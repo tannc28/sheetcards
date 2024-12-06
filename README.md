@@ -30,9 +30,11 @@
 ## Example Google Sheets Document
 
 Use this [example Google Sheets document](https://docs.google.com/spreadsheets/d/1S97fZkuw1DctJhBB1yaiWiSh5grmNmY9Gp8KVPCpMfU/edit?usp=sharing) as a starting template.  
+![imagen](https://github.com/user-attachments/assets/a030ddd0-5dae-483b-bde2-32f20ed0e245)
 - Just copy and paste: `question`, `answer`, and `tags` columns as needed.
 - Add Cloze-formatted questions (e.g., `{{c1::essential}}`) for Cloze cards.
 - After finalizing, publish the sheet as a CSV (File > Publish to the Web) and copy the CSV URL.
+
 
 ## Installation
 
