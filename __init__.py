@@ -98,14 +98,12 @@ if mw is not None:
     remoteDecksSubMenu.addAction(remoteDeckAction)
 
     # Acción para "Sincronizar mazos remotos"
-    syncDecksAction = QAction("Sync sheets2anki Remote Decks", mw)
     syncDecksAction = QAction("Sync Decks", mw)
     syncDecksAction.setShortcut(QKeySequence("Ctrl+Shift+S"))
     qconnect(syncDecksAction.triggered, syncDecks)
     remoteDecksSubMenu.addAction(syncDecksAction)
 
     # Acción para "Eliminar mazo remoto"
-    removeRemoteDeck = QAction("Delete sheets2anki Remote Deck", mw)
     removeRemoteDeck = QAction("Disconnect a remote Deck", mw)
     removeRemoteDeck.setShortcut(QKeySequence("Ctrl+Shift+D"))
     qconnect(removeRemoteDeck.triggered, removeRemote)
