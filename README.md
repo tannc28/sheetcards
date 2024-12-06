@@ -1,45 +1,84 @@
 # Sheets2Anki
 
-**Sheets2Anki** is an Anki add-on that syncs your Anki decks with a Google Sheets document published as CSV. It supports both Basic and Cloze note types, automatically assigns tags, and removes cards that are no longer in Google Sheets.
+**Sheets2Anki** is an Anki add-on that synchronizes your Anki decks with a published Google Sheets CSV. Your Google Sheets document serves as the source of truth: when you sync, cards are created, updated, or removed in your Anki deck to reflect the sheet’s contents. This add-on is currently in **beta**, so features and behavior may still change.
 
 ## Features
-- **Sync from Google Sheets (CSV):** Publish your Google Sheet as a CSV and easily integrate with Anki.
-- **Supports Cloze and Basic Cards:** Automatically detect if a question is Cloze-formatted or a simple Q&A.
-- **Automatic Tag Assignment:** Tags are derived from a specified column in your sheet.
-- **Removes Deleted Cards:** If a card no longer appears in the Google Sheet, it’s removed from Anki to maintain consistency.
+
+- **Google Sheets as Source of Truth:**  
+  Your published Google Sheet determines the cards present in Anki.  
+- **Supports Both Basic and Cloze Cards:**  
+  Automatically detects Cloze formatting (`{{c1::...}}`) in the question field for Cloze cards. Other questions become Basic cards.  
+- **Automatic Tag Assignment:**  
+  If you have a `tags` column in your sheet, those tags will be assigned to the cards in Anki.  
+- **Deck Maintenance:**  
+  - **Removed in Sheet → Removed in Anki:** If a card disappears from the sheet, it is removed from Anki on the next sync.
+  - **Removed in Anki → Not Removed in Sheet:** There is **no reverse sync**. Deleting a card in Anki does not affect the sheet; the card may reappear if you sync again unless it’s removed from the sheet.
+  
+**Important:** This add-on is in **beta** and currently supports only Basic and Cloze note types. Future updates may improve or extend functionality.
+
+## No Reverse Sync & Deck Disconnection
+
+- **No Reverse Sync:**  
+  All changes flow from Google Sheets to Anki. If you delete or modify a card in Anki, it will not update the sheet. To permanently remove a card, remove it from the sheet before syncing again.
+  
+- **Syncing vs. Disconnecting a Remote Deck:**
+  - **Sync Once and Disconnect:**  
+    You can sync a deck once, and then if you prefer to manage cards locally without further remote updates, go to `Tools > Manage Remote Deck > Disconnect Remote Deck`. This "unlinks" Anki from the sheet. The local deck remains and can be edited freely in Anki as a normal deck.
+  - **Continuous Syncing:**  
+    Alternatively, you can keep the deck connected and continue updating your Google Sheets document. Upon each sync, Anki updates to match the sheet. If you want a card gone, you must remove it from the sheet, as deletions in Anki alone won't persist after a resync.
+
+## Example Google Sheets Document
+
+Use this [example Google Sheets document](https://docs.google.com/spreadsheets/d/1S97fZkuw1DctJhBB1yaiWiSh5grmNmY9Gp8KVPCpMfU/edit?usp=sharing) as a starting template.  
+- Just copy and paste: `question`, `answer`, and `tags` columns as needed.
+- Add Cloze-formatted questions (e.g., `{{c1::essential}}`) for Cloze cards.
+- After finalizing, publish the sheet as a CSV (File > Publish to the Web) and copy the CSV URL.
 
 ## Installation
-1. Go to the [Releases](https://github.com/sebastianpaez/sheets2anki/releases) page of this repository.
-2. Download the latest `.ankiaddon` file.
-3. In Anki, go to `Tools > Add-ons > Install from file...`.
-4. Select the downloaded `.ankiaddon` file and restart Anki.
+
+1. **Download the `.ankiaddon` File:**
+   - Go to the [Releases](https://github.com/your-username/sheets2anki/releases) page of this repository.
+   - Download the latest `.ankiaddon`.
+
+2. **Install in Anki:**
+   - In Anki, go to `Tools > Add-ons > Install from file...`.
+   - Select the downloaded `.ankiaddon` file.
+   - Restart Anki when prompted.
 
 ## Usage
+
 1. **Add a New Remote Deck:**
-   - Go to `Tools > Manage Remote Deck > Add New Remote Deck`.
-   - Paste the URL of your published Google Sheet CSV.
+   - `Tools > Manage Remote Deck > Add New Remote Deck`.
+   - Paste the published CSV URL from your Google Sheet.
    - Enter a deck name and confirm.
 
-2. **Syncing Decks:**
-   - Go to `Tools > Manage Remote Deck > Sync Remote Decks` to synchronize your local Anki deck with Google Sheets.
+2. **Sync Decks:**
+   - `Tools > Manage Remote Deck > Sync Remote Decks` to update Anki from the sheet.
 
-3. **Remove a Remote Deck:**
-   - Go to `Tools > Manage Remote Deck > Remove Remote Deck`.
-   - Select the deck you want to unlink.
+3. **Disconnect a Remote Deck:**
+   - `Tools > Manage Remote Deck > Remove Remote Deck`.
+   - This unlinks the remote sheet. The local deck remains, allowing you to manage it entirely in Anki going forward.
 
 ## Requirements
+
 - **Anki Version:** Compatible with Anki 2.1.x.
-- **Models Needed:**
-  - **Basic Model:** Should have `Front` and `Back` fields.
-  - **Cloze Model:** Should have `Text` and `Extra` fields.
+- **Note Models Needed:**
+  - **Basic:** Fields `Front` and `Back`.
+  - **Cloze:** Fields `Text` and `Extra`.
+
+Confirm these models exist before syncing.
 
 ## Troubleshooting
-- **No Cards Imported?:** Check that your CSV headers are correct (`question`, `answer`, `tags`) and that your note models exist.
-- **Permission Denied (Publickey):** If using Git via SSH, ensure your SSH keys are correctly added to GitHub.
-- **Cards Not Deleting?:** Verify that the cards no longer appear in the CSV and re-sync.
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+- **No Cards Imported?**  
+  Check CSV headers (`question`, `answer`, `tags`) and ensure required note models exist.
+- **Changes Not Updating?**  
+  Wait a few minutes after editing the sheet or verify the correct published CSV URL.
+- **Cloze Cards Not Forming?**  
+  Ensure Cloze syntax (`{{c1::...}}`) is correct and the Cloze model has `Text` and `Extra` fields, see Example Google Sheets Document above. 
+- **Cards Reappearing After Deletion in Anki?**  
+  Remember there’s no reverse sync. Remove the card from the sheet if you want it gone permanently.
 
-## Contact
-For suggestions or issues, please open an issue on GitHub or contact me via [Your Contact Info or GitHub Profile].
+## Beta Status and Future Plans
+
+Sheets2Anki is in beta. Basic and Cloze types are supported now, but more features and improvements may follow as the project evolves. Keep an eye on this repository for updates.
