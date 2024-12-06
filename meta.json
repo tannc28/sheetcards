@@ -1,0 +1,1 @@
+{"name": "Sheets2Anki", "version": "1.0.0", "author": "Tu Nombre", "description": "Synchronize Anki decks with Google Sheets published as CSV.", "addonId": null, "conflicts": [], "min_point_version": 20100, "max_point_version": 20199, "config": {"remote-decks": {}, "debug": false}}
