@@ -1217,7 +1217,7 @@ def show_cleanup_confirmation_dialog(disabled_students: Set[str]) -> int:
     Returns:
         int: Dialog result code (MessageBox_Yes or MessageBox_Cancel)
     """
-    from .data_removal_confirmation import confirm_students_removal
+    from .ui.data_removal_confirmation import confirm_students_removal
 
     if not disabled_students:
         return MessageBox_Cancel
@@ -1476,7 +1476,7 @@ def show_missing_cleanup_confirmation_dialog() -> int:
     Returns:
         int: Dialog result code (MessageBox_Yes or MessageBox_Cancel)
     """
-    from .data_removal_confirmation import show_data_removal_confirmation_dialog
+    from .ui.data_removal_confirmation import show_data_removal_confirmation_dialog
     
     # Use centralized dialog only for missing student placeholder
     # Now returns int result

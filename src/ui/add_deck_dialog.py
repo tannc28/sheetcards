@@ -5,30 +5,30 @@ This module provides a modern, user-friendly interface for adding decks
 with support for automatic naming and conflict resolution.
 """
 
-from .compat import AlignCenter
-from .compat import DialogAccepted
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QGroupBox
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QLineEdit
-from .compat import QMessageBox
-from .compat import QProgressBar
-from .compat import QPushButton
-from .compat import QTimer
-from .compat import QVBoxLayout
-from .compat import QWidget
-from .compat import mw
-from .compat import safe_exec
-from .config_manager import add_remote_deck
-from .config_manager import get_remote_decks
-from .config_manager import is_deck_disconnected
-from .data_processor import RemoteDeckError
-from .data_processor import getRemoteDeck
-from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
-from .styled_messages import StyledMessageBox
-from .utils import get_or_create_deck, validate_url, get_spreadsheet_id_from_url, add_debug_message
+from ..compat import AlignCenter
+from ..compat import DialogAccepted
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QGroupBox
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QLineEdit
+from ..compat import QMessageBox
+from ..compat import QProgressBar
+from ..compat import QPushButton
+from ..compat import QTimer
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import mw
+from ..compat import safe_exec
+from ..config_manager import add_remote_deck
+from ..config_manager import get_remote_decks
+from ..config_manager import is_deck_disconnected
+from ..data_processor import RemoteDeckError
+from ..data_processor import getRemoteDeck
+from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+from ..styled_messages import StyledMessageBox
+from ..utils import get_or_create_deck, validate_url, get_spreadsheet_id_from_url, add_debug_message
 
 
 def is_dark_mode():
@@ -576,7 +576,7 @@ class AddDeckDialog(QDialog):
 
     def _validate_url_auto(self):
         """Validates URL automatically (called by timer)."""
-        from .deck_manager import DeckNameManager
+        from ..deck_manager import DeckNameManager
 
         url = self.url_edit.text().strip()
 
@@ -696,7 +696,7 @@ class AddDeckDialog(QDialog):
 
     def _update_deck_name_preview(self):
         """Updates deck name preview with conflict detection."""
-        from .deck_manager import DeckNameManager
+        from ..deck_manager import DeckNameManager
 
         if not self.suggested_name:
             return
@@ -745,7 +745,7 @@ class AddDeckDialog(QDialog):
 
     def _add_deck(self):
         """Adds the remote deck."""
-        from .deck_manager import DeckNameManager
+        from ..deck_manager import DeckNameManager
 
         url = self.url_edit.text().strip()
 
@@ -781,7 +781,7 @@ class AddDeckDialog(QDialog):
             deck_id, actual_name = get_or_create_deck(mw.col, full_name)
 
             # Add to configuration
-            from .config_manager import create_deck_info
+            from ..config_manager import create_deck_info
 
             deck_info = create_deck_info(
                 url=url,
@@ -800,14 +800,14 @@ class AddDeckDialog(QDialog):
 
             # Apply options
             try:
-                from .utils import apply_sheets2anki_options_to_deck
+                from ..utils import apply_sheets2anki_options_to_deck
                 apply_sheets2anki_options_to_deck(deck_id)
             except Exception as e:
                 add_debug_message(f"Warning: Error applying options: {e}", "ADD_DECK")
 
             # Reconnect if disconnected
             if is_deck_disconnected(url):
-                from .config_manager import reconnect_deck
+                from ..config_manager import reconnect_deck
                 reconnect_deck(url)
 
             self.accept()
@@ -824,10 +824,10 @@ class AddDeckDialog(QDialog):
 
     def get_deck_info(self):
         """Returns information about the added deck."""
-        from .deck_manager import DeckNameManager
+        from ..deck_manager import DeckNameManager
 
         url = self.url_edit.text().strip()
-        from .config_manager import get_deck_local_name
+        from ..config_manager import get_deck_local_name
 
         final_remote_name = DeckNameManager.resolve_remote_name_conflict(
             url, self.suggested_name

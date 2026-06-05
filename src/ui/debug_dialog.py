@@ -8,7 +8,7 @@ viewing debug logs, and clearing them.
 import os
 from datetime import datetime
 
-from .compat import (
+from ..compat import (
     mw,
     QDialog,
     QVBoxLayout,
@@ -21,19 +21,19 @@ from .compat import (
     safe_exec_dialog,
     Palette_Window,
 )
-from .utils import (
+from ..utils import (
     get_debug_log_path,
     is_debug_enabled,
     clear_debug_log,
     add_debug_message,
 )
-from .config_manager import (
+from ..config_manager import (
     get_meta,
     save_meta,
     should_accumulate_logs,
     set_accumulate_logs,
 )
-from .styled_messages import StyledMessageBox
+from ..styled_messages import StyledMessageBox
 
 
 

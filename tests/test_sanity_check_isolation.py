@@ -281,7 +281,7 @@ def test_ai_assistance_config_dialog_no_sanity():
     """
     Verify that the AI configuration dialog does not reference sanity check.
     """
-    dialog_py = read_file("src/ai_assistance_config_dialog.py")
+    dialog_py = read_file("src/ui/ai_assistance_config_dialog.py")
     assert "sanity" not in dialog_py.lower(), \
         "AI config dialog must not reference sanity check"
     

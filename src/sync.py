@@ -3192,7 +3192,7 @@ def _handle_consolidated_confirmation_cleanup(remote_decks):
     from .config_manager import get_students_with_sync_history
     from .student_manager import cleanup_disabled_students_data
     from .student_manager import cleanup_missing_students_data
-    from .data_removal_confirmation import collect_students_for_removal, show_data_removal_confirmation_dialog
+    from .ui.data_removal_confirmation import collect_students_for_removal, show_data_removal_confirmation_dialog
     from .templates_and_definitions import DEFAULT_STUDENT
 
     # Missing student placeholders

@@ -6,22 +6,22 @@ This module allows the user to choose between two synchronization modes:
 2. Sync - Execute sync after deck synchronization
 """
 
-from .compat import AlignCenter
-from .compat import DialogAccepted
-from .compat import Palette_Window
-from .compat import QButtonGroup
-from .compat import QCheckBox
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QGroupBox
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QPushButton
-from .compat import QRadioButton
-from .compat import QSpinBox
-from .compat import QVBoxLayout
-from .compat import safe_exec_dialog
-from .styled_messages import StyledMessageBox
+from ..compat import AlignCenter
+from ..compat import DialogAccepted
+from ..compat import Palette_Window
+from ..compat import QButtonGroup
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QGroupBox
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QPushButton
+from ..compat import QRadioButton
+from ..compat import QSpinBox
+from ..compat import QVBoxLayout
+from ..compat import safe_exec_dialog
+from ..styled_messages import StyledMessageBox
 
 
 class AnkiWebSyncConfigDialog(QDialog):
@@ -36,7 +36,7 @@ class AnkiWebSyncConfigDialog(QDialog):
         self.resize(600, 600)
 
         # Get current settings
-        from .config_manager import get_ankiweb_sync_mode
+        from ..config_manager import get_ankiweb_sync_mode
 
         self.current_mode = get_ankiweb_sync_mode()
 
@@ -328,8 +328,8 @@ class AnkiWebSyncConfigDialog(QDialog):
     def _test_connection(self):
         """Tests connection with AnkiWeb."""
         try:
-            from .ankiweb_sync import get_sync_status
-            from .ankiweb_sync import test_ankiweb_connection
+            from ..ankiweb_sync import get_sync_status
+            from ..ankiweb_sync import test_ankiweb_connection
 
             self.test_button.setText("🔍 Testing...")
             self.test_button.setEnabled(False)
@@ -361,7 +361,7 @@ class AnkiWebSyncConfigDialog(QDialog):
     def _save_settings(self):
         """Saves settings and closes dialog."""
         try:
-            from .config_manager import set_ankiweb_sync_config
+            from ..config_manager import set_ankiweb_sync_config
 
             mode_map = {0: "none", 1: "sync"}
             selected_mode = mode_map[self.mode_group.checkedId()]

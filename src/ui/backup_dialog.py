@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from .compat import (
+from ..compat import (
     mw,
     QDialog,
     QVBoxLayout,
@@ -36,9 +36,9 @@ from .compat import (
     AlignCenter,
     ScrollBarAlwaysOff,
 )
-from .styled_messages import StyledMessageBox
-from .backup_system import SimplifiedBackupManager
-from .config_manager import (
+from ..styled_messages import StyledMessageBox
+from ..backup_system import SimplifiedBackupManager
+from ..config_manager import (
     get_auto_backup_config,
     set_auto_backup_config,
     get_auto_backup_directory,

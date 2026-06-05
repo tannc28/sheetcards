@@ -6,9 +6,9 @@ confirmation messages when student data needs to be removed.
 """
 
 from typing import List, Optional
-from .compat import MessageBox_Yes, MessageBox_Cancel, safe_exec_dialog
-from .styled_messages import StyledMessageBox
-from .templates_and_definitions import DEFAULT_STUDENT
+from ..compat import MessageBox_Yes, MessageBox_Cancel, safe_exec_dialog
+from ..styled_messages import StyledMessageBox
+from ..templates_and_definitions import DEFAULT_STUDENT
 
 
 def generate_data_removal_confirmation_message(students_to_remove: List[str]) -> str:

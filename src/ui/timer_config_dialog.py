@@ -7,20 +7,20 @@ This module allows the user to choose between three timer positions:
 3. Hidden - Timer disabled
 """
 
-from .compat import AlignCenter
-from .compat import DialogAccepted
-from .compat import MessageBox_Ok
-from .compat import Palette_Window
-from .compat import QButtonGroup
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QPushButton
-from .compat import QRadioButton
-from .compat import QVBoxLayout
-from .styled_messages import StyledMessageBox
-from .compat import safe_exec_dialog
+from ..compat import AlignCenter
+from ..compat import DialogAccepted
+from ..compat import MessageBox_Ok
+from ..compat import Palette_Window
+from ..compat import QButtonGroup
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QPushButton
+from ..compat import QRadioButton
+from ..compat import QVBoxLayout
+from ..styled_messages import StyledMessageBox
+from ..compat import safe_exec_dialog
 
 
 class TimerConfigDialog(QDialog):
@@ -35,7 +35,7 @@ class TimerConfigDialog(QDialog):
         self.resize(550, 480)
 
         # Get current position
-        from .config_manager import get_timer_position
+        from ..config_manager import get_timer_position
         self.current_position = get_timer_position()
 
         # Detect dark mode
@@ -311,7 +311,7 @@ class TimerConfigDialog(QDialog):
             new_position = positions[selected_id]
 
             try:
-                from .config_manager import set_timer_position
+                from ..config_manager import set_timer_position
                 set_timer_position(new_position)
 
                 # Feedback
