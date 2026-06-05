@@ -335,7 +335,7 @@ class AIAssistanceConfigDialog(QDialog):
                 font-size: 12pt;
             }}
             QPushButton:hover {{
-                background-color: #1565C0;
+                background-color: {self.colors['primary_dark']};
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['button_bg']};
@@ -482,7 +482,7 @@ class AIAssistanceConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         self.ok_button.setDefault(True)

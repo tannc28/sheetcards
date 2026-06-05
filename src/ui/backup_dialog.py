@@ -501,7 +501,7 @@ class BackupDialog(QDialog):
                 font-size: 12pt;
             }}
             QPushButton:hover {{
-                background-color: #1565C0;
+                background-color: {self.colors['primary_dark']};
             }}
         """)
         refresh_btn.clicked.connect(self._refresh_backup_status)
@@ -544,7 +544,7 @@ class BackupDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         save_btn.clicked.connect(self._save_settings)

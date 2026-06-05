@@ -105,7 +105,7 @@ class AnkiWebSyncConfigDialog(QDialog):
             QFrame#headerFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                     stop:0 {self.colors['accent_primary']}, 
-                    stop:1 #00BCD4);
+                    stop:1 {self.colors['header_gradient_end']});
                 border-radius: 12px;
                 padding: 5px;
             }}
@@ -172,7 +172,7 @@ class AnkiWebSyncConfigDialog(QDialog):
                 font-size: 12pt;
             }}
             QPushButton:hover {{
-                background-color: #1565C0;
+                background-color: {self.colors['primary_dark']};
             }}
         """)
         self.test_button.clicked.connect(self._test_connection)
@@ -209,7 +209,7 @@ class AnkiWebSyncConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         self.save_button.clicked.connect(self._save_settings)

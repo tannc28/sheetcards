@@ -342,7 +342,7 @@ class DisconnectDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #c62828;
+                background-color: {self.colors['danger_dark']};
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['border']};

@@ -293,7 +293,7 @@ class GlobalStudentConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         ok_btn.clicked.connect(self.accept)
@@ -337,7 +337,7 @@ class GlobalStudentConfigDialog(QDialog):
                 font-size: 12pt;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         add_btn.clicked.connect(self._move_to_selected)
@@ -381,7 +381,7 @@ class GlobalStudentConfigDialog(QDialog):
                 font-size: 12pt;
             }}
             QPushButton:hover {{
-                background-color: #c62828;
+                background-color: {self.colors['danger_dark']};
             }}
         """)
         remove_btn.clicked.connect(self._move_to_available)

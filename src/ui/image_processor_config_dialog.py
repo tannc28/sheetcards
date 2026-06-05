@@ -222,7 +222,7 @@ class ImageProcessorConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         save_btn.clicked.connect(self._save_settings)
@@ -301,7 +301,7 @@ class ImageProcessorConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #E68900;
+                background-color: {self.colors['warning_dark']};
             }}
         """)
         copy_btn.clicked.connect(self._copy_script_to_clipboard)
@@ -454,7 +454,7 @@ class ImageProcessorConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #1976D2;
+                background-color: {self.colors['primary_dark']};
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['border']};

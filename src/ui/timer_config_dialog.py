@@ -165,7 +165,7 @@ class TimerConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
         """)
         self.ok_button.setDefault(True)
