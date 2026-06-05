@@ -212,8 +212,8 @@ class DeckOptionsConfigDialog(QDialog):
                 height: 22px;
             }}
             QRadioButton::indicator:checked {{
-                background-color: {accent_color};
-                border: 2px solid {accent_color};
+                background-color: {self.colors['accent_primary']};
+                border: 2px solid {self.colors['accent_primary']};
                 border-radius: 11px;
             }}
             QRadioButton::indicator:unchecked {{

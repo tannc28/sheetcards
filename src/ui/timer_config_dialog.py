@@ -102,7 +102,7 @@ class TimerConfigDialog(QDialog):
         # Option 1: Top Middle
         top_middle_card = self._create_option_card(
             "top_middle",
-            "📍 Top Middle",
+            "Top Middle",
             "Fixed",
             "Timer appears fixed at the top center of the screen, always visible.",
             self.colors["accent_primary"],
@@ -113,7 +113,7 @@ class TimerConfigDialog(QDialog):
         # Option 2: Between Sections
         between_sections_card = self._create_option_card(
             "between_sections",
-            "📋 Between Sections",
+            "Between Sections",
             "Default",
             "Timer appears between CONTEXT and CARD sections, flows with content.",
             self.colors["accent_success"],
@@ -124,7 +124,7 @@ class TimerConfigDialog(QDialog):
         # Option 3: Hidden
         hidden_card = self._create_option_card(
             "hidden",
-            "🚫 Hidden",
+            "Hidden",
             "Disabled",
             "Timer is completely disabled. No timer will be shown on cards.",
             self.colors["accent_warning"],
@@ -210,8 +210,8 @@ class TimerConfigDialog(QDialog):
                 height: 22px;
             }}
             QRadioButton::indicator:checked {{
-                background-color: {accent_color};
-                border: 2px solid {accent_color};
+                background-color: {self.colors['accent_primary']};
+                border: 2px solid {self.colors['accent_primary']};
                 border-radius: 11px;
             }}
             QRadioButton::indicator:unchecked {{

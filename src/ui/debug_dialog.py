@@ -9,6 +9,7 @@ import os
 
 from ..compat import QCheckBox
 from ..compat import QDialog
+from ..compat import QFrame
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
@@ -57,12 +58,37 @@ class DebugModeDialog(QDialog):
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # Title
+        # Header banner (consistent with the other dialogs)
+        colors = get_colors()
+        header_frame = QFrame()
+        header_frame.setObjectName("headerFrame")
+        header_frame.setStyleSheet(f"""
+            QFrame#headerFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {colors['header_gradient_start']},
+                    stop:1 {colors['header_gradient_end']});
+                border-radius: 12px;
+            }}
+            QFrame#headerFrame QLabel {{
+                background: transparent;
+                color: white;
+                border: none;
+            }}
+        """)
+        header_layout = QVBoxLayout(header_frame)
+        header_layout.setContentsMargins(20, 15, 20, 15)
+        header_layout.setSpacing(6)
+
         title_label = QLabel("Debug Mode Configuration")
-        title_label.setStyleSheet(
-            "font-size: 18pt; font-weight: bold; margin-bottom: 10px;"
-        )
-        layout.addWidget(title_label)
+        title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
+        header_layout.addWidget(title_label)
+
+        subtitle_label = QLabel("Toggle debug logging and view the Sheets2Anki log.")
+        subtitle_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
+        subtitle_label.setWordWrap(True)
+        header_layout.addWidget(subtitle_label)
+
+        layout.addWidget(header_frame)
 
         # Debug mode toggle section
         toggle_group = QGroupBox("Debug Mode Status")
