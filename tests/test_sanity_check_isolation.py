@@ -55,30 +55,27 @@ def extract_string_constant(source, var_name):
 
 def test_js_desktop_hides_sanity_check_before_capture():
     """
-    DESKTOP JS: Verify that captureOriginalContent() hides the 
+    DESKTOP JS: Verify that captureOriginalContent() hides the
     .sanity-check-container BEFORE reading document.body.innerText.
+
+    Checks the EVALUATED template string (the actual JS a card receives), not the
+    Python source layout, so it is robust to how the JS is composed from constants.
     """
-    # The desktop JS is AI_HELP_JS_DESKTOP - a string in templates_and_definitions.py
-    # Find the captureOriginalContent function in the full file content
-    assert "captureOriginalContent" in TEMPLATES_PY, "captureOriginalContent function must exist"
-    
-    # Find the desktop version (first occurrence before mobile template)
-    # Look for the pattern within the desktop JS section
-    desktop_section_start = TEMPLATES_PY.index("AI_HELP_JS_DESKTOP")
-    mobile_section_start = TEMPLATES_PY.index("AI_HELP_JS_MOBILE_TEMPLATE")
-    desktop_js = TEMPLATES_PY[desktop_section_start:mobile_section_start]
-    
+    from src import templates_and_definitions as T
+
+    desktop_js = T.AI_HELP_JS_DESKTOP
+    assert "captureOriginalContent" in desktop_js, "captureOriginalContent function must exist"
     assert ".sanity-check-container" in desktop_js, "Must reference .sanity-check-container"
     assert "sanityCheck.style.display = 'none'" in desktop_js, "Must hide sanity check"
-    
+
     # Verify ORDER: hide → read → restore
     hide_pos = desktop_js.index("sanityCheck.style.display = 'none'")
     read_pos = desktop_js.index("document.body.innerText")
     restore_pos = desktop_js.index("sanityCheck.style.display = originalDisplay")
-    
+
     assert hide_pos < read_pos, "Sanity check must be hidden BEFORE reading innerText"
     assert read_pos < restore_pos, "innerText must be read BEFORE restoring sanity check"
-    
+
     print("✅ DESKTOP JS: Sanity check is hidden before card content capture")
 
 
@@ -87,9 +84,9 @@ def test_js_mobile_hides_sanity_check_before_capture():
     MOBILE JS: Verify that captureOriginalContent() hides the 
     .sanity-check-container BEFORE reading document.body.innerText.
     """
-    mobile_section_start = TEMPLATES_PY.index("AI_HELP_JS_MOBILE_TEMPLATE")
-    mobile_js = TEMPLATES_PY[mobile_section_start:]
-    
+    from src import templates_and_definitions as T
+
+    mobile_js = T.AI_HELP_JS_MOBILE_TEMPLATE
     assert "captureOriginalContent" in mobile_js, "captureOriginalContent must exist in mobile template"
     assert ".sanity-check-container" in mobile_js, "Must reference .sanity-check-container in mobile"
     assert "sanityCheck.style.display = 'none'" in mobile_js, "Must hide sanity check in mobile"
@@ -110,28 +107,26 @@ def test_collectCardContent_uses_cached_snapshot():
     Verify that collectCardContent() returns the cached _originalCardContent
     and never re-reads the DOM (which could pick up sanity check data).
     """
-    for label, section_marker in [
-        ("DESKTOP", "AI_HELP_JS_DESKTOP"),
-        ("MOBILE", "AI_HELP_JS_MOBILE_TEMPLATE")
+    from src import templates_and_definitions as T
+
+    for label, js in [
+        ("DESKTOP", T.AI_HELP_JS_DESKTOP),
+        ("MOBILE", T.AI_HELP_JS_MOBILE_TEMPLATE),
     ]:
-        start = TEMPLATES_PY.index(section_marker)
-        # Get a reasonable chunk
-        section = TEMPLATES_PY[start:start + 15000]
-        
-        # Find collectCardContent function body
-        match = re.search(r'function collectCardContent\(\)\s*\{([^}]+)\}', section)
+        # Find collectCardContent function body in the evaluated template
+        match = re.search(r'function collectCardContent\(\)\s*\{([^}]+)\}', js)
         assert match, f"collectCardContent function must exist in {label}"
-        
+
         body = match.group(1)
-        
+
         # Must return the cached snapshot
         assert "_originalCardContent" in body, f"Must use _originalCardContent in {label}"
-        
+
         # Must NOT re-read DOM
         assert "document.body" not in body, f"Must NOT re-read document.body in {label}"
         assert "innerText" not in body, f"Must NOT call innerText in {label}"
         assert "textContent" not in body, f"Must NOT call textContent in {label}"
-        
+
         print(f"✅ {label}: collectCardContent() uses cached snapshot only (no live DOM read)")
 
 
@@ -234,20 +229,21 @@ def test_sanity_check_container_css_class_exists_in_template():
     Verify that the sanity check HTML uses the .sanity-check-container class
     that the JS code targets for hiding.
     """
+    from src import templates_and_definitions as T
+
     # The HTML template must use the class
     assert 'class="sanity-check-container"' in TEMPLATES_PY or "class=\\'sanity-check-container\\'" in TEMPLATES_PY, \
         "Sanity check HTML must use .sanity-check-container class"
-    
-    # And the JS must target that same class
-    assert ".sanity-check-container" in TEMPLATES_PY, \
-        "JS must query .sanity-check-container to hide it"
-    
-    # Count occurrences to ensure both desktop AND mobile JS hide it
-    hide_count = TEMPLATES_PY.count("sanityCheck.style.display = 'none'")
-    assert hide_count >= 2, \
-        f"Must hide sanity check in both desktop and mobile JS (found {hide_count} hide operations)"
-    
-    print(f"✅ TEMPLATE: Sanity check uses correct CSS class, hidden in {hide_count} JS contexts")
+
+    # Both the desktop AND mobile EVALUATED templates must hide it before capture.
+    # (Counted on the rendered strings, not the source, so it is robust to the shared
+    # capture helper being defined once and composed into both.)
+    desktop_hide = T.AI_HELP_JS_DESKTOP.count("sanityCheck.style.display = 'none'")
+    mobile_hide = T.AI_HELP_JS_MOBILE_TEMPLATE.count("sanityCheck.style.display = 'none'")
+    assert desktop_hide >= 1, "Desktop JS must hide sanity check"
+    assert mobile_hide >= 1, "Mobile JS must hide sanity check"
+
+    print(f"✅ TEMPLATE: Sanity check hidden in desktop ({desktop_hide}) and mobile ({mobile_hide}) JS")
 
 
 def test_debug_log_no_sanity_in_ai_context():
