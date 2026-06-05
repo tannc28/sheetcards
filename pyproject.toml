@@ -67,7 +67,7 @@ Homepage = "https://github.com/igorrflorentino/sheets2anki"
 Documentation = "https://github.com/igorrflorentino/sheets2anki/blob/main/README.md"
 Repository = "https://github.com/igorrflorentino/sheets2anki.git"
 "Bug Tracker" = "https://github.com/igorrflorentino/sheets2anki/issues"
-Changelog = "https://github.com/igorrflorentino/sheets2anki/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/igorrflorentino/sheets2anki/blob/main/docs/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

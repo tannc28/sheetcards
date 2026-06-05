@@ -1,16 +1,12 @@
 {
     "include": [
         "src",
-        "tests",
-        "stubs"
+        "tests"
     ],
     "exclude": [
         "**/__pycache__",
-        "**/.*"
-    ],
-    "stubPath": "./stubs",
-    "extraPaths": [
-        "./stubs"
+        "**/.*",
+        "libs"
     ],
     "typeCheckingMode": "basic",
     "reportMissingImports": "none",
@@ -27,5 +23,5 @@
     "reportGeneralTypeIssues": "warning",
     "pythonVersion": "3.13",
     "venvPath": ".",
-    "venv": "venv"
+    "venv": ".venv"
 }
