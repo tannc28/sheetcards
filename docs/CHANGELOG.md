@@ -4,10 +4,40 @@
 
 ---
 
-## 🛠️ **Unreleased** — Maintenance (on `main` since v3.0.0)
+## 🔧 **v3.0.1** - June 2026 *(Maintenance)*
 
-Internal quality work plus a UI-consistency pass. No feature or behavior changes — the
-UI updates below are purely visual (colors and labels).
+Internal quality work, a full code audit, and a UI-consistency pass since v3.0.0. No new
+features and no breaking changes; the UI updates are purely visual (colors and labels) and
+the audit changes are bug fixes and cleanup.
+
+### 🔍 Full code audit (bugs, dead code, deduplication)
+A repository-wide audit fixed correctness bugs and removed accumulated cruft:
+
+**Bug fixes**
+- **Cloze content with colons**: `clean_cloze_formatting` now preserves colons inside the
+  answer (e.g. `{{c1::10:30}}` → `10:30`) and strips hints case-insensitively; previously
+  such reverse-card fronts could render raw `{{c1::…}}` markup.
+- **Backup restore data-loss guard**: a "full" backup whose `.apkg` is missing/corrupt no
+  longer deletes the live deck before discovering the deck file is absent.
+- **Backup zip-slip**: backup archives are validated against path traversal before extraction.
+- **Config persistence**: a deck whose only changed field was its local deck id is now
+  written to `meta.json` (previously updated in memory but never saved).
+- **Note-type naming**: a whitespace-only student no longer produces a `None` note-type name.
+- **Sync robustness**: fixed an `UnboundLocalError` in the cleanup step, stopped
+  double-counting a single failed deck as two errors, and corrected the deck name shown in
+  "unexpected error" messages.
+- Smaller fixes: the import-test-deck duplicate guard, add-deck reconnection prompt for
+  disconnected URLs, HTTP error-body decoding, deterministic `student_selection` ordering,
+  and the error-traceback dialog now honoring the real debug flag.
+
+**Cleanup**
+- Removed ~40 grep-verified unused functions/classes (~1500 lines) across the engine,
+  config, deck, student, backup and UI layers, plus stale/misleading comments and leftover
+  section banners from the earlier facade split.
+- De-duplicated the SYNC-true value set, the two sync error handlers, and the dialogs' URL
+  helpers (new `src/ui/url_helpers.py`).
+- Pinned `black`/`ruff` in the dev environment to the exact CI versions so local formatting
+  matches the gates; added regression tests for the cloze and note-type-name fixes.
 
 ### 🎨 UI design system (visual consistency)
 A single design system now drives every screen, replacing per-dialog hardcoded styling:
@@ -39,8 +69,8 @@ A single design system now drives every screen, replacing per-dialog hardcoded s
 
 ### ⚙️ Tooling & CI
 - **GitHub Actions CI**: a test job plus a lint job with **blocking** `ruff` and `black`
-  gates (pinned versions) and an advisory `mypy` pass, including a dedicated blocking
-  `ruff F821` (undefined-name) gate.
+  gates (pinned versions) and an advisory `mypy` pass. Undefined-name errors (`F821`) are
+  caught as part of the standard `ruff check` (the `F` rule family is enabled).
 - **Pre-commit hooks** (`.pre-commit-config.yaml`): ruff + black + hygiene hooks
   (`libs/` excluded).
 - **`CONTRIBUTING.md`** added; non-test JS/HTML harnesses moved to `tools/js-harnesses/`.
@@ -48,7 +78,7 @@ A single design system now drives every screen, replacing per-dialog hardcoded s
 ### 🐛 Fixes
 - **Sync-summary crash**: `sync_report.py` referenced `DEFAULT_STUDENT` without importing
   it, raising `NameError` when the post-sync summary dialog rendered. Fixed, and now
-  guarded by the `F821` CI gate.
+  caught by the `ruff check` gate (`F` rules).
 
 ### 🎨 Code style & docs
 - Repository-wide formatting pass (ruff auto-fixes + black), now enforced in CI.

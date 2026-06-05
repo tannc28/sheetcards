@@ -20,7 +20,8 @@ python tests/run_tests.py --file core_logic --function test_duplicate_ids_detect
 ```
 
 Supported runner flags: `--unit`, `--integration`, `--fast`, `--coverage`, `--verbose`,
-`--info`, `--file <name>`, `--function <name>`.
+`--file <name>`, `--function <name>`. (`--info`, which just lists the available tests,
+must be passed on its own — it is not combinable with the other flags.)
 
 ### Running pytest directly
 
