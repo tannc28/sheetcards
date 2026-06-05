@@ -79,14 +79,14 @@ def show_data_removal_confirmation_dialog(
     # Create custom buttons (simplified to 2 options)
     buttons = [
         {
-            "text": "🗑️ DELETE DATA",
+            "text": "DELETE DATA",
             "role": "custom",
             "result_code": MessageBox_Yes,
             "primary": True,
             "destructive": True,
         },
         {
-            "text": "🚫 CANCEL SYNC",
+            "text": "CANCEL SYNC",
             "role": "custom",
             "result_code": MessageBox_Cancel,
             "primary": False,

@@ -141,7 +141,7 @@ class AddDeckDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 8)
 
         # Title with icon
-        title = QLabel("📊 Add Remote Deck")
+        title = QLabel("Add Remote Deck")
         title.setStyleSheet(f"""
             font-size: 20px;
             font-weight: bold;
@@ -277,7 +277,7 @@ class AddDeckDialog(QDialog):
         name_layout.setContentsMargins(0, 8, 0, 0)
         name_layout.setSpacing(6)
 
-        name_label = QLabel("📁 Deck will be created as:")
+        name_label = QLabel("Deck will be created as:")
         name_label.setStyleSheet(f"""
             font-size: 11px;
             color: {self.colors['text_secondary']};

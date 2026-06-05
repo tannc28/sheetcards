@@ -138,7 +138,7 @@ class GlobalStudentConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("👥 Global Student Configuration")
+        title_label = QLabel("Global Student Configuration")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -247,7 +247,7 @@ class GlobalStudentConfigDialog(QDialog):
             }}
         """
 
-        auto_discover_btn = QPushButton("🔍 Auto-Discover Students")
+        auto_discover_btn = QPushButton("Auto-Discover Students")
         auto_discover_btn.setStyleSheet(btn_style)
         auto_discover_btn.setToolTip(
             "Discover students from all configured remote decks"
@@ -255,7 +255,7 @@ class GlobalStudentConfigDialog(QDialog):
         auto_discover_btn.clicked.connect(self._auto_discover_students)
         action_layout.addWidget(auto_discover_btn)
 
-        add_manual_btn = QPushButton("➕ Add Student...")
+        add_manual_btn = QPushButton("Add Student...")
         add_manual_btn.setStyleSheet(btn_style)
         add_manual_btn.setToolTip("Add a student not listed automatically")
         add_manual_btn.clicked.connect(self._add_manual_student)
@@ -308,7 +308,7 @@ class GlobalStudentConfigDialog(QDialog):
         layout = QVBoxLayout()
         layout.setSpacing(8)
 
-        title = QLabel("📄 Available Students")
+        title = QLabel("Available Students")
         title.setStyleSheet(
             f"font-weight: bold; font-size: 12pt; color: {self.colors['text']};"
         )
