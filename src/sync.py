@@ -26,7 +26,6 @@ from .compat import QTextEdit
 from .compat import QVBoxLayout
 from .compat import mw
 from .compat import safe_exec_dialog
-from .config_manager import get_deck_local_name
 from .config_manager import get_meta
 from .config_manager import get_remote_decks
 from .config_manager import save_remote_decks
@@ -2503,80 +2502,63 @@ def _sync_single_deck(
     return step, 1, deck_stats
 
 
-def _handle_sync_error(
-    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
-):
-    """Handles deck synchronization errors."""
-    # Check if mw.col and mw.col.decks are available
+def _resolve_deck_name_for_error(deckKey, remote_decks):
+    """Best-effort local deck name for an error message; never raises."""
     if not _is_anki_decks_ready():
-        deckName = "Unknown"
-    else:
-        assert mw.col is not None  # Type hint for checker
-        # Try to get deck name for error message
-        try:
-            deck_info = remote_decks[deckKey]
-            local_deck_id = deck_info["local_deck_id"]
-            deck = (
-                mw.col.decks.get(local_deck_id) if local_deck_id is not None else None
-            )
-            deckName = (
-                deck["name"]
-                if deck
-                else (
-                    deck_info.get("local_deck_name") or str(local_deck_id)
-                    if local_deck_id is not None
-                    else "Unknown"
-                )
-            )
-        except Exception:
-            deckName = "Unknown"
+        return "Unknown"
+    assert mw.col is not None  # Type hint for checker
+    try:
+        deck_info = remote_decks[deckKey]
+        local_deck_id = deck_info["local_deck_id"]
+        deck = mw.col.decks.get(local_deck_id) if local_deck_id is not None else None
+        if deck:
+            return deck["name"]
+        if local_deck_id is not None:
+            # deckKey is a spreadsheet id, so resolve the name from deck_info
+            # (get_deck_local_name expects a URL and would fail on a bare id).
+            return deck_info.get("local_deck_name") or str(local_deck_id)
+        return "Unknown"
+    except Exception:
+        return "Unknown"
 
-    error_msg = f"❌ {deckName}: Sync failed - {str(e)}"
-    sync_errors.append(error_msg)
-    status_msgs.append(error_msg)
+
+def _report_deck_sync_error(message, progress, status_msgs, sync_errors, step):
+    """Records a deck error message and advances the progress bar."""
+    sync_errors.append(message)
+    status_msgs.append(message)
     _update_progress_text(progress, status_msgs)
     step += 3
     progress.setValue(step)
     mw.app.processEvents()
     return step, sync_errors
+
+
+def _handle_sync_error(
+    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
+):
+    """Handles deck synchronization errors."""
+    deck_name = _resolve_deck_name_for_error(deckKey, remote_decks)
+    return _report_deck_sync_error(
+        f"❌ {deck_name}: Sync failed - {str(e)}",
+        progress,
+        status_msgs,
+        sync_errors,
+        step,
+    )
 
 
 def _handle_unexpected_error(
     e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
 ):
     """Handles unexpected errors during synchronization."""
-    # Check if mw.col and mw.col.decks are available
-    if not _is_anki_decks_ready():
-        deckName = "Unknown"
-    else:
-        assert mw.col is not None  # Type hint for checker
-        # Try to get deck name for error message
-        try:
-            deck_info = remote_decks[deckKey]
-            local_deck_id = deck_info["local_deck_id"]
-            deck = (
-                mw.col.decks.get(local_deck_id) if local_deck_id is not None else None
-            )
-            deckName = (
-                deck["name"]
-                if deck
-                else (
-                    get_deck_local_name(deckKey) or str(local_deck_id)
-                    if local_deck_id is not None
-                    else "Unknown"
-                )
-            )
-        except Exception:
-            deckName = "Unknown"
-
-    error_msg = f"🔥 {deckName}: Unexpected error - {str(e)}"
-    sync_errors.append(error_msg)
-    status_msgs.append(error_msg)
-    _update_progress_text(progress, status_msgs)
-    step += 3
-    progress.setValue(step)
-    mw.app.processEvents()
-    return step, sync_errors
+    deck_name = _resolve_deck_name_for_error(deckKey, remote_decks)
+    return _report_deck_sync_error(
+        f"🔥 {deck_name}: Unexpected error - {str(e)}",
+        progress,
+        status_msgs,
+        sync_errors,
+        step,
+    )
 
 
 def _handle_consolidated_cleanup(remote_decks):

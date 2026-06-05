@@ -48,6 +48,12 @@ def add_debug_msg(message, category="DATA_PROCESSOR"):
     add_debug_message(message, category)
 
 
+# Accepted truthy values for the SYNC column (compared against the value
+# already normalized to lower-case/stripped at each use site). Single-sourced
+# so every sync-marking check below uses the same set.
+_SYNC_TRUE_VALUES = frozenset({"true", "1", "yes", "sim"})
+
+
 # Import mw safely
 try:
     from .compat import mw
@@ -158,7 +164,7 @@ class RemoteDeck:
 
         # 4. Lines marked for sync (only for valid lines)
         sync_value = str(note_data.get(cols.is_sync, "")).strip().lower()
-        if sync_value in ["true", "1", "yes", "sim"]:
+        if sync_value in _SYNC_TRUE_VALUES:
             self.sync_marked_lines += 1
 
         # Student analysis for metrics 5-9 (only for valid lines)
@@ -580,7 +586,7 @@ def build_remote_deck_from_tsv(
 
             # Check if it should sync
             sync_value = str(note_data.get(cols.is_sync, "")).strip().lower()
-            if sync_value not in ["true", "1", "yes", "sim"]:
+            if sync_value not in _SYNC_TRUE_VALUES:
                 add_debug_msg(f"Row {row_index + 2}: note not marked for sync")
                 continue
 
@@ -955,7 +961,7 @@ def create_or_update_notes(
 
             # Check if this note should sync
             sync_value = str(note_data.get(cols.is_sync, "")).strip().lower()
-            if sync_value not in ["true", "1", "yes", "sim"]:
+            if sync_value not in _SYNC_TRUE_VALUES:
                 continue
 
             # Obtain students list for this note
@@ -1047,7 +1053,7 @@ def create_or_update_notes(
 
             # Check if it should sync
             sync_value = str(note_data.get(cols.is_sync, "")).strip().lower()
-            if sync_value not in ["true", "1", "yes", "sim"]:
+            if sync_value not in _SYNC_TRUE_VALUES:
                 stats.skipped += 1
                 continue
 
@@ -1460,7 +1466,7 @@ def create_or_update_notes(
             if not rid:
                 continue
             sv = str(note_data.get(cols.is_sync, "")).strip().lower()
-            remote_id_sync[rid] = sv in ["true", "1", "yes", "sim"]
+            remote_id_sync[rid] = sv in _SYNC_TRUE_VALUES
 
         def _resolve_remote_match(full_id):
             """Resolve a stored "{student}_{id}[_REV]" key against the remote IDs.
