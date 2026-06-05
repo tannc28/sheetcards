@@ -124,7 +124,7 @@ class AIAssistanceConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("✨ AI Assistance Configuration")
+        title_label = QLabel("AI Assistance Configuration")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -272,8 +272,8 @@ class AIAssistanceConfigDialog(QDialog):
             }}
         """)
 
-        self.show_key_btn = QPushButton("👁")
-        self.show_key_btn.setFixedWidth(40)
+        self.show_key_btn = QPushButton("Show")
+        self.show_key_btn.setFixedWidth(64)
         self.show_key_btn.setCheckable(True)
         self.show_key_btn.setStyleSheet(f"""
             QPushButton {{
@@ -324,7 +324,7 @@ class AIAssistanceConfigDialog(QDialog):
             }}
         """)
 
-        self.fetch_models_btn = QPushButton("🔄 Fetch Models")
+        self.fetch_models_btn = QPushButton("Fetch Models")
         self.fetch_models_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_primary']};
@@ -592,8 +592,10 @@ class AIAssistanceConfigDialog(QDialog):
         """Toggles API key visibility."""
         if self.show_key_btn.isChecked():
             self.api_key_input.setEchoMode(EchoModeNormal)
+            self.show_key_btn.setText("Hide")
         else:
             self.api_key_input.setEchoMode(EchoModePassword)
+            self.show_key_btn.setText("Show")
 
     def _get_selected_service(self):
         """Gets the currently selected service."""
@@ -663,7 +665,7 @@ class AIAssistanceConfigDialog(QDialog):
             )
         finally:
             self.fetch_models_btn.setEnabled(True)
-            self.fetch_models_btn.setText("🔄 Fetch Models")
+            self.fetch_models_btn.setText("Fetch Models")
 
     def _reset_prompt(self):
         """Resets prompts to default."""

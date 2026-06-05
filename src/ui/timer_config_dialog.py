@@ -85,7 +85,7 @@ class TimerConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("⏱️ Timer Position")
+        title_label = QLabel("Timer Position")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 

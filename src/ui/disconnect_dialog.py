@@ -164,7 +164,7 @@ class DisconnectDialog(QDialog):
         header_layout.setContentsMargins(20, 15, 20, 15)
 
         # Title with icon
-        title_label = QLabel("🔌 Disconnect Remote Decks")
+        title_label = QLabel("Disconnect Remote Decks")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -330,7 +330,7 @@ class DisconnectDialog(QDialog):
             }}
         """)
 
-        self.disconnect_button = QPushButton("🔌 Disconnect Selected")
+        self.disconnect_button = QPushButton("Disconnect Selected")
         self.disconnect_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_danger']};
@@ -454,7 +454,7 @@ class DisconnectDialog(QDialog):
                 )
 
                 # Card count label
-                count_label = QLabel(f"📚 {card_count} cards")
+                count_label = QLabel(f"{card_count} cards")
                 count_label.setStyleSheet(f"""
                     color: {self.colors['text_secondary']};
                     font-size: 12pt;

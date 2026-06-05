@@ -118,7 +118,7 @@ class AnkiWebSyncConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("☁️ AnkiWeb Synchronization")
+        title_label = QLabel("AnkiWeb Synchronization")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -137,7 +137,7 @@ class AnkiWebSyncConfigDialog(QDialog):
         # Option 1: Disabled
         disabled_card = self._create_mode_card(
             "none",
-            "🚫 Disabled",
+            "Disabled",
             "No automatic synchronization. Sync manually via Tools > Sync.",
             self.colors["text_secondary"],
             0,
@@ -147,7 +147,7 @@ class AnkiWebSyncConfigDialog(QDialog):
         # Option 2: Sync
         sync_card = self._create_mode_card(
             "sync",
-            "🔄 Sync with AnkiWeb",
+            "Sync with AnkiWeb",
             "Automatically sync with AnkiWeb after each deck synchronization. Recommended for multi-device users.",
             self.colors["accent_success"],
             1,
@@ -161,7 +161,7 @@ class AnkiWebSyncConfigDialog(QDialog):
         buttons_layout.setContentsMargins(0, 10, 0, 0)
 
         # Test connection button
-        self.test_button = QPushButton("🔍 Test Connection")
+        self.test_button = QPushButton("Test Connection")
         self.test_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_primary']};
@@ -301,7 +301,7 @@ class AnkiWebSyncConfigDialog(QDialog):
             from ..ankiweb_sync import get_sync_status
             from ..ankiweb_sync import test_ankiweb_connection
 
-            self.test_button.setText("🔍 Testing...")
+            self.test_button.setText("Testing...")
             self.test_button.setEnabled(False)
 
             result = test_ankiweb_connection()
@@ -338,7 +338,7 @@ class AnkiWebSyncConfigDialog(QDialog):
                 self, "Error", f"Error testing connection: {str(e)}"
             )
         finally:
-            self.test_button.setText("🔍 Test Connection")
+            self.test_button.setText("Test Connection")
             self.test_button.setEnabled(True)
 
     def _save_settings(self):

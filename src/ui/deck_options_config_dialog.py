@@ -85,7 +85,7 @@ class DeckOptionsConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("⚙️ Deck Options Management")
+        title_label = QLabel("Deck Options Management")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -104,7 +104,7 @@ class DeckOptionsConfigDialog(QDialog):
         # Option 1: Shared
         shared_card = self._create_option_card(
             "shared",
-            "📦 Shared Options",
+            "Shared Options",
             "Recommended",
             "All remote decks use the same settings group. Configure once and all changes apply to all decks.",
             self.colors["accent_success"],
@@ -115,7 +115,7 @@ class DeckOptionsConfigDialog(QDialog):
         # Option 2: Individual
         individual_card = self._create_option_card(
             "individual",
-            "🎯 Individual Options",
+            "Individual Options",
             "Per Deck",
             "Each remote deck has its own settings group. Useful when decks have specific study needs.",
             self.colors["accent_primary"],
@@ -126,7 +126,7 @@ class DeckOptionsConfigDialog(QDialog):
         # Option 3: Manual
         manual_card = self._create_option_card(
             "manual",
-            "🔧 Manual Configuration",
+            "Manual Configuration",
             "Advanced",
             "The addon does not apply any settings automatically. Full control over each deck's options.",
             self.colors["accent_warning"],

@@ -146,7 +146,7 @@ class BackupDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("💾 Backup & Restore")
+        title_label = QLabel("Backup & Restore")
         title_label.setStyleSheet("font-size: 20pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -163,7 +163,7 @@ class BackupDialog(QDialog):
     def _create_manual_backup_section(self):
         """Creates the manual backup section."""
         section = self._create_section_frame(
-            "📦 Manual Backup", "Create a backup of your data now"
+            "Manual Backup", "Create a backup of your data now"
         )
         layout = section.layout()
 
@@ -173,7 +173,7 @@ class BackupDialog(QDialog):
 
         # Simple backup card
         simple_card = self._create_action_card(
-            "⚙️ Simple Backup",
+            "Simple Backup",
             "Configuration files only",
             "Backs up your addon settings, remote deck links, and student configurations. "
             "Perfect for restoring after reinstalling the addon.",
@@ -184,7 +184,7 @@ class BackupDialog(QDialog):
 
         # Complete backup card
         complete_card = self._create_action_card(
-            "📚 Complete Backup",
+            "Complete Backup",
             "Configuration + Deck Data",
             "Backs up everything including your Sheets2Anki deck with all cards, "
             "scheduling data, and media files.",
@@ -199,7 +199,7 @@ class BackupDialog(QDialog):
     def _create_restore_section(self):
         """Creates the restore section."""
         section = self._create_section_frame(
-            "🔄 Restore Backup", "Recover from a previous backup"
+            "Restore Backup", "Recover from a previous backup"
         )
         layout = section.layout()
 
@@ -209,7 +209,7 @@ class BackupDialog(QDialog):
 
         # Restore config only
         config_card = self._create_action_card(
-            "🔧 Restore Settings",
+            "Restore Settings",
             "Configuration only",
             "Restores addon settings and remote deck links without modifying "
             "your Anki data. Creates a safety backup first.",
@@ -220,7 +220,7 @@ class BackupDialog(QDialog):
 
         # Full restore
         full_card = self._create_action_card(
-            "📥 Full Restore",
+            "Full Restore",
             "Complete data restore",
             "Restores everything including deck data. This will replace "
             "your current Sheets2Anki deck. Creates a safety backup first.",
@@ -256,7 +256,7 @@ class BackupDialog(QDialog):
     def _create_backup_directory_section(self):
         """Creates the backup directory configuration section."""
         section = self._create_section_frame(
-            "📁 Backup Directory",
+            "Backup Directory",
             "Where backups are saved and searched for in Backup Status",
         )
         layout = section.layout()
@@ -329,7 +329,7 @@ class BackupDialog(QDialog):
     def _create_auto_backup_section(self):
         """Creates the auto-backup configuration section."""
         section = self._create_section_frame(
-            "⏰ Automatic Backup", "Configure automatic backups before each sync"
+            "Automatic Backup", "Configure automatic backups before each sync"
         )
         layout = section.layout()
 
@@ -430,7 +430,7 @@ class BackupDialog(QDialog):
         max_layout = QHBoxLayout(max_frame)
         max_layout.setContentsMargins(15, 10, 15, 10)
 
-        max_label = QLabel("🗂️ Keep maximum backup files:")
+        max_label = QLabel("Keep maximum backup files:")
         max_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text']};")
         max_layout.addWidget(max_label)
 
@@ -465,7 +465,7 @@ class BackupDialog(QDialog):
     def _create_backup_info_section(self):
         """Creates the backup information section."""
         section = self._create_section_frame(
-            "📊 Backup Status", "Current backup information"
+            "Backup Status", "Current backup information"
         )
         layout = section.layout()
 
@@ -490,7 +490,7 @@ class BackupDialog(QDialog):
         info_layout.addWidget(self.backup_status_label)
 
         # Refresh button
-        refresh_btn = QPushButton("🔄 Refresh Status")
+        refresh_btn = QPushButton("Refresh Status")
         refresh_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_primary']};

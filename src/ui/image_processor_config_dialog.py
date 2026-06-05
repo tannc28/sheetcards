@@ -137,7 +137,7 @@ class ImageProcessorConfigDialog(QDialog):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 15, 20, 15)
 
-        title_label = QLabel("📸 Automatic Image Processing")
+        title_label = QLabel("Automatic Image Processing")
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
@@ -267,7 +267,7 @@ class ImageProcessorConfigDialog(QDialog):
         """Creates the setup guide section with copy script button."""
         from ..compat import QGroupBox
 
-        section = QGroupBox("📖 Setup Guide (one-time)")
+        section = QGroupBox("Setup Guide (one-time)")
         section.setStyleSheet(self._create_section_style())
 
         layout = QVBoxLayout()
@@ -288,7 +288,7 @@ class ImageProcessorConfigDialog(QDialog):
         layout.addWidget(steps_label)
 
         # Copy script button
-        copy_btn = QPushButton("📋 Copy Script to Clipboard")
+        copy_btn = QPushButton("Copy Script to Clipboard")
         copy_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_warning']};
@@ -313,14 +313,14 @@ class ImageProcessorConfigDialog(QDialog):
         """Creates API configuration section."""
         from ..compat import QGroupBox
 
-        section = QGroupBox("🔧 Configuration")
+        section = QGroupBox("Configuration")
         section.setStyleSheet(self._create_section_style())
 
         layout = QVBoxLayout()
         layout.setSpacing(12)
 
         # ImgBB API Key
-        imgbb_label = QLabel("🖼️ ImgBB API Key")
+        imgbb_label = QLabel("ImgBB API Key")
         imgbb_label.setStyleSheet(
             f"font-weight: bold; color: {self.colors['text']}; font-size: 12pt;"
         )
@@ -338,7 +338,7 @@ class ImageProcessorConfigDialog(QDialog):
         self.imgbb_input.setEchoMode(QLineEdit.EchoMode.Password)
         imgbb_input_layout.addWidget(self.imgbb_input)
 
-        self.imgbb_show_btn = QPushButton("👁️ Show")
+        self.imgbb_show_btn = QPushButton("Show")
         self.imgbb_show_btn.setMaximumWidth(80)
         self.imgbb_show_btn.setStyleSheet(f"""
             QPushButton {{
@@ -366,7 +366,7 @@ class ImageProcessorConfigDialog(QDialog):
         layout.addWidget(sep)
 
         # Web App URL
-        webapp_label = QLabel("🌐 Google Apps Script Web App URL")
+        webapp_label = QLabel("Google Apps Script Web App URL")
         webapp_label.setStyleSheet(
             f"font-weight: bold; color: {self.colors['text']}; font-size: 12pt;"
         )
@@ -395,7 +395,7 @@ class ImageProcessorConfigDialog(QDialog):
         """Creates processing options section."""
         from ..compat import QGroupBox
 
-        section = QGroupBox("⚙️ Processing Options")
+        section = QGroupBox("Processing Options")
         section.setStyleSheet(self._create_section_style())
 
         layout = QVBoxLayout()
@@ -432,7 +432,7 @@ class ImageProcessorConfigDialog(QDialog):
         """Creates test section."""
         from ..compat import QGroupBox
 
-        section = QGroupBox("📋 Status & Testing")
+        section = QGroupBox("Status & Testing")
         section.setStyleSheet(self._create_section_style())
 
         layout = QVBoxLayout()
@@ -441,7 +441,7 @@ class ImageProcessorConfigDialog(QDialog):
         # Test button
         buttons_row = QHBoxLayout()
 
-        test_btn = QPushButton("🧪 Test Configuration")
+        test_btn = QPushButton("Test Configuration")
         test_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_primary']};
@@ -522,10 +522,10 @@ class ImageProcessorConfigDialog(QDialog):
         """Toggles visibility of the ImgBB API key."""
         if self.imgbb_input.echoMode() == QLineEdit.EchoMode.Password:
             self.imgbb_input.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.imgbb_show_btn.setText("🙈 Hide")
+            self.imgbb_show_btn.setText("Hide")
         else:
             self.imgbb_input.setEchoMode(QLineEdit.EchoMode.Password)
-            self.imgbb_show_btn.setText("👁️ Show")
+            self.imgbb_show_btn.setText("Show")
 
     def _test_configuration(self):
         """Tests the current configuration."""

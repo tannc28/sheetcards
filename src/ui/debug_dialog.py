@@ -58,7 +58,7 @@ class DebugModeDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         # Title
-        title_label = QLabel("🔧 Debug Mode Configuration")
+        title_label = QLabel("Debug Mode Configuration")
         title_label.setStyleSheet(
             "font-size: 18pt; font-weight: bold; margin-bottom: 10px;"
         )
@@ -123,21 +123,21 @@ class DebugModeDialog(QDialog):
         # Log action buttons
         log_buttons = QHBoxLayout()
 
-        self.refresh_btn = QPushButton("🔄 Refresh")
+        self.refresh_btn = QPushButton("Refresh")
         self.refresh_btn.clicked.connect(self._load_log_content)
         log_buttons.addWidget(self.refresh_btn)
 
-        self.scroll_bottom_btn = QPushButton("⬇️ Scroll to End")
+        self.scroll_bottom_btn = QPushButton("Scroll to End")
         self.scroll_bottom_btn.clicked.connect(self._scroll_to_bottom)
         log_buttons.addWidget(self.scroll_bottom_btn)
 
         log_buttons.addStretch()
 
-        self.clear_btn = QPushButton("🗑️ Clear Log")
+        self.clear_btn = QPushButton("Clear Log")
         self.clear_btn.clicked.connect(self._clear_log)
         log_buttons.addWidget(self.clear_btn)
 
-        self.open_folder_btn = QPushButton("📁 Open Log Folder")
+        self.open_folder_btn = QPushButton("Open Log Folder")
         self.open_folder_btn.clicked.connect(self._open_log_folder)
         log_buttons.addWidget(self.open_folder_btn)
 
