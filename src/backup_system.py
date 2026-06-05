@@ -286,6 +286,18 @@ class SimplifiedBackupManager:
             if not self._validate_backup(temp_path):
                 raise Exception("Invalid or corrupted backup file.")
 
+            # 2b. If the backup advertises an included deck, ensure the .apkg
+            # is actually present BEFORE destroying the current deck. Otherwise
+            # a corrupt/truncated backup would delete the user's deck and
+            # replace it with nothing (data loss).
+            apkg_path = temp_path / "sheets2anki_deck.apkg"
+            backup_info = self._get_backup_info(temp_path) or {}
+            if backup_info.get("apkg_included") and not apkg_path.exists():
+                raise Exception(
+                    "Backup is marked as containing a deck but the deck file is "
+                    "missing or corrupted. Restoration aborted to avoid data loss."
+                )
+
             # 3. Remove current deck
             self._remove_current_sheets2anki_deck()
 
@@ -293,7 +305,6 @@ class SimplifiedBackupManager:
             self._restore_configurations(temp_path)
 
             # 5. Import deck from backup
-            apkg_path = temp_path / "sheets2anki_deck.apkg"
             if apkg_path.exists():
                 self._import_deck_apkg(str(apkg_path))
 
@@ -498,8 +509,21 @@ class SimplifiedBackupManager:
                     zipf.write(file_path, arcname)
 
     def _extract_backup_zip(self, backup_path: str, temp_path: Path) -> None:
-        """Extracts the backup ZIP file"""
+        """Extracts the backup ZIP file, rejecting unsafe member paths.
+
+        A crafted backup could contain absolute paths or ``..`` traversal
+        entries that escape ``temp_path``. Validate every member resolves
+        inside the temp directory before extracting (zip-slip protection).
+        """
+        temp_root = temp_path.resolve()
         with zipfile.ZipFile(backup_path, "r") as zipf:
+            for member in zipf.namelist():
+                target = (temp_path / member).resolve()
+                if target != temp_root and temp_root not in target.parents:
+                    raise Exception(
+                        f"Unsafe path in backup archive: {member!r}. "
+                        "Restoration aborted."
+                    )
             zipf.extractall(temp_path)
 
     def _validate_backup(self, temp_path: Path) -> bool:

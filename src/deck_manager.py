@@ -235,7 +235,7 @@ def _force_delete_note_types_by_suffix(suffix, remote_deck_name=None, url=None):
                 )
             except Exception as e:
                 add_debug_msg(
-                    f"[FORCE DELETE] ❌ Error deleting note type '{model_name}': {e}"
+                    f"[FORCE DELETE] ❌ Error deleting note type '{model['name']}': {e}"
                 )
 
         # Force save
@@ -415,9 +415,11 @@ def import_test_deck():
     remote_name = DeckNameManager.extract_remote_name_from_url(url)
     deck_name = DeckNameManager.generate_local_name(remote_name)
 
-    # Check if URL is already configured
+    # Check if URL is already configured (remote_decks is keyed by spreadsheet id)
+    from .config_manager import get_deck_id
+
     remote_decks = get_remote_decks()
-    if url in remote_decks:
+    if get_deck_id(url) in remote_decks:
         local_name = get_deck_local_name(url) or "Deck"
         StyledMessageBox.warning(
             mw,

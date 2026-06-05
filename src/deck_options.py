@@ -98,6 +98,10 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
         add_debug_message("❌ Anki not available", "DECK_OPTIONS")
         return None
 
+    # Resolve the configured mode up front so it is always bound — the
+    # stored-package-name branch below would otherwise skip assigning it.
+    mode = get_deck_options_mode()
+
     # First, check if there's a specific configuration stored for this deck
     if deck_url:
         stored_package_name = get_deck_configurations_package_name(deck_url)
@@ -170,7 +174,7 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
                 try:
                     existing_config = mw.col.decks.get_config(group["id"])
                     if existing_config and not _is_default_config(
-                        existing_config, "default" if mode == "shared" else "default"
+                        existing_config, "default"
                     ):
                         add_debug_message(
                             f"🔒 Group '{options_group_name}' has customized settings - preserving",

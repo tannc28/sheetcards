@@ -100,7 +100,8 @@ def addDeck():
     except Exception as e:
         errorMessage = str(e)
         showInfo(errorTemplate.format(errorMessage))
-        if ankiBridge and ankiBridge.getConfig().get("debug", False):
+        from .src.debug import is_debug_enabled
+        if is_debug_enabled():
             import traceback
             trace = traceback.format_exc()
             showInfo(str(trace))
@@ -155,7 +156,8 @@ def removeRemote():
     except Exception as e:
         errorMessage = str(e)
         showInfo(errorTemplate.format(errorMessage))
-        if ankiBridge and ankiBridge.getConfig().get("debug", False):
+        from .src.debug import is_debug_enabled
+        if is_debug_enabled():
             import traceback
             trace = traceback.format_exc()
             showInfo(str(trace))

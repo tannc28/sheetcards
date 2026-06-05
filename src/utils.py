@@ -500,13 +500,15 @@ def get_note_type_name(
     # Use remote name directly (already comes with conflict suffix from config_manager)
     clean_remote_name = remote_deck_name.strip() if remote_deck_name else "RemoteDeck"
 
-    # Use student name as provided (case-sensitive)
+    # Use student name as provided (case-sensitive). Fall through to the
+    # no-student format when student is absent OR whitespace-only, so this
+    # never returns None (which would break col.models.by_name downstream).
     if student:
         clean_student_name = student.strip()
         if clean_student_name:
             return f"Sheets2Anki - {clean_remote_name} - {clean_student_name} - {note_type}"
-    else:
-        return f"Sheets2Anki - {clean_remote_name} - {note_type}"
+
+    return f"Sheets2Anki - {clean_remote_name} - {note_type}"
 
 
 def register_note_type_for_deck(url, note_type_id, note_type_name, debug_messages=None):
