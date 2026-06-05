@@ -12,19 +12,20 @@ Author: Sheets2Anki Team
 
 import json
 
-from aqt import mw
-from aqt.qt import QCheckBox
-from aqt.qt import QDialog
-from aqt.qt import QFrame
-from aqt.qt import QHBoxLayout
-from aqt.qt import QLabel
-from aqt.qt import QLineEdit
-from aqt.qt import QPushButton
-from aqt.qt import QTextEdit
-from aqt.qt import QVBoxLayout
-from aqt.qt import QWidget
-
 from ..compat import DialogAccepted
+from ..compat import QApplication
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QLineEdit
+from ..compat import QPushButton
+from ..compat import QScrollArea
+from ..compat import QTextEdit
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_image_processor_config
 from ..config_manager import set_image_processor_config
@@ -103,8 +104,6 @@ class ImageProcessorConfigDialog(QDialog):
         main_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create scroll area for content
-        from aqt.qt import QScrollArea
-
         from ..compat import ScrollBarAlwaysOff
 
         scroll_area = QScrollArea()
@@ -504,8 +503,6 @@ class ImageProcessorConfigDialog(QDialog):
 
     def _copy_script_to_clipboard(self):
         """Copies the Google Apps Script content to the clipboard."""
-        from aqt.qt import QApplication
-
         from ..image_processor_script import APPS_SCRIPT_CONTENT
 
         clipboard = QApplication.clipboard()
