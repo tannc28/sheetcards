@@ -59,27 +59,6 @@ def _is_default_config(config, config_type="default"):
         return False
 
 
-def _should_update_config_version(config):
-    """
-    Checks if the configuration needs to be updated for a new version of the addon.
-    This function can be used in the future to apply configuration updates
-    without overwriting user customizations.
-
-    Args:
-        config (dict): Deck configuration
-
-    Returns:
-        bool: True if it needs to update to a new version
-    """
-    # For future versions, we can add logic here to detect
-    # old configurations that need to be updated
-    config_version = config.get("sheets2anki_version", "1.0.0")
-    addon_version = "1.0.0"  # This would be obtained from manifest.json
-
-    # For now, always returns False to not force updates
-    return False
-
-
 def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
     """
     Gets or creates the options group based on the configured mode and deck-specific configuration.

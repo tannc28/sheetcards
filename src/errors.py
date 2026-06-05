@@ -23,8 +23,3 @@ class ConfigurationError(Exception):
     """Exception raised for configuration-related issues."""
 
     pass
-
-
-# =============================================================================
-# SUBDECK FUNCTIONS (moved to avoid circular import)
-# =============================================================================

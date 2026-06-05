@@ -248,42 +248,6 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
     return "".join(html_parts)
 
 
-def generate_aggregated_summary_only(total_stats, sync_errors=None) -> str:
-    """
-    Generates only aggregated summary HTML.
-    """
-    html_parts = []
-
-    # Errors
-    all_errors = (sync_errors or []) + total_stats.error_details
-    if all_errors:
-        html_parts.append(
-            _generate_details_list_html(
-                f"⚠️ General Errors ({len(all_errors)})", all_errors
-            )
-        )
-
-    # Warnings
-    if total_stats.warnings:
-        html_parts.append(
-            _generate_details_list_html(
-                f"⚠️ Warnings ({len(total_stats.warnings)})", total_stats.warnings
-            )
-        )
-
-    # Metrics
-    if (
-        total_stats.remote_total_table_lines > 0
-        or total_stats.remote_total_potential_anki_notes > 0
-    ):
-        html_parts.append(
-            '<div class="section-header"><h2>📊 Aggregated Remote Metrics Totals</h2></div>'
-        )
-        html_parts.append(_generate_metrics_table_html(total_stats))
-
-    return "".join(html_parts)
-
-
 def generate_deck_detailed_metrics(stats, deck_name) -> str:
     """
     Generates complete detailed metrics HTML for an individual deck.

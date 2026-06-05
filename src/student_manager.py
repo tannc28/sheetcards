@@ -12,8 +12,6 @@ Main features:
 - Removal of notes for unselected students
 """
 
-import re
-
 from . import templates_and_definitions as cols
 from .compat import ButtonBox_Cancel
 from .compat import ButtonBox_Ok
@@ -34,7 +32,6 @@ from .compat import mw
 from .compat import safe_exec_dialog
 from .config_manager import get_enabled_students
 from .config_manager import get_meta
-from .config_manager import is_student_filter_active
 from .config_manager import save_meta
 from .styled_messages import StyledMessageBox
 from .templates_and_definitions import DEFAULT_STUDENT
@@ -44,43 +41,6 @@ from .utils import add_debug_message
 def add_debug_msg(message, category="STUDENT_MANAGER"):
     """Local helper for debug messages."""
     add_debug_message(message, category)
-
-
-def get_students_to_sync(all_students: set[str]) -> set[str]:
-    """
-    Gets the students that should be synchronized based on the global configuration.
-    NEW VERSION: Uses consistent name normalization.
-
-    Args:
-        all_students (Set[str]): All students found in the spreadsheet (already normalized)
-
-    Returns:
-        Set[str]: Students that should be synchronized (normalized names)
-    """
-    # Check if the filter is active (based on the list of enabled students)
-    if not is_student_filter_active():
-        # Filter inactive - sync all (already normalized)
-        return all_students
-
-    # Get globally enabled students (case-sensitive)
-    enabled_students_raw = get_enabled_students()
-    enabled_students_set = {
-        student for student in enabled_students_raw if student and student.strip()
-    }
-
-    # If no students are configured, sync none
-    if not enabled_students_set:
-        return set()
-
-    # Case-sensitive intersection
-    matched_students = all_students.intersection(enabled_students_set)
-
-    add_debug_msg("🔍 SYNC: Student filter applied:")
-    add_debug_msg(f"  • Students in spreadsheet: {sorted(all_students)}")
-    add_debug_msg(f"  • Enabled students: {sorted(enabled_students_set)}")
-    add_debug_msg(f"  • Students for sync: {sorted(matched_students)}")
-
-    return matched_students
 
 
 class StudentSelectionDialog(QDialog):
@@ -232,7 +192,6 @@ def get_selected_students_for_deck(deck_url: str) -> set[str]:
         Set[str]: Set of selected students for this deck (including [MISSING S.] if applicable)
     """
     from .config_manager import get_deck_id
-    from .config_manager import get_enabled_students
     from .config_manager import is_sync_missing_students_notes
 
     meta = get_meta()
@@ -322,221 +281,6 @@ def show_student_selection_dialog(
         return selected
 
     return None
-
-
-def filter_questions_by_selected_students(
-    questions: list[dict], selected_students: set[str]
-) -> list[dict]:
-    """
-    Filters questions based on selected students.
-    NEW VERSION: Uses consistent name normalization.
-
-    NEW: If sync_missing_students_notes is activated, includes questions with empty STUDENTS
-    for synchronization into the [MISSING S.] deck
-
-    Args:
-        questions: List of questions from remote deck
-        selected_students: Set of selected students (already normalized)
-
-    Returns:
-        List[Dict]: Filtered list of questions
-    """
-    if not selected_students:
-        return []
-
-    # Check if notes without specific students should be included
-    from .config_manager import is_sync_missing_students_notes
-
-    include_missing_students = is_sync_missing_students_notes()
-
-    filtered_questions = []
-
-    add_debug_msg("🔍 FILTER: Starting question filtering...")
-    add_debug_msg(f"  • Total questions: {len(questions)}")
-    add_debug_msg(f"  • Selected students (norm): {sorted(selected_students)}")
-    add_debug_msg(f"  • Include [MISSING S.]: {include_missing_students}")
-
-    for i, question in enumerate(questions):
-        fields = question.get("fields", {})
-        students_field = fields.get(cols.students, "").strip()
-
-        if not students_field:
-            # NEW: If [MISSING STUDENTS] feature is active, include note
-            if include_missing_students:
-                filtered_questions.append(question)
-                add_debug_msg(
-                    f"  📝 Question {i+1}: NO student → included ([MISSING STUDENTS] active)"
-                )
-            else:
-                add_debug_msg(
-                    f"  ❌ Question {i+1}: NO student → ignored ([MISSING STUDENTS] inactive)"
-                )
-            continue
-
-        # Check if any of the selected students are in the question's student list
-        question_students = set()
-        students_list = re.split(r"[,;|]", students_field)
-        for student in students_list:
-            student = student.strip()
-            if student:
-                # Add student name (case-sensitive)
-                question_students.add(student)
-
-        # DEBUG: Show comparison
-        add_debug_msg(
-            f"  📝 Question {i+1}: '{students_field}' → {sorted(question_students)}"
-        )
-
-        # If there is intersection between question students and selected students (case-sensitive)
-        intersection = question_students.intersection(selected_students)
-        if intersection:
-            filtered_questions.append(question)
-            add_debug_msg(
-                f"  ✅ Question {i+1}: INCLUDED (match: {sorted(intersection)})"
-            )
-        else:
-            add_debug_msg(f"  ❌ Question {i+1}: IGNORED (no match)")
-
-    add_debug_msg(
-        f"🎯 FILTER: {len(filtered_questions)}/{len(questions)} questions selected"
-    )
-    return filtered_questions
-
-
-def get_student_subdeck_name(main_deck_name: str, student: str, fields: dict) -> str:
-    """
-    Generates subdeck name for a specific student.
-
-    Structure will be: "root deck::remote deck::student::importance::topic::subtopic::concept"
-
-    Args:
-        main_deck_name: Main deck name
-        student: Student name
-        fields: Note fields with IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT
-
-    Returns:
-        str: Full student subdeck name
-    """
-    from .templates_and_definitions import DEFAULT_CONCEPT
-    from .templates_and_definitions import DEFAULT_IMPORTANCE
-    from .templates_and_definitions import DEFAULT_SUBTOPIC
-    from .templates_and_definitions import DEFAULT_TOPIC
-
-    # Get field values, using default values if empty
-    importance = fields.get(cols.hierarchy_1, "").strip() or DEFAULT_IMPORTANCE
-    topic = fields.get(cols.hierarchy_2, "").strip() or DEFAULT_TOPIC
-    subtopic = fields.get(cols.hierarchy_3, "").strip() or DEFAULT_SUBTOPIC
-    concept = fields.get(cols.hierarchy_4, "").strip() or DEFAULT_CONCEPT
-
-    # Create full hierarchy including the student
-    return f"{main_deck_name}::{student}::{importance}::{topic}::{subtopic}::{concept}"
-
-
-def get_missing_students_subdeck_name(main_deck_name: str, fields: dict) -> str:
-    """
-    Generates subdeck name for notes without specific students ([MISSING STUDENTS]).
-
-    Structure will be: "root deck::remote deck::[MISSING STUDENTS]::importance::topic::subtopic::concept"
-
-    Args:
-        main_deck_name: Main deck name
-        fields: Note fields with IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT
-
-    Returns:
-        str: Full [MISSING S.] subdeck name
-    """
-    from .templates_and_definitions import DEFAULT_CONCEPT
-    from .templates_and_definitions import DEFAULT_IMPORTANCE
-    from .templates_and_definitions import DEFAULT_SUBTOPIC
-    from .templates_and_definitions import DEFAULT_TOPIC
-
-    # Get field values, using default values if empty
-    importance = fields.get(cols.hierarchy_1, "").strip() or DEFAULT_IMPORTANCE
-    topic = fields.get(cols.hierarchy_2, "").strip() or DEFAULT_TOPIC
-    subtopic = fields.get(cols.hierarchy_3, "").strip() or DEFAULT_SUBTOPIC
-    concept = fields.get(cols.hierarchy_4, "").strip() or DEFAULT_CONCEPT
-
-    # Create full hierarchy with [MISSING STUDENTS] as "student"
-    return f"{main_deck_name}::{DEFAULT_STUDENT}::{importance}::{topic}::{subtopic}::{concept}"
-
-
-def get_students_from_question(fields: dict) -> set[str]:
-    """
-    Extracts all students from a specific question.
-
-    Args:
-        fields: Question fields
-
-    Returns:
-        Set[str]: Set of students for this question
-    """
-    students = set()
-    students_field = fields.get(cols.students, "").strip()
-
-    if students_field:
-        students_list = re.split(r"[,;|]", students_field)
-        for student in students_list:
-            student = student.strip()
-            if student:
-                students.add(student)
-
-    return students
-
-
-def remove_notes_for_unselected_students(
-    col,
-    main_deck_name: str,
-    selected_students: set[str],
-    all_students_in_sheet: set[str],
-) -> int:
-    """
-    Removes notes for students that are no longer selected.
-
-    Args:
-        col: Anki collection
-        main_deck_name: Main deck name
-        selected_students: Selected students
-        all_students_in_sheet: All students present in the spreadsheet
-
-    Returns:
-        int: Number of removed notes
-    """
-    removed_count = 0
-
-    if not mw or not hasattr(mw, "col") or not mw.col:
-        return removed_count
-
-    # Find students who should have their notes removed
-    unselected_students = all_students_in_sheet - selected_students
-
-    if not unselected_students:
-        return removed_count
-
-    # For each unselected student, find and remove their notes
-    for student in unselected_students:
-        # Search for student subdecks
-        student_deck_pattern = f"{main_deck_name}::{student}::"
-
-        # Find all decks that start with this pattern
-        all_decks = mw.col.decks.all_names_and_ids()
-        student_decks = [
-            d for d in all_decks if d.name.startswith(student_deck_pattern)
-        ]
-
-        for deck in student_decks:
-            # Find all notes in this deck
-            note_ids = mw.col.find_notes(f'deck:"{deck.name}"')
-
-            for note_id in note_ids:
-                try:
-                    mw.col.remove_notes([note_id])
-                    removed_count += 1
-                except Exception as e:
-                    add_debug_msg(
-                        f"Error removing note {note_id} from deck {deck.name}: {e}"
-                    )
-
-    return removed_count
 
 
 def _convert_to_tsv_export_url(url: str) -> str:
@@ -902,7 +646,7 @@ def _remove_student_note_types(student: str, deck_names: list[str]) -> int:
 
             # METHOD 2: Check general pattern for orphaned note types (robust fallback)
             if not should_remove and note_type_name.startswith("Sheets2Anki - "):
-                # General format: "Sheets2Anki - {any_deck} - {student} - {Basic|Cloze}"
+                # General format: "Sheets2Anki - {any_deck} - {student} - {Basic|Cloze|Reverse}"
                 # IMPORTANT: deck_name may contain " - ", so parse from the END
                 parts = note_type_name.split(" - ")
                 if len(parts) >= 4:

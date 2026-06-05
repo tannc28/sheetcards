@@ -138,15 +138,6 @@ class DebugManager:
         addon_path = os.path.dirname(os.path.dirname(__file__))
         return os.path.join(addon_path, "debug_sheets2anki.log")
 
-    def get_recent_messages(self, count: int = 10) -> list[str]:
-        """
-        Returns the most recent messages.
-
-        Args:
-            count: Number of recent messages to return
-        """
-        return self.messages[-count:] if self.messages else []
-
 
 # Global instance of the debug manager
 debug_manager = DebugManager()
@@ -209,16 +200,3 @@ def clear_debug_log():
     except Exception as e:
         # We don't use add_debug_message here to avoid potential infinite recursion
         print(f"[DEBUG] Error clearing log: {e}")
-
-
-# =============================================================================
-# SHARED DECK OPTIONS MANAGEMENT
-# =============================================================================
-
-
-# Removed obsolete debug_log function as it is redundant with DebugManager
-
-
-# ========================================================================================
-# VALIDATION FUNCTIONS (consolidated from validation.py)
-# ========================================================================================

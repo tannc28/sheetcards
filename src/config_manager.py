@@ -346,62 +346,6 @@ def add_remote_deck_simple(
     add_remote_deck(url, deck_info)
 
 
-def ensure_deck_consistency():
-    """
-    Ensures that all decks have all required fields.
-    Fixes inconsistencies in existing decks.
-    """
-    import time
-
-    meta = get_meta()
-    decks = meta.get("decks", {})
-    modified = False
-
-    required_fields = {
-        "remote_deck_url": None,
-        "local_deck_id": None,
-        "local_deck_name": None,
-        "remote_deck_name": None,
-        "note_types": {},
-        "is_test_deck": False,
-        "is_sync": True,
-        "local_deck_configurations_package_name": None,
-        "created_at": int(time.time()),
-        "last_sync": None,  # null = never synchronized
-        "first_sync": None,  # First synchronization timestamp
-        "sync_count": 0,  # Synchronization counter
-    }
-
-    for spreadsheet_id, deck_info in decks.items():
-        for field, default_value in required_fields.items():
-            if field not in deck_info:
-                if field == "created_at":
-                    # For created_at, use timestamp based on local_deck_id if available
-                    # or current timestamp as fallback
-                    deck_info[field] = deck_info.get("local_deck_id", int(time.time()))
-                elif field in ["last_sync", "first_sync"]:
-                    # Synchronization fields always start as None for existing decks
-                    # that didn't have these fields (consider them as already synced)
-                    deck_info[field] = None
-                elif field == "sync_count":
-                    # For existing decks without sync_count, assume they were already synced
-                    deck_info[field] = 1
-                else:
-                    deck_info[field] = default_value
-                modified = True
-                add_debug_msg(
-                    f"[CONSISTENCY] Added field '{field}' to deck {spreadsheet_id}"
-                )
-
-    if modified:
-        save_meta(meta)
-        add_debug_msg(f"[CONSISTENCY] {len(decks)} decks fixed to ensure consistency")
-    else:
-        add_debug_msg("[CONSISTENCY] All decks are already consistent")
-
-    return modified
-
-
 def update_deck_sync_status(deck_url, success=True):
     """
     Updates synchronization fields for a deck after a sync.
@@ -454,26 +398,6 @@ def update_deck_sync_status(deck_url, success=True):
         add_debug_msg(f"[SYNC_STATUS] Deck {deck_hash} synced (new: {was_new_deck})")
 
     return was_new_deck
-
-
-def is_deck_new(deck_url):
-    """
-    Checks if a deck is new (has never been synchronized).
-
-    Args:
-        deck_url (str): Deck URL
-
-    Returns:
-        bool: True if the deck has never been synchronized, False otherwise
-    """
-    meta = get_meta()
-    decks = meta.get("decks", {})
-
-    for deck_info in decks.values():
-        if deck_info.get("remote_deck_url") == deck_url:
-            return deck_info.get("last_sync") is None
-
-    return False
 
 
 def get_deck_local_name(url):
@@ -589,39 +513,6 @@ def get_active_decks():
     """
     meta = get_meta()
     return meta.get("decks", {})
-
-
-def is_local_deck_missing(url):
-    """
-    Checks if the corresponding local deck for a remote deck was deleted.
-
-    Args:
-        url (str): Remote deck URL
-
-    Returns:
-        bool: True if remote deck exists but local deck doesn't
-    """
-    meta = get_meta()
-    remote_decks = meta.get("decks", {})
-
-    if url not in remote_decks:
-        return False  # Remote deck doesn't exist
-
-    deck_info = remote_decks[url]
-    deck_id = deck_info.get("deck_id")
-
-    if not deck_id:
-        return True  # Remote deck has no local ID
-
-    try:
-        # Check if local deck exists in Anki
-        if mw.col and mw.col.decks:
-            deck = mw.col.decks.get(deck_id)
-            return deck is None
-        else:
-            return True  # Collection or decks not available
-    except Exception:
-        return True  # Error accessing deck = deck doesn't exist
 
 
 # =============================================================================
@@ -1181,70 +1072,6 @@ def remove_student_from_sync_history(student_name):
         add_debug_msg(f"ℹ️ HISTORY: Student '{student_name}' not found in history")
 
 
-def cleanup_orphaned_sync_history():
-    """
-    Removes sync history entries that no longer correspond
-    to real data in Anki (maintenance cleanup).
-
-    Returns:
-        int: Number of entries removed
-    """
-    if not mw or not hasattr(mw, "col") or not mw.col:
-        return 0
-
-    sync_history = get_student_sync_history()
-    if not sync_history:
-        return 0
-
-    orphaned_students = []
-    col = mw.col
-
-    # Check each student in history
-    for student in sync_history.keys():
-        # Search for notes that have ID starting with this student
-        student_notes = []
-        try:
-            # Approximate search for notes that might belong to student
-            all_notes = col.find_notes("*")[
-                :2000
-            ]  # Limit search for performance - use wildcard
-
-            for note_id in all_notes:
-                try:
-                    note = col.get_note(note_id)
-                    if "ID" in note.keys():
-                        unique_id = note["ID"].strip()
-                        if unique_id.startswith(f"{student}_"):
-                            student_notes.append(note_id)
-                            break  # Found at least one note, student still exists
-                except Exception:
-                    continue
-
-            # If no note found, mark as orphan
-            if not student_notes:
-                orphaned_students.append(student)
-
-        except Exception as e:
-            add_debug_msg(f"⚠️ HISTORY: Error checking student '{student}': {e}")
-            continue
-
-    # Remove orphans
-    if orphaned_students:
-        meta = get_meta()
-        sync_history = meta.get("students", {}).get("sync_history", {})
-
-        for student in orphaned_students:
-            if student in sync_history:
-                del sync_history[student]
-
-        save_meta(meta)
-        add_debug_msg(
-            f"Sweep HISTORY: Removed {len(orphaned_students)} orphaned entries: {orphaned_students}"
-        )
-
-    return len(orphaned_students)
-
-
 def discover_all_students_from_remote_decks():
     """
     Discovers all unique students from all configured remote decks.
@@ -1553,122 +1380,6 @@ def cleanup_invalid_note_type_ids():
     except Exception as e:
         add_debug_msg(f"[NOTE_TYPE_IDS] Error during cleanup of invalid IDs: {e}")
         return 0
-
-
-def get_all_deck_note_types():
-    """
-    Gets all note types from all decks.
-
-    Returns:
-        dict: {spreadsheet_id: {note_type_id: expected_name}} dictionary
-    """
-    try:
-        meta = get_meta()
-
-        result = {}
-        for spreadsheet_id, deck_info in meta.get("decks", {}).items():
-            result[spreadsheet_id] = deck_info.get("note_types", {})
-
-        return result
-
-    except Exception as e:
-        add_debug_msg(f"[NOTE_TYPE_IDS] Error getting all note types: {e}")
-        return {}
-
-
-def update_note_type_names_if_needed():
-    """
-    Updates note type names in Anki if there are discrepancies with expected names.
-
-    Returns:
-        int: Number of renamed note types
-    """
-    from .compat import mw
-
-    if not mw or not mw.col:
-        return 0
-
-    try:
-        meta = get_meta()
-
-        renamed_count = 0
-
-        for deck_hash, deck_info in meta.get("decks", {}).items():
-            note_types = deck_info.get("note_types", {})
-
-            for note_type_id, expected_name in note_types.items():
-                try:
-                    note_type_id_int = int(note_type_id)
-                    # Find model using more robust method
-                    model = None
-                    for m in mw.col.models.all():
-                        if m["id"] == note_type_id_int:
-                            model = m
-                            break
-
-                    if model and model.get("name") != expected_name:
-                        # Name diverges - update in Anki
-                        old_name = model["name"]
-                        model["name"] = expected_name
-                        mw.col.models.update(model)
-                        renamed_count += 1
-                        add_debug_msg(
-                            f"[Sheets2Anki] Note type renamed: '{old_name}' -> '{expected_name}'"
-                        )
-
-                except (ValueError, TypeError) as e:
-                    add_debug_msg(
-                        f"[WARNING] Error processing note type ID {note_type_id}: {e}"
-                    )
-                    continue
-
-        return renamed_count
-
-    except Exception as e:
-        add_debug_msg(f"[NOTE_TYPE_IDS] Error updating note type names: {e}")
-        return 0
-
-
-def get_deck_note_types_by_ids(deck_url):
-    """
-    Gets Anki note type objects based on saved IDs for a deck.
-
-    Args:
-        deck_url (str): Remote deck URL
-
-    Returns:
-        list: List of Anki note type dictionaries
-    """
-    from .compat import mw
-
-    if not mw or not mw.col:
-        return []
-
-    try:
-        note_types_dict = get_deck_note_type_ids(deck_url)
-        note_types = []
-
-        for note_type_id_str in note_types_dict.keys():
-            try:
-                note_type_id_int = int(note_type_id_str)
-                # Search using more robust method
-                for model in mw.col.models.all():
-                    if model["id"] == note_type_id_int:
-                        note_types.append(model)
-                        break
-                else:
-                    add_debug_msg(
-                        f"[NOTE_TYPE_IDS] Note type with ID {note_type_id_int} not found"
-                    )
-            except ValueError:
-                add_debug_msg(f"[NOTE_TYPE_IDS] Invalid ID: {note_type_id_str}")
-                continue
-
-        return note_types
-
-    except Exception as e:
-        add_debug_msg(f"[NOTE_TYPE_IDS] Error getting note types by ID: {e}")
-        return []
 
 
 def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=None):
@@ -2019,107 +1730,9 @@ def set_ankiweb_sync_config(mode):
         meta["config"] = {}
 
     meta["config"]["ankiweb_sync_mode"] = mode
-    # Timeout setting removed
-    # Notification setting removed (always enabled)
 
     save_meta(meta)
     add_debug_msg(f"[ANKIWEB_CONFIG] Updated: mode={mode}")
-
-
-def fix_note_type_names_consistency(url, correct_remote_name):
-    """
-    Fixes inconsistencies in note_type names.
-
-    This function detects and fixes note_types that have names inconsistent
-    with the current remote_deck_name, such as duplications or incorrect suffixes.
-
-    Args:
-        url (str): Remote deck URL
-        correct_remote_name (str): Correct remote name to be used
-
-    Returns:
-        int: Number of fixed note_types
-    """
-    try:
-        from .utils import get_note_type_name
-
-        meta = get_meta()
-        spreadsheet_id = get_deck_id(url)
-
-        if "decks" not in meta or spreadsheet_id not in meta["decks"]:
-            return 0
-
-        deck_info = meta["decks"][spreadsheet_id]
-        note_types = deck_info.get("note_types", {})
-
-        if not note_types:
-            return 0
-
-        def fix_note_type_name(old_name):
-            """Fixes an inconsistent note_type name."""
-            if not old_name.startswith("Sheets2Anki - "):
-                return old_name  # Not a system note_type
-
-            parts = old_name.split(" - ")
-            if len(parts) < 3:
-                return old_name  # Unrecognized format
-
-            # Extract information from old name
-            # IMPORTANT: deck_name may contain " - ", so parse from the END
-            if len(parts) >= 4:  # Format: "Sheets2Anki - remote_name - student - type"
-                # Last part is the type (Basic/Cloze)
-                note_type = parts[-1].strip()
-                # Second-to-last part is the student name
-                student = parts[-2].strip()
-                is_cloze = note_type == "Cloze"
-                is_reverse = note_type == "Reverse"
-
-                return get_note_type_name(
-                    url,
-                    correct_remote_name,
-                    student=student,
-                    is_cloze=is_cloze,
-                    is_reverse=is_reverse,
-                )
-
-            elif len(parts) == 3:  # Format: "Sheets2Anki - remote_name - type"
-                note_type = parts[-1].strip()
-                is_cloze = note_type == "Cloze"
-                is_reverse = note_type == "Reverse"
-
-                return get_note_type_name(
-                    url,
-                    correct_remote_name,
-                    student=None,
-                    is_cloze=is_cloze,
-                    is_reverse=is_reverse,
-                )
-
-            return old_name  # Could not fix
-
-        fixed_count = 0
-
-        # Check and fix each note_type
-        for note_type_id, old_name in note_types.items():
-            corrected_name = fix_note_type_name(old_name)
-
-            if corrected_name != old_name:
-                note_types[note_type_id] = corrected_name
-                fixed_count += 1
-                add_debug_msg(
-                    f"[NOTE_TYPE_FIX] ✅ Fixed {note_type_id}: '{old_name}' -> '{corrected_name}'"
-                )
-
-        # Save changes if there were fixes
-        if fixed_count > 0:
-            save_meta(meta)
-            add_debug_msg(f"[NOTE_TYPE_FIX] {fixed_count} note_types fixed and saved")
-
-        return fixed_count
-
-    except Exception as e:
-        add_debug_msg(f"[NOTE_TYPE_FIX] Error in consistency fix: {e}")
-        return 0
 
 
 def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
@@ -2294,56 +1907,6 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
 
         add_debug_msg(f"[NOTE_TYPE_SYNC] Traceback: {traceback.format_exc()}")
         return {"updated_count": 0, "renamed_in_anki": 0, "updated_in_meta": 0}
-
-
-def fix_missing_created_at_fields():
-    """
-    Fixes decks that do not have 'created_at' key by adding a default timestamp.
-    This function is useful for fixing inconsistencies in existing configurations.
-
-    Returns:
-        dict: Report with the number of fixed decks
-    """
-    import time
-
-    try:
-        remote_decks = get_remote_decks()
-        corrected_count = 0
-
-        # Default timestamp for decks that do not have created_at
-        # Use a timestamp that indicates it's a later fix
-        default_timestamp = int(time.time())
-
-        for deck_hash, deck_info in remote_decks.items():
-            if "created_at" not in deck_info:
-                deck_info["created_at"] = default_timestamp
-                corrected_count += 1
-                add_debug_msg(
-                    f"[CONFIG_FIX] Added 'created_at' for deck: {deck_info.get('remote_deck_name', 'Name not defined')}"
-                )
-
-        if corrected_count > 0:
-            save_remote_decks(remote_decks)
-            add_debug_msg(
-                f"[CONFIG_FIX] ✅ Fixed {corrected_count} decks without 'created_at'"
-            )
-        else:
-            add_debug_msg("[CONFIG_FIX] ✅ All decks already have 'created_at'")
-
-        return {
-            "corrected_count": corrected_count,
-            "total_decks": len(remote_decks),
-            "success": True,
-        }
-
-    except Exception as e:
-        add_debug_msg(f"[CONFIG_FIX] ❌ Error fixing 'created_at': {e}")
-        return {
-            "corrected_count": 0,
-            "total_decks": 0,
-            "success": False,
-            "error": str(e),
-        }
 
 
 # =============================================================================
@@ -2656,33 +2219,6 @@ def set_ai_assistance_api_key(api_key):
         api_key (str): API key
     """
     set_ai_assistance_config(api_key=api_key)
-
-
-def get_ai_help_prompt():
-    """
-    Gets the custom prompt template.
-
-    Returns:
-        str: Prompt template
-    """
-    return get_ai_assistance_config().get("prompt", DEFAULT_AI_HELP_PROMPT)
-
-
-def set_ai_help_prompt(prompt):
-    """
-    Sets the custom prompt template.
-
-    Args:
-        prompt (str): Prompt template
-    """
-    set_ai_assistance_config(prompt=prompt)
-
-
-def reset_ai_help_prompt():
-    """
-    Resets the prompt template to the default.
-    """
-    set_ai_assistance_config(prompt=DEFAULT_AI_HELP_PROMPT)
 
 
 # =============================================================================

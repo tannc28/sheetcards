@@ -43,7 +43,7 @@ _executor = ThreadPoolExecutor(max_workers=2)
 # Ensure threads are cleaned up when Anki closes (wait=False avoids blocking shutdown)
 atexit.register(_executor.shutdown, wait=False)
 
-# Pricing per 1M tokens (as of Jan 2024, approximate)
+# Pricing per 1M tokens (approximate; update when providers change rates)
 # Format: {model_prefix: (input_cost_per_1m, output_cost_per_1m)}
 PRICING = {
     # Gemini pricing

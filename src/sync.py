@@ -41,7 +41,6 @@ from .sync_report import _generate_details_list_html  # noqa: F401
 
 # --- Re-exported from sync_report (split out of this file) ---
 from .sync_report import _generate_metrics_table_html  # noqa: F401
-from .sync_report import generate_aggregated_summary_only  # noqa: F401
 from .sync_report import generate_deck_detailed_metrics  # noqa: F401
 from .sync_report import generate_detailed_html_view  # noqa: F401
 from .sync_report import generate_errors_view  # noqa: F401
@@ -94,8 +93,6 @@ class SyncStats:
 
     # 10. Total ghost rows (ignored)
     remote_ignored_ghost_rows: int = 0
-
-    # 4. Total lines marked for sync (SYNC = true)
 
     # 4. Total lines marked for sync (SYNC = true)
     remote_sync_marked_lines: int = 0
@@ -534,9 +531,6 @@ def _show_sync_summary_with_scroll(
 
     # Determine overall status
     has_errors = (sync_errors and len(sync_errors) > 0) or total_stats.errors > 0
-    has_changes = (
-        total_stats.created > 0 or total_stats.updated > 0 or total_stats.deleted > 0
-    )
 
     # Apply general dialog style
     dialog.setStyleSheet(f"""
@@ -850,10 +844,6 @@ def _show_sync_summary_with_scroll(
                 total_stats, sync_errors, deck_results
             )
         elif detailed_radio.isChecked():
-            # Use generate_detailed_html_view instead of generate_detailed_view if available,
-            # OR assume I renamed it. I defined generate_detailed_html_view in step 49.
-            # I should update the call here to use the new name or alias it.
-            # In the previous step, I defined `generate_detailed_html_view`.
             details_content = generate_detailed_html_view(
                 total_stats, sync_errors, deck_results
             )
@@ -990,57 +980,6 @@ def _show_sync_summary_with_scroll(
 # ========================================================================================
 # INTERFACE UPDATE FUNCTIONS (consolidated from interface_updater.py)
 # ========================================================================================
-
-
-def refresh_anki_interface():
-    """
-    Updates the Anki interface after synchronization.
-
-    Updates:
-    - Deck list on main screen
-    - Card counters
-    - Reviewer interface if active
-    - Browser if open
-    """
-    if not mw:
-        add_debug_message("❌ MainWindow not available for update", "INTERFACE_UPDATE")
-        return
-
-    try:
-        add_debug_message("🔄 Starting Anki interface update", "INTERFACE_UPDATE")
-
-        # 1. Update deck list on main screen
-        if hasattr(mw, "deckBrowser") and mw.deckBrowser:
-            add_debug_message("📂 Updating deck list", "INTERFACE_UPDATE")
-            mw.deckBrowser.refresh()
-
-        # 2. Update reviewer if active
-        if hasattr(mw, "reviewer") and mw.reviewer and mw.state == "review":
-            add_debug_message("📝 Updating reviewer", "INTERFACE_UPDATE")
-            # Force recalculation of card count
-            if hasattr(mw.reviewer, "_updateCounts"):
-                mw.reviewer._updateCounts()
-
-        # 3. Update browser if open
-        if hasattr(mw, "browser") and mw.browser:
-            add_debug_message("🔍 Updating browser", "INTERFACE_UPDATE")
-            mw.browser.model.reset()
-            mw.browser.form.tableView.selectRow(0)
-
-        # 4. Update title bar and general interface
-        if hasattr(mw, "setWindowTitle") and mw.col:
-            # Keep original title but force internal recalculation
-            mw.col.reset()
-
-        # 5. General interface reset trigger
-        if hasattr(mw, "reset"):
-            add_debug_message("🔄 Running general interface reset", "INTERFACE_UPDATE")
-            mw.reset()
-
-        add_debug_message("✅ Anki interface updated successfully", "INTERFACE_UPDATE")
-
-    except Exception as e:
-        add_debug_message(f"❌ Error updating interface: {e}", "INTERFACE_UPDATE")
 
 
 def refresh_deck_list():
@@ -2638,147 +2577,6 @@ def _handle_unexpected_error(
     progress.setValue(step)
     mw.app.processEvents()
     return step, sync_errors
-
-
-def _show_debug_messages_window(debug_messages):
-    """
-    Shows a scrollable window with all debug messages.
-    Adapted for Anki dark and light modes.
-
-    Args:
-        debug_messages: List of debug messages to display
-    """
-    from aqt.qt import QDialog
-    from aqt.qt import QLabel
-    from aqt.qt import QPushButton
-    from aqt.qt import QTextEdit
-    from aqt.qt import QVBoxLayout
-
-    dialog = QDialog(mw)
-    dialog.setWindowTitle(
-        f"Debug Messages - Note Type IDs System ({len(debug_messages)} messages)"
-    )
-    dialog.setFixedSize(800, 600)
-
-    layout = QVBoxLayout(dialog)
-
-    # Detect dark mode using a more direct method
-    is_dark_mode = False
-    if hasattr(mw, "pm") and hasattr(mw.pm, "night_mode"):
-        is_dark_mode = mw.pm.night_mode()
-
-    # Define theme-based colors
-    if is_dark_mode:
-        # Dark mode colors - high contrast
-        bg_color = "#1e1e1e"  # Very dark background
-        text_color = "#f0f0f0"  # Very light text
-        border_color = "#555555"  # Medium border
-        info_bg_color = "#2d2d2d"  # Slightly lighter info background
-        scroll_bg = "#3d3d3d"  # Scrollbar background
-        scroll_handle = "#707070"  # Scrollbar handle
-        scroll_hover = "#909090"  # Handle hover
-        button_bg = "#4a4a4a"  # Button background
-        button_hover = "#5a5a5a"  # Button hover
-    else:
-        # Light mode colors - traditional
-        bg_color = "#ffffff"
-        text_color = "#000000"
-        border_color = "#cccccc"
-        info_bg_color = "#f8f8f8"
-        scroll_bg = "#f0f0f0"
-        scroll_handle = "#c0c0c0"
-        scroll_hover = "#a0a0a0"
-        button_bg = "#f0f0f0"
-        button_hover = "#e0e0e0"
-
-    # Add informative label
-    info_label = QLabel(
-        f"📋 Total of {len(debug_messages)} debug messages captured during synchronization:"
-    )
-    info_label.setStyleSheet(f"""
-        QLabel {{
-            font-weight: bold; 
-            margin-bottom: 5px;
-            color: {text_color};
-            background-color: {info_bg_color};
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid {border_color};
-        }}
-    """)
-    layout.addWidget(info_label)
-
-    # Create scrollable text area with high-contrast colors
-    text_area = QTextEdit()
-    text_area.setReadOnly(True)
-    text_area.setPlainText("\n".join(debug_messages))
-    text_area.setStyleSheet(f"""
-        QTextEdit {{
-            font-family: 'Courier New', 'Monaco', 'Consolas', 'Liberation Mono', monospace;
-            font-size: 12pt;
-            background-color: {bg_color};
-            color: {text_color};
-            border: 2px solid {border_color};
-            line-height: 1.4;
-            padding: 10px;
-            selection-background-color: {"#4a4a4a" if is_dark_mode else "#3390ff"};
-            selection-color: {text_color};
-        }}
-        QScrollBar:vertical {{
-            background-color: {scroll_bg};
-            width: 14px;
-            border: 1px solid {border_color};
-        }}
-        QScrollBar::handle:vertical {{
-            background-color: {scroll_handle};
-            border-radius: 6px;
-            margin: 2px;
-        }}
-        QScrollBar::handle:vertical:hover {{
-            background-color: {scroll_hover};
-        }}
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-            background: none;
-            border: none;
-        }}
-    """)
-
-    layout.addWidget(text_area)
-
-    # Close button with appropriate style
-    close_button = QPushButton("Close")
-    close_button.clicked.connect(dialog.accept)
-    close_button.setDefault(True)
-    close_button.setStyleSheet(f"""
-        QPushButton {{
-            background-color: {button_bg};
-            color: {text_color};
-            border: 1px solid {border_color};
-            padding: 10px 20px;
-            border-radius: 6px;
-          font-weight: bold;
-            min-width: 80px;
-        }}
-        QPushButton:hover {{
-            background-color: {button_hover};
-        }}
-        QPushButton:pressed {{
-            background-color: {border_color};
-        }}
-    """)
-    layout.addWidget(close_button)
-
-    # Apply general style to dialog
-    dialog.setStyleSheet(f"""
-        QDialog {{
-            background-color: {info_bg_color};
-            color: {text_color};
-        }}
-    """)
-
-    from .compat import safe_exec_dialog
-
-    safe_exec_dialog(dialog)
 
 
 def _handle_consolidated_cleanup(remote_decks):

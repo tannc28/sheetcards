@@ -153,11 +153,7 @@ class RemoteDeck:
             self.valid_note_lines += 1
         else:
             self.invalid_note_lines += 1
-            # Debug log for invalid lines
-            # Debug log for invalid lines removed to avoid log spam
-            # add_debug_msg(f"Invalid line found...", category="METRICS")
-            # For invalid lines, do not process additional metrics
-            # but continue to allow other accounting if necessary
+            # Invalid lines are counted but not processed further.
             return
 
         # 4. Lines marked for sync (only for valid lines)
@@ -514,7 +510,7 @@ def parse_tsv_data(tsv_data, debug_messages=None):
         add_debug_msg(f"Headers found: {len(headers)}")
         add_debug_msg(f"Data rows: {len(data_rows)}")
 
-        # Validate mandatory headers (only ID and MATCH are really mandatory)
+        # Validate mandatory headers (only ID and ANSWER are enforced)
         required_headers = [cols.identifier, cols.answer]
         missing_headers = [h for h in required_headers if h not in headers]
 
@@ -1035,12 +1031,8 @@ def create_or_update_notes(
             ensure_custom_models(
                 col, deck_url, student=student, debug_messages=debug_messages
             )
-            # Ensure reverse model exists too if using reverse notes
-            # We can just call ensure_custom_models and it will handle checking if needed,
-            # but since ensure_custom_models now returns a dict with 'reverse', it's fine.
-            # However, ensure_custom_models creates based on logic that might need specific calls?
-            # Actually ensure_custom_models implementation I updated checks existing notes? No.
-            # I updated ensure_custom_models to ALWAYS check for reverse model. So calling it once is enough.
+            # ensure_custom_models always provisions the reverse model too,
+            # so a single call per student is sufficient.
 
         # 4. Get existing notes by student_note_id
         existing_notes = get_existing_notes_by_student_id(col, deck_id)

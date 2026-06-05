@@ -44,12 +44,15 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black>=24.0.0",
+    # black/ruff pinned to match the CI gates (.github/workflows/ci.yml) and
+    # .pre-commit-config.yaml exactly — formatting must be byte-identical, so a
+    # newer local version that reformats differently would fail `black --check`.
+    "black==26.5.1",
     "mypy>=1.8.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
-    "ruff>=0.3.0",
+    "ruff==0.15.16",
     "pre-commit>=3.5.0",
 ]
 test = [
@@ -167,6 +170,7 @@ ignore = [
     "N803",  # argument name should be lowercase
     # Intentional conventions in this codebase:
     "N802",  # function name not lowercase — Anki/API style (syncDecks, getRemoteDeck, addNewDeck)
+    "N816",  # mixedCase globals/locals — same Anki/Qt style (errorTemplate, *Action menu items)
     "N812",  # import aliased to non-lowercase
     "N818",  # exception name without an "Error" suffix (e.g. SyncAborted)
     "N999",  # module name (kept for stable import paths)
