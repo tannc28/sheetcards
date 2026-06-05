@@ -9,8 +9,6 @@ This module provides a comprehensive dialog for managing backups with:
 """
 
 import os
-import threading
-import time
 from datetime import datetime
 
 from ..backup_system import SimplifiedBackupManager
@@ -22,7 +20,6 @@ from ..compat import QFrame
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QLineEdit
-from ..compat import QProgressDialog
 from ..compat import QPushButton
 from ..compat import QRadioButton
 from ..compat import QScrollArea
@@ -39,6 +36,8 @@ from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 
 
 class BackupDialog(QDialog):
@@ -509,39 +508,14 @@ class BackupDialog(QDialog):
 
         # Save settings button
         save_btn = QPushButton("✓ Save")
-        save_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_success']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['success_dark']};
-            }}
-        """)
+        save_btn.setStyleSheet(primary_button_qss(self.colors, "success"))
         save_btn.clicked.connect(self._save_settings)
 
         button_layout.addStretch()
 
         # Close button
         close_btn = QPushButton("Close")
-        close_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-            }}
-        """)
+        close_btn.setStyleSheet(secondary_button_qss(self.colors))
         close_btn.clicked.connect(self.accept)
         button_layout.addWidget(close_btn)
         button_layout.addWidget(save_btn)
@@ -753,97 +727,38 @@ class BackupDialog(QDialog):
         self, operation_func, title: str, message: str, timeout_seconds: int = 60
     ):
         """
-        Runs an operation with a progress dialog and timeout.
+        Runs an operation synchronously on the MAIN THREAD behind Anki's progress UI.
+
+        Anki's collection (``mw.col``) is NOT thread-safe and must only be touched on
+        the main thread. This previously ran ``operation_func`` in a daemon thread while
+        the main thread spun a progress loop — but the backup/restore operations call
+        into ``mw.col`` (export/import .apkg, ``decks.rem``, ``col.save``), so that risked
+        database corruption. We now run the operation directly on the main thread and let
+        Anki's progress manager show a modal busy indicator so the window doesn't look hung.
 
         Args:
-            operation_func: Function to execute (should return bool for success)
-            title: Title for the progress dialog
-            message: Message to show during operation
-            timeout_seconds: Maximum time allowed for operation (default: 60)
+            operation_func: Function to execute; its return value is passed back as
+                the first tuple element.
+            title: Kept for call-site compatibility (Anki's progress owns the window).
+            message: Label shown in the progress indicator.
+            timeout_seconds: Kept for compatibility; unused. A synchronous main-thread
+                operation cannot be safely interrupted by a timer, and forcibly killing
+                a half-finished collection write is exactly what we must avoid.
 
         Returns:
-            tuple: (success: bool, timed_out: bool, error: str or None)
+            tuple: (result, timed_out: bool, error: str or None). ``timed_out`` is always
+            False now; the field is retained so existing call sites keep working.
         """
-        result = {"success": False, "error": None, "completed": False}
-
-        def run_operation():
-            try:
-                result["success"] = operation_func()
-            except Exception as e:
-                result["error"] = str(e)
-            finally:
-                result["completed"] = True
-
-        # Create progress dialog
-        progress = QProgressDialog(message, "Cancel", 0, 0, self)
-        progress.setWindowTitle(title)
-        progress.setMinimumDuration(0)
-        progress.setAutoClose(False)
-        progress.setAutoReset(False)
-        progress.setCancelButton(None)  # No cancel button for backup operations
-        progress.setMinimumWidth(400)
-
-        # Apply styling
-        progress.setStyleSheet(f"""
-            QProgressDialog {{
-                background-color: {self.colors['card_bg']};
-                color: {self.colors['text']};
-            }}
-            QLabel {{
-                font-size: 12pt;
-                color: {self.colors['text']};
-                padding: 10px;
-            }}
-            QProgressBar {{
-                border: none;
-                border-radius: 5px;
-                background-color: {self.colors['input_bg']};
-                height: 20px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {self.colors['accent_primary']};
-                border-radius: 5px;
-            }}
-        """)
-
-        progress.show()
-
-        # Start operation in background thread
-        thread = threading.Thread(target=run_operation, daemon=True)
-        thread.start()
-
-        # Track time for timeout
-        start_time = time.time()
-
-        # Wait for completion with timeout check
-        while not result["completed"]:
-            # Process Qt events to keep UI responsive
-            if mw and mw.app:
-                mw.app.processEvents()
-
-            # Check timeout
-            elapsed = time.time() - start_time
-            if elapsed > timeout_seconds:
-                progress.close()
-                return (
-                    False,
-                    True,
-                    f"Operation timed out after {timeout_seconds} seconds",
-                )
-
-            # Update progress message with elapsed time
-            elapsed_int = int(elapsed)
-            progress.setLabelText(f"{message}\n\nElapsed: {elapsed_int}s")
-
-            # Small sleep to prevent CPU spinning
-            time.sleep(0.1)
-
-        progress.close()
-
-        if result["error"]:
-            return (False, False, result["error"])
-
-        return (result["success"], False, None)
+        if mw:
+            mw.progress.start(label=message, immediate=True)
+        try:
+            result = operation_func()
+            return (result, False, None)
+        except Exception as e:
+            return (False, False, str(e))
+        finally:
+            if mw:
+                mw.progress.finish()
 
     def _create_simple_backup(self):
         """Creates a simple (config only) backup in the configured backup directory."""

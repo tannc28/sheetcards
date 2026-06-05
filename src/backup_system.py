@@ -609,9 +609,8 @@ class SimplifiedBackupManager:
             add_debug_message(f"Modern method failed: {e}", "BACKUP")
 
         # Method 2: Try using UI import (more compatible)
-        # Note: importFile might show UI, which is risky in a background thread,
-        # but it typically runs synchronously. Ideally we avoid this in a thread.
-        # However, for now we keep it as fallback but avoid specific Success UI calls.
+        # importFile may show its own UI; that's fine now that restore runs on the main
+        # thread (see backup_dialog._run_with_progress). Kept as a compatibility fallback.
         try:
             from aqt.importing import importFile
 
