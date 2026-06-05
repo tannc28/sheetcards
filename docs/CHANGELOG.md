@@ -24,6 +24,9 @@ A single design system now drives every screen, replacing per-dialog hardcoded s
   from off-brand purple / neon-green to the same brand blue. CSS-only — the card JS is
   byte-identical (sha256-verified).
 - **Button labels** unified ("Save Settings" / "Save Configuration" → "Save").
+- **Emoji standardized** — removed decorative emoji from buttons and section headers
+  (keeping semantic status icons ⚠️✅❌ℹ️, language flags, and ✓/✗/←/→ affordances) for a
+  more professional tone; card icons (timer, reverse badge, AI buttons) were left as-is.
 - Regression guards added (`tests/test_theme.py`, `tests/test_ui_import_smoke.py`): they
   lock the palette values, assert every dialog color key resolves, and import every dialog.
 
