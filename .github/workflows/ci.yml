@@ -24,11 +24,10 @@ jobs:
       - name: Run test suite
         run: python tests/run_tests.py
 
-  # Advisory: surfaces lint/format/type issues without blocking the build yet.
-  # The codebase is not fully ruff/black-clean; once a formatting pass lands,
-  # drop the `continue-on-error` lines to make these hard gates.
+  # ruff + black are blocking gates; mypy runs as advisory (the codebase is not
+  # fully type-annotated yet).
   lint:
-    name: Lint & types (advisory)
+    name: Lint (ruff + black) & type-check (mypy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
