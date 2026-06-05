@@ -23,8 +23,6 @@ except Exception as e:
 # =============================================================================
 
 # Project module imports
-from .ui.backup_dialog import show_backup_dialog
-from .ui.debug_dialog import show_debug_mode_dialog
 from .deck_manager import addNewDeck
 from .deck_manager import import_test_deck
 from .deck_manager import manage_deck_students
@@ -32,6 +30,8 @@ from .deck_manager import removeRemoteDeck
 from .deck_manager import reset_student_selection
 from .deck_manager import syncDecksWithSelection
 from .sync import syncDecks
+from .ui.backup_dialog import show_backup_dialog
+from .ui.debug_dialog import show_debug_mode_dialog
 from .ui.sync_dialog import show_sync_dialog
 
 # These functions are the main entry points of the addon
@@ -47,4 +47,3 @@ __all__ = [
     "show_backup_dialog",
     "show_debug_mode_dialog",
 ]
-

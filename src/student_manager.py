@@ -13,17 +13,13 @@ Main features:
 """
 
 import re
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
 
-from .templates_and_definitions import DEFAULT_STUDENT
 from . import templates_and_definitions as cols
 from .compat import ButtonBox_Cancel
 from .compat import ButtonBox_Ok
 from .compat import DialogAccepted
-from .compat import MessageBox_Yes, MessageBox_Cancel
+from .compat import MessageBox_Cancel
+from .compat import MessageBox_Yes
 from .compat import QCheckBox
 from .compat import QDialog
 from .compat import QDialogButtonBox
@@ -36,11 +32,12 @@ from .compat import QVBoxLayout
 from .compat import QWidget
 from .compat import mw
 from .compat import safe_exec_dialog
-from .styled_messages import StyledMessageBox
 from .config_manager import get_enabled_students
 from .config_manager import get_meta
 from .config_manager import is_student_filter_active
 from .config_manager import save_meta
+from .styled_messages import StyledMessageBox
+from .templates_and_definitions import DEFAULT_STUDENT
 from .utils import add_debug_message
 
 
@@ -49,7 +46,7 @@ def add_debug_msg(message, category="STUDENT_MANAGER"):
     add_debug_message(message, category)
 
 
-def get_students_to_sync(all_students: Set[str]) -> Set[str]:
+def get_students_to_sync(all_students: set[str]) -> set[str]:
     """
     Gets the students that should be synchronized based on the global configuration.
     NEW VERSION: Uses consistent name normalization.
@@ -91,7 +88,7 @@ class StudentSelectionDialog(QDialog):
     Dialog for selecting the students the user wants to synchronize.
     """
 
-    def __init__(self, students: List[str], deck_url: str, current_selection: Set[str]):
+    def __init__(self, students: list[str], deck_url: str, current_selection: set[str]):
         super().__init__()
         self.students = sorted(students)  # Alphabetical order
         self.deck_url = deck_url
@@ -178,7 +175,7 @@ class StudentSelectionDialog(QDialog):
         for checkbox in self.checkboxes.values():
             checkbox.setChecked(False)
 
-    def get_selected_students(self) -> Set[str]:
+    def get_selected_students(self) -> set[str]:
         """Returns the set of selected students."""
         selected = set()
         for student, checkbox in self.checkboxes.items():
@@ -187,7 +184,7 @@ class StudentSelectionDialog(QDialog):
         return selected
 
 
-def extract_students_from_remote_data(remote_deck) -> Set[str]:
+def extract_students_from_remote_data(remote_deck) -> set[str]:
     """
     Extracts all unique students present in the remote data.
 
@@ -221,11 +218,11 @@ def extract_students_from_remote_data(remote_deck) -> Set[str]:
     return students
 
 
-def get_selected_students_for_deck(deck_url: str) -> Set[str]:
+def get_selected_students_for_deck(deck_url: str) -> set[str]:
     """
     Gets the selected students for a specific deck.
     If there is no specific selection for the deck, uses the global configuration.
-    
+
     IMPORTANT: Includes [MISSING S.] if the feature is activated.
 
     Args:
@@ -254,7 +251,9 @@ def get_selected_students_for_deck(deck_url: str) -> Set[str]:
         if isinstance(student_selection, list):
             selected_students = set(student_selection)
         else:
-            selected_students = student_selection if isinstance(student_selection, set) else set()
+            selected_students = (
+                student_selection if isinstance(student_selection, set) else set()
+            )
 
     # NEW: Include [MISSING STUDENTS] if the feature is activated
     if is_sync_missing_students_notes():
@@ -263,7 +262,7 @@ def get_selected_students_for_deck(deck_url: str) -> Set[str]:
     return selected_students
 
 
-def save_selected_students_for_deck(deck_url: str, selected_students: Set[str]):
+def save_selected_students_for_deck(deck_url: str, selected_students: set[str]):
     """
     Saves the student selection for a specific deck.
 
@@ -290,8 +289,8 @@ def save_selected_students_for_deck(deck_url: str, selected_students: Set[str]):
 
 
 def show_student_selection_dialog(
-    deck_url: str, available_students: Set[str]
-) -> Optional[Set[str]]:
+    deck_url: str, available_students: set[str]
+) -> set[str] | None:
     """
     Shows student selection dialog and returns user selection.
 
@@ -303,7 +302,11 @@ def show_student_selection_dialog(
         Optional[Set[str]]: Set of selected students or None if canceled
     """
     if not available_students:
-        StyledMessageBox.warning(None, "No Students", "No students were found in the STUDENTS column of the spreadsheet.")
+        StyledMessageBox.warning(
+            None,
+            "No Students",
+            "No students were found in the STUDENTS column of the spreadsheet.",
+        )
         return None
 
     current_selection = get_selected_students_for_deck(deck_url)
@@ -321,8 +324,8 @@ def show_student_selection_dialog(
 
 
 def filter_questions_by_selected_students(
-    questions: List[Dict], selected_students: Set[str]
-) -> List[Dict]:
+    questions: list[dict], selected_students: set[str]
+) -> list[dict]:
     """
     Filters questions based on selected students.
     NEW VERSION: Uses consistent name normalization.
@@ -387,7 +390,9 @@ def filter_questions_by_selected_students(
         intersection = question_students.intersection(selected_students)
         if intersection:
             filtered_questions.append(question)
-            add_debug_msg(f"  ✅ Question {i+1}: INCLUDED (match: {sorted(intersection)})")
+            add_debug_msg(
+                f"  ✅ Question {i+1}: INCLUDED (match: {sorted(intersection)})"
+            )
         else:
             add_debug_msg(f"  ❌ Question {i+1}: IGNORED (no match)")
 
@@ -397,7 +402,7 @@ def filter_questions_by_selected_students(
     return filtered_questions
 
 
-def get_student_subdeck_name(main_deck_name: str, student: str, fields: Dict) -> str:
+def get_student_subdeck_name(main_deck_name: str, student: str, fields: dict) -> str:
     """
     Generates subdeck name for a specific student.
 
@@ -423,12 +428,10 @@ def get_student_subdeck_name(main_deck_name: str, student: str, fields: Dict) ->
     concept = fields.get(cols.hierarchy_4, "").strip() or DEFAULT_CONCEPT
 
     # Create full hierarchy including the student
-    return (
-        f"{main_deck_name}::{student}::{importance}::{topic}::{subtopic}::{concept}"
-    )
+    return f"{main_deck_name}::{student}::{importance}::{topic}::{subtopic}::{concept}"
 
 
-def get_missing_students_subdeck_name(main_deck_name: str, fields: Dict) -> str:
+def get_missing_students_subdeck_name(main_deck_name: str, fields: dict) -> str:
     """
     Generates subdeck name for notes without specific students ([MISSING STUDENTS]).
 
@@ -456,7 +459,7 @@ def get_missing_students_subdeck_name(main_deck_name: str, fields: Dict) -> str:
     return f"{main_deck_name}::{DEFAULT_STUDENT}::{importance}::{topic}::{subtopic}::{concept}"
 
 
-def get_students_from_question(fields: Dict) -> Set[str]:
+def get_students_from_question(fields: dict) -> set[str]:
     """
     Extracts all students from a specific question.
 
@@ -482,8 +485,8 @@ def get_students_from_question(fields: Dict) -> Set[str]:
 def remove_notes_for_unselected_students(
     col,
     main_deck_name: str,
-    selected_students: Set[str],
-    all_students_in_sheet: Set[str],
+    selected_students: set[str],
+    all_students_in_sheet: set[str],
 ) -> int:
     """
     Removes notes for students that are no longer selected.
@@ -528,7 +531,9 @@ def remove_notes_for_unselected_students(
                     mw.col.remove_notes([note_id])
                     removed_count += 1
                 except Exception as e:
-                    add_debug_msg(f"Error removing note {note_id} from deck {deck.name}: {e}")
+                    add_debug_msg(
+                        f"Error removing note {note_id} from deck {deck.name}: {e}"
+                    )
 
     return removed_count
 
@@ -536,10 +541,10 @@ def remove_notes_for_unselected_students(
 def _convert_to_tsv_export_url(url: str) -> str:
     """
     Converts a Google Sheets URL to TSV export format.
-    
+
     Args:
         url (str): Original Google Sheets URL
-        
+
     Returns:
         str: Formatted URL for TSV export
     """
@@ -547,17 +552,17 @@ def _convert_to_tsv_export_url(url: str) -> str:
         # If it's already a TSV export URL, return as is
         if "export?format=tsv" in url:
             return url
-        
+
         # Use centralized conversion function from utils.py
         from .utils import convert_edit_url_to_tsv
-        
+
         try:
             tsv_url = convert_edit_url_to_tsv(url)
             return tsv_url
         except ValueError:
             # Fallback to previous method if the URL is not a standard edit URL
             return _fallback_url_conversion(url)
-            
+
     except Exception:
         return url
 
@@ -565,41 +570,43 @@ def _convert_to_tsv_export_url(url: str) -> str:
 def _fallback_url_conversion(url: str) -> str:
     """
     Fallback method for non-standard URL conversion.
-    
+
     Args:
         url (str): Original Google Sheets URL
-        
+
     Returns:
         str: TSV export formatted URL or original URL if failed
     """
     try:
         import re
-        
+
         # Common Google Sheets URL patterns
         patterns = [
-            r'/spreadsheets/d/([a-zA-Z0-9-_]+)',  # Standard URL
-            r'[?&]id=([a-zA-Z0-9-_]+)',           # URL with id parameter
+            r"/spreadsheets/d/([a-zA-Z0-9-_]+)",  # Standard URL
+            r"[?&]id=([a-zA-Z0-9-_]+)",  # URL with id parameter
         ]
-        
+
         sheet_id = None
         for pattern in patterns:
             match = re.search(pattern, url)
             if match:
                 sheet_id = match.group(1)
                 break
-        
+
         if sheet_id:
             # Construct TSV export URL
-            tsv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=tsv"
+            tsv_url = (
+                f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=tsv"
+            )
             return tsv_url
         else:
             return url
-            
+
     except Exception:
         return url
 
 
-def discover_students_from_tsv_url(url: str) -> Set[str]:
+def discover_students_from_tsv_url(url: str) -> set[str]:
     """
     Discovers unique students from a Google Sheets TSV URL.
 
@@ -610,10 +617,10 @@ def discover_students_from_tsv_url(url: str) -> Set[str]:
         Set[str]: Set of unique student names found
     """
     try:
-        
+
         # First, validate and convert URL using centralized function
         from .utils import validate_url
-        
+
         try:
             tsv_url = validate_url(url)
         except ValueError:
@@ -629,11 +636,9 @@ def discover_students_from_tsv_url(url: str) -> Set[str]:
             return set()
 
         # Download TSV data with appropriate headers
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"
-        }
+        headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
         request = urllib.request.Request(tsv_url, headers=headers)
-        
+
         with urllib.request.urlopen(request, timeout=30) as response:
             # utf-8-sig strips a possible BOM that would otherwise corrupt the header.
             data = response.read().decode("utf-8-sig")
@@ -669,17 +674,17 @@ def discover_students_from_tsv_url(url: str) -> Set[str]:
 
     except urllib.error.HTTPError:
         return set()
-        
+
     except urllib.error.URLError:
         return set()
-        
+
     except Exception:
         return set()
 
 
 def cleanup_disabled_students_data(
-    disabled_students: Set[str], deck_names: List[str]
-) -> Dict[str, int]:
+    disabled_students: set[str], deck_names: list[str]
+) -> dict[str, int]:
     """
     Removes all data for disabled students: notes, cards, note types and decks.
 
@@ -803,12 +808,15 @@ def cleanup_disabled_students_data(
 
         # NEW: Update meta.json after cleanup to remove references of deleted note types
         _update_meta_after_cleanup(disabled_students, deck_names)
-        
+
         # NEW: Remove students from sync history after successful cleanup
         from .config_manager import remove_student_from_sync_history
+
         for student in disabled_students:
             remove_student_from_sync_history(student)
-        add_debug_msg(f"📝 CLEANUP: {len(disabled_students)} students removed from sync history")
+        add_debug_msg(
+            f"📝 CLEANUP: {len(disabled_students)} students removed from sync history"
+        )
 
         # Save changes
         col.save()
@@ -824,10 +832,10 @@ def cleanup_disabled_students_data(
         return stats
 
 
-def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
+def _remove_student_note_types(student: str, deck_names: list[str]) -> int:
     """
     Removes specific note types of a student.
-    
+
     CORRECTED VERSION WITH IMPROVED DEBUG:
     - Checks all note types in Anki, not just those based on deck_names
     - Removes orphaned note types that may exist due to old configurations
@@ -845,10 +853,11 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
     # Use proper logging when possible
     try:
         from .utils import add_debug_message
+
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_NOTE_TYPES")
     except Exception:
         log_func = print
-    
+
     if not mw or not hasattr(mw, "col") or not mw.col:
         log_func(f"❌ Anki not available to remove note types for student '{student}'")
         return 0
@@ -862,7 +871,7 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
         log_func(f"🔍 Checking {len(note_types)} note types for student '{student}'")
 
         student_note_types_found = []
-        
+
         for note_type in note_types:
             note_type_name = note_type.get("name", "")
             note_type_id = note_type.get("id")
@@ -877,11 +886,15 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
             for deck_name in deck_names:
                 student_pattern_basic = f"Sheets2Anki - {deck_name} - {student} - Basic"
                 student_pattern_cloze = f"Sheets2Anki - {deck_name} - {student} - Cloze"
-                student_pattern_reverse = f"Sheets2Anki - {deck_name} - {student} - Reverse"
+                student_pattern_reverse = (
+                    f"Sheets2Anki - {deck_name} - {student} - Reverse"
+                )
 
-                if (note_type_name == student_pattern_basic or 
-                    note_type_name == student_pattern_cloze or 
-                    note_type_name == student_pattern_reverse):
+                if (
+                    note_type_name == student_pattern_basic
+                    or note_type_name == student_pattern_cloze
+                    or note_type_name == student_pattern_reverse
+                ):
                     should_remove = True
                     match_reason = f"deck pattern for '{student}'"
                     break
@@ -896,16 +909,23 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
                     note_type_suffix = parts[-1].strip()
                     # Second-to-last part is the student name
                     note_student = parts[-2].strip()
-                    
-                    if (note_student == student and 
-                        note_type_suffix in ["Basic", "Cloze", "Reverse"]):
+
+                    if note_student == student and note_type_suffix in [
+                        "Basic",
+                        "Cloze",
+                        "Reverse",
+                    ]:
                         should_remove = True
                         match_reason = f"orphaned note type for student '{student}'"
 
             if should_remove:
-                student_note_types_found.append((note_type_name, note_type_id, match_reason))
+                student_note_types_found.append(
+                    (note_type_name, note_type_id, match_reason)
+                )
 
-        log_func(f"🎯 Found {len(student_note_types_found)} note types for student '{student}':")
+        log_func(
+            f"🎯 Found {len(student_note_types_found)} note types for student '{student}':"
+        )
         for nt_name, nt_id, reason in student_note_types_found:
             log_func(f"   • '{nt_name}' (ID: {nt_id}) - {reason}")
 
@@ -914,8 +934,9 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
             try:
                 # Check if note type is in use with defensive approach
                 from anki.models import NotetypeId
+
                 use_count = 0
-                
+
                 try:
                     # Method 1: Try with NotetypeId
                     use_count = col.models.useCount(NotetypeId(note_type_id))
@@ -930,19 +951,25 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
                             # Method 3: Search for notes using this note type manually
                             note_ids = col.find_notes(f"mid:{note_type_id}")
                             use_count = len(note_ids)
-                            log_func(f"ℹ️ Using manual search: {use_count} notes found for note type {note_type_id}")
+                            log_func(
+                                f"ℹ️ Using manual search: {use_count} notes found for note type {note_type_id}"
+                            )
                         except Exception as e3:
                             log_func(f"❌ All methods failed for {note_type_id}: {e3}")
                             # If we cannot check, assume it's in use for safety
                             use_count = 1
-                
+
                 if use_count > 0:
-                    log_func(f"⚠️ Note type '{note_type_name}' still has {use_count} notes, skipping removal")
+                    log_func(
+                        f"⚠️ Note type '{note_type_name}' still has {use_count} notes, skipping removal"
+                    )
                     continue
 
                 # Note type is not in use, can remove
-                log_func(f"🗑️ REMOVING note type '{note_type_name}' (ID: {note_type_id})...")
-                
+                log_func(
+                    f"🗑️ REMOVING note type '{note_type_name}' (ID: {note_type_id})..."
+                )
+
                 try:
                     # Try removal with NotetypeId
                     col.models.remove(NotetypeId(note_type_id))
@@ -954,20 +981,25 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
                     except Exception as e2:
                         log_func(f"❌ Removal failed completely: {e2}")
                         continue
-                
+
                 removed_count += 1
                 log_func(f"✅ Note type '{note_type_name}' removed successfully")
 
             except Exception as e:
                 log_func(f"❌ Error removing note type '{note_type_name}': {e}")
                 import traceback
+
                 traceback.print_exc()
                 continue
 
         if removed_count == 0 and len(student_note_types_found) > 0:
-            log_func(f"⚠️ ATTENTION: {len(student_note_types_found)} note types found but none were removed")
+            log_func(
+                f"⚠️ ATTENTION: {len(student_note_types_found)} note types found but none were removed"
+            )
         elif removed_count > 0:
-            log_func(f"✅ SUCCESS: {removed_count} note types removed for student '{student}'")
+            log_func(
+                f"✅ SUCCESS: {removed_count} note types removed for student '{student}'"
+            )
         else:
             log_func(f"ℹ️ No note type found for student '{student}'")
 
@@ -976,12 +1008,13 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
     except Exception as e:
         log_func(f"❌ Error removing note types for student '{student}': {e}")
         import traceback
+
         traceback.print_exc()
         return 0
 
 
 def _update_meta_after_cleanup(
-    disabled_students: Set[str], deck_names: List[str]
+    disabled_students: set[str], deck_names: list[str]
 ) -> None:
     """
     Updates meta.json removing references of note types that were deleted during cleanup.
@@ -993,10 +1026,11 @@ def _update_meta_after_cleanup(
     # Use proper logging when possible
     try:
         from .utils import add_debug_message
+
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_META")
     except Exception:
         log_func = print
-        
+
     try:
         from .config_manager import get_meta
         from .config_manager import save_meta
@@ -1061,7 +1095,7 @@ def _update_meta_after_cleanup(
         traceback.print_exc()
 
 
-def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
+def _update_meta_after_missing_cleanup(deck_names: list[str]) -> None:
     """
     Updates meta.json by removing missing student note type references that were deleted.
     Handles DEFAULT_STUDENT, [MISSING STUDENTS] and [MISSING S.].
@@ -1072,10 +1106,11 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
     # Use proper logging when possible
     try:
         from .utils import add_debug_message
+
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_MISSING_META")
     except Exception:
         log_func = print
-        
+
     try:
         from .config_manager import get_meta
         from .config_manager import save_meta
@@ -1086,13 +1121,9 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
 
         meta = get_meta()
         updates_made = False
-        
+
         # Legacy missing placeholders
-        missing_placeholders = [
-            DEFAULT_STUDENT,
-            "[MISSING STUDENTS]",
-            "[MISSING S.]"
-        ]
+        missing_placeholders = [DEFAULT_STUDENT, "[MISSING STUDENTS]", "[MISSING S.]"]
 
         # For each configured deck
         for deck_info in meta.get("decks", {}).values():
@@ -1106,16 +1137,24 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
                     # Check against all placeholders
                     is_missing_type = False
                     for placeholder in missing_placeholders:
-                        pattern_basic = f"Sheets2Anki - {deck_name} - {placeholder} - Basic"
-                        pattern_cloze = f"Sheets2Anki - {deck_name} - {placeholder} - Cloze"
-                        pattern_reverse = f"Sheets2Anki - {deck_name} - {placeholder} - Reverse"
-                        
-                        if (note_type_name == pattern_basic or 
-                            note_type_name == pattern_cloze or 
-                            note_type_name == pattern_reverse):
+                        pattern_basic = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Basic"
+                        )
+                        pattern_cloze = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Cloze"
+                        )
+                        pattern_reverse = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Reverse"
+                        )
+
+                        if (
+                            note_type_name == pattern_basic
+                            or note_type_name == pattern_cloze
+                            or note_type_name == pattern_reverse
+                        ):
                             is_missing_type = True
                             break
-                    
+
                     if is_missing_type:
                         note_types_to_remove.append(note_type_id)
                         log_func(
@@ -1133,9 +1172,7 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
             save_meta(meta)
             log_func("✅ META UPDATE: meta.json updated after missing student cleanup")
         else:
-            log_func(
-                "ℹ️ META UPDATE: No missing student references found in meta.json"
-            )
+            log_func("ℹ️ META UPDATE: No missing student references found in meta.json")
 
     except Exception as e:
         log_func(
@@ -1146,14 +1183,14 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
         traceback.print_exc()
 
 
-def get_disabled_students_for_cleanup(current_enabled: Set[str]) -> Set[str]:
+def get_disabled_students_for_cleanup(current_enabled: set[str]) -> set[str]:
     """
     Identifies students who were removed from the enabled list and need data cleanup.
-    
+
     SIMPLIFIED LOGIC:
     - Only considers students who were SYNCHRONIZED at least once (in sync_history)
     - Students need cleanup ONLY if they are in sync_history but NOT in enabled_students
-    
+
     NOTE: DEFAULT_STUDENT is handled separately by missing students cleanup.
 
     Args:
@@ -1165,34 +1202,44 @@ def get_disabled_students_for_cleanup(current_enabled: Set[str]) -> Set[str]:
     # Use proper logging when possible
     try:
         from .utils import add_debug_message
+
         log_func = lambda msg: add_debug_message(msg, "CLEANUP")
     except Exception:
         log_func = print
-    
+
     log_func("🔍 CLEANUP: Identifying disabled students for cleanup...")
-    
+
     # SOURCE: sync_history - students who were actually synchronized
     # This is the ONLY reliable source since it tracks actual sync operations
     from .config_manager import get_students_with_sync_history
+
     sync_history_students = get_students_with_sync_history()
     log_func(f"📚 Students in sync_history: {sorted(sync_history_students)}")
-    
+
     # Filter out missing student placeholders (handled separately)
     missing_placeholders = {DEFAULT_STUDENT, "[MISSING STUDENTS]", "[MISSING S.]"}
     real_students_with_data = sync_history_students - missing_placeholders
-    
-    log_func(f"👤 Real students with data (from sync_history): {sorted(real_students_with_data)}")
-    
+
+    log_func(
+        f"👤 Real students with data (from sync_history): {sorted(real_students_with_data)}"
+    )
+
     # Filter out DEFAULT_STUDENT from current enabled
-    current_real_students = {s for s in current_enabled if s not in missing_placeholders}
+    current_real_students = {
+        s for s in current_enabled if s not in missing_placeholders
+    }
     log_func(f"✅ Currently enabled students: {sorted(current_real_students)}")
 
     # SIMPLE CHECK: Students who have data but are no longer enabled
     disabled_students = real_students_with_data - current_real_students
 
     if disabled_students:
-        log_func(f"🎯 CLEANUP: Detected students for cleanup: {sorted(disabled_students)}")
-        log_func(f"   • Students with data (sync_history): {sorted(real_students_with_data)}")
+        log_func(
+            f"🎯 CLEANUP: Detected students for cleanup: {sorted(disabled_students)}"
+        )
+        log_func(
+            f"   • Students with data (sync_history): {sorted(real_students_with_data)}"
+        )
         log_func(f"   • Currently enabled: {sorted(current_real_students)}")
         log_func(f"   • Students to remove: {sorted(disabled_students)}")
     else:
@@ -1201,12 +1248,12 @@ def get_disabled_students_for_cleanup(current_enabled: Set[str]) -> Set[str]:
     return disabled_students
 
 
-def show_cleanup_confirmation_dialog(disabled_students: Set[str]) -> int:
+def show_cleanup_confirmation_dialog(disabled_students: set[str]) -> int:
     """
     Shows a confirmation dialog before removing data of disabled students.
-    
+
     REFATURED: Now uses centralized function to ensure consistency.
-    
+
     The dialog presents two options:
     - DELETE DATA: Removes data and continues sync (returns MessageBox_Yes)
     - CANCEL SYNC: Aborts the sync entirely (returns MessageBox_Cancel)
@@ -1224,12 +1271,12 @@ def show_cleanup_confirmation_dialog(disabled_students: Set[str]) -> int:
 
     # Convert set to list and use centralized function
     disabled_students_list = list(disabled_students)
-    
+
     # Use centralized function to confirm removal
     result = confirm_students_removal(
         disabled_students=disabled_students_list,
         missing_functionality_disabled=False,  # Students only, no [MISSING S.]
-        window_title="Confirm Permanent Data Removal"
+        window_title="Confirm Permanent Data Removal",
     )
 
     if result == MessageBox_Yes:
@@ -1242,10 +1289,10 @@ def show_cleanup_confirmation_dialog(disabled_students: Set[str]) -> int:
     return result
 
 
-def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
+def cleanup_missing_students_data(deck_names: list[str]) -> dict[str, int]:
     """
     Removes all "{DEFAULT_STUDENT}" note data when the feature is disabled.
-    
+
     CORRECTED VERSION:
     - Detects {DEFAULT_STUDENT} note types using multiple patterns
     - Searches for orphaned note types even if deck_name doesn't match exactly
@@ -1272,11 +1319,7 @@ def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
     col = mw.col
 
     # Legacy missing placeholders
-    missing_placeholders = [
-        DEFAULT_STUDENT,
-        "[MISSING STUDENTS]",
-        "[MISSING S.]"
-    ]
+    missing_placeholders = [DEFAULT_STUDENT, "[MISSING STUDENTS]", "[MISSING S.]"]
 
     try:
         # 1. Search and remove all notes with ID {placeholder}_{any_id}
@@ -1288,56 +1331,66 @@ def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
                 note = col.get_note(note_id)
                 if "ID" in note.keys():
                     note_unique_id = note["ID"].strip()
-                    if any(note_unique_id.startswith(f"{p}_") for p in missing_placeholders):
+                    if any(
+                        note_unique_id.startswith(f"{p}_") for p in missing_placeholders
+                    ):
                         missing_note_ids.append(note_id)
-                        add_debug_msg(f"   📝 Found missing student note: {note_unique_id}")
+                        add_debug_msg(
+                            f"   📝 Found missing student note: {note_unique_id}"
+                        )
             except Exception:
                 continue
 
         # Remove all found missing notes
         if missing_note_ids:
-            add_debug_msg(f"🗑️ CLEANUP: Removing {len(missing_note_ids)} missing student notes...")
+            add_debug_msg(
+                f"🗑️ CLEANUP: Removing {len(missing_note_ids)} missing student notes..."
+            )
             col.remove_notes(missing_note_ids)
             stats["notes_removed"] = len(missing_note_ids)
 
         # 2. Remove missing student decks (using multiple patterns)
         all_decks = col.decks.all_names_and_ids()
-        
+
         # Patterns to search for:
         # - "Sheets2Anki::{deck_name}::{placeholder}::"
         # - Any deck containing "::{placeholder}::"
         missing_decks_found = []
-        
+
         for deck in all_decks:
             deck_name = deck.name
-            
+
             # Check if it's a missing student deck
             is_missing_deck = False
             for placeholder in missing_placeholders:
                 if f"::{placeholder}::" in deck_name:
                     is_missing_deck = True
                     break
-            
+
             if is_missing_deck:
                 # Check if it corresponds to any provided decks (if provided)
                 if deck_names:
                     deck_matches = False
                     for remote_deck_name in deck_names:
                         for placeholder in missing_placeholders:
-                            expected_pattern = f"Sheets2Anki::{remote_deck_name}::{placeholder}::"
+                            expected_pattern = (
+                                f"Sheets2Anki::{remote_deck_name}::{placeholder}::"
+                            )
                             if deck_name.startswith(expected_pattern):
                                 deck_matches = True
                                 break
                         if deck_matches:
                             break
-                    
+
                     if deck_matches:
                         missing_decks_found.append(deck)
                         add_debug_msg(f"   📁 Missing student deck found: {deck_name}")
                 else:
                     # If no deck_names specified, remove any missing student deck
                     missing_decks_found.append(deck)
-                    add_debug_msg(f"   📁 Generic missing student deck found: {deck_name}")
+                    add_debug_msg(
+                        f"   📁 Generic missing student deck found: {deck_name}"
+                    )
 
         # Remove empty missing student decks
         for deck in missing_decks_found:
@@ -1345,43 +1398,60 @@ def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
                 remaining_notes = col.find_notes(f'deck:"{deck.name}"')
                 if not remaining_notes:
                     from anki.decks import DeckId
+
                     col.decks.remove([DeckId(deck.id)])
                     stats["decks_removed"] += 1
-                    add_debug_msg(f"   🗑️ Empty missing student deck removed: '{deck.name}'")
+                    add_debug_msg(
+                        f"   🗑️ Empty missing student deck removed: '{deck.name}'"
+                    )
                 else:
-                    add_debug_msg(f"   📁 Missing student deck '{deck.name}' still has {len(remaining_notes)} notes, keeping")
+                    add_debug_msg(
+                        f"   📁 Missing student deck '{deck.name}' still has {len(remaining_notes)} notes, keeping"
+                    )
             except Exception as e:
-                add_debug_msg(f"   ❌ Error processing missing student deck '{deck.name}': {e}")
+                add_debug_msg(
+                    f"   ❌ Error processing missing student deck '{deck.name}': {e}"
+                )
 
         # 3. Remove missing student note types (using robust detection)
         note_types = col.models.all()
-        
+
         for note_type in note_types:
             note_type_name = note_type.get("name", "")
             note_type_id = note_type.get("id")
-            
+
             if not note_type_id:
                 continue
-            
+
             should_remove = False
-            
+
             # METHOD 1: Check patterns based on provided deck_names
             if deck_names:
                 for deck_name in deck_names:
                     for placeholder in missing_placeholders:
-                        pattern_basic = f"Sheets2Anki - {deck_name} - {placeholder} - Basic"
-                        pattern_cloze = f"Sheets2Anki - {deck_name} - {placeholder} - Cloze"
-                        pattern_reverse = f"Sheets2Anki - {deck_name} - {placeholder} - Reverse"
-                        
-                        if (note_type_name == pattern_basic or 
-                            note_type_name == pattern_cloze or 
-                            note_type_name == pattern_reverse):
+                        pattern_basic = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Basic"
+                        )
+                        pattern_cloze = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Cloze"
+                        )
+                        pattern_reverse = (
+                            f"Sheets2Anki - {deck_name} - {placeholder} - Reverse"
+                        )
+
+                        if (
+                            note_type_name == pattern_basic
+                            or note_type_name == pattern_cloze
+                            or note_type_name == pattern_reverse
+                        ):
                             should_remove = True
-                            add_debug_msg(f"   🎯 Missing student note type '{note_type_name}' matched deck pattern")
+                            add_debug_msg(
+                                f"   🎯 Missing student note type '{note_type_name}' matched deck pattern"
+                            )
                             break
                     if should_remove:
                         break
-            
+
             # METHOD 2: Check general pattern for orphaned missing student note types
             # IMPORTANT: deck_name may contain " - ", so parse from the END
             if not should_remove and note_type_name.startswith("Sheets2Anki - "):
@@ -1391,72 +1461,105 @@ def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
                     note_type_suffix = parts[-1].strip()
                     # Second-to-last part is the student name
                     note_student = parts[-2].strip()
-                    
-                    if (note_student in missing_placeholders and 
-                        note_type_suffix in ["Basic", "Cloze", "Reverse"]):
+
+                    if note_student in missing_placeholders and note_type_suffix in [
+                        "Basic",
+                        "Cloze",
+                        "Reverse",
+                    ]:
                         should_remove = True
-                        add_debug_msg(f"   🔍 Orphaned missing student note type '{note_type_name}' found", "CLEANUP_MISSING")
-            
+                        add_debug_msg(
+                            f"   🔍 Orphaned missing student note type '{note_type_name}' found",
+                            "CLEANUP_MISSING",
+                        )
+
             if should_remove:
                 try:
                     # Check if note type is in use with defensive approach
                     from anki.models import NotetypeId
+
                     use_count = 0
-                    
+
                     try:
                         # Method 1: Try with NotetypeId
                         use_count = col.models.useCount(NotetypeId(note_type_id))
                     except (TypeError, AttributeError) as e:
-                        add_debug_msg(f"   ⚠️ NotetypeId method failed for missing student {note_type_id}: {e}", "CLEANUP_MISSING")
+                        add_debug_msg(
+                            f"   ⚠️ NotetypeId method failed for missing student {note_type_id}: {e}",
+                            "CLEANUP_MISSING",
+                        )
                         try:
                             # Method 2: Try with int directly
                             use_count = col.models.useCount(note_type_id)
-                        except Exception as e2:
+                        except Exception:
                             try:
                                 # Method 3: Search for notes manually
                                 note_ids = col.find_notes(f"mid:{note_type_id}")
                                 use_count = len(note_ids)
-                                add_debug_msg(f"ℹ️ Using manual search for missing student: {use_count} notes", "CLEANUP_MISSING")
-                            except Exception as e3:
+                                add_debug_msg(
+                                    f"ℹ️ Using manual search for missing student: {use_count} notes",
+                                    "CLEANUP_MISSING",
+                                )
+                            except Exception:
                                 # If all fails, assume it's in use for safety
                                 use_count = 1
-                    
+
                     if use_count > 0:
-                        add_debug_msg(f"⚠️ Missing student note type '{note_type_name}' still has {use_count} notes, skipping", "CLEANUP_MISSING")
+                        add_debug_msg(
+                            f"⚠️ Missing student note type '{note_type_name}' still has {use_count} notes, skipping",
+                            "CLEANUP_MISSING",
+                        )
                         continue
-                    
+
                     # Note type is not in use, can remove
                     try:
                         # Try removal with NotetypeId
                         col.models.remove(NotetypeId(note_type_id))
                     except (TypeError, AttributeError) as e:
-                        add_debug_msg(f"⚠️ Removal with NotetypeId failed for missing student: {e}", "CLEANUP_MISSING")
+                        add_debug_msg(
+                            f"⚠️ Removal with NotetypeId failed for missing student: {e}",
+                            "CLEANUP_MISSING",
+                        )
                         try:
                             # Fallback: try with int directly
                             col.models.remove(note_type_id)
                         except Exception as e2:
-                            add_debug_msg(f"❌ Removal failed completely for missing student: {e2}", "CLEANUP_MISSING")
+                            add_debug_msg(
+                                f"❌ Removal failed completely for missing student: {e2}",
+                                "CLEANUP_MISSING",
+                            )
                             continue
-                    
+
                     stats["note_types_removed"] += 1
-                    add_debug_msg(f"🗑️ Missing student note type '{note_type_name}' removed", "CLEANUP_MISSING")
-                    
+                    add_debug_msg(
+                        f"🗑️ Missing student note type '{note_type_name}' removed",
+                        "CLEANUP_MISSING",
+                    )
+
                 except Exception as e:
-                    add_debug_msg(f"❌ Error removing missing student note type '{note_type_name}': {e}", "CLEANUP_MISSING")
+                    add_debug_msg(
+                        f"❌ Error removing missing student note type '{note_type_name}': {e}",
+                        "CLEANUP_MISSING",
+                    )
 
         # NEW: Update meta.json after cleanup
         _update_meta_after_missing_cleanup(deck_names)
-        
+
         # NEW: Remove missing student placeholders from sync history after successful cleanup
         from .config_manager import remove_student_from_sync_history
+
         for placeholder in missing_placeholders:
             remove_student_from_sync_history(placeholder)
-        add_debug_msg(f"📝 CLEANUP: Missing student placeholders removed from sync history: {missing_placeholders}")
+        add_debug_msg(
+            f"📝 CLEANUP: Missing student placeholders removed from sync history: {missing_placeholders}"
+        )
 
         # Save changes
         col.save()
 
-        add_debug_msg(f"✅ CLEANUP: Missing student cleanup completed - Statistics: {stats}")
+        add_debug_msg(
+            f"✅ CLEANUP: Missing student cleanup completed - Statistics: {stats}"
+        )
         return stats
 
     except Exception as e:
@@ -1468,7 +1571,7 @@ def show_missing_cleanup_confirmation_dialog() -> int:
     """
     Shows confirmation dialog for missing student data cleanup.
     REFATURED: Uses centralized module for message generation and confirmation.
-    
+
     The dialog presents two options:
     - DELETE DATA: Removes data and continues sync (returns MessageBox_Yes)
     - CANCEL SYNC: Aborts the sync entirely (returns MessageBox_Cancel)
@@ -1477,17 +1580,19 @@ def show_missing_cleanup_confirmation_dialog() -> int:
         int: Dialog result code (MessageBox_Yes or MessageBox_Cancel)
     """
     from .ui.data_removal_confirmation import show_data_removal_confirmation_dialog
-    
+
     # Use centralized dialog only for missing student placeholder
     # Now returns int result
     result = show_data_removal_confirmation_dialog(
         students_to_remove=[DEFAULT_STUDENT],
-        window_title=f"⚠️ Removal Confirmation - {DEFAULT_STUDENT} Notes"
+        window_title=f"⚠️ Removal Confirmation - {DEFAULT_STUDENT} Notes",
     )
-    
+
     if result == MessageBox_Yes:
         add_debug_msg(f"⚠️ CLEANUP: User confirmed {DEFAULT_STUDENT} data removal")
     else:  # MessageBox_Cancel or any other response
-        add_debug_msg(f"🛑 CLEANUP: User CANCELLED sync (during {DEFAULT_STUDENT} check)")
+        add_debug_msg(
+            f"🛑 CLEANUP: User CANCELLED sync (during {DEFAULT_STUDENT} check)"
+        )
 
     return result

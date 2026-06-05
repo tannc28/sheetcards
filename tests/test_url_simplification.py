@@ -15,7 +15,7 @@ class TestSpreadsheetIdExtraction:
 
         url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
         expected_id = "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP"
-        
+
         result = extract_spreadsheet_id_from_url(url)
         assert result == expected_id
 
@@ -25,7 +25,7 @@ class TestSpreadsheetIdExtraction:
 
         url = "https://docs.google.com/spreadsheets/d/1abc123xyz/edit#gid=0"
         expected_id = "1abc123xyz"
-        
+
         result = extract_spreadsheet_id_from_url(url)
         assert result == expected_id
 
@@ -48,7 +48,7 @@ class TestSpreadsheetIdExtraction:
         from src.utils import extract_spreadsheet_id_from_url
 
         url = "https://example.com/not-google-sheets"
-        
+
         result = extract_spreadsheet_id_from_url(url)
         assert result is None
 
@@ -57,12 +57,12 @@ class TestSpreadsheetIdExtraction:
         from src.utils import extract_spreadsheet_id_from_url
 
         url = "https://docs.google.com/spreadsheets/d/1abc123/view"
-        
+
         result = extract_spreadsheet_id_from_url(url)
         assert result is None
 
 
-@pytest.mark.unit  
+@pytest.mark.unit
 class TestSpreadsheetIdFromUrl:
     """Tests for getting spreadsheet ID with validation."""
 
@@ -71,7 +71,7 @@ class TestSpreadsheetIdFromUrl:
         from src.utils import get_spreadsheet_id_from_url
 
         url = "https://docs.google.com/spreadsheets/d/1abc123/edit?usp=sharing"
-        
+
         result = get_spreadsheet_id_from_url(url)
         assert result == "1abc123"
 
@@ -80,30 +80,32 @@ class TestSpreadsheetIdFromUrl:
         from src.utils import get_spreadsheet_id_from_url
 
         url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
-        
+
         result = get_spreadsheet_id_from_url(url)
         assert result == "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP"
 
     def test_get_id_invalid_url(self):
         """Test that fails for invalid URL."""
-        from src.utils import get_spreadsheet_id_from_url
         import pytest
 
+        from src.utils import get_spreadsheet_id_from_url
+
         url = "https://example.com/invalid"
-        
+
         with pytest.raises(ValueError) as exc_info:
             get_spreadsheet_id_from_url(url)
-        
+
         assert "valid Google Sheets edit URL" in str(exc_info.value)
 
     def test_get_id_empty_url(self):
         """Test that fails for empty URL."""
-        from src.utils import get_spreadsheet_id_from_url
         import pytest
+
+        from src.utils import get_spreadsheet_id_from_url
 
         with pytest.raises(ValueError) as exc_info:
             get_spreadsheet_id_from_url("")
-        
+
         assert "valid Google Sheets edit URL" in str(exc_info.value)
 
 
@@ -117,7 +119,7 @@ class TestEditUrlToTsv:
 
         url = "https://docs.google.com/spreadsheets/d/1abc123/edit?usp=sharing"
         expected = "https://docs.google.com/spreadsheets/d/1abc123/export?format=tsv"
-        
+
         result = convert_edit_url_to_tsv(url)
         assert result == expected
 
@@ -127,42 +129,45 @@ class TestEditUrlToTsv:
 
         url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
         expected = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/export?format=tsv"
-        
+
         result = convert_edit_url_to_tsv(url)
         assert result == expected
 
     def test_convert_invalid_url(self):
         """Test with invalid URL."""
-        from src.utils import convert_edit_url_to_tsv
         import pytest
 
+        from src.utils import convert_edit_url_to_tsv
+
         url = "https://example.com/not-google"
-        
+
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv(url)
-        
+
         assert "URL must be from Google Sheets" in str(exc_info.value)
 
     def test_convert_empty_url(self):
         """Test with empty URL."""
-        from src.utils import convert_edit_url_to_tsv
         import pytest
+
+        from src.utils import convert_edit_url_to_tsv
 
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv("")
-        
+
         assert "URL must be a non-empty string" in str(exc_info.value)
 
     def test_convert_non_edit_google_url(self):
         """Test with Google Sheets URL but not an edit one."""
-        from src.utils import convert_edit_url_to_tsv
         import pytest
 
+        from src.utils import convert_edit_url_to_tsv
+
         url = "https://docs.google.com/spreadsheets/d/1abc123/view"
-        
+
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv(url)
-        
+
         assert "URL must be a Google Sheets edit URL" in str(exc_info.value)
 
 
@@ -172,35 +177,38 @@ class TestValidateUrl:
 
     def test_validate_url_format_check(self):
         """Format validation test without connectivity."""
-        from src.utils import validate_url
         import pytest
+
+        from src.utils import validate_url
 
         # Non-Google Sheets URL
         url = "https://example.com/invalid"
-        
+
         with pytest.raises(ValueError) as exc_info:
             validate_url(url)
-        
+
         assert "Invalid URL" in str(exc_info.value)
 
     def test_validate_empty_url(self):
         """Empty URL validation test."""
-        from src.utils import validate_url
         import pytest
+
+        from src.utils import validate_url
 
         with pytest.raises(ValueError) as exc_info:
             validate_url("")
-        
+
         assert "URL must be a non-empty string" in str(exc_info.value)
 
     def test_validate_invalid_protocol(self):
         """Invalid protocol validation test."""
-        from src.utils import validate_url
         import pytest
 
+        from src.utils import validate_url
+
         url = "ftp://docs.google.com/spreadsheets/d/1abc123/edit"
-        
+
         with pytest.raises(ValueError) as exc_info:
             validate_url(url)
-        
+
         assert "Must start with http:// or https://" in str(exc_info.value)

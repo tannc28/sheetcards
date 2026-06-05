@@ -64,8 +64,10 @@ pip install pre-commit
 pre-commit install
 ```
 
-> The codebase is not yet fully `ruff`/`black`-clean, so CI runs these as **advisory**
-> (non-blocking) checks for now. A one-time formatting pass is welcome.
+> CI enforces `ruff` and `black` as **blocking** gates (`mypy` runs as advisory). Run
+> them before pushing, or install the pre-commit hooks above. The ruff config ignores a
+> few intentional conventions (camelCase Anki-API names, the dual-import pattern) and
+> defers some stylistic rules — see `[tool.ruff.lint]` in `pyproject.toml`.
 
 ## Building distributable packages
 

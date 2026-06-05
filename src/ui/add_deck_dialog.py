@@ -13,7 +13,6 @@ from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QLineEdit
-from ..compat import QMessageBox
 from ..compat import QProgressBar
 from ..compat import QPushButton
 from ..compat import QTimer
@@ -26,20 +25,25 @@ from ..config_manager import get_remote_decks
 from ..config_manager import is_deck_disconnected
 from ..data_processor import RemoteDeckError
 from ..data_processor import getRemoteDeck
-from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 from ..styled_messages import StyledMessageBox
-from ..utils import get_or_create_deck, validate_url, get_spreadsheet_id_from_url, add_debug_message
+from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+from ..utils import add_debug_message
+from ..utils import get_or_create_deck
+from ..utils import get_spreadsheet_id_from_url
+from ..utils import validate_url
 
 
 def is_dark_mode():
     """Detects if Anki is running in dark mode."""
     try:
         from aqt import theme
-        if hasattr(theme, 'theme_manager'):
+
+        if hasattr(theme, "theme_manager"):
             return theme.theme_manager.night_mode
         # Fallback for older Anki versions
         from aqt import mw as main_window
-        if main_window and hasattr(main_window, 'pm'):
+
+        if main_window and hasattr(main_window, "pm"):
             return main_window.pm.night_mode()
     except Exception:
         pass
@@ -109,7 +113,7 @@ class AddDeckDialog(QDialog):
         self.suggested_name = ""
         self.validation_timer = QTimer()
         self.current_step = 1
-        
+
         # Get colors based on current theme
         self.colors = get_colors()
 
@@ -240,7 +244,7 @@ class AddDeckDialog(QDialog):
         # Help text
         help_text = QLabel(
             "💡 <b>How to get the URL:</b> Open your Google Sheets spreadsheet, "
-            "click <b>Share</b>, set access to <b>\"Anyone with the link\"</b>, "
+            'click <b>Share</b>, set access to <b>"Anyone with the link"</b>, '
             "then copy the URL from your browser."
         )
         help_text.setStyleSheet(f"""
@@ -508,16 +512,16 @@ class AddDeckDialog(QDialog):
         # Force layout recalculation
         layout.activate()
         self.adjustSize()
-        
+
         # Get the recommended size
         size_hint = self.sizeHint()
-        
+
         # Calculate ideal dimensions with better bounds
         # When step2 is visible, need more width for 5 stat cards with potentially large numbers
         min_width = 720 if self.step2_group.isVisible() else 520
         ideal_width = max(size_hint.width(), min_width)
         ideal_height = max(size_hint.height(), 300)
-        
+
         # Apply the new size
         self.resize(ideal_width, ideal_height)
         self.updateGeometry()
@@ -584,12 +588,20 @@ class AddDeckDialog(QDialog):
             return
 
         # Check if URL is already in use
-        is_duplicate, deck_info, is_disconnected = self._check_duplicate_spreadsheet(url)
+        is_duplicate, deck_info, is_disconnected = self._check_duplicate_spreadsheet(
+            url
+        )
         if is_duplicate:
             if is_disconnected:
-                self._show_status("This spreadsheet will reconnect an existing deck", "warning")
+                self._show_status(
+                    "This spreadsheet will reconnect an existing deck", "warning"
+                )
             else:
-                deck_name = deck_info.get('remote_deck_name', 'Unknown') if deck_info else 'Unknown'
+                deck_name = (
+                    deck_info.get("remote_deck_name", "Unknown")
+                    if deck_info
+                    else "Unknown"
+                )
                 self._show_status(f"Already registered as: {deck_name}", "error")
                 self.add_button.setEnabled(False)
                 return
@@ -631,14 +643,21 @@ class AddDeckDialog(QDialog):
     def _show_status(self, message, status_type="info"):
         """Shows status message with visual indicator."""
         indicators = {
-            "waiting": ("⚪", self.colors['text_muted'], self.colors['background_secondary']),
-            "validating": ("🔄", self.colors['primary'], self.colors['primary_light']),
-            "success": ("✅", self.colors['success'], self.colors['success_light']),
-            "warning": ("⚠️", self.colors['warning'], self.colors['warning_light']),
-            "error": ("❌", self.colors['error'], self.colors['error_light']),
+            "waiting": (
+                "⚪",
+                self.colors["text_muted"],
+                self.colors["background_secondary"],
+            ),
+            "validating": ("🔄", self.colors["primary"], self.colors["primary_light"]),
+            "success": ("✅", self.colors["success"], self.colors["success_light"]),
+            "warning": ("⚠️", self.colors["warning"], self.colors["warning_light"]),
+            "error": ("❌", self.colors["error"], self.colors["error_light"]),
         }
 
-        icon, color, bg = indicators.get(status_type, ("ℹ️", self.colors['text_secondary'], self.colors['background_secondary']))
+        icon, color, bg = indicators.get(
+            status_type,
+            ("ℹ️", self.colors["text_secondary"], self.colors["background_secondary"]),
+        )
 
         self.status_indicator.setText(icon)
         self.status_indicator.setStyleSheet(f"""
@@ -672,19 +691,29 @@ class AddDeckDialog(QDialog):
         # Create stat cards
         # Create stat cards - ALWAYS SHOW ALL for consistent UI
         valid_lines = deck_stats.get("valid_note_lines", 0)
-        self.stats_layout.addWidget(self._create_stat_card("📝", str(valid_lines), "Questions"))
+        self.stats_layout.addWidget(
+            self._create_stat_card("📝", str(valid_lines), "Questions")
+        )
 
         unique_students = deck_stats.get("unique_students_count", 0)
-        self.stats_layout.addWidget(self._create_stat_card("👥", str(unique_students), "Students"))
+        self.stats_layout.addWidget(
+            self._create_stat_card("👥", str(unique_students), "Students")
+        )
 
         potential_notes = deck_stats.get("total_potential_anki_notes", 0)
-        self.stats_layout.addWidget(self._create_stat_card("🎯", str(potential_notes), "Anki Notes"))
+        self.stats_layout.addWidget(
+            self._create_stat_card("🎯", str(potential_notes), "Anki Notes")
+        )
 
         invalid_lines = deck_stats.get("invalid_note_lines", 0)
-        self.stats_layout.addWidget(self._create_stat_card("🫥", str(invalid_lines), "Invalid Rows"))
+        self.stats_layout.addWidget(
+            self._create_stat_card("🫥", str(invalid_lines), "Invalid Rows")
+        )
 
         ghost_rows = deck_stats.get("ignored_ghost_rows", 0)
-        self.stats_layout.addWidget(self._create_stat_card("👻", str(ghost_rows), "Ghost Rows"))
+        self.stats_layout.addWidget(
+            self._create_stat_card("👻", str(ghost_rows), "Ghost Rows")
+        )
 
         self.stats_layout.addStretch()
 
@@ -750,18 +779,27 @@ class AddDeckDialog(QDialog):
         url = self.url_edit.text().strip()
 
         if not url or not self.remote_deck:
-            StyledMessageBox.warning(self, "Validation Required", "Please validate the URL before proceeding.", detailed_text="The URL needs to be checked to ensure it points to a valid Google Sheet.")
+            StyledMessageBox.warning(
+                self,
+                "Validation Required",
+                "Please validate the URL before proceeding.",
+                detailed_text="The URL needs to be checked to ensure it points to a valid Google Sheet.",
+            )
             return
 
         # Final validation
-        is_duplicate, deck_info, is_disconnected = self._check_duplicate_spreadsheet(url)
+        is_duplicate, deck_info, is_disconnected = self._check_duplicate_spreadsheet(
+            url
+        )
         if is_duplicate and not is_disconnected:
-            deck_name = deck_info.get('remote_deck_name', 'Unknown') if deck_info else 'Unknown'
+            deck_name = (
+                deck_info.get("remote_deck_name", "Unknown") if deck_info else "Unknown"
+            )
             StyledMessageBox.warning(
                 self,
                 "Already Registered",
                 "This spreadsheet is already connected.",
-                detailed_text=f"It is currently registered as: {deck_name}\n\nYou don't need to add it again."
+                detailed_text=f"It is currently registered as: {deck_name}\n\nYou don't need to add it again.",
             )
             return
 
@@ -796,11 +834,14 @@ class AddDeckDialog(QDialog):
             sync_result = DeckNameManager.sync_deck_with_config(url)
             if sync_result:
                 synced_deck_id, synced_name = sync_result
-                add_debug_message(f"Deck synchronized: {actual_name} → {synced_name}", "ADD_DECK")
+                add_debug_message(
+                    f"Deck synchronized: {actual_name} → {synced_name}", "ADD_DECK"
+                )
 
             # Apply options
             try:
                 from ..utils import apply_sheets2anki_options_to_deck
+
                 apply_sheets2anki_options_to_deck(deck_id)
             except Exception as e:
                 add_debug_message(f"Warning: Error applying options: {e}", "ADD_DECK")
@@ -808,15 +849,21 @@ class AddDeckDialog(QDialog):
             # Reconnect if disconnected
             if is_deck_disconnected(url):
                 from ..config_manager import reconnect_deck
+
                 reconnect_deck(url)
 
             self.accept()
-            
+
             # Show success message (optional, but nice)
             # StyledMessageBox.success(self.parent(), "Success", f"Deck '{final_remote_name}' added successfully!")
 
         except Exception as e:
-            StyledMessageBox.critical(self, "Error Adding Deck", "An unexpected error occurred while adding the deck.", detailed_text=str(e))
+            StyledMessageBox.critical(
+                self,
+                "Error Adding Deck",
+                "An unexpected error occurred while adding the deck.",
+                detailed_text=str(e),
+            )
             self.add_button.setEnabled(True)
             self.add_button.setText("✓ Add Deck")
         finally:

@@ -8,12 +8,10 @@ This module allows the user to configure:
 4. Custom prompt template
 """
 
-from ..compat import AlignCenter
 from ..compat import AlignLeft
 from ..compat import DialogAccepted
 from ..compat import EchoModeNormal
 from ..compat import EchoModePassword
-from ..compat import MessageBox_Ok
 from ..compat import Palette_Window
 from ..compat import QButtonGroup
 from ..compat import QCheckBox
@@ -25,14 +23,14 @@ from ..compat import QLabel
 from ..compat import QLineEdit
 from ..compat import QPushButton
 from ..compat import QRadioButton
-from ..compat import QTextEdit
-from ..compat import QVBoxLayout
-from ..compat import QTimer
 from ..compat import QScrollArea
-from ..compat import QWidget
 from ..compat import QTabWidget
-from ..styled_messages import StyledMessageBox
+from ..compat import QTextEdit
+from ..compat import QTimer
+from ..compat import QVBoxLayout
+from ..compat import QWidget
 from ..compat import safe_exec_dialog
+from ..styled_messages import StyledMessageBox
 
 
 class AIAssistanceConfigDialog(QDialog):
@@ -47,7 +45,12 @@ class AIAssistanceConfigDialog(QDialog):
         self.resize(650, 700)
 
         # Get current config
-        from ..config_manager import get_ai_assistance_config, DEFAULT_AI_HELP_PROMPT, AI_HELP_PROMPTS, AI_ASK_PROMPTS, AI_CHECKER_PROMPTS
+        from ..config_manager import AI_ASK_PROMPTS
+        from ..config_manager import AI_CHECKER_PROMPTS
+        from ..config_manager import AI_HELP_PROMPTS
+        from ..config_manager import DEFAULT_AI_HELP_PROMPT
+        from ..config_manager import get_ai_assistance_config
+
         self.current_config = get_ai_assistance_config()
         self.default_prompt = DEFAULT_AI_HELP_PROMPT
         self.prompts = AI_HELP_PROMPTS
@@ -69,33 +72,33 @@ class AIAssistanceConfigDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#9C27B0',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
-                'input_bg': '#3d3d3d',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#9C27B0",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
+                "input_bg": "#3d3d3d",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#7B1FA2',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
-                'input_bg': '#ffffff',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#7B1FA2",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
+                "input_bg": "#ffffff",
             }
 
     def _apply_styles(self):
@@ -165,7 +168,9 @@ class AIAssistanceConfigDialog(QDialog):
         layout.addWidget(header_frame)
 
         # Enable checkbox
-        self.enable_checkbox = QCheckBox("Enable AI buttons on cards (Help, Ask, Checker)")
+        self.enable_checkbox = QCheckBox(
+            "Enable AI buttons on cards (Help, Ask, Checker)"
+        )
         self.enable_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 font-size: 12pt;
@@ -192,8 +197,10 @@ class AIAssistanceConfigDialog(QDialog):
         mobile_layout = QVBoxLayout(mobile_frame)
         mobile_layout.setContentsMargins(12, 8, 12, 8)
         mobile_layout.setSpacing(4)
-        
-        self.mobile_checkbox = QCheckBox("📱 Enable mobile support (embed API key in cards)")
+
+        self.mobile_checkbox = QCheckBox(
+            "📱 Enable mobile support (embed API key in cards)"
+        )
         self.mobile_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 font-size: 11pt;
@@ -206,7 +213,7 @@ class AIAssistanceConfigDialog(QDialog):
             }}
         """)
         mobile_layout.addWidget(self.mobile_checkbox)
-        
+
         mobile_warning = QLabel(
             "⚠️ Security warning: your API key is embedded in plaintext inside the card "
             "templates. Those templates are part of your Anki collection, so enabling this "
@@ -215,10 +222,12 @@ class AIAssistanceConfigDialog(QDialog):
             "read the cards can read and use the key. Enable only if you accept that, and "
             "prefer a restricted / low-quota key you can rotate."
         )
-        mobile_warning.setStyleSheet(f"color: {self.colors['accent_warning']}; font-size: 10pt;")
+        mobile_warning.setStyleSheet(
+            f"color: {self.colors['accent_warning']}; font-size: 10pt;"
+        )
         mobile_warning.setWordWrap(True)
         mobile_layout.addWidget(mobile_warning)
-        
+
         layout.addWidget(mobile_frame)
 
         # Service Selection
@@ -227,7 +236,7 @@ class AIAssistanceConfigDialog(QDialog):
         service_layout.setSpacing(15)
 
         self.service_group = QButtonGroup()
-        
+
         self.gemini_radio = self._create_service_radio("🔮 Gemini", "gemini", 0)
         self.claude_radio = self._create_service_radio("🧠 Claude", "claude", 1)
         self.openai_radio = self._create_service_radio("💬 OpenAI", "openai", 2)
@@ -265,12 +274,12 @@ class AIAssistanceConfigDialog(QDialog):
                 selection-background-color: {self.colors['accent_primary']};
             }}
         """)
-        
+
         # Add languages
         self.language_combo.addItem("🇺🇸 English (US)", "en_us")
         self.language_combo.addItem("🇧🇷 Português (Brasil)", "pt_br")
         self.language_combo.addItem("🇪🇸 Español (Latinoamérica)", "es_la")
-        
+
         language_layout.addWidget(self.language_combo)
         language_frame.layout().addLayout(language_layout)
         layout.addWidget(language_frame)
@@ -369,14 +378,16 @@ class AIAssistanceConfigDialog(QDialog):
         model_frame.layout().addLayout(model_layout)
 
         self.model_status_label = QLabel("")
-        self.model_status_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 10pt;")
+        self.model_status_label.setStyleSheet(
+            f"color: {self.colors['text_secondary']}; font-size: 10pt;"
+        )
         model_frame.layout().addWidget(self.model_status_label)
 
         layout.addWidget(model_frame)
 
         # Custom Prompt section
         prompt_frame = self._create_section_frame("Custom Prompts")
-        
+
         self.prompt_tabs = QTabWidget()
         self.prompt_tabs.setStyleSheet(f"""
             QTabWidget::pane {{
@@ -399,17 +410,19 @@ class AIAssistanceConfigDialog(QDialog):
                 font-weight: bold;
             }}
         """)
-        
+
         # Helper function to create prompt tab
         def create_prompt_tab(placeholder_text, desc_text):
             tab = QWidget()
             layout = QVBoxLayout(tab)
             layout.setContentsMargins(10, 10, 10, 10)
-            
+
             desc = QLabel(desc_text)
-            desc.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 10pt;")
+            desc.setStyleSheet(
+                f"color: {self.colors['text_secondary']}; font-size: 10pt;"
+            )
             layout.addWidget(desc)
-            
+
             edit = QTextEdit()
             edit.setPlaceholderText(placeholder_text)
             edit.setStyleSheet(f"""
@@ -426,24 +439,24 @@ class AIAssistanceConfigDialog(QDialog):
             edit.setMaximumHeight(150)
             layout.addWidget(edit)
             return tab, edit
-            
+
         self.tab_help, self.prompt_help_edit = create_prompt_tab(
             "Enter custom prompt template for AI Help...",
-            "Use {card_content} as placeholder for the card content."
+            "Use {card_content} as placeholder for the card content.",
         )
         self.tab_ask, self.prompt_ask_edit = create_prompt_tab(
             "Enter custom prompt template for AI Ask...",
-            "Use {card_content} and {question} as placeholders."
+            "Use {card_content} and {question} as placeholders.",
         )
         self.tab_checker, self.prompt_checker_edit = create_prompt_tab(
             "Enter custom prompt template for AI Checker...",
-            "Use {card_content} as placeholder for the card content."
+            "Use {card_content} as placeholder for the card content.",
         )
-        
+
         self.prompt_tabs.addTab(self.tab_help, "🤖 AI Help")
         self.prompt_tabs.addTab(self.tab_ask, "💬 AI Ask")
         self.prompt_tabs.addTab(self.tab_checker, "🔍 AI Checker")
-        
+
         prompt_frame.layout().addWidget(self.prompt_tabs)
 
         self.reset_prompt_btn = QPushButton("↻ Reset to Default")
@@ -522,15 +535,17 @@ class AIAssistanceConfigDialog(QDialog):
                 padding: 10px;
             }}
         """)
-        
+
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(15, 12, 15, 12)
         layout.setSpacing(10)
-        
+
         title_label = QLabel(title)
-        title_label.setStyleSheet(f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};")
+        title_label.setStyleSheet(
+            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+        )
         layout.addWidget(title_label)
-        
+
         return frame
 
     def _create_service_radio(self, text, service_id, button_id):
@@ -564,7 +579,7 @@ class AIAssistanceConfigDialog(QDialog):
     def _load_current_config(self):
         """Loads current configuration into the UI."""
         self.enable_checkbox.setChecked(self.current_config.get("enabled", False))
-        
+
         # Set service
         service = self.current_config.get("service", "gemini")
         if service == "gemini":
@@ -573,29 +588,35 @@ class AIAssistanceConfigDialog(QDialog):
             self.claude_radio.setChecked(True)
         elif service == "openai":
             self.openai_radio.setChecked(True)
-            
+
         # Set language
         language = self.current_config.get("language", "en_us")
         index = self.language_combo.findData(language)
         if index >= 0:
             self.language_combo.setCurrentIndex(index)
-        
+
         # Set API key
         self.api_key_input.setText(self.current_config.get("api_key", ""))
-        
+
         # Set model (add to combo if not empty)
         model = self.current_config.get("model", "")
         if model:
             self.model_combo.addItem(model, model)
             self.model_combo.setCurrentText(model)
-        
+
         # Set prompts
-        self.prompt_help_edit.setPlainText(self.current_config.get("prompt", self.default_prompt))
+        self.prompt_help_edit.setPlainText(
+            self.current_config.get("prompt", self.default_prompt)
+        )
         self.prompt_ask_edit.setPlainText(self.current_config.get("prompt_ask", ""))
-        self.prompt_checker_edit.setPlainText(self.current_config.get("prompt_checker", ""))
-        
+        self.prompt_checker_edit.setPlainText(
+            self.current_config.get("prompt_checker", "")
+        )
+
         # Set mobile enabled
-        self.mobile_checkbox.setChecked(self.current_config.get("mobile_enabled", False))
+        self.mobile_checkbox.setChecked(
+            self.current_config.get("mobile_enabled", False)
+        )
 
     def _toggle_key_visibility(self):
         """Toggles API key visibility."""
@@ -618,7 +639,9 @@ class AIAssistanceConfigDialog(QDialog):
         """Called when service selection changes."""
         # Clear models when service changes
         self.model_combo.clear()
-        self.model_status_label.setText("Click 'Fetch Models' to load available models.")
+        self.model_status_label.setText(
+            "Click 'Fetch Models' to load available models."
+        )
 
     def _fetch_models(self):
         """Fetches available models from the selected service."""
@@ -632,7 +655,7 @@ class AIAssistanceConfigDialog(QDialog):
             return
 
         service = self._get_selected_service()
-        
+
         self.fetch_models_btn.setEnabled(False)
         self.fetch_models_btn.setText("Loading...")
         self.model_status_label.setText("Fetching models...")
@@ -644,15 +667,15 @@ class AIAssistanceConfigDialog(QDialog):
         """Actually fetches the models (called after UI update)."""
         try:
             from ..ai_service import get_available_models
-            
+
             models = get_available_models(service, api_key)
-            
+
             self.model_combo.clear()
             for model in models:
                 self.model_combo.addItem(model["name"], model["id"])
-            
+
             self.model_status_label.setText(f"✓ Found {len(models)} models")
-            
+
             # Try to select previously configured model
             prev_model = self.current_config.get("model", "")
             if prev_model:
@@ -666,7 +689,7 @@ class AIAssistanceConfigDialog(QDialog):
                 self,
                 "Failed to Fetch Models",
                 "Could not fetch models from the API.",
-                detailed_text=str(e)
+                detailed_text=str(e),
             )
         finally:
             self.fetch_models_btn.setEnabled(True)
@@ -675,18 +698,24 @@ class AIAssistanceConfigDialog(QDialog):
     def _reset_prompt(self):
         """Resets prompts to default."""
         language = self.language_combo.currentData()
-        self.prompt_help_edit.setPlainText(self.prompts.get(language, self.prompts["en_us"]))
-        self.prompt_ask_edit.setPlainText(self.ask_prompts.get(language, self.ask_prompts["en_us"]))
-        self.prompt_checker_edit.setPlainText(self.checker_prompts.get(language, self.checker_prompts["en_us"]))
+        self.prompt_help_edit.setPlainText(
+            self.prompts.get(language, self.prompts["en_us"])
+        )
+        self.prompt_ask_edit.setPlainText(
+            self.ask_prompts.get(language, self.ask_prompts["en_us"])
+        )
+        self.prompt_checker_edit.setPlainText(
+            self.checker_prompts.get(language, self.checker_prompts["en_us"])
+        )
 
     def _on_language_changed(self):
         """Updates prompts when language changes, if they match a default prompt."""
         current_help = self.prompt_help_edit.toPlainText().strip()
         current_ask = self.prompt_ask_edit.toPlainText().strip()
         current_checker = self.prompt_checker_edit.toPlainText().strip()
-        
+
         new_lang = self.language_combo.currentData()
-        
+
         # Helper to check and update a specific prompt
         def update_if_default(current_text, dict_prompts, edit_widget):
             is_default = False
@@ -697,10 +726,12 @@ class AIAssistanceConfigDialog(QDialog):
             if is_default:
                 new_default = dict_prompts.get(new_lang, dict_prompts["en_us"])
                 edit_widget.setPlainText(new_default)
-                
+
         update_if_default(current_help, self.prompts, self.prompt_help_edit)
         update_if_default(current_ask, self.ask_prompts, self.prompt_ask_edit)
-        update_if_default(current_checker, self.checker_prompts, self.prompt_checker_edit)
+        update_if_default(
+            current_checker, self.checker_prompts, self.prompt_checker_edit
+        )
 
     def _apply_changes(self):
         """Applies configuration changes."""
@@ -743,7 +774,7 @@ class AIAssistanceConfigDialog(QDialog):
                 prompt_ask=prompt_ask if prompt_ask else None,
                 prompt_checker=prompt_checker if prompt_checker else None,
                 mobile_enabled=mobile_enabled,
-                language=language
+                language=language,
             )
 
             status = "enabled" if enabled else "disabled"
@@ -751,7 +782,11 @@ class AIAssistanceConfigDialog(QDialog):
                 self,
                 "AI Assistance Configuration Saved",
                 f"AI buttons are now {status}.",
-                detailed_text="Run a sync (Ctrl+Shift+S) to update card templates with the AI buttons." if enabled else None
+                detailed_text=(
+                    "Run a sync (Ctrl+Shift+S) to update card templates with the AI buttons."
+                    if enabled
+                    else None
+                ),
             )
 
             self.accept()

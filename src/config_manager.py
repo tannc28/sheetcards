@@ -12,25 +12,27 @@ Features:
 - Remote deck control
 """
 
+import copy
 import json
 import os
 import time
-import traceback
-import copy
 
 try:
     from .compat import mw
     from .styled_messages import StyledMessageBox
-    from .utils import get_spreadsheet_id_from_url, add_debug_message
+    from .utils import add_debug_message
+    from .utils import get_spreadsheet_id_from_url
 except ImportError:
     # For standalone tests
     from compat import mw
-    from utils import get_spreadsheet_id_from_url, add_debug_message
+    from utils import add_debug_message
+    from utils import get_spreadsheet_id_from_url
 
 
 def add_debug_msg(message, category="CONFIG"):
     """Local helper for debug messages."""
     add_debug_message(message, category)
+
 
 # =============================================================================
 # UTILITY FUNCTIONS FOR SPREADSHEET ID
@@ -46,7 +48,7 @@ def get_deck_id(url):
 
     Returns:
         str: Google Sheets spreadsheet ID
-        
+
     Raises:
         ValueError: If the URL is not a valid edit URL
     """
@@ -77,8 +79,8 @@ DEFAULT_CONFIG = {
         "ai_assistance_model": "",  # specific model ID
         "ai_assistance_api_key": "",  # user's API key
         "ai_help_prompt": "",  # custom prompt for AI Help (empty = use default for language)
-        "ai_ask_prompt": "",   # custom prompt for AI Ask (empty = use default for language)
-        "ai_checker_prompt": "", # custom prompt for AI Checker (empty = use default for language)
+        "ai_ask_prompt": "",  # custom prompt for AI Ask (empty = use default for language)
+        "ai_checker_prompt": "",  # custom prompt for AI Checker (empty = use default for language)
         "ai_assistance_mobile_enabled": False,  # whether to embed key in cards for mobile
         "ai_assistance_language": "en_us",  # default language
         # Image processor settings
@@ -93,9 +95,9 @@ DEFAULT_CONFIG = {
         "auto_remove_disabled_students": True,
         "sync_missing_students_notes": True,
         # Persistent history of students who have already been synchronized
-        "sync_history": {}  # format: "student_name": {"first_sync": timestamp, "last_sync": timestamp, "total_syncs": count}
+        "sync_history": {},  # format: "student_name": {"first_sync": timestamp, "last_sync": timestamp, "total_syncs": count}
     },
-    "decks": {}
+    "decks": {},
 }
 
 DEFAULT_META = copy.deepcopy(DEFAULT_CONFIG)
@@ -133,7 +135,7 @@ def get_config():
                 mw,
                 "Config Load Error",
                 f"Error loading config.json: {str(e)}",
-                detailed_text="Using default configuration."
+                detailed_text="Using default configuration.",
             )
         return DEFAULT_CONFIG.copy()
 
@@ -159,12 +161,12 @@ def get_meta():
         if os.path.exists(meta_path):
             with open(meta_path, encoding="utf-8") as f:
                 meta = json.load(f)
-        
+
         # 2. If meta.json doesn't exist, try config.json (Defaults)
         elif os.path.exists(config_path):
             with open(config_path, encoding="utf-8") as f:
                 meta = json.load(f)
-                
+
         # 3. Fallback to hardcoded defaults
         else:
             meta = DEFAULT_META.copy()
@@ -179,7 +181,7 @@ def get_meta():
                 mw,
                 "Meta Load Error",
                 f"Error loading meta.json: {str(e)}",
-                detailed_text="Using default configuration."
+                detailed_text="Using default configuration.",
             )
         return DEFAULT_META.copy()
 
@@ -203,7 +205,9 @@ def save_meta(meta):
             json.dump(meta, f, indent=4, ensure_ascii=False)
     except Exception as e:
         if mw:
-            StyledMessageBox.warning(mw, "Meta Save Error", f"Error saving meta.json: {str(e)}")
+            StyledMessageBox.warning(
+                mw, "Meta Save Error", f"Error saving meta.json: {str(e)}"
+            )
 
 
 def get_remote_decks():
@@ -281,8 +285,9 @@ def create_deck_info(
         dict: Full deck structure
     """
     # Resolve remote_deck_name conflicts using DeckNameManager
-    from .deck_manager import DeckNameManager
     import time
+
+    from .deck_manager import DeckNameManager
 
     resolved_remote_name = DeckNameManager.resolve_remote_name_conflict(
         url, remote_deck_name or ""
@@ -299,7 +304,7 @@ def create_deck_info(
 
     # Ensure created_at always exists
     current_timestamp = int(time.time())
-    created_at = additional_info.pop('created_at', current_timestamp)
+    created_at = additional_info.pop("created_at", current_timestamp)
 
     deck_info = {
         "remote_deck_url": url,
@@ -347,11 +352,11 @@ def ensure_deck_consistency():
     Fixes inconsistencies in existing decks.
     """
     import time
-    
+
     meta = get_meta()
     decks = meta.get("decks", {})
     modified = False
-    
+
     required_fields = {
         "remote_deck_url": None,
         "local_deck_id": None,
@@ -366,7 +371,7 @@ def ensure_deck_consistency():
         "first_sync": None,  # First synchronization timestamp
         "sync_count": 0,  # Synchronization counter
     }
-    
+
     for spreadsheet_id, deck_info in decks.items():
         for field, default_value in required_fields.items():
             if field not in deck_info:
@@ -384,88 +389,90 @@ def ensure_deck_consistency():
                 else:
                     deck_info[field] = default_value
                 modified = True
-                add_debug_msg(f"[CONSISTENCY] Added field '{field}' to deck {spreadsheet_id}")
-    
+                add_debug_msg(
+                    f"[CONSISTENCY] Added field '{field}' to deck {spreadsheet_id}"
+                )
+
     if modified:
         save_meta(meta)
         add_debug_msg(f"[CONSISTENCY] {len(decks)} decks fixed to ensure consistency")
     else:
         add_debug_msg("[CONSISTENCY] All decks are already consistent")
-    
+
     return modified
 
 
 def update_deck_sync_status(deck_url, success=True):
     """
     Updates synchronization fields for a deck after a sync.
-    
+
     Args:
         deck_url (str): Synchronized deck URL
         success (bool): Whether the sync was successful
-    
+
     Returns:
         bool: True if deck was new (never synchronized), False otherwise
     """
     import time
-    
+
     meta = get_meta()
     decks = meta.get("decks", {})
-    
+
     # Find deck by URL
     deck_hash = None
     deck_info = None
-    
+
     for hash_key, info in decks.items():
         if info.get("remote_deck_url") == deck_url:
             deck_hash = hash_key
             deck_info = info
             break
-    
+
     if not deck_info:
         add_debug_msg(f"[SYNC_STATUS] Deck not found for URL: {deck_url}")
         return False
-    
+
     # Check if it's a new deck (never synchronized)
     was_new_deck = deck_info.get("last_sync") is None
-    
+
     if success:
         current_timestamp = int(time.time())
-        
+
         # If it's the first successful sync, set first_sync
         if deck_info.get("first_sync") is None:
             deck_info["first_sync"] = current_timestamp
-        
+
         # Update last_sync
         deck_info["last_sync"] = current_timestamp
-        
+
         # Increment counter
         deck_info["sync_count"] = deck_info.get("sync_count", 0) + 1
-        
+
         # Save changes
         save_meta(meta)
-        
+
         add_debug_msg(f"[SYNC_STATUS] Deck {deck_hash} synced (new: {was_new_deck})")
-    
+
     return was_new_deck
 
 
 def is_deck_new(deck_url):
     """
     Checks if a deck is new (has never been synchronized).
-    
+
     Args:
         deck_url (str): Deck URL
-        
+
     Returns:
         bool: True if the deck has never been synchronized, False otherwise
     """
     meta = get_meta()
     decks = meta.get("decks", {})
-    
+
     for deck_info in decks.values():
         if deck_info.get("remote_deck_url") == deck_url:
             return deck_info.get("last_sync") is None
-    
+
     return False
 
 
@@ -673,7 +680,7 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
             url, current_remote_name
         )
         deck_info["remote_deck_name"] = resolved_remote_name
-        
+
         # Also update local_deck_configurations_package_name for consistency
         deck_options_mode = get_deck_options_mode()
         if deck_options_mode == "individual":
@@ -681,10 +688,12 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
             deck_info["local_deck_configurations_package_name"] = new_package_name
             add_debug_msg(f"[Sheets2Anki] Package name updated to '{new_package_name}'")
         elif deck_options_mode == "shared":
-            deck_info["local_deck_configurations_package_name"] = "Sheets2Anki - Default Options"
+            deck_info["local_deck_configurations_package_name"] = (
+                "Sheets2Anki - Default Options"
+            )
         else:  # manual
             deck_info["local_deck_configurations_package_name"] = None
-        
+
         updated = True
         if not silent:
             add_debug_msg(
@@ -697,7 +706,6 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
         return True
 
     return False
-
 
 
 def detect_deck_name_changes(skip_deleted=False):
@@ -944,12 +952,12 @@ def save_global_student_config(
     # Instead of overwriting the whole "students" section, update only necessary keys
     if "students" not in meta:
         meta["students"] = {}
-    
+
     meta["students"]["available_students"] = final_available
     meta["students"]["enabled_students"] = final_enabled
     meta["students"]["auto_remove_disabled_students"] = final_auto_remove
     meta["students"]["sync_missing_students_notes"] = final_sync_missing
-    
+
     # sync_history and other keys are preserved automatically
 
     save_meta(meta)
@@ -1062,15 +1070,16 @@ def set_sync_missing_students_notes(enabled):
 # STUDENT SYNCHRONIZATION HISTORY MANAGEMENT (NEW)
 # =============================================================================
 
+
 def get_student_sync_history():
     """
     Gets full student synchronization history.
-    
+
     Returns:
         dict: History in format {
             "student_name": {
                 "first_sync": timestamp,
-                "last_sync": timestamp, 
+                "last_sync": timestamp,
                 "total_syncs": count
             }
         }
@@ -1082,77 +1091,87 @@ def get_student_sync_history():
 def update_student_sync_history(students_synced):
     """
     Updates synchronization history for specified students.
-    
+
     This function should be called EVERY TIME a synchronization is completed
     successfully, regardless of manual note type renames.
-    
+
     Args:
         students_synced (set): Set of students that were synchronized
     """
     meta = get_meta()
     current_time = int(time.time())
-    
+
     # Ensure structure
     if "students" not in meta:
         meta["students"] = {}
     if "sync_history" not in meta["students"]:
         meta["students"]["sync_history"] = {}
-    
+
     sync_history = meta["students"]["sync_history"]
-    
+
     for student in students_synced:
         if student in sync_history:
             # Student already exists in history - update
             sync_history[student]["last_sync"] = current_time
-            sync_history[student]["total_syncs"] = sync_history[student].get("total_syncs", 0) + 1
+            sync_history[student]["total_syncs"] = (
+                sync_history[student].get("total_syncs", 0) + 1
+            )
         else:
             # New student - create entry
             sync_history[student] = {
                 "first_sync": current_time,
                 "last_sync": current_time,
-                "total_syncs": 1
+                "total_syncs": 1,
             }
-    
+
     # Save changes
     save_meta(meta)
-    add_debug_msg(f"📝 HISTORY: History updated for {len(students_synced)} students: {sorted(students_synced)}")
+    add_debug_msg(
+        f"📝 HISTORY: History updated for {len(students_synced)} students: {sorted(students_synced)}"
+    )
 
 
 def get_students_with_sync_history():
     """
     Returns set of all students who have ever been synchronized.
-    
+
     This is the definitive source of truth to know which students existed,
     regardless of manual renames or other modifications.
-    
+
     Returns:
         set: Set of students that have been synchronized
     """
     sync_history = get_student_sync_history()
     historical_students = set(sync_history.keys())
-    
+
     try:
         from .utils import add_debug_message
-        add_debug_message(f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}", "CLEANUP")
+
+        add_debug_message(
+            f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}",
+            "CLEANUP",
+        )
     except Exception:
-        add_debug_msg(f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}")
-    
+        add_debug_msg(
+            f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}"
+        )
+
     return historical_students
 
 
 def remove_student_from_sync_history(student_name):
     """
     Removes a student from synchronization history.
-    
+
     Should be called ONLY after confirmation that the user wants
     to permanently delete all student data.
-    
+
     Args:
         student_name (str): Student name to be removed from history
     """
     meta = get_meta()
     sync_history = meta.get("students", {}).get("sync_history", {})
-    
+
     if student_name in sync_history:
         del sync_history[student_name]
         save_meta(meta)
@@ -1165,28 +1184,30 @@ def cleanup_orphaned_sync_history():
     """
     Removes sync history entries that no longer correspond
     to real data in Anki (maintenance cleanup).
-    
+
     Returns:
         int: Number of entries removed
     """
     if not mw or not hasattr(mw, "col") or not mw.col:
         return 0
-    
+
     sync_history = get_student_sync_history()
     if not sync_history:
         return 0
-    
+
     orphaned_students = []
     col = mw.col
-    
+
     # Check each student in history
     for student in sync_history.keys():
         # Search for notes that have ID starting with this student
         student_notes = []
         try:
             # Approximate search for notes that might belong to student
-            all_notes = col.find_notes("*")[:2000]  # Limit search for performance - use wildcard
-            
+            all_notes = col.find_notes("*")[
+                :2000
+            ]  # Limit search for performance - use wildcard
+
             for note_id in all_notes:
                 try:
                     note = col.get_note(note_id)
@@ -1197,27 +1218,29 @@ def cleanup_orphaned_sync_history():
                             break  # Found at least one note, student still exists
                 except Exception:
                     continue
-            
+
             # If no note found, mark as orphan
             if not student_notes:
                 orphaned_students.append(student)
-                
+
         except Exception as e:
             add_debug_msg(f"⚠️ HISTORY: Error checking student '{student}': {e}")
             continue
-    
+
     # Remove orphans
     if orphaned_students:
         meta = get_meta()
         sync_history = meta.get("students", {}).get("sync_history", {})
-        
+
         for student in orphaned_students:
             if student in sync_history:
                 del sync_history[student]
-        
+
         save_meta(meta)
-        add_debug_msg(f"Sweep HISTORY: Removed {len(orphaned_students)} orphaned entries: {orphaned_students}")
-    
+        add_debug_msg(
+            f"Sweep HISTORY: Removed {len(orphaned_students)} orphaned entries: {orphaned_students}"
+        )
+
     return len(orphaned_students)
 
 
@@ -1260,7 +1283,9 @@ def discover_all_students_from_remote_decks():
 
         except Exception as e:
             # In case of error, continue with next deck
-            add_debug_msg(f"   ❌ Error discovering students from deck {deck_name}: {e}")
+            add_debug_msg(
+                f"   ❌ Error discovering students from deck {deck_name}: {e}"
+            )
             continue
 
     final_students = sorted(all_students)
@@ -1645,7 +1670,6 @@ def get_deck_note_types_by_ids(deck_url):
         return []
 
 
-
 def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=None):
     """
     Updates note type names in meta.json when remote_deck_name changes.
@@ -1691,7 +1715,11 @@ def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=N
                     is_reverse = note_type == "Reverse"
 
                     new_name = get_note_type_name(
-                        url, new_remote_deck_name, student=student, is_cloze=is_cloze, is_reverse=is_reverse
+                        url,
+                        new_remote_deck_name,
+                        student=student,
+                        is_cloze=is_cloze,
+                        is_reverse=is_reverse,
                     )
 
                 elif len(parts) == 3:  # Format: "Sheets2Anki - remote_name - type"
@@ -1700,7 +1728,11 @@ def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=N
                     is_reverse = note_type == "Reverse"
 
                     new_name = get_note_type_name(
-                        url, new_remote_deck_name, student=None, is_cloze=is_cloze, is_reverse=is_reverse
+                        url,
+                        new_remote_deck_name,
+                        student=None,
+                        is_cloze=is_cloze,
+                        is_reverse=is_reverse,
                     )
 
                 else:
@@ -1716,7 +1748,11 @@ def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=N
                             break
 
                     new_name = get_note_type_name(
-                        url, new_remote_deck_name, student=student, is_cloze=is_cloze, is_reverse=is_reverse
+                        url,
+                        new_remote_deck_name,
+                        student=student,
+                        is_cloze=is_cloze,
+                        is_reverse=is_reverse,
                     )
 
                 # Update if name changed
@@ -1771,7 +1807,7 @@ def set_deck_options_mode(mode):
     meta["config"]["deck_options_mode"] = mode
     save_meta(meta)
     add_debug_msg(f"[DECK_OPTIONS_MODE] Mode changed to: {mode}")
-    
+
     # Update existing deck settings to reflect the new mode
     update_deck_configurations_for_mode(mode)
 
@@ -1779,43 +1815,45 @@ def set_deck_options_mode(mode):
 def update_deck_configurations_for_mode(mode):
     """
     Updates existing deck settings when the options mode is changed.
-    
+
     Args:
         mode (str): The new mode ("shared", "individual", or "manual")
     """
     meta = get_meta()
     remote_decks = meta.get("decks", {})
-    
+
     for deck_hash, deck_info in remote_decks.items():
         remote_deck_name = deck_info.get("remote_deck_name", "UnknownDeck")
-        
+
         if mode == "individual":
             options_group_name = f"Sheets2Anki - {remote_deck_name}"
         elif mode == "shared":
             options_group_name = "Sheets2Anki - Default Options"
         else:  # manual
             options_group_name = None
-            
+
         deck_info["local_deck_configurations_package_name"] = options_group_name
-    
+
     save_meta(meta)
-    add_debug_msg(f"[DECK_CONFIG_UPDATE] Updated {len(remote_decks)} decks' configurations to '{mode}' mode")
+    add_debug_msg(
+        f"[DECK_CONFIG_UPDATE] Updated {len(remote_decks)} decks' configurations to '{mode}' mode"
+    )
 
 
 def get_deck_configurations_package_name(url):
     """
     Gets the configured options group name for a specific deck.
-    
+
     Args:
         url (str): Remote deck URL
-        
+
     Returns:
         str or None: Options group name or None if manual mode
     """
     remote_decks = get_remote_decks()
     spreadsheet_id = get_deck_id(url)
     deck_info = remote_decks.get(spreadsheet_id)
-    
+
     if deck_info:
         return deck_info.get("local_deck_configurations_package_name")
     return None
@@ -1824,7 +1862,7 @@ def get_deck_configurations_package_name(url):
 def set_deck_configurations_package_name(url, package_name):
     """
     Sets the options group name for a specific deck.
-    
+
     Args:
         url (str): Remote deck URL
         package_name (str or None): Options group name
@@ -1832,11 +1870,13 @@ def set_deck_configurations_package_name(url, package_name):
     remote_decks = get_remote_decks()
     spreadsheet_id = get_deck_id(url)
     deck_info = remote_decks.get(spreadsheet_id)
-    
+
     if deck_info:
         deck_info["local_deck_configurations_package_name"] = package_name
         add_remote_deck(url, deck_info)
-        add_debug_msg(f"[DECK_CONFIG] Options group '{package_name}' defined for deck {deck_info.get('remote_deck_name', 'Unknown')}")
+        add_debug_msg(
+            f"[DECK_CONFIG] Options group '{package_name}' defined for deck {deck_info.get('remote_deck_name', 'Unknown')}"
+        )
     else:
         add_debug_msg(f"[DECK_CONFIG] Deck not found for URL: {url}")
 
@@ -1849,14 +1889,14 @@ def ensure_deck_configurations_consistency():
     current_mode = get_deck_options_mode()
     meta = get_meta()
     remote_decks = meta.get("decks", {})
-    
+
     added_count = 0
     fixed_count = 0
-    
+
     for deck_hash, deck_info in remote_decks.items():
         remote_deck_name = deck_info.get("remote_deck_name", "UnknownDeck")
         current_package_name = deck_info.get("local_deck_configurations_package_name")
-        
+
         # Calculate what the correct name should be
         if current_mode == "individual":
             expected_package_name = f"Sheets2Anki - {remote_deck_name}"
@@ -1864,7 +1904,7 @@ def ensure_deck_configurations_consistency():
             expected_package_name = "Sheets2Anki - Default Options"
         else:  # manual
             expected_package_name = None
-        
+
         # If configuration doesn't exist, add it
         if "local_deck_configurations_package_name" not in deck_info:
             deck_info["local_deck_configurations_package_name"] = expected_package_name
@@ -1873,15 +1913,19 @@ def ensure_deck_configurations_consistency():
         elif current_package_name != expected_package_name:
             deck_info["local_deck_configurations_package_name"] = expected_package_name
             fixed_count += 1
-    
+
     total_changes = added_count + fixed_count
     if total_changes > 0:
         save_meta(meta)
         if added_count > 0:
-            add_debug_msg(f"[DECK_CONFIG_CONSISTENCY] Added local_deck_configurations_package_name configuration to {added_count} decks")
+            add_debug_msg(
+                f"[DECK_CONFIG_CONSISTENCY] Added local_deck_configurations_package_name configuration to {added_count} decks"
+            )
         if fixed_count > 0:
-            add_debug_msg(f"[DECK_CONFIG_CONSISTENCY] Fixed inconsistencies in {fixed_count} decks")
-    
+            add_debug_msg(
+                f"[DECK_CONFIG_CONSISTENCY] Fixed inconsistencies in {fixed_count} decks"
+            )
+
     return total_changes
 
 
@@ -1911,9 +1955,7 @@ def set_timer_position(position):
     """
     valid_positions = ["top_middle", "between_sections", "hidden"]
     if position not in valid_positions:
-        raise ValueError(
-            f"Invalid position: {position}. Use one of: {valid_positions}"
-        )
+        raise ValueError(f"Invalid position: {position}. Use one of: {valid_positions}")
 
     meta = get_meta()
     if "config" not in meta:
@@ -1960,12 +2002,6 @@ def set_ankiweb_sync_mode(mode):
     add_debug_msg(f"[ANKIWEB_SYNC_MODE] Mode changed to: {mode}")
 
 
-
-
-
-
-
-
 def set_ankiweb_sync_config(mode):
     """
     Sets all AnkiWeb synchronization configuration at once.
@@ -1986,9 +2022,7 @@ def set_ankiweb_sync_config(mode):
     # Notification setting removed (always enabled)
 
     save_meta(meta)
-    add_debug_msg(
-        f"[ANKIWEB_CONFIG] Updated: mode={mode}"
-    )
+    add_debug_msg(f"[ANKIWEB_CONFIG] Updated: mode={mode}")
 
 
 def fix_note_type_names_consistency(url, correct_remote_name):
@@ -2040,7 +2074,11 @@ def fix_note_type_names_consistency(url, correct_remote_name):
                 is_reverse = note_type == "Reverse"
 
                 return get_note_type_name(
-                    url, correct_remote_name, student=student, is_cloze=is_cloze, is_reverse=is_reverse
+                    url,
+                    correct_remote_name,
+                    student=student,
+                    is_cloze=is_cloze,
+                    is_reverse=is_reverse,
                 )
 
             elif len(parts) == 3:  # Format: "Sheets2Anki - remote_name - type"
@@ -2049,7 +2087,11 @@ def fix_note_type_names_consistency(url, correct_remote_name):
                 is_reverse = note_type == "Reverse"
 
                 return get_note_type_name(
-                    url, correct_remote_name, student=None, is_cloze=is_cloze, is_reverse=is_reverse
+                    url,
+                    correct_remote_name,
+                    student=None,
+                    is_cloze=is_cloze,
+                    is_reverse=is_reverse,
                 )
 
             return old_name  # Could not fix
@@ -2111,7 +2153,9 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
         spreadsheet_id = get_deck_id(url)
 
         if "decks" not in meta or spreadsheet_id not in meta["decks"]:
-            add_debug_msg(f"[NOTE_TYPE_SYNC] Deck {spreadsheet_id} not found in meta.json")
+            add_debug_msg(
+                f"[NOTE_TYPE_SYNC] Deck {spreadsheet_id} not found in meta.json"
+            )
             return {"updated_count": 0, "renamed_in_anki": 0, "updated_in_meta": 0}
 
         deck_info = meta["decks"][spreadsheet_id]
@@ -2161,8 +2205,8 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                 note_type_id_int = int(note_type_id)
 
                 # 1. RECREATE: Generate expected name based on correct pattern
-                student, note_type, is_cloze, is_reverse = extract_student_and_type_from_name(
-                    old_name
+                student, note_type, is_cloze, is_reverse = (
+                    extract_student_and_type_from_name(old_name)
                 )
 
                 if student is None and note_type is None:
@@ -2172,7 +2216,11 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                     continue
 
                 expected_name = get_note_type_name(
-                    url, correct_remote_name, student=student, is_cloze=is_cloze, is_reverse=is_reverse
+                    url,
+                    correct_remote_name,
+                    student=student,
+                    is_cloze=is_cloze,
+                    is_reverse=is_reverse,
                 )
 
                 # 2. DETECT: Compare old vs. recreated name
@@ -2182,7 +2230,9 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                     )
                     continue
 
-                add_debug_msg(f"[NOTE_TYPE_SYNC] 🔄 {note_type_id} needs to be updated:")
+                add_debug_msg(
+                    f"[NOTE_TYPE_SYNC] 🔄 {note_type_id} needs to be updated:"
+                )
                 add_debug_msg(f"[NOTE_TYPE_SYNC]    Old:      '{old_name}'")
                 add_debug_msg(f"[NOTE_TYPE_SYNC]    Expected: '{expected_name}'")
 
@@ -2214,7 +2264,9 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                 result["updated_count"] += 1
 
             except Exception as e:
-                add_debug_msg(f"[NOTE_TYPE_SYNC] ❌ Error processing {note_type_id}: {e}")
+                add_debug_msg(
+                    f"[NOTE_TYPE_SYNC] ❌ Error processing {note_type_id}: {e}"
+                )
                 continue
 
         # Save meta.json changes if there were updates
@@ -2234,7 +2286,9 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
         return result
 
     except Exception as e:
-        add_debug_msg(f"[NOTE_TYPE_SYNC] ❌ General error in robust synchronization: {e}")
+        add_debug_msg(
+            f"[NOTE_TYPE_SYNC] ❌ General error in robust synchronization: {e}"
+        )
         import traceback
 
         add_debug_msg(f"[NOTE_TYPE_SYNC] Traceback: {traceback.format_exc()}")
@@ -2245,45 +2299,49 @@ def fix_missing_created_at_fields():
     """
     Fixes decks that do not have 'created_at' key by adding a default timestamp.
     This function is useful for fixing inconsistencies in existing configurations.
-    
+
     Returns:
         dict: Report with the number of fixed decks
     """
     import time
-    
+
     try:
         remote_decks = get_remote_decks()
         corrected_count = 0
-        
+
         # Default timestamp for decks that do not have created_at
         # Use a timestamp that indicates it's a later fix
         default_timestamp = int(time.time())
-        
+
         for deck_hash, deck_info in remote_decks.items():
             if "created_at" not in deck_info:
                 deck_info["created_at"] = default_timestamp
                 corrected_count += 1
-                add_debug_msg(f"[CONFIG_FIX] Added 'created_at' for deck: {deck_info.get('remote_deck_name', 'Name not defined')}")
-        
+                add_debug_msg(
+                    f"[CONFIG_FIX] Added 'created_at' for deck: {deck_info.get('remote_deck_name', 'Name not defined')}"
+                )
+
         if corrected_count > 0:
             save_remote_decks(remote_decks)
-            add_debug_msg(f"[CONFIG_FIX] ✅ Fixed {corrected_count} decks without 'created_at'")
+            add_debug_msg(
+                f"[CONFIG_FIX] ✅ Fixed {corrected_count} decks without 'created_at'"
+            )
         else:
             add_debug_msg("[CONFIG_FIX] ✅ All decks already have 'created_at'")
-        
+
         return {
             "corrected_count": corrected_count,
             "total_decks": len(remote_decks),
-            "success": True
+            "success": True,
         }
-        
+
     except Exception as e:
         add_debug_msg(f"[CONFIG_FIX] ❌ Error fixing 'created_at': {e}")
         return {
             "corrected_count": 0,
             "total_decks": 0,
             "success": False,
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -2291,10 +2349,11 @@ def fix_missing_created_at_fields():
 # AUTOMATIC BACKUP CONFIGURATION FUNCTIONS
 # =============================================================================
 
+
 def get_auto_backup_config():
     """
     Gets automatic backup settings.
-    
+
     Returns:
         dict: Automatic backup settings including:
             - enabled: Whether auto-backup is enabled
@@ -2304,32 +2363,34 @@ def get_auto_backup_config():
     """
     meta = get_meta()
     config = meta.get("config", {})
-    
+
     return {
         "enabled": config.get("auto_backup_enabled", True),
         "directory": config.get("auto_backup_directory", ""),
         "max_files": config.get("auto_backup_max_files", 50),
-        "type": config.get("auto_backup_type", "simple")  # 'simple' or 'complete'
+        "type": config.get("auto_backup_type", "simple"),  # 'simple' or 'complete'
     }
 
 
-def set_auto_backup_config(enabled=None, directory=None, max_files=None, backup_type=None):
+def set_auto_backup_config(
+    enabled=None, directory=None, max_files=None, backup_type=None
+):
     """
     Sets automatic backup settings.
-    
+
     Args:
         enabled (bool, optional): Enable automatic backup
         directory (str, optional): Directory to save backups
         max_files (int, optional): Maximum files to keep
         backup_type (str, optional): Backup type ('simple' or 'complete')
-    
+
     Returns:
         bool: True if successfully saved
     """
     try:
         meta = get_meta()
         config = meta.get("config", {})
-        
+
         if enabled is not None:
             config["auto_backup_enabled"] = enabled
         if directory is not None:
@@ -2338,18 +2399,22 @@ def set_auto_backup_config(enabled=None, directory=None, max_files=None, backup_
             config["auto_backup_max_files"] = max_files
         if backup_type is not None:
             if backup_type not in ["simple", "complete"]:
-                add_debug_msg(f"[AUTO_BACKUP] Invalid backup type: {backup_type}. Using 'simple'.")
+                add_debug_msg(
+                    f"[AUTO_BACKUP] Invalid backup type: {backup_type}. Using 'simple'."
+                )
                 backup_type = "simple"
             config["auto_backup_type"] = backup_type
-        
+
         meta["config"] = config
         save_meta(meta)
-        
-        add_debug_msg(f"[AUTO_BACKUP] Settings updated: enabled={enabled}, directory={directory}, max_files={max_files}, type={backup_type}")
+
+        add_debug_msg(
+            f"[AUTO_BACKUP] Settings updated: enabled={enabled}, directory={directory}, max_files={max_files}, type={backup_type}"
+        )
         return True
-        
+
     except Exception as e:
-        add_debug_msg(f"[AUTO_BACKUP] Error saving settings: {e}")  
+        add_debug_msg(f"[AUTO_BACKUP] Error saving settings: {e}")
         return False
 
 
@@ -2357,23 +2422,22 @@ def get_auto_backup_directory():
     """
     Gets the configured directory for automatic backup.
     If not configured, returns a default directory.
-    
+
     Returns:
         str: Automatic backup directory path
     """
-    import os
     from pathlib import Path
-    
+
     config = get_auto_backup_config()
     directory = config.get("directory", "")
-    
+
     # If not configured, use default directory
     if not directory:
         # Use user/Documents/Sheets2Anki/AutoBackups directory
         user_home = Path.home()
         default_dir = user_home / "Documents" / "Sheets2Anki" / "AutoBackups"
         directory = str(default_dir)
-    
+
     # Create directory if it doesn't exist
     try:
         Path(directory).mkdir(parents=True, exist_ok=True)
@@ -2381,8 +2445,9 @@ def get_auto_backup_directory():
         add_debug_msg(f"[AUTO_BACKUP] Error creating directory {directory}: {e}")
         # Fallback to temporary directory
         import tempfile
+
         directory = tempfile.gettempdir()
-    
+
     return directory
 
 
@@ -2392,17 +2457,16 @@ def get_auto_backup_directory():
 
 # Default prompt template for AI Help
 # --- Re-exported from ai_prompts (split out of this file) ---
-from .ai_prompts import (  # noqa: F401
-    AI_HELP_PROMPTS,
-    DEFAULT_AI_HELP_PROMPT,
-    AI_ASK_PROMPTS,
-    AI_CHECKER_PROMPTS,
-)
+from .ai_prompts import AI_ASK_PROMPTS  # noqa: F401
+from .ai_prompts import AI_CHECKER_PROMPTS  # noqa: F401
+from .ai_prompts import AI_HELP_PROMPTS  # noqa: F401
+from .ai_prompts import DEFAULT_AI_HELP_PROMPT  # noqa: F401
+
 
 def get_ai_assistance_config():
     """
     Gets AI Assistance configuration settings.
-    
+
     Returns:
         dict: AI Assistance settings including:
             - enabled: Whether AI Assistance is enabled
@@ -2414,28 +2478,41 @@ def get_ai_assistance_config():
     """
     meta = get_meta()
     config = meta.get("config", {})
-    
+
     # Resolve language first so all prompts can use the same language-aware fallback.
     # Using 'or' ensures empty strings ("") are treated the same as missing keys.
     language = config.get("ai_assistance_language") or "en_us"
-    
+
     return {
         "enabled": config.get("ai_assistance_enabled", False),
         "service": config.get("ai_assistance_service", "gemini"),
         "model": config.get("ai_assistance_model", ""),
         "api_key": config.get("ai_assistance_api_key", ""),
-        "prompt": config.get("ai_help_prompt") or AI_HELP_PROMPTS.get(language, DEFAULT_AI_HELP_PROMPT),
-        "prompt_ask": config.get("ai_ask_prompt") or AI_ASK_PROMPTS.get(language, AI_ASK_PROMPTS["en_us"]),
-        "prompt_checker": config.get("ai_checker_prompt") or AI_CHECKER_PROMPTS.get(language, AI_CHECKER_PROMPTS["en_us"]),
+        "prompt": config.get("ai_help_prompt")
+        or AI_HELP_PROMPTS.get(language, DEFAULT_AI_HELP_PROMPT),
+        "prompt_ask": config.get("ai_ask_prompt")
+        or AI_ASK_PROMPTS.get(language, AI_ASK_PROMPTS["en_us"]),
+        "prompt_checker": config.get("ai_checker_prompt")
+        or AI_CHECKER_PROMPTS.get(language, AI_CHECKER_PROMPTS["en_us"]),
         "mobile_enabled": config.get("ai_assistance_mobile_enabled", False),
         "language": language,
     }
 
 
-def set_ai_assistance_config(enabled=None, service=None, model=None, api_key=None, prompt=None, prompt_ask=None, prompt_checker=None, mobile_enabled=None, language=None):
+def set_ai_assistance_config(
+    enabled=None,
+    service=None,
+    model=None,
+    api_key=None,
+    prompt=None,
+    prompt_ask=None,
+    prompt_checker=None,
+    mobile_enabled=None,
+    language=None,
+):
     """
     Sets AI Assistance configuration settings.
-    
+
     Args:
         enabled (bool, optional): Whether AI Assistance is enabled
         service (str, optional): Selected service (gemini, claude, openai)
@@ -2445,52 +2522,56 @@ def set_ai_assistance_config(enabled=None, service=None, model=None, api_key=Non
         prompt_ask (str, optional): Custom prompt template for AI Ask
         prompt_checker (str, optional): Custom prompt template for AI Checker
         mobile_enabled (bool, optional): Whether to embed API key for mobile support
-    
+
     Returns:
         bool: True if settings were saved successfully
     """
     valid_services = ["gemini", "claude", "openai"]
-    
+
     try:
         meta = get_meta()
         config = meta.get("config", {})
-        
+
         if enabled is not None:
             config["ai_assistance_enabled"] = bool(enabled)
-        
+
         if service is not None:
             if service not in valid_services:
-                add_debug_msg(f"[AI_ASSISTANCE] Invalid service: {service}. Using 'gemini'.")
+                add_debug_msg(
+                    f"[AI_ASSISTANCE] Invalid service: {service}. Using 'gemini'."
+                )
                 service = "gemini"
             config["ai_assistance_service"] = service
-        
+
         if model is not None:
             config["ai_assistance_model"] = str(model)
-        
+
         if api_key is not None:
             config["ai_assistance_api_key"] = str(api_key)
-        
+
         if prompt is not None:
             config["ai_help_prompt"] = str(prompt)
-        
+
         if prompt_ask is not None:
             config["ai_ask_prompt"] = str(prompt_ask)
-            
+
         if prompt_checker is not None:
             config["ai_checker_prompt"] = str(prompt_checker)
-        
+
         if mobile_enabled is not None:
             config["ai_assistance_mobile_enabled"] = bool(mobile_enabled)
-            
+
         if language is not None:
             config["ai_assistance_language"] = str(language)
-        
+
         meta["config"] = config
         save_meta(meta)
-        
-        add_debug_msg(f"[AI_ASSISTANCE] Settings updated: enabled={enabled}, service={service}, model={model}, mobile={mobile_enabled}, language={language}")
+
+        add_debug_msg(
+            f"[AI_ASSISTANCE] Settings updated: enabled={enabled}, service={service}, model={model}, mobile={mobile_enabled}, language={language}"
+        )
         return True
-        
+
     except Exception as e:
         add_debug_msg(f"[AI_ASSISTANCE] Error saving settings: {e}")
         return False
@@ -2499,7 +2580,7 @@ def set_ai_assistance_config(enabled=None, service=None, model=None, api_key=Non
 def get_ai_assistance_enabled():
     """
     Gets whether AI Assistance is enabled.
-    
+
     Returns:
         bool: True if AI Assistance is enabled
     """
@@ -2509,7 +2590,7 @@ def get_ai_assistance_enabled():
 def set_ai_assistance_enabled(enabled):
     """
     Sets whether AI Assistance is enabled.
-    
+
     Args:
         enabled (bool): True to enable AI Assistance
     """
@@ -2519,7 +2600,7 @@ def set_ai_assistance_enabled(enabled):
 def get_ai_assistance_service():
     """
     Gets the selected AI service.
-    
+
     Returns:
         str: Service name (gemini, claude, openai)
     """
@@ -2529,7 +2610,7 @@ def get_ai_assistance_service():
 def set_ai_assistance_service(service):
     """
     Sets the AI service.
-    
+
     Args:
         service (str): Service name (gemini, claude, openai)
     """
@@ -2539,7 +2620,7 @@ def set_ai_assistance_service(service):
 def get_ai_assistance_model():
     """
     Gets the selected AI model.
-    
+
     Returns:
         str: Model name
     """
@@ -2549,7 +2630,7 @@ def get_ai_assistance_model():
 def set_ai_assistance_model(model):
     """
     Sets the AI model.
-    
+
     Args:
         model (str): Model name
     """
@@ -2559,7 +2640,7 @@ def set_ai_assistance_model(model):
 def get_ai_assistance_api_key():
     """
     Gets the API key for the AI service.
-    
+
     Returns:
         str: API key
     """
@@ -2569,7 +2650,7 @@ def get_ai_assistance_api_key():
 def set_ai_assistance_api_key(api_key):
     """
     Sets the API key for the AI service.
-    
+
     Args:
         api_key (str): API key
     """
@@ -2579,7 +2660,7 @@ def set_ai_assistance_api_key(api_key):
 def get_ai_help_prompt():
     """
     Gets the custom prompt template.
-    
+
     Returns:
         str: Prompt template
     """
@@ -2589,7 +2670,7 @@ def get_ai_help_prompt():
 def set_ai_help_prompt(prompt):
     """
     Sets the custom prompt template.
-    
+
     Args:
         prompt (str): Prompt template
     """
@@ -2606,6 +2687,7 @@ def reset_ai_help_prompt():
 # =============================================================================
 # DEBUG LOG CONFIGURATION
 # =============================================================================
+
 
 def should_accumulate_logs():
     """Checks if logs should be accumulated over time."""
@@ -2626,10 +2708,11 @@ def set_accumulate_logs(enabled):
 # IMAGE PROCESSOR CONFIGURATION
 # =============================================================================
 
+
 def get_image_processor_config():
     """
     Gets Image Processor configuration settings.
-    
+
     Returns:
         dict: Configuration dictionary with:
             - enabled: Whether Image Processor is enabled
@@ -2639,7 +2722,7 @@ def get_image_processor_config():
     """
     meta = get_meta()
     config = meta.get("config", {})
-    
+
     return {
         "enabled": config.get("image_processor_enabled", False),
         "imgbb_api_key": config.get("image_processor_imgbb_key", ""),
@@ -2648,41 +2731,45 @@ def get_image_processor_config():
     }
 
 
-def set_image_processor_config(enabled=None, imgbb_api_key=None, webapp_url=None, auto_process=None):
+def set_image_processor_config(
+    enabled=None, imgbb_api_key=None, webapp_url=None, auto_process=None
+):
     """
     Sets Image Processor configuration settings.
-    
+
     Args:
         enabled (bool, optional): Whether Image Processor is enabled
         imgbb_api_key (str, optional): ImgBB API key for image hosting
         webapp_url (str, optional): Google Apps Script Web App URL
         auto_process (bool, optional): Whether to process images automatically during sync
-    
+
     Returns:
         bool: True if settings were saved successfully
     """
     try:
         meta = get_meta()
         config = meta.get("config", {})
-        
+
         if enabled is not None:
             config["image_processor_enabled"] = bool(enabled)
-        
+
         if imgbb_api_key is not None:
             config["image_processor_imgbb_key"] = str(imgbb_api_key)
-        
+
         if webapp_url is not None:
             config["image_processor_webapp_url"] = str(webapp_url)
-        
+
         if auto_process is not None:
             config["image_processor_auto_process"] = bool(auto_process)
-        
+
         meta["config"] = config
         save_meta(meta)
-        
-        add_debug_msg(f"[IMAGE_PROCESSOR] Settings updated: enabled={enabled}, auto_process={auto_process}")
+
+        add_debug_msg(
+            f"[IMAGE_PROCESSOR] Settings updated: enabled={enabled}, auto_process={auto_process}"
+        )
         return True
-        
+
     except Exception as e:
         add_debug_msg(f"[IMAGE_PROCESSOR] Error saving settings: {e}")
         return False
@@ -2691,7 +2778,7 @@ def set_image_processor_config(enabled=None, imgbb_api_key=None, webapp_url=None
 def get_image_processor_enabled():
     """
     Gets whether Image Processor is enabled.
-    
+
     Returns:
         bool: True if Image Processor is enabled
     """
@@ -2701,7 +2788,7 @@ def get_image_processor_enabled():
 def set_image_processor_enabled(enabled):
     """
     Sets whether Image Processor is enabled.
-    
+
     Args:
         enabled (bool): True to enable Image Processor
     """
@@ -2711,7 +2798,7 @@ def set_image_processor_enabled(enabled):
 def get_image_processor_imgbb_key():
     """
     Gets the ImgBB API key.
-    
+
     Returns:
         str: ImgBB API key
     """
@@ -2721,7 +2808,7 @@ def get_image_processor_imgbb_key():
 def set_image_processor_imgbb_key(api_key):
     """
     Sets the ImgBB API key.
-    
+
     Args:
         api_key (str): ImgBB API key
     """
@@ -2731,7 +2818,7 @@ def set_image_processor_imgbb_key(api_key):
 def get_image_processor_webapp_url():
     """
     Gets the Google Apps Script Web App URL.
-    
+
     Returns:
         str: Web App URL
     """
@@ -2741,7 +2828,7 @@ def get_image_processor_webapp_url():
 def set_image_processor_webapp_url(url):
     """
     Sets the Google Apps Script Web App URL.
-    
+
     Args:
         url (str): Web App URL
     """
@@ -2751,7 +2838,7 @@ def set_image_processor_webapp_url(url):
 def get_image_processor_auto_process():
     """
     Gets whether to process images automatically during sync.
-    
+
     Returns:
         bool: True if auto-processing is enabled
     """
@@ -2761,9 +2848,8 @@ def get_image_processor_auto_process():
 def set_image_processor_auto_process(enabled):
     """
     Sets whether to process images automatically during sync.
-    
+
     Args:
         enabled (bool): True to enable auto-processing
     """
     set_image_processor_config(auto_process=enabled)
-

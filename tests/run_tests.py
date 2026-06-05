@@ -21,9 +21,7 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Run Sheets2Anki tests")
 
-    parser.add_argument(
-        "--unit", action="store_true", help="Run only unit tests"
-    )
+    parser.add_argument("--unit", action="store_true", help="Run only unit tests")
     parser.add_argument(
         "--integration",
         action="store_true",
@@ -33,15 +31,9 @@ def main():
         "--coverage", action="store_true", help="Generate coverage report"
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    parser.add_argument(
-        "--fast", action="store_true", help="Skip tests marked as slow"
-    )
-    parser.add_argument(
-        "--file", "-f", type=str, help="Run specific test file"
-    )
-    parser.add_argument(
-        "--function", "-k", type=str, help="Run specific test function"
-    )
+    parser.add_argument("--fast", action="store_true", help="Skip tests marked as slow")
+    parser.add_argument("--file", "-f", type=str, help="Run specific test file")
+    parser.add_argument("--function", "-k", type=str, help="Run specific test function")
 
     args = parser.parse_args()
 
@@ -132,7 +124,10 @@ def show_test_info():
     print("-" * 40)
 
     test_files = [
-        ("test_core_logic.py", "Core logic (real src) — parsing, cloze, tags, URLs, guards"),
+        (
+            "test_core_logic.py",
+            "Core logic (real src) — parsing, cloze, tags, URLs, guards",
+        ),
         ("test_data_processor.py", "TSV data processing"),
         ("test_config_manager.py", "Settings management"),
         ("test_utils.py", "Utility functions"),

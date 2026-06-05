@@ -7,9 +7,7 @@ This module allows the user to choose between three timer positions:
 3. Hidden - Timer disabled
 """
 
-from ..compat import AlignCenter
 from ..compat import DialogAccepted
-from ..compat import MessageBox_Ok
 from ..compat import Palette_Window
 from ..compat import QButtonGroup
 from ..compat import QDialog
@@ -19,8 +17,8 @@ from ..compat import QLabel
 from ..compat import QPushButton
 from ..compat import QRadioButton
 from ..compat import QVBoxLayout
-from ..styled_messages import StyledMessageBox
 from ..compat import safe_exec_dialog
+from ..styled_messages import StyledMessageBox
 
 
 class TimerConfigDialog(QDialog):
@@ -36,6 +34,7 @@ class TimerConfigDialog(QDialog):
 
         # Get current position
         from ..config_manager import get_timer_position
+
         self.current_position = get_timer_position()
 
         # Detect dark mode
@@ -52,31 +51,31 @@ class TimerConfigDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#9C27B0',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#9C27B0",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#7B1FA2',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#7B1FA2",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
             }
 
     def _apply_styles(self):
@@ -118,9 +117,7 @@ class TimerConfigDialog(QDialog):
         title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
         header_layout.addWidget(title_label)
 
-        desc_label = QLabel(
-            "Choose where the review timer appears on your cards."
-        )
+        desc_label = QLabel("Choose where the review timer appears on your cards.")
         desc_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
         desc_label.setWordWrap(True)
         header_layout.addWidget(desc_label)
@@ -136,8 +133,8 @@ class TimerConfigDialog(QDialog):
             "📍 Top Middle",
             "Fixed",
             "Timer appears fixed at the top center of the screen, always visible.",
-            self.colors['accent_primary'],
-            0
+            self.colors["accent_primary"],
+            0,
         )
         layout.addWidget(top_middle_card)
 
@@ -147,8 +144,8 @@ class TimerConfigDialog(QDialog):
             "📋 Between Sections",
             "Default",
             "Timer appears between CONTEXT and CARD sections, flows with content.",
-            self.colors['accent_success'],
-            1
+            self.colors["accent_success"],
+            1,
         )
         layout.addWidget(between_sections_card)
 
@@ -158,8 +155,8 @@ class TimerConfigDialog(QDialog):
             "🚫 Hidden",
             "Disabled",
             "Timer is completely disabled. No timer will be shown on cards.",
-            self.colors['accent_warning'],
-            2
+            self.colors["accent_warning"],
+            2,
         )
         layout.addWidget(hidden_card)
 
@@ -208,11 +205,13 @@ class TimerConfigDialog(QDialog):
         layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
-    def _create_option_card(self, position, title, badge, description, accent_color, button_id):
+    def _create_option_card(
+        self, position, title, badge, description, accent_color, button_id
+    ):
         """Creates a styled option card."""
         card = QFrame()
         card.setObjectName(f"card_{position}")
-        
+
         # Base card style
         card.setStyleSheet(f"""
             QFrame#card_{position} {{
@@ -225,7 +224,7 @@ class TimerConfigDialog(QDialog):
                 border-color: {accent_color};
             }}
         """)
-        
+
         card_layout = QHBoxLayout(card)
         card_layout.setContentsMargins(15, 12, 15, 12)
         card_layout.setSpacing(15)
@@ -267,7 +266,9 @@ class TimerConfigDialog(QDialog):
         # Title row with badge
         title_row = QHBoxLayout()
         title_label = QLabel(title)
-        title_label.setStyleSheet(f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};")
+        title_label.setStyleSheet(
+            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+        )
         title_row.addWidget(title_label)
 
         badge_label = QLabel(badge)
@@ -286,7 +287,9 @@ class TimerConfigDialog(QDialog):
 
         # Description
         desc_label = QLabel(description)
-        desc_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text_secondary']};")
+        desc_label.setStyleSheet(
+            f"font-size: 12pt; color: {self.colors['text_secondary']};"
+        )
         desc_label.setWordWrap(True)
         content_layout.addWidget(desc_label)
 
@@ -312,6 +315,7 @@ class TimerConfigDialog(QDialog):
 
             try:
                 from ..config_manager import set_timer_position
+
                 set_timer_position(new_position)
 
                 # Feedback
@@ -325,7 +329,7 @@ class TimerConfigDialog(QDialog):
                     self,
                     "Timer Position Updated",
                     f"Timer position changed to: {position_names[new_position]}",
-                    detailed_text="Run a sync (Ctrl+Shift+S) to update card templates with the new timer position."
+                    detailed_text="Run a sync (Ctrl+Shift+S) to update card templates with the new timer position.",
                 )
 
                 self.accept()

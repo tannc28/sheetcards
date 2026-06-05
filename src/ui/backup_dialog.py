@@ -9,42 +9,34 @@ This module provides a comprehensive dialog for managing backups with:
 """
 
 import os
-from datetime import datetime
-from pathlib import Path
-
-from ..compat import (
-    mw,
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QFileDialog,
-    QFrame,
-    QMessageBox,
-    QCheckBox,
-    QSpinBox,
-    QLineEdit,
-    QScrollArea,
-    QWidget,
-    QButtonGroup,
-    QRadioButton,
-    QProgressDialog,
-    QTimer,
-    safe_exec_dialog,
-    Palette_Window,
-    AlignCenter,
-    ScrollBarAlwaysOff,
-)
-from ..styled_messages import StyledMessageBox
-from ..backup_system import SimplifiedBackupManager
-from ..config_manager import (
-    get_auto_backup_config,
-    set_auto_backup_config,
-    get_auto_backup_directory,
-)
 import threading
 import time
+from datetime import datetime
+
+from ..backup_system import SimplifiedBackupManager
+from ..compat import Palette_Window
+from ..compat import QButtonGroup
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFileDialog
+from ..compat import QFrame
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QLineEdit
+from ..compat import QProgressDialog
+from ..compat import QPushButton
+from ..compat import QRadioButton
+from ..compat import QScrollArea
+from ..compat import QSpinBox
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import ScrollBarAlwaysOff
+from ..compat import mw
+from ..compat import safe_exec_dialog
+from ..config_manager import get_auto_backup_config
+from ..config_manager import get_auto_backup_directory
+from ..config_manager import set_auto_backup_config
+from ..styled_messages import StyledMessageBox
 
 
 class BackupDialog(QDialog):
@@ -57,14 +49,14 @@ class BackupDialog(QDialog):
         self.setWindowTitle("Backup & Restore - Sheets2Anki")
         self.setMinimumSize(700, 750)
         self.resize(750, 800)
-        
+
         self.backup_manager = SimplifiedBackupManager()
-        
+
         # Detect dark mode
         palette = self.palette()
         bg_color = palette.color(Palette_Window)
         self.is_dark_mode = bg_color.lightness() < 128
-        
+
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
@@ -74,37 +66,37 @@ class BackupDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'text_muted': '#808080',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_danger': '#e53935',
-                'accent_purple': '#9C27B0',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
-                'input_bg': '#383838',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "text_muted": "#808080",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_danger": "#e53935",
+                "accent_purple": "#9C27B0",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
+                "input_bg": "#383838",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'text_muted': '#999999',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_danger': '#d32f2f',
-                'accent_purple': '#7B1FA2',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
-                'input_bg': '#fafafa',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "text_muted": "#999999",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_danger": "#d32f2f",
+                "accent_purple": "#7B1FA2",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
+                "input_bg": "#fafafa",
             }
 
     def _apply_styles(self):
@@ -133,7 +125,7 @@ class BackupDialog(QDialog):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(ScrollBarAlwaysOff)
-        
+
         scroll_widget = QWidget()
         layout = QVBoxLayout(scroll_widget)
         layout.setSpacing(15)
@@ -204,7 +196,9 @@ class BackupDialog(QDialog):
 
     def _create_manual_backup_section(self):
         """Creates the manual backup section."""
-        section = self._create_section_frame("📦 Manual Backup", "Create a backup of your data now")
+        section = self._create_section_frame(
+            "📦 Manual Backup", "Create a backup of your data now"
+        )
         layout = section.layout()
 
         # Backup type cards
@@ -217,8 +211,8 @@ class BackupDialog(QDialog):
             "Configuration files only",
             "Backs up your addon settings, remote deck links, and student configurations. "
             "Perfect for restoring after reinstalling the addon.",
-            self.colors['accent_primary'],
-            self._create_simple_backup
+            self.colors["accent_primary"],
+            self._create_simple_backup,
         )
         cards_layout.addWidget(simple_card)
 
@@ -228,8 +222,8 @@ class BackupDialog(QDialog):
             "Configuration + Deck Data",
             "Backs up everything including your Sheets2Anki deck with all cards, "
             "scheduling data, and media files.",
-            self.colors['accent_success'],
-            self._create_complete_backup
+            self.colors["accent_success"],
+            self._create_complete_backup,
         )
         cards_layout.addWidget(complete_card)
 
@@ -238,7 +232,9 @@ class BackupDialog(QDialog):
 
     def _create_restore_section(self):
         """Creates the restore section."""
-        section = self._create_section_frame("🔄 Restore Backup", "Recover from a previous backup")
+        section = self._create_section_frame(
+            "🔄 Restore Backup", "Recover from a previous backup"
+        )
         layout = section.layout()
 
         # Restore type cards
@@ -251,8 +247,8 @@ class BackupDialog(QDialog):
             "Configuration only",
             "Restores addon settings and remote deck links without modifying "
             "your Anki data. Creates a safety backup first.",
-            self.colors['accent_warning'],
-            self._restore_config_backup
+            self.colors["accent_warning"],
+            self._restore_config_backup,
         )
         cards_layout.addWidget(config_card)
 
@@ -262,8 +258,8 @@ class BackupDialog(QDialog):
             "Complete data restore",
             "Restores everything including deck data. This will replace "
             "your current Sheets2Anki deck. Creates a safety backup first.",
-            self.colors['accent_danger'],
-            self._restore_full_backup
+            self.colors["accent_danger"],
+            self._restore_full_backup,
         )
         cards_layout.addWidget(full_card)
 
@@ -294,8 +290,8 @@ class BackupDialog(QDialog):
     def _create_backup_directory_section(self):
         """Creates the backup directory configuration section."""
         section = self._create_section_frame(
-            "📁 Backup Directory", 
-            "Where backups are saved and searched for in Backup Status"
+            "📁 Backup Directory",
+            "Where backups are saved and searched for in Backup Status",
         )
         layout = section.layout()
 
@@ -312,8 +308,12 @@ class BackupDialog(QDialog):
         dir_layout = QVBoxLayout(dir_frame)
         dir_layout.setSpacing(8)
 
-        dir_label = QLabel("All backups (manual, automatic, and safety) will be saved to this directory:")
-        dir_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text_secondary']};")
+        dir_label = QLabel(
+            "All backups (manual, automatic, and safety) will be saved to this directory:"
+        )
+        dir_label.setStyleSheet(
+            f"font-size: 12pt; color: {self.colors['text_secondary']};"
+        )
         dir_label.setWordWrap(True)
         dir_layout.addWidget(dir_label)
 
@@ -363,8 +363,7 @@ class BackupDialog(QDialog):
     def _create_auto_backup_section(self):
         """Creates the auto-backup configuration section."""
         section = self._create_section_frame(
-            "⏰ Automatic Backup", 
-            "Configure automatic backups before each sync"
+            "⏰ Automatic Backup", "Configure automatic backups before each sync"
         )
         layout = section.layout()
 
@@ -408,11 +407,13 @@ class BackupDialog(QDialog):
         type_layout.setSpacing(8)
 
         type_label = QLabel("Backup type:")
-        type_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text_secondary']};")
+        type_label.setStyleSheet(
+            f"font-size: 12pt; color: {self.colors['text_secondary']};"
+        )
         type_layout.addWidget(type_label)
 
         self.auto_type_group = QButtonGroup(self)
-        
+
         type_buttons_layout = QHBoxLayout()
         type_buttons_layout.setSpacing(20)
 
@@ -497,7 +498,9 @@ class BackupDialog(QDialog):
 
     def _create_backup_info_section(self):
         """Creates the backup information section."""
-        section = self._create_section_frame("📊 Backup Status", "Current backup information")
+        section = self._create_section_frame(
+            "📊 Backup Status", "Current backup information"
+        )
         layout = section.layout()
 
         info_frame = QFrame()
@@ -536,7 +539,7 @@ class BackupDialog(QDialog):
             }}
         """)
         refresh_btn.clicked.connect(self._refresh_backup_status)
-        
+
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         btn_layout.addWidget(refresh_btn)
@@ -704,26 +707,26 @@ class BackupDialog(QDialog):
 
     def _darken_color(self, hex_color):
         """Darkens a hex color by 15%."""
-        hex_color = hex_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
         darkened = tuple(max(0, int(c * 0.85)) for c in rgb)
         return f"#{darkened[0]:02x}{darkened[1]:02x}{darkened[2]:02x}"
 
     def _load_current_settings(self):
         """Loads current auto-backup settings."""
         config = get_auto_backup_config()
-        
+
         self.auto_backup_check.setChecked(config.get("enabled", True))
         self.dir_input.setText(config.get("directory", ""))
         self.max_files_spin.setValue(config.get("max_files", 50))
-        
+
         # Load backup type (default to simple)
         backup_type = config.get("type", "simple")
         if backup_type == "complete":
             self.radio_complete.setChecked(True)
         else:
             self.radio_simple.setChecked(True)
-        
+
         # Update UI state
         self._on_auto_backup_toggled(config.get("enabled", True))
 
@@ -731,7 +734,7 @@ class BackupDialog(QDialog):
         """Handles auto-backup checkbox toggle."""
         self.auto_type_frame.setEnabled(enabled)
         self.max_frame.setEnabled(enabled)
-        
+
         opacity = "1.0" if enabled else "0.5"
         for frame in [self.auto_type_frame, self.max_frame]:
             frame.setStyleSheet(frame.styleSheet() + f"opacity: {opacity};")
@@ -739,13 +742,13 @@ class BackupDialog(QDialog):
     def _browse_directory(self):
         """Opens directory browser dialog."""
         current_dir = self.dir_input.text() or get_auto_backup_directory()
-        
+
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select Backup Directory",
             current_dir,
         )
-        
+
         if directory:
             self.dir_input.setText(directory)
 
@@ -757,7 +760,7 @@ class BackupDialog(QDialog):
             self,
             "Save Backup",
             os.path.join(last_dir, default_name),
-            "Zip Files (*.zip)"
+            "Zip Files (*.zip)",
         )
         return filename
 
@@ -766,60 +769,59 @@ class BackupDialog(QDialog):
         # Use backup directory by default so users find their backups
         last_dir = get_auto_backup_directory()
         filename, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Backup File",
-            last_dir,
-            "Zip Files (*.zip)"
+            self, "Select Backup File", last_dir, "Zip Files (*.zip)"
         )
         return filename
 
     def _validate_backup_directory(self) -> str:
         """
         Validates the backup directory is configured and exists.
-        
+
         Returns:
             str: Valid backup directory path, or empty string if invalid
         """
         # Get the configured directory
         backup_dir = get_auto_backup_directory()
-        
+
         # Check if directory is configured
         if not backup_dir:
             StyledMessageBox.warning(
                 self,
                 "Backup Directory Not Configured",
                 "Please configure a backup directory first.",
-                detailed_text="Go to the 'Backup Directory' section above and set a valid directory path."
+                detailed_text="Go to the 'Backup Directory' section above and set a valid directory path.",
             )
             return ""
-        
+
         # Check if directory exists
         if not os.path.isdir(backup_dir):
             StyledMessageBox.warning(
                 self,
                 "Backup Directory Not Found",
                 f"The backup directory does not exist:\n{backup_dir}",
-                detailed_text="Please configure a valid directory in the 'Backup Directory' section above, or create the directory first."
+                detailed_text="Please configure a valid directory in the 'Backup Directory' section above, or create the directory first.",
             )
             return ""
-        
+
         return backup_dir
 
-    def _run_with_progress(self, operation_func, title: str, message: str, timeout_seconds: int = 60):
+    def _run_with_progress(
+        self, operation_func, title: str, message: str, timeout_seconds: int = 60
+    ):
         """
         Runs an operation with a progress dialog and timeout.
-        
+
         Args:
             operation_func: Function to execute (should return bool for success)
             title: Title for the progress dialog
             message: Message to show during operation
             timeout_seconds: Maximum time allowed for operation (default: 60)
-            
+
         Returns:
             tuple: (success: bool, timed_out: bool, error: str or None)
         """
         result = {"success": False, "error": None, "completed": False}
-        
+
         def run_operation():
             try:
                 result["success"] = operation_func()
@@ -827,7 +829,7 @@ class BackupDialog(QDialog):
                 result["error"] = str(e)
             finally:
                 result["completed"] = True
-        
+
         # Create progress dialog
         progress = QProgressDialog(message, "Cancel", 0, 0, self)
         progress.setWindowTitle(title)
@@ -836,7 +838,7 @@ class BackupDialog(QDialog):
         progress.setAutoReset(False)
         progress.setCancelButton(None)  # No cancel button for backup operations
         progress.setMinimumWidth(400)
-        
+
         # Apply styling
         progress.setStyleSheet(f"""
             QProgressDialog {{
@@ -859,40 +861,44 @@ class BackupDialog(QDialog):
                 border-radius: 5px;
             }}
         """)
-        
+
         progress.show()
-        
+
         # Start operation in background thread
         thread = threading.Thread(target=run_operation, daemon=True)
         thread.start()
-        
+
         # Track time for timeout
         start_time = time.time()
-        
+
         # Wait for completion with timeout check
         while not result["completed"]:
             # Process Qt events to keep UI responsive
             if mw and mw.app:
                 mw.app.processEvents()
-            
+
             # Check timeout
             elapsed = time.time() - start_time
             if elapsed > timeout_seconds:
                 progress.close()
-                return (False, True, f"Operation timed out after {timeout_seconds} seconds")
-            
+                return (
+                    False,
+                    True,
+                    f"Operation timed out after {timeout_seconds} seconds",
+                )
+
             # Update progress message with elapsed time
             elapsed_int = int(elapsed)
             progress.setLabelText(f"{message}\n\nElapsed: {elapsed_int}s")
-            
+
             # Small sleep to prevent CPU spinning
             time.sleep(0.1)
-        
+
         progress.close()
-        
+
         if result["error"]:
             return (False, False, result["error"])
-        
+
         return (result["success"], False, None)
 
     def _create_simple_backup(self):
@@ -901,32 +907,38 @@ class BackupDialog(QDialog):
         backup_dir = self._validate_backup_directory()
         if not backup_dir:
             return
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_filename = f"sheets2anki_backup_manual_simple_{timestamp}.zip"
         path = os.path.join(backup_dir, backup_filename)
-        
+
         # Run with progress dialog
         success, timed_out, error = self._run_with_progress(
             lambda: self.backup_manager.create_config_backup(path),
             "Creating Backup",
-            "Creating simple backup (configuration only)..."
+            "Creating simple backup (configuration only)...",
         )
-        
+
         if timed_out:
-            StyledMessageBox.critical(self, "Timeout", "The backup operation timed out after 60 seconds.")
+            StyledMessageBox.critical(
+                self, "Timeout", "The backup operation timed out after 60 seconds."
+            )
         elif error:
-            StyledMessageBox.critical(self, "Backup Failed", f"Error creating backup:\n{error}")
+            StyledMessageBox.critical(
+                self, "Backup Failed", f"Error creating backup:\n{error}"
+            )
         elif success:
             StyledMessageBox.success(
-                self, 
-                "Backup Created", 
-                "Simple backup created successfully!", 
-                detailed_text=f"Location: {path}"
+                self,
+                "Backup Created",
+                "Simple backup created successfully!",
+                detailed_text=f"Location: {path}",
             )
             self._refresh_backup_status()
         else:
-            StyledMessageBox.warning(self, "Backup Failed", "The backup operation failed. Please try again.")
+            StyledMessageBox.warning(
+                self, "Backup Failed", "The backup operation failed. Please try again."
+            )
 
     def _create_complete_backup(self):
         """Creates a complete (full) backup in the configured backup directory."""
@@ -934,39 +946,45 @@ class BackupDialog(QDialog):
         backup_dir = self._validate_backup_directory()
         if not backup_dir:
             return
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_filename = f"sheets2anki_backup_manual_full_{timestamp}.zip"
         path = os.path.join(backup_dir, backup_filename)
-        
+
         # Run with progress dialog
         success, timed_out, error = self._run_with_progress(
             lambda: self.backup_manager.create_backup(path),
             "Creating Backup",
-            "Creating complete backup (configuration + deck data)...\nThis may take a moment."
+            "Creating complete backup (configuration + deck data)...\nThis may take a moment.",
         )
-        
+
         if timed_out:
-            StyledMessageBox.critical(self, "Timeout", "The backup operation timed out after 60 seconds.")
+            StyledMessageBox.critical(
+                self, "Timeout", "The backup operation timed out after 60 seconds."
+            )
         elif error:
-            StyledMessageBox.critical(self, "Backup Failed", f"Error creating backup:\n{error}")
+            StyledMessageBox.critical(
+                self, "Backup Failed", f"Error creating backup:\n{error}"
+            )
         elif success:
             StyledMessageBox.success(
-                self, 
-                "Backup Created", 
-                "Complete backup created successfully!", 
-                detailed_text=f"Location: {path}"
+                self,
+                "Backup Created",
+                "Complete backup created successfully!",
+                detailed_text=f"Location: {path}",
             )
             self._refresh_backup_status()
         else:
-            StyledMessageBox.warning(self, "Backup Failed", "The backup operation failed. Please try again.")
+            StyledMessageBox.warning(
+                self, "Backup Failed", "The backup operation failed. Please try again."
+            )
 
     def _restore_config_backup(self):
         """Restores settings only from a backup."""
         path = self._get_open_filename()
         if not path:
             return
-            
+
         # Confirm operation
         if not StyledMessageBox.question(
             self,
@@ -982,23 +1000,29 @@ class BackupDialog(QDialog):
             ),
             yes_text="Restore",
             no_text="Cancel",
-            destructive=True
+            destructive=True,
         ):
             return
-        
+
         # Run with progress dialog
         # result_data will act as 'success' from _run_with_progress
         result_data, timed_out, error = self._run_with_progress(
             lambda: self.backup_manager.restore_config_only(path),
             "Restoring Backup",
-            "Restoring configuration from backup..."
+            "Restoring configuration from backup...",
         )
-        
+
         if timed_out:
-            StyledMessageBox.critical(self, "Timeout", "The restore operation timed out after 60 seconds.")
+            StyledMessageBox.critical(
+                self, "Timeout", "The restore operation timed out after 60 seconds."
+            )
         elif error:
-            StyledMessageBox.critical(self, "Restore Failed", f"Error restoring backup:\n{error}")
-        elif result_data and isinstance(result_data, dict) and result_data.get("success"):
+            StyledMessageBox.critical(
+                self, "Restore Failed", f"Error restoring backup:\n{error}"
+            )
+        elif (
+            result_data and isinstance(result_data, dict) and result_data.get("success")
+        ):
             # Show success message
             safety_path = result_data.get("safety_backup_path")
             success_msg = "Settings restored successfully!\n\n"
@@ -1014,14 +1038,16 @@ class BackupDialog(QDialog):
             StyledMessageBox.success(self, "Restore Complete", success_msg)
             self._refresh_backup_status()
         else:
-            StyledMessageBox.warning(self, "Restore Failed", "The restore operation failed unexpectedly.")
+            StyledMessageBox.warning(
+                self, "Restore Failed", "The restore operation failed unexpectedly."
+            )
 
     def _restore_full_backup(self):
         """Restores a full backup."""
         path = self._get_open_filename()
         if not path:
             return
-            
+
         # Confirm operation
         if not StyledMessageBox.question(
             self,
@@ -1037,22 +1063,28 @@ class BackupDialog(QDialog):
             ),
             yes_text="Restore",
             no_text="Cancel",
-            destructive=True
+            destructive=True,
         ):
             return
-        
+
         # Run with progress dialog
         result_data, timed_out, error = self._run_with_progress(
             lambda: self.backup_manager.restore_backup(path),
             "Restoring Backup",
-            "Restoring full backup (configuration + deck data)...\nThis may take a moment."
+            "Restoring full backup (configuration + deck data)...\nThis may take a moment.",
         )
-        
+
         if timed_out:
-            StyledMessageBox.critical(self, "Timeout", "The restore operation timed out after 60 seconds.")
+            StyledMessageBox.critical(
+                self, "Timeout", "The restore operation timed out after 60 seconds."
+            )
         elif error:
-            StyledMessageBox.critical(self, "Restore Failed", f"Error restoring backup:\n{error}")
-        elif result_data and isinstance(result_data, dict) and result_data.get("success"):
+            StyledMessageBox.critical(
+                self, "Restore Failed", f"Error restoring backup:\n{error}"
+            )
+        elif (
+            result_data and isinstance(result_data, dict) and result_data.get("success")
+        ):
             # Show success message
             safety_path = result_data.get("safety_backup_path")
             success_msg = "Backup restored successfully!\n\n"
@@ -1062,60 +1094,88 @@ class BackupDialog(QDialog):
             StyledMessageBox.success(self, "Restore Complete", success_msg)
             self._refresh_backup_status()
         else:
-            StyledMessageBox.warning(self, "Restore Failed", "The restore operation failed unexpectedly.")
+            StyledMessageBox.warning(
+                self, "Restore Failed", "The restore operation failed unexpectedly."
+            )
 
     def _refresh_backup_status(self):
         """Refreshes the backup status display."""
         try:
             summary = self.backup_manager.get_backup_summary()
-            
+
             status_text = []
-            
+
             # Check if we have any files
             total_files = summary.get("total_files_count", 0)
-            
+
             if total_files > 0:
                 # Counts
-                status_text.append(f"🧮 <b>Countings:</b>")
-                status_text.append(f"• Auto Full Backups: {summary.get('auto_full_count', 0)}")
-                status_text.append(f"• Auto Simple Backups: {summary.get('auto_simple_count', 0)}")
-                status_text.append(f"• Manual Full Backups: {summary.get('manual_full_count', 0)}")
-                status_text.append(f"• Manual Simple Backups: {summary.get('manual_simple_count', 0)}")
-                status_text.append(f"• Safety Full Backups: {summary.get('safety_full_count', 0)}")
-                status_text.append(f"• Safety Simple Backups: {summary.get('safety_simple_count', 0)}")
-                status_text.append(f"• Other files: {summary.get('other_files_count', 0)}")
-                
+                status_text.append("🧮 <b>Countings:</b>")
+                status_text.append(
+                    f"• Auto Full Backups: {summary.get('auto_full_count', 0)}"
+                )
+                status_text.append(
+                    f"• Auto Simple Backups: {summary.get('auto_simple_count', 0)}"
+                )
+                status_text.append(
+                    f"• Manual Full Backups: {summary.get('manual_full_count', 0)}"
+                )
+                status_text.append(
+                    f"• Manual Simple Backups: {summary.get('manual_simple_count', 0)}"
+                )
+                status_text.append(
+                    f"• Safety Full Backups: {summary.get('safety_full_count', 0)}"
+                )
+                status_text.append(
+                    f"• Safety Simple Backups: {summary.get('safety_simple_count', 0)}"
+                )
+                status_text.append(
+                    f"• Other files: {summary.get('other_files_count', 0)}"
+                )
+
                 # Sizes
                 status_text.append("")
-                status_text.append(f"💾 <b>Sizes:</b>")
-                status_text.append(f"• Auto Backups: {summary.get('auto_size_human', '0 B')}")
-                status_text.append(f"• Manual Backups: {summary.get('manual_size_human', '0 B')}")
-                status_text.append(f"• Safety Backups: {summary.get('safety_size_human', '0 B')}")
-                status_text.append(f"• All Backups: {summary.get('total_backup_size_human', '0 B')}")
-                
+                status_text.append("💾 <b>Sizes:</b>")
+                status_text.append(
+                    f"• Auto Backups: {summary.get('auto_size_human', '0 B')}"
+                )
+                status_text.append(
+                    f"• Manual Backups: {summary.get('manual_size_human', '0 B')}"
+                )
+                status_text.append(
+                    f"• Safety Backups: {summary.get('safety_size_human', '0 B')}"
+                )
+                status_text.append(
+                    f"• All Backups: {summary.get('total_backup_size_human', '0 B')}"
+                )
+
                 # Latest backup
                 latest = summary.get("latest_backup")
                 if latest:
                     status_text.append("")
-                    status_text.append(f"🕐 <b>Latest backup:</b>")
+                    status_text.append("🕐 <b>Latest backup:</b>")
                     status_text.append(f"   {latest.get('filename', 'Unknown')}")
-                    status_text.append(f"   Created: {latest.get('created_at', 'Unknown')[:19].replace('T', ' ')}")
+                    status_text.append(
+                        f"   Created: {latest.get('created_at', 'Unknown')[:19].replace('T', ' ')}"
+                    )
             else:
                 status_text.append("📭 No files found in the backup directory.")
                 status_text.append("")
                 status_text.append("Create your first backup using the options above!")
-            
+
             self.backup_status_label.setText("<br>".join(status_text))
-            
+
         except Exception as e:
-            self.backup_status_label.setText(f"❌ Error loading backup status: {str(e)}")
+            self.backup_status_label.setText(
+                f"❌ Error loading backup status: {str(e)}"
+            )
 
     def _save_settings(self):
         """Saves auto-backup settings silently and closes the dialog."""
         try:
             # Get the directory value
             directory = self.dir_input.text().strip()
-            
+
             # Validate directory if provided
             if directory:
                 if not os.path.isdir(directory):
@@ -1126,24 +1186,24 @@ class BackupDialog(QDialog):
                         f"The directory does not exist:\n{directory}",
                         detailed_text="Would you like to create it now?",
                         yes_text="Create Directory",
-                        no_text="Cancel"
+                        no_text="Cancel",
                     ):
                         try:
                             os.makedirs(directory, exist_ok=True)
                         except Exception as e:
                             StyledMessageBox.critical(
-                                self, 
-                                "Cannot Create Directory", 
-                                f"Failed to create directory:\n{str(e)}"
+                                self,
+                                "Cannot Create Directory",
+                                f"Failed to create directory:\n{str(e)}",
                             )
                             return
                     else:
                         # User cancelled - don't save
                         return
-            
+
             # Get backup type
             backup_type = "complete" if self.radio_complete.isChecked() else "simple"
-            
+
             # Save all settings using the updated config function
             success = set_auto_backup_config(
                 enabled=self.auto_backup_check.isChecked(),
@@ -1151,15 +1211,19 @@ class BackupDialog(QDialog):
                 max_files=self.max_files_spin.value(),
                 backup_type=backup_type,
             )
-            
+
             if success:
                 # Silently close the dialog on success
                 self.accept()
             else:
-                StyledMessageBox.warning(self, "Saving Issue", "There was an issue saving the settings.")
-                
+                StyledMessageBox.warning(
+                    self, "Saving Issue", "There was an issue saving the settings."
+                )
+
         except Exception as e:
-            StyledMessageBox.critical(self, "Error Saving Settings", f"Error saving settings: {str(e)}")
+            StyledMessageBox.critical(
+                self, "Error Saving Settings", f"Error saving settings: {str(e)}"
+            )
 
 
 def show_backup_dialog():

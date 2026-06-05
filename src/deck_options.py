@@ -1,10 +1,5 @@
 """Sheets2Anki per-deck options-group management (extracted from utils.py)."""
 
-import hashlib
-import re
-from datetime import datetime
-from typing import List
-
 try:
     from .compat import mw
     from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
@@ -12,16 +7,7 @@ except ImportError:
     from compat import mw
     from templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 
-from .debug import (
-    DebugManager,
-    add_debug_message,
-    is_debug_enabled,
-    get_debug_messages,
-    clear_debug_messages,
-    initialize_debug_log,
-    get_debug_log_path,
-    clear_debug_log,
-)
+from .debug import add_debug_message
 
 
 def _is_default_config(config, config_type="default"):
@@ -105,7 +91,8 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
     Returns:
         int: Options group ID or None if in manual mode
     """
-    from .config_manager import get_deck_options_mode, get_deck_configurations_package_name
+    from .config_manager import get_deck_configurations_package_name
+    from .config_manager import get_deck_options_mode
 
     if not mw or not mw.col:
         add_debug_message("❌ Anki not available", "DECK_OPTIONS")
@@ -125,7 +112,8 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
             mode = get_deck_options_mode()
             if mode == "manual":
                 add_debug_message(
-                    "Manual mode active - not applying automatic options", "DECK_OPTIONS"
+                    "Manual mode active - not applying automatic options",
+                    "DECK_OPTIONS",
                 )
                 return None
             elif mode == "individual" and deck_name:
@@ -137,7 +125,8 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
             else:  # mode == "shared" or fallback
                 options_group_name = "Sheets2Anki - Default Options"
                 add_debug_message(
-                    f"Shared mode: creating/getting group '{options_group_name}'", "DECK_OPTIONS"
+                    f"Shared mode: creating/getting group '{options_group_name}'",
+                    "DECK_OPTIONS",
                 )
     else:
         # Check configured mode (fallback when no URL)
@@ -157,7 +146,8 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
         else:  # mode == "shared" or fallback
             options_group_name = "Sheets2Anki - Default Options"
             add_debug_message(
-                f"Shared mode: creating/getting group '{options_group_name}'", "DECK_OPTIONS"
+                f"Shared mode: creating/getting group '{options_group_name}'",
+                "DECK_OPTIONS",
             )
 
     try:
@@ -201,7 +191,8 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
 
         # If it doesn't exist, create a new group
         add_debug_message(
-            f"Group does not exist, creating new one: '{options_group_name}'", "DECK_OPTIONS"
+            f"Group does not exist, creating new one: '{options_group_name}'",
+            "DECK_OPTIONS",
         )
         new_group = mw.col.decks.add_config_returning_id(options_group_name)
         add_debug_message(
@@ -363,9 +354,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
             "total_decks": 0,
             "updated_decks": 0,
             "failed_decks": 0,
-            "errors": [
-                "Manual mode active - settings not applied automatically"
-            ],
+            "errors": ["Manual mode active - settings not applied automatically"],
         }
 
     stats = {
@@ -381,9 +370,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
         remote_decks = get_remote_decks()
         stats["total_decks"] = len(remote_decks)
 
-        add_debug_message(
-            f"Remote decks found: {len(remote_decks)}", "DECK_OPTIONS"
-        )
+        add_debug_message(f"Remote decks found: {len(remote_decks)}", "DECK_OPTIONS")
 
         if not remote_decks:
             add_debug_message("No remote decks found", "DECK_OPTIONS")
@@ -467,9 +454,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
         )
 
         if stats["errors"]:
-            add_debug_message(
-                f"{len(stats['errors'])} errors found:", "DECK_OPTIONS"
-            )
+            add_debug_message(f"{len(stats['errors'])} errors found:", "DECK_OPTIONS")
             for error in stats["errors"]:
                 add_debug_message(f"  - {error}", "DECK_OPTIONS")
 
@@ -506,7 +491,9 @@ def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
         return
 
     try:
-        add_debug_message(f"Searching for subdecks of: {parent_deck_name}", "DECK_OPTIONS")
+        add_debug_message(
+            f"Searching for subdecks of: {parent_deck_name}", "DECK_OPTIONS"
+        )
 
         # Search for all decks that start with parent deck name
         all_decks = mw.col.decks.all()
@@ -533,9 +520,7 @@ def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
                         "DECK_OPTIONS",
                     )
 
-        add_debug_message(
-            f"Total subdecks processed: {subdeck_count}", "DECK_OPTIONS"
-        )
+        add_debug_message(f"Total subdecks processed: {subdeck_count}", "DECK_OPTIONS")
 
     except Exception as e:
         add_debug_message(
@@ -560,7 +545,9 @@ def cleanup_orphaned_deck_option_groups():
         return 0
 
     try:
-        add_debug_message("Starting orphaned options group cleanup...", "DECK_OPTIONS_CLEANUP")
+        add_debug_message(
+            "Starting orphaned options group cleanup...", "DECK_OPTIONS_CLEANUP"
+        )
 
         # Get all options groups
         all_option_groups = mw.col.decks.all_config()
@@ -592,7 +579,7 @@ def cleanup_orphaned_deck_option_groups():
                 orphaned_groups.append(group)
                 add_debug_message(
                     f"Orphaned group found: '{group['name']}' (ID: {group_id})",
-                    "DECK_OPTIONS_CLEANUP"
+                    "DECK_OPTIONS_CLEANUP",
                 )
 
         # Remove orphaned groups
@@ -602,19 +589,19 @@ def cleanup_orphaned_deck_option_groups():
                 mw.col.decks.remove_config(group["id"])
                 add_debug_message(
                     f"Removed: '{group['name']}' (ID: {group['id']})",
-                    "DECK_OPTIONS_CLEANUP"
+                    "DECK_OPTIONS_CLEANUP",
                 )
                 removed_count += 1
             except Exception as e:
                 add_debug_message(
                     f"Error removing group '{group['name']}': {e}",
-                    "DECK_OPTIONS_CLEANUP"
+                    "DECK_OPTIONS_CLEANUP",
                 )
 
         if removed_count > 0:
             add_debug_message(
                 f"Cleanup completed: {removed_count} orphaned groups removed",
-                "DECK_OPTIONS_CLEANUP"
+                "DECK_OPTIONS_CLEANUP",
             )
         else:
             add_debug_message("No orphaned groups found", "DECK_OPTIONS_CLEANUP")
@@ -622,7 +609,9 @@ def cleanup_orphaned_deck_option_groups():
         return removed_count
 
     except Exception as e:
-        add_debug_message(f"Error in orphaned group cleanup: {e}", "DECK_OPTIONS_CLEANUP")
+        add_debug_message(
+            f"Error in orphaned group cleanup: {e}", "DECK_OPTIONS_CLEANUP"
+        )
         return 0
 
 
@@ -684,9 +673,7 @@ def apply_automatic_deck_options_system():
             "errors": [],
         }
 
-        add_debug_message(
-            "🎯 STEP 1: Configuring root deck...", "DECK_OPTIONS_SYSTEM"
-        )
+        add_debug_message("🎯 STEP 1: Configuring root deck...", "DECK_OPTIONS_SYSTEM")
         # 1. Apply options to root deck
         try:
             root_result = ensure_root_deck_has_root_options()
@@ -751,9 +738,7 @@ def apply_automatic_deck_options_system():
                     f"✅ {cleaned_count} orphaned groups removed", "DECK_OPTIONS_SYSTEM"
                 )
             else:
-                add_debug_message(
-                    "ℹ️ No orphaned groups found", "DECK_OPTIONS_SYSTEM"
-                )
+                add_debug_message("ℹ️ No orphaned groups found", "DECK_OPTIONS_SYSTEM")
         except Exception as e:
             error_msg = f"Error cleaning up orphaned groups: {e}"
             stats["errors"].append(error_msg)
@@ -768,9 +753,7 @@ def apply_automatic_deck_options_system():
         if stats["root_deck_updated"]:
             messages.append("Root deck configured")
         if stats["remote_decks_updated"] > 0:
-            messages.append(
-                f"{stats['remote_decks_updated']} remote decks configured"
-            )
+            messages.append(f"{stats['remote_decks_updated']} remote decks configured")
         if stats["cleaned_groups"] > 0:
             messages.append(f"{stats['cleaned_groups']} orphaned groups removed")
 
@@ -961,7 +944,8 @@ def get_or_create_root_options_group():
                 return group["id"]
 
         add_debug_message(
-            f"Group '{options_group_name}' does not exist, creating new one...", "DECK_OPTIONS"
+            f"Group '{options_group_name}' does not exist, creating new one...",
+            "DECK_OPTIONS",
         )
         # If it doesn't exist, create new group
         new_group = mw.col.decks.add_config_returning_id(options_group_name)

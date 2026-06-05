@@ -14,10 +14,8 @@ Features:
 """
 
 from .compat import mw
-from .styled_messages import StyledMessageBox
 from .config_manager import get_ankiweb_sync_mode
-
-
+from .styled_messages import StyledMessageBox
 
 # =============================================================================
 # DEBUG UTILITIES
@@ -64,9 +62,7 @@ def can_sync_ankiweb():
             profile = mw.pm.profile
             if isinstance(profile, dict):
                 if profile.get("syncKey") or profile.get("syncUser"):
-                    add_debug_message(
-                        "✅ AnkiWeb configured (profile)", "ANKIWEB_SYNC"
-                    )
+                    add_debug_message("✅ AnkiWeb configured (profile)", "ANKIWEB_SYNC")
                     return True
 
         # Method 3: Check if sync menu is available (indicates configuration)
@@ -108,13 +104,9 @@ def sync_ankiweb_normal():
     try:
         # Method 1: Use modern sync API
         if hasattr(mw, "sync") and hasattr(mw.sync, "sync"):
-            add_debug_message(
-                "🔄 Using modern sync API...", "ANKIWEB_SYNC"
-            )
+            add_debug_message("🔄 Using modern sync API...", "ANKIWEB_SYNC")
             mw.sync.sync()
-            add_debug_message(
-                "✅ AnkiWeb sync started (modern API)", "ANKIWEB_SYNC"
-            )
+            add_debug_message("✅ AnkiWeb sync started (modern API)", "ANKIWEB_SYNC")
             return {
                 "success": True,
                 "message": "AnkiWeb sync started successfully! Monitor progress in the Anki status bar.",
@@ -125,9 +117,7 @@ def sync_ankiweb_normal():
         elif hasattr(mw, "onSync"):
             add_debug_message("🔄 Using direct onSync method...", "ANKIWEB_SYNC")
             mw.onSync()
-            add_debug_message(
-                "✅ AnkiWeb sync started (onSync)", "ANKIWEB_SYNC"
-            )
+            add_debug_message("✅ AnkiWeb sync started (onSync)", "ANKIWEB_SYNC")
             return {
                 "success": True,
                 "message": "AnkiWeb sync started successfully! Anki will automatically decide whether to upload or download your data.",
@@ -136,13 +126,9 @@ def sync_ankiweb_normal():
 
         # Method 3: Try through menu actions
         elif hasattr(mw, "form") and hasattr(mw.form, "actionSync"):
-            add_debug_message(
-                "🔄 Using sync menu action...", "ANKIWEB_SYNC"
-            )
+            add_debug_message("🔄 Using sync menu action...", "ANKIWEB_SYNC")
             mw.form.actionSync.trigger()
-            add_debug_message(
-                "✅ AnkiWeb sync started (menu action)", "ANKIWEB_SYNC"
-            )
+            add_debug_message("✅ AnkiWeb sync started (menu action)", "ANKIWEB_SYNC")
             return {
                 "success": True,
                 "message": "AnkiWeb sync started via menu!",
@@ -200,7 +186,9 @@ def execute_ankiweb_sync_if_configured():
         error_msg = "AnkiWeb not configured - access Tools > Sync in Anki"
         add_debug_message(f"⚠️ {error_msg}", "ANKIWEB_SYNC")
 
-        StyledMessageBox.warning(None, "AnkiWeb Config Error", f"Sheets2Anki: {error_msg}")
+        StyledMessageBox.warning(
+            None, "AnkiWeb Config Error", f"Sheets2Anki: {error_msg}"
+        )
 
         return {"success": False, "error": error_msg}
 
@@ -228,7 +216,6 @@ def get_sync_status():
     status = {
         "ankiweb_configured": can_sync_ankiweb(),
         "sync_mode": get_ankiweb_sync_mode(),
-
         "notifications_enabled": True,
         "can_sync": can_sync_ankiweb(),
         "debug_info": {},

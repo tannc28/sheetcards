@@ -6,6 +6,7 @@ to select and synchronize active decks in the system.
 """
 
 from ..compat import DialogAccepted
+from ..compat import Palette_Window
 from ..compat import QApplication
 from ..compat import QCheckBox
 from ..compat import QDialog
@@ -17,8 +18,6 @@ from ..compat import QPushButton
 from ..compat import QScrollArea
 from ..compat import QVBoxLayout
 from ..compat import QWidget
-from ..compat import Qt
-from ..compat import Palette_Window
 from ..compat import mw
 from ..compat import safe_exec
 from ..config_manager import get_active_decks
@@ -99,31 +98,31 @@ class SyncDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_success': '#4CAF50',
-                'accent_info': '#2196F3',
-                'accent_warning': '#FF9800',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
-                'row_hover': '#363636',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_success": "#4CAF50",
+                "accent_info": "#2196F3",
+                "accent_warning": "#FF9800",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
+                "row_hover": "#363636",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_success': '#4CAF50',
-                'accent_info': '#1976D2',
-                'accent_warning': '#FF9800',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
-                'row_hover': '#f0f0f0',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_success": "#4CAF50",
+                "accent_info": "#1976D2",
+                "accent_warning": "#FF9800",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
+                "row_hover": "#f0f0f0",
             }
 
     def _apply_styles(self):
@@ -467,7 +466,11 @@ class SyncDialog(QDialog):
                     "url": remote_deck_url,
                     "hash_key": hash_key,
                     "deck_info": deck_info,
-                    "local_deck_name": local_deck_name if deck else get_deck_local_name(remote_deck_url),
+                    "local_deck_name": (
+                        local_deck_name
+                        if deck
+                        else get_deck_local_name(remote_deck_url)
+                    ),
                     "remote_deck_name": remote_name,
                     "card_count": card_count,
                 }
@@ -541,13 +544,13 @@ class SyncDialog(QDialog):
         # Update informative text
         if selected_count == 0:
             info_text = "⚠️ No deck selected"
-            bg_color = self.colors['border']
+            bg_color = self.colors["border"]
         elif selected_count == total_count:
             info_text = f"✓ All {total_count} deck(s) selected"
-            bg_color = self.colors['accent_success']
+            bg_color = self.colors["accent_success"]
         else:
             info_text = f"📋 {selected_count} of {total_count} deck(s) selected"
-            bg_color = self.colors['accent_info']
+            bg_color = self.colors["accent_info"]
 
         self.selection_info.setText(info_text)
         self.selection_info.setStyleSheet(f"""

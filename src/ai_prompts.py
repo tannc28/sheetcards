@@ -3,8 +3,7 @@
 AI Help / Ask / Checker prompt dictionaries keyed by language code."""
 
 AI_HELP_PROMPTS = {
-    "en_us": 
-    """
+    "en_us": """
         <command>
             I'm studying with flashcards and need help understanding this one better.
         </command>
@@ -28,8 +27,7 @@ AI_HELP_PROMPTS = {
             Whenever convenient, use HTML lists (enumerated or bullet points) and bold text to make your response easier to read.
         </output_details>    
     """,
-    "pt_br": 
-    """
+    "pt_br": """
         <command>
             Estou estudando com flashcards e preciso de ajuda para entender este cartão melhor.
         </command>
@@ -53,8 +51,7 @@ AI_HELP_PROMPTS = {
             Sempre que conveniente, use listas HTML (numeradas ou com marcadores) e texto em negrito para facilitar a leitura da sua resposta.
         </output_details>
     """,
-    "es_la": 
-    """
+    "es_la": """
         <command>
             Estoy estudiando con tarjetas de memoria y necesito ayuda para entender esta tarjeta mejor.
         </command>
@@ -77,7 +74,7 @@ AI_HELP_PROMPTS = {
             La respuesta debe estar siempre formateada usando etiquetas HTML.
             Siempre que sea conveniente, usa listas HTML (numeradas o con viñetas) y texto en negrita para facilitar la lectura de tu respuesta.
         </output_details>
-    """
+    """,
 }
 
 # Default prompt template for AI Help (English)
@@ -85,8 +82,7 @@ DEFAULT_AI_HELP_PROMPT = AI_HELP_PROMPTS["en_us"]
 
 # Default prompt templates for AI Ask (answering user questions)
 AI_ASK_PROMPTS = {
-    "en_us": 
-    """
+    "en_us": """
         <command>
             I am studying with flashcards. Here is the card content for context:
         </command>
@@ -107,8 +103,7 @@ AI_ASK_PROMPTS = {
             Whenever convenient, use HTML lists (enumerated or bullet points) and bold text to make your response easier to read.
         </output_details>  
     """,
-    "pt_br": 
-    """
+    "pt_br": """
         <command>
             Estou estudando com flashcards. Aqui está o conteúdo do cartão para contexto:
         </command>
@@ -129,8 +124,7 @@ AI_ASK_PROMPTS = {
             Sempre que conveniente, use listas HTML (numeradas ou com marcadores) e texto em negrito para facilitar a leitura da sua resposta.
         </output_details>
     """,
-    "es_la": 
-    """
+    "es_la": """
         <command>
             Estoy estudiando con tarjetas de memoria. Aquí está el contenido de la tarjeta como contexto:
         </command>
@@ -150,13 +144,12 @@ AI_ASK_PROMPTS = {
             La respuesta debe estar siempre formateada usando etiquetas HTML.
             Siempre que sea conveniente, usa listas HTML (numeradas o con viñetas) y texto en negrita para facilitar la lectura de tu respuesta.
         </output_details>
-    """
+    """,
 }
 
 # Default prompt templates for AI Checker (fact-checking and improvement)
 AI_CHECKER_PROMPTS = {
-    "en_us": 
-    """
+    "en_us": """
         <command>
             I'm studying with flashcards and need help checking the quality of this one.
         </command>
@@ -187,8 +180,7 @@ AI_CHECKER_PROMPTS = {
             Whenever convenient, use HTML lists (enumerated or bullet points) and bold text to make your response easier to read.
         </output_details>   
     """,
-    "pt_br": 
-    """
+    "pt_br": """
         <command>
             Estou estudando com flashcards e preciso de ajuda para verificar a qualidade deste.
         </command>
@@ -219,8 +211,7 @@ AI_CHECKER_PROMPTS = {
             Sempre que conveniente, use listas HTML (numeradas ou com marcadores) e texto em negrito para facilitar a leitura da sua resposta.
         </output_details>   
     """,
-    "es_la": 
-    """
+    "es_la": """
         <command>
             Estoy estudiando con tarjetas de memoria y necesito ayuda para verificar la calidad de esta.
         </command>
@@ -250,5 +241,5 @@ AI_CHECKER_PROMPTS = {
             La respuesta debe estar siempre formateada usando etiquetas HTML.
             Siempre que sea conveniente, usa listas HTML (numeradas o con viñetas) y texto en negrita para facilitar la lectura de tu respuesta.
         </output_details>   
-    """
+    """,
 }

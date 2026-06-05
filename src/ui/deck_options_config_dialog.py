@@ -7,9 +7,7 @@ This module allows the user to choose between three modes:
 3. Manual - No automatic application of options
 """
 
-from ..compat import AlignCenter
 from ..compat import DialogAccepted
-from ..compat import MessageBox_Ok
 from ..compat import Palette_Window
 from ..compat import QButtonGroup
 from ..compat import QDialog
@@ -19,8 +17,8 @@ from ..compat import QLabel
 from ..compat import QPushButton
 from ..compat import QRadioButton
 from ..compat import QVBoxLayout
-from ..styled_messages import StyledMessageBox
 from ..compat import safe_exec_dialog
+from ..styled_messages import StyledMessageBox
 
 
 class DeckOptionsConfigDialog(QDialog):
@@ -36,6 +34,7 @@ class DeckOptionsConfigDialog(QDialog):
 
         # Get current mode
         from ..config_manager import get_deck_options_mode
+
         self.current_mode = get_deck_options_mode()
 
         # Detect dark mode
@@ -52,31 +51,31 @@ class DeckOptionsConfigDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#9C27B0',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#9C27B0",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_purple': '#7B1FA2',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_purple": "#7B1FA2",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
             }
 
     def _apply_styles(self):
@@ -136,8 +135,8 @@ class DeckOptionsConfigDialog(QDialog):
             "📦 Shared Options",
             "Recommended",
             "All remote decks use the same settings group. Configure once and all changes apply to all decks.",
-            self.colors['accent_success'],
-            0
+            self.colors["accent_success"],
+            0,
         )
         layout.addWidget(shared_card)
 
@@ -147,8 +146,8 @@ class DeckOptionsConfigDialog(QDialog):
             "🎯 Individual Options",
             "Per Deck",
             "Each remote deck has its own settings group. Useful when decks have specific study needs.",
-            self.colors['accent_primary'],
-            1
+            self.colors["accent_primary"],
+            1,
         )
         layout.addWidget(individual_card)
 
@@ -158,8 +157,8 @@ class DeckOptionsConfigDialog(QDialog):
             "🔧 Manual Configuration",
             "Advanced",
             "The addon does not apply any settings automatically. Full control over each deck's options.",
-            self.colors['accent_warning'],
-            2
+            self.colors["accent_warning"],
+            2,
         )
         layout.addWidget(manual_card)
 
@@ -208,11 +207,13 @@ class DeckOptionsConfigDialog(QDialog):
         layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
-    def _create_option_card(self, mode, title, badge, description, accent_color, button_id):
+    def _create_option_card(
+        self, mode, title, badge, description, accent_color, button_id
+    ):
         """Creates a styled option card."""
         card = QFrame()
         card.setObjectName(f"card_{mode}")
-        
+
         # Base card style
         card.setStyleSheet(f"""
             QFrame#card_{mode} {{
@@ -225,7 +226,7 @@ class DeckOptionsConfigDialog(QDialog):
                 border-color: {accent_color};
             }}
         """)
-        
+
         card_layout = QHBoxLayout(card)
         card_layout.setContentsMargins(15, 12, 15, 12)
         card_layout.setSpacing(15)
@@ -267,7 +268,9 @@ class DeckOptionsConfigDialog(QDialog):
         # Title row with badge
         title_row = QHBoxLayout()
         title_label = QLabel(title)
-        title_label.setStyleSheet(f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};")
+        title_label.setStyleSheet(
+            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+        )
         title_row.addWidget(title_label)
 
         badge_label = QLabel(badge)
@@ -286,7 +289,9 @@ class DeckOptionsConfigDialog(QDialog):
 
         # Description
         desc_label = QLabel(description)
-        desc_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text_secondary']};")
+        desc_label.setStyleSheet(
+            f"font-size: 12pt; color: {self.colors['text_secondary']};"
+        )
         desc_label.setWordWrap(True)
         content_layout.addWidget(desc_label)
 
@@ -312,10 +317,12 @@ class DeckOptionsConfigDialog(QDialog):
 
             try:
                 from ..config_manager import set_deck_options_mode
+
                 set_deck_options_mode(new_mode)
 
                 # Apply full automatic system
                 from ..utils import apply_automatic_deck_options_system
+
                 auto_result = apply_automatic_deck_options_system()
 
                 # Feedback logic
@@ -335,21 +342,33 @@ class DeckOptionsConfigDialog(QDialog):
                 elif auto_result.get("success", False):
                     details = []
                     if auto_result.get("root_deck_updated", False):
-                        details.append("Root deck configured with 'Sheets2Anki - Root Options'")
+                        details.append(
+                            "Root deck configured with 'Sheets2Anki - Root Options'"
+                        )
                     if auto_result.get("remote_decks_updated", 0) > 0:
                         deck_count = auto_result["remote_decks_updated"]
                         if new_mode == "individual":
-                            details.append(f"{deck_count} decks configured with individual options")
+                            details.append(
+                                f"{deck_count} decks configured with individual options"
+                            )
                         else:
-                            details.append(f"{deck_count} decks configured with 'Sheets2Anki - Default Options'")
+                            details.append(
+                                f"{deck_count} decks configured with 'Sheets2Anki - Default Options'"
+                            )
                     if auto_result.get("cleaned_groups", 0) > 0:
-                        details.append(f"{auto_result['cleaned_groups']} orphaned groups removed")
+                        details.append(
+                            f"{auto_result['cleaned_groups']} orphaned groups removed"
+                        )
 
                     if details:
-                        info_text = "Automatic system applied:\n• " + "\n• ".join(details)
+                        info_text = "Automatic system applied:\n• " + "\n• ".join(
+                            details
+                        )
                     else:
                         if new_mode == "individual":
-                            info_text = "Each new deck will have its own custom options group."
+                            info_text = (
+                                "Each new deck will have its own custom options group."
+                            )
                         else:
                             info_text = "All decks will use 'Sheets2Anki - Default Options' group."
 
@@ -363,9 +382,13 @@ class DeckOptionsConfigDialog(QDialog):
 
                 # Show message
                 if message_type == StyledMessageBox.SUCCESS:
-                    StyledMessageBox.success(self, title, main_text, detailed_text=info_text)
+                    StyledMessageBox.success(
+                        self, title, main_text, detailed_text=info_text
+                    )
                 else:
-                    StyledMessageBox.warning(self, title, main_text, detailed_text=info_text)
+                    StyledMessageBox.warning(
+                        self, title, main_text, detailed_text=info_text
+                    )
 
                 self.accept()
 
