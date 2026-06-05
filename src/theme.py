@@ -72,6 +72,8 @@ _LIGHT = {
     "background_secondary": "#F8F9FA",
     "border": "#DEE2E6",
     "border_light": "#E9ECEF",
+    "header_gradient_start": "#4A90D9",
+    "header_gradient_end": "#357ABD",
     # --- dialog aliases (harmonized to the blue identity) ---
     "text": "#2C3E50",  # == text_primary
     "bg": "#F5F5F5",  # dialog window (recessed surface)
@@ -108,6 +110,8 @@ _DARK = {
     "background_secondary": "#383838",
     "border": "#505050",
     "border_light": "#454545",
+    "header_gradient_start": "#3A5A7C",
+    "header_gradient_end": "#2A4A6A",
     # --- dialog aliases (harmonized to the blue identity) ---
     "text": "#E0E0E0",  # == text_primary
     "bg": "#1E1E1E",  # dialog window (recessed surface)
@@ -192,7 +196,8 @@ def header_qss(colors: dict) -> str:
         QWidget {{
             background-color: qlineargradient(
                 x1:0, y1:0, x2:1, y2:0,
-                stop:0 {colors['primary']}, stop:1 {colors['primary_dark']}
+                stop:0 {colors['header_gradient_start']},
+                stop:1 {colors['header_gradient_end']}
             );
             border-top-left-radius: {RADIUS};
             border-top-right-radius: {RADIUS};

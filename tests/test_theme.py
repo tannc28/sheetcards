@@ -41,7 +41,7 @@ _REQUIRED_KEYS = {
     "accent_danger", "accent_purple", "row_hover", "list_bg", "warning_bg", "primary",
     "background_secondary", "text_primary", "background", "text_muted", "primary_light",
     "warning_light", "success", "warning", "error", "success_light", "error_light",
-    "border_light",
+    "border_light", "header_gradient_start", "header_gradient_end",
 }  # fmt: skip
 
 

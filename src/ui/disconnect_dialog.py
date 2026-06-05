@@ -6,7 +6,6 @@ to select and disconnect multiple remote decks using checkboxes.
 """
 
 from ..compat import DialogAccepted
-from ..compat import Palette_Window
 from ..compat import QApplication
 from ..compat import QCheckBox
 from ..compat import QDialog
@@ -25,6 +24,8 @@ from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
 from ..config_manager import get_remote_decks
 from ..styled_messages import StyledMessageBox
+from ..theme import get_colors
+from ..theme import is_dark_mode
 from ..utils import add_debug_message
 
 
@@ -84,9 +85,7 @@ class DisconnectDialog(QDialog):
         self.selected_urls = []
 
         # Detect dark mode
-        palette = self.palette()
-        bg_color = palette.color(Palette_Window)
-        self.is_dark_mode = bg_color.lightness() < 128
+        self.is_dark_mode = is_dark_mode()
 
         # Define color scheme
         self._setup_colors()
@@ -97,36 +96,7 @@ class DisconnectDialog(QDialog):
 
     def _setup_colors(self):
         """Sets up color scheme based on theme."""
-        if self.is_dark_mode:
-            self.colors = {
-                "bg": "#1e1e1e",
-                "card_bg": "#2d2d2d",
-                "text": "#ffffff",
-                "text_secondary": "#b0b0b0",
-                "border": "#404040",
-                "accent_danger": "#e53935",
-                "accent_warning": "#FF9800",
-                "accent_info": "#2196F3",
-                "button_bg": "#3d3d3d",
-                "button_hover": "#4a4a4a",
-                "row_hover": "#363636",
-                "warning_bg": "rgba(255, 152, 0, 0.15)",
-            }
-        else:
-            self.colors = {
-                "bg": "#f5f5f5",
-                "card_bg": "#ffffff",
-                "text": "#1a1a1a",
-                "text_secondary": "#666666",
-                "border": "#d0d0d0",
-                "accent_danger": "#d32f2f",
-                "accent_warning": "#FF9800",
-                "accent_info": "#1976D2",
-                "button_bg": "#e0e0e0",
-                "button_hover": "#d0d0d0",
-                "row_hover": "#f0f0f0",
-                "warning_bg": "rgba(255, 152, 0, 0.1)",
-            }
+        self.colors = get_colors()
 
     def _apply_styles(self):
         """Applies styles to the dialog."""
