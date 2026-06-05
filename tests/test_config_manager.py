@@ -412,6 +412,35 @@ class TestConfigValidation:
         assert validate_config_structure(invalid_config) == False
 
 
+@pytest.mark.unit
+class TestConfigDefaultsIsolation:
+    """get_config/get_meta fallbacks must DEEP-copy the module defaults so a caller
+    mutating a nested dict can't corrupt DEFAULT_CONFIG / DEFAULT_META process-wide."""
+
+    @patch("src.config_manager.os.path.exists", return_value=False)
+    def test_get_config_fallback_deep_copies_nested(self, _exists):
+        from src import config_manager as cm
+
+        cfg = cm.get_config()
+        nested = [k for k, v in cm.DEFAULT_CONFIG.items() if isinstance(v, dict | list)]
+        assert nested, "expected at least one nested default to guard"
+        for k in nested:
+            assert (
+                cfg[k] is not cm.DEFAULT_CONFIG[k]
+            ), f"get_config()['{k}'] shares identity with the module default (shallow copy)"
+
+    @patch("src.config_manager.os.path.exists", return_value=False)
+    def test_get_meta_fallback_deep_copies_nested(self, _exists):
+        from src import config_manager as cm
+
+        meta = cm.get_meta()
+        for k, v in cm.DEFAULT_META.items():
+            if isinstance(v, dict | list) and k in meta:
+                assert (
+                    meta[k] is not cm.DEFAULT_META[k]
+                ), f"get_meta()['{k}'] shares identity with the module default (shallow copy)"
+
+
 # =============================================================================
 # CONFIGURATION MIGRATION TESTS
 # =============================================================================
