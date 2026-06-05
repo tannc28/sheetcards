@@ -134,41 +134,38 @@ class AddDeckDialog(QDialog):
         self.setLayout(main_layout)
 
     def _create_header(self):
-        """Creates the header section with title and description."""
-        header = QWidget()
-        layout = QVBoxLayout(header)
-        layout.setSpacing(8)
-        layout.setContentsMargins(0, 0, 0, 8)
-
-        # Title with icon
-        title = QLabel("Add Remote Deck")
-        title.setStyleSheet(f"""
-            font-size: 20px;
-            font-weight: bold;
-            color: {self.colors['text_primary']};
-            padding-bottom: 4px;
+        """Creates the gradient header banner (consistent with the other dialogs)."""
+        header_frame = QFrame()
+        header_frame.setObjectName("headerFrame")
+        header_frame.setStyleSheet(f"""
+            QFrame#headerFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {self.colors['header_gradient_start']},
+                    stop:1 {self.colors['header_gradient_end']});
+                border-radius: 12px;
+            }}
+            QFrame#headerFrame QLabel {{
+                background: transparent;
+                color: white;
+                border: none;
+            }}
         """)
+        layout = QVBoxLayout(header_frame)
+        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setSpacing(6)
+
+        title = QLabel("Add Remote Deck")
+        title.setStyleSheet("font-size: 18pt; font-weight: bold;")
         layout.addWidget(title)
 
-        # Subtitle/description
         subtitle = QLabel(
             "Connect a Google Sheets spreadsheet to sync flashcards automatically."
         )
-        subtitle.setStyleSheet(f"""
-            font-size: 12px;
-            color: {self.colors['text_secondary']};
-            line-height: 1.4;
-        """)
+        subtitle.setStyleSheet("font-size: 12pt; opacity: 0.9;")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        # Separator line
-        separator = QFrame()
-        separator.setFixedHeight(1)
-        separator.setStyleSheet(f"background-color: {self.colors['border_light']};")
-        layout.addWidget(separator)
-
-        return header
+        return header_frame
 
     def _create_step1_section(self):
         """Creates Step 1: URL input section."""

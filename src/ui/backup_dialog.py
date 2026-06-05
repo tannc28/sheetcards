@@ -235,7 +235,7 @@ class BackupDialog(QDialog):
         warning_frame = QFrame()
         warning_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {self.colors['accent_warning']}15;
+                background-color: {self.colors['warning_light']};
                 border-left: 3px solid {self.colors['accent_warning']};
                 border-radius: 4px;
                 padding: 10px;
@@ -548,7 +548,6 @@ class BackupDialog(QDialog):
             }}
         """)
         save_btn.clicked.connect(self._save_settings)
-        button_layout.addWidget(save_btn)
 
         button_layout.addStretch()
 
@@ -569,6 +568,7 @@ class BackupDialog(QDialog):
         """)
         close_btn.clicked.connect(self.accept)
         button_layout.addWidget(close_btn)
+        button_layout.addWidget(save_btn)
 
         return button_frame
 

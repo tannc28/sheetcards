@@ -169,7 +169,7 @@ class AIAssistanceConfigDialog(QDialog):
         mobile_layout.setSpacing(4)
 
         self.mobile_checkbox = QCheckBox(
-            "📱 Enable mobile support (embed API key in cards)"
+            "Enable mobile support (embed API key in cards)"
         )
         self.mobile_checkbox.setStyleSheet(f"""
             QCheckBox {{

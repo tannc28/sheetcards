@@ -179,7 +179,7 @@ class GlobalStudentConfigDialog(QDialog):
 
         # Sync missing checkbox
         self.sync_missing_checkbox = QCheckBox(
-            f"📋 Synchronize notes without specific students to {DEFAULT_STUDENT} deck"
+            f"Synchronize notes without specific students to {DEFAULT_STUDENT} deck"
         )
         self.sync_missing_checkbox.setToolTip(
             "If enabled, notes that don't have defined students (empty STUDENTS column)\n"
@@ -188,10 +188,9 @@ class GlobalStudentConfigDialog(QDialog):
         )
         self.sync_missing_checkbox.setStyleSheet(f"""
             QCheckBox {{
-                color: {self.colors['accent_primary']};
-                font-weight: bold;
+                color: {self.colors['text']};
                 padding: 10px;
-                background-color: rgba(33, 150, 243, 0.1);
+                background-color: {self.colors['background_secondary']};
                 border-radius: 6px;
             }}
         """)

@@ -152,7 +152,7 @@ class ImageProcessorConfigDialog(QDialog):
         content_layout.addWidget(header_frame)
 
         # Enable checkbox
-        self.enable_checkbox = QCheckBox("✓ Enable automatic image processing")
+        self.enable_checkbox = QCheckBox("Enable automatic image processing")
         self.enable_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 font-size: 13pt;
@@ -291,7 +291,7 @@ class ImageProcessorConfigDialog(QDialog):
         copy_btn = QPushButton("Copy Script to Clipboard")
         copy_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {self.colors['accent_warning']};
+                background-color: {self.colors['accent_primary']};
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -300,7 +300,7 @@ class ImageProcessorConfigDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: {self.colors['warning_dark']};
+                background-color: {self.colors['primary_dark']};
             }}
         """)
         copy_btn.clicked.connect(self._copy_script_to_clipboard)
@@ -402,7 +402,7 @@ class ImageProcessorConfigDialog(QDialog):
         layout.setSpacing(10)
 
         self.auto_process_checkbox = QCheckBox(
-            "📤 Process images automatically during each sync"
+            "Process images automatically during each sync"
         )
         self.auto_process_checkbox.setToolTip(
             "When enabled, images will be uploaded and converted automatically before syncing."
