@@ -235,8 +235,9 @@ class BackupDialog(QDialog):
 
         # Warning message
         warning_frame = QFrame()
+        warning_frame.setObjectName("warningFrame")
         warning_frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#warningFrame {{
                 background-color: {self.colors['warning_light']};
                 border-left: 3px solid {self.colors['accent_warning']};
                 border-radius: 4px;
@@ -337,8 +338,9 @@ class BackupDialog(QDialog):
 
         # Enable/disable toggle
         enable_frame = QFrame()
+        enable_frame.setObjectName("enableFrame")
         enable_frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#enableFrame {{
                 background-color: {self.colors['input_bg']};
                 border-radius: 8px;
                 padding: 5px;
@@ -472,8 +474,9 @@ class BackupDialog(QDialog):
         layout = section.layout()
 
         info_frame = QFrame()
+        info_frame.setObjectName("infoFrame")
         info_frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#infoFrame {{
                 background-color: {self.colors['input_bg']};
                 border-radius: 8px;
                 padding: 15px;
@@ -523,8 +526,9 @@ class BackupDialog(QDialog):
     def _create_bottom_buttons(self):
         """Creates the bottom button bar."""
         button_frame = QFrame()
+        button_frame.setObjectName("buttonBar")
         button_frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#buttonBar {{
                 background-color: {self.colors['card_bg']};
                 border-top: 1px solid {self.colors['border']};
                 padding: 15px 20px;
@@ -577,8 +581,9 @@ class BackupDialog(QDialog):
     def _create_section_frame(self, title, subtitle):
         """Creates a styled section frame."""
         frame = QFrame()
+        frame.setObjectName("sectionFrame")
         frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#sectionFrame {{
                 background-color: {self.colors['card_bg']};
                 border: 1px solid {self.colors['border']};
                 border-radius: 12px;
@@ -611,9 +616,10 @@ class BackupDialog(QDialog):
     def _create_action_card(self, title, subtitle, description, accent_color, callback):
         """Creates a styled action card with button."""
         card = QFrame()
-        card.setObjectName(f"actionCard_{title.replace(' ', '_')}")
+        card_id = f"actionCard_{title.replace(' ', '_')}"
+        card.setObjectName(card_id)
         card.setStyleSheet(f"""
-            QFrame {{
+            QFrame#{card_id} {{
                 background-color: {self.colors['input_bg']};
                 border: none;
                 border-radius: 10px;

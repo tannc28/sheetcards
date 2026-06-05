@@ -158,8 +158,9 @@ class AIAssistanceConfigDialog(QDialog):
 
         # Mobile support checkbox
         mobile_frame = QFrame()
+        mobile_frame.setObjectName("mobileFrame")
         mobile_frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#mobileFrame {{
                 background-color: {self.colors['card_bg']};
                 border: 1px solid {self.colors['accent_warning']};
                 border-radius: 8px;
@@ -499,8 +500,9 @@ class AIAssistanceConfigDialog(QDialog):
     def _create_section_frame(self, title):
         """Creates a styled section frame with title."""
         frame = QFrame()
+        frame.setObjectName("sectionFrame")
         frame.setStyleSheet(f"""
-            QFrame {{
+            QFrame#sectionFrame {{
                 background-color: {self.colors['card_bg']};
                 border: 1px solid {self.colors['border']};
                 border-radius: 12px;

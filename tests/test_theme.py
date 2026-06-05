@@ -94,3 +94,28 @@ def test_every_dialog_color_key_is_defined():
     assert used, "scan found no color-key references — regex likely broke"
     missing = used - available
     assert not missing, f"dialogs reference undefined color keys: {sorted(missing)}"
+
+
+@pytest.mark.unit
+def test_no_unscoped_qframe_selectors():
+    """Forbid bare ``QFrame {{ ... }}`` selectors in dialog stylesheets.
+
+    ``QLabel`` (and other widgets) subclass ``QFrame``, so an unscoped
+    ``QFrame { border: ... }`` rule leaks its border/background onto every child
+    label — drawing spurious boxes around section titles. Frame styling must be
+    scoped to an objectName (``QFrame#name``).
+    """
+    import pathlib
+    import re
+
+    ui_dir = pathlib.Path(__file__).resolve().parent.parent / "src" / "ui"
+    bare = re.compile(r"QFrame \{\{")
+    offenders = [
+        f"{path.name}:{i}"
+        for path in ui_dir.glob("*.py")
+        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if bare.search(line)
+    ]
+    assert (
+        not offenders
+    ), f"unscoped QFrame selectors leak to child QLabels: {offenders}"
