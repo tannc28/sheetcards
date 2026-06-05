@@ -27,6 +27,7 @@ from unittest.mock import patch
 class TestConfigManager:
     """Class for configuration manager tests."""
 
+    @pytest.mark.skip(reason="legacy self-mock (asserts against a local load_config, not src); superseded by tests/test_core_logic.py — pending migration")
     def test_load_config_success(self, temp_config_file):
         """Successful configuration loading test."""
 

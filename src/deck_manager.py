@@ -197,11 +197,14 @@ def _force_delete_note_types_by_suffix(suffix, remote_deck_name=None, url=None):
         for model in mw.col.models.all():
             model_name = model["name"]
 
-            # Check if it's a Sheets2Anki note type and contains remote deck name
+            # Check if it's a Sheets2Anki note type for THIS remote deck.
+            # Note type names are "Sheets2Anki - {deck} - {student} - {Type}" or
+            # "Sheets2Anki - {deck} - {Type}", so require the deck name as a
+            # ' - '-delimited segment. A plain substring test ("Bio" in name) would
+            # wrongly match a different deck whose name is a superstring ("Biologia").
             if (
-                model_name.startswith("Sheets2Anki - ")
-                and remote_deck_name
-                and remote_deck_name in model_name
+                remote_deck_name
+                and model_name.startswith(f"Sheets2Anki - {remote_deck_name} - ")
             ):
                 models_to_delete.append(model)
                 add_debug_msg(f"[FORCE DELETE] Forcing deletion of note type: {model_name}")
@@ -1082,7 +1085,7 @@ class DeckNameManager:
                 existing_deck = mw.col.decks.by_name(name)
                 return existing_deck is not None
             return False
-        except:
+        except Exception:
             return False
 
     @staticmethod

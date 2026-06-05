@@ -17,6 +17,7 @@ Consolidated from:
 # =============================================================================
 
 import csv
+import io
 import re
 import socket
 import urllib.error
@@ -109,6 +110,7 @@ class RemoteDeck:
         self.ignored_ghost_rows = 0  # 10. Ghost Rows (ignored)
 
         self.enabled_students = set()  # Set of enabled students
+        self.duplicate_ids = []  # Non-empty IDs that appear on more than one row
 
     def add_note(self, note_data):
         """
@@ -404,7 +406,20 @@ def download_tsv_data(url, timeout=30):
                 tsv_url = convert_edit_url_to_tsv(url)
         except ValueError as e:
             raise RemoteDeckError(f"Invalid URL: {str(e)}")
-        
+
+        # Defense-in-depth (SSRF): only ever fetch from Google hosts. The deck URL is
+        # user-supplied at add time, and the "/export?format=tsv" pass-through above does
+        # not go through convert_edit_url_to_tsv's host check — so a stored URL like
+        # "http://169.254.169.254/...export?format=tsv" would otherwise be fetched verbatim.
+        from urllib.parse import urlparse
+
+        host = (urlparse(tsv_url).hostname or "").lower()
+        if not (host == "google.com" or host.endswith(".google.com") or host.endswith(".googleusercontent.com")):
+            raise RemoteDeckError(
+                f"Refusing to download from non-Google host '{host}'. "
+                f"The deck URL must be a Google Sheets link."
+            )
+
         headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
         request = urllib.request.Request(tsv_url, headers=headers)
 
@@ -414,8 +429,10 @@ def download_tsv_data(url, timeout=30):
                     f"HTTP {response.getcode()}: Failed to access URL"
                 )
 
-            # Read and decode data
-            data = response.read().decode("utf-8")
+            # Read and decode data. Use utf-8-sig so a UTF-8 BOM that some Google
+            # export paths prepend is stripped instead of corrupting the first header
+            # (e.g. "﻿ID"), which would fail the required-header check.
+            data = response.read().decode("utf-8-sig")
             return data
 
     except socket.timeout:
@@ -464,12 +481,15 @@ def parse_tsv_data(tsv_data, debug_messages=None):
             debug_messages.append(formatted_msg)
 
     try:
-        # Use csv.reader for TSV parsing
-        lines = tsv_data.strip().split("\n")
-        if not lines:
+        # Parse with csv.reader over the raw text stream (NOT a pre-split list of lines)
+        # so that quoted cells containing embedded newlines — common for multi-line
+        # answers/explanations from Google Sheets — are preserved instead of being
+        # silently flattened. Outer .strip() only trims the whole document's edges; it
+        # does not touch newlines inside quoted cells.
+        if not tsv_data.strip():
             raise RemoteDeckError("Empty TSV data")
 
-        reader = csv.reader(lines, delimiter="\t")
+        reader = csv.reader(io.StringIO(tsv_data.strip()), delimiter="\t")
         rows = list(reader)
 
         if not rows:
@@ -580,6 +600,22 @@ def build_remote_deck_from_tsv(
     # Update enabled students information
     if enabled_students:
         remote_deck.enabled_students = set(enabled_students)
+
+    # Detect duplicate (non-empty) IDs. These silently collapse during sync because
+    # notes are keyed by "{student}_{id}" — only one survives and the others are
+    # stranded/un-updated. Record them so the user can be warned.
+    seen_ids = {}
+    for note_data in remote_deck.notes:
+        nid = note_data.get(cols.identifier, "").strip()
+        if nid:
+            seen_ids[nid] = seen_ids.get(nid, 0) + 1
+    remote_deck.duplicate_ids = sorted(nid for nid, count in seen_ids.items() if count > 1)
+    if remote_deck.duplicate_ids:
+        shown = ", ".join(remote_deck.duplicate_ids[:20])
+        suffix = " ..." if len(remote_deck.duplicate_ids) > 20 else ""
+        add_debug_msg(
+            f"⚠️ Duplicate IDs detected ({len(remote_deck.duplicate_ids)}): {shown}{suffix}"
+        )
 
     # Finalize calculation of metrics
     remote_deck.finalize_metrics()
@@ -850,6 +886,16 @@ def create_or_update_notes(
     stats.remote_potential_missing_students_notes = deck_stats["potential_missing_students_notes"]
     stats.remote_unique_students_count = deck_stats["unique_students_count"]
     stats.remote_notes_per_student = deck_stats["notes_per_student"].copy()
+
+    # Surface duplicate spreadsheet IDs (detected during deck build) so the user can fix
+    # them — duplicates silently strand notes that share the same "{student}_{id}" key.
+    if getattr(remoteDeck, "duplicate_ids", None):
+        shown = ", ".join(remoteDeck.duplicate_ids[:10])
+        suffix = " ..." if len(remoteDeck.duplicate_ids) > 10 else ""
+        stats.add_error(
+            f"Duplicate IDs in the spreadsheet ({len(remoteDeck.duplicate_ids)}): {shown}{suffix}. "
+            f"Each '{cols.identifier}' must be unique — duplicate rows are not all synced."
+        )
 
     try:
         # 1. Obtain enabled students from configuration system
@@ -1305,43 +1351,96 @@ def create_or_update_notes(
 
         # 6. Separate obsolete notes from disabled students' notes and sync-disabled notes
         all_existing_note_ids = set(existing_notes.keys())
-        
+
+        # SAFETY GUARD (prevents catastrophic data loss):
+        # If the remote spreadsheet returned ZERO valid note lines (no row had a filled
+        # ID) — e.g. an empty sheet, the wrong tab/gid, or a transient export that returns
+        # a valid-but-empty body — then EVERY existing note would look "obsolete" below and
+        # be deleted, wiping the whole deck. Refuse to delete in that case: preserve all
+        # notes and surface a warning so the user can fix the source and re-sync.
+        if remoteDeck.valid_note_lines == 0 and all_existing_note_ids:
+            warning = (
+                f"Sync safety: the spreadsheet returned no valid rows (every row had an "
+                f"empty '{cols.identifier}'). Skipped deletion of {len(all_existing_note_ids)} "
+                f"existing note(s) to prevent accidental data loss. Verify the sheet/tab is "
+                f"correct and not empty, then sync again."
+            )
+            add_debug_msg(f"🛡️ {warning}")
+            stats.add_error(warning)
+            try:
+                col.save()
+                add_debug_msg("Collection saved successfully (no changes applied)")
+            except Exception as e:
+                raise CollectionSaveError(f"Failed to save collection: {e}")
+            return stats
+
         # 6.1. Identify truly obsolete notes (no longer in spreadsheet)
         notes_really_obsolete = set()
         notes_from_disabled_students = set()
         notes_with_sync_disabled = set()  # NEW: Notes with SYNC=false should be preserved
-        
+        # Best-effort (student, note_id) per stored key, for accurate deletion reporting.
+        note_meta = {}
+
+        # Lookup of remote spreadsheet IDs -> sync-enabled flag, keyed by the raw
+        # ID-column value. Used to decide whether an existing note still corresponds to a
+        # remote row WITHOUT splitting the stored "{student}_{id}" key on '_', which is
+        # ambiguous when a student name or ID itself contains underscores.
+        remote_id_sync = {}
+        for note_data in remoteDeck.notes:
+            rid = note_data.get(cols.identifier, "").strip()
+            if not rid:
+                continue
+            sv = str(note_data.get(cols.is_sync, "")).strip().lower()
+            remote_id_sync[rid] = sv in ["true", "1", "yes", "sim"]
+
+        def _resolve_remote_match(full_id):
+            """Resolve a stored "{student}_{id}[_REV]" key against the remote IDs.
+
+            Anchors on the remote id as a '_'-delimited suffix (longest match wins) so
+            student names containing '_' are handled correctly. Returns
+            (remote_id, student_label); remote_id is None when the note's id is no longer
+            present anywhere in the spreadsheet.
+            """
+            base = full_id[:-4] if full_id.endswith("_REV") else full_id
+            best = None
+            for rid in remote_id_sync:
+                if base == rid or base.endswith(f"_{rid}"):
+                    if best is None or len(rid) > len(best):
+                        best = rid
+            if best is None:
+                return None, None
+            label = base[: -(len(best) + 1)] if base != best else ""
+            return best, label
+
         for student_note_id in all_existing_note_ids - expected_student_note_ids:
-            # Extract note information
+            # Old/malformed keys with no separator at all: treat as obsolete.
             if "_" not in student_note_id:
                 notes_really_obsolete.add(student_note_id)
+                # Best-effort label for reporting.
+                note_meta[student_note_id] = (
+                    extract_student_from_student_note_id(student_note_id)
+                )
                 continue
-                
-            student_name, note_id = extract_student_from_student_note_id(student_note_id)
-            
-            # Check if note still exists in remote spreadsheet and get its sync status
-            note_exists_in_remote = False
-            note_has_sync_disabled = False
-            for note_data in remoteDeck.notes:
-                remote_note_id = note_data.get(cols.identifier, "").strip()
-                if remote_note_id == note_id:
-                    note_exists_in_remote = True
-                    # Check if SYNC is explicitly disabled for this note
-                    sync_value = str(note_data.get(cols.is_sync, "")).strip().lower()
-                    if sync_value not in ["true", "1", "yes", "sim"]:
-                        note_has_sync_disabled = True
-                    break
-            
-            if not note_exists_in_remote:
-                # Note truly no longer exists in spreadsheet
+
+            remote_id, student_name = _resolve_remote_match(student_note_id)
+            # Fall back to a best-effort split only for the human-readable report.
+            if student_name is None:
+                student_name, note_id = extract_student_from_student_note_id(student_note_id)
+            else:
+                note_id = remote_id
+            note_meta[student_note_id] = (student_name, note_id)
+
+            if remote_id is None:
+                # Note's ID is no longer present anywhere in the spreadsheet.
                 notes_really_obsolete.add(student_note_id)
                 add_debug_msg(f"📝 Obsolete note (removed from spreadsheet): {student_note_id}")
-            elif note_has_sync_disabled:
-                # Note exists but SYNC=false - ALWAYS preserve (user intentionally disabled sync)
+            elif not remote_id_sync.get(remote_id, False):
+                # Row exists but SYNC=false - ALWAYS preserve (user intentionally disabled sync)
                 notes_with_sync_disabled.add(student_note_id)
                 add_debug_msg(f"⏸️ Note with SYNC disabled (preserving): {student_note_id}")
             else:
-                # Note exists in spreadsheet with SYNC=true, but student was disabled
+                # Row exists with SYNC=true, but this student/variant is not expected
+                # (student disabled or filtered out).
                 notes_from_disabled_students.add(student_note_id)
                 add_debug_msg(f"👤 Note from disabled student: {student_note_id} (student: {student_name})")
         
@@ -1350,6 +1449,7 @@ def create_or_update_notes(
         for student_note_id in notes_really_obsolete:
             try:
                 note_to_delete = existing_notes[student_note_id]
+                meta_student, meta_note_id = note_meta.get(student_note_id, ("", ""))
                 if delete_note_by_id(col, note_to_delete):
                     stats.deleted += 1
                     # Extract question text for better logging
@@ -1358,13 +1458,13 @@ def create_or_update_notes(
                         if cols.question in note_to_delete.keys():
                             full_pergunta = note_to_delete[cols.question]
                             pergunta = full_pergunta[:100] + ("..." if len(full_pergunta) > 100 else "")
-                    except:
+                    except Exception:
                         pass
                     # Capture deletion details
                     deletion_detail = {
                         "student_note_id": student_note_id,
-                        "student": student_name,
-                        "note_id": note_id,
+                        "student": meta_student,
+                        "note_id": meta_note_id,
                         "reason": "obsolete",
                         "pergunta": pergunta
                     }
@@ -1383,6 +1483,7 @@ def create_or_update_notes(
                 for student_note_id in notes_from_disabled_students:
                     try:
                         note_to_delete = existing_notes[student_note_id]
+                        meta_student, meta_note_id = note_meta.get(student_note_id, ("", ""))
                         if delete_note_by_id(col, note_to_delete):
                             stats.deleted += 1
                             # Extract question text for better logging
@@ -1391,13 +1492,13 @@ def create_or_update_notes(
                                 if cols.question in note_to_delete.keys():
                                     full_pergunta = note_to_delete[cols.question]
                                     pergunta = full_pergunta[:100] + ("..." if len(full_pergunta) > 100 else "")
-                            except:
+                            except Exception:
                                 pass
                             # Capture deletion details
                             deletion_detail = {
                                 "student_note_id": student_note_id,
-                                "student": student_name,
-                                "note_id": note_id,
+                                "student": meta_student,
+                                "note_id": meta_note_id,
                                 "reason": "disabled_student",
                                 "pergunta": pergunta
                             }
@@ -1409,11 +1510,8 @@ def create_or_update_notes(
             else:
                 add_debug_msg(f"🛡️ Auto-removal OFF: preserving {len(notes_from_disabled_students)} notes from disabled students")
                 for student_note_id in notes_from_disabled_students:
-                    if student_note_id.startswith(DEFAULT_STUDENT + "_"):
-                        student_name = DEFAULT_STUDENT
-                    else:
-                        student_name, _ = extract_student_from_student_note_id(student_note_id)
-                    add_debug_msg(f"🛡️ Preserving note: {student_note_id} (student: {student_name})")
+                    meta_student, _ = note_meta.get(student_note_id, ("", ""))
+                    add_debug_msg(f"🛡️ Preserving note: {student_note_id} (student: {meta_student})")
 
         # 6.4. Log sync-disabled notes (always preserved)
         if notes_with_sync_disabled:
@@ -1861,38 +1959,41 @@ def update_existing_note_for_student(
             add_debug_msg(f"🔄 Note {note_id}: Note type change detected! '{old_type_name}' → '{new_type_name}'")
             
             try:
-                # Strategy: Delete old note and recreate with correct note type
-                # This is necessary because Anki's ModelManager doesn't have a direct
-                # method to change the note type of an existing note programmatically
-                
-                # Get the current deck ID before deleting
+                # Strategy: recreate the note with the correct note type, because Anki's
+                # ModelManager has no direct API to retype an existing note in place.
+                # IMPORTANT: create the replacement FIRST and remove the old note only
+                # after the new one exists, so a failure can never leave the user with no
+                # note at all (the original is preserved on any error). Review history is
+                # still reset on a type change — that is inherent to delete+recreate.
+
+                # Get the current deck ID before recreating
                 cards = existing_note.cards()
                 current_deck_id = cards[0].did if cards else None
-                
-                # Delete the old note
-                col.remove_notes([existing_note.id])
-                add_debug_msg(f"🗑️ Deleted old note {note_id} for recreation with new type")
-                
+                old_note_id = existing_note.id
+
                 # Recreate the note with the correct note type
-                # Use the deck ID we already got from the existing note's cards
                 success = create_new_note_for_student(
                     col, new_data, student, current_deck_id, deck_url, debug_messages, is_reverse=is_reverse
                 )
-                
+
                 if success:
+                    # Only now remove the old note — the replacement is safely in place.
+                    col.remove_notes([old_note_id])
                     changes.append(f"Note type changed (recreated): '{old_type_name}' → '{new_type_name}'")
-                    add_debug_msg(f"✅ Note {note_id} recreated with new type '{new_type_name}'")
+                    add_debug_msg(f"✅ Note {note_id} recreated with new type '{new_type_name}'; old note removed")
                     return True, True, changes  # Success, was updated (recreated)
                 else:
-                    add_debug_msg(f"❌ Failed to recreate note {note_id} with new type")
+                    # Keep the original note intact so no data is lost.
+                    add_debug_msg(f"❌ Failed to create replacement for note {note_id}; keeping original (type unchanged)")
                     return False, False, []
-                    
+
             except Exception as e:
                 import traceback
                 error_details = traceback.format_exc()
                 add_debug_msg(f"❌ Error changing note type for {note_id}: {e}")
                 add_debug_msg(f"❌ Stack trace: {error_details}")
-                # On failure, return error - note was likely deleted but not recreated
+                # The original note is only removed after a successful create, so it is
+                # still present here — no data lost.
                 return False, False, []
 
 

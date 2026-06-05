@@ -465,7 +465,7 @@ class SimplifiedBackupManager:
         try:
             with open(backup_info_path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return None
 
     def _remove_current_sheets2anki_deck(self) -> None:

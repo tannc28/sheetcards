@@ -613,7 +613,7 @@ def is_local_deck_missing(url):
             return deck is None
         else:
             return True  # Collection or decks not available
-    except:
+    except Exception:
         return True  # Error accessing deck = deck doesn't exist
 
 
@@ -1134,7 +1134,7 @@ def get_students_with_sync_history():
     try:
         from .utils import add_debug_message
         add_debug_message(f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}", "CLEANUP")
-    except:
+    except Exception:
         add_debug_msg(f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}")
     
     return historical_students
@@ -1195,7 +1195,7 @@ def cleanup_orphaned_sync_history():
                         if unique_id.startswith(f"{student}_"):
                             student_notes.append(note_id)
                             break  # Found at least one note, student still exists
-                except:
+                except Exception:
                     continue
             
             # If no note found, mark as orphan

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sheets2anki"
-version = "2.2.0"
+version = "3.0.0"
 description = "Professional add-on to synchronize Anki decks with Google Sheets - Now with automatic consistency system and enhanced interface"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -90,27 +90,27 @@ include = [
 # =============================================================================
 [tool.pytest.ini_options]
 minversion = "8.0"
+# This is the single source of pytest configuration (the old pytest.ini was removed).
+# Tests MUST be run with --rootdir=tests (tests/run_tests.py does this): the repo-root
+# __init__.py is the Anki entry point (``from .src...``) and must not be collected as a
+# package. Coverage is opt-in via ``run_tests.py --coverage`` rather than always-on.
 addopts = [
+    "--import-mode=importlib",
     "--strict-markers",
-    "--strict-config",
     "--verbose",
     "--tb=short",
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml",
 ]
 testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests", 
+    "unit: marks tests as unit tests",
     "requires_anki: marks tests that require Anki environment",
 ]
 filterwarnings = [
-    "error",
-    "ignore::UserWarning",
-    "ignore::DeprecationWarning",
+    # The card-template JS is embedded in non-raw Python strings that intentionally
+    # contain regex backslashes; those raise harmless invalid-escape SyntaxWarnings.
+    "ignore::SyntaxWarning",
 ]
 
 # =============================================================================

@@ -87,7 +87,14 @@ def process_images_for_sync(spreadsheet_url: str) -> Tuple[bool, str]:
     
     # Trigger the Google Apps Script
     add_debug_msg(f"🌐 Triggering Web App: {webapp_url[:60]}...")
-    
+
+    # The ImgBB API key is sent in the POST body, so refuse to transmit it over plaintext
+    # HTTP. Apps Script web app URLs are always https://.
+    if not str(webapp_url).lower().startswith("https://"):
+        error_msg = "Web App URL must use https:// (the ImgBB key is sent in the request body)."
+        add_debug_msg(f"❌ {error_msg}")
+        return False, error_msg
+
     try:
         import urllib.request
         import urllib.error

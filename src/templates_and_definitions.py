@@ -937,7 +937,7 @@ AI_HELP_CSS = """
 AI_HELP_BUTTON_HTML = """
 <div class="ai-help-container">
   <!-- Load marked.js for markdown parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js" integrity="sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <div class="ai-buttons-row">
     <button id="ai-help-btn" class="ai-help-button" onclick="requestAIHelp()">
       <span class="btn-text">🤖 AI Help</span>
@@ -982,6 +982,33 @@ AI_HELP_BUTTON_HTML = """
 # AI Help JavaScript - Base template (desktop-only mode)
 AI_HELP_JS_DESKTOP = """
 <script>
+// --- Security: sanitize AI/markdown HTML before inserting via innerHTML ---
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function sanitizeHtml(dirty) {
+  // Conservative allowlist sanitizer (no external dependency, works offline):
+  // renders formatted AI output while stripping script-execution vectors.
+  var root = document.createElement('div');
+  root.innerHTML = String(dirty == null ? '' : dirty);
+  var banned = {SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, LINK:1, META:1, BASE:1, SVG:1, MATH:1};
+  var els = root.querySelectorAll('*');
+  for (var i = els.length - 1; i >= 0; i--) {
+    var el = els[i];
+    if (banned[el.tagName]) { if (el.parentNode) el.parentNode.removeChild(el); continue; }
+    for (var j = el.attributes.length - 1; j >= 0; j--) {
+      var an = el.attributes[j].name, av = el.attributes[j].value || '', ln = an.toLowerCase();
+      if (ln.indexOf('on') === 0) { el.removeAttribute(an); continue; }
+      if (ln === 'href' || ln === 'src' || ln === 'xlink:href' || ln === 'formaction' || ln === 'action') {
+        var v = av.replace(/\\s+/g, '').toLowerCase();
+        if (v.indexOf('javascript:') === 0 || (v.indexOf('data:') === 0 && v.indexOf('data:image/') !== 0)) el.removeAttribute(an);
+      } else if (ln === 'style' && /expression|javascript:/i.test(av)) {
+        el.removeAttribute(an);
+      }
+    }
+  }
+  return root.innerHTML;
+}
 // Desktop-only mode: hide button if pycmd not available
 (function() {
   if (typeof pycmd === 'undefined') {
@@ -1184,7 +1211,7 @@ function showAIHelpResponse(response, usageInfo) {
     html += '</div>';
   }
   
-  body.innerHTML = html;
+  body.innerHTML = sanitizeHtml(html);
   modal.classList.add('show');
   
   // Trigger MathJax
@@ -1204,7 +1231,7 @@ function showAIHelpError(error) {
   var modal = document.getElementById('ai-help-modal');
   var body = document.getElementById('ai-help-modal-body');
   if (!modal || !body) return;
-  body.innerHTML = '<div class="ai-help-error">⚠️ ' + error + '</div>';
+  body.innerHTML = '<div class="ai-help-error">⚠️ ' + escapeHtml(error) + '</div>';
   modal.classList.add('show');
 }
 
@@ -1228,6 +1255,33 @@ if (typeof globalThis !== 'undefined') {
 # AI Help JavaScript - Mobile mode (with embedded API config)
 AI_HELP_JS_MOBILE_TEMPLATE = """
 <script>
+// --- Security: sanitize AI/markdown HTML before inserting via innerHTML ---
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function sanitizeHtml(dirty) {
+  // Conservative allowlist sanitizer (no external dependency, works offline):
+  // renders formatted AI output while stripping script-execution vectors.
+  var root = document.createElement('div');
+  root.innerHTML = String(dirty == null ? '' : dirty);
+  var banned = {SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, LINK:1, META:1, BASE:1, SVG:1, MATH:1};
+  var els = root.querySelectorAll('*');
+  for (var i = els.length - 1; i >= 0; i--) {
+    var el = els[i];
+    if (banned[el.tagName]) { if (el.parentNode) el.parentNode.removeChild(el); continue; }
+    for (var j = el.attributes.length - 1; j >= 0; j--) {
+      var an = el.attributes[j].name, av = el.attributes[j].value || '', ln = an.toLowerCase();
+      if (ln.indexOf('on') === 0) { el.removeAttribute(an); continue; }
+      if (ln === 'href' || ln === 'src' || ln === 'xlink:href' || ln === 'formaction' || ln === 'action') {
+        var v = av.replace(/\\s+/g, '').toLowerCase();
+        if (v.indexOf('javascript:') === 0 || (v.indexOf('data:') === 0 && v.indexOf('data:image/') !== 0)) el.removeAttribute(an);
+      } else if (ln === 'style' && /expression|javascript:/i.test(av)) {
+        el.removeAttribute(an);
+      }
+    }
+  }
+  return root.innerHTML;
+}
 // Decode Base64-encoded prompts to prevent HTML parser corruption
 function _b64decode(str) {
   try {
@@ -1651,7 +1705,7 @@ function showAIHelpResponse(response, usageInfo) {
     var inline = document.getElementById('ai-help-inline');
     if (inline) {
       var titleHtml = window._aiModalTitle ? '<h3>' + window._aiModalTitle + '</h3>' : '';
-      inline.innerHTML = titleHtml + html;
+      inline.innerHTML = titleHtml + sanitizeHtml(html);
       inline.classList.add('show');
     }
   } else {
@@ -1660,7 +1714,7 @@ function showAIHelpResponse(response, usageInfo) {
     if (!modal || !body) return;
     var titleEl = document.querySelector('.ai-help-modal-title');
     if (titleEl && window._aiModalTitle) titleEl.textContent = window._aiModalTitle;
-    body.innerHTML = html;
+    body.innerHTML = sanitizeHtml(html);
     modal.classList.add('show');
   }
   
@@ -1678,7 +1732,7 @@ function showAIHelpError(error) {
   
   if (typeof resetAIAskInput === 'function') resetAIAskInput();
   
-  var errorHtml = '<div class="ai-help-error">⚠️ ' + error + '</div>';
+  var errorHtml = '<div class="ai-help-error">⚠️ ' + escapeHtml(error) + '</div>';
   
   // On mobile (no pycmd), show inline; on desktop, use modal
   if (typeof pycmd === 'undefined') {
