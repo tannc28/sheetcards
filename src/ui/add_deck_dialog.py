@@ -305,8 +305,9 @@ class AddDeckDialog(QDialog):
     def _create_stat_card(self, icon, value, label):
         """Creates a statistics card widget."""
         card = QWidget()
+        card.setObjectName("statCard")
         card.setStyleSheet(f"""
-            QWidget {{
+            QWidget#statCard {{
                 background-color: {self.colors['background_secondary']};
                 border-radius: 8px;
                 min-width: 110px;

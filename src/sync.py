@@ -601,8 +601,9 @@ def _show_sync_summary_with_scroll(
             "rgba(76, 175, 80, 0.12)" if not is_dark_mode else "rgba(76, 175, 80, 0.18)"
         )
 
+    header_frame.setObjectName("syncReportHeader")
     header_frame.setStyleSheet(f"""
-        QFrame {{
+        QFrame#syncReportHeader {{
             background: {header_bg};
             border: 2px solid {header_color};
             border-radius: 12px;

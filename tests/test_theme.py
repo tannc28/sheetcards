@@ -97,25 +97,25 @@ def test_every_dialog_color_key_is_defined():
 
 
 @pytest.mark.unit
-def test_no_unscoped_qframe_selectors():
-    """Forbid bare ``QFrame {{ ... }}`` selectors in dialog stylesheets.
+def test_no_unscoped_frame_selectors():
+    """Forbid bare ``QFrame {{ }}`` / ``QWidget {{ }}`` selectors in widget stylesheets.
 
-    ``QLabel`` (and other widgets) subclass ``QFrame``, so an unscoped
-    ``QFrame { border: ... }`` rule leaks its border/background onto every child
-    label — drawing spurious boxes around section titles. Frame styling must be
-    scoped to an objectName (``QFrame#name``).
+    Most widgets (``QLabel`` included) subclass ``QFrame``/``QWidget``, so an unscoped
+    ``QFrame { border: ... }`` rule set on a container leaks its border/background onto
+    every child — drawing spurious boxes around section titles. Frame/widget styling
+    must be scoped to an objectName (``QFrame#name`` / ``QWidget#name``). Descendant
+    rules like ``QScrollArea > QWidget > QWidget`` are fine (they don't start the line).
     """
     import pathlib
-    import re
 
-    ui_dir = pathlib.Path(__file__).resolve().parent.parent / "src" / "ui"
-    bare = re.compile(r"QFrame \{\{")
+    src_dir = pathlib.Path(__file__).resolve().parent.parent / "src"
+    # Web CSS (different selector semantics) lives in these — skip.
+    skip = {"card_assets.py", "templates_and_definitions.py"}
     offenders = [
-        f"{path.name}:{i}"
-        for path in ui_dir.glob("*.py")
+        f"{path.relative_to(src_dir)}:{i}"
+        for path in src_dir.rglob("*.py")
+        if path.name not in skip
         for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
-        if bare.search(line)
+        if line.strip().startswith(("QFrame {{", "QWidget {{"))
     ]
-    assert (
-        not offenders
-    ), f"unscoped QFrame selectors leak to child QLabels: {offenders}"
+    assert not offenders, f"unscoped frame selectors leak to children: {offenders}"
