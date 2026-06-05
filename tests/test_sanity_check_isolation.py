@@ -135,13 +135,12 @@ def test_all_ai_functions_use_collectCardContent():
     Verify that requestAIHelp, requestAIChecker, and submitAIAsk
     all call collectCardContent() to get card content.
     """
-    for label, section_marker in [
-        ("DESKTOP", "AI_HELP_JS_DESKTOP"),
-        ("MOBILE", "AI_HELP_JS_MOBILE_TEMPLATE")
+    from src import templates_and_definitions as T
+
+    for label, section in [
+        ("DESKTOP", T.AI_HELP_JS_DESKTOP),
+        ("MOBILE", T.AI_HELP_JS_MOBILE_TEMPLATE),
     ]:
-        start = TEMPLATES_PY.index(section_marker)
-        section = TEMPLATES_PY[start:start + 15000]
-        
         for func_name in ["requestAIHelp", "requestAIChecker", "submitAIAsk"]:
             func_match = re.search(rf'function {func_name}\(\)\s*\{{', section)
             assert func_match, f"{func_name} function must exist in {label}"
@@ -176,14 +175,12 @@ def test_prompt_templates_no_sanity_references():
     # Search for any sanity reference in prompt dictionaries
     # The prompts are defined as AI_HELP_PROMPTS, AI_ASK_PROMPTS, AI_CHECKER_PROMPTS in config_manager.py
     
+    from src import config_manager as C
+
     for dict_name in ["AI_HELP_PROMPTS", "AI_ASK_PROMPTS", "AI_CHECKER_PROMPTS"]:
-        # Find the dictionary definition
-        dict_start = CONFIG_MANAGER_PY.index(dict_name)
-        # Find the end (next top-level definition or large gap)
-        # Simple: grab 5000 chars after the start
-        dict_section = CONFIG_MANAGER_PY[dict_start:dict_start + 5000]
-        
-        assert "sanity" not in dict_section.lower(), \
+        prompts = getattr(C, dict_name)
+        blob = " ".join(str(v) for v in prompts.values()).lower()
+        assert "sanity" not in blob, \
             f"{dict_name} must not reference 'sanity'"
     
     print("✅ PROMPTS: No sanity check references in any AI prompt template (all languages)")
