@@ -38,13 +38,6 @@ def is_dark_mode() -> bool:
     return False
 
 
-# Base font size for the UI, in points (pt scales with the user's system DPI / font
-# settings; px does not). Use this instead of hardcoding mixed pt/px sizes.
-FONT_PT = 12
-
-# Corner radius and the standard control padding, kept identical everywhere.
-RADIUS = "6px"
-
 # -----------------------------------------------------------------------------
 # LAYOUT SCALE (4px grid) — use these instead of ad-hoc margin/spacing numbers so
 # every window shares the same rhythm.
@@ -169,46 +162,6 @@ def get_colors() -> dict:
 # =============================================================================
 
 
-def primary_button_qss(colors: dict, destructive: bool = False) -> str:
-    """QSS for a filled primary (or destructive) call-to-action button."""
-    bg = colors["error"] if destructive else colors["primary"]
-    hover = "#C0392B" if destructive else colors["primary_dark"]
-    return f"""
-        QPushButton {{
-            background-color: {bg};
-            color: #ffffff;
-            border: none;
-            border-radius: {RADIUS};
-            font-size: {FONT_PT}pt;
-            font-weight: bold;
-            padding: 8px 20px;
-            min-width: 80px;
-        }}
-        QPushButton:hover {{ background-color: {hover}; }}
-        QPushButton:disabled {{ background-color: {colors['text_muted']}; }}
-    """
-
-
-def secondary_button_qss(colors: dict) -> str:
-    """QSS for a neutral, outlined secondary button."""
-    return f"""
-        QPushButton {{
-            background-color: {colors['background']};
-            color: {colors['text_primary']};
-            border: 1px solid {colors['border']};
-            border-radius: {RADIUS};
-            font-size: {FONT_PT}pt;
-            font-weight: 500;
-            padding: 8px 16px;
-            min-width: 70px;
-        }}
-        QPushButton:hover {{
-            background-color: {colors['background_secondary']};
-            border-color: {colors['text_secondary']};
-        }}
-    """
-
-
 def scrollbar_qss(colors: dict) -> str:
     """A thin, modern, arrow-less scrollbar — themed and identical app-wide.
 
@@ -282,22 +235,3 @@ def base_dialog_qss(colors: dict) -> str:
     """Shared base styling appended to every dialog: a consistent scrollbar and a
     consistent QGroupBox delimitation. Append after the dialog's own stylesheet."""
     return scrollbar_qss(colors) + groupbox_qss(colors)
-
-
-def header_qss(colors: dict) -> str:
-    """QSS for a gradient page header (white text on the brand gradient).
-
-    Apply to a header ``QFrame``/``QWidget`` so every dialog gets the same banner.
-    """
-    return f"""
-        QWidget {{
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:1, y2:0,
-                stop:0 {colors['header_gradient_start']},
-                stop:1 {colors['header_gradient_end']}
-            );
-            border-top-left-radius: {RADIUS};
-            border-top-right-radius: {RADIUS};
-        }}
-        QLabel {{ color: #ffffff; background: transparent; }}
-    """

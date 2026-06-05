@@ -86,9 +86,10 @@ class StyledMessageBox(QDialog):
 
         # === Header Area with Icon ===
         header_widget = QWidget()
+        header_widget.setObjectName("msgHeader")
         icon_char, type_color, type_bg = self._get_icon_and_color()
         header_widget.setStyleSheet(f"""
-            QWidget {{
+            QWidget#msgHeader {{
                 background-color: {type_bg};
                 border-bottom: 1px solid {self.colors['border_light']};
             }}
@@ -168,8 +169,9 @@ class StyledMessageBox(QDialog):
 
         # === Buttons Area ===
         button_widget = QWidget()
+        button_widget.setObjectName("msgButtonBar")
         button_widget.setStyleSheet(f"""
-            QWidget {{
+            QWidget#msgButtonBar {{
                 background-color: {self.colors['background_secondary']};
                 border-top: 1px solid {self.colors['border']};
             }}
