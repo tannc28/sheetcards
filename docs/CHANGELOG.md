@@ -4,6 +4,31 @@
 
 ---
 
+## 🔧 **v3.0.2** - June 2026 *(Maintenance)*
+
+Post-v3.0.1 audit follow-ups. No new features and no behavior changes for end users
+(the UI work is visual-consistency only).
+
+### 🐛 Fixes
+- **Config defaults isolation**: `get_config()` / `get_meta()` now deep-copy the module
+  defaults in their fallback/merge paths, so a caller mutating a nested dict can no longer
+  corrupt `DEFAULT_CONFIG` / `DEFAULT_META` for the rest of the process.
+
+### 🎨 UI deduplication
+- The gradient **header banner** (all 11 dialogs) and the **radio option-card**
+  (deck-options + timer) now come from shared `theme.make_header` /
+  `theme.make_radio_option_card` factories — ~560 lines of duplicated dialog code removed,
+  and the headers are now byte-consistent.
+- Removed write-only per-dialog state (`is_dark_mode`, `current_step`, the dead `*_radio`
+  attributes) and the orphaned comments left behind.
+
+### 🧪 Tests
+- New construction-smoke (`tests/test_ui_instantiate_smoke.py`) instantiates every dialog,
+  catching `__init__`/setup errors the import-only smoke can't; plus regression tests for
+  the config-defaults isolation.
+
+---
+
 ## 🔧 **v3.0.1** - June 2026 *(Maintenance)*
 
 Internal quality work, a full code audit, and a UI-consistency pass since v3.0.0. No new
