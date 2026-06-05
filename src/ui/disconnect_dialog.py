@@ -6,7 +6,6 @@ to select and disconnect multiple remote decks using checkboxes.
 """
 
 from ..compat import DialogAccepted
-from ..compat import QApplication
 from ..compat import QCheckBox
 from ..compat import QDialog
 from ..compat import QFrame
@@ -27,43 +26,7 @@ from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..utils import add_debug_message
-
-
-def clean_url_for_browser(url):
-    """
-    Removes the '&output=tsv' ending from URL to allow browser viewing.
-
-    Args:
-        url (str): Complete URL with TSV ending
-
-    Returns:
-        str: Clean URL for browser viewing
-    """
-    if url.endswith("&output=tsv"):
-        return url[:-11]  # Removes '&output=tsv'
-    elif url.endswith("&single=true&output=tsv"):
-        return url[:-23]  # Removes '&single=true&output=tsv'
-    return url
-
-
-def copy_url_to_clipboard(url):
-    """
-    Copies the clean URL to system clipboard.
-
-    Args:
-        url (str): URL to copy
-    """
-    try:
-        clean_url = clean_url_for_browser(url)
-        clipboard = QApplication.clipboard()
-        if clipboard:
-            clipboard.setText(clean_url)
-            return True
-        return False
-    except Exception as e:
-        add_debug_message(f"Error copying URL: {e}", "UI")
-        return False
+from .url_helpers import copy_url_to_clipboard
 
 
 class DisconnectDialog(QDialog):
