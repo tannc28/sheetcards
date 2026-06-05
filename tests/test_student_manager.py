@@ -117,6 +117,7 @@ class TestStudentManager:
 class TestStudentFiltering:
     """Tests for data filtering by students."""
 
+    @pytest.mark.skip(reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration")
     def test_filter_data_by_students_basic(self, sample_tsv_data):
         """Basic filtering test by students."""
 
@@ -526,6 +527,7 @@ class TestStudentValidation:
 class TestStudentManagerIntegration:
     """Student manager integration tests."""
 
+    @pytest.mark.skip(reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration")
     def test_full_student_management_workflow(self, sample_tsv_data, mock_mw):
         """Full student management workflow test."""
 

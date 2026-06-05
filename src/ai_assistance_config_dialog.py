@@ -207,7 +207,14 @@ class AIAssistanceConfigDialog(QDialog):
         """)
         mobile_layout.addWidget(self.mobile_checkbox)
         
-        mobile_warning = QLabel("⚠️ Warning: API key will be visible in card HTML. Don't share decks with this enabled.")
+        mobile_warning = QLabel(
+            "⚠️ Security warning: your API key is embedded in plaintext inside the card "
+            "templates. Those templates are part of your Anki collection, so enabling this "
+            "uploads the key to AnkiWeb and syncs it to every device on your account — and "
+            "it is included in any deck or collection you export or share. Anyone who can "
+            "read the cards can read and use the key. Enable only if you accept that, and "
+            "prefer a restricted / low-quota key you can rotate."
+        )
         mobile_warning.setStyleSheet(f"color: {self.colors['accent_warning']}; font-size: 10pt;")
         mobile_warning.setWordWrap(True)
         mobile_layout.addWidget(mobile_warning)

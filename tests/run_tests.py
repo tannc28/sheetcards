@@ -49,8 +49,18 @@ def main():
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)
 
-    # Build pytest command
-    cmd = ["python", "-m", "pytest"]
+    # Build pytest command.
+    # --rootdir=tests keeps pytest from treating the repo-root __init__.py (the Anki
+    # entry point, which does ``from .src...``) as a package and trying to import it.
+    # --import-mode=importlib imports test modules in isolation. Both are required for
+    # collection to succeed; --rootdir must be on the CLI (it is resolved before addopts).
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--rootdir=tests",
+        "--import-mode=importlib",
+    ]
 
     # Add flags based on arguments
     if args.verbose:
@@ -122,12 +132,12 @@ def show_test_info():
     print("-" * 40)
 
     test_files = [
+        ("test_core_logic.py", "Core logic (real src) — parsing, cloze, tags, URLs, guards"),
         ("test_data_processor.py", "TSV data processing"),
         ("test_config_manager.py", "Settings management"),
         ("test_utils.py", "Utility functions"),
         ("test_student_manager.py", "Student management"),
         ("test_integration.py", "Integration tests"),
-        ("test_new_tags.py", "Tag system (existing)"),
     ]
 
     for filename, description in test_files:

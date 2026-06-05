@@ -404,7 +404,7 @@ def _show_sync_summary_new(
             sync_mode = get_ankiweb_sync_mode()
             if sync_mode == "disabled":
                 summary.append("⏹️ AnkiWeb: Automatic synchronization disabled")
-        except:
+        except Exception:
             pass
 
     # Errors
@@ -2807,7 +2807,7 @@ def _handle_sync_error(
                     else "Unknown"
                 )
             )
-        except:
+        except Exception:
             deckName = "Unknown"
 
     error_msg = f"❌ {deckName}: Sync failed - {str(e)}"
@@ -2845,7 +2845,7 @@ def _handle_unexpected_error(
                     else "Unknown"
                 )
             )
-        except:
+        except Exception:
             deckName = "Unknown"
 
     error_msg = f"🔥 {deckName}: Unexpected error - {str(e)}"

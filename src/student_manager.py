@@ -635,7 +635,8 @@ def discover_students_from_tsv_url(url: str) -> Set[str]:
         request = urllib.request.Request(tsv_url, headers=headers)
         
         with urllib.request.urlopen(request, timeout=30) as response:
-            data = response.read().decode("utf-8")
+            # utf-8-sig strips a possible BOM that would otherwise corrupt the header.
+            data = response.read().decode("utf-8-sig")
 
         # Parse CSV/TSV
         csv_reader = csv.DictReader(StringIO(data), delimiter="\t")
@@ -716,28 +717,40 @@ def cleanup_disabled_students_data(
         for student in disabled_students:
             add_debug_msg(f"🧹 CLEANUP: Processing student '{student}'...")
 
-            # Search for notes by unique ID in {student}_{id} or [MISSING STUDENTS]_{id} format
-            # Use ID field search containing student_note_id
-            student_pattern = f"{student}_*"
-
-            # Find all notes in Anki that have this student in the ID field
-            # Since we cannot direct search by custom field, let's iterate
+            # Find all notes belonging to this student.
+            # Since we cannot search by custom field directly, iterate all notes and
+            # determine ownership from the note's subdeck path
+            # (Sheets2Anki::{deck}::{student}::...), which uses '::' as an unambiguous
+            # delimiter. A plain ID-prefix test (note["ID"].startswith("{student}_"))
+            # would wrongly match a DIFFERENT student whose name shares this one as an
+            # underscore-delimited prefix — e.g. disabling "Ana" must not delete the
+            # notes of "Ana_B". When the owning student can't be determined, we skip the
+            # note (safe: never delete on ambiguity).
             all_note_ids = col.find_notes("*")  # All notes - use wildcard
             student_note_ids = []
 
             for note_id in all_note_ids:
                 try:
                     note = col.get_note(note_id)
-                    # Check if note has ID field and if it matches the student
-                    if "ID" in note.keys():
-                        note_unique_id = note["ID"].strip()
-                        # Check if note ID starts with "{student}_"
-                        if note_unique_id.startswith(f"{student}_"):
-                            student_note_ids.append(note_id)
-                            add_debug_msg(
-                                f"   🚀 Found note for student '{student}': {note_unique_id}"
-                            )
-                except:
+                    if "ID" not in note.keys():
+                        continue
+                    note_unique_id = note["ID"].strip()
+
+                    note_student = None
+                    cards = note.cards()
+                    if cards:
+                        deck = col.decks.get(cards[0].did)
+                        if deck:
+                            parts = deck["name"].split("::")
+                            if len(parts) >= 3:
+                                note_student = parts[2]
+
+                    if note_student == student:
+                        student_note_ids.append(note_id)
+                        add_debug_msg(
+                            f"   🚀 Found note for student '{student}': {note_unique_id}"
+                        )
+                except Exception:
                     continue
 
             notes_to_remove.extend(student_note_ids)
@@ -833,7 +846,7 @@ def _remove_student_note_types(student: str, deck_names: List[str]) -> int:
     try:
         from .utils import add_debug_message
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_NOTE_TYPES")
-    except:
+    except Exception:
         log_func = print
     
     if not mw or not hasattr(mw, "col") or not mw.col:
@@ -981,7 +994,7 @@ def _update_meta_after_cleanup(
     try:
         from .utils import add_debug_message
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_META")
-    except:
+    except Exception:
         log_func = print
         
     try:
@@ -1060,7 +1073,7 @@ def _update_meta_after_missing_cleanup(deck_names: List[str]) -> None:
     try:
         from .utils import add_debug_message
         log_func = lambda msg: add_debug_message(msg, "CLEANUP_MISSING_META")
-    except:
+    except Exception:
         log_func = print
         
     try:
@@ -1153,7 +1166,7 @@ def get_disabled_students_for_cleanup(current_enabled: Set[str]) -> Set[str]:
     try:
         from .utils import add_debug_message
         log_func = lambda msg: add_debug_message(msg, "CLEANUP")
-    except:
+    except Exception:
         log_func = print
     
     log_func("🔍 CLEANUP: Identifying disabled students for cleanup...")
@@ -1278,7 +1291,7 @@ def cleanup_missing_students_data(deck_names: List[str]) -> Dict[str, int]:
                     if any(note_unique_id.startswith(f"{p}_") for p in missing_placeholders):
                         missing_note_ids.append(note_id)
                         add_debug_msg(f"   📝 Found missing student note: {note_unique_id}")
-            except:
+            except Exception:
                 continue
 
         # Remove all found missing notes
