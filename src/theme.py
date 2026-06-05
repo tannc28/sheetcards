@@ -195,6 +195,49 @@ def secondary_button_qss(colors: dict) -> str:
     """
 
 
+def scrollbar_qss(colors: dict) -> str:
+    """A thin, modern, arrow-less scrollbar — themed and identical app-wide.
+
+    Append this to a dialog's stylesheet so every scroll area, list and text view
+    in that dialog gets the same scrollbar instead of the native one (which renders
+    differently per widget type and OS).
+    """
+    thumb = colors["text_muted"]
+    thumb_hover = colors["text_secondary"]
+    return f"""
+        QScrollBar:vertical {{
+            background: transparent;
+            width: 12px;
+            margin: 0;
+        }}
+        QScrollBar::handle:vertical {{
+            background: {thumb};
+            border-radius: 6px;
+            min-height: 32px;
+        }}
+        QScrollBar::handle:vertical:hover {{ background: {thumb_hover}; }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+            background: transparent;
+        }}
+        QScrollBar:horizontal {{
+            background: transparent;
+            height: 12px;
+            margin: 0;
+        }}
+        QScrollBar::handle:horizontal {{
+            background: {thumb};
+            border-radius: 6px;
+            min-width: 32px;
+        }}
+        QScrollBar::handle:horizontal:hover {{ background: {thumb_hover}; }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+            background: transparent;
+        }}
+    """
+
+
 def header_qss(colors: dict) -> str:
     """QSS for a gradient page header (white text on the brand gradient).
 

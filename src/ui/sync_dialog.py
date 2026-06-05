@@ -24,6 +24,7 @@ from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import scrollbar_qss
 from ..utils import add_debug_message
 
 
@@ -89,6 +90,7 @@ class SyncDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
+        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
         self._load_decks()
         self._load_persistent_selection()
         self._connect_signals()

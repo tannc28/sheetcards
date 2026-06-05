@@ -38,6 +38,7 @@ from ..config_manager import set_auto_backup_config
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import scrollbar_qss
 
 
 class BackupDialog(QDialog):
@@ -59,6 +60,7 @@ class BackupDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
+        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
         self._load_current_settings()
 
     def _setup_colors(self):
