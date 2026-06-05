@@ -240,7 +240,7 @@ def base_dialog_qss(colors: dict) -> str:
 # =============================================================================
 # REUSABLE WIDGET BUILDERS
 # -----------------------------------------------------------------------------
-# Small widget factories so dialogs stop re-implementing the same banner/buttons.
+# Small widget factories so dialogs stop re-implementing the same banner/option-card.
 # =============================================================================
 
 
@@ -287,47 +287,98 @@ def make_header(colors: dict, title: str, subtitle: str = ""):
     return frame
 
 
-def primary_button_qss(colors: dict, kind: str = "primary") -> str:
-    """Filled action button (Save / Apply / Confirm). ``kind`` selects the accent:
-    ``"primary"`` (blue), ``"success"`` (green) or ``"danger"`` (red)."""
-    accent = {
-        "primary": colors["accent_primary"],
-        "success": colors["accent_success"],
-        "danger": colors["accent_danger"],
-    }[kind]
-    hover = {
-        "primary": colors["primary_dark"],
-        "success": colors["success_dark"],
-        "danger": colors["danger_dark"],
-    }[kind]
-    return f"""
-        QPushButton {{
-            background-color: {accent};
-            color: white;
-            border: none;
-            border-radius: {RADIUS_CONTROL};
-            padding: 12px 25px;
-            font-size: 13px;
-            font-weight: bold;
-        }}
-        QPushButton:hover {{ background-color: {hover}; }}
-        QPushButton:disabled {{
-            background-color: {colors['button_bg']};
-            color: {colors['text_muted']};
-        }}
-    """
+def make_radio_option_card(
+    colors: dict,
+    *,
+    key: str,
+    checked: bool,
+    title: str,
+    badge: str,
+    description: str,
+    accent_color: str,
+    button_group,
+    button_id: int,
+):
+    """Build a clickable radio "option card" (radio + title/badge/description).
 
-
-def secondary_button_qss(colors: dict) -> str:
-    """Outline button (Cancel / secondary actions) — transparent with a border."""
-    return f"""
-        QPushButton {{
-            background-color: transparent;
-            color: {colors['text_secondary']};
-            border: 1px solid {colors['border']};
-            border-radius: {RADIUS_CONTROL};
-            padding: 12px 25px;
-            font-size: 13px;
-        }}
-        QPushButton:hover {{ background-color: {colors['button_bg']}; }}
+    Shared by the deck-options and timer dialogs (their cards were byte-identical
+    apart from the key and the checked condition). Adds ``radio`` to
+    ``button_group`` under ``button_id`` and makes the whole card click-to-select.
     """
+    from .compat import QFrame
+    from .compat import QHBoxLayout
+    from .compat import QLabel
+    from .compat import QRadioButton
+    from .compat import QVBoxLayout
+
+    card = QFrame()
+    card.setObjectName(f"card_{key}")
+    card.setStyleSheet(f"""
+        QFrame#card_{key} {{
+            background-color: {colors['card_bg']};
+            border: 2px solid {colors['border']};
+            border-radius: 10px;
+            padding: 5px;
+        }}
+        QFrame#card_{key}:hover {{
+            border-color: {accent_color};
+        }}
+    """)
+
+    card_layout = QHBoxLayout(card)
+    card_layout.setContentsMargins(15, 12, 15, 12)
+    card_layout.setSpacing(15)
+
+    radio = QRadioButton()
+    radio.setChecked(checked)
+    radio.setStyleSheet(f"""
+        QRadioButton::indicator {{
+            width: 22px;
+            height: 22px;
+        }}
+        QRadioButton::indicator:checked {{
+            background-color: {colors['accent_primary']};
+            border: 2px solid {colors['accent_primary']};
+            border-radius: 11px;
+        }}
+        QRadioButton::indicator:unchecked {{
+            background-color: {colors['card_bg']};
+            border: 2px solid {colors['border']};
+            border-radius: 11px;
+        }}
+    """)
+    button_group.addButton(radio, button_id)
+    card_layout.addWidget(radio)
+
+    content_layout = QVBoxLayout()
+    content_layout.setSpacing(4)
+
+    title_row = QHBoxLayout()
+    title_label = QLabel(title)
+    title_label.setStyleSheet(
+        f"font-size: 13pt; font-weight: bold; color: {colors['text']};"
+    )
+    title_row.addWidget(title_label)
+
+    badge_label = QLabel(badge)
+    badge_label.setStyleSheet(f"""
+        background-color: {accent_color};
+        color: white;
+        font-size: 12pt;
+        font-weight: bold;
+        padding: 3px 10px;
+        border-radius: 10px;
+    """)
+    title_row.addWidget(badge_label)
+    title_row.addStretch()
+    content_layout.addLayout(title_row)
+
+    desc_label = QLabel(description)
+    desc_label.setStyleSheet(f"font-size: 12pt; color: {colors['text_secondary']};")
+    desc_label.setWordWrap(True)
+    content_layout.addWidget(desc_label)
+
+    card_layout.addLayout(content_layout, 1)
+
+    card.mousePressEvent = lambda e: radio.setChecked(True)
+    return card
