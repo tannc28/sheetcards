@@ -7,7 +7,6 @@ viewing debug logs, and clearing them.
 
 import os
 
-from ..compat import Palette_Window
 from ..compat import QCheckBox
 from ..compat import QDialog
 from ..compat import QGroupBox
@@ -23,6 +22,7 @@ from ..config_manager import save_meta
 from ..config_manager import set_accumulate_logs
 from ..config_manager import should_accumulate_logs
 from ..styled_messages import StyledMessageBox
+from ..theme import is_dark_mode
 from ..utils import add_debug_message
 from ..utils import clear_debug_log
 from ..utils import get_debug_log_path
@@ -46,10 +46,7 @@ class DebugModeDialog(QDialog):
         self.setMinimumSize(800, 600)
         self.resize(900, 650)
 
-        # Detect dark mode
-        palette = self.palette()
-        bg_color = palette.color(Palette_Window)
-        self.is_dark_mode = bg_color.lightness() < 128
+        self.is_dark_mode = is_dark_mode()
 
         self._setup_ui()
         self._apply_styles()

@@ -8,7 +8,6 @@ This module allows the user to choose between three timer positions:
 """
 
 from ..compat import DialogAccepted
-from ..compat import Palette_Window
 from ..compat import QButtonGroup
 from ..compat import QDialog
 from ..compat import QFrame
@@ -19,6 +18,8 @@ from ..compat import QRadioButton
 from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
+from ..theme import get_colors
+from ..theme import is_dark_mode
 
 
 class TimerConfigDialog(QDialog):
@@ -38,9 +39,7 @@ class TimerConfigDialog(QDialog):
         self.current_position = get_timer_position()
 
         # Detect dark mode
-        palette = self.palette()
-        bg_color = palette.color(Palette_Window)
-        self.is_dark_mode = bg_color.lightness() < 128
+        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()
@@ -49,34 +48,7 @@ class TimerConfigDialog(QDialog):
 
     def _setup_colors(self):
         """Sets up color scheme based on theme."""
-        if self.is_dark_mode:
-            self.colors = {
-                "bg": "#1e1e1e",
-                "card_bg": "#2d2d2d",
-                "text": "#ffffff",
-                "text_secondary": "#b0b0b0",
-                "border": "#404040",
-                "accent_primary": "#2196F3",
-                "accent_success": "#4CAF50",
-                "accent_warning": "#FF9800",
-                "accent_purple": "#9C27B0",
-                "button_bg": "#3d3d3d",
-                "button_hover": "#4a4a4a",
-            }
-        else:
-            self.colors = {
-                "bg": "#f5f5f5",
-                "card_bg": "#ffffff",
-                "text": "#1a1a1a",
-                "text_secondary": "#666666",
-                "border": "#d0d0d0",
-                "accent_primary": "#1976D2",
-                "accent_success": "#4CAF50",
-                "accent_warning": "#FF9800",
-                "accent_purple": "#7B1FA2",
-                "button_bg": "#e0e0e0",
-                "button_hover": "#d0d0d0",
-            }
+        self.colors = get_colors()
 
     def _apply_styles(self):
         """Applies styles to the dialog."""
