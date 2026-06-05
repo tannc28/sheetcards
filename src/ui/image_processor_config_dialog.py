@@ -124,8 +124,8 @@ class ImageProcessorConfigDialog(QDialog):
         header_frame.setStyleSheet(f"""
             QFrame#headerFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.colors['accent_primary']}, 
-                    stop:1 {self.colors['accent_success']});
+                    stop:0 {self.colors['header_gradient_start']}, 
+                    stop:1 {self.colors['header_gradient_end']});
                 border-radius: 12px;
                 padding: 5px;
             }}
@@ -210,7 +210,7 @@ class ImageProcessorConfigDialog(QDialog):
         """)
         cancel_btn.clicked.connect(self.reject)
 
-        save_btn = QPushButton("✓ Save Configuration")
+        save_btn = QPushButton("✓ Save")
         save_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.colors['accent_success']};
