@@ -8,7 +8,6 @@ with support for automatic naming and conflict resolution.
 from ..compat import AlignCenter
 from ..compat import DialogAccepted
 from ..compat import QDialog
-from ..compat import QFrame
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
@@ -29,6 +28,7 @@ from ..styled_messages import StyledMessageBox
 from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 from ..theme import base_dialog_qss
 from ..theme import get_colors
+from ..theme import make_header
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
 from ..utils import get_spreadsheet_id_from_url
@@ -137,37 +137,11 @@ class AddDeckDialog(QDialog):
 
     def _create_header(self):
         """Creates the gradient header banner (consistent with the other dialogs)."""
-        header_frame = QFrame()
-        header_frame.setObjectName("headerFrame")
-        header_frame.setStyleSheet(f"""
-            QFrame#headerFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.colors['header_gradient_start']},
-                    stop:1 {self.colors['header_gradient_end']});
-                border-radius: 12px;
-            }}
-            QFrame#headerFrame QLabel {{
-                background: transparent;
-                color: white;
-                border: none;
-            }}
-        """)
-        layout = QVBoxLayout(header_frame)
-        layout.setContentsMargins(20, 15, 20, 15)
-        layout.setSpacing(6)
-
-        title = QLabel("Add Remote Deck")
-        title.setStyleSheet("font-size: 18pt; font-weight: bold;")
-        layout.addWidget(title)
-
-        subtitle = QLabel(
-            "Connect a Google Sheets spreadsheet to sync flashcards automatically."
+        return make_header(
+            self.colors,
+            "Add Remote Deck",
+            "Connect a Google Sheets spreadsheet to sync flashcards automatically.",
         )
-        subtitle.setStyleSheet("font-size: 12pt; opacity: 0.9;")
-        subtitle.setWordWrap(True)
-        layout.addWidget(subtitle)
-
-        return header_frame
 
     def _create_step1_section(self):
         """Creates Step 1: URL input section."""

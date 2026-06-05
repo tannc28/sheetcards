@@ -24,6 +24,7 @@ from ..config_manager import get_deck_remote_name
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import make_header
 from .url_helpers import copy_url_to_clipboard
 
 
@@ -108,40 +109,13 @@ class SyncDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         # Header section
-        header_frame = QFrame()
-        header_frame.setObjectName("headerFrame")
-        header_frame.setStyleSheet(f"""
-            QFrame#headerFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.colors['header_gradient_start']}, 
-                    stop:1 {self.colors['header_gradient_end']});
-                border-radius: 12px;
-                padding: 5px;
-            }}
-            QFrame#headerFrame QLabel {{
-                background: transparent;
-                color: white;
-                border: none;
-            }}
-        """)
-        header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(20, 15, 20, 15)
-
-        # Title with icon
-        title_label = QLabel("Synchronize Decks")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
-        header_layout.addWidget(title_label)
-
-        # Description
-        desc_label = QLabel(
-            "Select which remote decks you want to synchronize. "
-            "Your selection will be remembered for future synchronizations."
+        layout.addWidget(
+            make_header(
+                self.colors,
+                "Synchronize Decks",
+                "Select which remote decks you want to synchronize. Your selection will be remembered for future synchronizations.",
+            )
         )
-        desc_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
-        desc_label.setWordWrap(True)
-        header_layout.addWidget(desc_label)
-
-        layout.addWidget(header_frame)
 
         # Remote decks section
         remote_group = QGroupBox("Available Remote Decks")

@@ -33,6 +33,7 @@ from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import make_header
 
 
 class AIAssistanceConfigDialog(QDialog):
@@ -107,37 +108,13 @@ class AIAssistanceConfigDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
 
         # Header section
-        header_frame = QFrame()
-        header_frame.setObjectName("headerFrame")
-        header_frame.setStyleSheet(f"""
-            QFrame#headerFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.colors['header_gradient_start']}, 
-                    stop:1 {self.colors['header_gradient_end']});
-                border-radius: 12px;
-                padding: 5px;
-            }}
-            QFrame#headerFrame QLabel {{
-                background: transparent;
-                color: white;
-                border: none;
-            }}
-        """)
-        header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(20, 15, 20, 15)
-
-        title_label = QLabel("AI Assistance Configuration")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
-        header_layout.addWidget(title_label)
-
-        desc_label = QLabel(
-            "Configure settings for the AI Help, AI Ask, and AI Checker buttons."
+        layout.addWidget(
+            make_header(
+                self.colors,
+                "AI Assistance Configuration",
+                "Configure settings for the AI Help, AI Ask, and AI Checker buttons.",
+            )
         )
-        desc_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
-        desc_label.setWordWrap(True)
-        header_layout.addWidget(desc_label)
-
-        layout.addWidget(header_frame)
 
         # Enable checkbox
         self.enable_checkbox = QCheckBox(
