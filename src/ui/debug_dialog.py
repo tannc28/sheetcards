@@ -23,8 +23,8 @@ from ..config_manager import save_meta
 from ..config_manager import set_accumulate_logs
 from ..config_manager import should_accumulate_logs
 from ..styled_messages import StyledMessageBox
+from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import scrollbar_qss
 from ..utils import add_debug_message
 from ..utils import clear_debug_log
 from ..utils import get_debug_log_path
@@ -50,7 +50,7 @@ class DebugModeDialog(QDialog):
 
         self._setup_ui()
         self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + scrollbar_qss(get_colors()))
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(get_colors()))
         self._load_debug_status()
         self._load_log_content()
 

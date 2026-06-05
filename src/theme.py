@@ -45,6 +45,20 @@ FONT_PT = 12
 # Corner radius and the standard control padding, kept identical everywhere.
 RADIUS = "6px"
 
+# -----------------------------------------------------------------------------
+# LAYOUT SCALE (4px grid) — use these instead of ad-hoc margin/spacing numbers so
+# every window shares the same rhythm.
+# -----------------------------------------------------------------------------
+MARGIN = 20  # dialog outer content margin (all four sides)
+SPACE_SECTION = 16  # gap between sections
+SPACE_ELEMENT = 12  # gap between elements within a section
+SPACE_TIGHT = 8  # label <-> field, icon <-> text
+
+# Border-radius scale.
+RADIUS_CARD = "12px"  # header banner, section cards, group boxes
+RADIUS_CONTROL = "8px"  # buttons, inputs, dropdowns
+RADIUS_SMALL = "6px"  # badges, pills, status chips
+
 # =============================================================================
 # PALETTES
 # -----------------------------------------------------------------------------
@@ -236,6 +250,38 @@ def scrollbar_qss(colors: dict) -> str:
             background: transparent;
         }}
     """
+
+
+def groupbox_qss(colors: dict) -> str:
+    """Consistent section delimitation for every QGroupBox — a rounded card with a
+    titled border, identical across all dialogs."""
+    return f"""
+        QGroupBox {{
+            background-color: {colors['card_bg']};
+            border: 1px solid {colors['border']};
+            border-radius: {RADIUS_CARD};
+            margin-top: 14px;
+            padding: {SPACE_SECTION}px;
+            padding-top: {SPACE_SECTION + 4}px;
+            font-size: 13pt;
+            font-weight: bold;
+            color: {colors['text']};
+        }}
+        QGroupBox::title {{
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            left: 14px;
+            top: 1px;
+            padding: 0 6px;
+            color: {colors['text_secondary']};
+        }}
+    """
+
+
+def base_dialog_qss(colors: dict) -> str:
+    """Shared base styling appended to every dialog: a consistent scrollbar and a
+    consistent QGroupBox delimitation. Append after the dialog's own stylesheet."""
+    return scrollbar_qss(colors) + groupbox_qss(colors)
 
 
 def header_qss(colors: dict) -> str:

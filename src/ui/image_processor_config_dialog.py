@@ -30,9 +30,9 @@ from ..compat import safe_exec_dialog
 from ..config_manager import get_image_processor_config
 from ..config_manager import set_image_processor_config
 from ..styled_messages import StyledMessageBox
+from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..theme import scrollbar_qss
 
 
 class ImageProcessorConfigDialog(QDialog):
@@ -53,7 +53,7 @@ class ImageProcessorConfigDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
 
     def _setup_colors(self):
         """Sets up color scheme based on theme."""
