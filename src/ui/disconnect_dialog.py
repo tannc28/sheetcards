@@ -5,27 +5,27 @@ This module provides an interface for the user
 to select and disconnect multiple remote decks using checkboxes.
 """
 
-from .compat import DialogAccepted
-from .compat import QApplication
-from .compat import QCheckBox
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QGroupBox
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QPushButton
-from .styled_messages import StyledMessageBox
-from .compat import QScrollArea
-from .compat import QVBoxLayout
-from .compat import QWidget
-from .compat import Qt
-from .compat import Palette_Window
-from .compat import mw
-from .compat import safe_exec
-from .config_manager import get_deck_local_name
-from .config_manager import get_deck_remote_name
-from .config_manager import get_remote_decks
-from .utils import add_debug_message
+from ..compat import DialogAccepted
+from ..compat import QApplication
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QGroupBox
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QPushButton
+from ..styled_messages import StyledMessageBox
+from ..compat import QScrollArea
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import Qt
+from ..compat import Palette_Window
+from ..compat import mw
+from ..compat import safe_exec
+from ..config_manager import get_deck_local_name
+from ..config_manager import get_deck_remote_name
+from ..config_manager import get_remote_decks
+from ..utils import add_debug_message
 
 
 def clean_url_for_browser(url):

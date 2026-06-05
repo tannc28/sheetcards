@@ -41,7 +41,7 @@ python scripts/build_packages.py
 
 ### Layers
 - **`__init__.py`** (root) — Anki integration entry point. Builds the menu, binds shortcuts (Ctrl+Shift+A/S/D/G/O/W/I/H/P/B/L), and registers the `webview_did_receive_js_message` hook that handles AI button clicks (`pycmd` messages `sheets2anki_ai_help/ask/checker:`).
-- **`src/`** — all add-on logic (see module map below).
+- **`src/`** — all add-on logic. UI dialogs/screens live under **`src/ui/`**; foundational shared modules (`compat`, `styled_messages`, `config_manager`, `templates_and_definitions`, …) and the sync/data engine stay at the `src/` root. Modules in `src/ui/` import siblings one level up (`from ..compat import ...`).
 - **`libs/`** — **vendored** third-party deps (`beautifulsoup4`, `chardet`, `org_to_anki`, `pygments`). Added to `sys.path` at runtime by `__init__.py`. **Never edit or lint these**; they're excluded from ruff/black/coverage.
 
 ### `src/compat.py` is the Qt/Anki gateway

@@ -6,7 +6,7 @@ remote decks in Anki with support for automatic naming and
 deck disconnection, including student management.
 """
 
-from .add_deck_dialog import show_add_deck_dialog
+from .ui.add_deck_dialog import show_add_deck_dialog
 from .compat import DialogAccepted
 from .compat import QCheckBox
 from .compat import QDialog
@@ -26,8 +26,8 @@ from .config_manager import disconnect_deck
 from .config_manager import get_deck_local_name
 from .config_manager import get_remote_decks
 from .data_processor import getRemoteDeck
-from .disconnect_dialog import show_disconnect_dialog
-from .sync_dialog import show_sync_dialog
+from .ui.disconnect_dialog import show_disconnect_dialog
+from .ui.sync_dialog import show_sync_dialog
 from .templates_and_definitions import TEST_SHEETS_URLS
 from .utils import get_or_create_deck, add_debug_message
 

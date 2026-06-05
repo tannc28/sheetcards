@@ -55,7 +55,7 @@ try:
     from .src.deck_manager import addNewDeck
     from .src.deck_manager import syncDecksWithSelection as sDecks
     from .src.deck_manager import removeRemoteDeck as rDecks
-    from .src.backup_dialog import show_backup_dialog
+    from .src.ui.backup_dialog import show_backup_dialog
     from .src.templates_and_definitions import DEFAULT_PARENT_DECK_NAME
     from .libs.org_to_anki.utils import getAnkiPluginConnector as getConnector
     
@@ -171,7 +171,7 @@ def configure_global_students():
     should be synchronized across all remote decks.
     """
     try:
-        from .src.global_student_config_dialog import show_global_student_config_dialog
+        from .src.ui.global_student_config_dialog import show_global_student_config_dialog
         show_global_student_config_dialog(mw)
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -187,7 +187,7 @@ def configure_deck_options_mode():
     3. Manual - No automatic options application
     """
     try:
-        from .src.deck_options_config_dialog import show_deck_options_config_dialog
+        from .src.ui.deck_options_config_dialog import show_deck_options_config_dialog
         show_deck_options_config_dialog(mw)
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -202,7 +202,7 @@ def configure_ankiweb_sync():
     2. Sync - Execute sync after deck synchronization
     """
     try:
-        from .src.ankiweb_sync_config_dialog import show_ankiweb_sync_config
+        from .src.ui.ankiweb_sync_config_dialog import show_ankiweb_sync_config
         show_ankiweb_sync_config()
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -211,7 +211,7 @@ def configure_ankiweb_sync():
 def open_debug_mode():
     """Opens the debug mode configuration dialog."""
     try:
-        from .src.debug_dialog import show_debug_mode_dialog
+        from .src.ui.debug_dialog import show_debug_mode_dialog
         show_debug_mode_dialog()
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -227,7 +227,7 @@ def configure_timer():
     3. Hidden - Timer disabled
     """
     try:
-        from .src.timer_config_dialog import show_timer_config_dialog
+        from .src.ui.timer_config_dialog import show_timer_config_dialog
         show_timer_config_dialog(mw)
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -244,7 +244,7 @@ def configure_ai_assistance():
     4. Custom prompt template
     """
     try:
-        from .src.ai_assistance_config_dialog import show_ai_assistance_config_dialog
+        from .src.ui.ai_assistance_config_dialog import show_ai_assistance_config_dialog
         show_ai_assistance_config_dialog(mw)
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
@@ -262,7 +262,7 @@ def configure_image_processor():
     4. Auto-process setting for syncs
     """
     try:
-        from .src.image_processor_config_dialog import show_image_processor_config
+        from .src.ui.image_processor_config_dialog import show_image_processor_config
         show_image_processor_config()
     except Exception as e:
         error_msg = errorTemplate.format(str(e))

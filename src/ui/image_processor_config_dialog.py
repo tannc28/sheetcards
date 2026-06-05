@@ -17,9 +17,9 @@ from typing import Optional
 from aqt import mw
 from aqt.qt import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QTextEdit, QFrame, QWidget
 
-from .compat import Palette_Window, safe_exec_dialog, DialogAccepted
-from .config_manager import get_image_processor_config, set_image_processor_config
-from .styled_messages import StyledMessageBox
+from ..compat import Palette_Window, safe_exec_dialog, DialogAccepted
+from ..config_manager import get_image_processor_config, set_image_processor_config
+from ..styled_messages import StyledMessageBox
 
 
 class ImageProcessorConfigDialog(QDialog):
@@ -122,7 +122,7 @@ class ImageProcessorConfigDialog(QDialog):
         
         # Create scroll area for content
         from aqt.qt import QScrollArea
-        from .compat import ScrollBarAlwaysOff
+        from ..compat import ScrollBarAlwaysOff
         
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -283,7 +283,7 @@ class ImageProcessorConfigDialog(QDialog):
     
     def _create_setup_section(self):
         """Creates the setup guide section with copy script button."""
-        from .compat import QGroupBox
+        from ..compat import QGroupBox
         
         section = QGroupBox("📖 Setup Guide (one-time)")
         section.setStyleSheet(self._create_section_style())
@@ -327,7 +327,7 @@ class ImageProcessorConfigDialog(QDialog):
     
     def _create_api_section(self):
         """Creates API configuration section."""
-        from .compat import QGroupBox
+        from ..compat import QGroupBox
         
         section = QGroupBox("🔧 Configuration")
         section.setStyleSheet(self._create_section_style())
@@ -399,7 +399,7 @@ class ImageProcessorConfigDialog(QDialog):
     
     def _create_options_section(self):
         """Creates processing options section."""
-        from .compat import QGroupBox
+        from ..compat import QGroupBox
         
         section = QGroupBox("⚙️ Processing Options")
         section.setStyleSheet(self._create_section_style())
@@ -434,7 +434,7 @@ class ImageProcessorConfigDialog(QDialog):
     
     def _create_test_section(self):
         """Creates test section."""
-        from .compat import QGroupBox
+        from ..compat import QGroupBox
         
         section = QGroupBox("📋 Status & Testing")
         section.setStyleSheet(self._create_section_style())
@@ -508,7 +508,7 @@ class ImageProcessorConfigDialog(QDialog):
     def _copy_script_to_clipboard(self):
         """Copies the Google Apps Script content to the clipboard."""
         from aqt.qt import QApplication
-        from .image_processor_script import APPS_SCRIPT_CONTENT
+        from ..image_processor_script import APPS_SCRIPT_CONTENT
         
         clipboard = QApplication.clipboard()
         clipboard.setText(APPS_SCRIPT_CONTENT.strip())

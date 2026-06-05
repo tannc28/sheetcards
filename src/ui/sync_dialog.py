@@ -5,26 +5,26 @@ This module provides an interface for the user
 to select and synchronize active decks in the system.
 """
 
-from .compat import DialogAccepted
-from .compat import QApplication
-from .compat import QCheckBox
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QGroupBox
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QPushButton
-from .compat import QScrollArea
-from .compat import QVBoxLayout
-from .compat import QWidget
-from .compat import Qt
-from .compat import Palette_Window
-from .compat import mw
-from .compat import safe_exec
-from .config_manager import get_active_decks
-from .config_manager import get_deck_local_name
-from .config_manager import get_deck_remote_name
-from .utils import add_debug_message
+from ..compat import DialogAccepted
+from ..compat import QApplication
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QGroupBox
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QPushButton
+from ..compat import QScrollArea
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import Qt
+from ..compat import Palette_Window
+from ..compat import mw
+from ..compat import safe_exec
+from ..config_manager import get_active_decks
+from ..config_manager import get_deck_local_name
+from ..config_manager import get_deck_remote_name
+from ..utils import add_debug_message
 
 
 def clean_url_for_browser(url):
@@ -486,7 +486,7 @@ class SyncDialog(QDialog):
 
     def _load_persistent_selection(self):
         """Loads saved persistent selection based on is_sync from meta.json."""
-        from .config_manager import get_meta
+        from ..config_manager import get_meta
 
         meta = get_meta()
         decks = meta.get("decks", {})
@@ -501,8 +501,8 @@ class SyncDialog(QDialog):
 
     def _on_checkbox_changed(self, hash_key, checked):
         """Callback for when a checkbox is changed."""
-        from .config_manager import get_meta
-        from .config_manager import save_meta
+        from ..config_manager import get_meta
+        from ..config_manager import save_meta
 
         # Update is_sync in meta.json
         meta = get_meta()

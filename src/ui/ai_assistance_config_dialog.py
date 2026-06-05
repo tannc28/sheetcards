@@ -8,31 +8,31 @@ This module allows the user to configure:
 4. Custom prompt template
 """
 
-from .compat import AlignCenter
-from .compat import AlignLeft
-from .compat import DialogAccepted
-from .compat import EchoModeNormal
-from .compat import EchoModePassword
-from .compat import MessageBox_Ok
-from .compat import Palette_Window
-from .compat import QButtonGroup
-from .compat import QCheckBox
-from .compat import QComboBox
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QLineEdit
-from .compat import QPushButton
-from .compat import QRadioButton
-from .compat import QTextEdit
-from .compat import QVBoxLayout
-from .compat import QTimer
-from .compat import QScrollArea
-from .compat import QWidget
-from .compat import QTabWidget
-from .styled_messages import StyledMessageBox
-from .compat import safe_exec_dialog
+from ..compat import AlignCenter
+from ..compat import AlignLeft
+from ..compat import DialogAccepted
+from ..compat import EchoModeNormal
+from ..compat import EchoModePassword
+from ..compat import MessageBox_Ok
+from ..compat import Palette_Window
+from ..compat import QButtonGroup
+from ..compat import QCheckBox
+from ..compat import QComboBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QLineEdit
+from ..compat import QPushButton
+from ..compat import QRadioButton
+from ..compat import QTextEdit
+from ..compat import QVBoxLayout
+from ..compat import QTimer
+from ..compat import QScrollArea
+from ..compat import QWidget
+from ..compat import QTabWidget
+from ..styled_messages import StyledMessageBox
+from ..compat import safe_exec_dialog
 
 
 class AIAssistanceConfigDialog(QDialog):
@@ -47,7 +47,7 @@ class AIAssistanceConfigDialog(QDialog):
         self.resize(650, 700)
 
         # Get current config
-        from .config_manager import get_ai_assistance_config, DEFAULT_AI_HELP_PROMPT, AI_HELP_PROMPTS, AI_ASK_PROMPTS, AI_CHECKER_PROMPTS
+        from ..config_manager import get_ai_assistance_config, DEFAULT_AI_HELP_PROMPT, AI_HELP_PROMPTS, AI_ASK_PROMPTS, AI_CHECKER_PROMPTS
         self.current_config = get_ai_assistance_config()
         self.default_prompt = DEFAULT_AI_HELP_PROMPT
         self.prompts = AI_HELP_PROMPTS
@@ -643,7 +643,7 @@ class AIAssistanceConfigDialog(QDialog):
     def _do_fetch_models(self, service, api_key):
         """Actually fetches the models (called after UI update)."""
         try:
-            from .ai_service import get_available_models
+            from ..ai_service import get_available_models
             
             models = get_available_models(service, api_key)
             
@@ -705,7 +705,7 @@ class AIAssistanceConfigDialog(QDialog):
     def _apply_changes(self):
         """Applies configuration changes."""
         try:
-            from .config_manager import set_ai_assistance_config
+            from ..config_manager import set_ai_assistance_config
 
             enabled = self.enable_checkbox.isChecked()
             service = self._get_selected_service()

@@ -5,32 +5,32 @@ This module implements an interface for globally configuring which students
 should be synchronized across all remote decks.
 """
 
-from .compat import CustomContextMenu
-from .compat import DialogAccepted
-from .compat import Horizontal
-from .compat import MessageBox_Yes
-from .compat import Palette_Window
-from .compat import QAction
-from .compat import QCheckBox
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QGroupBox
-from .compat import QHBoxLayout
-from .compat import QInputDialog
-from .compat import QLabel
-from .compat import QListWidget
-from .compat import QMenu
-from .compat import QPushButton
-from .styled_messages import StyledMessageBox
-from .compat import QSplitter
-from .compat import QVBoxLayout
-from .compat import QWidget
-from .compat import safe_exec_dialog
-from .compat import safe_exec_menu
-from .templates_and_definitions import DEFAULT_STUDENT
-from .config_manager import get_global_student_config
-from .config_manager import save_global_student_config
-from .config_manager import update_available_students_from_discovery
+from ..compat import CustomContextMenu
+from ..compat import DialogAccepted
+from ..compat import Horizontal
+from ..compat import MessageBox_Yes
+from ..compat import Palette_Window
+from ..compat import QAction
+from ..compat import QCheckBox
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QGroupBox
+from ..compat import QHBoxLayout
+from ..compat import QInputDialog
+from ..compat import QLabel
+from ..compat import QListWidget
+from ..compat import QMenu
+from ..compat import QPushButton
+from ..styled_messages import StyledMessageBox
+from ..compat import QSplitter
+from ..compat import QVBoxLayout
+from ..compat import QWidget
+from ..compat import safe_exec_dialog
+from ..compat import safe_exec_menu
+from ..templates_and_definitions import DEFAULT_STUDENT
+from ..config_manager import get_global_student_config
+from ..config_manager import save_global_student_config
+from ..config_manager import update_available_students_from_discovery
 
 
 class GlobalStudentConfigDialog(QDialog):

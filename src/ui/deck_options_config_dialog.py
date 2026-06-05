@@ -7,20 +7,20 @@ This module allows the user to choose between three modes:
 3. Manual - No automatic application of options
 """
 
-from .compat import AlignCenter
-from .compat import DialogAccepted
-from .compat import MessageBox_Ok
-from .compat import Palette_Window
-from .compat import QButtonGroup
-from .compat import QDialog
-from .compat import QFrame
-from .compat import QHBoxLayout
-from .compat import QLabel
-from .compat import QPushButton
-from .compat import QRadioButton
-from .compat import QVBoxLayout
-from .styled_messages import StyledMessageBox
-from .compat import safe_exec_dialog
+from ..compat import AlignCenter
+from ..compat import DialogAccepted
+from ..compat import MessageBox_Ok
+from ..compat import Palette_Window
+from ..compat import QButtonGroup
+from ..compat import QDialog
+from ..compat import QFrame
+from ..compat import QHBoxLayout
+from ..compat import QLabel
+from ..compat import QPushButton
+from ..compat import QRadioButton
+from ..compat import QVBoxLayout
+from ..styled_messages import StyledMessageBox
+from ..compat import safe_exec_dialog
 
 
 class DeckOptionsConfigDialog(QDialog):
@@ -35,7 +35,7 @@ class DeckOptionsConfigDialog(QDialog):
         self.resize(600, 550)
 
         # Get current mode
-        from .config_manager import get_deck_options_mode
+        from ..config_manager import get_deck_options_mode
         self.current_mode = get_deck_options_mode()
 
         # Detect dark mode
@@ -311,11 +311,11 @@ class DeckOptionsConfigDialog(QDialog):
             new_mode = modes[selected_id]
 
             try:
-                from .config_manager import set_deck_options_mode
+                from ..config_manager import set_deck_options_mode
                 set_deck_options_mode(new_mode)
 
                 # Apply full automatic system
-                from .utils import apply_automatic_deck_options_system
+                from ..utils import apply_automatic_deck_options_system
                 auto_result = apply_automatic_deck_options_system()
 
                 # Feedback logic
