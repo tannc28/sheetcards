@@ -4,6 +4,11 @@ Pure string builders: they take SyncStats-like objects and return HTML."""
 
 from typing import Any, Dict, List, Optional  # noqa: F401
 
+try:
+    from .templates_and_definitions import DEFAULT_STUDENT
+except ImportError:  # pragma: no cover - direct (non-package) import in some tests
+    from templates_and_definitions import DEFAULT_STUDENT
+
 
 def _generate_metrics_table_html(stats) -> str:
     """
