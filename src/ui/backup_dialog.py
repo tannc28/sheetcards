@@ -39,6 +39,7 @@ from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import make_header
 
 
 class BackupDialog(QDialog):
@@ -129,38 +130,11 @@ class BackupDialog(QDialog):
 
     def _create_header(self):
         """Creates the header section with gradient background."""
-        header_frame = QFrame()
-        header_frame.setObjectName("headerFrame")
-        header_frame.setStyleSheet(f"""
-            QFrame#headerFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.colors['header_gradient_start']}, 
-                    stop:1 {self.colors['header_gradient_end']});
-                border-radius: 12px;
-                padding: 5px;
-            }}
-            QFrame#headerFrame QLabel {{
-                background: transparent;
-                color: white;
-                border: none;
-            }}
-        """)
-        header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(20, 15, 20, 15)
-
-        title_label = QLabel("Backup & Restore")
-        title_label.setStyleSheet("font-size: 20pt; font-weight: bold;")
-        header_layout.addWidget(title_label)
-
-        desc_label = QLabel(
-            "Protect your data by creating backups of your Sheets2Anki configuration and decks. "
-            "Enable automatic backups to run before each synchronization."
+        return make_header(
+            self.colors,
+            "Backup & Restore",
+            "Protect your data by creating backups of your Sheets2Anki configuration and decks. Enable automatic backups to run before each synchronization.",
         )
-        desc_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
-        desc_label.setWordWrap(True)
-        header_layout.addWidget(desc_label)
-
-        return header_frame
 
     def _create_manual_backup_section(self):
         """Creates the manual backup section."""

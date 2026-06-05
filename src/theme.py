@@ -235,3 +235,99 @@ def base_dialog_qss(colors: dict) -> str:
     """Shared base styling appended to every dialog: a consistent scrollbar and a
     consistent QGroupBox delimitation. Append after the dialog's own stylesheet."""
     return scrollbar_qss(colors) + groupbox_qss(colors)
+
+
+# =============================================================================
+# REUSABLE WIDGET BUILDERS
+# -----------------------------------------------------------------------------
+# Small widget factories so dialogs stop re-implementing the same banner/buttons.
+# =============================================================================
+
+
+def make_header(colors: dict, title: str, subtitle: str = ""):
+    """Build the standard gradient header banner used at the top of every dialog.
+
+    Returns a ``QFrame`` (objectName ``headerFrame``) with the blue gradient
+    background, a bold white title and an optional white subtitle — replacing the
+    per-dialog copies of this exact block.
+    """
+    from .compat import QFrame
+    from .compat import QLabel
+    from .compat import QVBoxLayout
+
+    frame = QFrame()
+    frame.setObjectName("headerFrame")
+    frame.setStyleSheet(f"""
+        QFrame#headerFrame {{
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 {colors['header_gradient_start']},
+                stop:1 {colors['header_gradient_end']});
+            border-radius: {RADIUS_CARD};
+        }}
+        QFrame#headerFrame QLabel {{
+            background: transparent;
+            color: white;
+            border: none;
+        }}
+        """)
+    layout = QVBoxLayout(frame)
+    layout.setContentsMargins(MARGIN, 15, MARGIN, 15)
+    layout.setSpacing(6)
+
+    title_label = QLabel(title)
+    title_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
+    layout.addWidget(title_label)
+
+    if subtitle:
+        subtitle_label = QLabel(subtitle)
+        subtitle_label.setStyleSheet("font-size: 12pt; opacity: 0.9;")
+        subtitle_label.setWordWrap(True)
+        layout.addWidget(subtitle_label)
+
+    return frame
+
+
+def primary_button_qss(colors: dict, kind: str = "primary") -> str:
+    """Filled action button (Save / Apply / Confirm). ``kind`` selects the accent:
+    ``"primary"`` (blue), ``"success"`` (green) or ``"danger"`` (red)."""
+    accent = {
+        "primary": colors["accent_primary"],
+        "success": colors["accent_success"],
+        "danger": colors["accent_danger"],
+    }[kind]
+    hover = {
+        "primary": colors["primary_dark"],
+        "success": colors["success_dark"],
+        "danger": colors["danger_dark"],
+    }[kind]
+    return f"""
+        QPushButton {{
+            background-color: {accent};
+            color: white;
+            border: none;
+            border-radius: {RADIUS_CONTROL};
+            padding: 12px 25px;
+            font-size: 13px;
+            font-weight: bold;
+        }}
+        QPushButton:hover {{ background-color: {hover}; }}
+        QPushButton:disabled {{
+            background-color: {colors['button_bg']};
+            color: {colors['text_muted']};
+        }}
+    """
+
+
+def secondary_button_qss(colors: dict) -> str:
+    """Outline button (Cancel / secondary actions) — transparent with a border."""
+    return f"""
+        QPushButton {{
+            background-color: transparent;
+            color: {colors['text_secondary']};
+            border: 1px solid {colors['border']};
+            border-radius: {RADIUS_CONTROL};
+            padding: 12px 25px;
+            font-size: 13px;
+        }}
+        QPushButton:hover {{ background-color: {colors['button_bg']}; }}
+    """
