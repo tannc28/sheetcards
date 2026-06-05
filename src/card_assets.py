@@ -36,7 +36,7 @@ TIMER_CSS_BETWEEN_SECTIONS = """
   margin: 10px auto;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.75);
-  color: #00ff88;
+  color: #5BA3E0;
   font-family: 'Courier New', Consolas, monospace;
   font-size: 18px;
   font-weight: bold;
@@ -69,7 +69,7 @@ body {
   transform: translateX(-50%);
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.75);
-  color: #00ff88;
+  color: #5BA3E0;
   font-family: 'Courier New', Consolas, monospace;
   font-size: 18px;
   font-weight: bold;
@@ -103,14 +103,14 @@ REVERSE_INDICATOR_CSS = """
   width: fit-content;
   margin: 0 auto 20px auto;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  background: linear-gradient(135deg, #4A90D9 0%, #357ABD 100%);
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   font-weight: 600;
   border-radius: 20px;
   text-align: center;
-  box-shadow: 0 3px 10px rgba(155, 89, 182, 0.3);
+  box-shadow: 0 3px 10px rgba(74, 144, 217, 0.3);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -209,8 +209,8 @@ AI_HELP_CSS = """
   --ai-text: #e0e0e0;
   --ai-text-muted: #888;
   --ai-border: #404040;
-  --ai-accent: #667eea;
-  --ai-accent-secondary: #764ba2;
+  --ai-accent: #5BA3E0;
+  --ai-accent-secondary: #4A90D9;
   --ai-code-bg: #333;
   --ai-code-text: #f8f8f2;
   --ai-error: #ff6b6b;
@@ -227,8 +227,8 @@ AI_HELP_CSS = """
     --ai-text: #1a1a1a;
     --ai-text-muted: #666;
     --ai-border: #e0e0e0;
-    --ai-accent: #5a67d8;
-    --ai-accent-secondary: #6b46c1;
+    --ai-accent: #4A90D9;
+    --ai-accent-secondary: #357ABD;
     --ai-code-bg: #f0f0f0;
     --ai-code-text: #333;
     --ai-error: #e53e3e;
@@ -245,8 +245,8 @@ AI_HELP_CSS = """
   --ai-text: #e0e0e0;
   --ai-text-muted: #888;
   --ai-border: #404040;
-  --ai-accent: #667eea;
-  --ai-accent-secondary: #764ba2;
+  --ai-accent: #5BA3E0;
+  --ai-accent-secondary: #4A90D9;
   --ai-code-bg: #333;
   --ai-code-text: #f8f8f2;
   --ai-error: #ff6b6b;
