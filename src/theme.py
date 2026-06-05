@@ -86,6 +86,10 @@ _LIGHT = {
     "accent_info": "#4A90D9",  # info folds into the primary blue
     "accent_danger": "#DC3545",
     "accent_purple": "#7B1FA2",
+    # hover/pressed (darker) shades for filled action buttons
+    "success_dark": "#218838",
+    "danger_dark": "#C0392B",
+    "warning_dark": "#E0A800",
     "button_bg": "#E9ECEF",
     "button_hover": "#DEE2E6",
     "row_hover": "#E8F4FC",
@@ -124,6 +128,10 @@ _DARK = {
     "accent_info": "#5BA3E0",
     "accent_danger": "#E05555",
     "accent_purple": "#9C27B0",
+    # hover/pressed (darker) shades for filled action buttons
+    "success_dark": "#2E9E5B",
+    "danger_dark": "#C0392B",
+    "warning_dark": "#C99000",
     "button_bg": "#3D3D3D",
     "button_hover": "#4A4A4A",
     "row_hover": "#2A3F50",

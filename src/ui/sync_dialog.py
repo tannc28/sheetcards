@@ -275,7 +275,7 @@ class SyncDialog(QDialog):
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: #45a049;
+                background-color: {self.colors['success_dark']};
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['border']};

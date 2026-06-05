@@ -409,10 +409,10 @@ class AddDeckDialog(QDialog):
                 padding: 8px 24px;
             }}
             QPushButton:hover {{
-                background-color: #218838;
+                background-color: {self.colors['success_dark']};
             }}
             QPushButton:pressed {{
-                background-color: #1E7E34;
+                background-color: {self.colors['success_dark']};
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['border']};

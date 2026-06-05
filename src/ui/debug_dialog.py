@@ -22,7 +22,7 @@ from ..config_manager import save_meta
 from ..config_manager import set_accumulate_logs
 from ..config_manager import should_accumulate_logs
 from ..styled_messages import StyledMessageBox
-from ..theme import is_dark_mode
+from ..theme import get_colors
 from ..utils import add_debug_message
 from ..utils import clear_debug_log
 from ..utils import get_debug_log_path
@@ -45,8 +45,6 @@ class DebugModeDialog(QDialog):
         self.setWindowTitle("Debug Mode - Sheets2Anki")
         self.setMinimumSize(800, 600)
         self.resize(900, 650)
-
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_ui()
         self._apply_styles()
@@ -162,106 +160,61 @@ class DebugModeDialog(QDialog):
         self.setLayout(layout)
 
     def _apply_styles(self):
-        """Applies styles based on dark/light mode."""
-        if self.is_dark_mode:
-            self.setStyleSheet("""
-                QDialog {
-                    background-color: #2b2b2b;
-                    color: #ffffff;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    border: 1px solid #555555;
-                    border-radius: 6px;
-                    margin-top: 12px;
-                    padding-top: 10px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 10px;
-                    padding: 0 5px;
-                }
-                QTextEdit {
-                    background-color: #1e1e1e;
-                    color: #d4d4d4;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-                    font-size: 12pt;
-                    padding: 8px;
-                }
-                QPushButton {
-                    background-color: #4a4a4a;
-                    color: #ffffff;
-                    border: 1px solid #666666;
-                    border-radius: 4px;
-                    padding: 8px 16px;
-                    font-size: 12pt;
-                }
-                QPushButton:hover {
-                    background-color: #5a5a5a;
-                    border-color: #777777;
-                }
-                QPushButton:pressed {
-                    background-color: #3a3a3a;
-                }
-                QCheckBox {
-                    spacing: 8px;
-                }
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog {
-                    background-color: #ffffff;
-                    color: #000000;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    border: 1px solid #cccccc;
-                    border-radius: 6px;
-                    margin-top: 12px;
-                    padding-top: 10px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 10px;
-                    padding: 0 5px;
-                }
-                QTextEdit {
-                    background-color: #fafafa;
-                    color: #333333;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-                    font-size: 12pt;
-                    padding: 8px;
-                }
-                QPushButton {
-                    background-color: #f0f0f0;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 8px 16px;
-                    font-size: 12pt;
-                }
-                QPushButton:hover {
-                    background-color: #e0e0e0;
-                    border-color: #999999;
-                }
-                QPushButton:pressed {
-                    background-color: #d0d0d0;
-                }
-                QCheckBox {
-                    spacing: 8px;
-                }
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                }
+        """Applies the shared design-system theme."""
+        c = get_colors()
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {c['bg']};
+                color: {c['text']};
+            }}
+            QLabel {{
+                color: {c['text']};
+            }}
+            QGroupBox {{
+                font-weight: bold;
+                color: {c['text']};
+                border: 1px solid {c['border']};
+                border-radius: 6px;
+                margin-top: 12px;
+                padding-top: 10px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }}
+            QTextEdit {{
+                background-color: {c['bg']};
+                color: {c['text']};
+                border: 1px solid {c['border']};
+                border-radius: 4px;
+                font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+                font-size: 12pt;
+                padding: 8px;
+            }}
+            QPushButton {{
+                background-color: {c['button_bg']};
+                color: {c['text']};
+                border: 1px solid {c['border']};
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-size: 12pt;
+            }}
+            QPushButton:hover {{
+                background-color: {c['button_hover']};
+                border-color: {c['text_secondary']};
+            }}
+            QPushButton:pressed {{
+                background-color: {c['border']};
+            }}
+            QCheckBox {{
+                spacing: 8px;
+                color: {c['text']};
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+            }}
             """)
 
     def _load_debug_status(self):
@@ -278,15 +231,17 @@ class DebugModeDialog(QDialog):
 
     def _update_status_display(self, enabled: bool):
         """Updates the status display."""
+        c = get_colors()
         if enabled:
             self.status_label.setText("✅ Debug mode is ACTIVE")
             self.status_label.setStyleSheet(
-                "font-size: 12pt; padding: 5px; color: #4CAF50; font-weight: bold;"
+                f"font-size: 12pt; padding: 5px; color: {c['accent_success']};"
+                " font-weight: bold;"
             )
         else:
             self.status_label.setText("⭕ Debug mode is INACTIVE")
             self.status_label.setStyleSheet(
-                "font-size: 12pt; padding: 5px; color: #888888;"
+                f"font-size: 12pt; padding: 5px; color: {c['text_muted']};"
             )
 
     def _on_debug_toggled(self, checked: bool):

@@ -72,3 +72,25 @@ class TestThemePalette:
 
     def test_is_dark_mode_returns_bool(self):
         assert isinstance(is_dark_mode(), bool)
+
+
+@pytest.mark.unit
+def test_every_dialog_color_key_is_defined():
+    """Every color key referenced by a dialog must exist in get_colors().
+
+    Dialog stylesheets are f-strings evaluated only at widget-construction time, so a
+    typo'd or missing key wouldn't surface until that dialog opens in Anki. This scans
+    the source and fails fast instead.
+    """
+    import pathlib
+    import re
+
+    ui_dir = pathlib.Path(__file__).resolve().parent.parent / "src" / "ui"
+    available = set(get_colors())
+    key_re = re.compile(r"(?:self\.colors|\bc)\[['\"]([a-z_]+)['\"]\]")
+    used: set[str] = set()
+    for path in ui_dir.glob("*.py"):
+        used |= set(key_re.findall(path.read_text(encoding="utf-8")))
+    assert used, "scan found no color-key references — regex likely broke"
+    missing = used - available
+    assert not missing, f"dialogs reference undefined color keys: {sorted(missing)}"
