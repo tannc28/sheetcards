@@ -32,7 +32,6 @@ from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -59,9 +58,6 @@ class AIAssistanceConfigDialog(QDialog):
         self.prompts = AI_HELP_PROMPTS
         self.ask_prompts = AI_ASK_PROMPTS
         self.checker_prompts = AI_CHECKER_PROMPTS
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()
