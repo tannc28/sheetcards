@@ -38,7 +38,6 @@ from ..config_manager import set_auto_backup_config
 from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -54,9 +53,6 @@ class BackupDialog(QDialog):
         self.resize(750, 800)
 
         self.backup_manager = SimplifiedBackupManager()
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()

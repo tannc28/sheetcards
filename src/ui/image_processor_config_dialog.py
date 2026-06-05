@@ -32,7 +32,6 @@ from ..config_manager import set_image_processor_config
 from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -47,9 +46,6 @@ class ImageProcessorConfigDialog(QDialog):
 
         # Load current configuration
         self.config = get_image_processor_config()
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()

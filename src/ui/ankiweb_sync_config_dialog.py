@@ -18,7 +18,6 @@ from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -37,9 +36,6 @@ class AnkiWebSyncConfigDialog(QDialog):
         from ..config_manager import get_ankiweb_sync_mode
 
         self.current_mode = get_ankiweb_sync_mode()
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()

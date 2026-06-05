@@ -25,7 +25,6 @@ from ..config_manager import get_remote_decks
 from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 from .url_helpers import copy_url_to_clipboard
 
@@ -48,9 +47,6 @@ class DisconnectDialog(QDialog):
         self.remote_decks = []
         self.deck_checkboxes = {}  # URL -> QCheckBox
         self.selected_urls = []
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         # Define color scheme
         self._setup_colors()

@@ -23,7 +23,6 @@ from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
 from ..theme import base_dialog_qss
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 from .url_helpers import copy_url_to_clipboard
 
@@ -46,9 +45,6 @@ class SyncDialog(QDialog):
         self.active_decks = []
         self.deck_checkboxes = {}  # hash_key -> QCheckBox
         self.deck_hash_mapping = {}  # URL -> hash_key (for compatibility)
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         # Define color scheme
         self._setup_colors()

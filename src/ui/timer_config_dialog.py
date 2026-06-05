@@ -19,7 +19,6 @@ from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -38,9 +37,6 @@ class TimerConfigDialog(QDialog):
         from ..config_manager import get_timer_position
 
         self.current_position = get_timer_position()
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()
@@ -201,14 +197,6 @@ class TimerConfigDialog(QDialog):
         """)
         self.button_group.addButton(radio, button_id)
         card_layout.addWidget(radio)
-
-        # Store reference based on position
-        if position == "top_middle":
-            self.top_middle_radio = radio
-        elif position == "between_sections":
-            self.between_sections_radio = radio
-        else:
-            self.hidden_radio = radio
 
         # Content
         content_layout = QVBoxLayout()

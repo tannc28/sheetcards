@@ -49,7 +49,6 @@ class AddDeckDialog(QDialog):
         self.remote_deck = None
         self.suggested_name = ""
         self.validation_timer = QTimer()
-        self.current_step = 1
 
         # Get colors based on current theme
         self.colors = get_colors()

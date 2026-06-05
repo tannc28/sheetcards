@@ -19,7 +19,6 @@ from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
-from ..theme import is_dark_mode
 from ..theme import make_header
 
 
@@ -38,9 +37,6 @@ class DeckOptionsConfigDialog(QDialog):
         from ..config_manager import get_deck_options_mode
 
         self.current_mode = get_deck_options_mode()
-
-        # Detect dark mode
-        self.is_dark_mode = is_dark_mode()
 
         self._setup_colors()
         self._setup_ui()
@@ -201,14 +197,6 @@ class DeckOptionsConfigDialog(QDialog):
         """)
         self.button_group.addButton(radio, button_id)
         card_layout.addWidget(radio)
-
-        # Store reference based on mode
-        if mode == "shared":
-            self.shared_radio = radio
-        elif mode == "individual":
-            self.individual_radio = radio
-        else:
-            self.manual_radio = radio
 
         # Content
         content_layout = QVBoxLayout()
