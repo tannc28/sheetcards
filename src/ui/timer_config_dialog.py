@@ -18,6 +18,8 @@ from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
 from ..theme import make_header
 from ..theme import make_radio_option_card
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 
 
 class TimerConfigDialog(QDialog):
@@ -112,35 +114,10 @@ class TimerConfigDialog(QDialog):
         buttons_layout.setContentsMargins(0, 10, 0, 0)
 
         self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-            }}
-        """)
+        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
 
         self.ok_button = QPushButton("✓ Apply")
-        self.ok_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_success']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['success_dark']};
-            }}
-        """)
+        self.ok_button.setStyleSheet(primary_button_qss(self.colors, "success"))
         self.ok_button.setDefault(True)
 
         buttons_layout.addStretch()

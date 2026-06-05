@@ -32,6 +32,8 @@ from ..templates_and_definitions import DEFAULT_STUDENT
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 
 
 class GlobalStudentConfigDialog(QDialog):
@@ -68,27 +70,6 @@ class GlobalStudentConfigDialog(QDialog):
             QDialog {{
                 background-color: {self.colors['bg']};
                 color: {self.colors['text']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                font-size: 12pt;
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                margin-top: 16px;
-                padding: 12px;
-                padding-top: 28px;
-                background-color: {self.colors['card_bg']};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 12px;
-                top: 4px;
-                padding: 2px 10px;
-                background-color: {self.colors['card_bg']};
-                border-radius: 4px;
-                color: {self.colors['text_secondary']};
-                font-size: 12pt;
             }}
             QListWidget {{
                 background-color: {self.colors['list_bg']};
@@ -238,37 +219,12 @@ class GlobalStudentConfigDialog(QDialog):
 
         # OK/Cancel buttons
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-            }}
-        """)
+        cancel_btn.setStyleSheet(secondary_button_qss(self.colors))
         cancel_btn.clicked.connect(self.reject)
         action_layout.addWidget(cancel_btn)
 
         ok_btn = QPushButton("✓ Save")
-        ok_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_success']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['success_dark']};
-            }}
-        """)
+        ok_btn.setStyleSheet(primary_button_qss(self.colors, "success"))
         ok_btn.clicked.connect(self.accept)
         action_layout.addWidget(ok_btn)
 
