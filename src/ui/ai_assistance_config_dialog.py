@@ -32,6 +32,7 @@ from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
 from ..theme import is_dark_mode
+from ..theme import scrollbar_qss
 
 
 class AIAssistanceConfigDialog(QDialog):
@@ -64,6 +65,7 @@ class AIAssistanceConfigDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
+        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
         self._connect_signals()
         self._load_current_config()
 
