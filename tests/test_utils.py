@@ -579,7 +579,7 @@ class TestGoogleSheetsUrlConversion:
 
         edit_url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
         expected_tsv = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/export?format=tsv"
-        
+
         result = convert_edit_url_to_tsv(edit_url)
         assert result == expected_tsv
 
@@ -602,10 +602,10 @@ class TestGoogleSheetsUrlConversion:
         from src.utils import convert_edit_url_to_tsv
 
         invalid_url = "https://example.com/not-google-sheets"
-        
+
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv(invalid_url)
-        
+
         assert "URL must be from Google Sheets" in str(exc_info.value)
 
     def test_convert_empty_url(self):
@@ -614,7 +614,7 @@ class TestGoogleSheetsUrlConversion:
 
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv("")
-        
+
         assert "URL must be a non-empty string" in str(exc_info.value)
 
     def test_convert_unrecognized_format(self):
@@ -622,10 +622,10 @@ class TestGoogleSheetsUrlConversion:
         from src.utils import convert_edit_url_to_tsv
 
         unrecognized_url = "https://docs.google.com/spreadsheets/d/1abc123/view"
-        
+
         with pytest.raises(ValueError) as exc_info:
             convert_edit_url_to_tsv(unrecognized_url)
-        
+
         assert "URL must be a Google Sheets edit URL" in str(exc_info.value)
 
     def test_convert_edit_url_fallback(self):
@@ -633,12 +633,16 @@ class TestGoogleSheetsUrlConversion:
         from src.utils import convert_edit_url_to_tsv
 
         # Edit URL with fictitious ID (not accessible)
-        edit_url = "https://docs.google.com/spreadsheets/d/1fictitious123/edit?usp=sharing"
-        
+        edit_url = (
+            "https://docs.google.com/spreadsheets/d/1fictitious123/edit?usp=sharing"
+        )
+
         result = convert_edit_url_to_tsv(edit_url)
-        
+
         # Should return URL without gid (always downloads first tab)
-        expected_result = "https://docs.google.com/spreadsheets/d/1fictitious123/export?format=tsv"
+        expected_result = (
+            "https://docs.google.com/spreadsheets/d/1fictitious123/export?format=tsv"
+        )
         assert result == expected_result
 
 
@@ -652,7 +656,7 @@ class TestExtractPublicationKeyFromUrl:
 
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSample-Key-123/pub?output=tsv"
         expected_key = "2PACX-1vSample-Key-123"
-        
+
         result = extract_publication_key_from_url(url)
         assert result == expected_key
 
@@ -662,7 +666,7 @@ class TestExtractPublicationKeyFromUrl:
 
         url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
         expected_id = "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs"
-        
+
         result = extract_publication_key_from_url(url)
         assert result == expected_id
 
@@ -678,7 +682,7 @@ class TestExtractPublicationKeyFromUrl:
         from src.utils import extract_publication_key_from_url
 
         url = "https://example.com/not-google-sheets"
-        
+
         result = extract_publication_key_from_url(url)
         assert result is None
 
@@ -692,10 +696,10 @@ class TestGetPublicationKeyHash:
         from src.utils import get_publication_key_hash
 
         url = "https://docs.google.com/spreadsheets/d/1abc123/edit?usp=sharing"
-        
+
         hash1 = get_publication_key_hash(url)
         hash2 = get_publication_key_hash(url)
-        
+
         assert hash1 == hash2
         assert len(hash1) == 8
 
@@ -705,10 +709,10 @@ class TestGetPublicationKeyHash:
 
         url1 = "https://docs.google.com/spreadsheets/d/1abc123/edit?usp=sharing"
         url2 = "https://docs.google.com/spreadsheets/d/1xyz789/edit?usp=sharing"
-        
+
         hash1 = get_publication_key_hash(url1)
         hash2 = get_publication_key_hash(url2)
-        
+
         assert hash1 != hash2
         assert len(hash1) == 8
         assert len(hash2) == 8
@@ -719,7 +723,7 @@ class TestGetPublicationKeyHash:
 
         # URL in unrecognized format, but should still generate hash
         url = "https://docs.google.com/spreadsheets/unknown-format"
-        
+
         hash_result = get_publication_key_hash(url)
         assert len(hash_result) == 8
 

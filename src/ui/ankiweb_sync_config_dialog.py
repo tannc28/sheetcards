@@ -6,19 +6,15 @@ This module allows the user to choose between two synchronization modes:
 2. Sync - Execute sync after deck synchronization
 """
 
-from ..compat import AlignCenter
 from ..compat import DialogAccepted
 from ..compat import Palette_Window
 from ..compat import QButtonGroup
-from ..compat import QCheckBox
 from ..compat import QDialog
 from ..compat import QFrame
-from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
 from ..compat import QRadioButton
-from ..compat import QSpinBox
 from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
@@ -54,31 +50,31 @@ class AnkiWebSyncConfigDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_danger': '#e53935',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_danger": "#e53935",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_warning': '#FF9800',
-                'accent_danger': '#d32f2f',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_warning": "#FF9800",
+                "accent_danger": "#d32f2f",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
             }
 
     def _apply_styles(self):
@@ -171,8 +167,8 @@ class AnkiWebSyncConfigDialog(QDialog):
             "none",
             "🚫 Disabled",
             "No automatic synchronization. Sync manually via Tools > Sync.",
-            self.colors['text_secondary'],
-            0
+            self.colors["text_secondary"],
+            0,
         )
         layout.addWidget(disabled_card)
 
@@ -181,12 +177,10 @@ class AnkiWebSyncConfigDialog(QDialog):
             "sync",
             "🔄 Sync with AnkiWeb",
             "Automatically sync with AnkiWeb after each deck synchronization. Recommended for multi-device users.",
-            self.colors['accent_success'],
-            1
+            self.colors["accent_success"],
+            1,
         )
         layout.addWidget(sync_card)
-
-
 
         layout.addStretch()
 
@@ -306,11 +300,15 @@ class AnkiWebSyncConfigDialog(QDialog):
         content_layout.setSpacing(4)
 
         title_label = QLabel(title)
-        title_label.setStyleSheet(f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};")
+        title_label.setStyleSheet(
+            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+        )
         content_layout.addWidget(title_label)
 
         desc_label = QLabel(description)
-        desc_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text_secondary']};")
+        desc_label.setStyleSheet(
+            f"font-size: 12pt; color: {self.colors['text_secondary']};"
+        )
         desc_label.setWordWrap(True)
         content_layout.addWidget(desc_label)
 
@@ -337,7 +335,9 @@ class AnkiWebSyncConfigDialog(QDialog):
             result = test_ankiweb_connection()
 
             if result["success"]:
-                StyledMessageBox.success(self, "Connection Successful", result['message'])
+                StyledMessageBox.success(
+                    self, "Connection Successful", result["message"]
+                )
             else:
                 status = get_sync_status()
                 debug_info = status.get("debug_info", {})
@@ -345,15 +345,26 @@ class AnkiWebSyncConfigDialog(QDialog):
                 error_msg = f"{result['error']}\n\n"
                 error_msg += "Diagnostic information:\n"
                 error_msg += f"• Sync system available: {debug_info.get('has_sync_system', 'N/A')}\n"
-                error_msg += f"• Sync key present: {debug_info.get('has_sync_key', 'N/A')}\n"
-                error_msg += f"• Valid profile: {debug_info.get('has_profile', 'N/A')}\n"
+                error_msg += (
+                    f"• Sync key present: {debug_info.get('has_sync_key', 'N/A')}\n"
+                )
+                error_msg += (
+                    f"• Valid profile: {debug_info.get('has_profile', 'N/A')}\n"
+                )
                 error_msg += f"• Profile syncKey: {debug_info.get('has_profile_synckey', 'N/A')}\n"
                 error_msg += f"• Profile syncUser: {debug_info.get('has_profile_syncuser', 'N/A')}\n"
 
-                StyledMessageBox.warning(self, "Connection Failed", "Connection test failed", detailed_text=error_msg)
+                StyledMessageBox.warning(
+                    self,
+                    "Connection Failed",
+                    "Connection test failed",
+                    detailed_text=error_msg,
+                )
 
         except Exception as e:
-            StyledMessageBox.warning(self, "Error", f"Error testing connection: {str(e)}")
+            StyledMessageBox.warning(
+                self, "Error", f"Error testing connection: {str(e)}"
+            )
         finally:
             self.test_button.setText("🔍 Test Connection")
             self.test_button.setEnabled(True)

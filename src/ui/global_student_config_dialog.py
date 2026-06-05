@@ -8,7 +8,6 @@ should be synchronized across all remote decks.
 from ..compat import CustomContextMenu
 from ..compat import DialogAccepted
 from ..compat import Horizontal
-from ..compat import MessageBox_Yes
 from ..compat import Palette_Window
 from ..compat import QAction
 from ..compat import QCheckBox
@@ -21,16 +20,16 @@ from ..compat import QLabel
 from ..compat import QListWidget
 from ..compat import QMenu
 from ..compat import QPushButton
-from ..styled_messages import StyledMessageBox
 from ..compat import QSplitter
 from ..compat import QVBoxLayout
 from ..compat import QWidget
 from ..compat import safe_exec_dialog
 from ..compat import safe_exec_menu
-from ..templates_and_definitions import DEFAULT_STUDENT
 from ..config_manager import get_global_student_config
 from ..config_manager import save_global_student_config
 from ..config_manager import update_available_students_from_discovery
+from ..styled_messages import StyledMessageBox
+from ..templates_and_definitions import DEFAULT_STUDENT
 
 
 class GlobalStudentConfigDialog(QDialog):
@@ -65,33 +64,33 @@ class GlobalStudentConfigDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_primary': '#2196F3',
-                'accent_success': '#4CAF50',
-                'accent_danger': '#e53935',
-                'accent_warning': '#FF9800',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
-                'list_bg': '#252525',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_primary": "#2196F3",
+                "accent_success": "#4CAF50",
+                "accent_danger": "#e53935",
+                "accent_warning": "#FF9800",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
+                "list_bg": "#252525",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_primary': '#1976D2',
-                'accent_success': '#4CAF50',
-                'accent_danger': '#d32f2f',
-                'accent_warning': '#FF9800',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
-                'list_bg': '#fafafa',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_primary": "#1976D2",
+                "accent_success": "#4CAF50",
+                "accent_danger": "#d32f2f",
+                "accent_warning": "#FF9800",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
+                "list_bg": "#fafafa",
             }
 
     def _apply_styles(self):
@@ -280,7 +279,9 @@ class GlobalStudentConfigDialog(QDialog):
 
         auto_discover_btn = QPushButton("🔍 Auto-Discover Students")
         auto_discover_btn.setStyleSheet(btn_style)
-        auto_discover_btn.setToolTip("Discover students from all configured remote decks")
+        auto_discover_btn.setToolTip(
+            "Discover students from all configured remote decks"
+        )
         auto_discover_btn.clicked.connect(self._auto_discover_students)
         action_layout.addWidget(auto_discover_btn)
 
@@ -338,7 +339,9 @@ class GlobalStudentConfigDialog(QDialog):
         layout.setSpacing(8)
 
         title = QLabel("📄 Available Students")
-        title.setStyleSheet(f"font-weight: bold; font-size: 12pt; color: {self.colors['text']};")
+        title.setStyleSheet(
+            f"font-weight: bold; font-size: 12pt; color: {self.colors['text']};"
+        )
         layout.addWidget(title)
 
         self.available_list = QListWidget()
@@ -380,7 +383,9 @@ class GlobalStudentConfigDialog(QDialog):
         layout.setSpacing(8)
 
         title = QLabel("✅ Selected for Sync")
-        title.setStyleSheet(f"font-weight: bold; font-size: 12pt; color: {self.colors['accent_success']};")
+        title.setStyleSheet(
+            f"font-weight: bold; font-size: 12pt; color: {self.colors['accent_success']};"
+        )
         layout.addWidget(title)
 
         self.selected_list = QListWidget()
@@ -427,10 +432,10 @@ class GlobalStudentConfigDialog(QDialog):
                 message = f"Search completed!\nNo new students found.\nTotal available students: {len(discovered_students)}"
 
             StyledMessageBox.information(
-                self, 
-                "Automatic Search", 
-                "Search completed!", 
-                detailed_text=message.replace("Search completed!\n", "")
+                self,
+                "Automatic Search",
+                "Search completed!",
+                detailed_text=message.replace("Search completed!\n", ""),
             )
 
         except Exception as e:
@@ -504,16 +509,16 @@ class GlobalStudentConfigDialog(QDialog):
 
     def _add_manual_student(self):
         """Allows adding a student manually."""
-        student_name, ok = QInputDialog.getText(
-            self, "Add Student", "Student name:"
-        )
+        student_name, ok = QInputDialog.getText(self, "Add Student", "Student name:")
 
         if ok and student_name.strip():
             clean_name = student_name.strip()
 
             if self._student_name_exists(clean_name):
                 StyledMessageBox.warning(
-                    self, "Student Exists", f"Student '{clean_name}' is already in the list."
+                    self,
+                    "Student Exists",
+                    f"Student '{clean_name}' is already in the list.",
                 )
                 return
 
@@ -578,7 +583,7 @@ class GlobalStudentConfigDialog(QDialog):
             f"Are you sure you want to delete student '{student_name}'?",
             yes_text="Delete",
             no_text="Cancel",
-            destructive=True
+            destructive=True,
         ):
             self.available_students.discard(student_name)
             row = list_widget.row(current_item)

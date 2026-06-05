@@ -2,24 +2,14 @@
 
 Holds the DebugManager and the module-level add_debug_message / log helpers."""
 
-import hashlib
-import re
 from datetime import datetime
-from typing import List
-
-try:
-    from .compat import mw
-    from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
-except ImportError:
-    from compat import mw
-    from templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 
 
 class DebugManager:
     """Centralized debug manager for Sheets2Anki."""
 
     def __init__(self):
-        self.messages: List[str] = []
+        self.messages: list[str] = []
         self.is_debug_enabled = False
         self._update_debug_status()
 
@@ -81,7 +71,7 @@ class DebugManager:
             # We don't use add_debug_message here to avoid potential infinite recursion
             print(f"[DEBUG_FILE] Error saving log: {e}")
 
-    def get_messages(self) -> List[str]:
+    def get_messages(self) -> list[str]:
         """Returns all debug messages."""
         return self.messages.copy()
 
@@ -109,6 +99,7 @@ class DebugManager:
             # Check if logs should be accumulated
             try:
                 from .config_manager import should_accumulate_logs
+
                 accumulate = should_accumulate_logs()
             except ImportError:
                 accumulate = True
@@ -120,7 +111,10 @@ class DebugManager:
                         f"=== SHEETS2ANKI DEBUG LOG - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n"
                     )
                     if not accumulate and os.path.exists(log_path):
-                        add_debug_message("🧹 Log cleared at session start (accumulation disabled)", "DEBUG")
+                        add_debug_message(
+                            "🧹 Log cleared at session start (accumulation disabled)",
+                            "DEBUG",
+                        )
                 else:
                     f.write(separator)
                 f.flush()
@@ -144,7 +138,7 @@ class DebugManager:
         addon_path = os.path.dirname(os.path.dirname(__file__))
         return os.path.join(addon_path, "debug_sheets2anki.log")
 
-    def get_recent_messages(self, count: int = 10) -> List[str]:
+    def get_recent_messages(self, count: int = 10) -> list[str]:
         """
         Returns the most recent messages.
 
@@ -175,7 +169,7 @@ def is_debug_enabled() -> bool:
     return debug_manager.is_debug_enabled
 
 
-def get_debug_messages() -> List[str]:
+def get_debug_messages() -> list[str]:
     """Returns all debug messages."""
     return debug_manager.get_messages()
 

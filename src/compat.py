@@ -5,58 +5,59 @@ This module provides clean imports and constants for Anki 25.x+ with Qt6.
 All backward compatibility code has been removed.
 """
 
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 # =============================================================================
 # ANKI IMPORTS
 # =============================================================================
-
 from aqt import mw
-from aqt.qt import (
-    QAbstractItemView,
-    QAction,
-    QApplication,
-    QButtonGroup,
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QFileDialog,
-    QFont,
-    QFormLayout,
-    QFrame,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QInputDialog,
-    QKeySequence,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMenu,
-    QMessageBox,
-    QPalette,
-    QProgressBar,
-    QProgressDialog,
-    QPushButton,
-    QRadioButton,
-    QScrollArea,
-    QSize,
-    QSizePolicy,
-    QSpinBox,
-    QSplitter,
-    Qt,
-    QTabWidget,
-    QTextBrowser,
-    QTextCursor,
-    QTextEdit,
-    QTimer,
-    QVBoxLayout,
-    QWidget,
-    qconnect,
-)
-from aqt.utils import showCritical, showInfo, showWarning, tooltip
+from aqt.qt import QAbstractItemView
+from aqt.qt import QAction
+from aqt.qt import QApplication
+from aqt.qt import QButtonGroup
+from aqt.qt import QCheckBox
+from aqt.qt import QComboBox
+from aqt.qt import QDialog
+from aqt.qt import QDialogButtonBox
+from aqt.qt import QFileDialog
+from aqt.qt import QFont
+from aqt.qt import QFormLayout
+from aqt.qt import QFrame
+from aqt.qt import QGridLayout
+from aqt.qt import QGroupBox
+from aqt.qt import QHBoxLayout
+from aqt.qt import QInputDialog
+from aqt.qt import QKeySequence
+from aqt.qt import QLabel
+from aqt.qt import QLineEdit
+from aqt.qt import QListWidget
+from aqt.qt import QListWidgetItem
+from aqt.qt import QMenu
+from aqt.qt import QMessageBox
+from aqt.qt import QPalette
+from aqt.qt import QProgressBar
+from aqt.qt import QProgressDialog
+from aqt.qt import QPushButton
+from aqt.qt import QRadioButton
+from aqt.qt import QScrollArea
+from aqt.qt import QSize
+from aqt.qt import QSizePolicy
+from aqt.qt import QSpinBox
+from aqt.qt import QSplitter
+from aqt.qt import Qt
+from aqt.qt import QTabWidget
+from aqt.qt import QTextBrowser
+from aqt.qt import QTextCursor
+from aqt.qt import QTextEdit
+from aqt.qt import QTimer
+from aqt.qt import QVBoxLayout
+from aqt.qt import QWidget
+from aqt.qt import qconnect
+from aqt.utils import showCritical
+from aqt.utils import showInfo
+from aqt.utils import showWarning
+from aqt.utils import tooltip
 
 # Export qconnect for direct use
 safe_qconnect = qconnect
@@ -185,7 +186,7 @@ def safe_connect(signal, slot) -> None:
 
 
 def create_button(
-    text: str, callback=None, tooltip_text: Optional[str] = None
+    text: str, callback=None, tooltip_text: str | None = None
 ) -> QPushButton:
     """
     Creates a button with callback and tooltip.

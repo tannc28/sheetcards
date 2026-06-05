@@ -11,9 +11,8 @@ and the SSRF host guard on downloads.
 import pytest
 
 from src import data_processor as d
-from src import utils as u
 from src import templates_and_definitions as cols
-
+from src import utils as u
 
 # =============================================================================
 # TSV PARSING
@@ -97,7 +96,9 @@ class TestRemoteDeckBuild:
 
     def test_duplicate_ids_detected(self):
         """Regression (H7): duplicate non-empty IDs are reported, not silently merged."""
-        tsv = "ID\tQUESTION\tANSWER\tSYNC\nQ1\ta\tb\ttrue\nQ1\tc\td\ttrue\nQ2\te\tf\ttrue"
+        tsv = (
+            "ID\tQUESTION\tANSWER\tSYNC\nQ1\ta\tb\ttrue\nQ1\tc\td\ttrue\nQ2\te\tf\ttrue"
+        )
         deck = _build(tsv)
         assert deck.duplicate_ids == ["Q1"]
 
@@ -181,7 +182,9 @@ class TestUrls:
 
     def test_convert_rejects_non_google(self):
         with pytest.raises(ValueError):
-            u.convert_edit_url_to_tsv("https://evil.example.com/spreadsheets/d/ABC/edit")
+            u.convert_edit_url_to_tsv(
+                "https://evil.example.com/spreadsheets/d/ABC/edit"
+            )
 
 
 # =============================================================================

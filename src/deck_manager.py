@@ -6,7 +6,6 @@ remote decks in Anki with support for automatic naming and
 deck disconnection, including student management.
 """
 
-from .ui.add_deck_dialog import show_add_deck_dialog
 from .compat import DialogAccepted
 from .compat import QCheckBox
 from .compat import QDialog
@@ -14,11 +13,9 @@ from .compat import QHBoxLayout
 from .compat import QInputDialog
 from .compat import QLabel
 from .compat import QPushButton
-from .styled_messages import StyledMessageBox
 from .compat import QVBoxLayout
 from .compat import mw
 from .compat import safe_exec
-
 from .config_manager import add_remote_deck
 from .config_manager import create_deck_info
 from .config_manager import detect_deck_name_changes
@@ -26,10 +23,13 @@ from .config_manager import disconnect_deck
 from .config_manager import get_deck_local_name
 from .config_manager import get_remote_decks
 from .data_processor import getRemoteDeck
+from .styled_messages import StyledMessageBox
+from .templates_and_definitions import TEST_SHEETS_URLS
+from .ui.add_deck_dialog import show_add_deck_dialog
 from .ui.disconnect_dialog import show_disconnect_dialog
 from .ui.sync_dialog import show_sync_dialog
-from .templates_and_definitions import TEST_SHEETS_URLS
-from .utils import get_or_create_deck, add_debug_message
+from .utils import add_debug_message
+from .utils import get_or_create_deck
 
 
 def add_debug_msg(message, category="DECK_MANAGER"):
@@ -70,11 +70,15 @@ def _delete_local_deck_data(deck_id, deck_name, url):
                 model = mw.col.models.get(NotetypeId(note_type_id))
 
                 if not model:
-                    add_debug_msg(f"[DEBUG] Note type ID {note_type_id} not found in Anki")
+                    add_debug_msg(
+                        f"[DEBUG] Note type ID {note_type_id} not found in Anki"
+                    )
                     continue
 
                 model_name = model["name"]
-                add_debug_msg(f"[DEBUG] Found note type: {model_name} (ID: {note_type_id})")
+                add_debug_msg(
+                    f"[DEBUG] Found note type: {model_name} (ID: {note_type_id})"
+                )
 
                 # Check if note type is used only by this deck
                 notes_with_model = mw.col.find_notes(f'note:"{model_name}"')
@@ -95,7 +99,9 @@ def _delete_local_deck_data(deck_id, deck_name, url):
                     # If no cards from other decks, note type can be deleted
                     if not cards_from_other_decks:
                         models_to_delete.append(model)
-                        add_debug_msg(f"[DEBUG] Note type '{model_name}' marked for deletion")
+                        add_debug_msg(
+                            f"[DEBUG] Note type '{model_name}' marked for deletion"
+                        )
                     else:
                         add_debug_msg(
                             f"[DEBUG] Pattern found in '{model_name}', adding to deletion list"
@@ -108,7 +114,9 @@ def _delete_local_deck_data(deck_id, deck_name, url):
                     )
 
             except Exception as e:
-                add_debug_msg(f"[DEBUG] Error checking note type {note_type_id_str}: {e}")
+                add_debug_msg(
+                    f"[DEBUG] Error checking note type {note_type_id_str}: {e}"
+                )
 
         # 2. Delete all notes from the deck
         escaped_deck_name = deck_name.replace('"', '\\"')
@@ -128,9 +136,13 @@ def _delete_local_deck_data(deck_id, deck_name, url):
         for model in models_to_delete:
             try:
                 mw.col.models.rem(model)
-                add_debug_msg(f"[DEBUG] Note type '{model['name']}' successfully deleted")
+                add_debug_msg(
+                    f"[DEBUG] Note type '{model['name']}' successfully deleted"
+                )
             except Exception as e:
-                add_debug_msg(f"[DEBUG] Error deleting note type '{model['name']}': {e}")
+                add_debug_msg(
+                    f"[DEBUG] Error deleting note type '{model['name']}': {e}"
+                )
 
         # 5. Force save and UI update
         mw.col.save()
@@ -202,12 +214,13 @@ def _force_delete_note_types_by_suffix(suffix, remote_deck_name=None, url=None):
             # "Sheets2Anki - {deck} - {Type}", so require the deck name as a
             # ' - '-delimited segment. A plain substring test ("Bio" in name) would
             # wrongly match a different deck whose name is a superstring ("Biologia").
-            if (
-                remote_deck_name
-                and model_name.startswith(f"Sheets2Anki - {remote_deck_name} - ")
+            if remote_deck_name and model_name.startswith(
+                f"Sheets2Anki - {remote_deck_name} - "
             ):
                 models_to_delete.append(model)
-                add_debug_msg(f"[FORCE DELETE] Forcing deletion of note type: {model_name}")
+                add_debug_msg(
+                    f"[FORCE DELETE] Forcing deletion of note type: {model_name}"
+                )
 
         add_debug_msg(
             f"[FORCE DELETE] Identified {len(models_to_delete)} note types for deletion"
@@ -290,7 +303,7 @@ def check_and_update_deck_names(silent=False):
                 StyledMessageBox.information(
                     None,
                     "Deck Name Updated",
-                    f"The deck '{deck_names[0]}' was renamed in the configuration to match the remote source."
+                    f"The deck '{deck_names[0]}' was renamed in the configuration to match the remote source.",
                 )
             else:
                 names_str = "\n• " + "\n• ".join(deck_names)
@@ -298,13 +311,17 @@ def check_and_update_deck_names(silent=False):
                     None,
                     "Deck Names Updated",
                     "The following decks were renamed in the configuration:",
-                    detailed_text=f"• {names_str}"
+                    detailed_text=f"• {names_str}",
                 )
 
         return updated_urls
     except Exception as e:
         if not silent:
-            StyledMessageBox.warning(None, "Error Checking Names", f"An error occurred while checking for deck name updates: {str(e)}")
+            StyledMessageBox.warning(
+                None,
+                "Error Checking Names",
+                f"An error occurred while checking for deck name updates: {str(e)}",
+            )
         return []
 
 
@@ -363,7 +380,9 @@ def _show_selection_dialog_and_sync(deck_info_list):
 
             syncDecks(selected_decks)
         else:
-            StyledMessageBox.information(mw, "No Selection", "No deck was selected for synchronization.")
+            StyledMessageBox.information(
+                mw, "No Selection", "No deck was selected for synchronization."
+            )
 
 
 def import_test_deck():
@@ -400,7 +419,11 @@ def import_test_deck():
     remote_decks = get_remote_decks()
     if url in remote_decks:
         local_name = get_deck_local_name(url) or "Deck"
-        StyledMessageBox.warning(mw, "Already Configured", f"This test deck is already configured as '{local_name}'.")
+        StyledMessageBox.warning(
+            mw,
+            "Already Configured",
+            f"This test deck is already configured as '{local_name}'.",
+        )
         return
 
     try:
@@ -434,7 +457,9 @@ def import_test_deck():
             final_deck_name = actual_name
 
     except Exception as e:
-        StyledMessageBox.critical(mw, "Import Error", "Error importing test deck", detailed_text=str(e))
+        StyledMessageBox.critical(
+            mw, "Import Error", "Error importing test deck", detailed_text=str(e)
+        )
         return
 
 
@@ -524,6 +549,7 @@ def removeRemoteDeck():
         # Clean up orphaned deck option groups after disconnecting decks
         # This removes any Sheets2Anki deck options that are no longer linked to any local decks
         from .utils import cleanup_orphaned_deck_option_groups
+
         cleaned_options = cleanup_orphaned_deck_option_groups()
         if cleaned_options > 0:
             add_debug_msg(f"Cleaned up {cleaned_options} orphaned deck option group(s)")
@@ -563,7 +589,12 @@ def removeRemoteDeck():
                     f"To reconnect, you will need to add them again."
                 )
 
-        StyledMessageBox.success(mw, "Decks Disconnected", "Selected decks have been disconnected.", detailed_text=message)
+        StyledMessageBox.success(
+            mw,
+            "Decks Disconnected",
+            "Selected decks have been disconnected.",
+            detailed_text=message,
+        )
 
     return
 
@@ -578,7 +609,9 @@ def manage_deck_students():
     remote_decks = get_remote_decks()
 
     if not remote_decks:
-        StyledMessageBox.warning(None, "No Decks", "No remote deck configured. Please add a deck first.")
+        StyledMessageBox.warning(
+            None, "No Decks", "No remote deck configured. Please add a deck first."
+        )
         return
 
     # Create options list for user to select a deck
@@ -615,7 +648,11 @@ def manage_deck_students():
 
     try:
         # Download remote data to extract students
-        StyledMessageBox.information(None, "Downloading Data", "Downloading spreadsheet data to obtain students list...\nThis may take a moment.")
+        StyledMessageBox.information(
+            None,
+            "Downloading Data",
+            "Downloading spreadsheet data to obtain students list...\nThis may take a moment.",
+        )
 
         remote_deck = getRemoteDeck(selected_url)
         available_students = extract_students_from_remote_data(remote_deck)
@@ -625,7 +662,7 @@ def manage_deck_students():
                 None,
                 "No Students Found",
                 "No students found in the STUDENTS column of this spreadsheet.",
-                detailed_text="Make sure the spreadsheet contains a 'STUDENTS' or 'ALUNOS' column with student names."
+                detailed_text="Make sure the spreadsheet contains a 'STUDENTS' or 'ALUNOS' column with student names.",
             )
             return
 
@@ -644,7 +681,7 @@ def manage_deck_students():
                     None,
                     "No Selection",
                     f"No student selected for deck '{deck_name}'.",
-                    detailed_text="No notes will be synced for this deck until you select at least one student."
+                    detailed_text="No notes will be synced for this deck until you select at least one student.",
                 )
             else:
                 alunos_list = ", ".join(sorted(selected_students))
@@ -652,7 +689,7 @@ def manage_deck_students():
                     None,
                     "Configuration Saved",
                     f"Configuration saved for deck '{deck_name}'!",
-                    detailed_text=f"Selected students ({selected_count} of {total_count}):\n{alunos_list}\n\nOn the next sync, only notes of selected students will be included."
+                    detailed_text=f"Selected students ({selected_count} of {total_count}):\n{alunos_list}\n\nOn the next sync, only notes of selected students will be included.",
                 )
 
     except Exception as e:
@@ -660,7 +697,7 @@ def manage_deck_students():
             None,
             "Student Management Error",
             f"Error managing students: {str(e)}",
-            detailed_text="Check if deck URL is correct and if spreadsheet is accessible."
+            detailed_text="Check if deck URL is correct and if spreadsheet is accessible.",
         )
 
 
@@ -668,7 +705,6 @@ def reset_student_selection():
     """
     Removes student selection from all decks, returning to default behavior.
     """
-
 
     remote_decks = get_remote_decks()
 
@@ -684,7 +720,7 @@ def reset_student_selection():
         detailed_text="This will make all decks return to default behavior (sync all notes regardless of STUDENTS column).",
         yes_text="Reset All",
         no_text="Cancel",
-        destructive=True
+        destructive=True,
     )
 
     if not confirmed:
@@ -711,13 +747,17 @@ def reset_student_selection():
                 None,
                 "Reset Complete",
                 f"Student selection removed from {removed_count} deck(s).",
-                detailed_text="All decks will now return to default behavior on next sync."
+                detailed_text="All decks will now return to default behavior on next sync.",
             )
         else:
-            StyledMessageBox.information(None, "No Changes", "No student selection found to remove.")
+            StyledMessageBox.information(
+                None, "No Changes", "No student selection found to remove."
+            )
 
     except Exception as e:
-        StyledMessageBox.critical(None, "Reset Error", f"Error resetting student selection: {str(e)}")
+        StyledMessageBox.critical(
+            None, "Reset Error", f"Error resetting student selection: {str(e)}"
+        )
 
 
 # =============================================================================
@@ -726,9 +766,6 @@ def reset_student_selection():
 
 import re
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Tuple
 
 from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 
@@ -798,7 +835,7 @@ class DeckNameManager:
         return f"{parent_name}::{clean_remote_name}"
 
     @staticmethod
-    def generate_complete_names(url: str) -> Tuple[str, str]:
+    def generate_complete_names(url: str) -> tuple[str, str]:
         """
         Generates both local and remote name for a URL.
 
@@ -888,7 +925,7 @@ class DeckNameManager:
     @staticmethod
     def sync_deck_with_config(
         deck_url: str, debug_callback=None
-    ) -> Optional[Tuple[int, str]]:
+    ) -> tuple[int, str] | None:
         """
         Syncs deck name in Anki with configuration (source of truth).
 
@@ -952,7 +989,7 @@ class DeckNameManager:
         deck_url: str,
         deck_id: int,
         current_local_name: str,
-        remote_name: Optional[str] = None,
+        remote_name: str | None = None,
         debug_callback=None,
     ) -> str:
         """
@@ -1016,8 +1053,8 @@ class DeckNameManager:
 
     @staticmethod
     def create_deck_with_proper_naming(
-        deck_url: str, suggested_remote_name: Optional[str] = None
-    ) -> Tuple[int, str, str]:
+        deck_url: str, suggested_remote_name: str | None = None
+    ) -> tuple[int, str, str]:
         """
         Creates a deck with proper naming and resolves all conflicts.
 
@@ -1059,7 +1096,7 @@ class DeckNameManager:
     # =============================================================================
 
     @staticmethod
-    def _get_existing_remote_names(exclude_url: Optional[str] = None) -> set:
+    def _get_existing_remote_names(exclude_url: str | None = None) -> set:
         """Gets all existing remote names."""
         from .config_manager import get_remote_decks
 
@@ -1101,7 +1138,7 @@ class DeckNameManager:
         return desired_name.lower() != comparison_name.lower()
 
     @staticmethod
-    def _extract_numeric_suffix(name: str) -> Tuple[bool, str, Optional[int]]:
+    def _extract_numeric_suffix(name: str) -> tuple[bool, str, int | None]:
         """Extracts numeric suffix from name."""
         suffix_match = re.search(r"_(\d+)$", name)
         if suffix_match:
@@ -1175,7 +1212,7 @@ class DeckNameManager:
         return name
 
     @staticmethod
-    def _extract_spreadsheet_title(url: str) -> Optional[str]:
+    def _extract_spreadsheet_title(url: str) -> str | None:
         """Extracts spreadsheet title via HTML."""
         try:
             import urllib.parse
@@ -1230,10 +1267,15 @@ class DeckNameManager:
                     match = re.search(pattern, html, re.IGNORECASE)
                     if match:
                         title = match.group(1).strip()
-                        
+
                         # Clean additional suffixes that may have escaped the regex
-                        title = re.sub(r'\s*-\s*(Google\s*(Sheets|Planilhas)|Planilhas\s+Google)$', '', title, flags=re.IGNORECASE).strip()
-                        
+                        title = re.sub(
+                            r"\s*-\s*(Google\s*(Sheets|Planilhas)|Planilhas\s+Google)$",
+                            "",
+                            title,
+                            flags=re.IGNORECASE,
+                        ).strip()
+
                         if title and title.lower() not in [
                             "untitled",
                             "sem título",
@@ -1247,7 +1289,7 @@ class DeckNameManager:
             return None
 
     @staticmethod
-    def _extract_filename_from_headers(url: str) -> Optional[str]:
+    def _extract_filename_from_headers(url: str) -> str | None:
         """Extracts filename via headers."""
         try:
             import urllib.request
@@ -1318,8 +1360,8 @@ class DeckRecreationManager:
 
     @staticmethod
     def recreate_deck_if_missing(
-        deck_info: Dict[str, Any],
-    ) -> Tuple[bool, Optional[int], Optional[str]]:
+        deck_info: dict[str, Any],
+    ) -> tuple[bool, int | None, str | None]:
         """
         Recreates a deck if it is missing.
 
@@ -1409,7 +1451,7 @@ class DeckRecreationManager:
             raise
 
     @staticmethod
-    def _create_new_deck(deck_info: Dict[str, Any]) -> Tuple[int, str]:
+    def _create_new_deck(deck_info: dict[str, Any]) -> tuple[int, str]:
         """
         Creates a new deck based on provided information.
 
@@ -1525,7 +1567,7 @@ class DeckRecreationManager:
 
     @staticmethod
     def update_deck_info_after_recreation(
-        deck_info: Dict[str, Any], new_deck_id: int, actual_name: str
+        deck_info: dict[str, Any], new_deck_id: int, actual_name: str
     ) -> None:
         """
         Updates deck info after recreation.

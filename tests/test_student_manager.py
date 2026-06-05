@@ -117,7 +117,9 @@ class TestStudentManager:
 class TestStudentFiltering:
     """Tests for data filtering by students."""
 
-    @pytest.mark.skip(reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration")
+    @pytest.mark.skip(
+        reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration"
+    )
     def test_filter_data_by_students_basic(self, sample_tsv_data):
         """Basic filtering test by students."""
 
@@ -125,15 +127,17 @@ class TestStudentFiltering:
             filtered_data = []
 
             for row in data:
-                # Use key ALUNOS if internal Portuguese key still used in mock data, 
+                # Use key ALUNOS if internal Portuguese key still used in mock data,
                 # or Students if updated. conftest.py uses English names.
                 # However, the code being tested might expect Portuguese keys.
-                # Looking at conftest.py translation in previous steps, 
+                # Looking at conftest.py translation in previous steps,
                 # ALUNOS was translated to Students.
                 alunos_field = row.get("Students", row.get("ALUNOS", ""))
                 if not alunos_field:
                     # If no students, goes to special category
-                    filtered_data.append({**row, "_target_students": ["[MISSING STUDENTS]"]})
+                    filtered_data.append(
+                        {**row, "_target_students": ["[MISSING STUDENTS]"]}
+                    )
                     continue
 
                 # Parse row students
@@ -195,7 +199,9 @@ class TestStudentFiltering:
             for row in data:
                 alunos_field = row.get("Students", row.get("ALUNOS", ""))
                 if not alunos_field or alunos_field.strip() == "":
-                    filtered_data.append({**row, "_target_students": ["[MISSING STUDENTS]"]})
+                    filtered_data.append(
+                        {**row, "_target_students": ["[MISSING STUDENTS]"]}
+                    )
                     continue
 
                 import re
@@ -431,9 +437,7 @@ class TestDeckStudentConfig:
         assert history_students == ["Ann", "Bob"]
 
         # Deck without configuration and no fallback
-        math_students = get_deck_students(
-            config, "Math", fallback_to_global=False
-        )
+        math_students = get_deck_students(config, "Math", fallback_to_global=False)
         assert math_students == []
 
 
@@ -527,7 +531,9 @@ class TestStudentValidation:
 class TestStudentManagerIntegration:
     """Student manager integration tests."""
 
-    @pytest.mark.skip(reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration")
+    @pytest.mark.skip(
+        reason="legacy self-mock (re-implements logic inline, dead schema); superseded by tests/test_core_logic.py — pending migration"
+    )
     def test_full_student_management_workflow(self, sample_tsv_data, mock_mw):
         """Full student management workflow test."""
 

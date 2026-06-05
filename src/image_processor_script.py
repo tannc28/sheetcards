@@ -3,7 +3,7 @@ Embedded Google Apps Script content for image processing.
 This is bundled with the addon so users can copy it to their clipboard.
 """
 
-APPS_SCRIPT_CONTENT = r'''/**
+APPS_SCRIPT_CONTENT = r"""/**
  * Sheets2Anki Image Processor - Google Apps Script (Standalone)
  * 
  * Deploy this script ONCE as a standalone Web App. It works with ANY
@@ -350,4 +350,4 @@ function jsonResponse_(data) {
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
-'''
+"""

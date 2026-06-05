@@ -8,60 +8,57 @@ different parts of the project.
 import hashlib
 import re
 from datetime import datetime
-from typing import List
 
 try:
     from .compat import mw
-    from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 except ImportError:
     # For independent tests
     from compat import mw
-    from templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 
 
 # --- Re-exported from the modules split out of this file (back-compat facade) ---
-from .errors import (SyncError, NoteProcessingError, CollectionSaveError, ConfigurationError)  # noqa: F401
-from .debug import (  # noqa: F401
-    DebugManager,
-    add_debug_message,
-    is_debug_enabled,
-    get_debug_messages,
-    clear_debug_messages,
-    initialize_debug_log,
-    get_debug_log_path,
-    clear_debug_log,
-)
-from .deck_options import (  # noqa: F401
-    _is_default_config,
-    _should_update_config_version,
-    get_or_create_sheets2anki_options_group,
-    apply_sheets2anki_options_to_deck,
-    apply_sheets2anki_options_to_all_remote_decks,
-    apply_options_to_subdecks,
-    cleanup_orphaned_deck_option_groups,
-    apply_automatic_deck_options_system,
-    ensure_root_deck_has_root_options,
-    get_or_create_root_options_group,
-)
+from .debug import DebugManager  # noqa: F401
+from .debug import add_debug_message  # noqa: F401
+from .debug import clear_debug_log  # noqa: F401
+from .debug import clear_debug_messages  # noqa: F401
+from .debug import get_debug_log_path  # noqa: F401
+from .debug import get_debug_messages  # noqa: F401
+from .debug import initialize_debug_log  # noqa: F401
+from .debug import is_debug_enabled  # noqa: F401
+from .deck_options import _is_default_config  # noqa: F401
+from .deck_options import _should_update_config_version  # noqa: F401
+from .deck_options import apply_automatic_deck_options_system  # noqa: F401
+from .deck_options import apply_options_to_subdecks  # noqa: F401
+from .deck_options import apply_sheets2anki_options_to_all_remote_decks  # noqa: F401
+from .deck_options import apply_sheets2anki_options_to_deck  # noqa: F401
+from .deck_options import cleanup_orphaned_deck_option_groups  # noqa: F401
+from .deck_options import ensure_root_deck_has_root_options  # noqa: F401
+from .deck_options import get_or_create_root_options_group  # noqa: F401
+from .deck_options import get_or_create_sheets2anki_options_group  # noqa: F401
+from .errors import CollectionSaveError  # noqa: F401
+from .errors import ConfigurationError  # noqa: F401
+from .errors import NoteProcessingError  # noqa: F401
+from .errors import SyncError  # noqa: F401
+
 
 def safe_find_cards(search_query):
     """
     Performs a safe card search, escaping problematic characters.
-    
+
     Args:
         search_query (str): Search query
-        
+
     Returns:
         list: List of IDs of found cards
     """
     try:
         if not mw or not mw.col:
             return []
-        
+
         # Check if query is empty
         if not search_query or not search_query.strip():
             return []
-        
+
         return mw.col.find_cards(search_query)
     except Exception:
         return []
@@ -70,21 +67,21 @@ def safe_find_cards(search_query):
 def safe_find_cards_by_deck(deck_name):
     """
     Searches for cards by deck name safely.
-    
+
     Args:
         deck_name (str): Deck name
-        
+
     Returns:
         list: List of IDs of found cards
     """
     try:
         if not deck_name or not deck_name.strip():
             return []
-        
+
         # Escape double quotes in deck name
         escaped_deck_name = deck_name.replace('"', '\\"')
         search_query = f'deck:"{escaped_deck_name}"'
-        
+
         return safe_find_cards(search_query)
     except Exception as e:
         add_debug_message(f"Error searching by deck '{deck_name}': {e}", "SEARCH_ERROR")
@@ -140,7 +137,7 @@ def extract_spreadsheet_id_from_url(url):
     # Extract spreadsheet ID from edit URLs (ID between /d/ and /edit)
     edit_pattern = r"/spreadsheets/d/([a-zA-Z0-9-_]+)/edit"
     match = re.search(edit_pattern, url)
-    
+
     if match:
         return match.group(1)
 
@@ -160,7 +157,7 @@ def get_publication_key_hash(url):
     """
     if not url:
         return ""
-    
+
     # Try to extract ID, otherwise use full URL
     identifier = extract_spreadsheet_id_from_url(url) or url
     return hashlib.md5(identifier.encode()).hexdigest()[:8]
@@ -181,13 +178,13 @@ def get_spreadsheet_id_from_url(url):
         ValueError: If URL is not a valid Google Sheets edit URL
     """
     spreadsheet_id = extract_spreadsheet_id_from_url(url)
-    
+
     if not spreadsheet_id:
         raise ValueError(
             "URL must be a valid Google Sheets edit URL in the format:\n"
             "https://docs.google.com/spreadsheets/d/{ID}/edit?usp=sharing"
         )
-    
+
     return spreadsheet_id
 
 
@@ -213,7 +210,6 @@ def update_note_type_names_for_deck_rename(
     from .config_manager import save_meta
 
     def add_debug_msg(message, category="NOTE_TYPE_RENAME"):
-        from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] [{category}] {message}"
@@ -265,9 +261,7 @@ def update_note_type_names_for_deck_rename(
             except Exception as meta_error:
                 add_debug_msg(f"❌ Error updating meta.json: {meta_error}")
 
-        add_debug_msg(
-            f"✅ {updated_count} note type strings updated in meta.json"
-        )
+        add_debug_msg(f"✅ {updated_count} note type strings updated in meta.json")
         return updated_count
 
     except Exception as e:
@@ -292,7 +286,6 @@ def sync_note_type_names_with_config(col, deck_url, debug_messages=None):
 
     def add_debug_msg(message, category="NOTE_TYPE_SYNC"):
         """Helper to add debug messages with timestamp."""
-        from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] [{category}] {message}"
@@ -335,9 +328,12 @@ def sync_note_type_names_with_config(col, deck_url, debug_messages=None):
 
                 # Find note type in Anki
                 from anki.models import NotetypeId
+
                 note_type = col.models.get(NotetypeId(note_type_id))
                 if not note_type:
-                    add_debug_msg(f"❌ Note type ID {note_type_id} does not exist in Anki")
+                    add_debug_msg(
+                        f"❌ Note type ID {note_type_id} does not exist in Anki"
+                    )
                     stats["error_note_types"] += 1
                     continue
 
@@ -430,7 +426,7 @@ def get_or_create_deck(col, deckName, remote_deck_name=None):
         or deckName.strip().lower() == "default"
     ):
         raise ValueError(
-            "Invalid deck name or forbidden for synchronization: '%s'" % deckName
+            f"Invalid deck name or forbidden for synchronization: '{deckName}'"
         )
 
     deck = col.decks.by_name(deckName)
@@ -456,7 +452,7 @@ def get_or_create_deck(col, deckName, remote_deck_name=None):
         except Exception as e:
             add_debug_message(
                 f"Warning: Failed to apply options to deck '{actual_name}': {e}",
-                "DECK_OPTIONS"
+                "DECK_OPTIONS",
             )
 
     return deck_id, actual_name
@@ -475,7 +471,9 @@ def get_model_suffix_from_url(url):
     return hashlib.sha1(url.encode()).hexdigest()[:8]
 
 
-def get_note_type_name(url, remote_deck_name, student=None, is_cloze=False, is_reverse=False):
+def get_note_type_name(
+    url, remote_deck_name, student=None, is_cloze=False, is_reverse=False
+):
     """
     Generates standardized name for Sheets2Anki note types.
 
@@ -526,7 +524,6 @@ def register_note_type_for_deck(url, note_type_id, note_type_name, debug_message
 
     def add_debug_msg(message, category="NOTE_TYPE_REG"):
         """Helper to add debug messages with timestamp."""
-        from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] [{category}] {message}"
@@ -562,7 +559,6 @@ def capture_deck_note_type_ids_from_cards(url, local_deck_id, debug_messages=Non
 
     def add_debug_msg(message, category="NOTE_TYPE_IDS"):
         """Helper to add debug messages with timestamp."""
-        from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] [{category}] {message}"
@@ -598,9 +594,7 @@ def capture_deck_note_type_ids_from_cards(url, local_deck_id, debug_messages=Non
                 note_type = note.note_type()
 
                 if not note_type:
-                    add_debug_msg(
-                        f"Ignoring card {card_id} - note type not found"
-                    )
+                    add_debug_msg(f"Ignoring card {card_id} - note type not found")
                     continue
 
                 note_type_id = note_type["id"]
@@ -657,7 +651,6 @@ def capture_deck_note_type_ids(
     from .config_manager import get_deck_local_id
 
     def add_debug_msg(message, category="NOTE_TYPE_IDS"):
-        from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] [{category}] {message}"
@@ -722,10 +715,9 @@ def delete_deck_note_types_by_ids(url):
 
         deleted_count = 0
 
-        for (
-            note_type_id
-        ) in note_type_ids.copy():  # Use copy to modify during iteration
+        for note_type_id in note_type_ids.copy():  # Use copy to modify during iteration
             from anki.models import NotetypeId
+
             model = mw.col.models.get(NotetypeId(note_type_id))
             if model:
                 model_name = model["name"]
@@ -736,7 +728,7 @@ def delete_deck_note_types_by_ids(url):
                     if note_ids:
                         add_debug_message(
                             f"Note type '{model_name}' has {len(note_ids)} notes, deleting them first...",
-                            "DELETE_BY_IDS"
+                            "DELETE_BY_IDS",
                         )
                         mw.col.remove_notes(note_ids)
 
@@ -749,27 +741,27 @@ def delete_deck_note_types_by_ids(url):
 
                     add_debug_message(
                         f"Note type '{model_name}' (ID: {note_type_id}) successfully deleted",
-                        "DELETE_BY_IDS"
+                        "DELETE_BY_IDS",
                     )
 
                 except Exception as e:
                     add_debug_message(
                         f"Error deleting note type '{model_name}' (ID: {note_type_id}): {e}",
-                        "DELETE_BY_IDS"
+                        "DELETE_BY_IDS",
                     )
             else:
                 # ID no longer exists, remove from configuration
                 remove_note_type_id_from_deck(url, note_type_id)
                 add_debug_message(
                     f"Note type ID {note_type_id} not found, removed from configuration",
-                    "DELETE_BY_IDS"
+                    "DELETE_BY_IDS",
                 )
 
         if deleted_count > 0:
             mw.col.save()
             add_debug_message(
                 f"Operation completed: {deleted_count} note types deleted",
-                "DELETE_BY_IDS"
+                "DELETE_BY_IDS",
             )
 
         return deleted_count
@@ -802,9 +794,12 @@ def rename_note_type_in_anki(note_type_id, new_name):
 
         # Get existing model
         from anki.models import NotetypeId
+
         model = mw.col.models.get(NotetypeId(note_type_id))  # type: ignore
         if not model:
-            add_debug_message(f"Note type ID {note_type_id} not found", "RENAME_NOTE_TYPE")
+            add_debug_message(
+                f"Note type ID {note_type_id} not found", "RENAME_NOTE_TYPE"
+            )
             return False
 
         old_name = model["name"]
@@ -813,13 +808,13 @@ def rename_note_type_in_anki(note_type_id, new_name):
         if old_name == new_name:
             add_debug_message(
                 f"Note type {note_type_id} already has correct name: '{new_name}'",
-                "RENAME_NOTE_TYPE"
+                "RENAME_NOTE_TYPE",
             )
             return True
 
         add_debug_message(
             f"Renaming note type {note_type_id} from '{old_name}' to '{new_name}'",
-            "RENAME_NOTE_TYPE"
+            "RENAME_NOTE_TYPE",
         )
 
         # Change only the name of existing model
@@ -832,7 +827,9 @@ def rename_note_type_in_anki(note_type_id, new_name):
         return True
 
     except Exception as e:
-        add_debug_message(f"❌ Error renaming note type {note_type_id}: {e}", "RENAME_NOTE_TYPE")
+        add_debug_message(
+            f"❌ Error renaming note type {note_type_id}: {e}", "RENAME_NOTE_TYPE"
+        )
         import traceback
 
         traceback.print_exc()
@@ -895,34 +892,36 @@ def cleanup_orphaned_note_types():
                     note_type_id = int(note_type_id_str)
                     # Use the same pattern as the rest of the code
                     from anki.models import NotetypeId
+
                     model = mw.col.models.get(NotetypeId(note_type_id))  # type: ignore
 
                     if not model:
                         orphaned_ids.append(note_type_id_str)
                         add_debug_message(
                             f"Orphan found: ID {note_type_id_str} - '{note_type_name}'",
-                            "CLEANUP_ORPHANED"
+                            "CLEANUP_ORPHANED",
                         )
 
                 except (ValueError, TypeError):
                     # Invalid ID, also remove
                     orphaned_ids.append(note_type_id_str)
                     add_debug_message(
-                        f"Invalid ID found: '{note_type_id_str}'",
-                        "CLEANUP_ORPHANED"
+                        f"Invalid ID found: '{note_type_id_str}'", "CLEANUP_ORPHANED"
                     )
 
             # Remove orphans from configuration
             for orphaned_id in orphaned_ids:
                 del deck_info["note_types"][orphaned_id]
                 cleaned_count += 1
-                add_debug_message(f"Orphan removed: ID {orphaned_id}", "CLEANUP_ORPHANED")
+                add_debug_message(
+                    f"Orphan removed: ID {orphaned_id}", "CLEANUP_ORPHANED"
+                )
 
         if cleaned_count > 0:
             save_meta(meta)
             add_debug_message(
                 f"Cleanup completed: {cleaned_count} orphaned note types removed",
-                "CLEANUP_ORPHANED"
+                "CLEANUP_ORPHANED",
             )
         else:
             add_debug_message("No orphaned note types found", "CLEANUP_ORPHANED")
@@ -945,34 +944,36 @@ def cleanup_orphaned_note_types():
 def convert_edit_url_to_tsv(url):
     """
     Converts Google Sheets edit URLs to TSV download format.
-    
+
     Args:
         url (str): Google Sheets edit URL
-        
+
     Returns:
         str: URL in TSV format for download
-        
+
     Raises:
         ValueError: If the URL is not a valid edit URL
     """
     import re
-    
+
     if not url or not isinstance(url, str):
         raise ValueError("URL must be a non-empty string")
-    
+
     # Check if it's a Google Sheets URL
     if "docs.google.com/spreadsheets" not in url:
         raise ValueError("URL must be from Google Sheets")
-    
+
     # Extract spreadsheet ID for edit URLs
     edit_pattern = r"https://docs\.google\.com/spreadsheets/d/([a-zA-Z0-9-_]+)/edit"
     match = re.search(edit_pattern, url)
-    
+
     if match:
         spreadsheet_id = match.group(1)
         # Convert to TSV export format (without gid to automatically download the first tab)
-        return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=tsv"
-    
+        return (
+            f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=tsv"
+        )
+
     # If it reached here, it's not a valid edit URL
     raise ValueError(
         "URL must be a Google Sheets edit URL in the format:\n"
@@ -1038,25 +1039,27 @@ def validate_url(url):
             valid_type in content_type
             for valid_type in ["text/tab-separated-values", "text/plain", "text/csv"]
         ):
-            raise ValueError(f"URL does not return TSV content (received {content_type})")
+            raise ValueError(
+                f"URL does not return TSV content (received {content_type})"
+            )
 
         # Return valid TSV URL
         return tsv_url
 
-    except socket.timeout:
+    except TimeoutError:
         raise ValueError(
             "Connection timeout when accessing the URL (30s). Check your connection or try again."
         )
     except urllib.error.HTTPError as e:
         if e.code == 400:
             raise ValueError(
-                f"HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
-                f"To fix:\n"
-                f"1. Open the spreadsheet in Google Sheets\n"
-                f"2. Click 'Share'\n"
-                f"3. Change access to 'Anyone with the link'\n"
-                f"4. Set permission to 'Viewer'\n\n"
-                f"Alternatively: File → Share → Publish to the web"
+                "HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
+                "To fix:\n"
+                "1. Open the spreadsheet in Google Sheets\n"
+                "2. Click 'Share'\n"
+                "3. Change access to 'Anyone with the link'\n"
+                "4. Set permission to 'Viewer'\n\n"
+                "Alternatively: File → Share → Publish to the web"
             )
         else:
             raise ValueError(f"HTTP Error {e.code}: {e.reason}")
@@ -1093,6 +1096,7 @@ def get_subdeck_name(main_deck_name, fields, student=None):
         str: Full subdeck name in the format "MainDeck::[Student::]Importance::Topic::Subtopic::Concept"
     """
     import re
+
     from . import templates_and_definitions as cols
 
     def clean_deck_text(text):
@@ -1113,7 +1117,7 @@ def get_subdeck_name(main_deck_name, fields, student=None):
     topico_raw = fields.get(cols.hierarchy_2, "").strip()
     subtopico_raw = fields.get(cols.hierarchy_3, "").strip()
     conceito_raw = fields.get(cols.hierarchy_4, "").strip()
-    
+
     # Use default values if empty
     if not importancia_raw:
         importancia_raw = cols.DEFAULT_IMPORTANCE
@@ -1123,13 +1127,13 @@ def get_subdeck_name(main_deck_name, fields, student=None):
         subtopico_raw = cols.DEFAULT_SUBTOPIC
     if not conceito_raw:
         conceito_raw = cols.DEFAULT_CONCEPT
-    
+
     # Clean for deck name use
     importancia = clean_deck_text(importancia_raw)
     topico = clean_deck_text(topico_raw)
     subtopico = clean_deck_text(subtopico_raw)
     conceito = clean_deck_text(conceito_raw)
-    
+
     # If cleaning results in empty string (e.g., field had only invalid characters),
     # use the default placeholder
     if not importancia:

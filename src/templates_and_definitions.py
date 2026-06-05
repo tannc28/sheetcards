@@ -95,31 +95,24 @@ ALL_AVAILABLE_COLUMNS = [
     students,  # Interested students control
     is_sync,  # Synchronization control
     sanity_check,  # Quality control field
-
     hierarchy_1,  # Importance level
     hierarchy_2,  # Main topic
     hierarchy_3,  # Subtopic
     hierarchy_4,  # Atomic concept
-
     question,  # Main question text / front of card
     answer,  # Succinct answer (core of response)
     reverse,  # Reverse question
-
     info_1,  # Complementary info
     info_2,  # Detailed info
-
     example_1,  # First example
     example_2,  # Second example
     mnemonic,  # Mnemonic for memory aid
-
     multimedia_1,  # HTML code for images and illustrations
     multimedia_2,  # HTML code for embedded videos
-
     tags_1,  # Related exam boards
     tags_2,  # Exam year
     tags_3,  # Careers or professional areas
     tags_4,  # Additional tags
-
     extra_field_1,  # Extra field 1
     extra_field_2,  # Extra field 2
     extra_field_3,  # Extra field 3
@@ -135,8 +128,16 @@ REQUIRED_HEADERS = [identifier, question, answer]
 
 # Fields that can be used for filtering/selection
 # Fields that can be used for filtering/selection
-FILTER_FIELDS = [hierarchy_1, hierarchy_2, hierarchy_3, hierarchy_4,
-                 tags_1, tags_2, tags_3, tags_4]
+FILTER_FIELDS = [
+    hierarchy_1,
+    hierarchy_2,
+    hierarchy_3,
+    hierarchy_4,
+    tags_1,
+    tags_2,
+    tags_3,
+    tags_4,
+]
 
 # Fields containing extensive text information
 TEXT_FIELDS = [
@@ -162,30 +163,23 @@ MEDIA_FIELDS = [
 # Fields that should be included in Anki notes
 NOTE_FIELDS = [
     identifier,  # Unique identifier
-    
     hierarchy_1,  # Importance level
     hierarchy_2,  # Main topic
     hierarchy_3,  # Subtopic
     hierarchy_4,  # Atomic concept
-    
     question,  # Question text
     reverse,  # Reverse question
     answer,  # Succinct answer (core of response)
-    
     info_1,  # Complementary info
     info_2,  # Detailed info
-    
     example_1,  # First example
     example_2,  # Second example
     mnemonic,  # Mnemonic for memory aid
-    
     multimedia_1,  # HTML code for images and illustrations
     multimedia_2,  # HTML code for embedded videos
-
     extra_field_1,  # Extra field 1
     extra_field_2,  # Extra field 2
     extra_field_3,  # Extra field 3
-    
     tags_1,  # Related exam boards
     tags_2,  # Exam year
     tags_3,  # Careers or professional areas
@@ -223,36 +217,43 @@ TEST_SHEETS_URLS = [
 
 # Template constants for card generation
 # --- Re-exported from card_assets (split out of this file) ---
-from .card_assets import (  # noqa: F401
-    CARD_SHOW_ALLWAYS_TEMPLATE,
-    CARD_SHOW_HIDE_TEMPLATE,
-    MARKERS_TEMPLATE,
-    TIMER_CSS_BETWEEN_SECTIONS,
-    TIMER_CSS_TOP_MIDDLE,
-    TIMER_CSS,
-    REVERSE_INDICATOR_CSS,
-    REVERSE_INDICATOR_HTML,
-    TIMER_JS_FRONT,
-    TIMER_JS_BACK,
-    TIMER_HTML,
-    AI_HELP_CSS,
-    AI_HELP_BUTTON_HTML,
-    _AI_JS_HEAD,
-    _AI_JS_TAIL,
-    _AI_JS_ASK_MODAL,
-    _AI_JS_RESET_ASK,
-    _AI_JS_COLLECT,
-    _AI_JS_RENDER,
-    _AI_JS_CAPTURE,
-    AI_HELP_JS_DESKTOP,
-    AI_HELP_JS_MOBILE_TEMPLATE,
-    AI_HELP_JS,
-)
+from .card_assets import _AI_JS_ASK_MODAL  # noqa: F401
+from .card_assets import _AI_JS_CAPTURE  # noqa: F401
+from .card_assets import _AI_JS_COLLECT  # noqa: F401
+from .card_assets import _AI_JS_HEAD  # noqa: F401
+from .card_assets import _AI_JS_RENDER  # noqa: F401
+from .card_assets import _AI_JS_RESET_ASK  # noqa: F401
+from .card_assets import _AI_JS_TAIL  # noqa: F401
+from .card_assets import AI_HELP_BUTTON_HTML  # noqa: F401
+from .card_assets import AI_HELP_CSS  # noqa: F401
+from .card_assets import AI_HELP_JS  # noqa: F401
+from .card_assets import AI_HELP_JS_DESKTOP  # noqa: F401
+from .card_assets import AI_HELP_JS_MOBILE_TEMPLATE  # noqa: F401
+from .card_assets import CARD_SHOW_ALLWAYS_TEMPLATE  # noqa: F401
+from .card_assets import CARD_SHOW_HIDE_TEMPLATE  # noqa: F401
+from .card_assets import MARKERS_TEMPLATE  # noqa: F401
+from .card_assets import REVERSE_INDICATOR_CSS  # noqa: F401
+from .card_assets import REVERSE_INDICATOR_HTML  # noqa: F401
+from .card_assets import TIMER_CSS  # noqa: F401
+from .card_assets import TIMER_CSS_BETWEEN_SECTIONS  # noqa: F401
+from .card_assets import TIMER_CSS_TOP_MIDDLE  # noqa: F401
+from .card_assets import TIMER_HTML  # noqa: F401
+from .card_assets import TIMER_JS_BACK  # noqa: F401
+from .card_assets import TIMER_JS_FRONT  # noqa: F401
 
-def generate_ai_assistance_js(mobile_enabled=False, service="gemini", model="", api_key="", prompt_help="", prompt_ask="", prompt_checker=""):
+
+def generate_ai_assistance_js(
+    mobile_enabled=False,
+    service="gemini",
+    model="",
+    api_key="",
+    prompt_help="",
+    prompt_ask="",
+    prompt_checker="",
+):
     """
     Generates AI Assistance JavaScript based on configuration.
-    
+
     Args:
         mobile_enabled: If True, embed API config for mobile support
         service: AI service (gemini, claude, openai)
@@ -261,46 +262,42 @@ def generate_ai_assistance_js(mobile_enabled=False, service="gemini", model="", 
         prompt_help: Custom prompt template for AI Help
         prompt_ask: Custom prompt template for AI Ask
         prompt_checker: Custom prompt template for AI Checker
-    
+
     Returns:
         str: JavaScript code for AI Help
     """
-    import json
     import base64
-    
+    import json
+
     if not mobile_enabled:
         return AI_HELP_JS_DESKTOP
-    
+
     # Encode prompts as Base64 to prevent corruption by:
     # 1. HTML parser interpreting XML tags (<command>, <output_format>, etc.)
     # 2. Anki's template engine interpreting {{...}} as field references
     # 3. Python's .format() interpreting {...} as format placeholders
     # The JS code decodes them at runtime using _b64decode()
     def encode_prompt_b64(p):
-        return base64.b64encode(p.encode('utf-8')).decode('ascii')
-    
+        return base64.b64encode(p.encode("utf-8")).decode("ascii")
+
     prompt_help_b64 = encode_prompt_b64(prompt_help)
     prompt_ask_b64 = encode_prompt_b64(prompt_ask)
     prompt_checker_b64 = encode_prompt_b64(prompt_checker)
-    
+
     # Safely serialize string values to prevent JS injection from special chars
     service_json = json.dumps(service)
     model_json = json.dumps(model)
     api_key_json = json.dumps(api_key)
-    
-    return AI_HELP_JS_MOBILE_TEMPLATE.replace(
-        "{service_json}", service_json
-    ).replace(
-        "{model_json}", model_json
-    ).replace(
-        "{api_key_json}", api_key_json
-    ).replace(
-        "{prompt_help_b64}", prompt_help_b64
-    ).replace(
-        "{prompt_ask_b64}", prompt_ask_b64
-    ).replace(
-        "{prompt_checker_b64}", prompt_checker_b64
+
+    return (
+        AI_HELP_JS_MOBILE_TEMPLATE.replace("{service_json}", service_json)
+        .replace("{model_json}", model_json)
+        .replace("{api_key_json}", api_key_json)
+        .replace("{prompt_help_b64}", prompt_help_b64)
+        .replace("{prompt_ask_b64}", prompt_ask_b64)
+        .replace("{prompt_checker_b64}", prompt_checker_b64)
     )
+
 
 # Default values for empty fields (will be converted to lowercase by clean_tag_text)
 DEFAULT_IMPORTANCE = "[MISSING_IMPORTANCE]"
@@ -443,7 +440,9 @@ def get_all_column_info():
 # =============================================================================
 
 
-def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enabled=None, is_reverse=False):
+def create_card_template(
+    is_cloze=False, timer_position=None, ai_assistance_enabled=None, is_reverse=False
+):
     """
     Creates the HTML template for a card (standard or cloze).
 
@@ -458,20 +457,22 @@ def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enab
     Returns:
         dict: Dictionary with 'qfmt' and 'afmt' template strings
     """
-    
+
     # Get timer position from config if not specified
     if timer_position is None:
         try:
             from .config_manager import get_timer_position
+
             timer_position = get_timer_position()
         except ImportError:
             timer_position = "between_sections"  # Default fallback
-    
+
     # Get AI Assistance config from settings if not specified
     ai_assistance_config = None
     if ai_assistance_enabled is None:
         try:
             from .config_manager import get_ai_assistance_config
+
             ai_assistance_config = get_ai_assistance_config()
             ai_assistance_enabled = ai_assistance_config.get("enabled", False)
         except ImportError:
@@ -587,7 +588,6 @@ def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enab
         timer_js_front = TIMER_JS_FRONT
         timer_js_back = TIMER_JS_BACK
 
-
     # Build complete templates
     if is_reverse:
         # Question format for Reverse cards (REVERSE field is the question)
@@ -595,7 +595,7 @@ def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enab
             f"\u003cb\u003e❓ {question.capitalize()}\u003c/b\u003e\u003cbr\u003e"
             f"{{{{{reverse}}}}}\u003cbr\u003e\u003cbr\u003e"
         )
-        
+
         # Answer format for Reverse cards (QUESTION field is the answer)
         answer_html = (
             f"\u003cb\u003e❗️ {answer.capitalize()}\u003c/b\u003e\u003cbr\u003e"
@@ -608,82 +608,82 @@ def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enab
     if is_reverse:
         reverse_indicator_css = REVERSE_INDICATOR_CSS
         reverse_indicator_html = REVERSE_INDICATOR_HTML
-    
+
     if timer_position == "top_middle":
         # For top_middle: timer at beginning (fixed position, so doesn't matter)
         qfmt = (
-            reverse_indicator_css +
-            timer_css +
-            timer_html +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            header +
-            MARKERS_TEMPLATE.format(text="CARD", observation="") +
-            reverse_indicator_html +
-            question_html +
-            timer_js_front
+            reverse_indicator_css
+            + timer_css
+            + timer_html
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + header
+            + MARKERS_TEMPLATE.format(text="CARD", observation="")
+            + reverse_indicator_html
+            + question_html
+            + timer_js_front
         )
     elif timer_position == "hidden":
         # No timer at all
         qfmt = (
-            reverse_indicator_css +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            header +
-            MARKERS_TEMPLATE.format(text="CARD", observation="") +
-            reverse_indicator_html +
-            question_html
+            reverse_indicator_css
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + header
+            + MARKERS_TEMPLATE.format(text="CARD", observation="")
+            + reverse_indicator_html
+            + question_html
         )
     else:  # "between_sections"
         # Timer between CONTEXT and CARD
         qfmt = (
-            reverse_indicator_css +
-            timer_css +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            header +
-            timer_html +
-            MARKERS_TEMPLATE.format(text="CARD", observation="") +
-            reverse_indicator_html +
-            question_html +
-            timer_js_front
+            reverse_indicator_css
+            + timer_css
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + header
+            + timer_html
+            + MARKERS_TEMPLATE.format(text="CARD", observation="")
+            + reverse_indicator_html
+            + question_html
+            + timer_js_front
         )
-    
+
     # Back template
     if is_cloze:
         back_content = (
-            header + 
-            (timer_html if timer_position == "between_sections" else "") +
-            MARKERS_TEMPLATE.format(text="CARD", observation="") +
-            reverse_indicator_html +
-            question_html +
-            MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty") +
-            extra_infos + 
-            examples + 
-            image_html + 
-            video_html + 
-            extras + 
-            MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty") + 
-            footer +
-            sanity_html
+            header
+            + (timer_html if timer_position == "between_sections" else "")
+            + MARKERS_TEMPLATE.format(text="CARD", observation="")
+            + reverse_indicator_html
+            + question_html
+            + MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty")
+            + extra_infos
+            + examples
+            + image_html
+            + video_html
+            + extras
+            + MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty")
+            + footer
+            + sanity_html
         )
     else:
         # Basic card: show question + answer + additional info
         back_content = (
-            header + 
-            (timer_html if timer_position == "between_sections" else "") +
-            MARKERS_TEMPLATE.format(text="CARD", observation="") +
-            reverse_indicator_html +
-            question_html +
-            answer_html +
-            MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty") +
-            extra_infos + 
-            examples + 
-            image_html + 
-            video_html + 
-            extras + 
-            MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty") +
-            footer +
-            sanity_html
+            header
+            + (timer_html if timer_position == "between_sections" else "")
+            + MARKERS_TEMPLATE.format(text="CARD", observation="")
+            + reverse_indicator_html
+            + question_html
+            + answer_html
+            + MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty")
+            + extra_infos
+            + examples
+            + image_html
+            + video_html
+            + extras
+            + MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty")
+            + footer
+            + sanity_html
         )
-    
+
     # Build AI Assistance components if enabled
     ai_assistance_components = ""
     if ai_assistance_enabled:
@@ -696,43 +696,45 @@ def create_card_template(is_cloze=False, timer_position=None, ai_assistance_enab
                 api_key=ai_assistance_config.get("api_key", ""),
                 prompt_help=ai_assistance_config.get("prompt", ""),
                 prompt_ask=ai_assistance_config.get("prompt_ask", ""),
-                prompt_checker=ai_assistance_config.get("prompt_checker", "")
+                prompt_checker=ai_assistance_config.get("prompt_checker", ""),
             )
         else:
             ai_help_js = AI_HELP_JS_DESKTOP
         ai_assistance_components = AI_HELP_CSS + AI_HELP_BUTTON_HTML + ai_help_js
-    
+
     if timer_position == "top_middle":
         afmt = (
-            reverse_indicator_css +
-            timer_css +
-            timer_html +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            back_content +
-            ai_assistance_components +
-            timer_js_back
+            reverse_indicator_css
+            + timer_css
+            + timer_html
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + back_content
+            + ai_assistance_components
+            + timer_js_back
         )
     elif timer_position == "hidden":
         afmt = (
-            reverse_indicator_css +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            back_content +
-            ai_assistance_components
+            reverse_indicator_css
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + back_content
+            + ai_assistance_components
         )
     else:  # "between_sections"
         afmt = (
-            reverse_indicator_css +
-            timer_css +
-            MARKERS_TEMPLATE.format(text="CONTEXT", observation="") +
-            back_content +
-            ai_assistance_components +
-            timer_js_back
+            reverse_indicator_css
+            + timer_css
+            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
+            + back_content
+            + ai_assistance_components
+            + timer_js_back
         )
 
     return {"qfmt": qfmt, "afmt": afmt}
 
 
-def create_model(col, model_name, is_cloze=False, url=None, debug_messages=None, is_reverse=False):
+def create_model(
+    col, model_name, is_cloze=False, url=None, debug_messages=None, is_reverse=False
+):
     """
     Creates a new Anki note model.
 
@@ -822,7 +824,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
             target_type = "Cloze"
         else:
             target_type = "Basic"
-            
+
         target_pattern = (
             f" - {student} - {target_type}" if student else f" - {target_type}"
         )
@@ -833,6 +835,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
                 try:
                     note_type_id = int(note_type_id_str)
                     from anki.models import NotetypeId
+
                     model = col.models.get(NotetypeId(note_type_id))
                     if model:
                         add_debug_msg(
@@ -931,7 +934,9 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
     expected_reverse_name = get_note_type_name(
         url, remote_deck_name, student=student, is_cloze=False, is_reverse=True
     )
-    existing_reverse_model, existing_reverse_name = find_existing_note_type(is_cloze=False, is_reverse=True)
+    existing_reverse_model, existing_reverse_name = find_existing_note_type(
+        is_cloze=False, is_reverse=True
+    )
 
     if existing_reverse_model:
         # Use existing model and do NOT force new name if already registered
@@ -976,121 +981,142 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
 
     return models
 
+
 def update_existing_note_type_templates(col, debug_messages=None):
     """
     Updates templates of all existing Sheets2Anki note types
     to include ALL fields defined in NOTE_FIELDS and ensure templates are up to date.
-    
+
     Args:
         col: Anki collection object
         debug_messages (list, optional): List for debug
-    
+
     Returns:
         int: Number of updated note types
     """
     if debug_messages is None:
         debug_messages = []
-    
+
     updated_count = 0
-    
+
     # Search all note types that start with "Sheets2Anki"
     all_models = col.models.all()
     sheets2anki_models = [
-        model for model in all_models 
-        if model.get("name", "").startswith("Sheets2Anki")
+        model for model in all_models if model.get("name", "").startswith("Sheets2Anki")
     ]
-    
-    debug_messages.append(f"[UPDATE_TEMPLATES] Found {len(sheets2anki_models)} Sheets2Anki note types")
-    
+
+    debug_messages.append(
+        f"[UPDATE_TEMPLATES] Found {len(sheets2anki_models)} Sheets2Anki note types"
+    )
+
     for model in sheets2anki_models:
         try:
             model_name = model.get("name", "")
             is_cloze = model.get("type") == 1
             model_was_updated = False
-            
+
             # 1. Check for missing fields
             # ----------------------------------------------------------------
             existing_field_names = []
             for field in model.get("flds", []):
                 # Handle different field formats (dict or object)
-                if hasattr(field, 'get'):
+                if hasattr(field, "get"):
                     fname = field.get("name", "")
                 elif isinstance(field, dict):
                     fname = field.get("name", "")
                 else:
-                    fname = getattr(field, 'name', "")
+                    fname = getattr(field, "name", "")
                 existing_field_names.append(fname)
-            
+
             # Verify every standard field
             for target_field in NOTE_FIELDS:
                 if target_field not in existing_field_names:
-                    debug_messages.append(f"[UPDATE_TEMPLATES] Adding missing field '{target_field}' to {model_name}")
+                    debug_messages.append(
+                        f"[UPDATE_TEMPLATES] Adding missing field '{target_field}' to {model_name}"
+                    )
                     # Add missing field
                     field_template = col.models.new_field(target_field)
                     col.models.add_field(model, field_template)
                     model_was_updated = True
-            
+
             # 2. Update card templates (HTML/CSS)
             # ----------------------------------------------------------------
             # We force update if we added fields OR if we want to ensure latest HTML structure
             # To be efficient, we generate the current standard template
-            
+
             # Detect if this is a reverse note type by checking the name
             is_reverse = model_name.endswith(" - Reverse")
-            
+
             # Generate template with correct parameters
-            new_card_template = create_card_template(is_cloze=is_cloze, is_reverse=is_reverse)
+            new_card_template = create_card_template(
+                is_cloze=is_cloze, is_reverse=is_reverse
+            )
             templates = model.get("tmpls", [])
-            
+
             if templates:
                 for i, template in enumerate(templates):
                     # Get current content
-                    if hasattr(template, 'get'):
+                    if hasattr(template, "get"):
                         current_qfmt = template.get("qfmt", "")
                         current_afmt = template.get("afmt", "")
                     elif isinstance(template, dict):
                         current_qfmt = template.get("qfmt", "")
                         current_afmt = template.get("afmt", "")
                     else:
-                        current_qfmt = getattr(template, 'qfmt', "")
-                        current_afmt = getattr(template, 'afmt', "")
-                    
+                        current_qfmt = getattr(template, "qfmt", "")
+                        current_afmt = getattr(template, "afmt", "")
+
                     # Check if update is needed (simple string comparison)
                     # This ensures any HTML change in code is propagated
                     needs_template_update = (
-                        current_qfmt.strip() != new_card_template["qfmt"].strip() or 
-                        current_afmt.strip() != new_card_template["afmt"].strip()
+                        current_qfmt.strip() != new_card_template["qfmt"].strip()
+                        or current_afmt.strip() != new_card_template["afmt"].strip()
                     )
-                    
+
                     if needs_template_update:
                         # Update template content
-                        if hasattr(template, '__setitem__'):
+                        if hasattr(template, "__setitem__"):
                             template["qfmt"] = new_card_template["qfmt"]
                             template["afmt"] = new_card_template["afmt"]
                         elif isinstance(template, dict):
                             template["qfmt"] = new_card_template["qfmt"]
                             template["afmt"] = new_card_template["afmt"]
                         else:
-                            setattr(template, 'qfmt', new_card_template["qfmt"])
-                            setattr(template, 'afmt', new_card_template["afmt"])
-                        
+                            template.qfmt = new_card_template["qfmt"]
+                            template.afmt = new_card_template["afmt"]
+
                         model_was_updated = True
-                        template_type = "Reverse" if is_reverse else ("Cloze" if is_cloze else "Basic")
-                        debug_messages.append(f"[UPDATE_TEMPLATES] Template {i+1} ({template_type}) updated for {model_name}")
-            
+                        template_type = (
+                            "Reverse"
+                            if is_reverse
+                            else ("Cloze" if is_cloze else "Basic")
+                        )
+                        debug_messages.append(
+                            f"[UPDATE_TEMPLATES] Template {i+1} ({template_type}) updated for {model_name}"
+                        )
+
             # 3. Save changes if anything was modified
             # ----------------------------------------------------------------
             if model_was_updated:
                 col.models.save(model)
                 updated_count += 1
-                debug_messages.append(f"[UPDATE_TEMPLATES] ✅ {model_name} updated successfully")
+                debug_messages.append(
+                    f"[UPDATE_TEMPLATES] ✅ {model_name} updated successfully"
+                )
             else:
-                debug_messages.append(f"[UPDATE_TEMPLATES] ⏭️ {model_name} is already up to date")
-            
+                debug_messages.append(
+                    f"[UPDATE_TEMPLATES] ⏭️ {model_name} is already up to date"
+                )
+
         except Exception as e:
-            debug_messages.append(f"[UPDATE_TEMPLATES] ❌ Error processing {model.get('name', 'unknown')}: {e}")
+            debug_messages.append(
+                f"[UPDATE_TEMPLATES] ❌ Error processing {model.get('name', 'unknown')}: {e}"
+            )
             import traceback
+
             debug_messages.append(traceback.format_exc())
-    
-    debug_messages.append(f"[UPDATE_TEMPLATES] 🎯 Total note types updated: {updated_count}")
+
+    debug_messages.append(
+        f"[UPDATE_TEMPLATES] 🎯 Total note types updated: {updated_count}"
+    )
     return updated_count

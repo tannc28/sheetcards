@@ -171,6 +171,12 @@ def mock_mw():
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "unit: marks a test as a unit test")
-    config.addinivalue_line("markers", "integration: marks a test as an integration test")
-    config.addinivalue_line("markers", "slow: marks a test as slow (skipped in quick mode)")
-    config.addinivalue_line("markers", "requires_anki: marks a test that requires a real Anki")
+    config.addinivalue_line(
+        "markers", "integration: marks a test as an integration test"
+    )
+    config.addinivalue_line(
+        "markers", "slow: marks a test as slow (skipped in quick mode)"
+    )
+    config.addinivalue_line(
+        "markers", "requires_anki: marks a test that requires a real Anki"
+    )

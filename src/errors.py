@@ -1,5 +1,6 @@
 """Custom exception types for the Sheets2Anki addon (extracted from utils.py)."""
 
+
 class SyncError(Exception):
     """Base exception for sync-related errors."""
 

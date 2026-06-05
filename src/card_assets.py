@@ -892,9 +892,13 @@ _AI_JS_CAPTURE = """// Capture the original card content ONCE on page load, befo
   captureOriginalContent();
   // Also capture on DOMContentLoaded (fallback for early script execution)
   document.addEventListener('DOMContentLoaded', captureOriginalContent);
-})();""".replace("@@B6@@", "      ")
+})();""".replace(
+    "@@B6@@", "      "
+)
 
-AI_HELP_JS_DESKTOP = _AI_JS_HEAD + """// Desktop-only mode: hide button if pycmd not available
+AI_HELP_JS_DESKTOP = (
+    _AI_JS_HEAD
+    + """// Desktop-only mode: hide button if pycmd not available
 (function() {
   if (typeof pycmd === 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
@@ -936,7 +940,9 @@ function requestAIChecker() {
   }
 }
 
-""" + _AI_JS_ASK_MODAL + """
+"""
+    + _AI_JS_ASK_MODAL
+    + """
 
 function submitAIAsk() {
   var submitBtn = document.querySelector('.ai-ask-submit');
@@ -965,29 +971,37 @@ function submitAIAsk() {
   }
 }
 
-""" + _AI_JS_RESET_ASK + """
+"""
+    + _AI_JS_RESET_ASK
+    + """
 
 
-""" + """
-""" + _AI_JS_CAPTURE + """
+"""
+    + """
+"""
+    + _AI_JS_CAPTURE
+    + """
 
-""" + _AI_JS_COLLECT + """
+"""
+    + _AI_JS_COLLECT
+    + """
 
-""" + """
+"""
+    + """
 function processMathAndMarkdown(text) {
   var mathBlocks = [];
   var placeholder = "MATHBLOCK";
   var suffix = "END";
   
-  // Display math $$ ... $$ -> \[ ... \]
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
+  // Display math $$ ... $$ -> \\[ ... \\]
+  text = text.replace(/\\$\\$([\\s\\S]*?)\\$\\$/g, function(match, content) {
     var id = mathBlocks.length;
     mathBlocks.push('\\\\[' + content + '\\\\]');
     return placeholder + id + suffix;
   });
   
-  // Inline math $ ... $ -> \( ... \) (Disallow newlines)
-  text = text.replace(/([^\\\\$]|^)\$([^\s$\\n](?:[^$\\n]*?[^\s$\\n])?)\$(?!\d)/g, function(match, prefix, content) {
+  // Inline math $ ... $ -> \\( ... \\) (Disallow newlines)
+  text = text.replace(/([^\\\\$]|^)\\$([^\\s$\\n](?:[^$\\n]*?[^\\s$\\n])?)\\$(?!\\d)/g, function(match, prefix, content) {
     var id = mathBlocks.length;
     mathBlocks.push('\\\\(' + content + '\\\\)');
     return prefix + placeholder + id + suffix;
@@ -1003,7 +1017,9 @@ function processMathAndMarkdown(text) {
   return html;
 }
 
-""" + _AI_JS_RENDER + """
+"""
+    + _AI_JS_RENDER
+    + """
 
 function showAIHelpResponse(response, usageInfo) {
   var btn = document.getElementById('ai-help-btn');
@@ -1055,10 +1071,14 @@ function showAIHelpError(error) {
   if (!modal || !body) return;
   body.innerHTML = '<div class="ai-help-error">⚠️ ' + escapeHtml(error) + '</div>';
   modal.classList.add('show');
-}""" + _AI_JS_TAIL
+}"""
+    + _AI_JS_TAIL
+)
 
 # AI Help JavaScript - Mobile mode (with embedded API config)
-AI_HELP_JS_MOBILE_TEMPLATE = _AI_JS_HEAD + """// Decode Base64-encoded prompts to prevent HTML parser corruption
+AI_HELP_JS_MOBILE_TEMPLATE = (
+    _AI_JS_HEAD
+    + """// Decode Base64-encoded prompts to prevent HTML parser corruption
 function _b64decode(str) {
   try {
     return decodeURIComponent(Array.prototype.map.call(
@@ -1150,7 +1170,9 @@ function requestAIChecker() {
   callAICheckerAPI(cardContent);
 }
 
-""" + _AI_JS_ASK_MODAL + """
+"""
+    + _AI_JS_ASK_MODAL
+    + """
 
 function submitAIAsk() {
   var submitBtn = document.querySelector('.ai-ask-submit');
@@ -1182,7 +1204,9 @@ function submitAIAsk() {
   callAIAskAPI(question, cardContent);
 }
 
-""" + _AI_JS_RESET_ASK + """
+"""
+    + _AI_JS_RESET_ASK
+    + """
 
 function _replacePromptPlaceholder(promptTemplate, placeholder, value) {
   // Handles both {placeholder} and {placeholder} forms
@@ -1356,24 +1380,28 @@ function callOpenAIAPI(prompt) {
   .catch(function(e) { showAIHelpError('Request failed: ' + e.message); });
 }
 
-""" + _AI_JS_CAPTURE + """
+"""
+    + _AI_JS_CAPTURE
+    + """
 
-""" + _AI_JS_COLLECT + """
+"""
+    + _AI_JS_COLLECT
+    + """
 
 function processMathAndMarkdown(text) {
   var mathBlocks = [];
   var placeholder = "MATHBLOCK";
   var suffix = "END";
   
-  // Display math $$ ... $$ -> \[ ... \]
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
+  // Display math $$ ... $$ -> \\[ ... \\]
+  text = text.replace(/\\$\\$([\\s\\S]*?)\\$\\$/g, function(match, content) {
     var id = mathBlocks.length;
     mathBlocks.push('\\\\[' + content + '\\\\]');
     return placeholder + id + suffix;
   });
   
-  // Inline math $ ... $ -> \( ... \)
-  text = text.replace(/([^\\\\$]|^)\$([^\s$\\n](?:[^$\\n]*?[^\s$\\n])?)\$(?!\d)/g, function(match, prefix, content) {
+  // Inline math $ ... $ -> \\( ... \\)
+  text = text.replace(/([^\\\\$]|^)\\$([^\\s$\\n](?:[^$\\n]*?[^\\s$\\n])?)\\$(?!\\d)/g, function(match, prefix, content) {
     var id = mathBlocks.length;
     mathBlocks.push('\\\\(' + content + '\\\\)');
     return prefix + placeholder + id + suffix;
@@ -1389,7 +1417,9 @@ function processMathAndMarkdown(text) {
   return html;
 }
 
-""" + _AI_JS_RENDER + """
+"""
+    + _AI_JS_RENDER
+    + """
 
 function showAIHelpResponse(response, usageInfo) {
   var btn = document.getElementById('ai-help-btn');
@@ -1464,7 +1494,9 @@ function showAIHelpError(error) {
     body.innerHTML = errorHtml;
     modal.classList.add('show');
   }
-}""" + _AI_JS_TAIL
+}"""
+    + _AI_JS_TAIL
+)
 
 # Keep old constant for backward compatibility (desktop-only mode)
 AI_HELP_JS = AI_HELP_JS_DESKTOP

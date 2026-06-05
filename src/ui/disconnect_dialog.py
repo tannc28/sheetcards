@@ -6,6 +6,7 @@ to select and disconnect multiple remote decks using checkboxes.
 """
 
 from ..compat import DialogAccepted
+from ..compat import Palette_Window
 from ..compat import QApplication
 from ..compat import QCheckBox
 from ..compat import QDialog
@@ -14,17 +15,16 @@ from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
-from ..styled_messages import StyledMessageBox
 from ..compat import QScrollArea
+from ..compat import Qt
 from ..compat import QVBoxLayout
 from ..compat import QWidget
-from ..compat import Qt
-from ..compat import Palette_Window
 from ..compat import mw
 from ..compat import safe_exec
 from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
 from ..config_manager import get_remote_decks
+from ..styled_messages import StyledMessageBox
 from ..utils import add_debug_message
 
 
@@ -99,33 +99,33 @@ class DisconnectDialog(QDialog):
         """Sets up color scheme based on theme."""
         if self.is_dark_mode:
             self.colors = {
-                'bg': '#1e1e1e',
-                'card_bg': '#2d2d2d',
-                'text': '#ffffff',
-                'text_secondary': '#b0b0b0',
-                'border': '#404040',
-                'accent_danger': '#e53935',
-                'accent_warning': '#FF9800',
-                'accent_info': '#2196F3',
-                'button_bg': '#3d3d3d',
-                'button_hover': '#4a4a4a',
-                'row_hover': '#363636',
-                'warning_bg': 'rgba(255, 152, 0, 0.15)',
+                "bg": "#1e1e1e",
+                "card_bg": "#2d2d2d",
+                "text": "#ffffff",
+                "text_secondary": "#b0b0b0",
+                "border": "#404040",
+                "accent_danger": "#e53935",
+                "accent_warning": "#FF9800",
+                "accent_info": "#2196F3",
+                "button_bg": "#3d3d3d",
+                "button_hover": "#4a4a4a",
+                "row_hover": "#363636",
+                "warning_bg": "rgba(255, 152, 0, 0.15)",
             }
         else:
             self.colors = {
-                'bg': '#f5f5f5',
-                'card_bg': '#ffffff',
-                'text': '#1a1a1a',
-                'text_secondary': '#666666',
-                'border': '#d0d0d0',
-                'accent_danger': '#d32f2f',
-                'accent_warning': '#FF9800',
-                'accent_info': '#1976D2',
-                'button_bg': '#e0e0e0',
-                'button_hover': '#d0d0d0',
-                'row_hover': '#f0f0f0',
-                'warning_bg': 'rgba(255, 152, 0, 0.1)',
+                "bg": "#f5f5f5",
+                "card_bg": "#ffffff",
+                "text": "#1a1a1a",
+                "text_secondary": "#666666",
+                "border": "#d0d0d0",
+                "accent_danger": "#d32f2f",
+                "accent_warning": "#FF9800",
+                "accent_info": "#1976D2",
+                "button_bg": "#e0e0e0",
+                "button_hover": "#d0d0d0",
+                "row_hover": "#f0f0f0",
+                "warning_bg": "rgba(255, 152, 0, 0.1)",
             }
 
     def _apply_styles(self):
@@ -231,16 +231,18 @@ class DisconnectDialog(QDialog):
         warning_icon = QLabel("⚠️")
         warning_icon.setStyleSheet("font-size: 20pt;")
         warning_layout.addWidget(warning_icon)
-   
+
         warning_text = QLabel(
             "This action will permanently disconnect selected decks.\n"
             "To reconnect, you will need to add them again."
         )
-        warning_text.setStyleSheet(f"color: {self.colors['accent_warning']}; font-size: 12pt;")
+        warning_text.setStyleSheet(
+            f"color: {self.colors['accent_warning']}; font-size: 12pt;"
+        )
 
         warning_layout.addWidget(warning_text)
-        
-        warning_layout.addStretch()    # Push content to center (right side)
+
+        warning_layout.addStretch()  # Push content to center (right side)
 
         layout.addWidget(warning_frame)
 
@@ -542,7 +544,11 @@ class DisconnectDialog(QDialog):
                     "url": remote_deck_url,
                     "hash_key": hash_key,
                     "deck_info": deck_info,
-                    "local_deck_name": local_deck_name if deck else get_deck_local_name(remote_deck_url),
+                    "local_deck_name": (
+                        local_deck_name
+                        if deck
+                        else get_deck_local_name(remote_deck_url)
+                    ),
                     "remote_deck_name": remote_name,
                     "card_count": card_count if deck else 0,
                 }
@@ -597,13 +603,13 @@ class DisconnectDialog(QDialog):
         # Update informative text
         if selected_count == 0:
             info_text = "No deck selected"
-            bg_color = self.colors['border']
+            bg_color = self.colors["border"]
         elif selected_count == total_count:
             info_text = f"⚠️ All {total_count} deck(s) selected for disconnection"
-            bg_color = self.colors['accent_danger']
+            bg_color = self.colors["accent_danger"]
         else:
             info_text = f"📋 {selected_count} of {total_count} deck(s) selected"
-            bg_color = self.colors['accent_warning']
+            bg_color = self.colors["accent_warning"]
 
         self.selection_info.setText(info_text)
         self.selection_info.setStyleSheet(f"""
@@ -641,14 +647,20 @@ class DisconnectDialog(QDialog):
                     break
 
             if delete_local_data:
-                question_text = f"Disconnect deck '{deck_name}' and DELETE all local data?"
+                question_text = (
+                    f"Disconnect deck '{deck_name}' and DELETE all local data?"
+                )
             else:
                 question_text = f"Disconnect deck '{deck_name}' from remote source?"
         else:
             if delete_local_data:
-                question_text = f"Disconnect {selected_count} decks and DELETE all local data?"
+                question_text = (
+                    f"Disconnect {selected_count} decks and DELETE all local data?"
+                )
             else:
-                question_text = f"Disconnect {selected_count} decks from their remote sources?"
+                question_text = (
+                    f"Disconnect {selected_count} decks from their remote sources?"
+                )
 
         detailed_text = ""
         if delete_local_data:
@@ -660,7 +672,9 @@ class DisconnectDialog(QDialog):
                 "This action CANNOT be undone!"
             )
         else:
-            detailed_text = "This action cannot be undone. Local decks will remain in Anki."
+            detailed_text = (
+                "This action cannot be undone. Local decks will remain in Anki."
+            )
 
         if StyledMessageBox.question(
             self,
@@ -669,7 +683,7 @@ class DisconnectDialog(QDialog):
             detailed_text=detailed_text,
             yes_text="Disconnect",
             no_text="Cancel",
-            destructive=delete_local_data
+            destructive=delete_local_data,
         ):
             self.accept()
 

@@ -18,17 +18,29 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any
 
 from aqt import mw
+
 from .styled_messages import StyledMessageBox
 
 try:
-    from .config_manager import get_meta, save_meta, get_remote_decks, save_remote_decks, get_auto_backup_config, get_auto_backup_directory
+    from .config_manager import get_auto_backup_config
+    from .config_manager import get_auto_backup_directory
+    from .config_manager import get_meta
+    from .config_manager import get_remote_decks
+    from .config_manager import save_meta
+    from .config_manager import save_remote_decks
     from .utils import add_debug_message
 except ImportError:
     # For standalone testing
-    from config_manager import get_meta, save_meta, get_remote_decks, save_remote_decks, get_auto_backup_config, get_auto_backup_directory
+    from config_manager import get_auto_backup_config
+    from config_manager import get_auto_backup_directory
+    from config_manager import get_meta
+    from config_manager import get_remote_decks
+    from config_manager import save_meta
+    from config_manager import save_remote_decks
+
     def add_debug_message(message, category="DEBUG"):
         print(f"[{category}] {message}")
 
@@ -36,6 +48,7 @@ except ImportError:
 @dataclass
 class BackupInfo:
     """Information about a backup file"""
+
     filename: str
     path: str
     size: int
@@ -43,18 +56,18 @@ class BackupInfo:
     backup_type: str  # 'full', 'config_only', or 'safety'
     version: str
     apkg_included: bool
-    
+
     @property
     def size_human(self) -> str:
         """Returns human-readable file size"""
         size = self.size
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024:
                 return f"{size:.1f} {unit}"
             size /= 1024
         return f"{size:.1f} TB"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Converts to dictionary"""
         return {
             "filename": self.filename,
@@ -64,7 +77,7 @@ class BackupInfo:
             "created_at": self.created_at.isoformat(),
             "backup_type": self.backup_type,
             "version": self.version,
-            "apkg_included": self.apkg_included
+            "apkg_included": self.apkg_included,
         }
 
 
@@ -81,35 +94,38 @@ class SimplifiedBackupManager:
     def _validate_backup_directory(self, show_warning: bool = True) -> tuple:
         """
         Validates the backup directory and returns it along with validation status.
-        
+
         Args:
             show_warning: If True, shows a warning dialog when directory is invalid.
-            
+
         Returns:
             tuple: (backup_dir: str, is_valid: bool, used_fallback: bool)
         """
         from .config_manager import get_auto_backup_config
-        
+
         config = get_auto_backup_config()
         configured_dir = config.get("directory", "")
-        
+
         # Check if a directory is configured
         if not configured_dir:
             # Not configured - will use default
             backup_dir = get_auto_backup_directory()
             return (backup_dir, True, False)
-        
+
         # Directory is configured, check if it exists
         if os.path.isdir(configured_dir):
             return (configured_dir, True, False)
-        
+
         # Directory doesn't exist, try to create it
         try:
             Path(configured_dir).mkdir(parents=True, exist_ok=True)
             return (configured_dir, True, False)
         except Exception as e:
-            add_debug_message(f"⚠️ Cannot use configured backup directory: {configured_dir} - {e}", "BACKUP")
-            
+            add_debug_message(
+                f"⚠️ Cannot use configured backup directory: {configured_dir} - {e}",
+                "BACKUP",
+            )
+
             # Show warning to user if requested
             if show_warning and mw:
                 StyledMessageBox.warning(
@@ -120,9 +136,9 @@ class SimplifiedBackupManager:
                         f"Error: {e}\n\n"
                         "The backup will be saved to the default location instead.\n"
                         "Please check your backup directory settings."
-                    )
+                    ),
                 )
-            
+
             # Fall back to default directory
             fallback_dir = get_auto_backup_directory()
             return (fallback_dir, True, True)
@@ -131,104 +147,115 @@ class SimplifiedBackupManager:
         """Creates a full backup of the Sheets2Anki system"""
         # Note: Do not wrap in try/except here. Let exceptions propagate to the caller (UI or sync)
         # where they can be properly displayed or logged.
-        
+
         if not mw or not mw.col:
             raise Exception("Anki is not available for backup.")
 
         # Create temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # 1. Export main deck as .apkg
             apkg_success = self._export_main_deck_apkg(temp_path)
             # Note: If deck is not found, we continue (config-only backup effectively)
             # This logic was already present.
-            
+
             # 2. Save all settings
             self._save_configurations(temp_path)
-            
+
             # 3. Save backup information
             self._save_backup_info(temp_path, apkg_success, config_only=False)
-            
+
             # 4. Create final ZIP file
             # This might raise PermissionError if target directory is locked
             self._create_backup_zip(temp_path, backup_path)
-            
+
         return True
 
     def create_config_backup(self, backup_path: str) -> bool:
         """Creates a backup of addon settings only"""
         # Note: Do not wrap in try/except here. Let exceptions propagate to the caller.
-        
+
         if not mw or not mw.col:
             raise Exception("Anki is not available for backup.")
 
         # Create temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # 1. Save only settings
             self._save_configurations(temp_path)
-            
+
             # 2. Save backup information (no deck)
             self._save_backup_info(temp_path, apkg_included=False, config_only=True)
-            
+
             # 3. Create final ZIP file
             # This might raise PermissionError if target directory is locked
             self._create_backup_zip(temp_path, backup_path)
-            
+
         return True
 
-    def create_safety_backup(self) -> Optional[str]:
+    def create_safety_backup(self) -> str | None:
         """
         Creates a safety backup of the current state before restore operations.
-        
+
         This is automatically called before any restore operation to prevent
         data loss in case the restoration is not what was desired.
-        
+
         Returns:
             str: Path to the safety backup file, or None if failed
         """
         try:
-            add_debug_message("Creating safety backup before restore operation...", "SAFETY_BACKUP")
-            
+            add_debug_message(
+                "Creating safety backup before restore operation...", "SAFETY_BACKUP"
+            )
+
             # Validate and get backup directory
-            backup_dir, is_valid, used_fallback = self._validate_backup_directory(show_warning=True)
-            
+            backup_dir, is_valid, used_fallback = self._validate_backup_directory(
+                show_warning=True
+            )
+
             if used_fallback:
-                add_debug_message(f"⚠️ Using fallback directory for safety backup: {backup_dir}", "SAFETY_BACKUP")
-            
+                add_debug_message(
+                    f"⚠️ Using fallback directory for safety backup: {backup_dir}",
+                    "SAFETY_BACKUP",
+                )
+
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_filename = f"{self._safety_backup_prefix}full_{timestamp}.zip"
             backup_path = os.path.join(backup_dir, backup_filename)
-            
+
             # Create full backup (includes deck if exists)
             success = self.create_backup(backup_path)
-            
+
             if success:
-                add_debug_message(f"✅ Safety backup created: {backup_path}", "SAFETY_BACKUP")
+                add_debug_message(
+                    f"✅ Safety backup created: {backup_path}", "SAFETY_BACKUP"
+                )
                 return backup_path
             else:
                 add_debug_message("❌ Failed to create safety backup", "SAFETY_BACKUP")
                 return None
-                
+
         except Exception as e:
             add_debug_message(f"❌ Error creating safety backup: {e}", "SAFETY_BACKUP")
             return None
 
-    def restore_backup(self, backup_path: str, create_safety: bool = True) -> Dict[str, Any]:
+    def restore_backup(
+        self, backup_path: str, create_safety: bool = True
+    ) -> dict[str, Any]:
         """Restores a full backup of the Sheets2Anki system
-        
+
         Args:
             backup_path: Path to the backup file to restore
             create_safety: If True, creates a safety backup before restoring (default: True)
-            
+
         Returns:
             Dict: Result containing success status and safety backup path
         """
         # Note: UI logic (confirmations, success/error messages) has been moved to the caller
-        
+
         if not os.path.exists(backup_path):
             raise Exception("Backup file not found.")
 
@@ -240,54 +267,55 @@ class SimplifiedBackupManager:
         if create_safety:
             safety_backup_path = self.create_safety_backup()
             if safety_backup_path:
-                add_debug_message(f"Safety backup created at: {safety_backup_path}", "BACKUP")
+                add_debug_message(
+                    f"Safety backup created at: {safety_backup_path}", "BACKUP"
+                )
             else:
-                # If safety backup fails, fail the operation. 
+                # If safety backup fails, fail the operation.
                 # To skip safety backup, caller must pass create_safety=False
                 raise Exception("Could not create safety backup.")
 
         # Create temporary directory for extraction
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # 1. Extract backup
             self._extract_backup_zip(backup_path, temp_path)
-            
+
             # 2. Validate backup
             if not self._validate_backup(temp_path):
                 raise Exception("Invalid or corrupted backup file.")
-            
+
             # 3. Remove current deck
             self._remove_current_sheets2anki_deck()
-            
+
             # 4. Restore settings
             self._restore_configurations(temp_path)
-            
+
             # 5. Import deck from backup
             apkg_path = temp_path / "sheets2anki_deck.apkg"
             if apkg_path.exists():
                 self._import_deck_apkg(str(apkg_path))
-            
+
             # 6. Recreate links
             self._recreate_deck_links()
-        
-        return {
-            "success": True, 
-            "safety_backup_path": safety_backup_path
-        }
 
-    def restore_config_only(self, backup_path: str, create_safety: bool = True) -> Dict[str, Any]:
+        return {"success": True, "safety_backup_path": safety_backup_path}
+
+    def restore_config_only(
+        self, backup_path: str, create_safety: bool = True
+    ) -> dict[str, Any]:
         """Restores settings only from the backup, without affecting Anki data
-        
+
         Args:
             backup_path: Path to the backup file to restore
             create_safety: If True, creates a safety backup before restoring (default: True)
-            
+
         Returns:
             Dict: Result containing success status and safety backup path
         """
         # Note: UI logic has been moved to the caller
-        
+
         if not os.path.exists(backup_path):
             raise Exception("Backup file not found.")
 
@@ -299,69 +327,77 @@ class SimplifiedBackupManager:
         if create_safety:
             safety_backup_path = self._create_config_safety_backup()
             if safety_backup_path:
-                add_debug_message(f"Safety config backup created at: {safety_backup_path}", "BACKUP")
+                add_debug_message(
+                    f"Safety config backup created at: {safety_backup_path}", "BACKUP"
+                )
             else:
                 raise Exception("Could not create safety backup of current settings.")
 
         # Create temporary directory for extraction
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # 1. Extract backup
             self._extract_backup_zip(backup_path, temp_path)
-            
+
             # 2. Validate backup
             backup_info = self._get_backup_info(temp_path)
             if not backup_info:
                 raise Exception("Invalid or corrupted backup file.")
-            
+
             # 3. Check if it's a valid backup (full or config only)
             if backup_info.get("version") != self.backup_version:
                 raise Exception("Incompatible backup version.")
-            
+
             # 4. Restore settings only
             self._restore_configurations(temp_path)
-            
+
             # 5. Recreate links between remote and local decks
             self._recreate_deck_links()
-        
-        return {
-            "success": True, 
-            "safety_backup_path": safety_backup_path
-        }
 
-    def _create_config_safety_backup(self) -> Optional[str]:
+        return {"success": True, "safety_backup_path": safety_backup_path}
+
+    def _create_config_safety_backup(self) -> str | None:
         """
         Creates a safety backup of current settings only (lighter than full backup).
-        
+
         Returns:
             str: Path to the safety backup file, or None if failed
         """
         try:
             add_debug_message("Creating config-only safety backup...", "SAFETY_BACKUP")
-            
+
             # Validate and get backup directory
-            backup_dir, is_valid, used_fallback = self._validate_backup_directory(show_warning=True)
-            
+            backup_dir, is_valid, used_fallback = self._validate_backup_directory(
+                show_warning=True
+            )
+
             if used_fallback:
-                add_debug_message(f"⚠️ Using fallback directory for config safety backup: {backup_dir}", "SAFETY_BACKUP")
-            
+                add_debug_message(
+                    f"⚠️ Using fallback directory for config safety backup: {backup_dir}",
+                    "SAFETY_BACKUP",
+                )
+
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_filename = f"{self._safety_backup_prefix}simple_{timestamp}.zip"
             backup_path = os.path.join(backup_dir, backup_filename)
-            
+
             # Create config-only backup
             success = self.create_config_backup(backup_path)
-            
+
             if success:
-                add_debug_message(f"✅ Config safety backup created: {backup_path}", "SAFETY_BACKUP")
+                add_debug_message(
+                    f"✅ Config safety backup created: {backup_path}", "SAFETY_BACKUP"
+                )
                 return backup_path
             else:
                 return None
-                
+
         except Exception as e:
-            add_debug_message(f"❌ Error creating config safety backup: {e}", "SAFETY_BACKUP")
+            add_debug_message(
+                f"❌ Error creating config safety backup: {e}", "SAFETY_BACKUP"
+            )
             return None
 
     def _export_main_deck_apkg(self, temp_path: Path) -> bool:
@@ -369,39 +405,44 @@ class SimplifiedBackupManager:
         try:
             if not mw or not mw.col:
                 return False
-                
+
             # Find main Sheets2Anki deck
             deck_id = None
             all_decks = mw.col.decks.all()
             for deck_dict in all_decks:
-                if deck_dict['name'] == self.sheets2anki_deck_name:
-                    deck_id = deck_dict['id']
+                if deck_dict["name"] == self.sheets2anki_deck_name:
+                    deck_id = deck_dict["id"]
                     break
-            
+
             if deck_id is None:
-                add_debug_message("Main deck 'Sheets2Anki' not found for backup", "BACKUP")
+                add_debug_message(
+                    "Main deck 'Sheets2Anki' not found for backup", "BACKUP"
+                )
                 return False
-            
+
             # Export using Anki API
             from anki.exporting import AnkiPackageExporter
+
             apkg_path = temp_path / "sheets2anki_deck.apkg"
-            
+
             # Configure exporter with null check
             col = mw.col
             if col is None:
                 return False
-                
+
             exporter = AnkiPackageExporter(col)
             exporter.did = deck_id
             exporter.includeSched = True  # Include scheduling information
             exporter.includeMedia = True  # Include media
-            
+
             # Export
             exporter.exportInto(str(apkg_path))
-            
-            add_debug_message(f"Deck '{self.sheets2anki_deck_name}' exported successfully", "BACKUP")
+
+            add_debug_message(
+                f"Deck '{self.sheets2anki_deck_name}' exported successfully", "BACKUP"
+            )
             return True
-            
+
         except Exception as e:
             add_debug_message(f"Error exporting main deck: {e}", "BACKUP")
             return False
@@ -410,19 +451,21 @@ class SimplifiedBackupManager:
         """Saves all addon settings"""
         config_dir = temp_path / "config"
         config_dir.mkdir(exist_ok=True)
-        
+
         # Save meta.json
         meta = get_meta()
         with open(config_dir / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
-        
+
         # Save config.json if it exists
         addon_path = Path(__file__).parent.parent
         config_path = addon_path / "config.json"
         if config_path.exists():
             shutil.copy2(config_path, config_dir / "config.json")
 
-    def _save_backup_info(self, temp_path: Path, apkg_included: bool, config_only: bool = False) -> None:
+    def _save_backup_info(
+        self, temp_path: Path, apkg_included: bool, config_only: bool = False
+    ) -> None:
         """Saves information about the backup"""
         backup_info = {
             "version": self.backup_version,
@@ -432,9 +475,17 @@ class SimplifiedBackupManager:
             "apkg_included": apkg_included,
             "config_only": config_only,
             "deck_name": self.sheets2anki_deck_name,
-            "contents": ["configurations"] if config_only else (["configurations", "deck_apkg"] if apkg_included else ["configurations"])
+            "contents": (
+                ["configurations"]
+                if config_only
+                else (
+                    ["configurations", "deck_apkg"]
+                    if apkg_included
+                    else ["configurations"]
+                )
+            ),
         }
-        
+
         with open(temp_path / "backup_info.json", "w", encoding="utf-8") as f:
             json.dump(backup_info, f, indent=2, ensure_ascii=False)
 
@@ -454,16 +505,19 @@ class SimplifiedBackupManager:
     def _validate_backup(self, temp_path: Path) -> bool:
         """Validates if the backup is valid"""
         backup_info = self._get_backup_info(temp_path)
-        return backup_info is not None and backup_info.get("version") == self.backup_version
+        return (
+            backup_info is not None
+            and backup_info.get("version") == self.backup_version
+        )
 
-    def _get_backup_info(self, temp_path: Path) -> Optional[Dict[str, Any]]:
+    def _get_backup_info(self, temp_path: Path) -> dict[str, Any] | None:
         """Gets backup information"""
         backup_info_path = temp_path / "backup_info.json"
         if not backup_info_path.exists():
             return None
-        
+
         try:
-            with open(backup_info_path, "r", encoding="utf-8") as f:
+            with open(backup_info_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return None
@@ -473,36 +527,39 @@ class SimplifiedBackupManager:
         try:
             if not mw or not mw.col:
                 return
-                
+
             # Find and remove main deck
             deck_id = None
             all_decks = mw.col.decks.all()
             for deck_dict in all_decks:
-                if deck_dict['name'] == self.sheets2anki_deck_name:
-                    deck_id = deck_dict['id']
+                if deck_dict["name"] == self.sheets2anki_deck_name:
+                    deck_id = deck_dict["id"]
                     break
-            
+
             if deck_id is not None:
                 # Remove deck and all subdecks
                 col = mw.col
                 if col is not None:
                     col.decks.rem(deck_id, cardsToo=True)
-                    add_debug_message(f"Deck '{self.sheets2anki_deck_name}' removed for restoration", "BACKUP")
-            
+                    add_debug_message(
+                        f"Deck '{self.sheets2anki_deck_name}' removed for restoration",
+                        "BACKUP",
+                    )
+
         except Exception as e:
             add_debug_message(f"Error removing current deck: {e}", "BACKUP")
 
     def _restore_configurations(self, temp_path: Path) -> None:
         """Restores all addon settings from backup"""
         config_dir = temp_path / "config"
-        
+
         # Restore meta.json
         meta_path = config_dir / "meta.json"
         if meta_path.exists():
-            with open(meta_path, "r", encoding="utf-8") as f:
+            with open(meta_path, encoding="utf-8") as f:
                 meta = json.load(f)
             save_meta(meta)
-        
+
         # Restore config.json if it exists
         backup_config_path = config_dir / "config.json"
         if backup_config_path.exists():
@@ -514,48 +571,49 @@ class SimplifiedBackupManager:
         """Imports the deck from the .apkg file using modern Anki API"""
         if not mw or not mw.col:
             raise Exception("Anki is not available")
-        
+
         # Method 1: Try using AnkiPackageImporter (modern API)
         try:
             from anki.importing.apkg import AnkiPackageImporter
-            
+
             importer = AnkiPackageImporter(mw.col, apkg_path)
             importer.run()
             mw.col.save()
-            
+
             add_debug_message("Deck imported successfully (modern API)", "BACKUP")
             return
-            
+
         except Exception as e:
             add_debug_message(f"Modern method failed: {e}", "BACKUP")
-        
+
         # Method 2: Try using UI import (more compatible)
         # Note: importFile might show UI, which is risky in a background thread,
         # but it typically runs synchronously. Ideally we avoid this in a thread.
         # However, for now we keep it as fallback but avoid specific Success UI calls.
         try:
             from aqt.importing import importFile
-            
+
             # Use UI import function
             importFile(mw, apkg_path)
-            
+
             add_debug_message("Deck imported successfully (UI method)", "BACKUP")
             return
-            
+
         except Exception as e:
             add_debug_message(f"UI method failed: {e}", "BACKUP")
-        
+
         # Method 3: Fallback for older versions
         try:
             from aqt.importing import doImport
+
             doImport(mw, apkg_path)
-            
+
             add_debug_message("Deck imported successfully (legacy method)", "BACKUP")
             return
-            
+
         except Exception as e:
             add_debug_message(f"Legacy method failed: {e}", "BACKUP")
-        
+
         # If all methods failed
         raise Exception("All import methods failed")
 
@@ -574,7 +632,7 @@ class SimplifiedBackupManager:
                 f"3. Select file: {apkg_path}\n"
                 "4. Follow the on-screen instructions\n\n"
                 "Your data is safe in the backup file!"
-            )
+            ),
         )
 
     def _recreate_deck_links(self) -> None:
@@ -582,9 +640,9 @@ class SimplifiedBackupManager:
         try:
             if not mw or not mw.col:
                 return
-                
+
             remote_decks = get_remote_decks()
-            
+
             # For each remote deck, find the corresponding local deck
             for deck_key, deck_info in remote_decks.items():
                 local_deck_name = deck_info.get("local_deck_name", "")
@@ -592,27 +650,29 @@ class SimplifiedBackupManager:
                     # Find deck in Anki
                     all_decks = mw.col.decks.all()
                     for deck_dict in all_decks:
-                        if deck_dict['name'] == local_deck_name:
+                        if deck_dict["name"] == local_deck_name:
                             # Update local deck ID
-                            deck_info["local_deck_id"] = deck_dict['id']
-                            add_debug_message(f"Deck '{local_deck_name}' relinked with ID {deck_dict['id']}", "BACKUP")
+                            deck_info["local_deck_id"] = deck_dict["id"]
+                            add_debug_message(
+                                f"Deck '{local_deck_name}' relinked with ID {deck_dict['id']}",
+                                "BACKUP",
+                            )
                             break
-            
+
             # Save updated settings
             save_remote_decks(remote_decks)
-            
+
         except Exception as e:
             add_debug_message(f"Error recreating deck links: {e}", "BACKUP")
-
 
     def create_auto_backup(self) -> bool:
         """
         Creates an automatic backup before synchronization.
-        
+
         The backup type (simple or complete) is determined by user configuration.
         - Simple: Configuration files only (fast, small size)
         - Complete: Configuration + deck data with cards (slower, larger size)
-        
+
         Returns:
             bool: True if backup was successfully created
         """
@@ -622,42 +682,58 @@ class SimplifiedBackupManager:
             if not auto_config.get("enabled", True):
                 add_debug_message("Automatic backup disabled", "AUTO_BACKUP")
                 return False
-            
+
             # Get backup type setting
             backup_type = auto_config.get("type", "simple")
-            
+
             # Validate and get backup directory
-            backup_dir, is_valid, used_fallback = self._validate_backup_directory(show_warning=True)
-            
+            backup_dir, is_valid, used_fallback = self._validate_backup_directory(
+                show_warning=True
+            )
+
             if used_fallback:
-                add_debug_message(f"⚠️ Using fallback directory for automatic backup: {backup_dir}", "AUTO_BACKUP")
-            
+                add_debug_message(
+                    f"⚠️ Using fallback directory for automatic backup: {backup_dir}",
+                    "AUTO_BACKUP",
+                )
+
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
+
             # Use different filename prefixes based on backup type
             if backup_type == "complete":
                 backup_filename = f"{self._auto_backup_prefix}full_{timestamp}.zip"
-                add_debug_message("Creating COMPLETE automatic backup (config + deck)...", "AUTO_BACKUP")
+                add_debug_message(
+                    "Creating COMPLETE automatic backup (config + deck)...",
+                    "AUTO_BACKUP",
+                )
                 success = self.create_backup(os.path.join(backup_dir, backup_filename))
             else:
                 backup_filename = f"{self._auto_backup_prefix}simple_{timestamp}.zip"
-                add_debug_message("Creating SIMPLE automatic backup (config only)...", "AUTO_BACKUP")
-                success = self.create_config_backup(os.path.join(backup_dir, backup_filename))
-            
+                add_debug_message(
+                    "Creating SIMPLE automatic backup (config only)...", "AUTO_BACKUP"
+                )
+                success = self.create_config_backup(
+                    os.path.join(backup_dir, backup_filename)
+                )
+
             backup_path = os.path.join(backup_dir, backup_filename)
-            
+
             if success:
-                add_debug_message(f"✅ Automatic backup created: {backup_path}", "AUTO_BACKUP")
-                
+                add_debug_message(
+                    f"✅ Automatic backup created: {backup_path}", "AUTO_BACKUP"
+                )
+
                 # Perform file rotation (keep only the last N)
-                self._rotate_auto_backup_files(backup_dir, auto_config.get("max_files", 50))
-                
+                self._rotate_auto_backup_files(
+                    backup_dir, auto_config.get("max_files", 50)
+                )
+
                 return True
             else:
                 add_debug_message("❌ Failed to create automatic backup", "AUTO_BACKUP")
                 return False
-                
+
         except Exception as e:
             add_debug_message(f"❌ Error creating automatic backup: {e}", "AUTO_BACKUP")
             return False
@@ -665,54 +741,63 @@ class SimplifiedBackupManager:
     def _rotate_auto_backup_files(self, backup_dir: str, max_files: int) -> None:
         """
         Removes old backup files, keeping only the most recent ones.
-        
+
         Args:
             backup_dir (str): Backup directory
             max_files (int): Maximum number of files to keep
         """
         try:
             import glob
-            
+
             # Find all automatic backup files
             pattern = os.path.join(backup_dir, "sheets2anki_backup_auto_*.zip")
             backup_files = glob.glob(pattern)
-            
+
             # Sort by modification time (most recent first)
             backup_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            
+
             # Remove excess files
             files_to_remove = backup_files[max_files:]
-            
+
             for file_path in files_to_remove:
                 try:
                     os.remove(file_path)
-                    add_debug_message(f"🗑️ Removed old backup: {os.path.basename(file_path)}", "AUTO_BACKUP")
+                    add_debug_message(
+                        f"🗑️ Removed old backup: {os.path.basename(file_path)}",
+                        "AUTO_BACKUP",
+                    )
                 except Exception as e:
-                    add_debug_message(f"⚠️ Error removing {file_path}: {e}", "AUTO_BACKUP")
-            
+                    add_debug_message(
+                        f"⚠️ Error removing {file_path}: {e}", "AUTO_BACKUP"
+                    )
+
             if files_to_remove:
-                add_debug_message(f"📁 Rotation completed: {len(files_to_remove)} file(s) removed, {len(backup_files) - len(files_to_remove)} kept", "AUTO_BACKUP")
-            
+                add_debug_message(
+                    f"📁 Rotation completed: {len(files_to_remove)} file(s) removed, {len(backup_files) - len(files_to_remove)} kept",
+                    "AUTO_BACKUP",
+                )
+
         except Exception as e:
             add_debug_message(f"❌ Error in file rotation: {e}", "AUTO_BACKUP")
 
-    def get_auto_backup_info(self) -> Dict[str, Any]:
+    def get_auto_backup_info(self) -> dict[str, Any]:
         """
         Gets information about automatic backups.
-        
+
         Returns:
             dict: Automatic backup information
         """
         try:
             auto_config = get_auto_backup_config()
             backup_dir = get_auto_backup_directory()
-            
+
             # Count existing backup files
             import glob
+
             pattern = os.path.join(backup_dir, "sheets2anki_backup_auto_*.zip")
             backup_files = glob.glob(pattern)
             backup_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            
+
             # Latest backup info
             latest_backup = None
             if backup_files:
@@ -721,9 +806,11 @@ class SimplifiedBackupManager:
                     "filename": os.path.basename(latest_file),
                     "path": latest_file,
                     "size": os.path.getsize(latest_file),
-                    "created": datetime.fromtimestamp(os.path.getmtime(latest_file)).isoformat()
+                    "created": datetime.fromtimestamp(
+                        os.path.getmtime(latest_file)
+                    ).isoformat(),
                 }
-            
+
             return {
                 "enabled": auto_config.get("enabled", True),
                 "directory": backup_dir,
@@ -735,12 +822,14 @@ class SimplifiedBackupManager:
                         "filename": os.path.basename(f),
                         "path": f,
                         "size": os.path.getsize(f),
-                        "created": datetime.fromtimestamp(os.path.getmtime(f)).isoformat()
+                        "created": datetime.fromtimestamp(
+                            os.path.getmtime(f)
+                        ).isoformat(),
                     }
                     for f in backup_files[:10]  # Show only the 10 most recent
-                ]
+                ],
             }
-            
+
         except Exception as e:
             add_debug_message(f"❌ Error getting info: {e}", "AUTO_BACKUP")
             return {
@@ -750,79 +839,85 @@ class SimplifiedBackupManager:
                 "total_files": 0,
                 "latest_backup": None,
                 "all_backups": [],
-                "error": str(e)
+                "error": str(e),
             }
 
-    def list_available_backups(self, backup_dir: Optional[str] = None) -> List[BackupInfo]:
+    def list_available_backups(self, backup_dir: str | None = None) -> list[BackupInfo]:
         """
         Lists all available backup files with their metadata.
-        
+
         Args:
             backup_dir: Optional directory to search. If None, uses default backup directory.
-            
+
         Returns:
             List[BackupInfo]: List of BackupInfo objects sorted by creation date (newest first)
         """
-        backups: List[BackupInfo] = []
-        
+        backups: list[BackupInfo] = []
+
         try:
             # Use provided directory or default
             if backup_dir is None:
                 backup_dir = get_auto_backup_directory()
-            
+
             if not os.path.exists(backup_dir):
-                add_debug_message(f"Backup directory does not exist: {backup_dir}", "BACKUP")
+                add_debug_message(
+                    f"Backup directory does not exist: {backup_dir}", "BACKUP"
+                )
                 return []
-            
+
             # Find all backup files (*.zip)
             patterns = [
                 os.path.join(backup_dir, f"{self._safety_backup_prefix}*.zip"),
                 os.path.join(backup_dir, f"{self._auto_backup_prefix}*.zip"),
                 os.path.join(backup_dir, f"{self._manual_backup_prefix}*.zip"),
-                os.path.join(backup_dir, "sheets2anki_*.zip"),  # Catch-all for other formats
+                os.path.join(
+                    backup_dir, "sheets2anki_*.zip"
+                ),  # Catch-all for other formats
             ]
-            
+
             found_files = set()
             for pattern in patterns:
                 found_files.update(glob.glob(pattern))
-            
+
             for backup_path in found_files:
                 try:
                     backup_info = self._get_backup_info_from_file(backup_path)
                     if backup_info:
                         backups.append(backup_info)
                 except Exception as e:
-                    add_debug_message(f"Error reading backup {backup_path}: {e}", "BACKUP")
+                    add_debug_message(
+                        f"Error reading backup {backup_path}: {e}", "BACKUP"
+                    )
                     continue
-            
+
             # Sort by creation date (newest first)
             backups.sort(key=lambda x: x.created_at, reverse=True)
-            
+
             add_debug_message(f"Found {len(backups)} available backups", "BACKUP")
             return backups
-            
+
         except Exception as e:
             add_debug_message(f"Error listing backups: {e}", "BACKUP")
             return []
 
-    def _get_backup_info_from_file(self, backup_path: str) -> Optional[BackupInfo]:
+    def _get_backup_info_from_file(self, backup_path: str) -> BackupInfo | None:
         """
         Extracts BackupInfo from a backup file.
-        
+
         Args:
             backup_path: Path to the backup file
-            
+
         Returns:
             BackupInfo object or None if file is invalid
         """
         try:
-            if not os.path.exists(backup_path) or not backup_path.endswith('.zip'):
+            if not os.path.exists(backup_path) or not backup_path.endswith(".zip"):
                 return None
-            
+
             filename = os.path.basename(backup_path)
             file_size = os.path.getsize(backup_path)
             file_mtime = datetime.fromtimestamp(os.path.getmtime(backup_path))
-            
+
             # Determine backup type from filename
             if self._safety_backup_prefix in filename:
                 backup_type = "safety"
@@ -830,21 +925,21 @@ class SimplifiedBackupManager:
                 backup_type = "auto"
             else:
                 backup_type = "manual"
-            
+
             # Try to read backup_info.json from the zip
             version = "unknown"
             apkg_included = False
             config_only = True
-            
+
             try:
-                with zipfile.ZipFile(backup_path, 'r') as zf:
-                    if 'backup_info.json' in zf.namelist():
-                        with zf.open('backup_info.json') as f:
+                with zipfile.ZipFile(backup_path, "r") as zf:
+                    if "backup_info.json" in zf.namelist():
+                        with zf.open("backup_info.json") as f:
                             info_data = json.load(f)
-                            version = info_data.get('version', 'unknown')
-                            apkg_included = info_data.get('apkg_included', False)
-                            config_only = info_data.get('config_only', True)
-                            
+                            version = info_data.get("version", "unknown")
+                            apkg_included = info_data.get("apkg_included", False)
+                            config_only = info_data.get("config_only", True)
+
                             # Update backup type based on content
                             if not config_only and apkg_included:
                                 if backup_type == "manual":
@@ -855,7 +950,7 @@ class SimplifiedBackupManager:
             except Exception:
                 # If we can't read the zip, use defaults
                 pass
-            
+
             return BackupInfo(
                 filename=filename,
                 path=backup_path,
@@ -863,17 +958,19 @@ class SimplifiedBackupManager:
                 created_at=file_mtime,
                 backup_type=backup_type,
                 version=version,
-                apkg_included=apkg_included
+                apkg_included=apkg_included,
             )
-            
+
         except Exception as e:
-            add_debug_message(f"Error extracting backup info from {backup_path}: {e}", "BACKUP")
+            add_debug_message(
+                f"Error extracting backup info from {backup_path}: {e}", "BACKUP"
+            )
             return None
 
-    def get_backup_summary(self, backup_dir: Optional[str] = None) -> Dict[str, Any]:
+    def get_backup_summary(self, backup_dir: str | None = None) -> dict[str, Any]:
         """
         Gets a detailed summary of backups and files in the backup directory.
-        
+
         Returns:
             Dict with backup statistics, sizes, and counts.
         """
@@ -881,7 +978,7 @@ class SimplifiedBackupManager:
             # Determine backup directory
             if backup_dir is None:
                 backup_dir = get_auto_backup_directory()
-            
+
             if not os.path.exists(backup_dir):
                 return {
                     "total_files_count": 0,
@@ -902,21 +999,25 @@ class SimplifiedBackupManager:
                     "total_backup_size_human": "0 B",
                     "all_files_size": 0,
                     "all_files_size_human": "0 B",
-                    "latest_backup": None
+                    "latest_backup": None,
                 }
 
             # Scan directory
-            all_files = [f for f in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, f))]
-            
-            backups: List[BackupInfo] = []
+            all_files = [
+                f
+                for f in os.listdir(backup_dir)
+                if os.path.isfile(os.path.join(backup_dir, f))
+            ]
+
+            backups: list[BackupInfo] = []
             other_files_count = 0
             all_files_size = 0
-            
+
             for f in all_files:
                 f_path = os.path.join(backup_dir, f)
                 f_size = os.path.getsize(f_path)
                 all_files_size += f_size
-                
+
                 # Check if it is a Sheets2Anki backup
                 is_backup = False
                 if f.startswith("sheets2anki_") and f.endswith(".zip"):
@@ -924,7 +1025,7 @@ class SimplifiedBackupManager:
                     if backup_info:
                         backups.append(backup_info)
                         is_backup = True
-                
+
                 if not is_backup:
                     other_files_count += 1
 
@@ -935,35 +1036,35 @@ class SimplifiedBackupManager:
             manual_simple = []
             safety_full = []
             safety_simple = []
-            
+
             for b in backups:
-                if b.backup_type == 'safety':
+                if b.backup_type == "safety":
                     if b.apkg_included:
                         safety_full.append(b)
                     else:
                         safety_simple.append(b)
-                elif b.backup_type == 'auto':
+                elif b.backup_type == "auto":
                     if b.apkg_included:
                         auto_full.append(b)
                     else:
                         auto_simple.append(b)
-                else: 
+                else:
                     # Manual or Config Only (treated as Manual)
                     if b.apkg_included:
                         manual_full.append(b)
                     else:
                         manual_simple.append(b)
-            
+
             # Calculate sizes
             auto_size = sum(b.size for b in (auto_full + auto_simple))
             manual_size = sum(b.size for b in (manual_full + manual_simple))
             safety_size = sum(b.size for b in (safety_full + safety_simple))
             total_backup_size = sum(b.size for b in backups)
-            
+
             # Find latest backup
             backups.sort(key=lambda x: x.created_at, reverse=True)
             latest_backup = backups[0].to_dict() if backups else None
-            
+
             return {
                 "total_files_count": len(all_files),
                 "auto_full_count": len(auto_full),
@@ -983,19 +1084,16 @@ class SimplifiedBackupManager:
                 "total_backup_size_human": self._format_size(total_backup_size),
                 "all_files_size": all_files_size,
                 "all_files_size_human": self._format_size(all_files_size),
-                "latest_backup": latest_backup
+                "latest_backup": latest_backup,
             }
-            
+
         except Exception as e:
             add_debug_message(f"Error getting backup summary: {e}", "BACKUP")
-            return {
-                "total_files_count": 0,
-                "error": str(e)
-            }
+            return {"total_files_count": 0, "error": str(e)}
 
     def _format_size(self, size: int) -> str:
         """Formats size in bytes to human-readable string"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024:
                 return f"{size:.1f} {unit}"
             size /= 1024
@@ -1004,10 +1102,10 @@ class SimplifiedBackupManager:
     def cleanup_old_safety_backups(self, max_keep: int = 10) -> int:
         """
         Removes old safety backups, keeping only the most recent ones.
-        
+
         Args:
             max_keep: Maximum number of safety backups to keep (default: 10)
-            
+
         Returns:
             int: Number of files removed
         """
@@ -1015,27 +1113,33 @@ class SimplifiedBackupManager:
             backup_dir = get_auto_backup_directory()
             pattern = os.path.join(backup_dir, f"{self._safety_backup_prefix}*.zip")
             safety_files = glob.glob(pattern)
-            
+
             # Sort by modification time (most recent first)
             safety_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            
+
             # Remove excess files
             files_to_remove = safety_files[max_keep:]
             removed_count = 0
-            
+
             for file_path in files_to_remove:
                 try:
                     os.remove(file_path)
-                    add_debug_message(f"🗑️ Removed old safety backup: {os.path.basename(file_path)}", "BACKUP")
+                    add_debug_message(
+                        f"🗑️ Removed old safety backup: {os.path.basename(file_path)}",
+                        "BACKUP",
+                    )
                     removed_count += 1
                 except Exception as e:
                     add_debug_message(f"⚠️ Error removing {file_path}: {e}", "BACKUP")
-            
+
             if removed_count > 0:
-                add_debug_message(f"📁 Cleanup completed: {removed_count} safety backup(s) removed", "BACKUP")
-            
+                add_debug_message(
+                    f"📁 Cleanup completed: {removed_count} safety backup(s) removed",
+                    "BACKUP",
+                )
+
             return removed_count
-            
+
         except Exception as e:
             add_debug_message(f"Error cleaning up safety backups: {e}", "BACKUP")
             return 0
