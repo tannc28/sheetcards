@@ -25,7 +25,7 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 Simply fill in the columns in the spreadsheet:
 - **ID**: Unique identifier for updates. | `Q101`
-- **STUDENTS**: List os students who wants to learn the information. | `Igor, Isabelle, Jack`
+- **STUDENTS**: List of students who want to learn the information. | `Igor, Isabelle, Jack`
 - **SYNC**: Mark the checkbox to sync this row. | `TRUE`
 - **QUESTION**: The front of your flashcard. | `Capital of France?`
 - **ANSWER**: The back of your flashcard. | `Paris`

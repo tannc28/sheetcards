@@ -1,900 +1,334 @@
-# 🛠️ Sheets2Anki - Developer Documentation
+# Sheets2Anki — Developer Guide
 
-This document provides technical information about the **Sheets2Anki** add-on for developers who want to contribute, understand the architecture, or make modifications.
+Long-form technical guide for contributors. It explains how the add-on is laid out,
+how a sync flows end to end, and how to set up, test, build, and debug it.
 
-## 📋 Table of Contents
-- [System Architecture](#-system-architecture)
-- [Project Structure](#-project-structure)
-- [Main Components](#-main-components)
-- [Data Flow](#-data-flow)
-- [APIs and Integrations](#-apis-and-integrations)
-- [Development Setup](#-development-setup)
-- [Build and Deploy](#-build-and-deploy)
-- [Tests](#-tests)
-- [Debugging](#-debugging)
-- [Contributing](#-contributing)
+- For the **concise architecture reference and conventions**, see [`CLAUDE.md`](../CLAUDE.md).
+- For **setup and the contribution workflow**, see [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+- For the **end-user manual**, see the root [`README.md`](../README.md).
 
-## 🏗️ System Architecture
+> **Requirements:** Anki **25.x or newer** (Qt6, PyQt6), Python **3.13**. There is no
+> Qt5 fallback and no support for older Anki versions — this is v3.0.0+.
 
-### Overview
-Sheets2Anki is a modular add-on for Anki that synchronizes Google Sheets data with local decks. The architecture follows the **MVC** pattern adapted for Anki add-ons:
+## Table of contents
+
+- [What this is](#what-this-is)
+- [System architecture](#system-architecture)
+- [Project structure](#project-structure)
+- [Module map](#module-map)
+- [Sync data flow](#sync-data-flow)
+- [Column model & note keying](#column-model--note-keying)
+- [Card-side features & the AI layer](#card-side-features--the-ai-layer)
+- [Configuration: config.json vs meta.json](#configuration-configjson-vs-metajson)
+- [Development setup](#development-setup)
+- [Testing](#testing)
+- [Building & packaging](#building--packaging)
+- [Debugging](#debugging)
+- [Conventions](#conventions)
+
+## What this is
+
+Sheets2Anki is an **Anki add-on**, not a standalone application. The repository root
+*is* the add-on directory: Anki loads `__init__.py` from the root, which registers a
+`Tools → Sheets2Anki` menu, binds keyboard shortcuts, and wires the card webview hooks.
+There is no server and no `main()` — all code runs inside Anki's Python/Qt6 process.
+
+The architecture is **function-oriented**, organized around a handful of cohesive
+modules plus a few small types (`RemoteDeck`, `DebugManager`). It is *not* a class-based
+MVC framework; sync is driven by module-level functions such as `syncDecks()` and
+`create_or_update_notes()`.
+
+## System architecture
+
+Three layers, from the outside in:
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   UI Layer      │    │   Business       │    │   Data Layer    │
-│   (Dialogs)     │◄──►│   Logic          │◄──►│   (Managers)    │
-│                 │    │   (Sync Engine)  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-        ▲                        ▲                        ▲
-        │                        │                        │
-        ▼                        ▼                        ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Anki API      │    │   Google Sheets  │    │   File System   │
-│   Integration   │    │   TSV Parser     │    │   JSON Config   │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Anki integration  (__init__.py)                                       │
+│  • Tools → Sheets2Anki menu     • 12 keyboard shortcuts (Ctrl+Shift+…) │
+│  • webview_did_receive_js_message hook (AI button pycmd messages)      │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+┌───────────────────────────────▼──────────────────────────────────────┐
+│  Add-on logic  (src/)                                                   │
+│  • sync engine / data processing  • config & student management        │
+│  • dialogs (src/ui/)              • AI, backup, AnkiWeb, images         │
+│  • compat.py — the single Qt/Anki gateway                              │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+┌───────────────────────────────▼──────────────────────────────────────┐
+│  Vendored libraries  (libs/)  — added to sys.path at runtime           │
+│  • beautifulsoup4 (+ soupsieve)  • chardet  • org_to_anki              │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Main Design Patterns
+**`src/compat.py` is the Qt/Anki gateway.** All Qt and Anki UI imports must go through
+`compat.py` (which re-exports widgets and defines Qt6 enum constants), never directly
+from `aqt`/`aqt.qt`. When you need a new Qt symbol, add it to `compat.py`.
 
-#### 1. **Manager Pattern**
-- `ConfigManager`: Persistent settings
-- `DeckManager`: Anki deck operations
-- `StudentManager`: Student management
-- `BackupManager`: Backup system
+**Dual-context imports.** `src/` modules are imported two ways: as a package inside Anki
+(relative imports) and by the test suite (which registers `src` as a package). Most
+modules therefore use the pattern:
 
-#### 2. **Strategy Pattern**
-- `DataProcessor`: Different processing strategies (Basic vs Cloze cards)
-- Sync strategies: Incremental vs full sync
-
-#### 3. **Observer Pattern**
-- Event-driven updates between components
-- Progress callbacks during synchronization
-
-## 🆕 Recent Improvements - Current Version
-
-### 🔧 **Name Consistency System** (`src/name_consistency_manager.py`)
-
-#### **Solved Problem:**
-- Inconsistencies between note type names in Anki vs. configuration
-- Correction reversals by later save operations
-- Lack of automatic synchronization during the sync process
-
-#### **Implemented Solution:**
 ```python
-class NameConsistencyManager:
-    @staticmethod
-    def ensure_consistency_during_sync(
-        deck_url: str, 
-        remote_decks: Optional[Dict] = None,
-        debug_callback=None
-    ) -> Dict[str, Any]:
-        """Ensures name consistency during synchronization"""
-        
-    @staticmethod
-    def update_remote_decks_in_memory(
-        deck_url: str,
-        remote_decks: Dict,
-        local_deck_name: str,
-        note_types: Dict[str, str],
-        debug_callback
-    ):
-        """Updates in-memory data to avoid reversal"""
+try:
+    from .compat import mw
+except ImportError:
+    from compat import mw
 ```
 
-#### **Technical Features:**
-- **Automatic Detection:** Checks for inconsistencies after each deck sync
-- **Dual Correction:** Updates both meta.json and in-memory dictionary
-- **Reversal Prevention:** Prevents later `save_remote_decks()` from reverting changes
-- **Detailed Debug:** Complete log of all consistency operations
+Preserve this pattern when editing `src/`.
 
-### 📊 **Enhanced Summary Interface** (`src/sync.py`)
-
-#### **Reorganization of `generate_detailed_view()`:**
-```python
-def generate_detailed_view(total_stats, sync_errors=None, deck_results=None):
-    """
-    Generates detailed view with optimized order:
-    1. FIRST: Aggregated general summary
-    2. SECOND: Individual details per deck
-    """
-    details_content = []
-    
-    # FIRST: Show aggregated general summary
-    aggregated_summary = generate_aggregated_summary_only(total_stats, sync_errors)
-    if aggregated_summary:
-        details_content.append("📋 AGGREGATED GENERAL SUMMARY:")
-        details_content.extend(aggregated_summary)
-    
-    # SECOND: Show summary per individual deck
-    if deck_results and len(deck_results) > 1:
-        details_content.append("📊 INDIVIDUAL DECK SUMMARY:")
-        # ... deck details
-```
-
-#### **UX Improvements:**
-- **Logical Order:** General Overview → Specific Details
-- **Performance:** Optimized rendering for large volumes
-- **Consistency:** Uniform data presentation standard
-
-### 🔄 **Updated Sync Flow:**
-
-```mermaid
-graph TD
-    A[Sync Initiated] --> B[Process Each Deck]
-    B --> C[Download & Parse TSV]
-    C --> D[Create/Update Notes]
-    D --> E[Capture Note Type IDs]
-    E --> F[🆕 Name Consistency Check]
-    F --> G[Update Meta.json]
-    G --> H[🆕 Update Remote_Decks Memory]
-    H --> I[Final Save Operations]
-    I --> J[🆕 Consistency Preserved]
-```
-
-#### **Critical Improvement Points:**
-1. **Line 2002 sync.py:** Consistency system call
-2. **Dual Update:** Meta.json + in-memory remote_decks
-3. **Final Save:** Correctness persistence guarantee
-- Progress callbacks during synchronization
-
-## 📁 Project Structure
+## Project structure
 
 ```
 sheets2anki/
-├── 📄 __init__.py              # Add-on entry point
-├── 📄 config.json              # Default settings
-├── 📄 manifest.json            # Add-on metadata
-├── 📄 meta.json                # AnkiWeb info
-├── 📁 src/                     # Main source code
-│   ├── 📄 __init__.py
-│   ├── 📄 sync.py              # 🔥 Synchronization engine (2142 lines)
-│   ├── 📄 data_processor.py    # TSV data processing
-│   ├── 📄 config_manager.py    # Settings management
-│   ├── 📄 deck_manager.py      # Anki deck operations
-│   ├── 📄 student_manager.py   # Student management system
-│   ├── 📄 backup_system.py     # Backup/restore system
-│   ├── 📄 ankiweb_sync.py      # AnkiWeb integration
-│   ├── 📄 utils.py             # General utilities
-│   ├── 📄 compat.py            # Version compatibility
-│   ├── 📄 templates_and_definitions.py  # Card templates
-│   └── 📄 *_dialog.py          # User interfaces
-├── 📁 libs/                    # Bundled external libraries
-│   ├── 📄 beautifulsoup4/
-│   ├── 📄 chardet/
-│   └── 📄 org_to_anki/
-├── 📁 build/                   # Build artifacts
-├── 📁 scripts/                 # Build and deploy scripts
-├── 📁 tests/                   # Unit tests
-└── 📁 docs/                    # Documentation
+├── __init__.py                 # Anki entry point: menu, shortcuts, webview hooks
+├── config.json                 # Default settings (committed)
+├── manifest.json               # Add-on metadata (version lives here + pyproject.toml)
+├── meta.json                   # User settings + connected decks (gitignored; runtime)
+├── src/                        # All add-on logic (see module map below)
+│   └── ui/                     # Qt dialogs (12 modules)
+├── libs/                       # Vendored third-party deps — never edit or lint
+├── tests/                      # pytest suite (Anki is mocked; no Anki install needed)
+├── scripts/                    # Build/packaging tooling for .ankiaddon files
+├── tools/js-harnesses/         # Manual JS/HTML harnesses for card-template work
+└── docs/                       # This guide, the changelog, and the AnkiWeb listing
 ```
 
-### Critical Files
+### Facade-split modules
 
-#### **src/sync.py** (2142 lines)
-The heart of the system. Contains:
-- `SyncManager` main class
-- `syncDecks()`: Synchronization entry point
-- `_sync_single_deck()`: Per-deck synchronization logic
-- `_process_students()`: Student processing
-- Hierarchical tag management
-- Note type detection and creation
+Several large modules were decomposed but keep a **back-compat facade** (the original
+module re-exports the moved names), so `from .<module> import X` — including lazy
+imports — keeps working. When grepping for a definition, the real code may live in the
+split-out module:
 
-#### **src/data_processor.py**
-Responsible for:
-- Parsing Google Sheets TSV
-- Data validation (23 supported columns)
-- Automatic Cloze card detection
-- Input data normalization
+| Original (facade) | Split-out module(s) |
+| :--- | :--- |
+| `utils.py` | `errors.py`, `debug.py` (`DebugManager`, `add_debug_message`), `deck_options.py` |
+| `sync.py` | `sync_report.py` (sync-summary HTML) |
+| `config_manager.py` | `ai_prompts.py` (AI prompt dictionaries) |
+| `templates_and_definitions.py` | `card_assets.py` (card CSS/HTML/JS strings) |
 
-#### **src/config_manager.py**
-Manages:
-- Persistent JSON settings
-- Connected spreadsheet URLs
-- Sync preferences
-- Backup settings
+## Module map
 
-## 🔧 Main Components
+### Sync & data
+- **`sync.py`** — orchestrates a sync run (`syncDecks()`): iterates the selected decks,
+  delegates per-deck work, aggregates stats, and renders the summary
+  (HTML in **`sync_report.py`**).
+- **`data_processor.py`** — downloads and parses the spreadsheet
+  (`getRemoteDeck()`, `parse_tsv_data()`, `build_remote_deck_from_tsv()` → a
+  `RemoteDeck`) and applies changes to the collection
+  (`create_or_update_notes()`); detects Cloze cards (`has_cloze_deletion()`).
+- **`deck_manager.py`** — deck CRUD and the selection entry point
+  (`syncDecksWithSelection()`).
+- **`student_manager.py`** — multi-student logic: per-student subdecks, filtering,
+  and the composite note key.
+- **`name_consistency_manager.py`** — keeps dynamically-created note-type names in sync
+  when a deck is renamed.
 
-### 1. **Synchronization System** (`src/sync.py`)
+### Configuration & utilities
+- **`config_manager.py`** — the only module that reads/writes `meta.json`/`config.json`
+  (`get_meta()` / `save_meta()`); AI prompt defaults live in **`ai_prompts.py`**.
+- **`utils.py`** — URL conversion (`convert_edit_url_to_tsv()`,
+  `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), and other
+  helpers; errors/debug/deck-options were split into **`errors.py`**, **`debug.py`**,
+  **`deck_options.py`**.
+- **`templates_and_definitions.py`** — column definitions (`ALL_AVAILABLE_COLUMNS`,
+  `REQUIRED_HEADERS`), note-type/model construction (`create_model()`), and the card
+  template assembly; the large CSS/HTML/JS strings live in **`card_assets.py`**.
 
-#### Main Classes:
-```python
-class SyncManager:
-    def __init__(self, mw: AnkiQt)
-    def syncDecks() -> None
-    def _sync_single_deck(deck_name: str, url: str) -> Dict
-    def _process_students(deck_name: str, data: List[Dict]) -> None
-    def _create_or_update_note(note_data: Dict) -> Note
-```
+### Features & integrations
+- **`ai_service.py`** — desktop AI calls (`call_ai_api_async()`) to Gemini / Claude /
+  OpenAI.
+- **`ankiweb_sync.py`** — optional AnkiWeb auto-sync after changes.
+- **`backup_system.py`** — configuration/deck backup & restore.
+- **`image_processor.py`** + **`image_processor_script.py`** — the in-Anki image
+  workflow (a Google Apps Script Web App; see
+  [`scripts/IMAGE_PROCESSOR_README.md`](../scripts/IMAGE_PROCESSOR_README.md)).
+- **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
-#### Sync Flow:
-1. **Fetch Data**: Spreadsheet TSV download
-2. **Parse & Validate**: 23 columns validation
-3. **Student Processing**: Active students filtering
-4. **Note Creation/Update**: Anki notes CRUD
-5. **Tag Management**: Hierarchical tags application
-6. **Deck Organization**: Subdecks creation
-7. **Cleanup**: Orphaned data removal
+### UI (`src/ui/`)
+Twelve Qt dialogs (add deck, sync, disconnect, backup, debug, global-student config,
+deck-options config, AnkiWeb config, AI-assistance config, image-processor config,
+timer config, data-removal confirmation). Modules in `src/ui/` import siblings one level
+up (`from ..compat import …`).
 
-### 2. **Student Management System** (`src/student_manager.py`)
+## Sync data flow
 
-#### Features:
-- **Global Configuration**: Active students across all decks
-- **Individual Filtering**: Per specific deck
-- **Automatic Subdeck Creation**: Hierarchical structure
-- **Custom Note Types**: One per student
+`deck_manager.syncDecksWithSelection()` → `sync.syncDecks()` orchestrates everything.
+Per deck:
 
-```python
-class StudentManager:
-    def get_global_students() -> List[str]
-    def set_global_students(students: List[str]) -> None
-    def filter_data_by_students(data: List[Dict]) -> List[Dict]
-    def create_student_subdecks(deck_name: str, students: List[str]) -> None
-```
+1. **URL → TSV.** A Google Sheets **edit URL** is converted to a TSV export URL
+   (`.../export?format=tsv`) — `utils.convert_edit_url_to_tsv()` /
+   `get_spreadsheet_id_from_url()`. Downloads are restricted to Google hosts.
+2. **Download & parse.** `data_processor.getRemoteDeck()` downloads the TSV, runs
+   `parse_tsv_data()` and `build_remote_deck_from_tsv()`, and returns a `RemoteDeck`
+   (which tracks `valid_note_lines`, `invalid_note_lines`, etc.).
+3. **Apply changes.** `data_processor.create_or_update_notes()` creates, updates, and
+   deletes Anki notes to match the sheet.
 
-### 3. **Data Processor** (`src/data_processor.py`)
+> **Safety guard:** if a parsed sheet has `valid_note_lines == 0` (e.g. an empty or
+> failed fetch), the deletion pass is skipped so a transient blank download can't wipe
+> a deck.
 
-#### Responsibilities:
-- **TSV Parsing**: String → data structure conversion
-- **Column Validation**: 23 columns verification
-- **Cloze Detection**: Regex for `{{c1::text}}`
-- **Data Normalization**: Cleanup and standardization
+## Column model & note keying
 
-```python
-class DataProcessor:
-    def parse_tsv(tsv_content: str) -> List[Dict]
-    def validate_columns(data: List[Dict]) -> bool
-    def detect_cloze_cards(question: str) -> bool
-    def normalize_student_names(names: str) -> List[str]
-```
+- **Columns** are centralized in `templates_and_definitions.py`:
+  **25 available columns** (`ALL_AVAILABLE_COLUMNS`), of which **3 are required
+  headers** (`REQUIRED_HEADERS = ID, QUESTION, ANSWER`). `ID` is the stable per-row key
+  — never regenerate it.
+- **Multi-student.** The `STUDENTS` column duplicates a row into per-student subdecks.
+  Notes are matched/tracked by a composite **`{student}_{note_id}`** key. The
+  `[MISSING_STUDENT]` and other `[MISSING_*]` sentinels are real values handled
+  specially (matching is suffix-aware so an underscore in a student name can't corrupt
+  the key).
+- **Note types (models)** are created dynamically, one set per
+  `Sheets2Anki - {deck} - {student} - Basic|Cloze|Reverse`
+  (`utils.get_note_type_name()`, `templates_and_definitions.create_model()`).
+  `name_consistency_manager.py` keeps these names aligned when a deck is renamed.
+- **Cloze** cards are auto-detected from `{{c1::…}}` patterns
+  (`data_processor.has_cloze_deletion()`).
+- **Deck hierarchy:**
+  `Sheets2Anki::{deck}::{student}::{importance}::{topic}::{subtopic}::{concept}`.
+- **Tags:** hierarchical `sheets2anki::…` derived from the categorization columns.
 
-### 4. **Backup System** (`src/backup_system.py`)
+## Card-side features & the AI layer
 
-#### Backup Types:
-- **Manual Backup**: User initiated
-- **Safety Backup**: Before restore operations
-- **Configuration Backup**: Settings + decks + students
+`templates_and_definitions.py` / `card_assets.py` hold the CSS/JS rendered into card
+HTML: the study **timer** and the **AI Help / AI Ask / AI Checker** buttons. The AI
+layer has two execution paths that must stay in sync:
 
-```python
-class BackupManager:
-    def create_backup(include_decks=True, include_students=True) -> str
-    def restore_backup(backup_file: str) -> None
-    def list_available_backups() -> List[BackupInfo]
-```
+- **Desktop:** card JS calls `pycmd(...)` → handled in `__init__.py`
+  (`sheets2anki_ai_help/ask/checker:` messages) → `ai_service.call_ai_api_async()`.
+- **Mobile / Web (AnkiMobile, AnkiWeb):** `pycmd` is unavailable, so the JS calls the
+  provider API directly using config embedded into the template
+  (`AI_HELP_JS_MOBILE_TEMPLATE`, with base64-encoded prompts).
 
-### 5. **AnkiWeb Integration** (`src/ankiweb_sync.py`)
+The two JS blocks (`AI_HELP_JS_DESKTOP`, `AI_HELP_JS_MOBILE_TEMPLATE`) share their
+identical parts via single-source `_AI_JS_*` constants; only genuinely-divergent
+functions are duplicated.
 
-#### Integration:
-```python
-class AnkiWebSyncManager:
-    def auto_sync_after_changes() -> None
-    def test_connectivity() -> SyncStatus
-    def sync_with_ankiweb() -> None   # Anki 25.x+ modern API
-```
+> **Card-JS changes are render-sensitive.** Verify any template edit by byte-diffing the
+> *rendered* strings against a pre-edit snapshot — see the card-JS note in
+> [`CLAUDE.md`](../CLAUDE.md). The AI output is sanitized (`escapeHtml`/`sanitizeHtml`)
+> before it is injected into the webview.
 
-## 🔄 Data Flow
+## Configuration: config.json vs meta.json
 
-### 1. **User Action → Sync Trigger**
-```
-User clicks "Sync" (Ctrl+Shift+S)
-    ↓
-sync_dialog.py → SyncManager.syncDecks()
-    ↓
-For each configured deck:
-    ↓
-_sync_single_deck(deck_name, url)
-```
+- **`config.json`** (committed) — default settings only.
+- **`meta.json`** (gitignored, auto-created by Anki in the add-on dir) — **the source of
+  truth** for user settings and all connected remote decks.
 
-### 2. **Data Fetching & Processing**
-```
-Google Sheets URL → TSV Download
-    ↓
-DataProcessor.parse_tsv() → List[Dict]
-    ↓
-Column validation (23 columns required)
-    ↓
-StudentManager.filter_data_by_students()
-    ↓
-Filtered data ready for sync
-```
+Both are managed *exclusively* through `config_manager.py` (`get_meta()` /
+`save_meta()`). Never read or write these files directly from other modules.
 
-### 3. **Note Creation & Organization**
-```
-For each row in filtered_data:
-    ↓
-Detect card type (Basic vs Cloze)
-    ↓
-Create/Update Anki Note
-    ↓
-Apply hierarchical tags
-    ↓
-Place in correct subdeck
-    ↓
-Update progress stats
-```
+## Development setup
 
-### 4. **Post-Sync Actions**
-```
-Sync completion
-    ↓
-Cleanup orphaned data
-    ↓
-AnkiWeb auto-sync (if enabled)
-    ↓
-Update UI with results
-    ↓
-Log completion stats
-```
+Tooling is managed with [uv](https://docs.astral.sh/uv/) (`uv.lock`; Python 3.13 pinned
+in `.python-version`):
 
-## 🔌 APIs and Integrations
-
-### **Anki API Usage**
-
-#### Core APIs:
-```python
-# Collection operations
-mw.col.decks.add_config_dict()
-mw.col.decks.new_filtered()
-
-# Note operations  
-mw.col.newNote(note_type)
-mw.col.addNote(note)
-mw.col.updateNote(note)
-
-# Model (Note Type) operations
-mw.col.models.new()
-mw.col.models.addTemplate()
-mw.col.models.save()
-```
-
-#### Compatibility:
-- **Anki 25.x+**: Qt6 with modern async API
-- **Database**: Direct SQLite for complex queries
-
-### **Google Sheets Integration**
-
-#### TSV Format Requirements:
-- **Flexible URLs**: Supports both published TSV and edit URLs
-- **23 Columns**: Mandatory structure
-- **UTF-8 Encoding**: Character encoding
-- **Tab Separated**: Not comma-separated
-
-#### Supported URL Patterns:
-```
-# Published TSV URL (traditional format)
-https://docs.google.com/spreadsheets/d/e/{PUBLICATION_KEY}/pub?output=tsv
-
-# Edit URL (automatically converted to TSV)
-https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit?usp=sharing
-
-# Export URL (already in TSV format)
-https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=tsv&gid=0
-```
-
-#### URL Processing:
-- **Automatic Conversion**: Edit URLs are automatically converted to TSV export format
-- **Backward Compatibility**: Traditional published URLs continue to work
-- **Hash Generation**: Uses publication key or spreadsheet ID for consistent identification
-
-### **File System Operations**
-
-#### Configuration Storage:
-- **Location**: Anki user data folder
-- **Format**: JSON files
-- **Backup**: Automatic on changes
-
-#### Paths:
-```python
-CONFIG_FILE = os.path.join(ADDON_DIR, "user_config.json")
-BACKUP_DIR = os.path.join(ADDON_DIR, "backups")
-LOG_FILE = os.path.join(ADDON_DIR, "debug_sheets2anki.log")
-```
-
-## 🚀 Development Setup
-
-### **Prerequisites**
 ```bash
-# Python 3.13+ (required - same version as Anki 25.x)
-python --version
-
-# Anki 25.x or newer installed for development
-# Download: https://apps.ankiweb.net/
+uv sync --extra dev          # or: pip install -e ".[dev]"
 ```
 
-### **System Requirements**
-- **Python:** 3.13 or newer
-- **Anki:** Version 25.x or newer
-- **Qt:** Qt6 (included with Anki 25.x)
-- **Operating System:** Windows, macOS, or Linux
+To run inside Anki during development, symlink (or copy) the repository into Anki's
+add-ons folder, e.g.:
 
-### **Clone and Setup**
 ```bash
-# Clone the repository
-git clone https://github.com/igorrflorentino/sheets2anki.git
-cd sheets2anki
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Install in development mode in Anki
-# Copy folder to: ~/Documents/Anki2/addons21/sheets2anki_dev/
+ln -s "$(pwd)" ~/.local/share/Anki2/addons21/sheets2anki_dev   # Linux
+# macOS: ~/Library/Application Support/Anki2/addons21/
 ```
 
-### **Development Structure**
+## Testing
+
+Anki is **auto-mocked** by `tests/conftest.py` (an import hook fabricates subclassable
+`aqt`/`anki` modules and registers `src` as a package), so the suite runs without an
+Anki install. Use the canonical runner — it sets the flags pytest needs:
+
 ```bash
-# Symbolic link for active development
-ln -s /path/to/dev/sheets2anki ~/.local/share/Anki2/addons21/sheets2anki_dev
-
-# Or copy files
-cp -r src/* ~/.local/share/Anki2/addons21/sheets2anki_dev/
+python tests/run_tests.py                  # all tests
+python tests/run_tests.py --unit           # only @pytest.mark.unit
+python tests/run_tests.py --fast           # skip @pytest.mark.slow
+python tests/run_tests.py --coverage       # coverage report → htmlcov/
+python tests/run_tests.py --file core_logic --function test_duplicate_ids_detected
 ```
 
-### **IDE Configuration**
-```json
-// .vscode/settings.json
-{
-    "python.defaultInterpreterPath": "/path/to/anki/python",
-    "python.analysis.extraPaths": [
-        "/path/to/anki/lib",
-        "/path/to/anki/aqt"
-    ]
-}
-```
+Running pytest directly **requires** two flags (the runner adds them automatically):
 
-## 🏗️ Build and Deploy
-
-### **Build Scripts**
-
-#### **1. Build Standalone Package**
 ```bash
-# Creates package with all dependencies
-python scripts/create_standalone_package.py
+python -m pytest --rootdir=tests --import-mode=importlib tests/
 ```
 
-#### **2. Build AnkiWeb Package**
+> **Why the flags matter:** pytest config lives only in `pyproject.toml`
+> `[tool.pytest.ini_options]` (the old `pytest.ini` was removed). Without
+> `--rootdir=tests`, pytest builds a `Package` node for the repo-root `__init__.py`
+> (the Anki entry point, which does `from .src…`) and fails to import it.
+
+Current test modules:
+
+| File | Covers |
+| :--- | :--- |
+| `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
+| `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
+| `test_config_manager.py` | Settings CRUD and persistence |
+| `test_student_manager.py` | Multi-student filtering and subdecks |
+| `test_utils.py` | URL/hash/validation utilities |
+| `test_url_simplification.py` | Edit-URL → TSV conversion |
+| `test_deck_configurations.py` | Deck-option handling |
+| `test_search_fix.py` | Note-search edge cases |
+| `test_sanity_check_isolation.py` | Template/prompt assertions on evaluated assets |
+| `conftest.py` / `run_tests.py` | Mock-finder + fixtures / the test runner |
+
+## Building & packaging
+
 ```bash
-# Creates AnkiWeb compatible package
+python scripts/build_packages.py        # interactive menu (recommended)
+# or run a specific builder:
 python scripts/create_ankiweb_package.py
+python scripts/create_standalone_package.py
+python scripts/validate_packages.py build/sheets2anki.ankiaddon
 ```
 
-#### **3. Validate Packages**
-```bash
-# Validates the structure of created packages
-python scripts/validate_packages.py
-```
+The builders produce `build/*.ankiaddon` ZIPs. AnkiWeb requires: files at the **ZIP
+root** (no parent folder), a valid `manifest.json`, and **no `__pycache__`/`.pyc`** — the
+scripts enforce and verify all three. The AnkiWeb variant strips the manifest to
+mandatory fields; the standalone keeps the full manifest. See
+[`scripts/README.md`](../scripts/README.md) for details.
 
-### **Build Process**
+> **`IS_DEVELOPMENT_MODE`** is defined `True` in `templates_and_definitions.py` and is
+> left `True` in the repo (it gates the "Import Test Deck" menu item). The build scripts
+> rewrite it to `False` in the packaged copy.
 
-#### Standalone Package:
-1. **Copy Source**: `src/` → `build/sheets2anki-standalone/`
-2. **Bundle Dependencies**: `libs/` included
-3. **Create Manifest**: Complete metadata
-4. **ZIP Package**: `sheets2anki-standalone.ankiaddon`
+## Debugging
 
-#### AnkiWeb Package:
-1. **Copy Source**: `src/` → `build/sheets2anki/`
-2. **Exclude Dependencies**: AnkiWeb installs automatically
-3. **Minimal Manifest**: Essential metadata
-4. **ZIP Package**: `sheets2anki.ankiaddon`
+The add-on writes a debug log to **`debug_sheets2anki.log`** in the add-on directory.
+Emit messages through `src/debug.py`:
 
-### **Deploy Pipeline**
-
-#### Manual Deploy:
-```bash
-# 1. Validate code
-python -m pytest tests/
-
-# 2. Build packages
-python scripts/build_packages.py
-
-# 3. Test installation
-# Install in test Anki
-
-# 4. Upload to AnkiWeb
-# Via official web interface
-```
-
-#### Release Process:
-1. **Version Bump**: `meta.json` and `manifest.json`
-2. **Changelog**: Document changes
-3. **Build & Test**: Functional packages
-4. **Tag Release**: `git tag v1.x.x`
-5. **Upload**: AnkiWeb submission
-
-## 🧪 Tests
-
-### **Test Structure**
-```
-tests/
-├── test_sync.py              # Synchronization engine tests
-├── test_data_processor.py    # TSV processor tests
-├── test_student_manager.py   # Student management tests
-├── test_backup_system.py     # Backup/restore tests
-├── test_config_manager.py    # Configuration tests
-└── fixtures/                 # Test data
-    ├── sample_tsv/
-    └── mock_configs/
-```
-
-### **Running Tests**
-```bash
-# All tests
-python -m pytest tests/ -v
-
-# Specific tests
-python -m pytest tests/test_sync.py -v
-
-# With coverage
-python -m pytest tests/ --cov=src/ --cov-report=html
-```
-
-### **Mock Data**
 ```python
-# tests/fixtures/sample_data.py
-SAMPLE_TSV_DATA = [
-    {
-        'ID': 'Q001',
-        'QUESTION': 'Capital of Brazil?',
-        'ANSWER': 'Brasília',
-        'SYNC': 'true',
-        'STUDENTS': 'João, Maria',
-        # ... 18 more columns
-    }
-]
-```
-
-### **Test Categories**
-
-#### **1. Unit Tests**
-- Isolated functions
-- Mocking of external dependencies
-- Business logic validation
-
-#### **2. Integration Tests**
-- Complete sync flow
-- Anki API integration
-- Real data processing
-
-#### **3. UI Tests**
-- Dialogs and interactions
-- Input validation
-- Error handling
-
-## 🐛 Debugging
-
-### **Logging System**
-```python
-# Logs configuration
-import logging
-logger = logging.getLogger("sheets2anki")
-logger.setLevel(logging.DEBUG)
-
-# File output
-handler = logging.FileHandler("debug_sheets2anki.log")
-logger.addHandler(handler)
-```
-
-### **Debug Tools**
-
-#### **1. Anki Developer Mode**
-```python
-# In __init__.py
-import sys
-# Enable debug mode
-sys.path.insert(0, "/path/to/dev/tools")
-```
-
-#### **2. Remote Debugging**
-```python
-# For PyCharm/VSCode remote debugging
-import pdb; pdb.set_trace()
-
-# Or remote debugger
-import debugpy
-debugpy.listen(5678)
-debugpy.wait_for_client()
-```
-
-#### **3. Console Output**
-```python
-# Debug prints visible in Anki
-from aqt.utils import showInfo
-showInfo(f"Debug: {variable_content}")
-
-# Specific debug for name consistency
-from .utils import add_debug_message
+from .debug import add_debug_message
 add_debug_message("Consistency check started", "NAME_CONSISTENCY")
 ```
 
-### 🆕 **Debugging New Features**
+A **Debug Mode** dialog (`Ctrl+Shift+L`) lets you toggle debug mode, view the log, and
+reset configuration from inside Anki. `DebugManager` (in `src/debug.py`) owns the log
+file's lifecycle.
 
-#### **Name Consistency System**
+## Conventions
 
-**Important Logs:**
-```bash
-# File: debug_sheets2anki.log
-
-# Verification start
-[13:11:11.617] [NAME_CONSISTENCY] 🔧 Starting consistency check
-
-# Inconsistency detection
-[13:11:11.618] [NAME_CONSISTENCY] Note type 1756222007332: 'old_name' vs 'new_name'
-
-# Applied correction
-[13:11:11.618] [NAME_CONSISTENCY] 📋 Correct note type in Anki, updating meta.json
-
-# In-memory update
-[13:11:11.619] [NAME_CONSISTENCY] 💾 In-memory remote_decks dictionary updated
-
-# Final save
-[13:11:11.621] [SYNC] 💾 FINAL_SAVE: Settings saved after verification
-```
-
-**Debugging Checklist:**
-```python
-def debug_consistency_system():
-    """To debug consistency issues"""
-    
-    # 1. Check if function is called
-    assert "ensure_consistency_during_sync" in locals()
-    
-    # 2. Check if remote_decks is passed
-    assert remote_decks_param is not None
-    
-    # 3. Check save operations order
-    # Meta.json must be saved AFTER consistency
-    
-    # 4. Check if changes persist
-    # Compare before/after in meta.json
-```
-
-**Common Issues:**
-- **Changes reversal:** later `save_remote_decks()` overwrites
-- **Data doesn't persist:** FINAL_SAVE not executed
-- **Missing logs:** debug_callback not configured
-
-#### **Summary Interface**
-
-**Check Section Order:**
-```python
-def test_summary_order():
-    result = generate_detailed_view(stats, errors, deck_results)
-    
-    # Find section indices
-    agregado_idx = next(i for i, line in enumerate(result) 
-                       if "AGGREGATED GENERAL SUMMARY" in line)
-    individual_idx = next(i for i, line in enumerate(result) 
-                         if "INDIVIDUAL DECK SUMMARY" in line)
-    
-    # Verify correct order
-    assert agregado_idx < individual_idx, "Incorrect order!"
-```
-
-### **Common Issues**
-
-#### **1. Encoding Problems**
-```python
-# TSV parsing
-content = response.content.decode('utf-8-sig')  # Remove BOM
-
-# File operations
-with open(file_path, 'r', encoding='utf-8') as f:
-    data = f.read()
-```
-
-#### **2. Qt6 API Usage**
-```python
-# All code uses Qt6 enums
-from aqt.qt import Qt
-alignment = Qt.AlignmentFlag.AlignCenter  # Qt6 style
-```
-
-#### **3. Threading Issues**
-```python
-# UI updates must be on main thread
-from aqt.qt import QTimer
-
-def safe_ui_update():
-    QTimer.singleShot(0, lambda: update_progress_bar())
-```
-
-## 📝 Code Style and Conventions
-
-### **Python Style Guide**
-- **PEP 8**: Standard Python style
-- **Type Hints**: When possible
-- **Docstrings**: Google style
-- **Line Length**: 88 characters (Black formatter)
-
-### **Naming Conventions**
-```python
-# Classes: PascalCase
-class SyncManager:
-
-# Functions/methods: snake_case  
-def sync_decks():
-
-# Constants: UPPER_SNAKE_CASE
-MAX_RETRY_ATTEMPTS = 3
-
-# Private methods: _leading_underscore
-def _internal_helper():
-```
-
-### **Documentation Standards**
-```python
-def sync_single_deck(deck_name: str, url: str) -> Dict[str, Any]:
-    """Synchronizes a specific deck with remote spreadsheet.
-    
-    Args:
-        deck_name: Deck name in Anki
-        url: Google Sheets (TSV) URL
-        
-    Returns:
-        Dict containing sync statistics:
-        - cards_created: int
-        - cards_updated: int  
-        - cards_deleted: int
-        - students_processed: List[str]
-        
-    Raises:
-        SyncError: If URL is invalid or data is corrupted
-        ConnectionError: If cannot connect to spreadsheet
-    """
-```
-
-## 🤝 Contributing
-
-### **Contribution Process**
-
-#### **1. Fork & Clone**
-```bash
-# Fork on GitHub
-# Clone your fork
-git clone https://github.com/your-username/sheets2anki.git
-cd sheets2anki
-```
-
-#### **2. Create Branch**
-```bash
-# Descriptive branch
-git checkout -b feature/add-excel-support
-git checkout -b fix/fix-tsv-encoding
-git checkout -b docs/update-readme-dev
-```
-
-#### **3. Development**
-```bash
-# Install in dev mode
-# Make changes
-# Test locally
-python -m pytest tests/
-```
-
-#### **4. Commit & Push**
-```bash
-# Descriptive commits
-git add .
-git commit -m "feat: add support for Excel files
-
-- Implement parser for .xlsx
-- Add Excel column validation  
-- Maintain TSV compatibility
-- Add tests for Excel parser"
-
-git push origin feature/add-excel-support
-```
-
-#### **5. Pull Request**
-- **Clear title**: Describe the change
-- **Detailed description**: What, why, how
-- **Tests**: Evidence that it works
-- **Screenshots**: For UI changes
-
-### **Contribution Guidelines**
-
-#### **Code Quality**
-- ✅ Tests passing: `pytest tests/`
-- ✅ Style check: `flake8 src/`
-- ✅ Type check: `mypy src/`
-- ✅ Documentation updated
-
-#### **Types of Contributions**
-- 🐛 **Bug Fixes**: Problem corrections
-- ✨ **Features**: New functionalities
-- 📚 **Documentation**: Docs improvements
-- 🎨 **UI/UX**: Interface improvements
-- ⚡ **Performance**: Optimizations
-- 🧪 **Tests**: Test coverage
-
-#### **Priority Areas**
-1. **Error Handling**: Better error treatment
-2. **Performance**: Optimization for large datasets
-3. **UI/UX**: More intuitive interface
-4. **Testing**: Greater test coverage
-5. **Documentation**: More examples and tutorials
-
-### **Development Resources**
-
-#### **Anki Development**
-- [Anki Add-on Development Guide](https://addon-docs.ankiweb.net/)
-- [Anki Source Code](https://github.com/ankitects/anki)
-- [AnkiWeb Add-on Sharing](https://ankiweb.net/shared/addons/)
-
-#### **Python Resources**
-- [Python Type Hints](https://docs.python.org/3/library/typing.html)
-- [pytest Documentation](https://docs.pytest.org/)
-- [Black Code Formatter](https://black.readthedocs.io/)
-
-#### **Tools & Libraries**
-- **BeautifulSoup4**: HTML/XML parsing
-- **Requests**: HTTP client (if needed)
-- **PyQt5/6**: GUI framework (used by Anki)
-
-## 📊 Performance Considerations
-
-### **Optimization Areas**
-
-#### **1. Large Dataset Handling**
-```python
-# Batch processing for large spreadsheets
-def process_in_batches(data: List[Dict], batch_size: int = 100):
-    for i in range(0, len(data), batch_size):
-        batch = data[i:i + batch_size]
-        yield batch
-
-# Memory-efficient TSV parsing
-def parse_tsv_stream(file_path: str):
-    with open(file_path, 'r') as f:
-        reader = csv.DictReader(f, delimiter='\t')
-        for row in reader:
-            yield row
-```
-
-#### **2. Database Optimization**
-```python
-# Bulk operations when possible
-notes_to_add = []
-for data_row in processed_data:
-    note = create_note(data_row)
-    notes_to_add.append(note)
-
-# Single transaction
-with mw.col.backend.db.begin():
-    for note in notes_to_add:
-        mw.col.addNote(note)
-```
-
-#### **3. Caching Strategy**
-```python
-# Note types cache to avoid recreation
-_note_type_cache = {}
-
-def get_or_create_note_type(deck_name: str, student: str) -> NotetypeDict:
-    cache_key = f"{deck_name}::{student}"
-    if cache_key not in _note_type_cache:
-        _note_type_cache[cache_key] = create_note_type(deck_name, student)
-    return _note_type_cache[cache_key]
-```
-
-### **Memory Management**
-- **Lazy Loading**: Load data on demand
-- **Cleanup**: Clear unused objects
-- **Progress Callbacks**: Avoid blocking UI
-
-### **Network Optimization**
-- **Connection Pooling**: For multiple requests
-- **Retry Logic**: With exponential backoff
-- **Timeout Handling**: Avoid hangs
+- **Qt6 only.** Import Qt/Anki symbols through `compat.py`; do not reintroduce Qt5
+  fallbacks or version-detection.
+- **Dual-import pattern** in every `src/` module (see above).
+- **Vendored `libs/`** is never edited, linted, or reformatted.
+- **Formatting & lint:** `black` (line length 88) and `ruff` are **blocking** CI gates;
+  `mypy` is advisory. The ruff config intentionally tolerates camelCase Anki-API names
+  (`syncDecks`, `getRemoteDeck`) and the dual-import pattern — see `[tool.ruff.lint]` in
+  `pyproject.toml`. Run them (or the pre-commit hooks) before pushing.
+- **Version** is `3.0.0` in both `manifest.json` and `pyproject.toml`; keep them in sync
+  on release.
 
 ---
 
-## Future Plans
-- Make the whole card creating adaptable so the user can change the columns name and created the card interface directly in the google sheets
-
----
-
-**📞 Developer Contact**
-For technical questions, open an issue on GitHub or contact us through official channels.
-
-**🔄 Last updated:** August 2025
+For the contribution workflow and PR expectations, see
+[`CONTRIBUTING.md`](../CONTRIBUTING.md). For the canonical, concise architecture rules,
+see [`CLAUDE.md`](../CLAUDE.md).

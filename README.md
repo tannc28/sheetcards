@@ -169,6 +169,7 @@ All actions are available under `Tools → Sheets2Anki`; the most common have sh
 | `Ctrl+Shift+H` | Configure AI assistance |
 | `Ctrl+Shift+P` | Configure image processor |
 | `Ctrl+Shift+B` | Open the remote-decks backup tool |
+| `Ctrl+Shift+L` | Toggle debug mode / view logs |
 
 ## Troubleshooting
 
