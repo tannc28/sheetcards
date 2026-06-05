@@ -2,9 +2,9 @@
 
 Automatically processes embedded images in your Google Sheets spreadsheet:
 
-- Detects images in the "HTML IMAGE" column of the "Notes" sheet
+- Detects in-cell images in the **"IMAGE"** column of the "Notes" sheet
 - Uploads them to ImgBB (free image hosting)
-- Writes HTML `<img>` tags into the same cell
+- Writes HTML `<img>` tags into the matching **"HTML IMAGE"** cell
 - Smart detection: skips already-processed images, reprocesses changed ones
 - **Never deletes** your original images from the spreadsheet
 
@@ -53,14 +53,14 @@ During each sync, the addon:
 
 1. Extracts the spreadsheet ID from the deck URL
 2. Sends a POST to your deployed script with the ID + ImgBB key
-3. The script opens the spreadsheet, finds the "HTML IMAGE" column
-4. Uploads new images to ImgBB and writes HTML tags
+3. The script opens the spreadsheet and scans the "IMAGE" column for in-cell images
+4. Uploads new images to ImgBB and writes HTML tags into the "HTML IMAGE" column
 5. Returns a summary to the addon
 
 ## Important Notes
 
 - **One deployment for all spreadsheets** — no need to install per sheet
-- **Only the "HTML IMAGE" column** is scanned — floating images and other columns are ignored
+- **Only the "IMAGE" column** is scanned — floating images and other columns are ignored
 - **Images are never deleted** from your spreadsheet — only HTML tags are added
 - **Already-processed images are skipped** — no duplicate uploads
 - **Changed images are reprocessed** — if you replace an image, it gets re-uploaded
@@ -75,5 +75,5 @@ During each sync, the addon:
 | "Cannot open spreadsheet" | Make sure you have access to the spreadsheet |
 | "Failed to connect to Web App" | Check your internet connection and verify the URL |
 | Script timeout | Google Apps Script has a 6-minute execution limit; process fewer images at once |
-| Images not detected | Ensure images are in cells of the "HTML IMAGE" column (Insert → Image → Image in cell) |
+| Images not detected | Ensure images are in cells of the "IMAGE" column (Insert → Image → Image in cell) |
 | "Missing imgbb_api_key" | Enter your ImgBB API key in the addon configuration |

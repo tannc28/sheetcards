@@ -4,6 +4,36 @@
 
 ---
 
+## 🛠️ **Unreleased** — Maintenance (on `main` since v3.0.0)
+
+Internal quality work with **no user-facing feature or behavior changes**.
+
+### 🗂️ Project reorganization
+- **`src/ui/` subpackage**: the Qt dialog modules were grouped under `src/ui/`.
+- **God-file splits with back-compat facades**: `utils.py` → `errors.py` / `debug.py` /
+  `deck_options.py`; `sync.py` → `sync_report.py`; `config_manager.py` → `ai_prompts.py`;
+  `templates_and_definitions.py` → `card_assets.py`. The original modules re-export the
+  moved names, so existing imports keep working.
+
+### ⚙️ Tooling & CI
+- **GitHub Actions CI**: a test job plus a lint job with **blocking** `ruff` and `black`
+  gates (pinned versions) and an advisory `mypy` pass, including a dedicated blocking
+  `ruff F821` (undefined-name) gate.
+- **Pre-commit hooks** (`.pre-commit-config.yaml`): ruff + black + hygiene hooks
+  (`libs/` excluded).
+- **`CONTRIBUTING.md`** added; non-test JS/HTML harnesses moved to `tools/js-harnesses/`.
+
+### 🐛 Fixes
+- **Sync-summary crash**: `sync_report.py` referenced `DEFAULT_STUDENT` without importing
+  it, raising `NameError` when the post-sync summary dialog rendered. Fixed, and now
+  guarded by the `F821` CI gate.
+
+### 🎨 Code style & docs
+- Repository-wide formatting pass (ruff auto-fixes + black), now enforced in CI.
+- README rewritten in a professional tone; the developer guide (`docs/README.md`), test
+  guide (`tests/README.md`), and script docs refreshed to match the current structure;
+  the obsolete image-CLI docs were removed.
+
 ---
 
 ## 🚀 **v3.0.0** - January 2026 *(BREAKING CHANGES)*
@@ -13,6 +43,35 @@
 - **Anki 25.x Required**: Add-on now requires Anki version 25.x or newer
 - **Qt6 Only**: Removed all Qt5 compatibility code
 - **No Backward Compatibility**: Users on older Anki versions must update or use v2.x
+
+### 🔒 **Security & Correctness Hardening (Audit)**
+
+A full security/correctness audit was completed and all findings fixed:
+
+**Critical**
+- **Empty-sheet guard**: a sync that parses zero valid rows (e.g. a transient failed
+  download) no longer runs the deletion pass, so it cannot wipe a deck.
+- **Underscore-safe keys**: note/student/deck matching now uses suffix-aware logic, so an
+  underscore in a student name can't corrupt the composite `{student}_{note_id}` key.
+
+**High**
+- **Non-destructive note-type changes**: switching a note's type creates the replacement
+  before deleting the original, so a failure cannot lose the note.
+- **Duplicate spreadsheet IDs** are detected and reported instead of silently colliding.
+- **AI output sanitized**: HTML returned by AI providers is escaped/sanitized before it is
+  injected into the card webview.
+- **Test suite rebuilt** against the real `src` modules (with Anki mocked), replacing the
+  previous self-mocking tests.
+
+**Medium / Low**
+- **TSV parsing hardened**: BOM handling (`utf-8-sig`), quoted-field parsing, whitespace
+  trimming.
+- **`marked.js` served locally** (with Subresource Integrity) instead of from a CDN.
+- **Bare `except:` clauses** replaced with scoped handlers.
+- **SSRF host check**: downloads are restricted to Google hosts; ImgBB uploads forced to
+  HTTPS.
+- **Card-template JS de-duplicated** into shared single-source constants.
+- Version and pytest configuration unified; dead files and a tracked `.pyc` removed.
 
 ### 🎯 **Major Simplification**
 
@@ -236,54 +295,25 @@ Users upgrading from v2.x should:
 
 ---
 
-## 📊 **Project Statistics**
+## 📊 **Project Snapshot**
 
-### 📁 **Current Structure**
-- **Python Modules**: 15+ main modules
-- **Tests**: 10+ test files with comprehensive coverage
-- **Documentation**: 6 specialized documents
-- **Scripts**: 4 build and validation scripts
-
-### 🏷️ **Features by Version**
-- **v1.1.0**: 4 basic features
-- **v2.0.0**: +8 advanced features
-- **v2.1.0**: +12 premium features
-- **v3.0.0**: Major modernization (Python 3.13, Qt6 only)
-
-### 🧪 **Quality and Testing**
-- **Test Coverage**: 95%+ of features
-- **Compatibility**: Anki 25.x+ only (Qt6)
-- **Python**: 3.13+
+- **Compatibility**: Anki 25.x+ only (Qt6 / PyQt6)
+- **Python**: 3.13
 - **Platforms**: Windows, macOS, Linux
-
----
-
-## 🎯 **Planned Future Versions**
-
-### 🚀 **v3.1.0** - Planned
-- **Real-Time Synchronization**: WebSocket for instant updates
-- **Advanced Templates**: Visual card template editor
-- **Advanced Statistics**: Complete performance dashboard
-- **REST API**: Endpoints for integration with other tools
-
-### 🌟 **v4.0.0** - Roadmap
-- **Artificial Intelligence**: Automatic AI card generation
-- **Real-Time Collaboration**: Simultaneous spreadsheet editing
-- **Versioning**: Version control for spreadsheets
-- **Mobile Support**: Companion app for mobile devices
+- **Quality gates**: `ruff` + `black` enforced in CI; the test suite runs against the
+  real `src` modules with Anki mocked. Coverage is opt-in
+  (`python tests/run_tests.py --coverage`).
 
 ---
 
 ## 📚 **Related Documentation**
 
-### 📖 **Technical Documents**
-- [Developer Documentation](./README.md) - Comprehensive technical documentation
-- [User Guide](../README.md) - Feature explanations and usage instructions
-
-### 🛠️ **For Developers**
-- [`README.md`](../README.md) - Main user documentation
-- [`tests/README.md`](../tests/README.md) - Testing and development guide
-- [`scripts/README.md`](../scripts/README.md) - Build and deploy scripts
+- [`README.md`](../README.md) — end-user install & usage guide
+- [`docs/README.md`](README.md) — long-form developer guide
+- [`CLAUDE.md`](../CLAUDE.md) — concise architecture & conventions reference
+- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — setup & contribution workflow
+- [`tests/README.md`](../tests/README.md) — test-suite guide
+- [`scripts/README.md`](../scripts/README.md) — build & packaging
 
 ---
 
@@ -313,12 +343,10 @@ This project is licensed under the **MIT License** - see the [`LICENSE`](../LICE
 
 ## 🔗 **Useful Links**
 
-- **🏠 Homepage**: [Sheets2Anki](https://github.com/igorrflorentino/sheets2anki)
-- **📦 AnkiWeb**: [Add-on Page](https://ankiweb.net/shared/info/sheets2anki)
-- **📖 Documentation**: [Wiki](https://github.com/igorrflorentino/sheets2anki/wiki)
-- **💬 Support**: [Discord/Telegram](https://t.me/sheets2anki)
+- **🏠 Repository**: [github.com/igorrflorentino/sheets2anki](https://github.com/igorrflorentino/sheets2anki)
+- **🐛 Issues**: [GitHub Issues](https://github.com/igorrflorentino/sheets2anki/issues)
+- **📖 Documentation**: [`README.md`](../README.md) · [`docs/README.md`](README.md) · [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 
 ---
 
-*Last updated: January 08, 2026*
-*CHANGELOG Version: 1.0.0*
+*Last updated: June 2026*

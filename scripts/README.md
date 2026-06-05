@@ -1,24 +1,12 @@
 # Scripts Directory
 
-This directory contains utility scripts for Sheets2Anki development and image processing.
+Build and packaging tooling for the Sheets2Anki `.ankiaddon` packages.
 
-## 📸 Image Processor Tool
-
-**New!** Process images from Google Sheets cells and convert them to HTML tags.
-
-See [`IMAGE_PROCESSOR_README.md`](IMAGE_PROCESSOR_README.md) for full documentation.
-
-**Quick Start**: [`QUICKSTART.md`](QUICKSTART.md)
-
-```bash
-# Setup
-./setup_image_processor.sh
-
-# Run
-python3 process_sheet_images.py
-```
-
----
+> **📸 Image processing is an in-Anki feature, not a script here.** It runs as a Google
+> Apps Script Web App that you configure from **Sheets2Anki → Configure Image
+> Processor** inside Anki (the add-on copies the script to your clipboard). The full
+> setup guide is [`IMAGE_PROCESSOR_README.md`](IMAGE_PROCESSOR_README.md). There is no
+> standalone command-line image tool.
 
 ## 🔧 Build and Packaging Scripts
 
@@ -93,7 +81,7 @@ The scripts ensure that `.ankiaddon` packages follow AnkiWeb specifications:
 
 ## Requirements
 
-- Python 3.6+
-- Standard modules: `json`, `zipfile`, `os`, `shutil`, `tempfile`
+- Python 3.13 (the project's pinned version)
+- Standard library only: `json`, `zipfile`, `os`, `shutil`, `tempfile`
 
 All scripts are self-contained and do not require external dependencies.
