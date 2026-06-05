@@ -324,7 +324,7 @@ file's lifecycle.
   `mypy` is advisory. The ruff config intentionally tolerates camelCase Anki-API names
   (`syncDecks`, `getRemoteDeck`) and the dual-import pattern — see `[tool.ruff.lint]` in
   `pyproject.toml`. Run them (or the pre-commit hooks) before pushing.
-- **Version** is `3.0.1` in both `manifest.json` and `pyproject.toml`; keep them in sync
+- **Version** is `3.0.2` in both `manifest.json` and `pyproject.toml`; keep them in sync
   on release.
 
 ---
