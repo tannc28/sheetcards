@@ -5,4 +5,5 @@ Standalone HTML/JS pages for **manually** exercising the card-template JavaScrip
 
 These are not part of the automated pytest suite — open them directly in a browser to
 poke at the JS during development. The authoritative copy of the card JS lives in
-`src/templates_and_definitions.py`; treat anything here as a scratch/debug aid.
+`src/card_assets.py` (re-exported through `src/templates_and_definitions.py`); treat
+anything here as a scratch/debug aid.
