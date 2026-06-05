@@ -4,6 +4,29 @@
 
 ---
 
+## 🔧 **v3.0.3** - June 2026 *(Maintenance)*
+
+The last two audit follow-ups, done in parallel. No new features.
+
+### 🐛 Fixes
+- **Backup/restore thread-safety**: backup and restore now run synchronously on the main
+  thread (behind Anki's progress indicator) instead of in a daemon thread. These operations
+  call into `mw.col` (export/import `.apkg`, deck removal, `col.save`), and Anki's collection
+  is not thread-safe, so the old threaded path risked database corruption.
+
+### 🎨 UI deduplication (visual consistency)
+- Action buttons (Save / Apply / Cancel, and Disconnect's destructive button) across 10
+  dialogs now come from shared `theme.primary_button_qss` / `theme.secondary_button_qss`
+  helpers instead of per-dialog hand-rolled QSS.
+- Group-box styling reconciled: dialogs that overrode the shared `groupbox_qss` with their
+  own near-identical block now inherit the canonical one via `base_dialog_qss`.
+
+### 🧪 Tests
+- `tests/test_backup_threading.py` asserts backup operations run on the caller (main) thread,
+  not a worker — a regression guard against reintroducing the daemon-thread path.
+
+---
+
 ## 🔧 **v3.0.2** - June 2026 *(Maintenance)*
 
 Post-v3.0.1 audit follow-ups. No new features and no behavior changes for end users
