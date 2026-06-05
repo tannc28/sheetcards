@@ -36,9 +36,9 @@ from ..config_manager import get_auto_backup_config
 from ..config_manager import get_auto_backup_directory
 from ..config_manager import set_auto_backup_config
 from ..styled_messages import StyledMessageBox
+from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..theme import scrollbar_qss
 
 
 class BackupDialog(QDialog):
@@ -60,7 +60,7 @@ class BackupDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._load_current_settings()
 
     def _setup_colors(self):
@@ -580,18 +580,18 @@ class BackupDialog(QDialog):
         frame.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['card_bg']};
-                border: none;
+                border: 1px solid {self.colors['border']};
                 border-radius: 12px;
             }}
         """)
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(20, 15, 20, 20)
-        layout.setSpacing(10)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
         # Section title
         title_label = QLabel(title)
         title_label.setStyleSheet(f"""
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
             color: {self.colors['text']};
         """)

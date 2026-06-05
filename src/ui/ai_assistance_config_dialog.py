@@ -30,9 +30,9 @@ from ..compat import QVBoxLayout
 from ..compat import QWidget
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
+from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..theme import scrollbar_qss
 
 
 class AIAssistanceConfigDialog(QDialog):
@@ -65,7 +65,7 @@ class AIAssistanceConfigDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._connect_signals()
         self._load_current_config()
 
@@ -503,14 +503,13 @@ class AIAssistanceConfigDialog(QDialog):
             QFrame {{
                 background-color: {self.colors['card_bg']};
                 border: 1px solid {self.colors['border']};
-                border-radius: 10px;
-                padding: 10px;
+                border-radius: 12px;
             }}
         """)
 
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(15, 12, 15, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
         title_label = QLabel(title)
         title_label.setStyleSheet(

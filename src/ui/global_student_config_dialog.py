@@ -29,9 +29,9 @@ from ..config_manager import save_global_student_config
 from ..config_manager import update_available_students_from_discovery
 from ..styled_messages import StyledMessageBox
 from ..templates_and_definitions import DEFAULT_STUDENT
+from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..theme import scrollbar_qss
 
 
 class GlobalStudentConfigDialog(QDialog):
@@ -58,7 +58,7 @@ class GlobalStudentConfigDialog(QDialog):
         self._setup_colors()
         self._setup_ui()
         self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + scrollbar_qss(self.colors))
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._load_current_config()
 
     def _setup_colors(self):

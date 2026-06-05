@@ -27,6 +27,7 @@ from ..data_processor import RemoteDeckError
 from ..data_processor import getRemoteDeck
 from ..styled_messages import StyledMessageBox
 from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
@@ -54,6 +55,7 @@ class AddDeckDialog(QDialog):
         self.colors = get_colors()
 
         self._setup_styles()
+        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._setup_ui()
         self._connect_signals()
         self._adjust_dialog_size()
@@ -105,7 +107,7 @@ class AddDeckDialog(QDialog):
         """Sets up the modern user interface."""
         main_layout = QVBoxLayout()
         main_layout.setSpacing(16)
-        main_layout.setContentsMargins(24, 20, 24, 20)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
         # ===== HEADER SECTION =====
         header_widget = self._create_header()
