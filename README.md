@@ -1,211 +1,187 @@
-# 📚 Sheets2Anki
+# Sheets2Anki
 
-**The smartest way to create Anki cards. Collaborate in Sheets, sync to Anki.**
+Author and maintain Anki decks in Google Sheets, then synchronize them into Anki with a single command.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Anki Version](https://img.shields.io/badge/Anki-25.x%2B-blue) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Anki](https://img.shields.io/badge/Anki-25.x%2B-blue)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
----
+## Overview
 
-## 🚀 Why Sheets2Anki?
+Sheets2Anki is an Anki add-on that treats a Google Sheets spreadsheet as the source of truth for your flashcards. You write and organize cards in a familiar spreadsheet — alone or collaboratively — and the add-on keeps the corresponding Anki notes in sync: creating, updating, and removing them as the sheet changes.
 
-Creating flashcards manually is slow, lonely, and repetitive. **Sheets2Anki** transforms this workflow by letting you use the power of Google Sheets to manage your knowledge base.
+It is designed for users who maintain large or shared decks, such as study groups, tutors managing per-student material, and exam-preparation collections that benefit from spreadsheet-style organization, bulk editing, and version control.
 
-**The Problem:**
-*   😫 **Tedious:** Clicking through menus for every single card.
-*   🔒 **Isolated:** Hard to share decks or work with classmates/colleagues.
-*   📉 **Disorganized:** Difficult to see the "big picture" of your study material.
+## Features
 
-**The Solution:**
-*   🚀 **Bulk Creation:** Write hundreds of cards as fast as you can type in a spreadsheet.
-*   👥 **Collaboration:** Use Google Sheets to work together in real-time.
-*   🧠 **AI-Powered:** Get instant explanations and help directly within your cards.
+- **Spreadsheet-driven sync** — one-way synchronization from Google Sheets to Anki, with reliable create/update/delete tracking by stable row IDs.
+- **Collaboration** — multiple authors can edit the same sheet; everyone syncs the latest content.
+- **Multi-student decks** — a single sheet can drive separate sub-decks per student or study group via a `STUDENTS` column.
+- **Cloze support** — `{{c1::...}}` patterns are detected automatically and rendered as cloze cards.
+- **Reverse cards** — optionally generate an Answer → Question card from the same row.
+- **Hierarchical organization** — automatic deck hierarchy and namespaced tags derived from topic, subtopic, concept, importance, exam board, and more.
+- **AI assistant** — optional in-card AI help, follow-up questions, and answer checking via Google Gemini, Anthropic Claude, or OpenAI.
+- **Rich media** — embed images and videos (YouTube/Vimeo) directly in cards.
+- **Automatic image hosting** — images placed in the sheet are uploaded and embedded as `<img>` tags automatically.
+- **Study timer** — an optional, unobtrusive per-card timer.
+- **AnkiWeb integration** — trigger an AnkiWeb sync automatically after each deck sync to reach AnkiMobile and AnkiWeb.
 
----
+## Requirements
 
-## ✨ Features that WOW
+| Component | Minimum version |
+| :--- | :--- |
+| Anki | 25.7.5 |
+| Qt | 6 (PyQt6 6.9.1) |
+| Python | 3.13.5 (bundled with Anki 25.x) |
 
-*   🤖 **AI Assistant Built-in:** Connect **Gemini**, **Claude**, or **OpenAI** to get explanations, context, and examples for your cards while you study.
-*   ⏱️ **Focus Timer:** A beautiful, non-intrusive timer to keep your study sessions on track.
-*   🔄 **Seamless Sync:** One-click synchronization from Sheets → Anki → AnkiWeb (Mobile/Tablet).
-*   🏷️ **Smart Tagging:** Automatic hierarchical tags for Topic, Subtopic, Complexity, and Exam Board.
-*   🧩 **Cloze Deletions:** Automatic detection of `{{c1::cloze}}` patterns.
-*   📸 **Automatic Image Processing:** Insert images in Sheets, they're automatically hosted and embedded in your cards.
-*   🎬 **Rich Media Support:** Embed HTML, Images, and Videos (YouTube/Vimeo) directly in your cards.
-*   👩‍🎓 **Multi-Student Support:** Manage distinct decks for different students (or study groups) from a single sheet.
+Sheets2Anki 3.x targets the modern Anki runtime only. Users on older Anki releases should remain on the 2.x line.
 
----
+## Installation
 
-## 🛠️ Installation
+### From AnkiWeb (recommended)
 
-1.  **Open Anki:** Go to `Tools` → `Add-ons` → `Get Add-ons...`
-2.  **Enter Code:** Paste the Sheets2Anki code: *(Check AnkiWeb for the code)*
-3.  **Restart Anki:** Restart to load the add-on.
-4.  **Ready!** You will see a new `Sheets2Anki` menu under `Tools`.
+1. In Anki, open `Tools → Add-ons → Get Add-ons…`.
+2. Enter the Sheets2Anki add-on code (see the [AnkiWeb listing](https://ankiweb.net/shared/addons/)).
+3. Restart Anki. A new `Sheets2Anki` entry appears under the `Tools` menu.
 
----
+### Manual installation
 
-## ⚡ Quick Start Guide
+1. Download `sheets2anki-standalone.ankiaddon` from the [latest release](https://github.com/igorrflorentino/sheets2anki/releases/latest).
+2. In Anki, open `Tools → Add-ons → Install from file…` and select the downloaded file.
+3. Restart Anki.
 
-### 1. Get the Template
-Don't start from scratch. Use our official template which has all the columns pre-configured.
+## Getting started
 
-[**➡️ Click here to get the Official Sheets2Anki Template**](https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing)
+### 1. Copy the template
 
-*(File → Make a copy)*
+Start from the official template, which has every supported column pre-configured:
 
-### 2. Connect to Anki
-1.  In your Google Sheet, click `Share` -> `Anyone with the link can view` -> **Copy Link**.
-2.  In Anki, press `Ctrl+Shift+A` (or `Tools` → `Sheets2Anki` → `Add New Remote Deck`).
-3.  Paste your link and give your deck a name.
+[**Open the Sheets2Anki template**](https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing) → `File → Make a copy`.
 
-### 3. Sync & Study!
-1.  Add your questions and answers to the sheet.
-2.  In Anki, press `Ctrl+Shift+S` to sync.
-3.  Your cards are now in Anki, organized and ready!
+### 2. Connect the sheet to Anki
 
----
+1. In Google Sheets, choose `Share → Anyone with the link → Viewer`, then copy the link.
+2. In Anki, press `Ctrl+Shift+A` (or `Tools → Sheets2Anki → Add New Remote Deck`).
+3. Paste the link and give the deck a name.
 
-## 📊 Spreadsheet Structure
+### 3. Sync
 
-Your spreadsheet is the brain of your deck. The template comes with **23 columns**, but you only strictly need **3 in the header** plus a few filled in per row.
+Add questions and answers to the sheet, then press `Ctrl+Shift+S` (or `Tools → Sheets2Anki → Synchronize Remote Decks`). Your cards appear in Anki, organized and ready to study.
 
-### 🔴 Required Columns (Must exist in the header)
+## Spreadsheet schema
 
-| Column | Description | Example |
-| :--- | :--- | :--- |
-| **ID** | **Do not touch.** Unique identifier used to track card updates. | `Q101` |
-| **QUESTION** | The front of your flashcard. | `Capital of France?` |
-| **ANSWER** | The back of your flashcard. | `Paris` |
+The template ships with a full set of columns, but only three are required in the header. Each row becomes one note (or several, when reverse cards or multiple students are involved).
 
-### 🟡 Control Columns (Recommended)
+### Required columns
 
 | Column | Description | Example |
 | :--- | :--- | :--- |
-| **STUDENTS** | Who is this card for? Comma-separated. | `John, Mary` |
-| **SYNC** | Set to `TRUE` to sync this row. | `TRUE` |
+| `ID` | Stable unique identifier used to track each card across syncs. Do not edit or reuse it. | `Q101` |
+| `QUESTION` | Front of the card. | `Capital of France?` |
+| `ANSWER` | Back of the card. | `Paris` |
 
-### 🟢 Optional Columns (Use if needed)
+### Control columns (recommended)
 
 | Column | Description | Example |
 | :--- | :--- | :--- |
-| **IMPORTANCE** | Priority level. | `High` |
-| **TOPIC** | Organizing category. | `Geography` |
-| **SUBTOPIC** | Organizing sub-category. | `Europe` |
-| **CONCEPT** | Atomic concept (more refined than subtopic). | `Capital Cities` |
-| **REVERSE** | Reverse question (creates an extra Answer → Question card). | `What city is the capital of France?` |
-| **COMPLEMENTARY INFO** | Additional context. | `France is in Western Europe.` |
-| **DETAILED INFO** | Extended explanation. | `Paris has been the capital since...` |
-| **EXAMPLE 1** | First example. | `London is the capital of the UK.` |
-| **EXAMPLE 2** | Second example. | `Berlin is the capital of Germany.` |
-| **MNEMONIC** | Memory aids. | `My Very Educated Mother...` |
-| **HTML IMAGE** | HTML code for images (or use Image Processor). | `<img src="...">` |
-| **HTML VIDEO** | Embedded video (YouTube/Vimeo). | `<iframe src="...">` |
-| **BOARDS** | Related exam boards. | `ENEM, FUVEST` |
-| **LAST YEAR IN EXAM** | Last year this appeared in an exam. | `2024` |
-| **CAREERS** | Related careers or areas. | `Medicine, Law` |
-| **OTHER TAGS** | Additional tags for organization. | `review, hard` |
-| **EXTRA FIELD 1/2/3** | Free-use fields for anything you want. | *(your content)* |
+| `STUDENTS` | Comma-separated list of students the card belongs to. Drives per-student sub-decks. | `John, Mary` |
+| `SYNC` | Set to `TRUE` to include the row in synchronization. | `TRUE` |
 
-> 💡 **Tip:** You can hide any optional columns you don't use in Google Sheets to keep your workspace clean. The add-on will still read them correctly!
+### Optional columns
 
----
+| Column | Description |
+| :--- | :--- |
+| `IMPORTANCE` | Priority level (used in the deck hierarchy and tags). |
+| `TOPIC` / `SUBTOPIC` / `CONCEPT` | Hierarchical categorization, from broad to atomic. |
+| `REVERSE` | Text for an additional Answer → Question card. |
+| `COMPLEMENTARY INFO` / `DETAILED INFO` | Additional context and extended explanation. |
+| `EXAMPLE 1` / `EXAMPLE 2` | Worked examples. |
+| `MNEMONIC` | Memory aid. |
+| `IMAGE` / `HTML IMAGE` | Source image cell and the generated `<img>` markup (see [Automatic image handling](#automatic-image-handling)). |
+| `HTML VIDEO` | Embedded video markup (YouTube/Vimeo). |
+| `BOARDS` / `LAST YEAR IN EXAM` / `CAREERS` | Exam metadata used for tagging. |
+| `OTHER TAGS` | Additional free-form tags. |
+| `EXTRA FIELD 1/2/3` | Free-use fields. |
 
-## 🤖 Configuring AI Help
+> Columns you do not use can be hidden in Google Sheets without affecting synchronization.
 
-Sheets2Anki brings the power of LLMs to your flashcards.
+## AI assistant
 
-1.  Go to `Tools` → `Sheets2Anki` → `Configure AI Help`.
-2.  Choose your provider: **Google Gemini**, **Anthropic Claude**, or **OpenAI**.
-3.  Enter your API Key (safely stored locally).
-4.  **Usage:** When reviewing a card, click the **🤖 AI Help** button to get more context about the question!
+Sheets2Anki can add AI-powered controls to your cards for explanations, follow-up questions, and answer verification.
 
----
+1. Open `Tools → Sheets2Anki → Configure AI Assistance` (`Ctrl+Shift+H`).
+2. Select a provider — Google Gemini, Anthropic Claude, or OpenAI — and enter your API key. The key is stored locally in the add-on configuration.
+3. While reviewing, use the **AI Help**, **AI Ask**, and **AI Checker** buttons on the card.
 
-## 📸 Using Images in Your Cards
+> **Security note:** AI responses are sanitized before display. Optional "mobile support" embeds your API key into the card templates so AnkiMobile and AnkiWeb can call the provider directly — this uploads the key to AnkiWeb and to every synced device. Enable it only if you accept that exposure, and prefer a restricted, rotatable key.
 
-Sheets2Anki can automatically process images from Google Sheets and embed them in your flashcards!
+## Automatic image handling
 
-### How It Works
+Sheets2Anki can upload images from your spreadsheet and embed them in cards, so they display on every device including AnkiMobile.
 
-1.  **Insert images** directly into cells in the **IMAGE** column (Insert > Image > Image in cell)
-2.  **Configure once:** `Tools` → `Sheets2Anki` → `Configure Image Processor`
-3.  **Automatic processing:** A Google Apps Script uploads images to ImgBB and writes HTML tags to the HTML IMAGE column.
-4.  **Sync normally:** Your cards will include the images automatically!
+1. Insert an image into a cell in the `IMAGE` column (`Insert → Image → Image in cell`).
+2. Configure the processor once via `Tools → Sheets2Anki → Configure Image Processor` (`Ctrl+Shift+P`): provide a free [ImgBB](https://api.imgbb.com/) API key and the URL of a deployed Google Apps Script web app.
+3. On processing, images are uploaded to ImgBB and the resulting `<img>` markup is written to the `HTML IMAGE` column, then synced like any other field.
 
-### Setup (One-time)
+Full setup instructions, including deploying the Apps Script, are in [`scripts/IMAGE_PROCESSOR_README.md`](scripts/IMAGE_PROCESSOR_README.md).
 
-1.  **Get ImgBB API Key** (Free):
-    *   Visit [api.imgbb.com](https://api.imgbb.com/)
-    *   Sign up (no credit card required)
-    *   Copy your API key
+## Organization
 
-2.  **Deploy the Google Apps Script** (once — works for all spreadsheets):
-    *   In Anki, open `Tools` → `Sheets2Anki` → `Configure Image Processor`
-    *   Click **📋 Copy Script to Clipboard**
-    *   Go to [script.google.com](https://script.google.com) → **New project**
-    *   Paste the script → **Save**
-    *   Click **Deploy → New deployment**
-    *   Configure: Type = Web app, Execute as = Me, Access = Anyone
-    *   Click **Deploy** and authorize when prompted
-    *   **Copy the Web App URL**
-
-3.  **Configure in Anki**:
-    *   `Tools` → `Sheets2Anki` → `Configure Image Processor`
-    *   ☑ Enable automatic image processing
-    *   Paste your **ImgBB API key**
-    *   Paste your **Web App URL**
-    *   Click "🧪 Test Configuration"
-    *   Save!
-
-> 📖 **Detailed Guide:** See [`scripts/IMAGE_PROCESSOR_README.md`](scripts/IMAGE_PROCESSOR_README.md) for complete documentation.
-
-### Usage Tips
-
-✅ **DO:** Insert images using "Insert > Image > Image in cell" in the **HTML IMAGE** column  
-❌ **DON'T:** Use drag-and-drop or "Image over cells" (not detectable)
-
-Images are hosted permanently on ImgBB (free) and will work on all devices including AnkiMobile!
-
----
-
-## 📂 Advanced Organization
-
-The add-on automatically creates a rich tag hierarchy for your cards in the Anki Browser:
+Sheets2Anki builds a namespaced tag hierarchy in the Anki browser:
 
 ```text
 sheets2anki
-├── topics::topic::subtopic::concept    (hierarchical content tree)
-├── concepts::concept                   (flat concept search)
-├── importance::level                   (priority level)
-├── boards::board                       (exam boards)
-├── years::year                         (exam years)
-├── careers::career                     (professional areas)
-└── other_tags::tag                     (additional tags)
+├── topics::topic::subtopic::concept    hierarchical content tree
+├── concepts::concept                   flat concept search
+├── importance::level                   priority level
+├── boards::board                       exam boards
+├── years::year                         exam years
+├── careers::career                     professional areas
+└── other_tags::tag                     additional tags
 ```
 
-Your **decks** are organized as:
+Decks are nested to mirror your spreadsheet's structure:
 
 ```text
 Sheets2Anki
-└── Remote Deck
-    └── Student
-        └── Importance
-            └── Topic
-                └── Subtopic
-                    └── Concept
+└── <Remote Deck>
+    └── <Student>
+        └── <Importance>
+            └── <Topic>
+                └── <Subtopic>
+                    └── <Concept>
 ```
 
----
+## Keyboard shortcuts
 
-## 🆘 Support & Troubleshooting
+All actions are available under `Tools → Sheets2Anki`; the most common have shortcuts:
 
-**Something went wrong?**
+| Shortcut | Action |
+| :--- | :--- |
+| `Ctrl+Shift+A` | Add a new remote deck |
+| `Ctrl+Shift+S` | Synchronize remote decks |
+| `Ctrl+Shift+D` | Disconnect a remote deck |
+| `Ctrl+Shift+G` | Configure students globally |
+| `Ctrl+Shift+O` | Configure deck options |
+| `Ctrl+Shift+W` | Configure AnkiWeb sync |
+| `Ctrl+Shift+I` | Configure study timer |
+| `Ctrl+Shift+H` | Configure AI assistance |
+| `Ctrl+Shift+P` | Configure image processor |
+| `Ctrl+Shift+B` | Open the remote-decks backup tool |
 
-1.  **Check the logs:** `Tools` → `Add-ons` → `Sheets2Anki` → `View Files` → `debug_sheets2anki.log`.
-2.  **Configure AnkiWeb Sync:** Press `Ctrl+Shift+W` to configure automatic AnkiWeb synchronization.
-3.  **Backup & Reset:** Access `Tools` → `Sheets2Anki` → `Remote Decks Backup` to save your state, then try removing and re-adding the deck.
+## Troubleshooting
 
----
+- **Inspect the logs.** `Tools → Add-ons → Sheets2Anki → View Files → debug_sheets2anki.log` records the most recent sync in detail.
+- **Back up before changes.** `Tools → Sheets2Anki → Remote Decks Backup` (`Ctrl+Shift+B`) saves your connected-deck configuration; you can restore it or re-add a deck cleanly.
+- **Verify sheet access.** A failed download usually means the sheet is not shared as "Anyone with the link – Viewer".
 
-**Happy Studying! 🚀**
-*Manage less, learn more.*
+If a problem persists, please open an issue at [github.com/igorrflorentino/sheets2anki/issues](https://github.com/igorrflorentino/sheets2anki/issues) and attach the relevant portion of the debug log.
+
+## Contributing
+
+Issues and pull requests are welcome. Development setup, the test suite, and the project architecture are documented in [`CLAUDE.md`](CLAUDE.md) and the build scripts under [`scripts/`](scripts/).
+
+## License
+
+Released under the [MIT License](LICENSE).
