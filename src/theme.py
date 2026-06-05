@@ -382,3 +382,48 @@ def make_radio_option_card(
 
     card.mousePressEvent = lambda e: radio.setChecked(True)
     return card
+
+
+def primary_button_qss(colors: dict, kind: str = "primary") -> str:
+    """Filled action button (Save / Apply / Confirm). kind: 'primary'|'success'|'danger'."""
+    accent = {
+        "primary": colors["accent_primary"],
+        "success": colors["accent_success"],
+        "danger": colors["accent_danger"],
+    }[kind]
+    hover = {
+        "primary": colors["primary_dark"],
+        "success": colors["success_dark"],
+        "danger": colors["danger_dark"],
+    }[kind]
+    return f"""
+        QPushButton {{
+            background-color: {accent};
+            color: white;
+            border: none;
+            border-radius: {RADIUS_CONTROL};
+            padding: 12px 25px;
+            font-size: 12pt;
+            font-weight: bold;
+        }}
+        QPushButton:hover {{ background-color: {hover}; }}
+        QPushButton:disabled {{
+            background-color: {colors['button_bg']};
+            color: {colors['text_muted']};
+        }}
+    """
+
+
+def secondary_button_qss(colors: dict) -> str:
+    """Filled-grey secondary button (Cancel / secondary actions)."""
+    return f"""
+        QPushButton {{
+            background-color: {colors['button_bg']};
+            color: {colors['text']};
+            border: 1px solid {colors['border']};
+            border-radius: {RADIUS_CONTROL};
+            padding: 12px 25px;
+            font-size: 12pt;
+        }}
+        QPushButton:hover {{ background-color: {colors['button_hover']}; }}
+    """

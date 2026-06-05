@@ -29,6 +29,8 @@ from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
 from ..utils import get_spreadsheet_id_from_url
@@ -347,51 +349,14 @@ class AddDeckDialog(QDialog):
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setMinimumHeight(40)
         self.cancel_button.setMinimumWidth(100)
-        self.cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['background']};
-                color: {self.colors['text_secondary']};
-                border: 2px solid {self.colors['border']};
-                border-radius: 8px;
-                font-size: 13px;
-                font-weight: 500;
-                padding: 8px 20px;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['background_secondary']};
-                border-color: {self.colors['text_secondary']};
-            }}
-            QPushButton:pressed {{
-                background-color: {self.colors['border']};
-            }}
-        """)
+        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
 
         # Add button
         self.add_button = QPushButton("✓ Add Deck")
         self.add_button.setEnabled(False)
         self.add_button.setMinimumHeight(40)
         self.add_button.setMinimumWidth(140)
-        self.add_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['success']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 13px;
-                font-weight: bold;
-                padding: 8px 24px;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['success_dark']};
-            }}
-            QPushButton:pressed {{
-                background-color: {self.colors['success_dark']};
-            }}
-            QPushButton:disabled {{
-                background-color: {self.colors['border']};
-                color: {self.colors['text_muted']};
-            }}
-        """)
+        self.add_button.setStyleSheet(primary_button_qss(self.colors, "success"))
 
         layout.addStretch()
         layout.addWidget(self.cancel_button)

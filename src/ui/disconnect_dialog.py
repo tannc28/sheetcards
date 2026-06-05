@@ -26,6 +26,8 @@ from ..styled_messages import StyledMessageBox
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 from .url_helpers import copy_url_to_clipboard
 
 
@@ -66,27 +68,6 @@ class DisconnectDialog(QDialog):
             QDialog {{
                 background-color: {self.colors['bg']};
                 color: {self.colors['text']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                font-size: 12pt;
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                margin-top: 16px;
-                padding: 12px;
-                padding-top: 28px;
-                background-color: {self.colors['card_bg']};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 12px;
-                top: 4px;
-                padding: 2px 10px;
-                background-color: {self.colors['card_bg']};
-                border-radius: 4px;
-                color: {self.colors['text_secondary']};
-                font-size: 12pt;
             }}
             QScrollArea {{
                 border: 1px solid {self.colors['border']};
@@ -251,39 +232,10 @@ class DisconnectDialog(QDialog):
         main_buttons_layout.setContentsMargins(0, 10, 0, 0)
 
         self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-            }}
-        """)
+        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
 
         self.disconnect_button = QPushButton("Disconnect Selected")
-        self.disconnect_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_danger']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['danger_dark']};
-            }}
-            QPushButton:disabled {{
-                background-color: {self.colors['border']};
-                color: {self.colors['text_secondary']};
-            }}
-        """)
+        self.disconnect_button.setStyleSheet(primary_button_qss(self.colors, "danger"))
 
         main_buttons_layout.addStretch()
         main_buttons_layout.addWidget(self.cancel_button)

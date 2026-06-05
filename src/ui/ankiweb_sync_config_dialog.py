@@ -19,6 +19,8 @@ from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import primary_button_qss
+from ..theme import secondary_button_qss
 
 
 class AnkiWebSyncConfigDialog(QDialog):
@@ -154,37 +156,12 @@ class AnkiWebSyncConfigDialog(QDialog):
         buttons_layout.addStretch()
 
         self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-            }}
-        """)
+        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
         self.cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_button)
 
         self.save_button = QPushButton("✓ Save")
-        self.save_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_success']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 25px;
-                font-size: 12pt;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['success_dark']};
-            }}
-        """)
+        self.save_button.setStyleSheet(primary_button_qss(self.colors, "success"))
         self.save_button.clicked.connect(self._save_settings)
         self.save_button.setDefault(True)
         buttons_layout.addWidget(self.save_button)
