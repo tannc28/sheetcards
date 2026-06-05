@@ -6,7 +6,26 @@
 
 ## 🛠️ **Unreleased** — Maintenance (on `main` since v3.0.0)
 
-Internal quality work with **no user-facing feature or behavior changes**.
+Internal quality work plus a UI-consistency pass. No feature or behavior changes — the
+UI updates below are purely visual (colors and labels).
+
+### 🎨 UI design system (visual consistency)
+A single design system now drives every screen, replacing per-dialog hardcoded styling:
+- **New `src/theme.py`** — one source of truth for theme detection (`is_dark_mode()`, via
+  Anki's `theme_manager.night_mode`) and a semantic light/dark color palette, plus
+  reusable button/header style helpers.
+- **All 12 config dialogs** migrated to the shared palette: hardcoded color sprawl dropped
+  from ~75 hex values (mixing Material Design and Bootstrap) to **zero**; the three
+  competing "primary" blues collapsed into one brand blue (`#4A90D9` / `#5BA3E0`); the
+  four duplicate `is_dark_mode()` copies into one; every gradient header unified (they
+  previously ranged across green / purple / red). ~330 lines of duplicated palette and
+  detection code removed.
+- **Card UI** (study timer, AI Help/Ask/Checker buttons, reverse-card badge) re-skinned
+  from off-brand purple / neon-green to the same brand blue. CSS-only — the card JS is
+  byte-identical (sha256-verified).
+- **Button labels** unified ("Save Settings" / "Save Configuration" → "Save").
+- Regression guards added (`tests/test_theme.py`, `tests/test_ui_import_smoke.py`): they
+  lock the palette values, assert every dialog color key resolves, and import every dialog.
 
 ### 🗂️ Project reorganization
 - **`src/ui/` subpackage**: the Qt dialog modules were grouped under `src/ui/`.
