@@ -124,11 +124,11 @@ def get_config():
                 config = json.load(f)
 
             # Merge with defaults to ensure compatibility
-            merged_config = DEFAULT_CONFIG.copy()
+            merged_config = copy.deepcopy(DEFAULT_CONFIG)
             merged_config.update(config)
             return merged_config
         else:
-            return DEFAULT_CONFIG.copy()
+            return copy.deepcopy(DEFAULT_CONFIG)
     except Exception as e:
         if mw:
             StyledMessageBox.warning(
@@ -137,7 +137,7 @@ def get_config():
                 f"Error loading config.json: {str(e)}",
                 detailed_text="Using default configuration.",
             )
-        return DEFAULT_CONFIG.copy()
+        return copy.deepcopy(DEFAULT_CONFIG)
 
 
 def get_meta():
@@ -169,7 +169,7 @@ def get_meta():
 
         # 3. Fallback to hardcoded defaults
         else:
-            meta = DEFAULT_META.copy()
+            meta = copy.deepcopy(DEFAULT_META)
 
         # Ensure proper structure
         meta = _ensure_meta_structure(meta)
@@ -183,7 +183,7 @@ def get_meta():
                 f"Error loading meta.json: {str(e)}",
                 detailed_text="Using default configuration.",
             )
-        return DEFAULT_META.copy()
+        return copy.deepcopy(DEFAULT_META)
 
 
 def save_meta(meta):
