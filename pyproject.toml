@@ -191,9 +191,6 @@ ignore = [
 # compat.py is a pure Qt/Anki re-export gateway — every import is a deliberate
 # re-export, so F401 (unused import) must not strip them.
 "compat.py" = ["F401"]
-# card_assets.py is almost entirely CSS/JS/HTML string literals; their leading/trailing
-# whitespace is part of the (byte-identical) card output, not Python formatting.
-"card_assets.py" = ["W291", "W293"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["sheets2anki"]
