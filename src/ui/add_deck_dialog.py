@@ -477,7 +477,7 @@ class AddDeckDialog(QDialog):
             remote_decks = get_remote_decks()
             if spreadsheet_id in remote_decks:
                 deck_info = remote_decks[spreadsheet_id]
-                is_disconnected = False
+                is_disconnected = is_deck_disconnected(url)
                 return True, deck_info, is_disconnected
             return False, None, False
         except ValueError:

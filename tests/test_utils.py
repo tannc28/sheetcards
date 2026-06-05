@@ -728,5 +728,41 @@ class TestGetPublicationKeyHash:
         assert len(hash_result) == 8
 
 
+@pytest.mark.unit
+class TestGetNoteTypeName:
+    """Tests for the standardized note-type name builder."""
+
+    def test_with_student(self):
+        from src.utils import get_note_type_name
+
+        assert (
+            get_note_type_name("url", "Deck", student="Ana")
+            == "Sheets2Anki - Deck - Ana - Basic"
+        )
+
+    def test_without_student(self):
+        from src.utils import get_note_type_name
+
+        assert (
+            get_note_type_name("url", "Deck") == "Sheets2Anki - Deck - Basic"
+        )
+
+    def test_whitespace_only_student_falls_back_not_none(self):
+        # Regression: a whitespace-only student must not return None (that
+        # would crash col.models.by_name downstream).
+        from src.utils import get_note_type_name
+
+        assert (
+            get_note_type_name("url", "Deck", student="   ")
+            == "Sheets2Anki - Deck - Basic"
+        )
+
+    def test_cloze_and_reverse_flags(self):
+        from src.utils import get_note_type_name
+
+        assert get_note_type_name("u", "D", is_cloze=True).endswith("- Cloze")
+        assert get_note_type_name("u", "D", is_reverse=True).endswith("- Reverse")
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

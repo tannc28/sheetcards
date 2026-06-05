@@ -664,6 +664,7 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
     current_local_deck_id = deck_info.get("local_deck_id")
     if current_local_deck_id != local_deck_id:
         deck_info["local_deck_id"] = local_deck_id
+        updated = True
     # Check if local_deck_name needs update
     current_local_deck_name = deck_info.get("local_deck_name")
     if current_local_deck_name != local_deck_name:

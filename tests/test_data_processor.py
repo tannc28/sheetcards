@@ -64,6 +64,31 @@ class TestStudentMetrics:
 
 
 @pytest.mark.unit
+class TestClozeFormatting:
+    def test_has_cloze_detects_basic_and_uppercase(self):
+        assert d.has_cloze_deletion("{{c1::x}}")
+        assert d.has_cloze_deletion("{{C2::x::hint}}")
+        assert not d.has_cloze_deletion("no cloze")
+
+    def test_clean_strips_markup_and_hint(self):
+        assert d.clean_cloze_formatting("{{c1::Hello}}") == "Hello"
+        assert d.clean_cloze_formatting("{{c2::World::hint}}") == "World"
+
+    def test_clean_preserves_colons_inside_content(self):
+        # Regression: content with colons (times, ions, ratios) must survive.
+        assert d.clean_cloze_formatting("{{c1::10:30}}") == "10:30"
+        assert d.clean_cloze_formatting("{{c1::Na+ : K+}}") == "Na+ : K+"
+        assert d.clean_cloze_formatting("{{c1::a::b::c}}") == "a"
+
+    def test_clean_handles_multiple_clozes_and_case(self):
+        assert (
+            d.clean_cloze_formatting("a {{c1::X}} b {{c2::Y::h}} c")
+            == "a X b Y c"
+        )
+        assert d.clean_cloze_formatting("{{C1::upper}}") == "upper"
+
+
+@pytest.mark.unit
 class TestTagsGeneration:
     def test_other_tags_split_and_namespaced(self):
         note = {cols.identifier: "Q1", cols.tags_4: "review, hard"}

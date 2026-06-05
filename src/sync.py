@@ -1237,7 +1237,11 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
         _update_progress_text(progress, status_msgs)
         # Continue synchronization even if template update failed
 
-    # Manage cleanups in a consolidated way to avoid multiple confirmations
+    # Manage cleanups in a consolidated way to avoid multiple confirmations.
+    # Initialize first so the "no cleanup needed" check below stays safe even
+    # if _handle_consolidated_cleanup raises before assigning them.
+    missing_cleanup_result = None
+    cleanup_result = None
     try:
         missing_cleanup_result, cleanup_result = _handle_consolidated_cleanup(
             remote_decks
@@ -2360,8 +2364,9 @@ def _sync_single_deck(
         error_details = traceback.format_exc()
         add_debug_message(f"❌ ERROR in create_or_update_notes call: {e}", "SYNC")
         add_debug_message(f"❌ Stack trace: {error_details}", "SYNC")
-        # Return default stats with errors
-        deck_stats = SyncStats(created=0, updated=0, deleted=0, errors=1, ignored=0)
+        # Return default stats with errors (add_error increments the counter,
+        # so start at 0 to avoid double-counting this single failure).
+        deck_stats = SyncStats(created=0, updated=0, deleted=0, errors=0, ignored=0)
         deck_stats.add_error(f"Critical synchronization error: {e}")
 
     add_debug_message(

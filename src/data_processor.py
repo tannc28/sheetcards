@@ -831,12 +831,13 @@ def clean_cloze_formatting(text):
         return text
 
     # Regex to find {{cX::content}} or {{cX::content::hint}}
-    # [^:}]+ matches content until : or }
-    # (::[^}]+)? matches the optional ::hint part
-    pattern = r"\{\{c\d+::([^:}]+)(?:::[^}]+)?\}\}"
+    # ([^}]+?) lazily captures the content so colons inside the answer are
+    # preserved (e.g. "{{c1::10:30}}" -> "10:30"); (?:::[^}]*)? strips an
+    # optional ::hint. IGNORECASE matches {{C1::...}} like has_cloze_deletion.
+    pattern = r"\{\{c\d+::([^}]+?)(?:::[^}]*)?\}\}"
 
     # Replace all occurrences with the first capturing group (the content)
-    return re.sub(pattern, r"\1", text)
+    return re.sub(pattern, r"\1", text, flags=re.IGNORECASE)
 
 
 # =============================================================================

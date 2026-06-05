@@ -71,7 +71,7 @@ def show_data_removal_confirmation_dialog(
         int: Dialog result code (MessageBox_Yes or MessageBox_Cancel)
     """
     if not students_to_remove:
-        return False
+        return MessageBox_Cancel
 
     # Generate message using centralized function
     message = generate_data_removal_confirmation_message(students_to_remove)

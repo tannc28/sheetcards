@@ -282,8 +282,9 @@ def save_selected_students_for_deck(deck_url: str, selected_students: set[str]):
     if spreadsheet_id not in meta["decks"]:
         meta["decks"][spreadsheet_id] = {}
 
-    # Convert set to list for JSON serialization
-    meta["decks"][spreadsheet_id]["student_selection"] = list(selected_students)
+    # Convert set to a sorted list for JSON serialization — sorting keeps
+    # meta.json stable across saves of the same selection (avoids diff churn).
+    meta["decks"][spreadsheet_id]["student_selection"] = sorted(selected_students)
 
     save_meta(meta)
 

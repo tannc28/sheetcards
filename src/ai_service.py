@@ -129,7 +129,7 @@ class AIProvider:
                 return json.loads(response.read().decode("utf-8"))
 
         except urllib.error.HTTPError as e:
-            error_body = e.read().decode("utf-8") if e.fp else str(e)
+            error_body = e.read().decode("utf-8", errors="replace") if e.fp else str(e)
             try:
                 error_json = json.loads(error_body)
                 error_msg = error_json.get("error", {}).get("message", error_body)
