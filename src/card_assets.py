@@ -1209,7 +1209,7 @@ function submitAIAsk() {
     + """
 
 function _replacePromptPlaceholder(promptTemplate, placeholder, value) {
-  // Handles both {placeholder} and {placeholder} forms
+  // Handles both double-brace and single-brace placeholder forms
   var regex = new RegExp('\\u007B\\u007B' + placeholder + '\\u007D\\u007D|\\u007B' + placeholder + '\\u007D', 'g');
   var testRegex = new RegExp('\\u007B\\u007B' + placeholder + '\\u007D\\u007D|\\u007B' + placeholder + '\\u007D');
   var hadPlaceholder = testRegex.test(promptTemplate);

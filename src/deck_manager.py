@@ -6,16 +6,8 @@ remote decks in Anki with support for automatic naming and
 deck disconnection, including student management.
 """
 
-from .compat import DialogAccepted
-from .compat import QCheckBox
-from .compat import QDialog
-from .compat import QHBoxLayout
 from .compat import QInputDialog
-from .compat import QLabel
-from .compat import QPushButton
-from .compat import QVBoxLayout
 from .compat import mw
-from .compat import safe_exec
 from .config_manager import add_remote_deck
 from .config_manager import create_deck_info
 from .config_manager import detect_deck_name_changes
@@ -294,7 +286,6 @@ def check_and_update_deck_names(silent=False):
             remote_decks = get_remote_decks()
 
             for url in updated_urls:
-                deck_info = remote_decks.get(url, {})
                 # Use local_deck_name from new structure, with fallback to old deck_name
                 deck_name = get_deck_local_name(url) or "Deck"
                 deck_names.append(deck_name)
@@ -323,66 +314,6 @@ def check_and_update_deck_names(silent=False):
                 f"An error occurred while checking for deck name updates: {str(e)}",
             )
         return []
-
-
-def _get_valid_deck_info(config):
-    """
-    Extracts valid deck info from configuration.
-
-    Args:
-        config: Addon configuration
-
-    Returns:
-        tuple: (deck_info_list, valid_decks) where deck_info_list contains
-               (deck_name, card_count) tuples and valid_decks maps
-               names to deck info
-    """
-    deck_info_list = []
-    valid_decks = {}
-
-    for url, deck_info in get_remote_decks().items():
-        deck_id = deck_info["deck_id"]
-        # Check if collection and deck manager are available
-        if mw and mw.col and mw.col.decks:
-            deck = mw.col.decks.get(deck_id)
-
-            # Check if deck still exists and is not default deck
-            if deck and deck["name"].strip().lower() != "default":
-                deck_name = deck["name"]
-                # Count cards in deck (checking if find_cards is available)
-                if mw.col.find_cards:
-                    escaped_deck_name = deck_name.replace('"', '\\"')
-                    card_count = len(mw.col.find_cards(f'deck:"{escaped_deck_name}"'))
-                else:
-                    card_count = 0  # Fallback if find_cards not available
-                deck_info_list.append((deck_name, card_count))
-                valid_decks[deck_name] = deck_info
-
-    return deck_info_list, valid_decks
-
-
-def _show_selection_dialog_and_sync(deck_info_list):
-    """
-    Shows selection dialog and executes sync for selected decks.
-
-    Args:
-        deck_info_list: Valid deck info list
-    """
-    dialog = DeckSelectionDialog(deck_info_list, mw)
-
-    # Use compatibility function for exec/exec_
-    result = safe_exec(dialog)
-
-    if result == DialogAccepted:
-        selected_decks = dialog.get_selected_decks()
-        if selected_decks:
-            from .sync import syncDecks
-
-            syncDecks(selected_decks)
-        else:
-            StyledMessageBox.information(
-                mw, "No Selection", "No deck was selected for synchronization."
-            )
 
 
 def import_test_deck():
@@ -451,13 +382,6 @@ def import_test_deck():
 
         syncDecks(selected_deck_urls=[url], new_deck_mode=True)
 
-        # Get final deck name after synchronization (it might have changed)
-        remote_decks = get_remote_decks()
-        if url in remote_decks:
-            final_deck_name = get_deck_local_name(url) or actual_name
-        else:
-            final_deck_name = actual_name
-
     except Exception as e:
         StyledMessageBox.critical(
             mw, "Import Error", "Error importing test deck", detailed_text=str(e)
@@ -481,15 +405,6 @@ def addNewDeck():
         from .sync import syncDecks
 
         syncDecks(selected_deck_urls=[url])
-
-        # Get final deck name after synchronization (it might have changed)
-        from .config_manager import get_remote_decks
-
-        remote_decks = get_remote_decks()
-        if url in remote_decks:
-            final_deck_name = get_deck_local_name(url) or deck_info["name"]
-        else:
-            final_deck_name = deck_info["name"]
 
 
 def removeRemoteDeck():
@@ -1601,145 +1516,3 @@ class DeckRecreationManager:
                 "DECK_RECREATION",
             )
             deck_info["local_deck_name"] = actual_name
-
-
-class DeckSelectionDialog(QDialog):
-    """
-    Dialog for selecting decks for synchronization.
-
-    Allows user to choose which remote decks should be synced,
-    showing information such as deck name and card count.
-    """
-
-    def __init__(self, deck_info_list, parent=None):
-        """
-        Initializes the deck selection dialog.
-
-        Args:
-            deck_info_list: List of (deck_name, card_count) tuples
-            parent: Parent widget (optional)
-        """
-        super().__init__(parent)
-        self.setWindowTitle("Select Decks to Sync")
-        self.setMinimumSize(500, 350)
-
-        # Store deck info
-        self.deck_info_list = deck_info_list
-
-        # Setup interface
-        self._setup_ui()
-
-        # Connect events after creating all elements
-        self._connect_events()
-
-        # Update initial status
-        self.update_status()
-
-    def _setup_ui(self):
-        """Configures the user interface elements."""
-        # Main layout
-        layout = QVBoxLayout()
-
-        # Instruction label
-        instruction_label = QLabel("Select decks you want to sync:")
-        instruction_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
-        layout.addWidget(instruction_label)
-
-        # Create checkboxes for each deck
-        self.checkboxes = {}
-        for deck_name, card_count in self.deck_info_list:
-            # Show deck name and number of cards
-            display_text = f"{deck_name} ({card_count} cards)"
-            checkbox = QCheckBox(display_text)
-            checkbox.setChecked(True)  # By default, all selected
-            self.checkboxes[deck_name] = checkbox
-            layout.addWidget(checkbox)
-
-        # Spacer
-        layout.addSpacing(10)
-
-        # Quick selection buttons
-        self._add_selection_buttons(layout)
-
-        # Spacer
-        layout.addSpacing(10)
-
-        # Status label
-        self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #666; font-size: 11px;")
-        layout.addWidget(self.status_label)
-
-        # Confirmation buttons
-        self._add_confirmation_buttons(layout)
-
-        self.setLayout(layout)
-
-    def _add_selection_buttons(self, layout):
-        """Adds quick selection buttons (Select/Deselect All)."""
-        button_layout = QHBoxLayout()
-
-        select_all_btn = QPushButton("Select All")
-        select_all_btn.clicked.connect(self.select_all)
-        button_layout.addWidget(select_all_btn)
-
-        deselect_all_btn = QPushButton("Deselect All")
-        deselect_all_btn.clicked.connect(self.deselect_all)
-        button_layout.addWidget(deselect_all_btn)
-
-        layout.addLayout(button_layout)
-
-    def _add_confirmation_buttons(self, layout):
-        """Adds OK and Cancel buttons."""
-        confirm_layout = QHBoxLayout()
-
-        self.ok_btn = QPushButton("Sync")
-        self.ok_btn.clicked.connect(self.accept)
-        confirm_layout.addWidget(self.ok_btn)
-
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
-        confirm_layout.addWidget(cancel_btn)
-
-        layout.addLayout(confirm_layout)
-
-    def _connect_events(self):
-        """Connects events after all elements are created."""
-        for checkbox in self.checkboxes.values():
-            checkbox.stateChanged.connect(self.update_status)
-
-    def select_all(self):
-        """Checks all checkboxes."""
-        for checkbox in self.checkboxes.values():
-            checkbox.setChecked(True)
-
-    def deselect_all(self):
-        """Unchecks all checkboxes."""
-        for checkbox in self.checkboxes.values():
-            checkbox.setChecked(False)
-
-    def update_status(self):
-        """Updates status label and enables/disables OK button."""
-        selected_count = len(self.get_selected_decks())
-        total_count = len(self.checkboxes)
-
-        if selected_count == 0:
-            self.status_label.setText("No deck selected")
-            self.ok_btn.setEnabled(False)
-        else:
-            self.status_label.setText(
-                f"{selected_count} of {total_count} decks selected"
-            )
-            self.ok_btn.setEnabled(True)
-
-    def get_selected_decks(self):
-        """
-        Returns list of selected deck names.
-
-        Returns:
-            list: List of checked deck names
-        """
-        selected = []
-        for deck_name, checkbox in self.checkboxes.items():
-            if checkbox.isChecked():
-                selected.append(deck_name)
-        return selected

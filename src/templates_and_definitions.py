@@ -389,30 +389,6 @@ def get_field_category(field_name):
         return "unknown"
 
 
-def should_sync_question(fields):
-    """
-    Checks if a question should be synchronized based on the SYNC field.
-
-    Args:
-        fields (dict): Dictionary with question fields
-
-    Returns:
-        bool: True if should synchronize, False otherwise
-    """
-    sync_value = fields.get(is_sync, "").strip().lower()
-
-    # Consider positive values: true, 1, sim, yes, verdadeiro
-    # Consider positive values: true, 1, yes
-    positive_values = ["true", "1", "yes", "sim", "v"]
-
-    if sync_value in positive_values:
-        return True
-    else:
-        # If value is not recognized or empty, do NOT synchronize
-        # Synchronization must be explicitly marked
-        return False
-
-
 def get_all_column_info():
     """
     Returns complete information about all defined columns.

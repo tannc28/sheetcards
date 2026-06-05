@@ -9,7 +9,6 @@ This module provides the following functionalities:
 4. List Available Backups: Returns list of available backup files
 """
 
-import glob
 import json
 import os
 import shutil
@@ -157,8 +156,7 @@ class SimplifiedBackupManager:
 
             # 1. Export main deck as .apkg
             apkg_success = self._export_main_deck_apkg(temp_path)
-            # Note: If deck is not found, we continue (config-only backup effectively)
-            # This logic was already present.
+            # If the deck is not found, continue anyway (effectively config-only).
 
             # 2. Save all settings
             self._save_configurations(temp_path)
@@ -641,24 +639,6 @@ class SimplifiedBackupManager:
         # If all methods failed
         raise Exception("All import methods failed")
 
-    def _import_deck_manual(self, apkg_path: str) -> None:
-        """Manual import method as a last resort"""
-        # This method was removed as it is too complex and risky
-        # Instead, we guide the user to import manually
-        StyledMessageBox.warning(
-            mw,
-            "Import Failed",
-            "Automatic import failed.",
-            detailed_text=(
-                "To recover your data:\n"
-                "1. Open Anki\n"
-                "2. Go to File > Import\n"
-                f"3. Select file: {apkg_path}\n"
-                "4. Follow the on-screen instructions\n\n"
-                "Your data is safe in the backup file!"
-            ),
-        )
-
     def _recreate_deck_links(self) -> None:
         """Recreates links between remote and local decks"""
         try:
@@ -803,126 +783,6 @@ class SimplifiedBackupManager:
 
         except Exception as e:
             add_debug_message(f"❌ Error in file rotation: {e}", "AUTO_BACKUP")
-
-    def get_auto_backup_info(self) -> dict[str, Any]:
-        """
-        Gets information about automatic backups.
-
-        Returns:
-            dict: Automatic backup information
-        """
-        try:
-            auto_config = get_auto_backup_config()
-            backup_dir = get_auto_backup_directory()
-
-            # Count existing backup files
-            import glob
-
-            pattern = os.path.join(backup_dir, "sheets2anki_backup_auto_*.zip")
-            backup_files = glob.glob(pattern)
-            backup_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-
-            # Latest backup info
-            latest_backup = None
-            if backup_files:
-                latest_file = backup_files[0]
-                latest_backup = {
-                    "filename": os.path.basename(latest_file),
-                    "path": latest_file,
-                    "size": os.path.getsize(latest_file),
-                    "created": datetime.fromtimestamp(
-                        os.path.getmtime(latest_file)
-                    ).isoformat(),
-                }
-
-            return {
-                "enabled": auto_config.get("enabled", True),
-                "directory": backup_dir,
-                "max_files": auto_config.get("max_files", 50),
-                "total_files": len(backup_files),
-                "latest_backup": latest_backup,
-                "all_backups": [
-                    {
-                        "filename": os.path.basename(f),
-                        "path": f,
-                        "size": os.path.getsize(f),
-                        "created": datetime.fromtimestamp(
-                            os.path.getmtime(f)
-                        ).isoformat(),
-                    }
-                    for f in backup_files[:10]  # Show only the 10 most recent
-                ],
-            }
-
-        except Exception as e:
-            add_debug_message(f"❌ Error getting info: {e}", "AUTO_BACKUP")
-            return {
-                "enabled": False,
-                "directory": "",
-                "max_files": 50,
-                "total_files": 0,
-                "latest_backup": None,
-                "all_backups": [],
-                "error": str(e),
-            }
-
-    def list_available_backups(self, backup_dir: str | None = None) -> list[BackupInfo]:
-        """
-        Lists all available backup files with their metadata.
-
-        Args:
-            backup_dir: Optional directory to search. If None, uses default backup directory.
-
-        Returns:
-            List[BackupInfo]: List of BackupInfo objects sorted by creation date (newest first)
-        """
-        backups: list[BackupInfo] = []
-
-        try:
-            # Use provided directory or default
-            if backup_dir is None:
-                backup_dir = get_auto_backup_directory()
-
-            if not os.path.exists(backup_dir):
-                add_debug_message(
-                    f"Backup directory does not exist: {backup_dir}", "BACKUP"
-                )
-                return []
-
-            # Find all backup files (*.zip)
-            patterns = [
-                os.path.join(backup_dir, f"{self._safety_backup_prefix}*.zip"),
-                os.path.join(backup_dir, f"{self._auto_backup_prefix}*.zip"),
-                os.path.join(backup_dir, f"{self._manual_backup_prefix}*.zip"),
-                os.path.join(
-                    backup_dir, "sheets2anki_*.zip"
-                ),  # Catch-all for other formats
-            ]
-
-            found_files = set()
-            for pattern in patterns:
-                found_files.update(glob.glob(pattern))
-
-            for backup_path in found_files:
-                try:
-                    backup_info = self._get_backup_info_from_file(backup_path)
-                    if backup_info:
-                        backups.append(backup_info)
-                except Exception as e:
-                    add_debug_message(
-                        f"Error reading backup {backup_path}: {e}", "BACKUP"
-                    )
-                    continue
-
-            # Sort by creation date (newest first)
-            backups.sort(key=lambda x: x.created_at, reverse=True)
-
-            add_debug_message(f"Found {len(backups)} available backups", "BACKUP")
-            return backups
-
-        except Exception as e:
-            add_debug_message(f"Error listing backups: {e}", "BACKUP")
-            return []
 
     def _get_backup_info_from_file(self, backup_path: str) -> BackupInfo | None:
         """
@@ -1122,48 +982,3 @@ class SimplifiedBackupManager:
                 return f"{size:.1f} {unit}"
             size /= 1024
         return f"{size:.1f} TB"
-
-    def cleanup_old_safety_backups(self, max_keep: int = 10) -> int:
-        """
-        Removes old safety backups, keeping only the most recent ones.
-
-        Args:
-            max_keep: Maximum number of safety backups to keep (default: 10)
-
-        Returns:
-            int: Number of files removed
-        """
-        try:
-            backup_dir = get_auto_backup_directory()
-            pattern = os.path.join(backup_dir, f"{self._safety_backup_prefix}*.zip")
-            safety_files = glob.glob(pattern)
-
-            # Sort by modification time (most recent first)
-            safety_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-
-            # Remove excess files
-            files_to_remove = safety_files[max_keep:]
-            removed_count = 0
-
-            for file_path in files_to_remove:
-                try:
-                    os.remove(file_path)
-                    add_debug_message(
-                        f"🗑️ Removed old safety backup: {os.path.basename(file_path)}",
-                        "BACKUP",
-                    )
-                    removed_count += 1
-                except Exception as e:
-                    add_debug_message(f"⚠️ Error removing {file_path}: {e}", "BACKUP")
-
-            if removed_count > 0:
-                add_debug_message(
-                    f"📁 Cleanup completed: {removed_count} safety backup(s) removed",
-                    "BACKUP",
-                )
-
-            return removed_count
-
-        except Exception as e:
-            add_debug_message(f"Error cleaning up safety backups: {e}", "BACKUP")
-            return 0

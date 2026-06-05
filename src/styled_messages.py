@@ -308,15 +308,3 @@ class StyledMessageBox(QDialog):
 
 
 # --- Helper functions that mimic standard aqt.utils but with style ---
-
-
-def show_info(title, text, parent=None):
-    StyledMessageBox.information(parent, title, text)
-
-
-def show_warning(title, text, parent=None):
-    StyledMessageBox.warning(parent, title, text)
-
-
-def show_error(title, text, parent=None):
-    StyledMessageBox.critical(parent, title, text)

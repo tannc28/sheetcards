@@ -743,9 +743,7 @@ class TestGetNoteTypeName:
     def test_without_student(self):
         from src.utils import get_note_type_name
 
-        assert (
-            get_note_type_name("url", "Deck") == "Sheets2Anki - Deck - Basic"
-        )
+        assert get_note_type_name("url", "Deck") == "Sheets2Anki - Deck - Basic"
 
     def test_whitespace_only_student_falls_back_not_none(self):
         # Regression: a whitespace-only student must not return None (that

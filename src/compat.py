@@ -166,69 +166,6 @@ ScrollBarAsNeeded = Qt.ScrollBarPolicy.ScrollBarAsNeeded
 # =============================================================================
 
 
-def safe_connect(signal, slot) -> None:
-    """
-    Connects signal/slot safely.
-
-    Args:
-        signal: Qt signal to connect
-        slot: Slot/function to connect to the signal
-    """
-    try:
-        signal.connect(slot)
-    except Exception as e:
-        try:
-            from .utils import add_debug_message
-
-            add_debug_message(f"Error connecting signal/slot: {e}", "COMPAT")
-        except ImportError:
-            print(f"Error connecting signal/slot: {e}")
-
-
-def create_button(
-    text: str, callback=None, tooltip_text: str | None = None
-) -> QPushButton:
-    """
-    Creates a button with callback and tooltip.
-
-    Args:
-        text: Button text
-        callback: Function to be called when button is clicked
-        tooltip_text: Tooltip text (optional)
-
-    Returns:
-        Configured QPushButton
-    """
-    button = QPushButton(text)
-
-    if callback:
-        safe_connect(button.clicked, callback)
-
-    if tooltip_text:
-        button.setToolTip(tooltip_text)
-
-    return button
-
-
-def show_message(title: str, message: str, message_type: str = "info") -> None:
-    """
-    Shows message to user.
-
-    Args:
-        title: Message title
-        message: Message content
-        message_type: Message type ("info", "warning", "error")
-    """
-    full_message = f"{title}\n\n{message}" if title else message
-
-    if message_type == "warning":
-        showWarning(full_message)
-    elif message_type == "error":
-        showCritical(full_message)
-    else:
-        showInfo(full_message)
-
-
 def safe_exec_dialog(dialog) -> int:
     """
     Executes a dialog.
@@ -254,17 +191,6 @@ def safe_exec_menu(menu, position) -> Any:
         Selected QAction or None
     """
     return menu.exec(position)
-
-
-def show_tooltip(message: str, period: int = 3000) -> None:
-    """
-    Shows temporary tooltip.
-
-    Args:
-        message: Tooltip message
-        period: Duration in milliseconds
-    """
-    tooltip(message)
 
 
 # Alias for consistency

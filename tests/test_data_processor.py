@@ -81,10 +81,7 @@ class TestClozeFormatting:
         assert d.clean_cloze_formatting("{{c1::a::b::c}}") == "a"
 
     def test_clean_handles_multiple_clozes_and_case(self):
-        assert (
-            d.clean_cloze_formatting("a {{c1::X}} b {{c2::Y::h}} c")
-            == "a X b Y c"
-        )
+        assert d.clean_cloze_formatting("a {{c1::X}} b {{c2::Y::h}} c") == "a X b Y c"
         assert d.clean_cloze_formatting("{{C1::upper}}") == "upper"
 
 

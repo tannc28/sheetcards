@@ -26,7 +26,6 @@ from .debug import get_debug_messages  # noqa: F401
 from .debug import initialize_debug_log  # noqa: F401
 from .debug import is_debug_enabled  # noqa: F401
 from .deck_options import _is_default_config  # noqa: F401
-from .deck_options import _should_update_config_version  # noqa: F401
 from .deck_options import apply_automatic_deck_options_system  # noqa: F401
 from .deck_options import apply_options_to_subdecks  # noqa: F401
 from .deck_options import apply_sheets2anki_options_to_all_remote_decks  # noqa: F401
@@ -61,30 +60,6 @@ def safe_find_cards(search_query):
 
         return mw.col.find_cards(search_query)
     except Exception:
-        return []
-
-
-def safe_find_cards_by_deck(deck_name):
-    """
-    Searches for cards by deck name safely.
-
-    Args:
-        deck_name (str): Deck name
-
-    Returns:
-        list: List of IDs of found cards
-    """
-    try:
-        if not deck_name or not deck_name.strip():
-            return []
-
-        # Escape double quotes in deck name
-        escaped_deck_name = deck_name.replace('"', '\\"')
-        search_query = f'deck:"{escaped_deck_name}"'
-
-        return safe_find_cards(search_query)
-    except Exception as e:
-        add_debug_message(f"Error searching by deck '{deck_name}': {e}", "SEARCH_ERROR")
         return []
 
 
@@ -776,85 +751,6 @@ def delete_deck_note_types_by_ids(url):
         return 0
 
 
-def rename_note_type_in_anki(note_type_id, new_name):
-    """
-    Renames an existing note type in Anki without creating a new one.
-
-    Args:
-        note_type_id (int): ID of note type to be renamed
-        new_name (str): New name for the note type
-
-    Returns:
-        bool: True if renamed successfully, False otherwise
-    """
-    try:
-        from aqt import mw
-
-        if not mw or not mw.col:
-            add_debug_message("Anki is not available", "RENAME_NOTE_TYPE")
-            return False
-
-        # Get existing model
-        from anki.models import NotetypeId
-
-        model = mw.col.models.get(NotetypeId(note_type_id))  # type: ignore
-        if not model:
-            add_debug_message(
-                f"Note type ID {note_type_id} not found", "RENAME_NOTE_TYPE"
-            )
-            return False
-
-        old_name = model["name"]
-
-        # Only rename if name is different
-        if old_name == new_name:
-            add_debug_message(
-                f"Note type {note_type_id} already has correct name: '{new_name}'",
-                "RENAME_NOTE_TYPE",
-            )
-            return True
-
-        add_debug_message(
-            f"Renaming note type {note_type_id} from '{old_name}' to '{new_name}'",
-            "RENAME_NOTE_TYPE",
-        )
-
-        # Change only the name of existing model
-        model["name"] = new_name
-
-        # Save changes
-        mw.col.models.save(model)
-
-        add_debug_message("✅ Note type successfully renamed!", "RENAME_NOTE_TYPE")
-        return True
-
-    except Exception as e:
-        add_debug_message(
-            f"❌ Error renaming note type {note_type_id}: {e}", "RENAME_NOTE_TYPE"
-        )
-        import traceback
-
-        traceback.print_exc()
-        return False
-
-
-def get_note_key(note):
-    """
-    Gets the key field of a note based on its type.
-
-    Args:
-        note: Anki note
-
-    Returns:
-        str: Key value or None if not found
-    """
-    if "Text" in note:
-        return note["Text"]
-    elif "Front" in note:
-        return note["Front"]
-    return None
-
-
 def cleanup_orphaned_note_types():
     """
     Removes note types that no longer exist in Anki from the configuration.
@@ -939,7 +835,7 @@ def cleanup_orphaned_note_types():
 
 
 # =============================================================================
-# SHARED DECK OPTIONS MANAGEMENT
+# URL CONVERSION
 # =============================================================================
 
 
@@ -1081,7 +977,7 @@ def validate_url(url):
 
 
 # ========================================================================================
-# CUSTOM EXCEPTIONS (consolidated from exceptions.py)
+# SUBDECK FUNCTIONS
 # ========================================================================================
 
 
@@ -1181,42 +1077,6 @@ def ensure_subdeck_exists(deck_name):
 
     # If it doesn't exist, create deck and all necessary parent decks
     return mw.col.decks.id(deck_name)
-
-
-def move_note_to_subdeck(note_id, subdeck_id):
-    """
-    Moves a note to a specific subdeck.
-
-    Args:
-        note_id (int): ID of the note to move
-        subdeck_id (int): Destination subdeck ID
-
-    Returns:
-        bool: True if operation was successful, False otherwise
-
-    Raises:
-        RuntimeError: If mw is not available
-    """
-    if not mw or not hasattr(mw, "col") or not mw.col:
-        raise RuntimeError("Anki main window (mw) is not available")
-
-    try:
-        # Get note
-        note = mw.col.get_note(note_id)
-
-        # Get all cards of the note using note ID search
-        card_ids = mw.col.find_cards(f"nid:{note_id}")
-
-        # Move each card to subdeck
-        for card_id in card_ids:
-            card = mw.col.get_card(card_id)
-            card.did = subdeck_id
-            card.flush()
-
-        return True
-    except Exception as e:
-        add_debug_message(f"Error moving note to subdeck: {e}", "SUBDECK")
-        return False
 
 
 def remove_empty_subdecks(remote_decks):
