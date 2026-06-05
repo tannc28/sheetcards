@@ -10,16 +10,14 @@ This module allows the user to choose between three timer positions:
 from ..compat import DialogAccepted
 from ..compat import QButtonGroup
 from ..compat import QDialog
-from ..compat import QFrame
 from ..compat import QHBoxLayout
-from ..compat import QLabel
 from ..compat import QPushButton
-from ..compat import QRadioButton
 from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
 from ..theme import get_colors
 from ..theme import make_header
+from ..theme import make_radio_option_card
 
 
 class TimerConfigDialog(QDialog):
@@ -156,88 +154,17 @@ class TimerConfigDialog(QDialog):
         self, position, title, badge, description, accent_color, button_id
     ):
         """Creates a styled option card."""
-        card = QFrame()
-        card.setObjectName(f"card_{position}")
-
-        # Base card style
-        card.setStyleSheet(f"""
-            QFrame#card_{position} {{
-                background-color: {self.colors['card_bg']};
-                border: 2px solid {self.colors['border']};
-                border-radius: 10px;
-                padding: 5px;
-            }}
-            QFrame#card_{position}:hover {{
-                border-color: {accent_color};
-            }}
-        """)
-
-        card_layout = QHBoxLayout(card)
-        card_layout.setContentsMargins(15, 12, 15, 12)
-        card_layout.setSpacing(15)
-
-        # Radio button
-        radio = QRadioButton()
-        radio.setChecked(self.current_position == position)
-        radio.setStyleSheet(f"""
-            QRadioButton::indicator {{
-                width: 22px;
-                height: 22px;
-            }}
-            QRadioButton::indicator:checked {{
-                background-color: {self.colors['accent_primary']};
-                border: 2px solid {self.colors['accent_primary']};
-                border-radius: 11px;
-            }}
-            QRadioButton::indicator:unchecked {{
-                background-color: {self.colors['card_bg']};
-                border: 2px solid {self.colors['border']};
-                border-radius: 11px;
-            }}
-        """)
-        self.button_group.addButton(radio, button_id)
-        card_layout.addWidget(radio)
-
-        # Content
-        content_layout = QVBoxLayout()
-        content_layout.setSpacing(4)
-
-        # Title row with badge
-        title_row = QHBoxLayout()
-        title_label = QLabel(title)
-        title_label.setStyleSheet(
-            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+        return make_radio_option_card(
+            self.colors,
+            key=position,
+            checked=self.current_position == position,
+            title=title,
+            badge=badge,
+            description=description,
+            accent_color=accent_color,
+            button_group=self.button_group,
+            button_id=button_id,
         )
-        title_row.addWidget(title_label)
-
-        badge_label = QLabel(badge)
-        badge_label.setStyleSheet(f"""
-            background-color: {accent_color};
-            color: white;
-            font-size: 12pt;
-            font-weight: bold;
-            padding: 3px 10px;
-            border-radius: 10px;
-        """)
-        title_row.addWidget(badge_label)
-        title_row.addStretch()
-
-        content_layout.addLayout(title_row)
-
-        # Description
-        desc_label = QLabel(description)
-        desc_label.setStyleSheet(
-            f"font-size: 12pt; color: {self.colors['text_secondary']};"
-        )
-        desc_label.setWordWrap(True)
-        content_layout.addWidget(desc_label)
-
-        card_layout.addLayout(content_layout, 1)
-
-        # Make entire card clickable
-        card.mousePressEvent = lambda e: radio.setChecked(True)
-
-        return card
 
     def _connect_signals(self):
         """Connects interface signals."""
