@@ -1034,6 +1034,83 @@ if (typeof globalThis !== 'undefined') {
 </script>
 """
 
+# Shared middle helpers, byte-identical in both desktop and mobile blocks.
+# Composed into both via `""" + _AI_JS_X + """` splices, so each lives in one place.
+_AI_JS_ASK_MODAL = """function openAIAskInput() {
+  var modal = document.getElementById('ai-ask-input-modal');
+  if (modal) {
+    modal.classList.add('show');
+    var textarea = document.getElementById('ai-ask-textarea');
+    if (textarea) {
+      textarea.value = '';
+      textarea.focus();
+    }
+  }
+}
+
+function closeAIAskInput(event) {
+  if (event && event.target !== event.currentTarget) return;
+  var modal = document.getElementById('ai-ask-input-modal');
+  if (modal) modal.classList.remove('show');
+}"""
+
+_AI_JS_RESET_ASK = """function resetAIAskInput() {
+  var submitBtn = document.querySelector('.ai-ask-submit');
+  if (submitBtn) {
+    submitBtn.classList.remove('loading');
+    submitBtn.innerHTML = 'Send Question';
+  }
+  var textarea = document.getElementById('ai-ask-textarea');
+  if (textarea) textarea.disabled = false;
+  closeAIAskInput();
+}"""
+
+_AI_JS_COLLECT = """function collectCardContent() {
+  // Always return the original card content snapshot, never re-read the DOM
+  return window._originalCardContent || '';
+}"""
+
+_AI_JS_RENDER = """function renderMathJax() {
+  if (typeof MathJax !== 'undefined') {
+    if (MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    } else if (MathJax.Hub && MathJax.Hub.Queue) {
+      MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+    }
+  }
+}"""
+
+# (@@B6@@ marks an original 6-space blank line; kept as a marker so the source
+# carries no trailing whitespace, substituted back at import time.)
+_AI_JS_CAPTURE = """// Capture the original card content ONCE on page load, before any AI response is injected.
+// This prevents AI responses from contaminating subsequent AI requests.
+(function() {
+  function captureOriginalContent() {
+    if (!window._originalCardContent) {
+      // Temporarily hide sanity check so it's not included in AI context
+      var sanityCheck = document.querySelector('.sanity-check-container');
+      var originalDisplay = '';
+      if (sanityCheck) {
+        originalDisplay = sanityCheck.style.display;
+        sanityCheck.style.display = 'none';
+      }
+@@B6@@
+      var allText = document.body.innerText || document.body.textContent;
+@@B6@@
+      // Restore sanity check visibility
+      if (sanityCheck) {
+        sanityCheck.style.display = originalDisplay;
+      }
+@@B6@@
+      window._originalCardContent = allText.trim();
+    }
+  }
+  // Capture immediately (for cases where DOM is already ready)
+  captureOriginalContent();
+  // Also capture on DOMContentLoaded (fallback for early script execution)
+  document.addEventListener('DOMContentLoaded', captureOriginalContent);
+})();""".replace("@@B6@@", "      ")
+
 AI_HELP_JS_DESKTOP = _AI_JS_HEAD + """// Desktop-only mode: hide button if pycmd not available
 (function() {
   if (typeof pycmd === 'undefined') {
@@ -1076,23 +1153,7 @@ function requestAIChecker() {
   }
 }
 
-function openAIAskInput() {
-  var modal = document.getElementById('ai-ask-input-modal');
-  if (modal) {
-    modal.classList.add('show');
-    var textarea = document.getElementById('ai-ask-textarea');
-    if (textarea) {
-      textarea.value = '';
-      textarea.focus();
-    }
-  }
-}
-
-function closeAIAskInput(event) {
-  if (event && event.target !== event.currentTarget) return;
-  var modal = document.getElementById('ai-ask-input-modal');
-  if (modal) modal.classList.remove('show');
-}
+""" + _AI_JS_ASK_MODAL + """
 
 function submitAIAsk() {
   var submitBtn = document.querySelector('.ai-ask-submit');
@@ -1121,52 +1182,13 @@ function submitAIAsk() {
   }
 }
 
-function resetAIAskInput() {
-  var submitBtn = document.querySelector('.ai-ask-submit');
-  if (submitBtn) {
-    submitBtn.classList.remove('loading');
-    submitBtn.innerHTML = 'Send Question';
-  }
-  var textarea = document.getElementById('ai-ask-textarea');
-  if (textarea) textarea.disabled = false;
-  closeAIAskInput();
-}
+""" + _AI_JS_RESET_ASK + """
 
 
 """ + """
-// Capture the original card content ONCE on page load, before any AI response is injected.
-// This prevents AI responses from contaminating subsequent AI requests.
-(function() {
-  function captureOriginalContent() {
-    if (!window._originalCardContent) {
-      // Temporarily hide sanity check so it's not included in AI context
-      var sanityCheck = document.querySelector('.sanity-check-container');
-      var originalDisplay = '';
-      if (sanityCheck) {
-        originalDisplay = sanityCheck.style.display;
-        sanityCheck.style.display = 'none';
-      }
-      
-      var allText = document.body.innerText || document.body.textContent;
-      
-      // Restore sanity check visibility
-      if (sanityCheck) {
-        sanityCheck.style.display = originalDisplay;
-      }
-      
-      window._originalCardContent = allText.trim();
-    }
-  }
-  // Capture immediately (for cases where DOM is already ready)
-  captureOriginalContent();
-  // Also capture on DOMContentLoaded (fallback for early script execution)
-  document.addEventListener('DOMContentLoaded', captureOriginalContent);
-})();
+""" + _AI_JS_CAPTURE + """
 
-function collectCardContent() {
-  // Always return the original card content snapshot, never re-read the DOM
-  return window._originalCardContent || '';
-}
+""" + _AI_JS_COLLECT + """
 
 """ + """
 function processMathAndMarkdown(text) {
@@ -1198,15 +1220,7 @@ function processMathAndMarkdown(text) {
   return html;
 }
 
-function renderMathJax() {
-  if (typeof MathJax !== 'undefined') {
-    if (MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    } else if (MathJax.Hub && MathJax.Hub.Queue) {
-      MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
-    }
-  }
-}
+""" + _AI_JS_RENDER + """
 
 function showAIHelpResponse(response, usageInfo) {
   var btn = document.getElementById('ai-help-btn');
@@ -1353,23 +1367,7 @@ function requestAIChecker() {
   callAICheckerAPI(cardContent);
 }
 
-function openAIAskInput() {
-  var modal = document.getElementById('ai-ask-input-modal');
-  if (modal) {
-    modal.classList.add('show');
-    var textarea = document.getElementById('ai-ask-textarea');
-    if (textarea) {
-      textarea.value = '';
-      textarea.focus();
-    }
-  }
-}
-
-function closeAIAskInput(event) {
-  if (event && event.target !== event.currentTarget) return;
-  var modal = document.getElementById('ai-ask-input-modal');
-  if (modal) modal.classList.remove('show');
-}
+""" + _AI_JS_ASK_MODAL + """
 
 function submitAIAsk() {
   var submitBtn = document.querySelector('.ai-ask-submit');
@@ -1401,16 +1399,7 @@ function submitAIAsk() {
   callAIAskAPI(question, cardContent);
 }
 
-function resetAIAskInput() {
-  var submitBtn = document.querySelector('.ai-ask-submit');
-  if (submitBtn) {
-    submitBtn.classList.remove('loading');
-    submitBtn.innerHTML = 'Send Question';
-  }
-  var textarea = document.getElementById('ai-ask-textarea');
-  if (textarea) textarea.disabled = false;
-  closeAIAskInput();
-}
+""" + _AI_JS_RESET_ASK + """
 
 function _replacePromptPlaceholder(promptTemplate, placeholder, value) {
   // Handles both {placeholder} and {placeholder} forms
@@ -1584,39 +1573,9 @@ function callOpenAIAPI(prompt) {
   .catch(function(e) { showAIHelpError('Request failed: ' + e.message); });
 }
 
-// Capture the original card content ONCE on page load, before any AI response is injected.
-// This prevents AI responses from contaminating subsequent AI requests.
-(function() {
-  function captureOriginalContent() {
-    if (!window._originalCardContent) {
-      // Temporarily hide sanity check so it's not included in AI context
-      var sanityCheck = document.querySelector('.sanity-check-container');
-      var originalDisplay = '';
-      if (sanityCheck) {
-        originalDisplay = sanityCheck.style.display;
-        sanityCheck.style.display = 'none';
-      }
-      
-      var allText = document.body.innerText || document.body.textContent;
-      
-      // Restore sanity check visibility
-      if (sanityCheck) {
-        sanityCheck.style.display = originalDisplay;
-      }
-      
-      window._originalCardContent = allText.trim();
-    }
-  }
-  // Capture immediately (for cases where DOM is already ready)
-  captureOriginalContent();
-  // Also capture on DOMContentLoaded (fallback for early script execution)
-  document.addEventListener('DOMContentLoaded', captureOriginalContent);
-})();
+""" + _AI_JS_CAPTURE + """
 
-function collectCardContent() {
-  // Always return the original card content snapshot, never re-read the DOM
-  return window._originalCardContent || '';
-}
+""" + _AI_JS_COLLECT + """
 
 function processMathAndMarkdown(text) {
   var mathBlocks = [];
@@ -1647,15 +1606,7 @@ function processMathAndMarkdown(text) {
   return html;
 }
 
-function renderMathJax() {
-  if (typeof MathJax !== 'undefined') {
-    if (MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    } else if (MathJax.Hub && MathJax.Hub.Queue) {
-      MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
-    }
-  }
-}
+""" + _AI_JS_RENDER + """
 
 function showAIHelpResponse(response, usageInfo) {
   var btn = document.getElementById('ai-help-btn');
