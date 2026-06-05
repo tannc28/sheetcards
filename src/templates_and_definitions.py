@@ -980,7 +980,9 @@ AI_HELP_BUTTON_HTML = """
 """
 
 # AI Help JavaScript - Base template (desktop-only mode)
-AI_HELP_JS_DESKTOP = """
+# Shared <script> head for BOTH AI templates: the security sanitizer
+# (escapeHtml / sanitizeHtml). Single source of truth — fix it in one place.
+_AI_JS_HEAD = """
 <script>
 // --- Security: sanitize AI/markdown HTML before inserting via innerHTML ---
 function escapeHtml(s) {
@@ -1009,7 +1011,30 @@ function sanitizeHtml(dirty) {
   }
   return root.innerHTML;
 }
-// Desktop-only mode: hide button if pycmd not available
+"""
+
+# Shared <script> tail for BOTH AI templates: the modal-close handler + the
+# globalThis bridge that Python's reviewer.web.eval() calls into. Single source of truth.
+_AI_JS_TAIL = """
+
+function closeAIHelpModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  var modal = document.getElementById('ai-help-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.sheets2ankiAIResponse = function(response, usageInfo) {
+    showAIHelpResponse(response, usageInfo);
+  };
+  globalThis.sheets2ankiAIError = function(error) {
+    showAIHelpError(error);
+  };
+}
+</script>
+"""
+
+AI_HELP_JS_DESKTOP = _AI_JS_HEAD + """// Desktop-only mode: hide button if pycmd not available
 (function() {
   if (typeof pycmd === 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
@@ -1233,56 +1258,10 @@ function showAIHelpError(error) {
   if (!modal || !body) return;
   body.innerHTML = '<div class="ai-help-error">⚠️ ' + escapeHtml(error) + '</div>';
   modal.classList.add('show');
-}
-
-function closeAIHelpModal(event) {
-  if (event && event.target !== event.currentTarget) return;
-  var modal = document.getElementById('ai-help-modal');
-  if (modal) modal.classList.remove('show');
-}
-
-if (typeof globalThis !== 'undefined') {
-  globalThis.sheets2ankiAIResponse = function(response, usageInfo) {
-    showAIHelpResponse(response, usageInfo);
-  };
-  globalThis.sheets2ankiAIError = function(error) {
-    showAIHelpError(error);
-  };
-}
-</script>
-"""
+}""" + _AI_JS_TAIL
 
 # AI Help JavaScript - Mobile mode (with embedded API config)
-AI_HELP_JS_MOBILE_TEMPLATE = """
-<script>
-// --- Security: sanitize AI/markdown HTML before inserting via innerHTML ---
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-function sanitizeHtml(dirty) {
-  // Conservative allowlist sanitizer (no external dependency, works offline):
-  // renders formatted AI output while stripping script-execution vectors.
-  var root = document.createElement('div');
-  root.innerHTML = String(dirty == null ? '' : dirty);
-  var banned = {SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, LINK:1, META:1, BASE:1, SVG:1, MATH:1};
-  var els = root.querySelectorAll('*');
-  for (var i = els.length - 1; i >= 0; i--) {
-    var el = els[i];
-    if (banned[el.tagName]) { if (el.parentNode) el.parentNode.removeChild(el); continue; }
-    for (var j = el.attributes.length - 1; j >= 0; j--) {
-      var an = el.attributes[j].name, av = el.attributes[j].value || '', ln = an.toLowerCase();
-      if (ln.indexOf('on') === 0) { el.removeAttribute(an); continue; }
-      if (ln === 'href' || ln === 'src' || ln === 'xlink:href' || ln === 'formaction' || ln === 'action') {
-        var v = av.replace(/\\s+/g, '').toLowerCase();
-        if (v.indexOf('javascript:') === 0 || (v.indexOf('data:') === 0 && v.indexOf('data:image/') !== 0)) el.removeAttribute(an);
-      } else if (ln === 'style' && /expression|javascript:/i.test(av)) {
-        el.removeAttribute(an);
-      }
-    }
-  }
-  return root.innerHTML;
-}
-// Decode Base64-encoded prompts to prevent HTML parser corruption
+AI_HELP_JS_MOBILE_TEMPLATE = _AI_JS_HEAD + """// Decode Base64-encoded prompts to prevent HTML parser corruption
 function _b64decode(str) {
   try {
     return decodeURIComponent(Array.prototype.map.call(
@@ -1751,24 +1730,7 @@ function showAIHelpError(error) {
     body.innerHTML = errorHtml;
     modal.classList.add('show');
   }
-}
-
-function closeAIHelpModal(event) {
-  if (event && event.target !== event.currentTarget) return;
-  var modal = document.getElementById('ai-help-modal');
-  if (modal) modal.classList.remove('show');
-}
-
-if (typeof globalThis !== 'undefined') {
-  globalThis.sheets2ankiAIResponse = function(response, usageInfo) {
-    showAIHelpResponse(response, usageInfo);
-  };
-  globalThis.sheets2ankiAIError = function(error) {
-    showAIHelpError(error);
-  };
-}
-</script>
-"""
+}""" + _AI_JS_TAIL
 
 # Keep old constant for backward compatibility (desktop-only mode)
 AI_HELP_JS = AI_HELP_JS_DESKTOP
