@@ -15,66 +15,12 @@ from .compat import Qt
 from .compat import QVBoxLayout
 from .compat import QWidget
 
-
-def is_dark_mode():
-    """Detects if Anki is running in dark mode."""
-    try:
-        from aqt import theme
-
-        if hasattr(theme, "theme_manager"):
-            return theme.theme_manager.night_mode
-        # Fallback for older Anki versions
-        from aqt import mw as main_window
-
-        if main_window and hasattr(main_window, "pm"):
-            return main_window.pm.night_mode()
-    except Exception:
-        pass
-    return False
-
-
-def get_colors():
-    """Returns color palette based on current theme."""
-    if is_dark_mode():
-        # Dark mode colors
-        return {
-            "primary": "#5BA3E0",
-            "primary_dark": "#4A90D9",
-            "primary_light": "#2A3F50",
-            "success": "#3CB371",
-            "success_light": "#1E3A2A",
-            "warning": "#E6A817",
-            "warning_light": "#3D3520",
-            "error": "#E05555",
-            "error_light": "#3D2020",
-            "text_primary": "#E0E0E0",
-            "text_secondary": "#B0B0B0",
-            "text_muted": "#707070",
-            "background": "#2D2D2D",
-            "background_secondary": "#383838",
-            "border": "#505050",
-            "border_light": "#454545",
-        }
-    else:
-        # Light mode colors
-        return {
-            "primary": "#4A90D9",
-            "primary_dark": "#357ABD",
-            "primary_light": "#E8F4FC",
-            "success": "#28A745",
-            "success_light": "#D4EDDA",
-            "warning": "#FFC107",
-            "warning_light": "#FFF3CD",
-            "error": "#DC3545",
-            "error_light": "#F8D7DA",
-            "text_primary": "#2C3E50",
-            "text_secondary": "#5C656D",
-            "text_muted": "#ADB5BD",
-            "background": "#FFFFFF",
-            "background_secondary": "#F8F9FA",
-            "border": "#DEE2E6",
-            "border_light": "#E9ECEF",
-        }
+# The color palette now lives in the shared design-system module (src/theme.py); the
+# canonical token values are preserved there, so message boxes render unchanged.
+try:
+    from .theme import get_colors
+except ImportError:  # pragma: no cover - direct-import fallback for tests
+    from theme import get_colors
 
 
 class StyledMessageBox(QDialog):
