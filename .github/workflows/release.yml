@@ -1,0 +1,111 @@
+name: Release
+
+# Publishing is driven by the tag: push v3.0.4 and this builds both .ankiaddon
+# packages and attaches them to a GitHub release of the same name. Nothing is
+# published from a branch push, so main stays a plain integration branch.
+on:
+  push:
+    tags: ["v*"]
+  # Lets a failed release be re-run (or a dry run done) without moving the tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build, e.g. v3.0.4"
+        required: true
+      draft:
+        description: "Create the release as a draft"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write # required to create the release and upload assets
+
+jobs:
+  release:
+    name: Build and publish .ankiaddon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # The add-on version lives in three places that must agree, and shipping a
+      # package whose manifest disagrees with its tag is the kind of mistake that
+      # is only noticed after users install it. Fail before building instead.
+      - name: Check tag matches manifest.json and pyproject.toml
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          TAG_VERSION="${TAG#v}"
+          MANIFEST_VERSION=$(python -c "import json;print(json.load(open('manifest.json'))['version'])")
+          PYPROJECT_VERSION=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "tag=$TAG_VERSION manifest=$MANIFEST_VERSION pyproject=$PYPROJECT_VERSION"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ] || [ "$TAG_VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "::error::Version mismatch — tag '$TAG_VERSION', manifest.json '$MANIFEST_VERSION', pyproject.toml '$PYPROJECT_VERSION' must all match."
+            exit 1
+          fi
+          echo "VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+
+      # Anki is mocked by tests/conftest.py, so the suite needs nothing heavier
+      # than pytest. A tag that cannot pass its own tests must not ship.
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest pytest-mock
+
+      - name: Run test suite
+        run: python tests/run_tests.py
+
+      # Both scripts are stdlib-only and non-interactive. They copy the tree into
+      # build/ and flip IS_DEVELOPMENT_MODE to False in the copy, leaving the
+      # checkout untouched.
+      - name: Build standalone package
+        run: python scripts/create_standalone_package.py
+
+      - name: Build AnkiWeb package
+        run: python scripts/create_ankiweb_package.py
+
+      # Enforces the three AnkiWeb hard requirements: files at the ZIP root, a
+      # valid manifest.json, and no __pycache__/.pyc.
+      - name: Validate packages
+        run: |
+          python scripts/validate_packages.py build/sheets2anki-standalone.ankiaddon
+          python scripts/validate_packages.py build/sheets2anki.ankiaddon
+
+      # Version-stamped names so a downloaded asset is still identifiable later.
+      - name: Name assets after the version
+        run: |
+          mv build/sheets2anki-standalone.ankiaddon "build/sheets2anki-${VERSION}.ankiaddon"
+          mv build/sheets2anki.ankiaddon "build/sheets2anki-${VERSION}-ankiweb.ankiaddon"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          DRAFT: ${{ github.event.inputs.draft }}
+        run: |
+          NOTES=$(cat <<'EOF'
+          Install the standalone package in Anki: **Tools → Add-ons → Install from file…**, then restart Anki.
+
+          | Asset | Use |
+          |---|---|
+          | `sheets2anki-VERSION.ankiaddon` | Manual install (full manifest) |
+          | `sheets2anki-VERSION-ankiweb.ankiaddon` | Upload to AnkiWeb (stripped manifest) |
+          EOF
+          )
+          NOTES="${NOTES//VERSION/$VERSION}"
+
+          # Only the manual dispatch can ask for a draft; a tag push publishes.
+          DRAFT_FLAG=""
+          if [ "$DRAFT" = "true" ]; then DRAFT_FLAG="--draft"; fi
+
+          # Re-runs should update the existing release rather than fail on it.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" build/*.ankiaddon --clobber
+          else
+            gh release create "$TAG" build/*.ankiaddon \
+              --title "$TAG" \
+              --notes "$NOTES" \
+              $DRAFT_FLAG
+          fi
