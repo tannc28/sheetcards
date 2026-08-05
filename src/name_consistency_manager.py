@@ -8,8 +8,6 @@ from anki.decks import DeckId
 from anki.models import NotetypeId
 from aqt import mw
 
-from .templates_and_definitions import DEFAULT_STUDENT
-
 
 class NameConsistencyManager:
     """
@@ -35,11 +33,11 @@ class NameConsistencyManager:
         # 2. recreate local_deck_name in the pattern "Sheets2Anki::{remote_deck_name}"
         local_deck_name = f"Sheets2Anki::{remote_deck_name}"
 
-        # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - {student} - Basic/Cloze/Reverse"
-        note_type_patterns = {
-            "basic_template": f"Sheets2Anki - {remote_deck_name} - {{student}} - Basic",
-            "cloze_template": f"Sheets2Anki - {remote_deck_name} - {{student}} - Cloze",
-            "reverse_template": f"Sheets2Anki - {remote_deck_name} - {{student}} - Reverse",
+        # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - Basic/Cloze/Reverse"
+        note_type_names = {
+            "basic": f"Sheets2Anki - {remote_deck_name} - Basic",
+            "cloze": f"Sheets2Anki - {remote_deck_name} - Cloze",
+            "reverse": f"Sheets2Anki - {remote_deck_name} - Reverse",
         }
 
         # 4. recreate deck_option_name in the pattern "Sheets2Anki - {remote_deck_name}"
@@ -47,7 +45,7 @@ class NameConsistencyManager:
 
         return {
             "local_deck_name": local_deck_name,
-            "note_type_patterns": note_type_patterns,
+            "note_type_names": note_type_names,
             "deck_option_name": deck_option_name,
         }
 
@@ -104,7 +102,7 @@ class NameConsistencyManager:
 
             # 7. Check and update note type names
             note_types_result = NameConsistencyManager._enforce_note_types_consistency(
-                deck_url, note_types_config, standard_names["note_type_patterns"], debug
+                deck_url, note_types_config, standard_names["note_type_names"], debug
             )
             results["note_types_updated"] = note_types_result["updated_types"]
             results["errors"].extend(note_types_result.get("errors", []))
@@ -208,7 +206,7 @@ class NameConsistencyManager:
     def _enforce_note_types_consistency(
         deck_url: str,
         current_note_types: dict[str, str],
-        name_patterns: dict[str, str],
+        expected_names: dict[str, str],
         debug_callback,
     ) -> dict[str, Any]:
         """
@@ -217,11 +215,6 @@ class NameConsistencyManager:
         try:
             if not mw or not mw.col:
                 return {"updated_types": [], "errors": ["Anki not available"]}
-
-            # Get list of enabled students
-            from .config_manager import get_enabled_students
-
-            enabled_students = get_enabled_students()
 
             updated_types = []
             final_note_types = {}
@@ -236,15 +229,15 @@ class NameConsistencyManager:
                         errors.append(f"Note type ID {note_type_id} not found")
                         continue
 
-                    # Determine expected name based on pattern
+                    # Determine expected name based on the note type kind
                     expected_name = (
                         NameConsistencyManager._determine_expected_note_type_name(
-                            current_name, name_patterns, enabled_students
+                            current_name, expected_names
                         )
                     )
 
                     if not expected_name:
-                        # Keep current name if pattern cannot be determined
+                        # Keep current name if the kind cannot be determined
                         final_note_types[note_type_id_str] = current_name
                         continue
 
@@ -304,45 +297,32 @@ class NameConsistencyManager:
 
     @staticmethod
     def _determine_expected_note_type_name(
-        current_name: str, patterns: dict[str, str], enabled_students: list[str]
+        current_name: str, expected_names: dict[str, str]
     ) -> str | None:
         """
-        Determines the expected name of a note type based on pattern and student.
+        Determines the expected name of a note type based on its kind.
         """
-        # Extract student and type from current name
+        # Extract the type from current name
         if " - " not in current_name:
             return None
 
         parts = current_name.split(" - ")
-        if len(parts) < 4:
+        if len(parts) < 3:
             return None
 
-        # Format is: "Sheets2Anki - {remote_name} - {student} - {type}"
+        # Format is: "Sheets2Anki - {remote_name} - {type}"
         # But remote_name may contain hyphens, so we need to work backwards
 
         # Last element is always the type (Basic/Cloze/Reverse)
         note_type = parts[-1]
 
-        # Second to last element is always the student
-        student = parts[-2]
-
-        # Check if it's a valid student
-        all_students = enabled_students + [DEFAULT_STUDENT]
-        if student not in all_students:
-            return None
-
-        # Determine correct pattern
+        # Determine correct name
         if note_type == "Basic":
-            pattern = patterns.get("basic_template")
+            return expected_names.get("basic")
         elif note_type == "Cloze":
-            pattern = patterns.get("cloze_template")
+            return expected_names.get("cloze")
         elif note_type == "Reverse":
-            pattern = patterns.get("reverse_template")
-        else:
-            return None
-
-        if pattern:
-            return pattern.format(student=student)
+            return expected_names.get("reverse")
 
         return None
 

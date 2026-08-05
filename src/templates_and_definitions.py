@@ -18,7 +18,6 @@ Consolidated from:
 
 # Basic system fields
 identifier = "ID"  # Unique question identifier (required)
-students = "STUDENTS"  # Indicates which students are interested in studying this note
 is_sync = "SYNC"  # Synchronization control field (true/false/1/0)
 sanity_check = "[ ✅ / ❌ ] - SANITY CHECK"  # Sanity check/Quality control field
 
@@ -92,7 +91,6 @@ extra_field_3 = "EXTRA FIELD 3"  # Extra field 3 - free use
 # Complete list of all available spreadsheet columns
 ALL_AVAILABLE_COLUMNS = [
     identifier,  # Unique identifier
-    students,  # Interested students control
     is_sync,  # Synchronization control
     sanity_check,  # Quality control field
     hierarchy_1,  # Importance level
@@ -229,9 +227,8 @@ from .card_assets import AI_HELP_CSS  # noqa: F401
 from .card_assets import AI_HELP_JS  # noqa: F401
 from .card_assets import AI_HELP_JS_DESKTOP  # noqa: F401
 from .card_assets import AI_HELP_JS_MOBILE_TEMPLATE  # noqa: F401
-from .card_assets import CARD_SHOW_ALLWAYS_TEMPLATE  # noqa: F401
+from .card_assets import ANSWER_SEPARATOR_HTML
 from .card_assets import CARD_SHOW_HIDE_TEMPLATE  # noqa: F401
-from .card_assets import MARKERS_TEMPLATE  # noqa: F401
 from .card_assets import REVERSE_INDICATOR_CSS  # noqa: F401
 from .card_assets import REVERSE_INDICATOR_HTML  # noqa: F401
 from .card_assets import TIMER_CSS  # noqa: F401
@@ -304,7 +301,6 @@ DEFAULT_IMPORTANCE = "[MISSING_IMPORTANCE]"
 DEFAULT_TOPIC = "[MISSING_TOPIC]"
 DEFAULT_SUBTOPIC = "[MISSING_SUBTOPIC]"
 DEFAULT_CONCEPT = "[MISSING_CONCEPT]"
-DEFAULT_STUDENT = "[MISSING_STUDENT]"
 
 # Root deck name - non-modifiable constant by user
 DEFAULT_PARENT_DECK_NAME = "Sheets2Anki"
@@ -455,127 +451,38 @@ def create_card_template(
             ai_assistance_enabled = False  # Default fallback
             ai_assistance_config = None
 
-    # Common header fields
-    header_fields = [
-        (hierarchy_1, hierarchy_1),
-        (hierarchy_2, hierarchy_2),
-        (hierarchy_3, hierarchy_3),
-        (hierarchy_4, hierarchy_4),
-    ]
+    # The card is deliberately minimal: the front carries the timer and the question,
+    # the back adds the answer plus whatever supporting content the row actually has.
+    # The old CONTEXT / INFORMATION / TAGS sections were removed outright — their
+    # headings rendered even when every field under them was empty, and the exam-prep
+    # fields (BOARDS, LAST YEAR IN EXAM, CAREERS, OTHER TAGS, EXTRA FIELD 1-3, SANITY
+    # CHECK) are still synced into the note, just not shown on the card.
 
-    # Build header section
-    header = ""
-    for field_name, field_value in header_fields:
-        header += CARD_SHOW_ALLWAYS_TEMPLATE.format(
-            field_name=field_name.capitalize(), field_value=field_value
-        )
+    # Question and answer are rendered bare — no label, nothing to read past.
+    cloze_prefix = "cloze:" if is_cloze else ""
+    question_html = f"{{{{{cloze_prefix}{question}}}}}"
+    answer_html = f"{{{{{cloze_prefix}{answer}}}}}"
 
-    # Question format
-    question_html = (
-        f"<b>❓ {question.capitalize()}</b><br>"
-        f"{{{{{'cloze:' if is_cloze else ''}{question}}}}}<br><br>"
-    )
-
-    # Answer format
-    answer_html = (
-        f"<b>❗️ {answer.capitalize()}</b><br>"
-        f"{{{{{'cloze:' if is_cloze else ''}{answer}}}}}<br><br>"
-    )
-
-    # Information fields
-    info_fields = [info_1, info_2]
-
-    extra_infos = ""
-    for info_field in info_fields:
-        extra_infos += CARD_SHOW_HIDE_TEMPLATE.format(
-            field_name=info_field.capitalize(), field_value=info_field
-        )
-
-    # Image multimedia field
-    image_html = CARD_SHOW_HIDE_TEMPLATE.format(
-        field_name=multimedia_1.capitalize(), field_value=multimedia_1
-    )
-
-    # Video multimedia field
-    video_html = CARD_SHOW_HIDE_TEMPLATE.format(
-        field_name=multimedia_2.capitalize(), field_value=multimedia_2
-    )
-
-    # Example fields
-    example_fields = [example_1, example_2, mnemonic]
-
-    examples = ""
-    for field in example_fields:
-        examples += CARD_SHOW_HIDE_TEMPLATE.format(
-            field_name=field.capitalize(), field_value=field
-        )
-
-    # Customizable extra fields
-    extra_fields = [extra_field_1, extra_field_2, extra_field_3]
-
-    extras = ""
-    for field in extra_fields:
-        extras += CARD_SHOW_HIDE_TEMPLATE.format(
-            field_name=field.capitalize(), field_value=field
-        )
-
-    # Footer fields
-    footer_fields = [
-        (tags_1, tags_1),
-        (tags_2, tags_2),
-        (tags_3, tags_3),
-        (tags_4, tags_4),
-    ]
-
-    # Build footer section
-    footer = ""
-    for field_name, field_value in footer_fields:
-        footer += CARD_SHOW_HIDE_TEMPLATE.format(
-            field_name=field_name.capitalize(), field_value=field_value
-        )
-
-    # Sanity check footer
-    sanity_html = f"""
-    {{{{#{sanity_check}}}}}
-    <hr style="border: 0; height: 1px; background: #ccc; margin-top: 20px; margin-bottom: 10px;">
-    <div class="sanity-check-container" style="text-align: center; padding: 10px; background: rgba(128, 128, 128, 0.1); border-radius: 8px;">
-      <span style="font-weight: bold; color: #555;">Sanity Check:</span> {{{{{sanity_check}}}}}
-    </div>
-    {{{{/{sanity_check}}}}}
-    """
-
-    # Determine timer components based on position
-    if timer_position == "hidden":
-        # No timer
-        timer_css = ""
-        timer_html = ""
-        timer_js_front = ""
-        timer_js_back = ""
-    elif timer_position == "top_middle":
-        # Fixed position at top middle
-        timer_css = TIMER_CSS_TOP_MIDDLE
-        timer_html = TIMER_HTML
-        timer_js_front = TIMER_JS_FRONT
-        timer_js_back = TIMER_JS_BACK
-    else:  # "between_sections" (default)
-        # Between CONTEXT and CARD sections
-        timer_css = TIMER_CSS_BETWEEN_SECTIONS
-        timer_html = TIMER_HTML
-        timer_js_front = TIMER_JS_FRONT
-        timer_js_back = TIMER_JS_BACK
-
-    # Build complete templates
     if is_reverse:
-        # Question format for Reverse cards (REVERSE field is the question)
-        question_html = (
-            f"\u003cb\u003e❓ {question.capitalize()}\u003c/b\u003e\u003cbr\u003e"
-            f"{{{{{reverse}}}}}\u003cbr\u003e\u003cbr\u003e"
-        )
+        # Reverse cards swap the two: REVERSE asks, QUESTION answers.
+        question_html = f"{{{{{reverse}}}}}"
+        answer_html = f"{{{{{question}}}}}"
 
-        # Answer format for Reverse cards (QUESTION field is the answer)
-        answer_html = (
-            f"\u003cb\u003e❗️ {answer.capitalize()}\u003c/b\u003e\u003cbr\u003e"
-            f"{{{{{question}}}}}\u003cbr\u003e\u003cbr\u003e"
+    # Supporting content, each row conditional so an empty field leaves no trace.
+    supporting_fields = [
+        info_1,
+        info_2,
+        example_1,
+        example_2,
+        mnemonic,
+        multimedia_1,
+        multimedia_2,
+    ]
+
+    supporting_html = ""
+    for field in supporting_fields:
+        supporting_html += CARD_SHOW_HIDE_TEMPLATE.format(
+            field_name=field.capitalize(), field_value=field
         )
 
     # Build reverse indicator if needed (CSS separate from HTML for positioning)
@@ -585,80 +492,32 @@ def create_card_template(
         reverse_indicator_css = REVERSE_INDICATOR_CSS
         reverse_indicator_html = REVERSE_INDICATOR_HTML
 
-    if timer_position == "top_middle":
-        # For top_middle: timer at beginning (fixed position, so doesn't matter)
-        qfmt = (
-            reverse_indicator_css
-            + timer_css
-            + timer_html
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + header
-            + MARKERS_TEMPLATE.format(text="CARD", observation="")
-            + reverse_indicator_html
-            + question_html
-            + timer_js_front
-        )
-    elif timer_position == "hidden":
-        # No timer at all
-        qfmt = (
-            reverse_indicator_css
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + header
-            + MARKERS_TEMPLATE.format(text="CARD", observation="")
-            + reverse_indicator_html
-            + question_html
-        )
-    else:  # "between_sections"
-        # Timer between CONTEXT and CARD
-        qfmt = (
-            reverse_indicator_css
-            + timer_css
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + header
-            + timer_html
-            + MARKERS_TEMPLATE.format(text="CARD", observation="")
-            + reverse_indicator_html
-            + question_html
-            + timer_js_front
-        )
+    # Determine timer components based on position
+    if timer_position == "hidden":
+        timer_css = ""
+        timer_html = ""
+        timer_js_front = ""
+        timer_js_back = ""
+    elif timer_position == "top_middle":
+        timer_css = TIMER_CSS_TOP_MIDDLE
+        timer_html = TIMER_HTML
+        timer_js_front = TIMER_JS_FRONT
+        timer_js_back = TIMER_JS_BACK
+    else:  # "between_sections" (default)
+        timer_css = TIMER_CSS_BETWEEN_SECTIONS
+        timer_html = TIMER_HTML
+        timer_js_front = TIMER_JS_FRONT
+        timer_js_back = TIMER_JS_BACK
 
-    # Back template
-    if is_cloze:
-        back_content = (
-            header
-            + (timer_html if timer_position == "between_sections" else "")
-            + MARKERS_TEMPLATE.format(text="CARD", observation="")
-            + reverse_indicator_html
-            + question_html
-            + MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty")
-            + extra_infos
-            + examples
-            + image_html
-            + video_html
-            + extras
-            + MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty")
-            + footer
-            + sanity_html
-        )
-    else:
-        # Basic card: show question + answer + additional info
-        back_content = (
-            header
-            + (timer_html if timer_position == "between_sections" else "")
-            + MARKERS_TEMPLATE.format(text="CARD", observation="")
-            + reverse_indicator_html
-            + question_html
-            + answer_html
-            + MARKERS_TEMPLATE.format(text="INFORMATION", observation="May be empty")
-            + extra_infos
-            + examples
-            + image_html
-            + video_html
-            + extras
-            + MARKERS_TEMPLATE.format(text="TAGS", observation="May be empty")
-            + footer
-            + sanity_html
-        )
+    # Front: timer, then the question. Nothing else.
+    qfmt = (
+        reverse_indicator_css
+        + timer_css
+        + timer_html
+        + reverse_indicator_html
+        + question_html
+        + timer_js_front
+    )
 
     # Build AI Assistance components if enabled
     ai_assistance_components = ""
@@ -678,32 +537,19 @@ def create_card_template(
             ai_help_js = AI_HELP_JS_DESKTOP
         ai_assistance_components = AI_HELP_CSS + AI_HELP_BUTTON_HTML + ai_help_js
 
-    if timer_position == "top_middle":
-        afmt = (
-            reverse_indicator_css
-            + timer_css
-            + timer_html
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + back_content
-            + ai_assistance_components
-            + timer_js_back
-        )
-    elif timer_position == "hidden":
-        afmt = (
-            reverse_indicator_css
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + back_content
-            + ai_assistance_components
-        )
-    else:  # "between_sections"
-        afmt = (
-            reverse_indicator_css
-            + timer_css
-            + MARKERS_TEMPLATE.format(text="CONTEXT", observation="")
-            + back_content
-            + ai_assistance_components
-            + timer_js_back
-        )
+    # Back: the front again, then a rule, then the answer and its supporting rows.
+    # A cloze card already reveals its answer inside the question text, so it does not
+    # repeat the ANSWER field.
+    back_answer = "" if is_cloze else answer_html + "<br><br>"
+
+    afmt = (
+        "{{FrontSide}}"
+        + ANSWER_SEPARATOR_HTML
+        + back_answer
+        + supporting_html
+        + ai_assistance_components
+        + timer_js_back
+    )
 
     return {"qfmt": qfmt, "afmt": afmt}
 
@@ -757,7 +603,7 @@ def create_model(
     return model
 
 
-def ensure_custom_models(col, url, student=None, debug_messages=None):
+def ensure_custom_models(col, url, debug_messages=None):
     """
     Ensures both models (standard and cloze) exist in Anki.
     Uses IDs stored in meta.json to find existing note types,
@@ -766,7 +612,6 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
     Args:
         col: Anki collection object
         url (str): Remote deck URL
-        student (str, optional): Student name for creating specific models
         debug_messages (list, optional): List for debug
 
     Returns:
@@ -787,9 +632,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
     remote_deck_name = get_deck_remote_name(url) or "RemoteDeck"
     existing_note_types = get_deck_note_type_ids(url) or {}
 
-    add_debug_msg(
-        f"Searching note types for student='{student}', remote_deck_name='{remote_deck_name}'"
-    )
+    add_debug_msg(f"Searching note types for remote_deck_name='{remote_deck_name}'")
     add_debug_msg(f"Existing note types: {len(existing_note_types)} found")
 
     # Helper function to find note type by pattern
@@ -801,9 +644,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
         else:
             target_type = "Basic"
 
-        target_pattern = (
-            f" - {student} - {target_type}" if student else f" - {target_type}"
-        )
+        target_pattern = f" - {target_type}"
 
         # Search in existing note types
         for note_type_id_str, note_type_name in existing_note_types.items():
@@ -823,9 +664,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
         return None, None
 
     # Standard model (Basic)
-    expected_name = get_note_type_name(
-        url, remote_deck_name, student=student, is_cloze=False
-    )
+    expected_name = get_note_type_name(url, remote_deck_name, is_cloze=False)
     existing_model, existing_name = find_existing_note_type(is_cloze=False)
 
     if existing_model:
@@ -863,9 +702,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
         models["standard"] = model
 
     # Cloze model
-    expected_cloze_name = get_note_type_name(
-        url, remote_deck_name, student=student, is_cloze=True
-    )
+    expected_cloze_name = get_note_type_name(url, remote_deck_name, is_cloze=True)
     existing_cloze_model, existing_cloze_name = find_existing_note_type(is_cloze=True)
 
     if existing_cloze_model:
@@ -908,7 +745,7 @@ def ensure_custom_models(col, url, student=None, debug_messages=None):
 
     # Reverse model
     expected_reverse_name = get_note_type_name(
-        url, remote_deck_name, student=student, is_cloze=False, is_reverse=True
+        url, remote_deck_name, is_cloze=False, is_reverse=True
     )
     existing_reverse_model, existing_reverse_name = find_existing_note_type(
         is_cloze=False, is_reverse=True

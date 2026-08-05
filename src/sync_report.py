@@ -2,11 +2,6 @@
 
 Pure string builders: they take SyncStats-like objects and return HTML."""
 
-try:
-    from .templates_and_definitions import DEFAULT_STUDENT
-except ImportError:  # pragma: no cover - direct (non-package) import in some tests
-    from templates_and_definitions import DEFAULT_STUDENT
-
 
 def _generate_metrics_table_html(stats) -> str:
     """
@@ -96,13 +91,6 @@ def _generate_metrics_table_html(stats) -> str:
 
     potential_metrics = [
         ("🚀", "Total notes to process", stats.remote_total_potential_anki_notes),
-        ("🎓", "Notes assigned to students", stats.remote_potential_student_notes),
-        (
-            "❓",
-            f"Notes unassigned (Default to {DEFAULT_STUDENT})",
-            stats.remote_potential_missing_students_notes,
-        ),
-        ("👥", "Total unique students found", stats.remote_unique_students_count),
     ]
 
     for icon, label, value in potential_metrics:
@@ -114,13 +102,6 @@ def _generate_metrics_table_html(stats) -> str:
         </tr>
         """
     html += "</table></div>"
-
-    # Students detail
-    if stats.remote_notes_per_student:
-        html += '<div class="students-section"><h4>👥 Notes per student:</h4><div class="student-tags">'
-        for student, count in sorted(stats.remote_notes_per_student.items()):
-            html += f'<span class="student-tag">{student}: <b>{count}</b></span>&nbsp;&nbsp;'
-        html += "</div></div>"
 
     return html
 
@@ -145,7 +126,7 @@ def _generate_changes_list_html(title, details, type_class="info") -> str:
     html = f'<div class="changes-block {type_class}"><h3>{title}</h3><table class="changes-table">'
 
     for i, detail in enumerate(details, 1):
-        note_info = f"{detail['student']}: {detail['note_id']}"
+        note_info = detail.get("note_key") or detail["note_id"]
         extra = ""
         if "pergunta" in detail:
             extra = f"<br><span class='note-extract'>{detail['pergunta']}</span>"

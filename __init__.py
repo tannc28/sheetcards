@@ -182,24 +182,6 @@ def removeRemote():
             ankiBridge.stopEditing()
 
 
-def configure_global_students():
-    """
-    Opens the global student configuration dialog.
-
-    This function allows the user to globally configure which students
-    should be synchronized across all remote decks.
-    """
-    try:
-        from .src.ui.global_student_config_dialog import (
-            show_global_student_config_dialog,
-        )
-
-        show_global_student_config_dialog(mw)
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
-
-
 def configure_deck_options_mode():
     """
     Opens the deck options mode configuration dialog.
@@ -655,12 +637,6 @@ if mw is not None:
 
     # Separator
     remoteDecksSubMenu.addSeparator()
-
-    # Action: Global Student Configuration
-    studentConfigAction = QAction("Configure Students Globally", mw)
-    studentConfigAction.setShortcut(QKeySequence("Ctrl+Shift+G"))
-    qconnect(studentConfigAction.triggered, configure_global_students)
-    remoteDecksSubMenu.addAction(studentConfigAction)
 
     # Action: Configure deck options mode
     deckOptionsConfigAction = QAction("Configure Deck Options", mw)

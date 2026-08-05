@@ -23,6 +23,12 @@ MARKERS_TEMPLATE = """
 <hr>
 """
 
+
+# Divider between the question and the answer on the back of the card. Anki styles the
+# "answer" id itself, so the rule also gives themes something to hook onto.
+ANSWER_SEPARATOR_HTML = '\n<hr id="answer">\n'
+
+
 # =============================================================================
 # TIMER FEATURE - CSS AND JAVASCRIPT
 # =============================================================================

@@ -40,7 +40,7 @@ python scripts/build_packages.py
 ## Architecture
 
 ### Layers
-- **`__init__.py`** (root) — Anki integration entry point. Builds the menu, binds shortcuts (Ctrl+Shift+A/S/D/G/O/W/I/H/P/B/L), and registers the `webview_did_receive_js_message` hook that handles AI button clicks (`pycmd` messages `sheets2anki_ai_help/ask/checker:`).
+- **`__init__.py`** (root) — Anki integration entry point. Builds the menu, binds shortcuts (Ctrl+Shift+A/S/D/O/W/I/H/P/B/L, plus Ctrl+Shift+T for the dev-only "Import Test Deck"), and registers the `webview_did_receive_js_message` hook that handles AI button clicks (`pycmd` messages `sheets2anki_ai_help/ask/checker:`).
 - **`src/`** — all add-on logic. UI dialogs/screens live under **`src/ui/`**; foundational shared modules (`compat`, `styled_messages`, `config_manager`, `templates_and_definitions`, …) and the sync/data engine stay at the `src/` root. Modules in `src/ui/` import siblings one level up (`from ..compat import ...`).
 - **Facade-split modules**: several large modules were decomposed but keep a back-compat **facade** (re-export) so `from .<module> import X` still resolves: `utils.py` → `errors.py` / `debug.py` (`DebugManager`, `add_debug_message`) / `deck_options.py`; `sync.py` → `sync_report.py` (summary HTML); `config_manager.py` → `ai_prompts.py`; `templates_and_definitions.py` → `card_assets.py`. When grepping for a definition, the real code may live in the split-out module even though imports point at the original.
 - **`libs/`** — **vendored** third-party deps (`beautifulsoup4` + `soupsieve`, `chardet`, `org_to_anki` — which itself bundles `pygments` under `org_to_anki/libs/`). Added to `sys.path` at runtime by `__init__.py`. **Never edit or lint these**; they're excluded from ruff/black/coverage.
@@ -70,10 +70,10 @@ Preserve this pattern. `tests/conftest.py` mocks `aqt`/`anki` modules via an aut
 
 ### Column model & note keying
 - Column names are centralized in `src/templates_and_definitions.py` (imported elsewhere as `cols`). Required headers: `ID`, `QUESTION`, `ANSWER`. `ID` is the stable per-row key — never regenerate it.
-- **Multi-student**: the `STUDENTS` column duplicates a row into per-student subdecks. Notes are matched/tracked by a composite **`{student}_{note_id}`** key (`extract_student_from_student_note_id`, `get_existing_notes_by_student_id`). `[MISSING_STUDENT]` and other `[MISSING_*]` sentinels (defined in `templates_and_definitions.py`) are real values, handled specially.
-- **Note types (models)** are created dynamically per `Sheets2Anki - {deck} - {student} - Basic|Cloze|Reverse` (`utils.get_note_type_name`, `templates_and_definitions.create_model`). `name_consistency_manager.py` keeps these names in sync when a deck is renamed.
+- **Note keying**: notes are matched/tracked by the plain spreadsheet `ID` (`get_existing_notes_by_id`); a row with REVERSE content produces a second note keyed **`{id}_REV`**. Suffix matching prefers a whole key, so a spreadsheet ID that itself ends in `_REV` still resolves to its own row. The `[MISSING_*]` sentinels for importance/topic/subtopic/concept (defined in `templates_and_definitions.py`) are real values, handled specially.
+- **Note types (models)** are created dynamically per `Sheets2Anki - {deck} - Basic|Cloze|Reverse` (`utils.get_note_type_name`, `templates_and_definitions.create_model`). `name_consistency_manager.py` keeps these names in sync when a deck is renamed.
 - **Cloze** cards are auto-detected from `{{c1::...}}` patterns (`data_processor.has_cloze_deletion`).
-- Deck hierarchy: `Sheets2Anki::{deck}::{student}::{importance}::{topic}::{subtopic}::{concept}`. Tags: hierarchical `sheets2anki::...` (`create_tags_from_fields`).
+- Deck hierarchy: `Sheets2Anki::{deck}::{importance}::{topic}::{subtopic}::{concept}` (`utils.get_subdeck_name`, `data_processor.determine_target_deck`). Tags: hierarchical `sheets2anki::...` (`create_tags_from_fields`).
 
 ### Card-side features (rendered into card HTML/CSS/JS)
 `src/card_assets.py` holds the large CSS/HTML/JS template strings for the study **timer** and the **AI Help / AI Ask / AI Checker** buttons (re-exported from `templates_and_definitions.py` via a back-compat facade; the model-building functions in `templates_and_definitions.py` compose them). The AI layer has two execution paths:

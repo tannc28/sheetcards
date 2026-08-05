@@ -254,22 +254,34 @@ def test_config_manager_no_sanity_references():
     print("✅ CONFIG MANAGER: No sanity check references in config_manager.py")
 
 
-def test_sanity_check_container_css_class_exists_in_template():
+def test_card_template_does_not_render_sanity_check():
     """
-    Verify that the sanity check HTML uses the .sanity-check-container class
-    that the JS code targets for hiding.
+    The card no longer renders the sanity check at all, so its data cannot reach the
+    AI capture in the first place. This is the strongest form of the isolation the
+    rest of this file checks, so assert the field stays off the card.
+    """
+    from src.templates_and_definitions import create_card_template
+
+    tpl = create_card_template(timer_position="hidden")
+
+    for side in ("qfmt", "afmt"):
+        assert (
+            "sanity-check-container" not in tpl[side]
+        ), f"Sanity check must not be rendered on the card ({side})"
+        assert (
+            "SANITY CHECK" not in tpl[side]
+        ), f"Sanity check field must not be referenced on the card ({side})"
+
+    print("✅ TEMPLATE: Sanity check is not rendered on the card at all")
+
+
+def test_ai_js_still_guards_sanity_check_container():
+    """
+    The JS guard is kept even though the card no longer renders the container: a user
+    can add it back by hand in the Cards editor, and the guard must survive that.
     """
     from src import templates_and_definitions as T
 
-    # The HTML template must use the class
-    assert (
-        'class="sanity-check-container"' in TEMPLATES_PY
-        or "class=\\'sanity-check-container\\'" in TEMPLATES_PY
-    ), "Sanity check HTML must use .sanity-check-container class"
-
-    # Both the desktop AND mobile EVALUATED templates must hide it before capture.
-    # (Counted on the rendered strings, not the source, so it is robust to the shared
-    # capture helper being defined once and composed into both.)
     desktop_hide = T.AI_HELP_JS_DESKTOP.count("sanityCheck.style.display = 'none'")
     mobile_hide = T.AI_HELP_JS_MOBILE_TEMPLATE.count(
         "sanityCheck.style.display = 'none'"
@@ -349,7 +361,8 @@ if __name__ == "__main__":
         test_python_ai_handlers_no_sanity_references,
         test_ai_service_no_sanity_references,
         test_config_manager_no_sanity_references,
-        test_sanity_check_container_css_class_exists_in_template,
+        test_card_template_does_not_render_sanity_check,
+        test_ai_js_still_guards_sanity_check_container,
         test_debug_log_no_sanity_in_ai_context,
         test_ai_assistance_config_dialog_no_sanity,
     ]

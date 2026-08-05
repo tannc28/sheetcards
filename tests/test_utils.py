@@ -241,32 +241,37 @@ class TestDeckUtilities:
         mock_mw.col.decks.new.assert_called_once_with("Test Deck")
 
     def test_get_subdeck_name(self):
-        """Subdeck name generation test."""
+        """Subdeck name is the deck plus the four hierarchy fields."""
+        from src import templates_and_definitions as cols
+        from src.utils import get_subdeck_name
 
-        def get_subdeck_name(
-            parent_deck, student, importance, topic, subtopic, concept
-        ):
-            parts = [parent_deck]
+        fields = {
+            cols.hierarchy_1: "High",
+            cols.hierarchy_2: "Geography",
+            cols.hierarchy_3: "Capitals",
+            cols.hierarchy_4: "Brazil",
+        }
 
-            if student:
-                parts.append(student)
-            if importance:
-                parts.append(importance)
-            if topic:
-                parts.append(topic)
-            if subtopic:
-                parts.append(subtopic)
-            if concept:
-                parts.append(concept)
-
-            return "::".join(parts)
-
-        result = get_subdeck_name(
-            "Sheets2Anki", "John", "High", "Geography", "Capitals", "Brazil"
+        assert (
+            get_subdeck_name("Sheets2Anki", fields)
+            == "Sheets2Anki::High::Geography::Capitals::Brazil"
         )
 
-        expected = "Sheets2Anki::John::High::Geography::Capitals::Brazil"
-        assert result == expected
+    def test_get_subdeck_name_skips_empty_levels(self):
+        """Only the hierarchy levels that carry a value become subdecks."""
+        from src import templates_and_definitions as cols
+        from src.utils import get_subdeck_name
+
+        assert (
+            get_subdeck_name("Sheets2Anki", {cols.hierarchy_2: "Topic 2"})
+            == "Sheets2Anki::Topic 2"
+        )
+
+    def test_get_subdeck_name_with_no_hierarchy_is_the_deck_itself(self):
+        """A row with no hierarchy at all stays in the deck root."""
+        from src.utils import get_subdeck_name
+
+        assert get_subdeck_name("Sheets2Anki", {}) == "Sheets2Anki"
 
     def test_ensure_subdeck_exists(self, mock_mw):
         """Subdeck existence guarantee test."""
@@ -372,32 +377,6 @@ class TestStringUtilities:
 @pytest.mark.unit
 class TestDataValidation:
     """Tests for data validation."""
-
-    def test_validate_student_name(self):
-        """Student name validation test."""
-
-        def validate_student_name(name):
-            if not name or not isinstance(name, str):
-                return False
-
-            name = name.strip()
-            if len(name) < 1:
-                return False
-
-            # Must not contain only numbers or special characters
-            # Check for letters (including accented ones)
-            import re
-
-            return bool(re.search(r"[a-zA-ZÀ-ÿ]", name))
-
-        valid_names = ["John", "Mary Smith", "Ann-Paula", "Joe123"]
-        invalid_names = ["", "   ", None, "123", "!@#$%", 123]
-
-        for name in valid_names:
-            assert validate_student_name(name) == True, f"Should be valid: {name}"
-
-        for name in invalid_names:
-            assert validate_student_name(name) == False, f"Should be invalid: {name}"
 
     def test_validate_deck_name(self):
         """Deck name validation test."""
@@ -732,28 +711,17 @@ class TestGetPublicationKeyHash:
 class TestGetNoteTypeName:
     """Tests for the standardized note-type name builder."""
 
-    def test_with_student(self):
-        from src.utils import get_note_type_name
-
-        assert (
-            get_note_type_name("url", "Deck", student="Ana")
-            == "Sheets2Anki - Deck - Ana - Basic"
-        )
-
-    def test_without_student(self):
+    def test_basic_name(self):
         from src.utils import get_note_type_name
 
         assert get_note_type_name("url", "Deck") == "Sheets2Anki - Deck - Basic"
 
-    def test_whitespace_only_student_falls_back_not_none(self):
-        # Regression: a whitespace-only student must not return None (that
-        # would crash col.models.by_name downstream).
+    def test_blank_remote_name_falls_back_not_none(self):
+        # Regression: the builder must never return None (that would crash
+        # col.models.by_name downstream).
         from src.utils import get_note_type_name
 
-        assert (
-            get_note_type_name("url", "Deck", student="   ")
-            == "Sheets2Anki - Deck - Basic"
-        )
+        assert get_note_type_name("url", "") == "Sheets2Anki - RemoteDeck - Basic"
 
     def test_cloze_and_reverse_flags(self):
         from src.utils import get_note_type_name

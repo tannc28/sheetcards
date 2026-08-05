@@ -131,7 +131,6 @@ def show_test_info():
         ("test_data_processor.py", "TSV data processing"),
         ("test_config_manager.py", "Settings management"),
         ("test_utils.py", "Utility functions"),
-        ("test_student_manager.py", "Student management"),
         ("test_integration.py", "Integration tests"),
     ]
 
@@ -150,7 +149,7 @@ def show_test_info():
     print("  python run_tests.py --unit --verbose")
     print("  python run_tests.py --integration --coverage")
     print("  python run_tests.py --file data_processor --verbose")
-    print("  python run_tests.py --function test_parse_students --verbose")
+    print("  python run_tests.py --function test_headers_and_rows --verbose")
 
 
 if __name__ == "__main__":

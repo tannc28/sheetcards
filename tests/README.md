@@ -47,12 +47,15 @@ Coverage is **opt-in** via `--coverage` (it is not always-on).
 | `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
 | `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
 | `test_config_manager.py` | Settings CRUD and persistence |
-| `test_student_manager.py` | Multi-student filtering and subdecks |
 | `test_utils.py` | URL / hash / validation utilities |
 | `test_url_simplification.py` | Edit-URL → TSV export-URL conversion |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
 | `test_sanity_check_isolation.py` | Assertions on evaluated templates / imported prompt dicts |
+| `test_theme.py` | Design-system tokens and `get_colors()` coverage |
+| `test_backup_threading.py` | Backup/restore must run on the calling thread |
+| `test_ui_import_smoke.py` | Import-smoke for every dialog module in `src/ui/` |
+| `test_ui_instantiate_smoke.py` | Construction-smoke: every Qt dialog's full `__init__` |
 | `conftest.py` | Anki mock-finder, `src` package registration, shared fixtures |
 | `run_tests.py` | The test runner (adds the required flags) |
 
@@ -67,14 +70,13 @@ unknown markers fail).
 | Fixture | Provides |
 | :--- | :--- |
 | `sample_tsv_content` | A TSV string with the English headers (`ID`, `QUESTION`, `ANSWER`, …) |
-| `sample_tsv_data` | The same data parsed into a list of row dicts |
-| `sample_students` | A list of student names for multi-student tests |
-| `sample_edit_url` | An example Google Sheets **edit** URL |
+| `sample_tsv_data` | Row dicts in the same schema (kept for older tests) |
 | `temp_config_file` | A temporary config path under pytest's `tmp_path` |
+| `sample_edit_url` | An example Google Sheets **edit** URL |
 | `mock_mw` | A mock of Anki's main window (`mw`) |
 
-> The schema is **English** (`ID`, `QUESTION`, `ANSWER`, `STUDENTS`, `SYNC`, …) — the old
-> Portuguese headers (`PERGUNTA`, `ALUNOS`) are no longer used.
+> The schema is **English** (`ID`, `QUESTION`, `ANSWER`, `SYNC`, `TOPIC`, …) — the old
+> Portuguese headers (`PERGUNTA`, …) are no longer used.
 
 ## Writing tests
 

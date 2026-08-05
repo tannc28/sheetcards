@@ -8,7 +8,7 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 *   **Bulk Creation:** Write hundreds of cards as fast as you can type.
 *   **🤖 AI Integration:** Use **Gemini**, **Claude**, or **OpenAI** to get explanations directly in your cards.
-*   **Collaboration:** Work with friends or students on the same spreadsheet.
+*   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Smart Sync:** Cards are automatically organized into subdecks (Topic > Subtopic).
 *   **Rich Media:** Supports HTML, Images, and Videos (YouTube/Vimeo).
 *   **Cloze Support:** Automatically detects `{{c1::cloze}}` cards.
@@ -25,7 +25,6 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 Simply fill in the columns in the spreadsheet:
 - **ID**: Unique identifier for updates. | `Q101`
-- **STUDENTS**: List of students who want to learn the information. | `Igor, Isabelle, Jack`
 - **SYNC**: Mark the checkbox to sync this row. | `TRUE`
 - **QUESTION**: The front of your flashcard. | `Capital of France?`
 - **ANSWER**: The back of your flashcard. | `Paris`

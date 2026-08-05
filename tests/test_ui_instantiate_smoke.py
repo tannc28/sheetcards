@@ -25,7 +25,6 @@ DIALOGS = [
     ("debug_dialog", "DebugModeDialog"),
     ("deck_options_config_dialog", "DeckOptionsConfigDialog"),
     ("disconnect_dialog", "DisconnectDialog"),
-    ("global_student_config_dialog", "GlobalStudentConfigDialog"),
     ("image_processor_config_dialog", "ImageProcessorConfigDialog"),
     ("sync_dialog", "SyncDialog"),
     ("timer_config_dialog", "TimerConfigDialog"),

@@ -15,7 +15,6 @@ Features:
 import copy
 import json
 import os
-import time
 
 try:
     from .compat import mw
@@ -88,14 +87,6 @@ DEFAULT_CONFIG = {
         "image_processor_imgbb_key": "",  # ImgBB API key for image hosting
         "image_processor_webapp_url": "",  # Google Apps Script Web App URL
         "image_processor_auto_process": True,  # process images automatically during sync
-    },
-    "students": {
-        "available_students": [],
-        "enabled_students": [],
-        "auto_remove_disabled_students": True,
-        "sync_missing_students_notes": True,
-        # Persistent history of students who have already been synchronized
-        "sync_history": {},  # format: "student_name": {"first_sync": timestamp, "last_sync": timestamp, "total_syncs": count}
     },
     "decks": {},
 }
@@ -756,415 +747,7 @@ def _ensure_meta_structure(meta):
         if "is_sync" not in deck_info:
             deck_info["is_sync"] = True  # Default: selected for synchronization
 
-    # Ensure students structure
-    if "students" not in meta:
-        meta["students"] = {
-            "enabled_students": [],
-            "student_sync_enabled": False,
-        }
-
     return meta
-
-
-# =============================================================================
-# GLOBAL STUDENT MANAGEMENT FUNCTIONS
-# =============================================================================
-
-
-def get_global_student_config():
-    """
-    Gets global student configuration.
-
-    Returns:
-        dict: Student configuration with keys:
-            - available_students: list of all known students
-            - enabled_students: list of enabled students
-            - student_sync_enabled: if student filter is active
-            - auto_remove_disabled_students: if disabled students' data should be removed
-            - sync_missing_students_notes: if notes without specific students should be synced
-            - sync_history: detailed synchronization history per student
-    """
-    meta = get_meta()
-    return meta.get(
-        "students",
-        {
-            "available_students": [],
-            "enabled_students": [],
-            "auto_remove_disabled_students": False,
-            "sync_missing_students_notes": False,
-        },
-    )
-
-
-def save_global_student_config(
-    enabled_students,
-    available_students=None,
-    auto_remove_disabled_students=None,
-    sync_missing_students_notes=None,
-):
-    """
-    Saves global student configuration.
-
-    Args:
-        enabled_students (list): List of students enabled for synchronization
-        available_students (list): List of all known students (optional)
-        auto_remove_disabled_students (bool): Whether to automatically remove disabled students' data (optional)
-        sync_missing_students_notes (bool): Whether to synchronize notes without specific students (optional)
-    """
-
-    meta = get_meta()
-
-    # Get current configuration
-    current_config = meta.get("students", {})
-    current_available = current_config.get("available_students", [])
-
-    # Remove duplicates from student lists (case-sensitive)
-    final_enabled = list(dict.fromkeys(enabled_students)) if enabled_students else []
-
-    if available_students is not None:
-        final_available = list(dict.fromkeys(available_students))
-    else:
-        # If not provided, keep current list and add enabled ones
-        all_students = list(current_available) + final_enabled
-        final_available = list(dict.fromkeys(all_students))
-
-    # Determine value for auto_remove_disabled_students
-    if auto_remove_disabled_students is not None:
-        final_auto_remove = bool(auto_remove_disabled_students)
-    else:
-        final_auto_remove = current_config.get("auto_remove_disabled_students", False)
-
-    # Determine value for sync_missing_students_notes
-    if sync_missing_students_notes is not None:
-        final_sync_missing = bool(sync_missing_students_notes)
-    else:
-        final_sync_missing = current_config.get("sync_missing_students_notes", False)
-
-    # ⚠️ PRESERVE existing keys like sync_history
-    # Instead of overwriting the whole "students" section, update only necessary keys
-    if "students" not in meta:
-        meta["students"] = {}
-
-    meta["students"]["available_students"] = final_available
-    meta["students"]["enabled_students"] = final_enabled
-    meta["students"]["auto_remove_disabled_students"] = final_auto_remove
-    meta["students"]["sync_missing_students_notes"] = final_sync_missing
-
-    # sync_history and other keys are preserved automatically
-
-    save_meta(meta)
-
-
-def get_enabled_students():
-    """
-    Gets the list of students enabled for synchronization.
-
-    Returns:
-        list: List of enabled student names
-    """
-    config = get_global_student_config()
-    return config.get("enabled_students", [])
-
-
-def is_student_filter_active():
-    """
-    Checks if student filter is active based on enabled students list.
-
-    Returns:
-        bool: True if there are specific students selected (filter active), False otherwise
-    """
-    config = get_global_student_config()
-    enabled_students = config.get("enabled_students", [])
-    return len(enabled_students) > 0
-
-
-def add_enabled_student(student_name):
-    """
-    Adds a student to the enabled list.
-
-    Args:
-        student_name (str): Student name to be added
-    """
-    config = get_global_student_config()
-    enabled = set(config.get("enabled_students", []))
-    enabled.add(student_name)
-    save_global_student_config(list(enabled), config.get("available_students", []))
-
-
-def remove_enabled_student(student_name):
-    """
-    Removes a student from the enabled list.
-
-    Args:
-        student_name (str): Student name to be removed
-    """
-    config = get_global_student_config()
-    enabled = set(config.get("enabled_students", []))
-    enabled.discard(student_name)
-    save_global_student_config(list(enabled), config.get("available_students", []))
-
-
-def is_auto_remove_disabled_students():
-    """
-    Checks if auto-removal of disabled students is enabled.
-
-    Returns:
-        bool: True if disabled students' data should be automatically removed
-    """
-    config = get_global_student_config()
-    return config.get("auto_remove_disabled_students", False)
-
-
-def set_auto_remove_disabled_students(enabled):
-    """
-    Enables or disables auto-removal of disabled students.
-
-    Args:
-        enabled (bool): Whether to automatically remove disabled students' data
-    """
-    config = get_global_student_config()
-    save_global_student_config(
-        config.get("enabled_students", []),
-        config.get("available_students", []),
-        enabled,
-        config.get("sync_missing_students_notes", False),
-    )
-
-
-def is_sync_missing_students_notes():
-    """
-    Checks if synchronization of notes without specific students is enabled.
-
-    Returns:
-        bool: True if notes with empty STUDENTS column should be synced for [MISSING STUDENT] deck
-    """
-    config = get_global_student_config()
-    return config.get("sync_missing_students_notes", False)
-
-
-def set_sync_missing_students_notes(enabled):
-    """
-    Enables or disables synchronization of notes without specific students.
-
-    Args:
-        enabled (bool): Whether to synchronize notes with empty STUDENTS column
-    """
-    config = get_global_student_config()
-    save_global_student_config(
-        config.get("enabled_students", []),
-        config.get("available_students", []),
-        config.get("auto_remove_disabled_students", False),
-        enabled,
-    )
-
-
-# =============================================================================
-# STUDENT SYNCHRONIZATION HISTORY MANAGEMENT (NEW)
-# =============================================================================
-
-
-def get_student_sync_history():
-    """
-    Gets full student synchronization history.
-
-    Returns:
-        dict: History in format {
-            "student_name": {
-                "first_sync": timestamp,
-                "last_sync": timestamp,
-                "total_syncs": count
-            }
-        }
-    """
-    meta = get_meta()
-    return meta.get("students", {}).get("sync_history", {})
-
-
-def update_student_sync_history(students_synced):
-    """
-    Updates synchronization history for specified students.
-
-    This function should be called EVERY TIME a synchronization is completed
-    successfully, regardless of manual note type renames.
-
-    Args:
-        students_synced (set): Set of students that were synchronized
-    """
-    meta = get_meta()
-    current_time = int(time.time())
-
-    # Ensure structure
-    if "students" not in meta:
-        meta["students"] = {}
-    if "sync_history" not in meta["students"]:
-        meta["students"]["sync_history"] = {}
-
-    sync_history = meta["students"]["sync_history"]
-
-    for student in students_synced:
-        if student in sync_history:
-            # Student already exists in history - update
-            sync_history[student]["last_sync"] = current_time
-            sync_history[student]["total_syncs"] = (
-                sync_history[student].get("total_syncs", 0) + 1
-            )
-        else:
-            # New student - create entry
-            sync_history[student] = {
-                "first_sync": current_time,
-                "last_sync": current_time,
-                "total_syncs": 1,
-            }
-
-    # Save changes
-    save_meta(meta)
-    add_debug_msg(
-        f"📝 HISTORY: History updated for {len(students_synced)} students: {sorted(students_synced)}"
-    )
-
-
-def get_students_with_sync_history():
-    """
-    Returns set of all students who have ever been synchronized.
-
-    This is the definitive source of truth to know which students existed,
-    regardless of manual renames or other modifications.
-
-    Returns:
-        set: Set of students that have been synchronized
-    """
-    sync_history = get_student_sync_history()
-    historical_students = set(sync_history.keys())
-
-    try:
-        from .utils import add_debug_message
-
-        add_debug_message(
-            f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}",
-            "CLEANUP",
-        )
-    except Exception:
-        add_debug_msg(
-            f"📚 HISTORY: Found {len(historical_students)} students in history: {sorted(historical_students)}"
-        )
-
-    return historical_students
-
-
-def remove_student_from_sync_history(student_name):
-    """
-    Removes a student from synchronization history.
-
-    Should be called ONLY after confirmation that the user wants
-    to permanently delete all student data.
-
-    Args:
-        student_name (str): Student name to be removed from history
-    """
-    meta = get_meta()
-    sync_history = meta.get("students", {}).get("sync_history", {})
-
-    if student_name in sync_history:
-        del sync_history[student_name]
-        save_meta(meta)
-        add_debug_msg(f"🗑️ HISTORY: Student '{student_name}' removed from sync history")
-    else:
-        add_debug_msg(f"ℹ️ HISTORY: Student '{student_name}' not found in history")
-
-
-def discover_all_students_from_remote_decks():
-    """
-    Discovers all unique students from all configured remote decks.
-
-    Returns:
-        list: List of student names found (normalized)
-    """
-    from .student_manager import discover_students_from_tsv_url
-
-    all_students = set()
-    remote_decks = get_remote_decks()
-
-    add_debug_msg("🔍 DEBUG: Starting student discovery...")
-    add_debug_msg(f"📋 DEBUG: Found {len(remote_decks)} remote decks for analysis")
-
-    for i, (hash_key, deck_info) in enumerate(remote_decks.items(), 1):
-        deck_name = deck_info.get("remote_deck_name", f"Deck {i}")
-        url = deck_info.get("remote_deck_url")
-
-        if not url:
-            add_debug_msg(f"   ⚠️ Deck {deck_name} has no URL configured, skipping...")
-            continue
-
-        add_debug_msg(f"🔍 DEBUG: Analyzing deck {i}/{len(remote_decks)}: {deck_name}")
-        add_debug_msg(f"🌐 DEBUG: URL: {url}")
-
-        try:
-            students = discover_students_from_tsv_url(url)
-            add_debug_msg(f"   ✓ Found {len(students)} students: {sorted(students)}")
-
-            # Add discovered students (case-sensitive)
-            for student in students:
-                if student and student.strip():
-                    all_students.add(student.strip())
-
-            add_debug_msg(f"   ✓ Added {len(students)} valid students")
-
-        except Exception as e:
-            # In case of error, continue with next deck
-            add_debug_msg(
-                f"   ❌ Error discovering students from deck {deck_name}: {e}"
-            )
-            continue
-
-    final_students = sorted(all_students)
-    add_debug_msg(
-        f"✅ DEBUG: Discovery completed. Total unique students: {len(final_students)}"
-    )
-    add_debug_msg(f"📝 DEBUG: Final list: {final_students}")
-
-    return final_students
-
-
-def update_available_students_from_discovery():
-    """
-    Updates available students list by discovering from all remote decks.
-
-    Returns:
-        tuple: (students_found, new_students_count)
-    """
-    add_debug_msg("🔄 DEBUG: Starting discovery update for available students...")
-
-    config = get_global_student_config()
-    current_available = set(config.get("available_students", []))
-    add_debug_msg(
-        f"📋 DEBUG: Current available students: {len(current_available)} - {sorted(current_available)}"
-    )
-
-    discovered_students = set(discover_all_students_from_remote_decks())
-    add_debug_msg(
-        f"🔍 DEBUG: Discovered students: {len(discovered_students)} - {sorted(discovered_students)}"
-    )
-
-    # Combine discovered students with existing ones (case-sensitive)
-    all_available = current_available.union(discovered_students)
-    final_available = sorted(list(all_available))
-
-    # Count new students
-    new_count = len(discovered_students - current_available)
-    add_debug_msg(f"✨ DEBUG: New students found: {new_count}")
-    if new_count > 0:
-        new_students = sorted(discovered_students - current_available)
-        add_debug_msg(f"📝 DEBUG: New students list: {new_students}")
-
-    add_debug_msg(
-        f"💾 DEBUG: Saving configuration with {len(final_available)} available students..."
-    )
-
-    # Update configuration keeping enabled students
-    save_global_student_config(config.get("enabled_students", []), final_available)
-
-    add_debug_msg("✅ DEBUG: Update completed successfully!")
-    return final_available, new_count
 
 
 # =============================================================================
@@ -1382,14 +965,13 @@ def cleanup_invalid_note_type_ids():
         return 0
 
 
-def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=None):
+def update_note_type_names_in_meta(url, new_remote_deck_name):
     """
     Updates note type names in meta.json when remote_deck_name changes.
 
     Args:
         url (str): Remote deck URL
         new_remote_deck_name (str): New remote deck name
-        enabled_students (list, optional): List of enabled students
     """
     try:
         from .utils import get_note_type_name
@@ -1412,60 +994,29 @@ def update_note_type_names_in_meta(url, new_remote_deck_name, enabled_students=N
 
         # Update each note type ID with the new expected name
         for note_type_id, old_name in note_types.items():
-            # Analyze old name to extract student and type
+            # Analyze old name to extract the note type
             # IMPORTANT: deck_name may contain " - ", so parse from the END
             if old_name.startswith("Sheets2Anki - "):
                 parts = old_name.split(" - ")
 
-                if len(parts) >= 4:
-                    # Format: "Sheets2Anki - remote_name - student - type"
-                    # Last part is the type (Basic/Cloze)
-                    note_type = parts[-1].strip()
-                    # Second-to-last part is the student name
-                    student = parts[-2].strip()
-                    is_cloze = note_type == "Cloze"
-                    is_reverse = note_type == "Reverse"
-
-                    new_name = get_note_type_name(
-                        url,
-                        new_remote_deck_name,
-                        student=student,
-                        is_cloze=is_cloze,
-                        is_reverse=is_reverse,
-                    )
-
-                elif len(parts) == 3:  # Format: "Sheets2Anki - remote_name - type"
+                if len(parts) >= 3:
+                    # Format: "Sheets2Anki - remote_name - type"
+                    # Last part is the type (Basic/Cloze/Reverse)
                     note_type = parts[-1].strip()
                     is_cloze = note_type == "Cloze"
                     is_reverse = note_type == "Reverse"
-
-                    new_name = get_note_type_name(
-                        url,
-                        new_remote_deck_name,
-                        student=None,
-                        is_cloze=is_cloze,
-                        is_reverse=is_reverse,
-                    )
 
                 else:
                     # Unrecognized format, try to deduce
                     is_cloze = "Cloze" in old_name
                     is_reverse = "Reverse" in old_name
-                    student_candidates = enabled_students or []
-                    student = None
 
-                    for candidate in student_candidates:
-                        if candidate in old_name:
-                            student = candidate
-                            break
-
-                    new_name = get_note_type_name(
-                        url,
-                        new_remote_deck_name,
-                        student=student,
-                        is_cloze=is_cloze,
-                        is_reverse=is_reverse,
-                    )
+                new_name = get_note_type_name(
+                    url,
+                    new_remote_deck_name,
+                    is_cloze=is_cloze,
+                    is_reverse=is_reverse,
+                )
 
                 # Update if name changed
                 if new_name != old_name:
@@ -1735,7 +1286,7 @@ def set_ankiweb_sync_config(mode):
     add_debug_msg(f"[ANKIWEB_CONFIG] Updated: mode={mode}")
 
 
-def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
+def sync_note_type_names_robustly(url, correct_remote_name):
     """
     Robust note_types synchronization: recreates names, detects changes,
     renames in Anki and migrates notes if necessary.
@@ -1749,7 +1300,6 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
     Args:
         url (str): Remote deck URL
         correct_remote_name (str): Current correct remote name
-        enabled_students (list): Enabled students list
 
     Returns:
         dict: Sync result with counters
@@ -1779,28 +1329,21 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
             add_debug_msg("[NOTE_TYPE_SYNC] No note_type found")
             return {"updated_count": 0, "renamed_in_anki": 0, "updated_in_meta": 0}
 
-        def extract_student_and_type_from_name(old_name):
-            """Extracts student and type from old name."""
+        def extract_type_from_name(old_name):
+            """Extracts the note type from old name."""
             if not old_name.startswith("Sheets2Anki - "):
-                return None, None, False, False
+                return None, False, False
 
             parts = old_name.split(" - ")
             # IMPORTANT: deck_name may contain " - ", so parse from the END
-            if len(parts) >= 4:  # "Sheets2Anki - remote_name - student - type"
-                # Last part is the type (Basic/Cloze)
-                note_type = parts[-1].strip()
-                # Second-to-last part is the student name
-                student = parts[-2].strip()
-                is_cloze = note_type == "Cloze"
-                is_reverse = note_type == "Reverse"
-                return student, note_type, is_cloze, is_reverse
-            elif len(parts) == 3:  # "Sheets2Anki - remote_name - type"
+            if len(parts) >= 3:  # "Sheets2Anki - remote_name - type"
+                # Last part is the type (Basic/Cloze/Reverse)
                 note_type = parts[-1].strip()
                 is_cloze = note_type == "Cloze"
                 is_reverse = note_type == "Reverse"
-                return None, note_type, is_cloze, is_reverse
+                return note_type, is_cloze, is_reverse
 
-            return None, None, False, False
+            return None, False, False
 
         result = {
             "updated_count": 0,
@@ -1819,11 +1362,9 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                 note_type_id_int = int(note_type_id)
 
                 # 1. RECREATE: Generate expected name based on correct pattern
-                student, note_type, is_cloze, is_reverse = (
-                    extract_student_and_type_from_name(old_name)
-                )
+                note_type, is_cloze, is_reverse = extract_type_from_name(old_name)
 
-                if student is None and note_type is None:
+                if note_type is None:
                     add_debug_msg(
                         f"[NOTE_TYPE_SYNC] Unrecognized format for {note_type_id}: '{old_name}'"
                     )
@@ -1832,7 +1373,6 @@ def sync_note_type_names_robustly(url, correct_remote_name, enabled_students):
                 expected_name = get_note_type_name(
                     url,
                     correct_remote_name,
-                    student=student,
                     is_cloze=is_cloze,
                     is_reverse=is_reverse,
                 )
