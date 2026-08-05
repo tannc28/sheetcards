@@ -4,6 +4,49 @@
 
 ---
 
+## 💥 **v3.1.0** - August 2026 *(Breaking)*
+
+The multi-student feature is gone, and the card is cut back to what a study card needs.
+
+### 💥 Breaking
+- **Multi-student removed.** The `STUDENTS` column is no longer read, and the
+  `[MISSING_STUDENT]` sentinel no longer exists. Notes are keyed by the plain
+  spreadsheet `ID` (and `{id}_REV` for the reverse variant) instead of the composite
+  `{student}_{note_id}`; note types are `Sheets2Anki - {deck} - Basic|Cloze|Reverse`;
+  and the deck hierarchy loses its student level. Existing collections re-key and
+  re-file their notes on the next sync.
+- **Empty hierarchy levels are skipped** in deck names rather than filled with
+  `[MISSING_*]` placeholders — a sheet that only uses `TOPIC` now gets `Deck::Topic`
+  instead of a chain of empty subdecks. The old placeholder subdecks are left behind
+  empty and can be deleted by hand.
+- **Removed**: `student_manager.py`, the global student config dialog, the data-removal
+  confirmation dialog, the `Ctrl+Shift+G` shortcut, the `students` config block and the
+  disabled-student cleanup subsystem.
+
+### 🐛 Fixes
+- **Sync returned 0 notes for any sheet without a `STUDENTS` column.** Such rows fell to
+  `[MISSING_STUDENT]`, whose sync is gated on `sync_missing_students_notes` — a key
+  `_ensure_meta_structure` never wrote into `meta.json`, so the reader's
+  `.get(..., False)` default won and the sync bailed, while `config.json` advertised the
+  default as `true`. Removing the feature removes the gate.
+
+### 🎨 Card template
+- Front is the timer and the question; back adds the answer plus whatever supporting
+  fields the row actually filled (examples, mnemonic, complementary/detailed info,
+  image, video), each conditional so an empty field leaves no trace.
+- The `CONTEXT`, `INFORMATION` and `TAGS` headings rendered even when every field under
+  them was empty, so they are gone, along with their "May be empty" subtitles, the
+  exam-prep fields (`BOARDS`, `LAST YEAR IN EXAM`, `CAREERS`, `OTHER TAGS`), the three
+  extra fields and the sanity check. Those columns still sync into the note — they are
+  just no longer drawn on the card.
+
+### 🤖 CI
+- Pushing a `v*` tag now builds both `.ankiaddon` packages, validates them and attaches
+  them to a GitHub release. The job refuses to build when the tag, `manifest.json` and
+  `pyproject.toml` disagree on the version.
+
+---
+
 ## 🔧 **v3.0.3** - June 2026 *(Maintenance)*
 
 The last two audit follow-ups, done in parallel. No new features.
