@@ -959,7 +959,7 @@ wheels = [
 
 [[package]]
 name = "sheets2anki"
-version = "3.0.3"
+version = "3.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aqt" },
