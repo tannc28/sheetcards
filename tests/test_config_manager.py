@@ -6,7 +6,6 @@ Tests functionalities for:
 - Settings management
 - Data persistence
 - Remote deck configuration
-- Global student configuration
 """
 
 import json
@@ -45,7 +44,6 @@ class TestConfigManager:
 
         assert isinstance(config, dict)
         assert "remote_decks" in config
-        assert "global_students" in config
 
     def test_load_config_not_exists(self):
         """Loading test with non-existent file."""
@@ -54,7 +52,6 @@ class TestConfigManager:
             if not os.path.exists(config_path):
                 return {
                     "remote_decks": {},
-                    "global_students": [],
                     "ankiweb_sync": {"enabled": False},
                 }
 
@@ -64,21 +61,18 @@ class TestConfigManager:
             except (OSError, json.JSONDecodeError):
                 return {
                     "remote_decks": {},
-                    "global_students": [],
                     "ankiweb_sync": {"enabled": False},
                 }
 
         config = load_config_safe("/nonexistent/path/config.json")
 
         assert config["remote_decks"] == {}
-        assert config["global_students"] == []
 
     def test_save_config_success(self, tmp_path):
         """Successful configuration saving test."""
         config_file = tmp_path / "test_save_config.json"
         test_config = {
             "remote_decks": {"Test Deck": "https://example.com"},
-            "global_students": ["John", "Mary"],
             "ankiweb_sync": {"enabled": True},
         }
 
@@ -172,89 +166,6 @@ class TestRemoteDeckConfig:
 
         url = get_deck_url(config, "Nonexistent Deck")
         assert url is None
-
-
-# =============================================================================
-# STUDENT CONFIGURATION TESTS
-# =============================================================================
-
-
-@pytest.mark.unit
-class TestStudentConfig:
-    """Tests for global student configuration."""
-
-    def test_set_global_students(self):
-        """Global student definition test."""
-
-        def set_global_students(config, students):
-            config["global_students"] = students
-            return config
-
-        config = {"global_students": []}
-        students = ["John", "Mary", "Peter"]
-
-        updated_config = set_global_students(config, students)
-
-        assert updated_config["global_students"] == students
-
-    def test_get_global_students(self):
-        """Global student retrieval test."""
-
-        def get_global_students(config):
-            return config.get("global_students", [])
-
-        config = {"global_students": ["Ann", "Charles"]}
-        students = get_global_students(config)
-
-        assert students == ["Ann", "Charles"]
-
-        # Test with empty configuration
-        empty_config = {}
-        students = get_global_students(empty_config)
-        assert students == []
-
-    def test_add_student(self):
-        """Individual student addition test."""
-
-        def add_student(config, student_name):
-            if "global_students" not in config:
-                config["global_students"] = []
-
-            if student_name not in config["global_students"]:
-                config["global_students"].append(student_name)
-
-            return config
-
-        config = {"global_students": ["John"]}
-
-        # Add new student
-        updated_config = add_student(config, "Mary")
-        assert "Mary" in updated_config["global_students"]
-        assert len(updated_config["global_students"]) == 2
-
-        # Try to add duplicate student
-        updated_config = add_student(config, "John")
-        assert updated_config["global_students"].count("John") == 1
-
-    def test_remove_student(self):
-        """Student removal test."""
-
-        def remove_student(config, student_name):
-            if (
-                "global_students" in config
-                and student_name in config["global_students"]
-            ):
-                config["global_students"].remove(student_name)
-            return config
-
-        config = {"global_students": ["John", "Mary", "Peter"]}
-
-        updated_config = remove_student(config, "Mary")
-
-        assert "Mary" not in updated_config["global_students"]
-        assert len(updated_config["global_students"]) == 2
-        assert "John" in updated_config["global_students"]
-        assert "Peter" in updated_config["global_students"]
 
 
 # =============================================================================
@@ -385,7 +296,7 @@ class TestConfigValidation:
         """Configuration structure validation test."""
 
         def validate_config_structure(config):
-            required_keys = ["remote_decks", "global_students"]
+            required_keys = ["remote_decks"]
             optional_keys = ["ankiweb_sync", "auto_backup_enabled"]
 
             # Check mandatory keys
@@ -396,17 +307,12 @@ class TestConfigValidation:
             # Check types
             if not isinstance(config["remote_decks"], dict):
                 return False
-            if not isinstance(config["global_students"], list):
-                return False
 
             return True
 
-        valid_config = {"remote_decks": {"Deck1": "url1"}, "global_students": ["John"]}
+        valid_config = {"remote_decks": {"Deck1": "url1"}}
 
-        invalid_config = {
-            "remote_decks": "not_a_dict",  # Incorrect type
-            "global_students": [],
-        }
+        invalid_config = {"remote_decks": "not_a_dict"}  # Incorrect type
 
         assert validate_config_structure(valid_config) == True
         assert validate_config_structure(invalid_config) == False
@@ -458,24 +364,19 @@ class TestConfigMigration:
             if "decks" in old_config and "remote_decks" not in old_config:
                 old_config["remote_decks"] = old_config.pop("decks")
 
-            if "students" in old_config and "global_students" not in old_config:
-                old_config["global_students"] = old_config.pop("students")
-
             # Add default settings if they don't exist
             if "ankiweb_sync" not in old_config:
                 old_config["ankiweb_sync"] = {"enabled": False}
 
             return old_config
 
-        old_config = {"decks": {"Old Deck": "url"}, "students": ["Student1"]}
+        old_config = {"decks": {"Old Deck": "url"}}
 
         migrated = migrate_config(old_config)
 
         assert "remote_decks" in migrated
-        assert "global_students" in migrated
         assert "ankiweb_sync" in migrated
         assert "decks" not in migrated
-        assert "students" not in migrated
 
 
 # =============================================================================
@@ -494,7 +395,7 @@ class TestConfigIntegration:
         # Helper functions
         def load_config(path):
             if not os.path.exists(path):
-                return {"remote_decks": {}, "global_students": []}
+                return {"remote_decks": {}}
             with open(path) as f:
                 return json.load(f)
 
@@ -508,7 +409,6 @@ class TestConfigIntegration:
 
         # 2. Add deck
         config["remote_decks"]["Test Deck"] = "https://test.com"
-        config["global_students"] = ["John", "Mary"]
 
         # 3. Save configuration
         save_config(str(config_file), config)
@@ -516,16 +416,15 @@ class TestConfigIntegration:
         # 4. Reload and verify
         reloaded_config = load_config(str(config_file))
         assert "Test Deck" in reloaded_config["remote_decks"]
-        assert "John" in reloaded_config["global_students"]
 
         # 5. Modify and save again
-        reloaded_config["global_students"].append("Peter")
+        reloaded_config["remote_decks"]["Second Deck"] = "https://second.com"
         save_config(str(config_file), reloaded_config)
 
         # 6. Verify changes persisted
         final_config = load_config(str(config_file))
-        assert len(final_config["global_students"]) == 3
-        assert "Peter" in final_config["global_students"]
+        assert len(final_config["remote_decks"]) == 2
+        assert "Second Deck" in final_config["remote_decks"]
 
 
 if __name__ == "__main__":

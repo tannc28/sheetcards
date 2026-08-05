@@ -45,13 +45,13 @@ Three layers, from the outside in:
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Anki integration  (__init__.py)                                       │
-│  • Tools → Sheets2Anki menu     • 12 keyboard shortcuts (Ctrl+Shift+…) │
+│  • Tools → Sheets2Anki menu     • 10 keyboard shortcuts (Ctrl+Shift+…) │
 │  • webview_did_receive_js_message hook (AI button pycmd messages)      │
 └───────────────────────────────┬──────────────────────────────────────┘
                                 │
 ┌───────────────────────────────▼──────────────────────────────────────┐
 │  Add-on logic  (src/)                                                   │
-│  • sync engine / data processing  • config & student management        │
+│  • sync engine / data processing  • configuration management           │
 │  • dialogs (src/ui/)              • AI, backup, AnkiWeb, images         │
 │  • compat.py — the single Qt/Anki gateway                              │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -88,7 +88,7 @@ sheets2anki/
 ├── manifest.json               # Add-on metadata (version lives here + pyproject.toml)
 ├── meta.json                   # User settings + connected decks (gitignored; runtime)
 ├── src/                        # All add-on logic (see module map below)
-│   └── ui/                     # Qt dialogs (12 modules)
+│   └── ui/                     # Qt dialogs (10 modules + url_helpers.py)
 ├── libs/                       # Vendored third-party deps — never edit or lint
 ├── tests/                      # pytest suite (Anki is mocked; no Anki install needed)
 ├── scripts/                    # Build/packaging tooling for .ankiaddon files
@@ -122,8 +122,6 @@ split-out module:
   (`create_or_update_notes()`); detects Cloze cards (`has_cloze_deletion()`).
 - **`deck_manager.py`** — deck CRUD and the selection entry point
   (`syncDecksWithSelection()`).
-- **`student_manager.py`** — multi-student logic: per-student subdecks, filtering,
-  and the composite note key.
 - **`name_consistency_manager.py`** — keeps dynamically-created note-type names in sync
   when a deck is renamed.
 
@@ -149,10 +147,10 @@ split-out module:
 - **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
 ### UI (`src/ui/`)
-Twelve Qt dialogs (add deck, sync, disconnect, backup, debug, global-student config,
-deck-options config, AnkiWeb config, AI-assistance config, image-processor config,
-timer config, data-removal confirmation). Modules in `src/ui/` import siblings one level
-up (`from ..compat import …`).
+Ten Qt dialogs (add deck, sync, disconnect, backup, debug, deck-options config, AnkiWeb
+config, AI-assistance config, image-processor config, timer config), plus
+`url_helpers.py` (shared clean-URL / copy-to-clipboard helpers). Modules in `src/ui/`
+import siblings one level up (`from ..compat import …`).
 
 ## Sync data flow
 
@@ -175,22 +173,24 @@ Per deck:
 ## Column model & note keying
 
 - **Columns** are centralized in `templates_and_definitions.py`:
-  **25 available columns** (`ALL_AVAILABLE_COLUMNS`), of which **3 are required
+  **24 available columns** (`ALL_AVAILABLE_COLUMNS`), of which **3 are required
   headers** (`REQUIRED_HEADERS = ID, QUESTION, ANSWER`). `ID` is the stable per-row key
   — never regenerate it.
-- **Multi-student.** The `STUDENTS` column duplicates a row into per-student subdecks.
-  Notes are matched/tracked by a composite **`{student}_{note_id}`** key. The
-  `[MISSING_STUDENT]` and other `[MISSING_*]` sentinels are real values handled
-  specially (matching is suffix-aware so an underscore in a student name can't corrupt
-  the key).
+- **Note keying.** Notes are matched/tracked by the plain spreadsheet `ID`
+  (`data_processor.get_existing_notes_by_id()`); a row whose `REVERSE` column has content
+  yields a second note keyed **`{id}_REV`**. Matching prefers a whole key over stripping
+  the `_REV` suffix, so a spreadsheet ID that itself ends in `_REV` still resolves to its
+  own row. The `[MISSING_IMPORTANCE]` / `[MISSING_TOPIC]` / `[MISSING_SUBTOPIC]` /
+  `[MISSING_CONCEPT]` sentinels are real values handled specially.
 - **Note types (models)** are created dynamically, one set per
-  `Sheets2Anki - {deck} - {student} - Basic|Cloze|Reverse`
+  `Sheets2Anki - {deck} - Basic|Cloze|Reverse`
   (`utils.get_note_type_name()`, `templates_and_definitions.create_model()`).
   `name_consistency_manager.py` keeps these names aligned when a deck is renamed.
 - **Cloze** cards are auto-detected from `{{c1::…}}` patterns
   (`data_processor.has_cloze_deletion()`).
 - **Deck hierarchy:**
-  `Sheets2Anki::{deck}::{student}::{importance}::{topic}::{subtopic}::{concept}`.
+  `Sheets2Anki::{deck}::{importance}::{topic}::{subtopic}::{concept}`
+  (`utils.get_subdeck_name()`, `data_processor.determine_target_deck()`).
 - **Tags:** hierarchical `sheets2anki::…` derived from the categorization columns.
 
 ## Card-side features & the AI layer
@@ -272,12 +272,15 @@ Current test modules:
 | `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
 | `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
 | `test_config_manager.py` | Settings CRUD and persistence |
-| `test_student_manager.py` | Multi-student filtering and subdecks |
 | `test_utils.py` | URL/hash/validation utilities |
 | `test_url_simplification.py` | Edit-URL → TSV conversion |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
 | `test_sanity_check_isolation.py` | Template/prompt assertions on evaluated assets |
+| `test_theme.py` | Design-system tokens and `get_colors()` |
+| `test_backup_threading.py` | Backup/restore stays on the calling thread |
+| `test_ui_import_smoke.py` | Every dialog module imports cleanly |
+| `test_ui_instantiate_smoke.py` | Every dialog constructs (full `__init__`) |
 | `conftest.py` / `run_tests.py` | Mock-finder + fixtures / the test runner |
 
 ## Building & packaging

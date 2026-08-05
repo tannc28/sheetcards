@@ -24,12 +24,5 @@
         "image_processor_webapp_url": "",
         "image_processor_auto_process": true
     },
-    "students": {
-        "available_students": [],
-        "enabled_students": [],
-        "auto_remove_disabled_students": true,
-        "sync_missing_students_notes": true,
-        "sync_history": {}
-    },
     "decks": {}
 }

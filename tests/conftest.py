@@ -92,7 +92,6 @@ for _modname in (
     "utils",
     "data_processor",
     "config_manager",
-    "student_manager",
 ):
     try:
         sys.modules.setdefault(_modname, importlib.import_module(f"src.{_modname}"))
@@ -109,15 +108,10 @@ for _modname in (
 def sample_tsv_content():
     """A small, valid TSV document using the live English column names."""
     return (
-        "ID\tQUESTION\tANSWER\tSYNC\tSTUDENTS\tTOPIC\tSUBTOPIC\tCONCEPT\tIMPORTANCE\n"
-        "Q001\tCapital of France?\tParis\ttrue\tJohn, Mary\tGeography\tEurope\tCapitals\tHigh\n"
-        "Q002\tThe capital of {{c1::Brazil}} is {{c2::Brasília}}\tCloze\ttrue\tMary\tGeography\tCloze\tCards\tMedium\n"
+        "ID\tQUESTION\tANSWER\tSYNC\tTOPIC\tSUBTOPIC\tCONCEPT\tIMPORTANCE\n"
+        "Q001\tCapital of France?\tParis\ttrue\tGeography\tEurope\tCapitals\tHigh\n"
+        "Q002\tThe capital of {{c1::Brazil}} is {{c2::Brasília}}\tCloze\ttrue\tGeography\tCloze\tCards\tMedium\n"
     )
-
-
-@pytest.fixture
-def sample_students():
-    return ["John", "Mary", "Peter", "Ann", "Charles"]
 
 
 @pytest.fixture
@@ -129,7 +123,6 @@ def sample_tsv_data():
             "QUESTION": "Capital of France?",
             "ANSWER": "Paris",
             "SYNC": "true",
-            "STUDENTS": "John, Mary",
             "TOPIC": "Geography",
         },
         {
@@ -137,7 +130,6 @@ def sample_tsv_data():
             "QUESTION": "The {{c1::sun}} is a star",
             "ANSWER": "Cloze",
             "SYNC": "true",
-            "STUDENTS": "Mary",
             "TOPIC": "Science",
         },
     ]
@@ -148,7 +140,7 @@ def temp_config_file(tmp_path):
     import json
 
     cfg = tmp_path / "test_config.json"
-    cfg.write_text(json.dumps({"config": {}, "students": {}, "decks": {}}, indent=2))
+    cfg.write_text(json.dumps({"config": {}, "decks": {}}, indent=2))
     return str(cfg)
 
 

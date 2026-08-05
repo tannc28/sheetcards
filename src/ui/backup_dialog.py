@@ -146,7 +146,7 @@ class BackupDialog(QDialog):
         simple_card = self._create_action_card(
             "Simple Backup",
             "Configuration files only",
-            "Backs up your addon settings, remote deck links, and student configurations. "
+            "Backs up your addon settings and remote deck links. "
             "Perfect for restoring after reinstalling the addon.",
             self.colors["accent_primary"],
             self._create_simple_backup,

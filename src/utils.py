@@ -446,19 +446,16 @@ def get_model_suffix_from_url(url):
     return hashlib.sha1(url.encode()).hexdigest()[:8]
 
 
-def get_note_type_name(
-    url, remote_deck_name, student=None, is_cloze=False, is_reverse=False
-):
+def get_note_type_name(url, remote_deck_name, is_cloze=False, is_reverse=False):
     """
     Generates standardized name for Sheets2Anki note types.
 
-    Format: "Sheets2Anki - {remote_deck_name} - {student_name} - Basic/Cloze/Reverse"
+    Format: "Sheets2Anki - {remote_deck_name} - Basic/Cloze/Reverse"
     The remote_deck_name already has conflict resolution applied by config_manager.
 
     Args:
         url (str): Remote deck URL
         remote_deck_name (str): Remote deck name from spreadsheet (with suffix if necessary)
-        student (str, optional): Student name for specific note type
         is_cloze (bool): If it's a Cloze note type
         is_reverse (bool): If it's a Reverse note type
 
@@ -474,14 +471,6 @@ def get_note_type_name(
 
     # Use remote name directly (already comes with conflict suffix from config_manager)
     clean_remote_name = remote_deck_name.strip() if remote_deck_name else "RemoteDeck"
-
-    # Use student name as provided (case-sensitive). Fall through to the
-    # no-student format when student is absent OR whitespace-only, so this
-    # never returns None (which would break col.models.by_name downstream).
-    if student:
-        clean_student_name = student.strip()
-        if clean_student_name:
-            return f"Sheets2Anki - {clean_remote_name} - {clean_student_name} - {note_type}"
 
     return f"Sheets2Anki - {clean_remote_name} - {note_type}"
 
@@ -613,16 +602,13 @@ def capture_deck_note_type_ids_from_cards(url, local_deck_id, debug_messages=Non
         add_debug_msg(f"Details: {traceback.format_exc()}")
 
 
-def capture_deck_note_type_ids(
-    url, remote_deck_name, enabled_students=None, debug_messages=None
-):
+def capture_deck_note_type_ids(url, remote_deck_name, debug_messages=None):
     """
     Compatibility function using card-based intelligent approach.
 
     Args:
         url (str): Remote deck URL
         remote_deck_name (str): Remote deck name
-        enabled_students (list, optional): List of enabled students
         debug_messages (list, optional): List for debug messages
     """
     from .config_manager import get_deck_local_id
@@ -981,17 +967,16 @@ def validate_url(url):
 # ========================================================================================
 
 
-def get_subdeck_name(main_deck_name, fields, student=None):
+def get_subdeck_name(main_deck_name, fields):
     """
     Generates subdeck name based on main deck and IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT fields.
 
     Args:
         main_deck_name (str): Main deck name
         fields (dict): Note fields with IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT
-        student (str, optional): Student name to include in hierarchy
 
     Returns:
-        str: Full subdeck name in the format "MainDeck::[Student::]Importance::Topic::Subtopic::Concept"
+        str: Full subdeck name in the format "MainDeck::Importance::Topic::Subtopic::Concept"
     """
     import re
 
@@ -1010,46 +995,23 @@ def get_subdeck_name(main_deck_name, fields, student=None):
         cleaned = re.sub(r"\s+", " ", cleaned)
         return cleaned
 
-    # Get field values (single values, NOT lists)
-    importancia_raw = fields.get(cols.hierarchy_1, "").strip()
-    topico_raw = fields.get(cols.hierarchy_2, "").strip()
-    subtopico_raw = fields.get(cols.hierarchy_3, "").strip()
-    conceito_raw = fields.get(cols.hierarchy_4, "").strip()
+    # Build the hierarchy from the levels that actually carry a value. Empty levels are
+    # skipped rather than filled with a placeholder, so a sheet that only uses TOPIC gets
+    # "Deck::Topic" instead of a chain of empty [MISSING_*] subdecks. A level whose text
+    # survives cleaning as an empty string (e.g. it held only invalid characters) is
+    # skipped for the same reason.
+    parts = [main_deck_name]
+    for level in (
+        cols.hierarchy_1,
+        cols.hierarchy_2,
+        cols.hierarchy_3,
+        cols.hierarchy_4,
+    ):
+        cleaned = clean_deck_text(fields.get(level, "").strip())
+        if cleaned:
+            parts.append(cleaned)
 
-    # Use default values if empty
-    if not importancia_raw:
-        importancia_raw = cols.DEFAULT_IMPORTANCE
-    if not topico_raw:
-        topico_raw = cols.DEFAULT_TOPIC
-    if not subtopico_raw:
-        subtopico_raw = cols.DEFAULT_SUBTOPIC
-    if not conceito_raw:
-        conceito_raw = cols.DEFAULT_CONCEPT
-
-    # Clean for deck name use
-    importancia = clean_deck_text(importancia_raw)
-    topico = clean_deck_text(topico_raw)
-    subtopico = clean_deck_text(subtopico_raw)
-    conceito = clean_deck_text(conceito_raw)
-
-    # If cleaning results in empty string (e.g., field had only invalid characters),
-    # use the default placeholder
-    if not importancia:
-        importancia = clean_deck_text(cols.DEFAULT_IMPORTANCE)
-    if not topico:
-        topico = clean_deck_text(cols.DEFAULT_TOPIC)
-    if not subtopico:
-        subtopico = clean_deck_text(cols.DEFAULT_SUBTOPIC)
-    if not conceito:
-        conceito = clean_deck_text(cols.DEFAULT_CONCEPT)
-
-    # Create full subdeck hierarchy
-    if student:
-        # With student: Deck::Student::Importance::Topic::Subtopic::Concept
-        return f"{main_deck_name}::{student}::{importancia}::{topico}::{subtopico}::{conceito}"
-    else:
-        # Without student: Deck::Importance::Topic::Subtopic::Concept (compatibility)
-        return f"{main_deck_name}::{importancia}::{topico}::{subtopico}::{conceito}"
+    return "::".join(parts)
 
 
 def ensure_subdeck_exists(deck_name):

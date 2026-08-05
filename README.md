@@ -11,13 +11,12 @@ Author and maintain Anki decks in Google Sheets, then synchronize them into Anki
 
 Sheets2Anki is an Anki add-on that treats a Google Sheets spreadsheet as the source of truth for your flashcards. You write and organize cards in a familiar spreadsheet — alone or collaboratively — and the add-on keeps the corresponding Anki notes in sync: creating, updating, and removing them as the sheet changes.
 
-It is designed for users who maintain large or shared decks, such as study groups, tutors managing per-student material, and exam-preparation collections that benefit from spreadsheet-style organization, bulk editing, and version control.
+It is designed for users who maintain large or collaboratively authored decks — exam-preparation collections, course material, and any deck that benefits from spreadsheet-style organization, bulk editing, and version control.
 
 ## Features
 
 - **Spreadsheet-driven sync** — one-way synchronization from Google Sheets to Anki, with reliable create/update/delete tracking by stable row IDs.
 - **Collaboration** — multiple authors can edit the same sheet; everyone syncs the latest content.
-- **Multi-student decks** — a single sheet can drive separate sub-decks per student or study group via a `STUDENTS` column.
 - **Cloze support** — `{{c1::...}}` patterns are detected automatically and rendered as cloze cards.
 - **Reverse cards** — optionally generate an Answer → Question card from the same row.
 - **Hierarchical organization** — automatic deck hierarchy and namespaced tags derived from topic, subtopic, concept, importance, exam board, and more.
@@ -71,7 +70,7 @@ Add questions and answers to the sheet, then press `Ctrl+Shift+S` (or `Tools →
 
 ## Spreadsheet schema
 
-The template ships with a full set of columns, but only three are required in the header. Each row becomes one note (or several, when reverse cards or multiple students are involved).
+The template ships with a full set of columns, but only three are required in the header. Each row becomes one note — or two, when the row also defines a reverse card.
 
 ### Required columns
 
@@ -81,11 +80,10 @@ The template ships with a full set of columns, but only three are required in th
 | `QUESTION` | Front of the card. | `Capital of France?` |
 | `ANSWER` | Back of the card. | `Paris` |
 
-### Control columns (recommended)
+### Control column (recommended)
 
 | Column | Description | Example |
 | :--- | :--- | :--- |
-| `STUDENTS` | Comma-separated list of students the card belongs to. Drives per-student sub-decks. | `John, Mary` |
 | `SYNC` | Set to `TRUE` to include the row in synchronization. | `TRUE` |
 
 ### Optional columns
@@ -146,11 +144,10 @@ Decks are nested to mirror your spreadsheet's structure:
 ```text
 Sheets2Anki
 └── <Remote Deck>
-    └── <Student>
-        └── <Importance>
-            └── <Topic>
-                └── <Subtopic>
-                    └── <Concept>
+    └── <Importance>
+        └── <Topic>
+            └── <Subtopic>
+                └── <Concept>
 ```
 
 ## Keyboard shortcuts
@@ -162,7 +159,6 @@ All actions are available under `Tools → Sheets2Anki`; the most common have sh
 | `Ctrl+Shift+A` | Add a new remote deck |
 | `Ctrl+Shift+S` | Synchronize remote decks |
 | `Ctrl+Shift+D` | Disconnect a remote deck |
-| `Ctrl+Shift+G` | Configure students globally |
 | `Ctrl+Shift+O` | Configure deck options |
 | `Ctrl+Shift+W` | Configure AnkiWeb sync |
 | `Ctrl+Shift+I` | Configure study timer |

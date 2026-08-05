@@ -569,11 +569,6 @@ class AddDeckDialog(QDialog):
             self._create_stat_card("📝", str(valid_lines), "Questions")
         )
 
-        unique_students = deck_stats.get("unique_students_count", 0)
-        self.stats_layout.addWidget(
-            self._create_stat_card("👥", str(unique_students), "Students")
-        )
-
         potential_notes = deck_stats.get("total_potential_anki_notes", 0)
         self.stats_layout.addWidget(
             self._create_stat_card("🎯", str(potential_notes), "Anki Notes")

@@ -25,9 +25,7 @@ except Exception as e:
 # Project module imports
 from .deck_manager import addNewDeck
 from .deck_manager import import_test_deck
-from .deck_manager import manage_deck_students
 from .deck_manager import removeRemoteDeck
-from .deck_manager import reset_student_selection
 from .deck_manager import syncDecksWithSelection
 from .sync import syncDecks
 from .ui.backup_dialog import show_backup_dialog
@@ -42,8 +40,6 @@ __all__ = [
     "import_test_deck",
     "addNewDeck",
     "removeRemoteDeck",
-    "manage_deck_students",
-    "reset_student_selection",
     "show_backup_dialog",
     "show_debug_mode_dialog",
 ]

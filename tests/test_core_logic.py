@@ -114,28 +114,6 @@ class TestRemoteDeckBuild:
 
 
 # =============================================================================
-# STUDENT / NOTE-ID KEY
-# =============================================================================
-
-
-@pytest.mark.unit
-class TestStudentKey:
-    def test_simple_split(self):
-        assert d.extract_student_from_student_note_id("John_Q1") == ("John", "Q1")
-
-    def test_missing_student_sentinel(self):
-        # The sentinel itself contains '_' and must be kept whole.
-        assert d.extract_student_from_student_note_id("[MISSING_STUDENT]_Q1") == (
-            "[MISSING_STUDENT]",
-            "Q1",
-        )
-
-    def test_empty_input(self):
-        student, note_id = d.extract_student_from_student_note_id("")
-        assert note_id == ""
-
-
-# =============================================================================
 # HIERARCHICAL TAGS
 # =============================================================================
 

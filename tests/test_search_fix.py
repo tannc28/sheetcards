@@ -35,25 +35,6 @@ def test_search_patterns():
     except Exception as e:
         print(f"❌ Error verifying config_manager.py: {e}")
 
-    # Verify student_manager.py
-    student_path = os.path.join(base_dir, "src/student_manager.py")
-    try:
-        with open(student_path, encoding="utf-8") as f:
-            content = f.read()
-
-        if 'find_notes("*")' in content:
-            print("✅ student_manager.py: Corrected pattern found")
-        else:
-            print("❌ student_manager.py: Correction pattern not found")
-
-        if 'find_notes("")' in content:
-            print("❌ student_manager.py: Problematic pattern still present")
-        else:
-            print("✅ student_manager.py: Problematic pattern removed")
-
-    except Exception as e:
-        print(f"❌ Error verifying student_manager.py: {e}")
-
     print("\n🎯 Correction test completed!")
 
 
@@ -69,7 +50,6 @@ def test_comment_quality():
     # Verify if explanatory comments are present
     paths_to_check = [
         os.path.join(base_dir, "src/config_manager.py"),
-        os.path.join(base_dir, "src/student_manager.py"),
     ]
 
     for path in paths_to_check:

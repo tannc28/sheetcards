@@ -46,21 +46,18 @@ class TestSyncSemantics:
 
 
 @pytest.mark.unit
-class TestStudentMetrics:
-    def test_missing_student_is_counted_as_sentinel(self):
-        deck = _deck("ID\tQUESTION\tANSWER\tSYNC\tSTUDENTS\nQ1\tq\ta\ttrue\t")
-        assert cols.DEFAULT_STUDENT in deck.notes_per_student
+class TestPotentialNoteMetrics:
+    def test_plain_row_counts_as_one_note(self):
+        deck = _deck("ID\tQUESTION\tANSWER\tSYNC\nQ1\tq\ta\ttrue")
+        assert deck.total_potential_anki_notes == 1
 
-    def test_multiple_students_split_on_comma(self):
-        deck = _deck("ID\tQUESTION\tANSWER\tSYNC\tSTUDENTS\nQ1\tq\ta\ttrue\tJohn, Mary")
-        assert "John" in deck.unique_students
-        assert "Mary" in deck.unique_students
+    def test_reverse_row_counts_as_two_notes(self):
+        deck = _deck(f"ID\tQUESTION\tANSWER\tSYNC\t{cols.reverse}\nQ1\tq\ta\ttrue\tr")
+        assert deck.total_potential_anki_notes == 2
 
-    def test_underscore_in_student_name_is_preserved(self):
-        # Regression context: student names may contain '_'. The build must keep the
-        # name whole (the sync key logic anchors on remote IDs rather than splitting).
-        deck = _deck("ID\tQUESTION\tANSWER\tSYNC\tSTUDENTS\nQ1\tq\ta\ttrue\tAna_B")
-        assert "Ana_B" in deck.unique_students
+    def test_empty_reverse_cell_still_counts_as_one(self):
+        deck = _deck(f"ID\tQUESTION\tANSWER\tSYNC\t{cols.reverse}\nQ1\tq\ta\ttrue\t")
+        assert deck.total_potential_anki_notes == 1
 
 
 @pytest.mark.unit

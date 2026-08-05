@@ -3,7 +3,7 @@ Deck management for the Sheets2Anki addon.
 
 This module contains functions for adding, removing, and managing
 remote decks in Anki with support for automatic naming and
-deck disconnection, including student management.
+deck disconnection.
 """
 
 from .compat import QInputDialog
@@ -14,7 +14,6 @@ from .config_manager import detect_deck_name_changes
 from .config_manager import disconnect_deck
 from .config_manager import get_deck_local_name
 from .config_manager import get_remote_decks
-from .data_processor import getRemoteDeck
 from .styled_messages import StyledMessageBox
 from .templates_and_definitions import TEST_SHEETS_URLS
 from .ui.add_deck_dialog import show_add_deck_dialog
@@ -202,10 +201,10 @@ def _force_delete_note_types_by_suffix(suffix, remote_deck_name=None, url=None):
             model_name = model["name"]
 
             # Check if it's a Sheets2Anki note type for THIS remote deck.
-            # Note type names are "Sheets2Anki - {deck} - {student} - {Type}" or
-            # "Sheets2Anki - {deck} - {Type}", so require the deck name as a
-            # ' - '-delimited segment. A plain substring test ("Bio" in name) would
-            # wrongly match a different deck whose name is a superstring ("Biologia").
+            # Note type names are "Sheets2Anki - {deck} - {Type}", so require the
+            # deck name as a ' - '-delimited segment. A plain substring test
+            # ("Bio" in name) would wrongly match a different deck whose name is
+            # a superstring ("Biologia").
             if remote_deck_name and model_name.startswith(
                 f"Sheets2Anki - {remote_deck_name} - "
             ):
@@ -514,167 +513,6 @@ def removeRemoteDeck():
         )
 
     return
-
-
-def manage_deck_students():
-    """
-    Allows user to manage which students they want to sync for each remote deck.
-    """
-    from .student_manager import extract_students_from_remote_data
-    from .student_manager import show_student_selection_dialog
-
-    remote_decks = get_remote_decks()
-
-    if not remote_decks:
-        StyledMessageBox.warning(
-            None, "No Decks", "No remote deck configured. Please add a deck first."
-        )
-        return
-
-    # Create options list for user to select a deck
-    deck_options = []
-    deck_urls = []
-
-    for url, deck_info in remote_decks.items():
-        try:
-            deck_name = get_deck_local_name(url) or "Unnamed deck"
-            deck_options.append(f"{deck_name} ({url[:50]}...)")
-            deck_urls.append(url)
-        except Exception:
-            deck_options.append(f"Deck with error ({url[:50]}...)")
-            deck_urls.append(url)
-
-    # Show deck selection dialog
-    from .compat import QInputDialog
-
-    deck_choice, ok = QInputDialog.getItem(
-        None,
-        "Manage Students - Select Deck",
-        "Select deck to manage students:",
-        deck_options,
-        0,
-        False,
-    )
-
-    if not ok:
-        return
-
-    # Get URL of selected deck
-    deck_index = deck_options.index(deck_choice)
-    selected_url = deck_urls[deck_index]
-
-    try:
-        # Download remote data to extract students
-        StyledMessageBox.information(
-            None,
-            "Downloading Data",
-            "Downloading spreadsheet data to obtain students list...\nThis may take a moment.",
-        )
-
-        remote_deck = getRemoteDeck(selected_url)
-        available_students = extract_students_from_remote_data(remote_deck)
-
-        if not available_students:
-            StyledMessageBox.warning(
-                None,
-                "No Students Found",
-                "No students found in the STUDENTS column of this spreadsheet.",
-                detailed_text="Make sure the spreadsheet contains a 'STUDENTS' or 'ALUNOS' column with student names.",
-            )
-            return
-
-        # Show student selection dialog
-        selected_students = show_student_selection_dialog(
-            selected_url, available_students
-        )
-
-        if selected_students is not None:
-            deck_name = get_deck_local_name(selected_url) or "Remote deck"
-            selected_count = len(selected_students)
-            total_count = len(available_students)
-
-            if selected_count == 0:
-                StyledMessageBox.information(
-                    None,
-                    "No Selection",
-                    f"No student selected for deck '{deck_name}'.",
-                    detailed_text="No notes will be synced for this deck until you select at least one student.",
-                )
-            else:
-                alunos_list = ", ".join(sorted(selected_students))
-                StyledMessageBox.success(
-                    None,
-                    "Configuration Saved",
-                    f"Configuration saved for deck '{deck_name}'!",
-                    detailed_text=f"Selected students ({selected_count} of {total_count}):\n{alunos_list}\n\nOn the next sync, only notes of selected students will be included.",
-                )
-
-    except Exception as e:
-        StyledMessageBox.critical(
-            None,
-            "Student Management Error",
-            f"Error managing students: {str(e)}",
-            detailed_text="Check if deck URL is correct and if spreadsheet is accessible.",
-        )
-
-
-def reset_student_selection():
-    """
-    Removes student selection from all decks, returning to default behavior.
-    """
-
-    remote_decks = get_remote_decks()
-
-    if not remote_decks:
-        StyledMessageBox.warning(None, "No Decks", "No remote deck configured.")
-        return
-
-    # Confirm with user
-    confirmed = StyledMessageBox.question(
-        None,
-        "Reset Student Selection",
-        "Are you sure you want to remove student selection from all decks?",
-        detailed_text="This will make all decks return to default behavior (sync all notes regardless of STUDENTS column).",
-        yes_text="Reset All",
-        no_text="Cancel",
-        destructive=True,
-    )
-
-    if not confirmed:
-        return
-
-    try:
-        from .config_manager import get_meta
-        from .config_manager import save_meta
-
-        meta = get_meta()
-        removed_count = 0
-
-        # Remove student_selection from all decks
-        if "decks" in meta:
-            for deck_url in meta["decks"]:
-                if "student_selection" in meta["decks"][deck_url]:
-                    del meta["decks"][deck_url]["student_selection"]
-                    removed_count += 1
-
-        save_meta(meta)
-
-        if removed_count > 0:
-            StyledMessageBox.success(
-                None,
-                "Reset Complete",
-                f"Student selection removed from {removed_count} deck(s).",
-                detailed_text="All decks will now return to default behavior on next sync.",
-            )
-        else:
-            StyledMessageBox.information(
-                None, "No Changes", "No student selection found to remove."
-            )
-
-    except Exception as e:
-        StyledMessageBox.critical(
-            None, "Reset Error", f"Error resetting student selection: {str(e)}"
-        )
 
 
 # =============================================================================

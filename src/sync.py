@@ -14,7 +14,6 @@ from typing import Any
 
 from .backup_system import SimplifiedBackupManager
 from .compat import AlignRight
-from .compat import MessageBox_Yes
 from .compat import Palette_Window
 from .compat import QDialog
 from .compat import QGroupBox
@@ -33,7 +32,7 @@ from .config_manager import sync_note_type_names_robustly
 from .config_manager import update_note_type_names_in_meta
 from .data_processor import create_or_update_notes
 from .data_processor import getRemoteDeck
-from .student_manager import get_selected_students_for_deck
+from .name_consistency_manager import NameConsistencyManager
 from .styled_messages import StyledMessageBox
 from .sync_report import _generate_changes_list_html  # noqa: F401
 from .sync_report import _generate_details_list_html  # noqa: F401
@@ -44,18 +43,8 @@ from .sync_report import generate_deck_detailed_metrics  # noqa: F401
 from .sync_report import generate_detailed_html_view  # noqa: F401
 from .sync_report import generate_errors_view  # noqa: F401
 from .sync_report import generate_simplified_view  # noqa: F401
-from .templates_and_definitions import DEFAULT_STUDENT
 from .templates_and_definitions import update_existing_note_type_templates
 from .utils import SyncError
-
-
-class SyncAborted(Exception):
-    """Exception raised when user aborts synchronization."""
-
-    pass
-
-
-from .name_consistency_manager import NameConsistencyManager
 from .utils import add_debug_message
 from .utils import capture_deck_note_type_ids
 from .utils import clear_debug_messages
@@ -96,20 +85,8 @@ class SyncStats:
     # 4. Total lines marked for sync (SYNC = true)
     remote_sync_marked_lines: int = 0
 
-    # 5. Potential total notes to be created in Anki (ID × students + [MISSING STUDENTS])
+    # 5. Potential total notes to be created in Anki
     remote_total_potential_anki_notes: int = 0
-
-    # 6. Potential total notes for specific students
-    remote_potential_student_notes: int = 0
-
-    # 7. Potential total notes for [MISSING STUDENTS]
-    remote_potential_missing_students_notes: int = 0
-
-    # 8. Total unique students found
-    remote_unique_students_count: int = 0
-
-    # 9. Potential total notes per student (detailed)
-    remote_notes_per_student: dict[str, int] = field(default_factory=dict)
 
     error_details: list[str] = field(default_factory=list)
     # Fields for structured details
@@ -154,21 +131,6 @@ class SyncStats:
         self.remote_total_potential_anki_notes += (
             other.remote_total_potential_anki_notes
         )
-        self.remote_potential_student_notes += other.remote_potential_student_notes
-        self.remote_potential_missing_students_notes += (
-            other.remote_potential_missing_students_notes
-        )
-        self.remote_unique_students_count = max(
-            self.remote_unique_students_count, other.remote_unique_students_count
-        )
-
-        # Merge student notes dictionaries - SUM values
-        for student, count in other.remote_notes_per_student.items():
-            if student in self.remote_notes_per_student:
-                # Sum instead of taking max to have correct aggregate total
-                self.remote_notes_per_student[student] += count
-            else:
-                self.remote_notes_per_student[student] = count
 
         self.error_details.extend(other.error_details)
         self.update_details.extend(other.update_details)
@@ -338,8 +300,6 @@ def _show_sync_summary_new(
     decks_synced,
     total_decks,
     removed_subdecks=0,
-    cleanup_result=None,
-    missing_cleanup_result=None,
     ankiweb_result=None,
     on_close_callback=None,
     deck_results=None,
@@ -399,14 +359,6 @@ def _show_sync_summary_new(
     if removed_subdecks > 0:
         summary.append(f"🧹 {removed_subdecks} empty subdecks removed")
 
-    if cleanup_result and cleanup_result.get("disabled_students_count", 0) > 0:
-        summary.append(
-            f"🧹 {cleanup_result['disabled_students_count']} disabled students removed"
-        )
-
-    if missing_cleanup_result:
-        summary.append(f"🧹 {DEFAULT_STUDENT} data removed")
-
     # AnkiWeb synchronization
     if ankiweb_result is not None:
         if ankiweb_result.get("success", False):
@@ -442,8 +394,6 @@ def _show_sync_summary_new(
         summary,
         total_stats,
         removed_subdecks,
-        cleanup_result,
-        missing_cleanup_result,
         sync_errors,
         ankiweb_result,
         on_close_callback,
@@ -455,8 +405,6 @@ def _show_sync_summary_with_scroll(
     base_summary,
     total_stats,
     removed_subdecks=0,
-    cleanup_result=None,
-    missing_cleanup_result=None,
     sync_errors=None,
     ankiweb_result=None,
     on_close_callback=None,
@@ -884,11 +832,7 @@ def _show_sync_summary_with_scroll(
             .separator-row td {{ padding: 10px 0; border: none; }}
             .separator-row hr {{ border: 0; height: 1px; background: {colors['border']}; opacity: 0.5; }}
             .info-row td {{ border-bottom: none; }}
-            
-            .students-section {{ margin-top: 15px; }}
-            .student-tags {{ margin-top: 5px; line-height: 1.8; }}
-            .student-tag {{ background: {colors['bg']}; border: 1px solid {colors['border']}; padding: 4px 8px; border-radius: 12px; font-size: 0.9em; margin-right: 8px; display: inline-block; }}
-            
+
             .details-block {{ margin-top: 20px; }}
             .details-block ul {{ list-style-type: none; padding-left: 0; }}
             .details-block li {{ padding: 4px 0; border-bottom: 1px solid {colors['border']}; }}
@@ -1073,12 +1017,11 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
     Synchronizes all remote decks with their sources.
 
     This is the main synchronization function that:
-    1. Checks if there are disabled students who need to have their data removed
-    2. Downloads data from remote decks
-    3. Processes and validates data
-    4. Updates Anki database
-    5. Shows progress to user
-    6. Automatically updates names if configured
+    1. Downloads data from remote decks
+    2. Processes and validates data
+    3. Updates Anki database
+    4. Shows progress to user
+    5. Automatically updates names if configured
 
     Args:
         selected_deck_names: List of deck names to synchronize.
@@ -1174,41 +1117,6 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
         sync_errors.append(f"Template Update Error: {str(e)}")
         _update_progress_text(progress, status_msgs)
         # Continue synchronization even if template update failed
-
-    # Manage cleanups in a consolidated way to avoid multiple confirmations.
-    # Initialize first so the "no cleanup needed" check below stays safe even
-    # if _handle_consolidated_cleanup raises before assigning them.
-    missing_cleanup_result = None
-    cleanup_result = None
-    try:
-        missing_cleanup_result, cleanup_result = _handle_consolidated_cleanup(
-            remote_decks
-        )
-
-        if missing_cleanup_result:
-            status_msgs.append("🧹 Removed [MISSING S.] data")
-            _update_progress_text(progress, status_msgs)
-
-        if cleanup_result:
-            count = cleanup_result.get("disabled_students_count", 0)
-            status_msgs.append(f"🧹 Removed data for {count} disabled student(s)")
-            _update_progress_text(progress, status_msgs)
-
-    except SyncAborted:
-        add_debug_message("🛑 SYNC: User aborted synchronization.", "SYNC")
-        progress.close()
-        return
-
-    except Exception as e:
-        add_debug_message(f"⚠️ Error during cleanup verification: {e}", "SYNC")
-        status_msgs.append("⚠️ Cleanup verification failed (continuing...)")
-        sync_errors.append(f"Cleanup Error: {str(e)}")
-        _update_progress_text(progress, status_msgs)
-
-    # Check if no cleanup was needed and report it (Explicit feedback)
-    if not missing_cleanup_result and not cleanup_result:
-        status_msgs.append("🧹 Cleanup verification: OK")
-        _update_progress_text(progress, status_msgs)
 
     # Initialize statistics system
     stats_manager = SyncStatsManager()
@@ -1364,8 +1272,6 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
                 successful_decks,
                 total_decks,
                 removed_subdecks,
-                cleanup_result,
-                missing_cleanup_result,
                 ankiweb_result=None,
                 on_close_callback=execute_ankiweb_sync_after_close,
                 deck_results=deck_results,
@@ -1879,13 +1785,6 @@ def _sync_single_deck(
     status_msgs.append(msg)
     _update_progress_text(progress, status_msgs)
 
-    # Get list of enabled students for this deck
-    enabled_students = get_selected_students_for_deck(remote_deck_url)
-    add_debug_message(
-        f"🎓 Enabled students for this deck: {list(enabled_students)}",
-        "STUDENTS",
-    )
-
     # Process images if enabled (before downloading TSV)
     try:
         from .config_manager import get_image_processor_auto_process
@@ -1913,7 +1812,7 @@ def _sync_single_deck(
         status_msgs.append("  ⚠️ Image processing failed (continuing sync)")
         _update_progress_text(progress, status_msgs)
 
-    remoteDeck = getRemoteDeck(tsv_url, enabled_students=list(enabled_students))
+    remoteDeck = getRemoteDeck(tsv_url)
 
     # NEW: Debug to check loaded notes
     notes_count = (
@@ -2110,22 +2009,22 @@ def _sync_single_deck(
                     if note_types_config:
                         # Look for common pattern in note types to extract actual name
                         for note_type_name in note_types_config.values():
-                            # Format: "Sheets2Anki - {remote_name} - {student} - {type}"
+                            # Format: "Sheets2Anki - {remote_name} - {type}"
                             if " - " in note_type_name:
                                 parts = note_type_name.split(" - ")
-                                if len(parts) >= 4 and parts[0] == "Sheets2Anki":
+                                if len(parts) >= 3 and parts[0] == "Sheets2Anki":
                                     # Reconstruct remote name (can have multiple hyphens)
-                                    # Get everything between "Sheets2Anki - " and " - {student}"
+                                    # Get everything between "Sheets2Anki - " and " - {type}"
                                     start_idx = note_type_name.find(
                                         "Sheets2Anki - "
                                     ) + len("Sheets2Anki - ")
-                                    # Find last occurrence of " - {student} - {type}"
-                                    last_dash_student = note_type_name.rfind(
-                                        " - " + parts[-2] + " - " + parts[-1]
+                                    # Find last occurrence of " - {type}"
+                                    last_dash_type = note_type_name.rfind(
+                                        " - " + parts[-1]
                                     )
-                                    if last_dash_student > start_idx:
+                                    if last_dash_type > start_idx:
                                         potential_name = note_type_name[
-                                            start_idx:last_dash_student
+                                            start_idx:last_dash_type
                                         ]
                                         actual_old_name = potential_name
                                         break
@@ -2330,8 +2229,6 @@ def _sync_single_deck(
         capture_deck_note_type_ids(
             remote_deck_url,  # Use actual URL instead of hash key
             currentRemoteInfo.get("remote_deck_name", "RemoteDeck"),
-            None,  # enabled_students is not needed for ID capture
-            None,  # enabled_students is not needed for ID capture
         )
 
         add_debug_message(
@@ -2406,9 +2303,8 @@ def _sync_single_deck(
         "SYNC",
     )
     try:
-        enabled_students = get_selected_students_for_deck(remote_deck_url)
         sync_result = sync_note_type_names_robustly(
-            remote_deck_url, current_remote_name, enabled_students
+            remote_deck_url, current_remote_name
         )
 
         if sync_result["updated_count"] > 0:
@@ -2446,42 +2342,12 @@ def _sync_single_deck(
         )
         # Try fallback with old method
         try:
-            enabled_students = get_selected_students_for_deck(remote_deck_url)
-            update_note_type_names_in_meta(
-                remote_deck_url, current_remote_name, enabled_students
-            )
+            update_note_type_names_in_meta(remote_deck_url, current_remote_name)
             add_debug_message("[NOTE_TYPE_SYNC] Fallback successfully applied", "SYNC")
         except Exception as fallback_error:
             add_debug_message(
                 f"[NOTE_TYPE_SYNC] ❌ Fallback also failed: {fallback_error}", "SYNC"
             )
-
-    # NEW: Update student sync history (ROBUST SOLUTION)
-    # This ensures we always know which students were synchronized,
-    # regardless of manual note type renames
-    try:
-        from .config_manager import update_student_sync_history
-
-        # Get students who were synchronized in this deck
-        students_synced = get_selected_students_for_deck(remote_deck_url)
-
-        if students_synced:
-            # Update persistent history
-            update_student_sync_history(students_synced)
-            add_debug_message(
-                f"📚 HISTORY: History updated for {len(students_synced)} students",
-                "SYNC",
-            )
-        else:
-            add_debug_message(
-                "📚 HISTORY: No students synchronized to update history", "SYNC"
-            )
-
-    except Exception as history_error:
-        add_debug_message(
-            f"⚠️ HISTORY: Error updating history: {history_error}", "SYNC"
-        )
-        # Don't interrupt synchronization due to history error
 
     # CRITICAL: Save final configurations after name consistency
     # This ensures NameConsistencyManager updates are persisted
@@ -2559,538 +2425,3 @@ def _handle_unexpected_error(
         sync_errors,
         step,
     )
-
-
-def _handle_consolidated_cleanup(remote_decks):
-    """
-    Manages data cleanups in a consolidated way to avoid multiple confirmations.
-
-    This function checks if cleanup is needed for:
-    1. Disabled students
-    2. [MISSING S.] notes (when feature was disabled)
-
-    If both need cleanup, shows a single consolidated confirmation.
-    If only one needs cleanup, uses specific confirmation.
-
-    Args:
-        remote_decks (dict): Dictionary of configured remote decks
-
-    Returns:
-        tuple: (missing_cleanup_result, cleanup_result)
-    """
-    add_debug_message(
-        "🧹 CLEANUP: Starting consolidated cleanup verification...", "CLEANUP"
-    )
-
-    # Check if [MISSING S.] cleanup is needed
-    add_debug_message(
-        "📋 CLEANUP: Checking if [MISSING S.] cleanup is needed...", "CLEANUP"
-    )
-    needs_missing_cleanup = _needs_missing_students_cleanup(remote_decks)
-    add_debug_message(
-        f"   ➜ [MISSING S.] cleanup {'REQUIRED' if needs_missing_cleanup else 'NOT required'}",
-        "CLEANUP",
-    )
-
-    # Check if disabled students cleanup is needed
-    add_debug_message(
-        "📋 CLEANUP: Checking if disabled students cleanup is needed...", "CLEANUP"
-    )
-    needs_disabled_cleanup = _needs_disabled_students_cleanup(remote_decks)
-    add_debug_message(
-        f"   ➜ Student cleanup {'REQUIRED' if needs_disabled_cleanup else 'NOT required'}",
-        "CLEANUP",
-    )
-
-    if not needs_missing_cleanup and not needs_disabled_cleanup:
-        # No cleanup needed
-        add_debug_message(
-            "✅ CLEANUP: No cleanup needed, continuing synchronization...", "CLEANUP"
-        )
-        return None, None
-
-    if needs_missing_cleanup and needs_disabled_cleanup:
-        # Both cleanups needed - show consolidated confirmation
-        return _handle_consolidated_confirmation_cleanup(remote_decks)
-
-    elif needs_missing_cleanup:
-        # Only [MISSING S.] cleanup
-        missing_result = _handle_missing_students_cleanup(remote_decks)
-        return missing_result, None
-
-    else:
-        # Only disabled students cleanup
-        cleanup_result = _handle_disabled_students_cleanup(remote_decks)
-        return None, cleanup_result
-
-
-def _needs_missing_students_cleanup(remote_decks):
-    """
-    Checks if missing student data cleanup is necessary.
-
-    SIMPLIFIED LOGIC:
-    Cleanup is needed ONLY if:
-    1. sync_missing_students_notes is disabled (feature turned off)
-    2. There's a missing student placeholder in sync_history (data exists)
-
-    This correctly detects when a user has disabled the missing students feature
-    after it was previously used (and thus has data to be deleted).
-
-    Returns:
-        bool: True if cleanup is required
-    """
-    from .config_manager import get_students_with_sync_history
-    from .config_manager import is_auto_remove_disabled_students
-    from .config_manager import is_sync_missing_students_notes
-    from .templates_and_definitions import DEFAULT_STUDENT
-
-    add_debug_message(
-        "📋 CLEANUP: Checking if [MISSING S.] cleanup is needed...", "CLEANUP"
-    )
-
-    # All missing student placeholders to check
-    missing_placeholders = {
-        DEFAULT_STUDENT,  # "[MISSING STUDENT]"
-        "[MISSING STUDENTS]",
-        "[MISSING S.]",
-    }
-
-    # FIRST CHECK: If feature is enabled, no need to clean
-    if is_sync_missing_students_notes():
-        add_debug_message(
-            "🔍 [MISSING S.]: Feature ENABLED, no cleanup needed", "CLEANUP"
-        )
-        return False  # Feature enabled, no cleanup needed
-
-    # SECOND CHECK: If auto-removal is disabled, don't clean
-    if not is_auto_remove_disabled_students():
-        add_debug_message(
-            "🔍 [MISSING S.]: Feature DISABLED, but automatic removal also DISABLED - not cleaning",
-            "CLEANUP",
-        )
-        return False
-
-    # SIMPLE CHECK: Is there any missing student placeholder in sync_history?
-    # This is the ONLY condition that requires cleanup warning
-    sync_history_students = get_students_with_sync_history()
-    missing_students_with_data = missing_placeholders.intersection(
-        sync_history_students
-    )
-
-    add_debug_message(
-        f"   📚 Students in sync_history: {sorted(sync_history_students)}", "CLEANUP"
-    )
-    add_debug_message(
-        f"   🔍 Missing placeholders with data: {sorted(missing_students_with_data)}",
-        "CLEANUP",
-    )
-
-    if missing_students_with_data:
-        add_debug_message(
-            f"⚠️ [MISSING S.]: Found {sorted(missing_students_with_data)} in sync_history, cleanup required",
-            "CLEANUP",
-        )
-        return True
-    else:
-        add_debug_message(
-            "✅ [MISSING S.]: No missing student data found in sync_history, cleanup NOT required",
-            "CLEANUP",
-        )
-        return False
-
-
-def _needs_disabled_students_cleanup(remote_decks):
-    """
-    Checks if disabled students cleanup is necessary.
-
-    SIMPLIFIED LOGIC:
-    Cleanup is needed ONLY if there are students in sync_history
-    that are NOT in enabled_students.
-
-    This correctly detects when a user has disabled a student
-    that was previously synced (and thus has data to be deleted).
-
-    Returns:
-        bool: True if cleanup is required
-    """
-    from .config_manager import get_global_student_config
-    from .config_manager import get_students_with_sync_history
-    from .config_manager import is_auto_remove_disabled_students
-    from .templates_and_definitions import DEFAULT_STUDENT
-
-    add_debug_message(
-        "🔍 CLEANUP: Checking if disabled students cleanup is required...", "CLEANUP"
-    )
-
-    # FIRST CHECK: Auto-removal must be active
-    auto_remove_enabled = is_auto_remove_disabled_students()
-    add_debug_message(
-        f"   📋 Auto-removal is {'ENABLED' if auto_remove_enabled else 'DISABLED'}",
-        "CLEANUP",
-    )
-
-    if not auto_remove_enabled:
-        add_debug_message(
-            "🚫 CLEANUP: Auto-removal disabled, skipping check", "CLEANUP"
-        )
-        return False
-
-    config = get_global_student_config()
-
-    # Get currently enabled students
-    current_enabled = set(config.get("enabled_students", []))
-    add_debug_message(
-        f"   👥 Currently enabled students: {sorted(current_enabled)}", "CLEANUP"
-    )
-
-    # Get students from sync_history (these are students who have data in Anki)
-    sync_history_students = get_students_with_sync_history()
-    add_debug_message(
-        f"   📚 Students in sync_history: {sorted(sync_history_students)}", "CLEANUP"
-    )
-
-    # Filter out missing student placeholders (handled separately)
-    missing_placeholders = {DEFAULT_STUDENT, "[MISSING STUDENTS]", "[MISSING S.]"}
-    real_students_with_data = sync_history_students - missing_placeholders
-    add_debug_message(
-        f"   👤 Real students with data: {sorted(real_students_with_data)}", "CLEANUP"
-    )
-
-    # SIMPLE CHECK: Are there any students with data that are no longer enabled?
-    # This is the ONLY condition that requires cleanup warning
-    students_to_cleanup = real_students_with_data - current_enabled
-
-    if students_to_cleanup:
-        add_debug_message("🔍 CLEANUP: Students detected for cleanup:", "CLEANUP")
-        add_debug_message(
-            f"  • Students with data (sync_history): {sorted(real_students_with_data)}",
-            "CLEANUP",
-        )
-        add_debug_message(
-            f"  • Currently enabled: {sorted(current_enabled)}", "CLEANUP"
-        )
-        add_debug_message(
-            f"  • Students to remove: {sorted(students_to_cleanup)}", "CLEANUP"
-        )
-        add_debug_message("✅ CLEANUP: Cleanup is REQUIRED", "CLEANUP")
-        return True
-    else:
-        add_debug_message(
-            "✅ CLEANUP: No disabled students with data found, cleanup NOT required",
-            "CLEANUP",
-        )
-        return False
-
-
-def _handle_consolidated_confirmation_cleanup(remote_decks):
-    """
-    Shows a single confirmation for both types of cleanup and executes both if confirmed.
-
-    SIMPLIFIED LOGIC:
-    - Uses sync_history as the ONLY source of truth for students with data
-    - Students need cleanup ONLY if they are in sync_history but NOT in enabled_students
-
-    Returns:
-        tuple: (missing_cleanup_result, cleanup_result)
-    """
-    from .config_manager import get_global_student_config
-    from .config_manager import get_students_with_sync_history
-    from .student_manager import cleanup_disabled_students_data
-    from .student_manager import cleanup_missing_students_data
-    from .templates_and_definitions import DEFAULT_STUDENT
-    from .ui.data_removal_confirmation import collect_students_for_removal
-    from .ui.data_removal_confirmation import show_data_removal_confirmation_dialog
-
-    # Missing student placeholders
-    missing_placeholders = {DEFAULT_STUDENT, "[MISSING STUDENTS]", "[MISSING S.]"}
-
-    # Get configuration
-    config = get_global_student_config()
-
-    # Currently enabled students
-    current_enabled = set(config.get("enabled_students", []))
-    add_debug_message(
-        f"   👥 Currently enabled students: {sorted(current_enabled)}", "CLEANUP"
-    )
-
-    # SOURCE: sync_history (ONLY source of truth for students with data)
-    sync_history_students = get_students_with_sync_history()
-    add_debug_message(
-        f"   📚 Students in sync_history: {sorted(sync_history_students)}", "CLEANUP"
-    )
-
-    # Filter out missing student placeholders (handled separately)
-    real_students_with_data = sync_history_students - missing_placeholders
-    add_debug_message(
-        f"   👤 Real students with data: {sorted(real_students_with_data)}", "CLEANUP"
-    )
-
-    # SIMPLE CHECK: Students who have data but are no longer enabled
-    disabled_students_set = real_students_with_data - current_enabled
-    add_debug_message(
-        f"   🎯 Students to cleanup: {sorted(disabled_students_set)}", "CLEANUP"
-    )
-
-    deck_names = [
-        deck_info.get("remote_deck_name", "") for deck_info in remote_decks.values()
-    ]
-    deck_names = [name for name in deck_names if name]
-
-    # Check if [MISSING S.] should be cleaned
-    from .config_manager import is_sync_missing_students_notes
-
-    missing_functionality_disabled = not is_sync_missing_students_notes()
-
-    # Check if there's actually missing student data in sync_history
-    missing_students_in_history = missing_placeholders.intersection(
-        sync_history_students
-    )
-    should_cleanup_missing = missing_functionality_disabled and bool(
-        missing_students_in_history
-    )
-
-    # Collect all students to be removed using centralized function
-    students_to_remove = collect_students_for_removal(
-        disabled_students=list(disabled_students_set),
-        missing_functionality_disabled=should_cleanup_missing,  # Only if there's actual data
-    )
-
-    # If nothing to remove, return without showing dialog
-    if not students_to_remove:
-        return ({}, {})
-
-    # Use centralized dialog for confirmation
-    # Use centralized dialog for confirmation (returns int)
-    result = show_data_removal_confirmation_dialog(
-        students_to_remove=students_to_remove, window_title="⚠️ Confirm Data Cleanup"
-    )
-
-    if result == MessageBox_Yes:
-        add_debug_message("🧹 CLEANUP: User confirmed consolidated cleanup", "CLEANUP")
-        add_debug_message(
-            f"🧹 CLEANUP: Disabled students: {sorted(disabled_students_set)}", "CLEANUP"
-        )
-
-        # Execute both cleanups
-        if should_cleanup_missing:
-            cleanup_missing_students_data(deck_names)
-        if disabled_students_set:
-            cleanup_disabled_students_data(disabled_students_set, deck_names)
-
-        # Return results
-        missing_result = {
-            "missing_cleanup_count": 1 if should_cleanup_missing else 0,
-            "missing_cleanup_message": (
-                "[MISSING S.] data removed" if should_cleanup_missing else ""
-            ),
-        }
-
-        cleanup_result = {
-            "disabled_students_count": len(disabled_students_set),
-            "disabled_students_names": ", ".join(sorted(disabled_students_set)),
-        }
-
-        add_debug_message("✅ CLEANUP: Consolidated cleanup completed", "CLEANUP")
-        return missing_result, cleanup_result
-
-    else:  # MessageBox_Cancel or any other response
-        add_debug_message(
-            "🛑 CLEANUP: User cancelled consolidated cleanup - ABORTING SYNC", "CLEANUP"
-        )
-        raise SyncAborted("User cancelled data cleanup")
-
-
-def _handle_missing_students_cleanup(remote_decks):
-    """
-    Manages missing student note data cleanup when feature is disabled.
-
-    SIMPLIFIED LOGIC:
-    - Only checks sync_history for missing student placeholders
-    - No Anki scanning needed (sync_history is the source of truth)
-
-    Args:
-        remote_decks (dict): Dictionary of configured remote decks
-
-    Returns:
-        dict: Cleanup statistics or None if no cleanup occurred
-    """
-    from .config_manager import get_students_with_sync_history
-    from .config_manager import is_sync_missing_students_notes
-    from .student_manager import cleanup_missing_students_data
-    from .student_manager import show_missing_cleanup_confirmation_dialog
-    from .templates_and_definitions import DEFAULT_STUDENT
-
-    # All missing student placeholders to check
-    missing_placeholders = {
-        DEFAULT_STUDENT,  # "[MISSING STUDENT]"
-        "[MISSING STUDENTS]",
-        "[MISSING S.]",
-    }
-
-    # If feature is enabled, do nothing
-    if is_sync_missing_students_notes():
-        return None  # Feature enabled, nothing to clean
-
-    # Feature disabled - check if there's missing student data in sync_history
-    add_debug_message(
-        "🔍 CLEANUP: Sync [MISSING S.] is DISABLED, checking for data to clean...",
-        "CLEANUP",
-    )
-
-    # Extract deck_names (needed for cleanup later)
-    deck_names = [
-        deck_info.get("remote_deck_name", "") for deck_info in remote_decks.values()
-    ]
-    deck_names = [name for name in deck_names if name]  # Filter empty names
-
-    # SIMPLE CHECK: Check sync_history for any missing student placeholders
-    sync_history_students = get_students_with_sync_history()
-    missing_students_with_data = missing_placeholders.intersection(
-        sync_history_students
-    )
-
-    add_debug_message(
-        f"   📚 Students in sync_history: {sorted(sync_history_students)}", "CLEANUP"
-    )
-    add_debug_message(
-        f"   🔍 Missing placeholders with data: {sorted(missing_students_with_data)}",
-        "CLEANUP",
-    )
-
-    if not missing_students_with_data:
-        add_debug_message(
-            "✅ CLEANUP: No missing student data found in sync_history", "CLEANUP"
-        )
-        return None
-
-    add_debug_message("⚠️ CLEANUP: [MISSING S.] data found for cleanup", "CLEANUP")
-
-    # Show confirmation dialog
-    # Show confirmation dialog
-    # Now returns int result
-    result = show_missing_cleanup_confirmation_dialog()
-
-    if result == MessageBox_Yes:
-        # User confirmed - execute cleanup
-        add_debug_message(
-            f"🧹 CLEANUP: Starting [MISSING S.] cleanup for decks: {deck_names}",
-            "CLEANUP",
-        )
-
-        cleanup_missing_students_data(deck_names)
-
-        # Simple log of completed cleanup
-        add_debug_message("✅ CLEANUP: [MISSING S.] cleanup completed", "CLEANUP")
-        return {
-            "missing_cleanup_count": 1,
-            "missing_cleanup_message": "[MISSING S.] data removed",
-        }
-
-    else:  # MessageBox_Cancel or any other response
-        add_debug_message(
-            "🛑 CLEANUP: User cancelled [MISSING S.] cleanup - ABORTING SYNC", "CLEANUP"
-        )
-        raise SyncAborted("User cancelled [MISSING S.] cleanup")
-
-
-def _handle_disabled_students_cleanup(remote_decks):
-    """
-    Manages cleanup of data for students who have been disabled.
-
-    This function:
-    1. Checks if auto-removal is enabled
-    2. Identifies disabled students
-    3. Shows security confirmation
-    4. Removes data if confirmed
-
-    Args:
-        remote_decks (dict): Dictionary of configured remote decks
-
-    Returns:
-        dict: Cleanup statistics or None if no cleanup occurred
-    """
-    from .config_manager import get_global_student_config
-    from .config_manager import is_auto_remove_disabled_students
-    from .student_manager import cleanup_disabled_students_data
-    from .student_manager import get_disabled_students_for_cleanup
-    from .student_manager import show_cleanup_confirmation_dialog
-
-    # Check if auto-removal is enabled
-    if not is_auto_remove_disabled_students():
-        return None  # Auto-removal disabled, nothing to do
-
-    add_debug_message(
-        "🔍 CLEANUP: Auto-removal is ENABLED, checking for disabled students...",
-        "CLEANUP",
-    )
-
-    # Get current configuration
-    config = get_global_student_config()
-    current_enabled = set(config.get("enabled_students", []))
-
-    # IMPROVED LOGIC for [MISSING S.]:
-    # - If [MISSING S.] functionality is active, include in current list
-    # - If functionality was disabled, [MISSING S.] will be detected as "removed"
-    #   and its notes will be cleaned
-    from .config_manager import is_sync_missing_students_notes
-
-    if is_sync_missing_students_notes():
-        current_enabled.add("[MISSING S.]")
-        add_debug_message(
-            "🔍 CLEANUP: [MISSING S.] included in current list (feature active)",
-            "CLEANUP",
-        )
-    else:
-        add_debug_message(
-            "🔍 CLEANUP: [MISSING S.] excluded from current list (feature disabled)",
-            "CLEANUP",
-        )
-        add_debug_message(
-            "          If existing [MISSING S.] notes exist, they will be detected for removal",
-            "CLEANUP",
-        )
-
-    # Use get_disabled_students_for_cleanup which uses sync_history as source of truth
-    disabled_students = get_disabled_students_for_cleanup(current_enabled)
-
-    if not disabled_students:
-        add_debug_message("✅ CLEANUP: No disabled students detected", "CLEANUP")
-        return None
-
-    add_debug_message(
-        f"⚠️ CLEANUP: Detected {len(disabled_students)} disabled students: {sorted(disabled_students)}",
-        "CLEANUP",
-    )
-
-    # Show confirmation dialog
-    # Show confirmation dialog (returns int)
-    result = show_cleanup_confirmation_dialog(disabled_students)
-
-    if result == MessageBox_Yes:
-        # User confirmed - execute cleanup
-        deck_names = [
-            deck_info.get("remote_deck_name", "") for deck_info in remote_decks.values()
-        ]
-        deck_names = [name for name in deck_names if name]  # Filter empty names
-
-        add_debug_message(
-            f"🧹 CLEANUP: Starting cleanup for decks: {deck_names}", "CLEANUP"
-        )
-
-        cleanup_disabled_students_data(disabled_students, deck_names)
-
-        # Simple log of completed cleanup
-        add_debug_message(
-            f"✅ CLEANUP: Cleanup completed for {len(disabled_students)} students",
-            "CLEANUP",
-        )
-        return {
-            "disabled_students_count": len(disabled_students),
-            "disabled_students_names": ", ".join(sorted(disabled_students)),
-        }
-
-    else:  # MessageBox_Cancel or any other response
-        add_debug_message(
-            "🛑 CLEANUP: User cancelled student cleanup - ABORTING SYNC", "CLEANUP"
-        )
-        raise SyncAborted("User cancelled student cleanup")
