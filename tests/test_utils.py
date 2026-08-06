@@ -241,37 +241,18 @@ class TestDeckUtilities:
         mock_mw.col.decks.new.assert_called_once_with("Test Deck")
 
     def test_get_subdeck_name(self):
-        """Subdeck name is the deck plus the four hierarchy fields."""
-        from src import templates_and_definitions as cols
-        from src.utils import get_subdeck_name
-
-        fields = {
-            cols.hierarchy_1: "High",
-            cols.hierarchy_2: "Geography",
-            cols.hierarchy_3: "Capitals",
-            cols.hierarchy_4: "Brazil",
-        }
-
-        assert (
-            get_subdeck_name("Sheets2Anki", fields)
-            == "Sheets2Anki::High::Geography::Capitals::Brazil"
-        )
-
-    def test_get_subdeck_name_skips_empty_levels(self):
-        """Only the hierarchy levels that carry a value become subdecks."""
-        from src import templates_and_definitions as cols
+        """Subdeck name is the deck plus the levels the row actually filled."""
         from src.utils import get_subdeck_name
 
         assert (
-            get_subdeck_name("Sheets2Anki", {cols.hierarchy_2: "Topic 2"})
-            == "Sheets2Anki::Topic 2"
+            get_subdeck_name("Sheets2Anki", ["High", "Geography", "Capitals"])
+            == "Sheets2Anki::High::Geography::Capitals"
         )
 
-    def test_get_subdeck_name_with_no_hierarchy_is_the_deck_itself(self):
-        """A row with no hierarchy at all stays in the deck root."""
+    def test_get_subdeck_name_with_no_levels_is_the_deck_itself(self):
         from src.utils import get_subdeck_name
 
-        assert get_subdeck_name("Sheets2Anki", {}) == "Sheets2Anki"
+        assert get_subdeck_name("Sheets2Anki", []) == "Sheets2Anki"
 
     def test_ensure_subdeck_exists(self, mock_mw):
         """Subdeck existence guarantee test."""
@@ -723,11 +704,10 @@ class TestGetNoteTypeName:
 
         assert get_note_type_name("url", "") == "Sheets2Anki - RemoteDeck - Basic"
 
-    def test_cloze_and_reverse_flags(self):
+    def test_cloze_flag(self):
         from src.utils import get_note_type_name
 
         assert get_note_type_name("u", "D", is_cloze=True).endswith("- Cloze")
-        assert get_note_type_name("u", "D", is_reverse=True).endswith("- Reverse")
 
 
 if __name__ == "__main__":

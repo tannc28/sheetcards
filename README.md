@@ -16,10 +16,12 @@ It is designed for users who maintain large or collaboratively authored decks �
 ## Features
 
 - **Spreadsheet-driven sync** — one-way synchronization from Google Sheets to Anki, with reliable create/update/delete tracking by stable row IDs.
+- **Your columns, your schema** — apart from a few reserved headers, every column you add becomes a note field named exactly like the header. Name them in any language you like; the add-on does not impose a column list.
+- **Configurable card layout** — decide per deck which fields appear on the front, which on the back, and how they are styled, without ever editing an Anki note type by hand.
 - **Collaboration** — multiple authors can edit the same sheet; everyone syncs the latest content.
 - **Cloze support** — `{{c1::...}}` patterns are detected automatically and rendered as cloze cards.
-- **Reverse cards** — optionally generate an Answer → Question card from the same row.
-- **Hierarchical organization** — automatic deck hierarchy and namespaced tags derived from topic, subtopic, concept, importance, exam board, and more.
+- **Reverse cards** — optionally add a second, back-to-front card to the same notes.
+- **Hierarchical organization** — automatic deck hierarchy and namespaced tags built from your `SUBDECK` columns.
 - **AI assistant** — optional in-card AI help, follow-up questions, and answer checking via Google Gemini, Anthropic Claude, or OpenAI.
 - **Rich media** — embed images and videos (YouTube/Vimeo) directly in cards.
 - **Automatic image hosting** — images placed in the sheet are uploaded and embedded as `<img>` tags automatically.
@@ -54,7 +56,7 @@ Sheets2Anki 3.x targets the modern Anki runtime only. Users on older Anki releas
 
 ### 1. Copy the template
 
-Start from the official template, which has every supported column pre-configured:
+Start from the official template, which already has the reserved columns in place and a few content columns to build on:
 
 [**Open the Sheets2Anki template**](https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing) → `File → Make a copy`.
 
@@ -66,43 +68,52 @@ Start from the official template, which has every supported column pre-configure
 
 ### 3. Sync
 
-Add questions and answers to the sheet, then press `Ctrl+Shift+S` (or `Tools → Sheets2Anki → Synchronize Remote Decks`). Your cards appear in Anki, organized and ready to study.
+Add your content to the sheet, then press `Ctrl+Shift+S` (or `Tools → Sheets2Anki → Synchronize Remote Decks`). Your cards appear in Anki, organized and ready to study.
 
 ## Spreadsheet schema
 
-The template ships with a full set of columns, but only three are required in the header. Each row becomes one note — or two, when the row also defines a reverse card.
+**Your spreadsheet defines the schema.** Only a handful of header names are reserved; every other column becomes an Anki note field named exactly like its header. Nothing forces you to use English — `Hán tự`, `Pinyin` and `Nghĩa` are perfectly good columns. Each row becomes exactly one note.
 
-### Required columns
+### Reserved columns
 
-| Column | Description | Example |
-| :--- | :--- | :--- |
-| `ID` | Stable unique identifier used to track each card across syncs. Do not edit or reuse it. | `Q101` |
-| `QUESTION` | Front of the card. | `Capital of France?` |
-| `ANSWER` | Back of the card. | `Paris` |
+Header names are matched case-insensitively and surrounding whitespace is ignored, so `id`, `ID ` and `Id` are all the same column.
 
-### Control column (recommended)
+| Column | Required | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `ID` | Yes | Stable unique identifier used to track each row across syncs. Do not edit or reuse it. | `Q101` |
+| `SYNC` | No | Include the row only when this is set (`TRUE`, `1`, `yes`, `x`, `✓`). **If the sheet has no `SYNC` column at all, every row syncs.** | `TRUE` |
+| `SUBDECK 1`, `SUBDECK 2`, … | No | One level of the deck path each, ordered by their number rather than their position in the sheet. Blank levels are skipped. | `Geography` |
+| `TAGS` | No | Extra Anki tags for the row, separated by commas or semicolons. | `capitals, europe` |
 
-| Column | Description | Example |
-| :--- | :--- | :--- |
-| `SYNC` | Set to `TRUE` to include the row in synchronization. | `TRUE` |
+### Content columns
 
-### Optional columns
+Everything else is yours. Each remaining column becomes a note field carrying its header as the field name, and the column order in the sheet is the field order on the card by default — the first content column goes on the front, the rest on the back.
 
-| Column | Description |
-| :--- | :--- |
-| `IMPORTANCE` | Priority level (used in the deck hierarchy and tags). |
-| `TOPIC` / `SUBTOPIC` / `CONCEPT` | Hierarchical categorization, from broad to atomic. |
-| `REVERSE` | Text for an additional Answer → Question card. |
-| `COMPLEMENTARY INFO` / `DETAILED INFO` | Additional context and extended explanation. |
-| `EXAMPLE 1` / `EXAMPLE 2` | Worked examples. |
-| `MNEMONIC` | Memory aid. |
-| `IMAGE` / `HTML IMAGE` | Source image cell and the generated `<img>` markup (see [Automatic image handling](#automatic-image-handling)). |
-| `HTML VIDEO` | Embedded video markup (YouTube/Vimeo). |
-| `BOARDS` / `LAST YEAR IN EXAM` / `CAREERS` | Exam metadata used for tagging. |
-| `OTHER TAGS` | Additional free-form tags. |
-| `EXTRA FIELD 1/2/3` | Free-use fields. |
+So a sheet whose header row reads:
 
-> Columns you do not use can be hidden in Google Sheets without affecting synchronization.
+```text
+ID | SYNC | SUBDECK 1 | SUBDECK 2 | Hán tự | Pinyin | Nghĩa | Ví dụ | TAGS
+```
+
+produces notes with the fields `ID`, `Hán tự`, `Pinyin`, `Nghĩa` and `Ví dụ`, filed two subdeck levels deep, with `Hán tự` on the front of the card by default.
+
+> **Adding and removing columns.** Adding a column adds the field and puts it on the back of the card; you can then move it wherever you like in the card layout. Removing a column stops the field being shown, but the field and its content are kept in Anki — Sheets2Anki never deletes data you have already collected.
+
+## Card layout
+
+How a card looks is a per-deck setting, not something the sheet dictates. Open `Tools → Sheets2Anki → Configure Card Layout` (`Ctrl+Shift+C`) to choose:
+
+- which fields appear on the **front** and which on the **back** (by default the first content column is the front and the rest are the back);
+- whether each field is preceded by a small **label**;
+- **font sizes** for the front and back, and text **alignment**;
+- a **reverse card**, a second back-to-front card added to the same notes;
+- the **study timer** and where it sits on the card.
+
+The reverse card is a second card template rather than a second note, so both directions are scheduled independently from a single spreadsheet row, and switching it off later removes those cards without touching your content. It is not available for cloze notes, which Anki limits to one template.
+
+If you would rather craft the templates yourself in Anki's card editor, switch on the dialog's "edit the template myself" option; sync will then leave that deck's templates alone.
+
+Card layouts are stored in your Anki collection rather than in the add-on's local settings, so they travel to your other machines through AnkiWeb sync.
 
 ## AI assistant
 
@@ -118,36 +129,32 @@ Sheets2Anki can add AI-powered controls to your cards for explanations, follow-u
 
 Sheets2Anki can upload images from your spreadsheet and embed them in cards, so they display on every device including AnkiMobile.
 
-1. Insert an image into a cell in the `IMAGE` column (`Insert → Image → Image in cell`).
+1. Add two ordinary content columns named `IMAGE` and `HTML IMAGE` — the Apps Script looks for exactly these names — and insert an image into a cell in the `IMAGE` column (`Insert → Image → Image in cell`).
 2. Configure the processor once via `Tools → Sheets2Anki → Configure Image Processor` (`Ctrl+Shift+P`): provide a free [ImgBB](https://api.imgbb.com/) API key and the URL of a deployed Google Apps Script web app.
-3. On processing, images are uploaded to ImgBB and the resulting `<img>` markup is written to the `HTML IMAGE` column, then synced like any other field.
+3. On processing, images are uploaded to ImgBB and the resulting `<img>` markup is written to the `HTML IMAGE` column. Because `HTML IMAGE` is a normal content column, it syncs into a field of the same name like any other.
 
 Full setup instructions, including deploying the Apps Script, are in [`scripts/IMAGE_PROCESSOR_README.md`](scripts/IMAGE_PROCESSOR_README.md).
 
 ## Organization
 
-Sheets2Anki builds a namespaced tag hierarchy in the Anki browser:
-
-```text
-sheets2anki
-├── topics::topic::subtopic::concept    hierarchical content tree
-├── concepts::concept                   flat concept search
-├── importance::level                   priority level
-├── boards::board                       exam boards
-├── years::year                         exam years
-├── careers::career                     professional areas
-└── other_tags::tag                     additional tags
-```
-
-Decks are nested to mirror your spreadsheet's structure:
+Your `SUBDECK` columns drive both the deck tree and the tags. A row with `SUBDECK 1 = Geography`, `SUBDECK 2 = Europe` and `SUBDECK 3 = Capitals` lands in:
 
 ```text
 Sheets2Anki
 └── <Remote Deck>
-    └── <Importance>
-        └── <Topic>
-            └── <Subtopic>
-                └── <Concept>
+    └── Geography
+        └── Europe
+            └── Capitals
+```
+
+Blank levels are simply skipped, and a sheet with no `SUBDECK` columns keeps every note in the deck's root.
+
+Each note also gets a small, predictable set of tags:
+
+```text
+sheets2anki                                  every note the add-on owns
+sheets2anki::geography::europe::capitals     mirrors the deck path
+capitals, europe                             whatever the TAGS column lists
 ```
 
 ## Keyboard shortcuts
@@ -161,6 +168,7 @@ All actions are available under `Tools → Sheets2Anki`; the most common have sh
 | `Ctrl+Shift+D` | Disconnect a remote deck |
 | `Ctrl+Shift+O` | Configure deck options |
 | `Ctrl+Shift+W` | Configure AnkiWeb sync |
+| `Ctrl+Shift+C` | Configure card layout |
 | `Ctrl+Shift+I` | Configure study timer |
 | `Ctrl+Shift+H` | Configure AI assistance |
 | `Ctrl+Shift+P` | Configure image processor |

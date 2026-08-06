@@ -246,6 +246,23 @@ def configure_timer():
         showInfo(error_msg)
 
 
+def configure_card_layout():
+    """
+    Opens the card layout dialog.
+
+    This function allows the user to choose, per connected deck:
+    1. Which fields appear on the front and on the back, and in which order
+    2. How the card is styled (labels, font sizes, alignment, reverse card, timer)
+    """
+    try:
+        from .src.ui.card_layout_dialog import show_card_layout_dialog
+
+        show_card_layout_dialog(mw)
+    except Exception as e:
+        error_msg = errorTemplate.format(str(e))
+        showInfo(error_msg)
+
+
 def configure_ai_assistance():
     """
     Opens the AI Assistance configuration dialog.
@@ -649,6 +666,12 @@ if mw is not None:
     ankiWebSyncConfigAction.setShortcut(QKeySequence("Ctrl+Shift+W"))
     qconnect(ankiWebSyncConfigAction.triggered, configure_ankiweb_sync)
     remoteDecksSubMenu.addAction(ankiWebSyncConfigAction)
+
+    # Action: Configure card layout
+    cardLayoutAction = QAction("Configure Card Layout", mw)
+    cardLayoutAction.setShortcut(QKeySequence("Ctrl+Shift+C"))
+    qconnect(cardLayoutAction.triggered, configure_card_layout)
+    remoteDecksSubMenu.addAction(cardLayoutAction)
 
     # Action: Configure timer position
     timerConfigAction = QAction("Configure Timer", mw)

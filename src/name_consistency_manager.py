@@ -33,11 +33,10 @@ class NameConsistencyManager:
         # 2. recreate local_deck_name in the pattern "Sheets2Anki::{remote_deck_name}"
         local_deck_name = f"Sheets2Anki::{remote_deck_name}"
 
-        # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - Basic/Cloze/Reverse"
+        # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
         note_type_names = {
             "basic": f"Sheets2Anki - {remote_deck_name} - Basic",
             "cloze": f"Sheets2Anki - {remote_deck_name} - Cloze",
-            "reverse": f"Sheets2Anki - {remote_deck_name} - Reverse",
         }
 
         # 4. recreate deck_option_name in the pattern "Sheets2Anki - {remote_deck_name}"
@@ -313,7 +312,7 @@ class NameConsistencyManager:
         # Format is: "Sheets2Anki - {remote_name} - {type}"
         # But remote_name may contain hyphens, so we need to work backwards
 
-        # Last element is always the type (Basic/Cloze/Reverse)
+        # Last element is always the type (Basic/Cloze)
         note_type = parts[-1]
 
         # Determine correct name
@@ -321,8 +320,6 @@ class NameConsistencyManager:
             return expected_names.get("basic")
         elif note_type == "Cloze":
             return expected_names.get("cloze")
-        elif note_type == "Reverse":
-            return expected_names.get("reverse")
 
         return None
 

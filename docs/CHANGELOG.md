@@ -4,6 +4,51 @@
 
 ---
 
+## 💥 **v4.0.0** - August 2026 *(Breaking — the sheet now defines the schema)*
+
+The fixed 24-column schema is gone. A sheet declares its own fields, and the card is
+built from a layout the user edits in a dialog instead of one hard-coded in Python.
+
+### 💥 Breaking
+- **Only four headers are reserved**: `ID` (the key), `SYNC` (per-row gate), `SUBDECK 1..N`
+  (deck path, ordered by the number rather than the column position, empty levels
+  skipped) and `TAGS`. **Every other column becomes a note field named exactly like the
+  header**, so a sheet can use whatever vocabulary its subject calls for. Column order
+  decides what lands on the front and back of the card.
+- The old exam-prep columns (`QUESTION`, `ANSWER`, `REVERSE`, `IMPORTANCE`, `TOPIC`,
+  `SUBTOPIC`, `CONCEPT`, `BOARDS`, `LAST YEAR IN EXAM`, `CAREERS`, `OTHER TAGS`,
+  `EXTRA FIELD 1-3`, `SANITY CHECK`) have no special meaning any more — they are just
+  ordinary content columns if a sheet still has them. Existing decks need their headers
+  renamed, and their notes are rebuilt on the next sync.
+- **A sheet with no `SYNC` column now syncs every row.** It previously synced none,
+  which produced an empty deck with nothing on screen explaining why.
+- **No more `- Reverse` note type.** The reverse direction is a second card template on
+  the same note type, so both directions are scheduled independently from one row of
+  data, and switching it off removes its cards without touching the note.
+- Tags are now `sheets2anki`, `sheets2anki::<subdeck path>` and whatever `TAGS` lists.
+  The `[missing_*]` placeholder tags are gone.
+
+### ✨ Card layout
+- New **Configure Card Layout** dialog (`Ctrl+Shift+C`): choose which fields sit on the
+  front and back, reorder them, toggle field labels, set font sizes and alignment, turn
+  the reverse card and timer on or off, with a preview.
+- The layout lives in **Anki's collection config**, so it travels between machines
+  through AnkiWeb — no Google API, no extra setup. The AI provider API key deliberately
+  stays machine-local in `meta.json`.
+- "I'll edit the template myself" stops sync from regenerating the note type's
+  templates, so hand edits in Anki's Cards editor finally survive a sync.
+
+### 🐛 Fixes
+- **Cloze note types were rejected by Anki.** A cloze template must reference
+  `{{cloze:Field}}` on *both* sides — `{{FrontSide}}` does not satisfy the check — so
+  provisioning one aborted the whole sync, including ordinary notes.
+- Adding a column to the sheet now adds the field and shows it; **removing a column
+  stops rendering it but never deletes the field**, so data is not destroyed by an
+  edit to the header row.
+- Dropped the deprecated `col.save()` calls; Anki persists collection changes itself.
+
+---
+
 ## 💥 **v3.1.0** - August 2026 *(Breaking)*
 
 The multi-student feature is gone, and the card is cut back to what a study card needs.

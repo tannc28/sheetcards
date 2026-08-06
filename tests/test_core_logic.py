@@ -10,8 +10,8 @@ and the SSRF host guard on downloads.
 
 import pytest
 
+from src import column_model as cm
 from src import data_processor as d
-from src import templates_and_definitions as cols
 from src import utils as u
 
 # =============================================================================
@@ -70,9 +70,6 @@ class TestCloze:
     def test_has_cloze_deletion(self, text, expected):
         assert d.has_cloze_deletion(text) is expected
 
-    def test_clean_cloze_formatting_strips_markers(self):
-        assert d.clean_cloze_formatting("{{c1::Paris}} nice") == "Paris nice"
-
 
 # =============================================================================
 # REMOTE DECK BUILD  (metrics + duplicate detection)
@@ -120,21 +117,32 @@ class TestRemoteDeckBuild:
 
 @pytest.mark.unit
 class TestTags:
-    def test_tags_are_hierarchical_and_lowercase(self):
-        note = {
-            cols.identifier: "Q1",
-            cols.hierarchy_2: "Geography",
-            cols.hierarchy_3: "Europe",
-            cols.hierarchy_4: "Capitals",
-            cols.hierarchy_1: "High",
-            cols.tags_1: "ENEM",
-        }
-        tags = d.create_tags_from_fields(note)
+    def test_deck_path_becomes_a_nested_tag(self):
+        plan = cm.plan_columns(["ID", "SUBDECK 1", "SUBDECK 2", "TAGS", "Front"])
+        tags = d.build_tags(
+            {
+                "ID": "Q1",
+                "SUBDECK 1": "Geography",
+                "SUBDECK 2": "Europe",
+                "TAGS": "ENEM",
+                "Front": "q",
+            },
+            plan,
+        )
         assert "sheets2anki" in tags
+        assert "sheets2anki::geography::europe" in tags
+        assert "enem" in tags
         assert all(t == t.lower() for t in tags)
-        # The topic→subtopic→concept hierarchy is encoded under topics::
-        assert any(t.startswith("sheets2anki::topics::geography") for t in tags)
-        assert any("concepts::capitals" in t for t in tags)
+
+    def test_spaces_and_colons_are_neutralised(self):
+        # Anki splits tags on spaces and nests on '::', so neither may survive
+        # inside a single tag component.
+        plan = cm.plan_columns(["ID", "SUBDECK 1", "Front"])
+        tags = d.build_tags(
+            {"ID": "Q1", "SUBDECK 1": "Bài 3: mở đầu", "Front": "q"}, plan
+        )
+        assert not any(" " in t for t in tags)
+        assert "sheets2anki::bài_3_mở_đầu" in tags
 
 
 # =============================================================================

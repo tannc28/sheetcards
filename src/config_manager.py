@@ -1001,21 +1001,16 @@ def update_note_type_names_in_meta(url, new_remote_deck_name):
 
                 if len(parts) >= 3:
                     # Format: "Sheets2Anki - remote_name - type"
-                    # Last part is the type (Basic/Cloze/Reverse)
-                    note_type = parts[-1].strip()
-                    is_cloze = note_type == "Cloze"
-                    is_reverse = note_type == "Reverse"
-
+                    # Last part is the type (Basic/Cloze)
+                    is_cloze = parts[-1].strip() == "Cloze"
                 else:
                     # Unrecognized format, try to deduce
                     is_cloze = "Cloze" in old_name
-                    is_reverse = "Reverse" in old_name
 
                 new_name = get_note_type_name(
                     url,
                     new_remote_deck_name,
                     is_cloze=is_cloze,
-                    is_reverse=is_reverse,
                 )
 
                 # Update if name changed
@@ -1332,18 +1327,16 @@ def sync_note_type_names_robustly(url, correct_remote_name):
         def extract_type_from_name(old_name):
             """Extracts the note type from old name."""
             if not old_name.startswith("Sheets2Anki - "):
-                return None, False, False
+                return None, False
 
             parts = old_name.split(" - ")
             # IMPORTANT: deck_name may contain " - ", so parse from the END
             if len(parts) >= 3:  # "Sheets2Anki - remote_name - type"
-                # Last part is the type (Basic/Cloze/Reverse)
+                # Last part is the type (Basic/Cloze)
                 note_type = parts[-1].strip()
-                is_cloze = note_type == "Cloze"
-                is_reverse = note_type == "Reverse"
-                return note_type, is_cloze, is_reverse
+                return note_type, note_type == "Cloze"
 
-            return None, False, False
+            return None, False
 
         result = {
             "updated_count": 0,
@@ -1362,7 +1355,7 @@ def sync_note_type_names_robustly(url, correct_remote_name):
                 note_type_id_int = int(note_type_id)
 
                 # 1. RECREATE: Generate expected name based on correct pattern
-                note_type, is_cloze, is_reverse = extract_type_from_name(old_name)
+                note_type, is_cloze = extract_type_from_name(old_name)
 
                 if note_type is None:
                     add_debug_msg(
@@ -1374,7 +1367,6 @@ def sync_note_type_names_robustly(url, correct_remote_name):
                     url,
                     correct_remote_name,
                     is_cloze=is_cloze,
-                    is_reverse=is_reverse,
                 )
 
                 # 2. DETECT: Compare old vs. recreated name
