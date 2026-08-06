@@ -1,5 +1,5 @@
-"""Card-template assets for Sheets2Anki: CSS, HTML, and JavaScript string
-constants for the study timer and the reverse-card indicator.
+"""Card-template assets for Sheets2Anki: CSS and HTML string constants for the
+card body and the reverse-card indicator.
 
 Pure string constants — the model-building functions in templates_and_definitions
 compose these into note-type templates."""
@@ -27,74 +27,6 @@ MARKERS_TEMPLATE = """
 # "answer" id itself, so the rule also gives themes something to hook onto.
 ANSWER_SEPARATOR_HTML = '\n<hr id="answer">\n'
 
-
-# =============================================================================
-# TIMER FEATURE - CSS AND JAVASCRIPT
-# =============================================================================
-
-# Timer CSS styling - Between Sections (inline, centered)
-TIMER_CSS_BETWEEN_SECTIONS = """
-<style>
-.sheets2anki-timer {
-  display: block;
-  width: fit-content;
-  margin: 10px auto;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #5BA3E0;
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 8px;
-  text-align: center;
-  user-select: none;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-.sheets2anki-timer::before {
-  content: '⏱️ ';
-}
-.sheets2anki-timer-frozen::before {
-  content: '🏁 ';
-}
-</style>
-"""
-
-# Timer CSS styling - Top Middle (fixed position)
-TIMER_CSS_TOP_MIDDLE = """
-<style>
-/* Add padding to prevent timer from covering content */
-body {
-  padding-top: 50px;
-}
-.sheets2anki-timer {
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #5BA3E0;
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 8px;
-  z-index: 9999;
-  user-select: none;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-.sheets2anki-timer::before {
-  content: '⏱️ ';
-}
-.sheets2anki-timer-frozen::before {
-  content: '🏁 ';
-}
-</style>
-"""
-
-# Default timer CSS (for backward compatibility)
-TIMER_CSS = TIMER_CSS_BETWEEN_SECTIONS
 
 # =============================================================================
 # REVERSE CARD INDICATOR - CSS
@@ -128,74 +60,3 @@ REVERSE_INDICATOR_CSS = """
 
 # Reverse Card Indicator HTML
 REVERSE_INDICATOR_HTML = '<div class="reverse-card-indicator">Card Reverso</div>'
-
-# Timer JavaScript for FRONT side (starts timer)
-TIMER_JS_FRONT = """
-<script>
-(function() {
-  // Start timer when front side loads
-  var startTime = Date.now();
-  sessionStorage.setItem('sheets2anki_timer_start', startTime.toString());
-  
-  var timerEl = document.getElementById('sheets2anki-timer');
-  if (!timerEl) return;
-  
-  function formatTime(ms) {
-    var totalSeconds = Math.floor(ms / 1000);
-    var minutes = Math.floor(totalSeconds / 60);
-    var seconds = totalSeconds % 60;
-    return (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-  }
-  
-  function updateTimer() {
-    var elapsed = Date.now() - startTime;
-    timerEl.textContent = formatTime(elapsed);
-  }
-  
-  // Update immediately and then every second
-  updateTimer();
-  var intervalId = setInterval(updateTimer, 1000);
-  
-  // Store interval ID for potential cleanup
-  window.sheets2ankiTimerInterval = intervalId;
-})();
-</script>
-"""
-
-# Timer JavaScript for BACK side (shows frozen time)
-TIMER_JS_BACK = """
-<script>
-(function() {
-  var timerEl = document.getElementById('sheets2anki-timer');
-  if (!timerEl) return;
-  
-  // Clear any running interval from front side
-  if (window.sheets2ankiTimerInterval) {
-    clearInterval(window.sheets2ankiTimerInterval);
-  }
-  
-  // Change emoji to 🏁 to indicate frozen/finished state
-  timerEl.classList.add('sheets2anki-timer-frozen');
-  
-  var startTimeStr = sessionStorage.getItem('sheets2anki_timer_start');
-  if (startTimeStr) {
-    var startTime = parseInt(startTimeStr, 10);
-    var elapsed = Date.now() - startTime;
-    
-    function formatTime(ms) {
-      var totalSeconds = Math.floor(ms / 1000);
-      var minutes = Math.floor(totalSeconds / 60);
-      var seconds = totalSeconds % 60;
-      return (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-    }
-    
-    timerEl.textContent = formatTime(elapsed);
-  } else {
-    timerEl.textContent = '--:--';
-  }
-})();
-</script>
-"""
-
-# Timer HTML element
-TIMER_HTML = '<div id="sheets2anki-timer" class="sheets2anki-timer">00:00</div>'

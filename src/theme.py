@@ -301,8 +301,7 @@ def make_radio_option_card(
 ):
     """Build a clickable radio "option card" (radio + title/badge/description).
 
-    Shared by the deck-options and timer dialogs (their cards were byte-identical
-    apart from the key and the checked condition). Adds ``radio`` to
+    Used by the deck-options dialog for its mode picker. Adds ``radio`` to
     ``button_group`` under ``button_id`` and makes the whole card click-to-select.
     """
     from .compat import QFrame

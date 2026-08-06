@@ -204,3 +204,62 @@ class TestNonAsciiColumns:
         plan = cm.plan_columns(UNICODE_HEADERS)
         assert cm.deck_path(_unicode_row(), plan) == ["Bài 3", "Động từ"]
         assert cm.tags_of(_unicode_row(), plan) == ["hsk4", "động từ"]
+
+
+# =============================================================================
+# SETTINGS-ROW MARKER AND FLAG NEGATION
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestSettingsRowMarker:
+    """Regression guards for the ways the marker used to be misread."""
+
+    @pytest.mark.parametrize(
+        "cell,expected",
+        [
+            ("#config", True),
+            ("#config align=left", True),
+            ("#config;align=left", True),  # a missing space must not import the row
+            ("  #CONFIG  ", True),
+            ("#configuration", False),  # a real column value, not the marker
+            ("config", False),
+            ("1", False),
+            ("", False),
+        ],
+    )
+    def test_marker_detection(self, cell, expected):
+        from src.sheet_config import is_config_row
+
+        plan = cm.plan_columns(["ID", "Word"])
+        assert is_config_row({"ID": cell}, plan) is expected
+
+
+@pytest.mark.unit
+class TestFlagNegation:
+    def test_a_flag_written_false_is_off(self):
+        # `bold=false` used to switch bold ON, because any value set the flag.
+        from src.sheet_config import parse_config_row
+
+        plan = cm.plan_columns(["ID", "Word"])
+        cfg = parse_config_row(
+            {"ID": "#config", "Word": "bold=false; hint=no; italic"}, plan
+        ).for_field("Word")
+
+        assert cfg.bold is False
+        assert cfg.hint is False
+        assert cfg.italic is True
+
+    def test_deck_reverse_can_be_switched_off(self):
+        from src.sheet_config import parse_config_row
+
+        plan = cm.plan_columns(["ID", "Word"])
+        assert parse_config_row({"ID": "#config reverse=false"}, plan).reverse is False
+
+    def test_deck_speed_is_range_checked_like_per_field_speed(self):
+        from src.sheet_config import parse_config_row
+
+        plan = cm.plan_columns(["ID", "Word"])
+        parsed = parse_config_row({"ID": "#config speed=9"}, plan)
+        assert parsed.speed is None
+        assert any("outside" in w for w in parsed.warnings)
