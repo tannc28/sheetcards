@@ -62,13 +62,6 @@ def create_ankiweb_package():
         shutil.copytree(src_source, src_dest, ignore=ignore_patterns)
         print("   ✓ src/")
 
-    # libs directory
-    libs_source = source_dir / "libs"
-    libs_dest = package_dir / "libs"
-    if libs_source.exists():
-        shutil.copytree(libs_source, libs_dest, ignore=ignore_patterns)
-        print("   ✓ libs/")
-
     print("\n3. Configuring production mode...")
 
     # Change IS_DEVELOPMENT_MODE constant to False

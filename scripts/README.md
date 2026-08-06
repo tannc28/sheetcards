@@ -77,7 +77,7 @@ The scripts ensure that `.ankiaddon` packages follow AnkiWeb specifications:
 - ✅ Files at the root of the ZIP (no parent folder)
 - ✅ Valid and present `manifest.json`
 - ✅ Absence of `__pycache__`, `.pyc`, `.pyo` files
-- ✅ Preserved directory structure (`src/`, `libs/`, etc.)
+- ✅ Preserved directory structure (`src/`, etc.)
 
 ## Requirements
 

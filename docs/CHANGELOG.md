@@ -4,6 +4,53 @@
 
 ---
 
+## 💥 **v5.0.0** - August 2026 *(Breaking — features removed)*
+
+A deliberate cut: the add-on now does one thing — sync a spreadsheet into Anki — and
+carries nothing it does not need to.
+
+### 💥 Removed
+- **AI assistance is gone**: the AI Help / AI Ask / AI Checker buttons on cards, the
+  Gemini/Claude/OpenAI integration, the desktop `pycmd` bridge and the mobile path that
+  **embedded your API key in plaintext inside the card templates** — which meant the key
+  was uploaded to AnkiWeb, synced to every device on the account, and included in any
+  deck you exported or shared. Removing the feature removes that exposure. Gone with it:
+  `ai_prompts.py`, `ai_service.py`, the AI config dialog, `Ctrl+Shift+H`, the
+  `webview_did_receive_js_message` hook and every `ai_*` config key.
+- **All vendored libraries.** `org_to_anki` (3.6 MB, which itself bundled pygments) was
+  reached for exactly two calls — `startEditing()` / `stopEditing()` — which wrap
+  `mw.requireReset()` / `mw.maybeReset()`, APIs Anki 25 answers with *"requireReset() is
+  obsolete; please use CollectionOp()"*. `bs4`, `soupsieve` and `chardet` (2 MB) had no
+  importer anywhere. All four are deleted along with the `sys.path` bootstrap. **The
+  add-on now has no runtime third-party dependencies.**
+- **The Configure Timer dialog** (`Ctrl+Shift+I`) — `get_timer_position()` and
+  `set_timer_position()` were read and written by nothing but that dialog itself, while
+  the timer that actually renders comes from the per-deck card layout. Changing the
+  setting did nothing and said nothing. The timer is configured in **Configure Card
+  Layout** (`Ctrl+Shift+C`), which is where it was always being read from.
+- `tools/js-harnesses/`, which only ever exercised the removed AI card JavaScript.
+
+### 📦 Size
+- The packaged add-on drops from **386 files / 1.44 MB to 40 files / 169 KB**.
+
+### 🐛 Fixes
+- `get_deck_options_mode()` fell back to `"shared"` while the shipped default in
+  `config.json` is `"individual"`; the fallback now matches.
+
+### 📖 Documentation
+- `README.md` rewritten as a user guide: every menu entry documented with what it does,
+  how to open it, **the mechanism that makes it work**, and its caveats — plus a
+  spreadsheet reference, sync semantics and troubleshooting drawn from the actual guards
+  in the code. Several behaviours are documented for the first time, including that only
+  the spreadsheet's **first tab** is ever synced (any `gid` in the URL is ignored), that
+  the image processor's Apps Script reads a tab named `Notes` so the first tab must carry
+  that name, and that the disconnect dialog's *delete local data* box is ticked by
+  default.
+- The version gotcha in `CLAUDE.md` is now stated as a rule rather than a number, since
+  the hard-coded one had already gone stale.
+
+---
+
 ## 🔧 **v4.0.1** - August 2026 *(Maintenance)*
 
 ### 🐛 Fixes

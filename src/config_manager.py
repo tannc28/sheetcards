@@ -72,16 +72,6 @@ DEFAULT_CONFIG = {
         "auto_backup_max_files": 50,  # maximum backup files to keep
         "auto_backup_type": "simple",  # "simple" or "full"
         "accumulate_logs": True,  # whether to keep logs between sessions
-        # AI Assistance settings
-        "ai_assistance_enabled": False,  # whether AI assistance is enabled
-        "ai_assistance_service": "gemini",  # gemini, claude, openai
-        "ai_assistance_model": "",  # specific model ID
-        "ai_assistance_api_key": "",  # user's API key
-        "ai_help_prompt": "",  # custom prompt for AI Help (empty = use default for language)
-        "ai_ask_prompt": "",  # custom prompt for AI Ask (empty = use default for language)
-        "ai_checker_prompt": "",  # custom prompt for AI Checker (empty = use default for language)
-        "ai_assistance_mobile_enabled": False,  # whether to embed key in cards for mobile
-        "ai_assistance_language": "en_us",  # default language
         # Image processor settings
         "image_processor_enabled": False,  # enable automatic image processing
         "image_processor_imgbb_key": "",  # ImgBB API key for image hosting
@@ -1043,7 +1033,7 @@ def get_deck_options_mode():
     """
     meta = get_meta()
     config = meta.get("config", {})
-    return config.get("deck_options_mode", "shared")
+    return config.get("deck_options_mode", "individual")
 
 
 def set_deck_options_mode(mode):
@@ -1189,43 +1179,6 @@ def ensure_deck_configurations_consistency():
 
 # =============================================================================
 # TIMER POSITION SETTINGS
-# =============================================================================
-
-
-def get_timer_position():
-    """
-    Gets the current timer position setting.
-
-    Returns:
-        str: "top_middle", "between_sections", or "hidden"
-    """
-    meta = get_meta()
-    config = meta.get("config", {})
-    return config.get("timer_position", "between_sections")
-
-
-def set_timer_position(position):
-    """
-    Sets the timer position setting.
-
-    Args:
-        position (str): "top_middle", "between_sections", or "hidden"
-    """
-    valid_positions = ["top_middle", "between_sections", "hidden"]
-    if position not in valid_positions:
-        raise ValueError(f"Invalid position: {position}. Use one of: {valid_positions}")
-
-    meta = get_meta()
-    if "config" not in meta:
-        meta["config"] = {}
-
-    meta["config"]["timer_position"] = position
-    save_meta(meta)
-    add_debug_msg(f"[TIMER_POSITION] Timer position changed to: {position}")
-
-
-# =============================================================================
-# ANKIWEB SYNCHRONIZATION SETTINGS MANAGEMENT
 # =============================================================================
 
 
@@ -1545,212 +1498,6 @@ def get_auto_backup_directory():
         directory = tempfile.gettempdir()
 
     return directory
-
-
-# =============================================================================
-# AI ASSISTANCE CONFIGURATION SETTINGS
-# =============================================================================
-
-# Default prompt template for AI Help
-# --- Re-exported from ai_prompts (split out of this file) ---
-from .ai_prompts import AI_ASK_PROMPTS  # noqa: F401
-from .ai_prompts import AI_CHECKER_PROMPTS  # noqa: F401
-from .ai_prompts import AI_HELP_PROMPTS  # noqa: F401
-from .ai_prompts import DEFAULT_AI_HELP_PROMPT  # noqa: F401
-
-
-def get_ai_assistance_config():
-    """
-    Gets AI Assistance configuration settings.
-
-    Returns:
-        dict: AI Assistance settings including:
-            - enabled: Whether AI Assistance is enabled
-            - service: Selected service (gemini, claude, openai)
-            - model: Selected model for the service
-            - api_key: API key for the service
-            - prompt: Custom prompt template
-            - mobile_enabled: Whether to embed API key for mobile support
-    """
-    meta = get_meta()
-    config = meta.get("config", {})
-
-    # Resolve language first so all prompts can use the same language-aware fallback.
-    # Using 'or' ensures empty strings ("") are treated the same as missing keys.
-    language = config.get("ai_assistance_language") or "en_us"
-
-    return {
-        "enabled": config.get("ai_assistance_enabled", False),
-        "service": config.get("ai_assistance_service", "gemini"),
-        "model": config.get("ai_assistance_model", ""),
-        "api_key": config.get("ai_assistance_api_key", ""),
-        "prompt": config.get("ai_help_prompt")
-        or AI_HELP_PROMPTS.get(language, DEFAULT_AI_HELP_PROMPT),
-        "prompt_ask": config.get("ai_ask_prompt")
-        or AI_ASK_PROMPTS.get(language, AI_ASK_PROMPTS["en_us"]),
-        "prompt_checker": config.get("ai_checker_prompt")
-        or AI_CHECKER_PROMPTS.get(language, AI_CHECKER_PROMPTS["en_us"]),
-        "mobile_enabled": config.get("ai_assistance_mobile_enabled", False),
-        "language": language,
-    }
-
-
-def set_ai_assistance_config(
-    enabled=None,
-    service=None,
-    model=None,
-    api_key=None,
-    prompt=None,
-    prompt_ask=None,
-    prompt_checker=None,
-    mobile_enabled=None,
-    language=None,
-):
-    """
-    Sets AI Assistance configuration settings.
-
-    Args:
-        enabled (bool, optional): Whether AI Assistance is enabled
-        service (str, optional): Selected service (gemini, claude, openai)
-        model (str, optional): Selected model for the service
-        api_key (str, optional): API key for the service
-        prompt (str, optional): Custom prompt template for AI Help
-        prompt_ask (str, optional): Custom prompt template for AI Ask
-        prompt_checker (str, optional): Custom prompt template for AI Checker
-        mobile_enabled (bool, optional): Whether to embed API key for mobile support
-
-    Returns:
-        bool: True if settings were saved successfully
-    """
-    valid_services = ["gemini", "claude", "openai"]
-
-    try:
-        meta = get_meta()
-        config = meta.get("config", {})
-
-        if enabled is not None:
-            config["ai_assistance_enabled"] = bool(enabled)
-
-        if service is not None:
-            if service not in valid_services:
-                add_debug_msg(
-                    f"[AI_ASSISTANCE] Invalid service: {service}. Using 'gemini'."
-                )
-                service = "gemini"
-            config["ai_assistance_service"] = service
-
-        if model is not None:
-            config["ai_assistance_model"] = str(model)
-
-        if api_key is not None:
-            config["ai_assistance_api_key"] = str(api_key)
-
-        if prompt is not None:
-            config["ai_help_prompt"] = str(prompt)
-
-        if prompt_ask is not None:
-            config["ai_ask_prompt"] = str(prompt_ask)
-
-        if prompt_checker is not None:
-            config["ai_checker_prompt"] = str(prompt_checker)
-
-        if mobile_enabled is not None:
-            config["ai_assistance_mobile_enabled"] = bool(mobile_enabled)
-
-        if language is not None:
-            config["ai_assistance_language"] = str(language)
-
-        meta["config"] = config
-        save_meta(meta)
-
-        add_debug_msg(
-            f"[AI_ASSISTANCE] Settings updated: enabled={enabled}, service={service}, model={model}, mobile={mobile_enabled}, language={language}"
-        )
-        return True
-
-    except Exception as e:
-        add_debug_msg(f"[AI_ASSISTANCE] Error saving settings: {e}")
-        return False
-
-
-def get_ai_assistance_enabled():
-    """
-    Gets whether AI Assistance is enabled.
-
-    Returns:
-        bool: True if AI Assistance is enabled
-    """
-    return get_ai_assistance_config().get("enabled", False)
-
-
-def set_ai_assistance_enabled(enabled):
-    """
-    Sets whether AI Assistance is enabled.
-
-    Args:
-        enabled (bool): True to enable AI Assistance
-    """
-    set_ai_assistance_config(enabled=enabled)
-
-
-def get_ai_assistance_service():
-    """
-    Gets the selected AI service.
-
-    Returns:
-        str: Service name (gemini, claude, openai)
-    """
-    return get_ai_assistance_config().get("service", "gemini")
-
-
-def set_ai_assistance_service(service):
-    """
-    Sets the AI service.
-
-    Args:
-        service (str): Service name (gemini, claude, openai)
-    """
-    set_ai_assistance_config(service=service)
-
-
-def get_ai_assistance_model():
-    """
-    Gets the selected AI model.
-
-    Returns:
-        str: Model name
-    """
-    return get_ai_assistance_config().get("model", "")
-
-
-def set_ai_assistance_model(model):
-    """
-    Sets the AI model.
-
-    Args:
-        model (str): Model name
-    """
-    set_ai_assistance_config(model=model)
-
-
-def get_ai_assistance_api_key():
-    """
-    Gets the API key for the AI service.
-
-    Returns:
-        str: API key
-    """
-    return get_ai_assistance_config().get("api_key", "")
-
-
-def set_ai_assistance_api_key(api_key):
-    """
-    Sets the API key for the AI service.
-
-    Args:
-        api_key (str): API key
-    """
-    set_ai_assistance_config(api_key=api_key)
 
 
 # =============================================================================

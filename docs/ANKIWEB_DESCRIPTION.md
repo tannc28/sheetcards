@@ -1,6 +1,6 @@
-# Sheets2Anki: Google Sheets to Anki + AI Integration
+# Sheets2Anki: Google Sheets to Anki
 
-**Create flashcards in Google Sheets and sync them to Anki. Now with AI support!**
+**Create flashcards in Google Sheets and sync them to Anki.**
 
 Stop wasting time creating cards one by one. Use the power of spreadsheets to manage your study material.
 
@@ -9,7 +9,6 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 *   **Bulk Creation:** Write hundreds of cards as fast as you can type.
 *   **Your Own Columns:** Apart from a few reserved headers, every column you add becomes a note field with the same name — in any language you like.
 *   **Custom Card Layout:** Choose per deck which fields go on the front, which on the back, and how they look — no note-type editing required.
-*   **🤖 AI Integration:** Use **Gemini**, **Claude**, or **OpenAI** to get explanations directly in your cards.
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
 *   **Rich Media:** Supports HTML, Images, and Videos (YouTube/Vimeo).

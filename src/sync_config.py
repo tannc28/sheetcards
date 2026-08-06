@@ -5,8 +5,8 @@ Anki's own collection config (``col.get_config`` / ``col.set_config``) lives in 
 AnkiWeb along with the notes and note types. Anything stored here is available on
 every machine the collection syncs to, with no Google API and no extra setup.
 
-``meta.json`` stays the home for machine-local settings — most importantly the AI
-provider API key, which should not be uploaded to AnkiWeb.
+``meta.json`` stays the home for machine-local settings, such as API keys and
+directory paths, which should not be uploaded to AnkiWeb.
 """
 
 import copy

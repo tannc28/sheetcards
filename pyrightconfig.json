@@ -5,8 +5,7 @@
     ],
     "exclude": [
         "**/__pycache__",
-        "**/.*",
-        "libs"
+        "**/.*"
     ],
     "typeCheckingMode": "basic",
     "reportMissingImports": "none",
