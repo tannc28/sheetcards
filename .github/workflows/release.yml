@@ -85,16 +85,28 @@ jobs:
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
           DRAFT: ${{ github.event.inputs.draft }}
         run: |
-          NOTES=$(cat <<'EOF'
-          Install the standalone package in Anki: **Tools → Add-ons → Install from file…**, then restart Anki.
+          # The changelog already describes each release properly, so the release
+          # body is that text. A second hand-written description would only drift
+          # out of step with it. This fails the build when the version has no
+          # section, rather than publishing a release that says nothing.
+          CHANGES=$(python scripts/changelog_section.py "$VERSION")
+
+          NOTES=$(cat <<EOF
+          $CHANGES
+
+          ---
+
+          ### Install
+
+          Download \`sheets2anki-${VERSION}.ankiaddon\` below, then in Anki:
+          **Tools → Add-ons → Install from file…** and restart.
 
           | Asset | Use |
           |---|---|
-          | `sheets2anki-VERSION.ankiaddon` | Manual install (full manifest) |
-          | `sheets2anki-VERSION-ankiweb.ankiaddon` | Upload to AnkiWeb (stripped manifest) |
+          | \`sheets2anki-${VERSION}.ankiaddon\` | Manual install (full manifest) |
+          | \`sheets2anki-${VERSION}-ankiweb.ankiaddon\` | Upload to AnkiWeb (stripped manifest) |
           EOF
           )
-          NOTES="${NOTES//VERSION/$VERSION}"
 
           # Only the manual dispatch can ask for a draft; a tag push publishes.
           DRAFT_FLAG=""
@@ -102,6 +114,7 @@ jobs:
 
           # Re-runs should update the existing release rather than fail on it.
           if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes "$NOTES"
             gh release upload "$TAG" build/*.ankiaddon --clobber
           else
             gh release create "$TAG" build/*.ankiaddon \
