@@ -5,9 +5,6 @@ reserved (``ID``, ``SYNC``, ``SUBDECK n``, ``TAGS``) becomes a note field, and t
 card is generated from the per-deck layout edited here and stored by
 ``sync_config``. The dialog therefore only ever moves field *names* around — it
 never writes HTML, that is ``card_layout.build_templates``' job.
-
-UI strings are Vietnamese because the add-on's users are; the code around them
-stays English like the rest of the repository.
 """
 
 import re
@@ -51,14 +48,14 @@ _FIELD_RE = re.compile(r"\{\{([^}]*)\}\}")
 _FRONT_SIDE_MARK = "\x00frontside\x00"
 
 ALIGN_CHOICES = (
-    ("Trái", "left"),
-    ("Giữa", "center"),
-    ("Phải", "right"),
+    ("Left", "left"),
+    ("Center", "center"),
+    ("Right", "right"),
 )
 
 TIMER_POSITION_CHOICES = (
-    ("Giữa hai phần", "between_sections"),
-    ("Trên cùng, chính giữa", "top_middle"),
+    ("Between sections", "between_sections"),
+    ("Top middle", "top_middle"),
 )
 
 
@@ -76,7 +73,7 @@ class CardLayoutDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent or mw)
-        self.setWindowTitle("Bố cục thẻ")
+        self.setWindowTitle("Configure Card Layout")
         self.setMinimumSize(900, 640)
         self.resize(980, 720)
 
@@ -183,15 +180,15 @@ class CardLayoutDialog(QDialog):
         root.addWidget(
             make_header(
                 self.colors,
-                "Bố cục thẻ",
-                "Chọn trường nào hiện ở mặt trước, mặt sau và thẻ trông như thế nào. "
-                "Mỗi cột trong bảng tính là một trường.",
+                "Card Layout",
+                "Choose which fields appear on the front and the back, and how the "
+                "card is styled. Every column in the spreadsheet is a field.",
             )
         )
 
         deck_row = QHBoxLayout()
         deck_row.setSpacing(10)
-        deck_label = QLabel("Bộ thẻ:")
+        deck_label = QLabel("Deck:")
         deck_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text']};")
         deck_row.addWidget(deck_label)
 
@@ -202,8 +199,8 @@ class CardLayoutDialog(QDialog):
         root.addLayout(deck_row)
 
         self.empty_label = QLabel(
-            "Chưa có bộ thẻ nào được kết nối. Hãy thêm một bộ thẻ từ Google Sheets "
-            "(Ctrl+Shift+A) trước, rồi quay lại đây để chỉnh bố cục."
+            "No decks are connected yet. Add a deck from Google Sheets "
+            "(Ctrl+Shift+A) first, then come back here to edit its card layout."
         )
         self.empty_label.setWordWrap(True)
         self.empty_label.setObjectName("emptyState")
@@ -228,16 +225,16 @@ class CardLayoutDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 10, 0, 0)
 
-        self.reset_button = QPushButton("↺ Khôi phục mặc định")
+        self.reset_button = QPushButton("↺ Restore Defaults")
         self.reset_button.setStyleSheet(secondary_button_qss(self.colors))
         buttons.addWidget(self.reset_button)
         buttons.addStretch()
 
-        self.cancel_button = QPushButton("Huỷ")
+        self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
         buttons.addWidget(self.cancel_button)
 
-        self.save_button = QPushButton("✓ Lưu")
+        self.save_button = QPushButton("✓ Save")
         self.save_button.setStyleSheet(primary_button_qss(self.colors, "success"))
         self.save_button.setDefault(True)
         buttons.addWidget(self.save_button)
@@ -253,14 +250,14 @@ class CardLayoutDialog(QDialog):
         self.reset_button.setEnabled(has_decks)
 
     def _build_fields_group(self):
-        group = QGroupBox("Trường hiển thị")
+        group = QGroupBox("Fields Shown")
         layout = QHBoxLayout()
         layout.setSpacing(10)
 
         self.front_list = QListWidget()
         self.back_list = QListWidget()
 
-        layout.addLayout(self._build_list_column("Mặt trước", self.front_list), 1)
+        layout.addLayout(self._build_list_column("Front", self.front_list), 1)
 
         move_column = QVBoxLayout()
         move_column.addStretch()
@@ -273,7 +270,7 @@ class CardLayoutDialog(QDialog):
         move_column.addStretch()
         layout.addLayout(move_column)
 
-        layout.addLayout(self._build_list_column("Mặt sau", self.back_list), 1)
+        layout.addLayout(self._build_list_column("Back", self.back_list), 1)
 
         group.setLayout(layout)
         return group
@@ -307,31 +304,31 @@ class CardLayoutDialog(QDialog):
         return column
 
     def _build_format_group(self):
-        group = QGroupBox("Định dạng")
+        group = QGroupBox("Formatting")
         layout = QVBoxLayout()
         layout.setSpacing(10)
 
-        self.show_labels_check = QCheckBox("Hiện tên trường phía trên nội dung")
+        self.show_labels_check = QCheckBox("Show field labels")
         layout.addWidget(self.show_labels_check)
 
         sizes = QHBoxLayout()
         sizes.setSpacing(10)
 
-        sizes.addWidget(QLabel("Cỡ chữ mặt trước:"))
+        sizes.addWidget(QLabel("Front text size:"))
         self.front_size_spin = QSpinBox()
         self.front_size_spin.setRange(10, 120)
         self.front_size_spin.setSuffix(" px")
         sizes.addWidget(self.front_size_spin)
 
         sizes.addSpacing(15)
-        sizes.addWidget(QLabel("Cỡ chữ mặt sau:"))
+        sizes.addWidget(QLabel("Back text size:"))
         self.back_size_spin = QSpinBox()
         self.back_size_spin.setRange(10, 120)
         self.back_size_spin.setSuffix(" px")
         sizes.addWidget(self.back_size_spin)
 
         sizes.addSpacing(15)
-        sizes.addWidget(QLabel("Căn lề:"))
+        sizes.addWidget(QLabel("Alignment:"))
         self.align_combo = QComboBox()
         for label, value in ALIGN_CHOICES:
             self.align_combo.addItem(label, value)
@@ -339,14 +336,14 @@ class CardLayoutDialog(QDialog):
         sizes.addStretch()
         layout.addLayout(sizes)
 
-        self.reverse_check = QCheckBox("Tạo thêm thẻ đảo ngược (mặt sau hỏi mặt trước)")
+        self.reverse_check = QCheckBox("Add a reverse card (back asks the front)")
         layout.addWidget(self.reverse_check)
 
         timer_row = QHBoxLayout()
         timer_row.setSpacing(10)
-        self.timer_check = QCheckBox("Hiện đồng hồ bấm giờ")
+        self.timer_check = QCheckBox("Show the timer")
         timer_row.addWidget(self.timer_check)
-        timer_row.addWidget(QLabel("Vị trí:"))
+        timer_row.addWidget(QLabel("Position:"))
         self.timer_position_combo = QComboBox()
         for label, value in TIMER_POSITION_CHOICES:
             self.timer_position_combo.addItem(label, value)
@@ -358,16 +355,16 @@ class CardLayoutDialog(QDialog):
         return group
 
     def _build_hand_edited_group(self):
-        group = QGroupBox("Tự chỉnh template")
+        group = QGroupBox("Hand-Edited Templates")
         layout = QVBoxLayout()
         layout.setSpacing(6)
 
-        self.hand_edited_check = QCheckBox("Tôi tự sửa template")
+        self.hand_edited_check = QCheckBox("I edit the templates myself")
         layout.addWidget(self.hand_edited_check)
 
         note = QLabel(
-            "Khi bật, mỗi lần đồng bộ sẽ không tạo lại template nữa, nên những "
-            "chỉnh sửa bạn làm trong trình soạn thẻ của Anki sẽ được giữ nguyên."
+            "When enabled, syncing no longer rebuilds the templates, so any changes "
+            "you make in Anki's card editor are kept."
         )
         note.setWordWrap(True)
         note.setStyleSheet(
@@ -379,7 +376,7 @@ class CardLayoutDialog(QDialog):
         return group
 
     def _build_preview_group(self):
-        group = QGroupBox("Xem trước")
+        group = QGroupBox("Preview")
         layout = QVBoxLayout()
         layout.setSpacing(8)
 
@@ -388,8 +385,8 @@ class CardLayoutDialog(QDialog):
         layout.addWidget(self.preview_view, 1)
 
         caption = QLabel(
-            "Bản xem trước chỉ mô phỏng cấu trúc thẻ với nội dung mẫu — "
-            "thẻ thật trong Anki có thể hiển thị khác đôi chút."
+            "The preview only approximates the card structure with sample content — "
+            "the real card in Anki may look slightly different."
         )
         caption.setWordWrap(True)
         caption.setStyleSheet(
@@ -601,7 +598,7 @@ class CardLayoutDialog(QDialog):
         try:
             html = self._preview_html(self._current_layout())
         except Exception as error:  # a broken preview must not block editing
-            html = f"<p>Không dựng được bản xem trước: {error}</p>"
+            html = f"<p>Could not build the preview: {error}</p>"
         self.preview_view.setHtml(html)
 
     def _preview_html(self, layout):
@@ -612,8 +609,8 @@ class CardLayoutDialog(QDialog):
             back = self._render(
                 template["afmt"].replace("{{FrontSide}}", _FRONT_SIDE_MARK)
             ).replace(_FRONT_SIDE_MARK, front)
-            blocks.append(self._preview_block(template["name"], "Mặt trước", front))
-            blocks.append(self._preview_block(template["name"], "Mặt sau", back))
+            blocks.append(self._preview_block(template["name"], "Front", front))
+            blocks.append(self._preview_block(template["name"], "Back", back))
         return "".join(blocks)
 
     def _preview_block(self, template_name, side, body):
@@ -656,23 +653,23 @@ class CardLayoutDialog(QDialog):
         if set_card_layout(self.sheet_id, layout):
             StyledMessageBox.success(
                 self,
-                "Đã lưu bố cục",
-                "Bố cục thẻ đã được lưu.",
+                "Card Layout Saved",
+                "The card layout has been saved.",
                 detailed_text=(
-                    "Hãy đồng bộ (Ctrl+Shift+S) để Anki dựng lại template theo bố cục mới."
+                    "Run a sync (Ctrl+Shift+S) so Anki rebuilds the templates with the new layout."
                     if not layout["hand_edited"]
-                    else "Bạn đã bật 'Tôi tự sửa template', nên đồng bộ sẽ không tạo lại template nữa."
+                    else "You enabled 'I edit the templates myself', so syncing will not rebuild the templates."
                 ),
             )
             self.accept()
         else:
             StyledMessageBox.critical(
                 self,
-                "Không lưu được",
-                "Không lưu được bố cục thẻ.",
+                "Save Failed",
+                "The card layout could not be saved.",
                 detailed_text=(
-                    "Bố cục được lưu trong bộ sưu tập của Anki, nhưng hiện không mở "
-                    "được bộ sưu tập nào. Hãy mở hồ sơ Anki rồi thử lại."
+                    "The layout is stored in the Anki collection, but no collection is "
+                    "currently open. Open an Anki profile and try again."
                 ),
             )
 

@@ -72,7 +72,7 @@ Add your content to the sheet, then press `Ctrl+Shift+S` (or `Tools → Sheets2A
 
 ## Spreadsheet schema
 
-**Your spreadsheet defines the schema.** Only a handful of header names are reserved; every other column becomes an Anki note field named exactly like its header. Nothing forces you to use English — `Hán tự`, `Pinyin` and `Nghĩa` are perfectly good columns. Each row becomes exactly one note.
+**Your spreadsheet defines the schema.** Only a handful of header names are reserved; every other column becomes an Anki note field named exactly like its header. Each row becomes exactly one note.
 
 ### Reserved columns
 
@@ -92,10 +92,12 @@ Everything else is yours. Each remaining column becomes a note field carrying it
 So a sheet whose header row reads:
 
 ```text
-ID | SYNC | SUBDECK 1 | SUBDECK 2 | Hán tự | Pinyin | Nghĩa | Ví dụ | TAGS
+ID | SYNC | SUBDECK 1 | SUBDECK 2 | Word | Reading | Meaning | Example | TAGS
 ```
 
-produces notes with the fields `ID`, `Hán tự`, `Pinyin`, `Nghĩa` and `Ví dụ`, filed two subdeck levels deep, with `Hán tự` on the front of the card by default.
+produces notes with the fields `ID`, `Word`, `Reading`, `Meaning` and `Example`, filed two subdeck levels deep, with `Word` on the front of the card by default.
+
+Headers may be written in any language or script — the header text becomes the field name verbatim.
 
 > **Adding and removing columns.** Adding a column adds the field and puts it on the back of the card; you can then move it wherever you like in the card layout. Removing a column stops the field being shown, but the field and its content are kept in Anki — Sheets2Anki never deletes data you have already collected.
 

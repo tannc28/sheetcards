@@ -15,6 +15,20 @@ HEADERS = [
     "SUBDECK 1",
     "SUBDECK 2",
     "TAGS",
+    "Word",
+    "Reading",
+    "Meaning",
+    "Example",
+]
+
+# Deliberately non-ASCII: headers, deck levels and values in another script, used by
+# TestNonAsciiColumns below.
+UNICODE_HEADERS = [
+    "ID",
+    "SYNC",
+    "SUBDECK 1",
+    "SUBDECK 2",
+    "TAGS",
     "Hán tự",
     "Pinyin",
     "Nghĩa",
@@ -26,9 +40,25 @@ def _row(**overrides):
     row = {
         "ID": "4",
         "SYNC": "TRUE",
+        "SUBDECK 1": "Unit 3",
+        "SUBDECK 2": "Verbs",
+        "TAGS": "vocab, verb",
+        "Word": "postpone",
+        "Reading": "post-PONE",
+        "Meaning": "to move to a later time",
+        "Example": "The meeting was postponed until tomorrow.",
+    }
+    row.update(overrides)
+    return row
+
+
+def _unicode_row(**overrides):
+    row = {
+        "ID": "4",
+        "SYNC": "TRUE",
         "SUBDECK 1": "Bài 3",
         "SUBDECK 2": "Động từ",
-        "TAGS": "hsk4, verb",
+        "TAGS": "hsk4, động từ",
         "Hán tự": "推迟",
         "Pinyin": "tuīchí",
         "Nghĩa": "hoãn lại",
@@ -42,7 +72,7 @@ def _row(**overrides):
 class TestPlanColumns:
     def test_content_columns_keep_sheet_order(self):
         plan = cm.plan_columns(HEADERS)
-        assert plan.content_headers == ["Hán tự", "Pinyin", "Nghĩa", "Ví dụ"]
+        assert plan.content_headers == ["Word", "Reading", "Meaning", "Example"]
 
     def test_reserved_columns_are_recognised(self):
         plan = cm.plan_columns(HEADERS)
@@ -55,10 +85,10 @@ class TestPlanColumns:
         plan = cm.plan_columns(HEADERS)
         assert plan.note_type_fields() == [
             "ID",
-            "Hán tự",
-            "Pinyin",
-            "Nghĩa",
-            "Ví dụ",
+            "Word",
+            "Reading",
+            "Meaning",
+            "Example",
         ]
 
     @pytest.mark.parametrize("header", ["id", "Id", " ID ", "﻿ID"])
@@ -116,11 +146,11 @@ class TestSyncGate:
 class TestDeckPath:
     def test_levels_in_order(self):
         plan = cm.plan_columns(HEADERS)
-        assert cm.deck_path(_row(), plan) == ["Bài 3", "Động từ"]
+        assert cm.deck_path(_row(), plan) == ["Unit 3", "Verbs"]
 
     def test_empty_levels_are_dropped(self):
         plan = cm.plan_columns(HEADERS)
-        assert cm.deck_path(_row(**{"SUBDECK 1": ""}), plan) == ["Động từ"]
+        assert cm.deck_path(_row(**{"SUBDECK 1": ""}), plan) == ["Verbs"]
 
     def test_no_subdeck_columns_means_no_path(self):
         plan = cm.plan_columns(["ID", "Front"])
@@ -131,8 +161,8 @@ class TestDeckPath:
 class TestTags:
     def test_comma_and_semicolon_separated(self):
         plan = cm.plan_columns(HEADERS)
-        assert cm.tags_of(_row(TAGS="hsk4, verb; formal"), plan) == [
-            "hsk4",
+        assert cm.tags_of(_row(TAGS="vocab, verb; formal"), plan) == [
+            "vocab",
             "verb",
             "formal",
         ]
@@ -141,3 +171,36 @@ class TestTags:
         plan = cm.plan_columns(HEADERS)
         assert cm.tags_of(_row(TAGS="  "), plan) == []
         assert cm.tags_of({"ID": "1"}, cm.plan_columns(["ID", "Front"])) == []
+
+
+@pytest.mark.unit
+class TestNonAsciiColumns:
+    """Unicode coverage: the model never re-encodes or normalises sheet text."""
+
+    def test_non_ascii_headers_become_fields_verbatim(self):
+        # Unicode handling: a header in another script is the field name, unchanged.
+        plan = cm.plan_columns(UNICODE_HEADERS)
+        assert plan.content_headers == ["Hán tự", "Pinyin", "Nghĩa", "Ví dụ"]
+        assert plan.note_type_fields() == [
+            "ID",
+            "Hán tự",
+            "Pinyin",
+            "Nghĩa",
+            "Ví dụ",
+        ]
+
+    def test_non_ascii_headers_do_not_shadow_the_reserved_ones(self):
+        # Unicode handling: case folding a multi-byte header must not accidentally
+        # match ID/SYNC/SUBDECK/TAGS, nor drop the header from the plan.
+        plan = cm.plan_columns(UNICODE_HEADERS)
+        assert plan.id_header == "ID"
+        assert plan.sync_header == "SYNC"
+        assert plan.tags_header == "TAGS"
+        assert plan.subdeck_headers == ["SUBDECK 1", "SUBDECK 2"]
+        assert plan.duplicates == []
+
+    def test_non_ascii_deck_levels_and_tags_survive(self):
+        # Unicode handling: multi-byte deck levels and tag values round-trip intact.
+        plan = cm.plan_columns(UNICODE_HEADERS)
+        assert cm.deck_path(_unicode_row(), plan) == ["Bài 3", "Động từ"]
+        assert cm.tags_of(_unicode_row(), plan) == ["hsk4", "động từ"]

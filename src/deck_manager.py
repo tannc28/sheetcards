@@ -23,6 +23,27 @@ from .utils import add_debug_message
 from .utils import get_or_create_deck
 
 
+def strip_google_title_suffix(title: str) -> str:
+    """Removes the localised "Google Sheets" tail from a spreadsheet page title.
+
+    Google serves the page title in the viewer's language — "… - Google Sheets",
+    "… - Google Trang tính", "… - Google Планшети", and Portuguese's reversed
+    "… - Planilhas Google" — so matching a fixed list of locales left non-English
+    users with the suffix baked into their deck name. Match the shape instead: a
+    trailing " - " segment that is "Google" plus up to three words, or Portuguese's
+    reversed form. The word cap keeps a sheet genuinely named "Report - Google Ads
+    Q3 Summary Draft" from being truncated.
+    """
+    if not title:
+        return ""
+    return re.sub(
+        r"\s*-\s*(?:Google\s+\S+(?:\s+\S+){0,2}|Planilhas\s+Google)$",
+        "",
+        title.strip(),
+        flags=re.IGNORECASE,
+    ).strip()
+
+
 def add_debug_msg(message, category="DECK_MANAGER"):
     """Local helper for debug messages."""
     add_debug_message(message, category)
@@ -1010,8 +1031,10 @@ class DeckNameManager:
 
                 # Multiple patterns to extract title
                 title_patterns = [
-                    # Specific pattern to remove Google Sheets/Planilhas suffixes (all variations)
-                    r"<title>([^<]+?)\s*-\s*(Google\s*(Sheets|Planilhas)|Planilhas\s*Google)</title>",
+                    # Google serves the page title localised — "… - Google Sheets",
+                    # "… - Google Trang tính", "… - Google Планшети" — so match the
+                    # "Google <anything>" tail generically rather than listing locales.
+                    r"<title>([^<]+?)\s*-\s*(?:Google\s+|Planilhas\s+Google)[^<]{0,30}</title>",
                     r"<title>([^<]+)</title>",
                     r'"title":"([^"]+)"',
                     r'<meta property="og:title" content="([^"]+)"',
@@ -1024,12 +1047,9 @@ class DeckNameManager:
                         title = match.group(1).strip()
 
                         # Clean additional suffixes that may have escaped the regex
-                        title = re.sub(
-                            r"\s*-\s*(Google\s*(Sheets|Planilhas)|Planilhas\s+Google)$",
-                            "",
-                            title,
-                            flags=re.IGNORECASE,
-                        ).strip()
+                        # Same tail, for titles that came from a pattern other
+                        # than the first one above.
+                        title = strip_google_title_suffix(title)
 
                         if title and title.lower() not in [
                             "untitled",

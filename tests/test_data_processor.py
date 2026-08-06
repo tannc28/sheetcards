@@ -72,16 +72,34 @@ class TestTagsGeneration:
         plan = plan_columns(["ID", "SUBDECK 1", "SUBDECK 2", "TAGS", "Front"])
         row = {
             "ID": "Q1",
-            "SUBDECK 1": "Bài 3",
-            "SUBDECK 2": "Động từ",
+            "SUBDECK 1": "Unit 3",
+            "SUBDECK 2": "Verbs",
             "TAGS": "review, hard",
             "Front": "q",
         }
         tags = d.build_tags(row, plan)
 
         assert tags[0] == "sheets2anki"
-        assert "sheets2anki::bài_3::động_từ" in tags
+        assert "sheets2anki::unit_3::verbs" in tags
         assert "review" in tags and "hard" in tags
+
+    def test_non_ascii_deck_levels_and_tags_are_kept(self):
+        # Unicode coverage: deck levels and user tags in another script must end up
+        # in the tag tree with their characters intact, only lower-cased and with
+        # spaces folded to underscores.
+        plan = plan_columns(["ID", "SUBDECK 1", "SUBDECK 2", "TAGS", "Front"])
+        row = {
+            "ID": "Q1",
+            "SUBDECK 1": "Bài 3",
+            "SUBDECK 2": "Động từ",
+            "TAGS": "ôn tập, 汉字",
+            "Front": "q",
+        }
+        tags = d.build_tags(row, plan)
+
+        assert tags[0] == "sheets2anki"
+        assert "sheets2anki::bài_3::động_từ" in tags
+        assert "ôn_tập" in tags and "汉字" in tags
 
     def test_no_placeholder_tags_for_blank_levels(self):
         # The old model emitted [missing_subtopic]-style tags; nothing should now.
