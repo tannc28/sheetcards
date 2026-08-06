@@ -18,8 +18,9 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 - [Module map](#module-map)
 - [Sync data flow](#sync-data-flow)
 - [Column model & note keying](#column-model--note-keying)
+- [Card layout](#card-layout)
 - [Card-side features & the AI layer](#card-side-features--the-ai-layer)
-- [Configuration: config.json vs meta.json](#configuration-configjson-vs-metajson)
+- [Configuration: where settings live](#configuration-where-settings-live)
 - [Development setup](#development-setup)
 - [Testing](#testing)
 - [Building & packaging](#building--packaging)
@@ -45,7 +46,7 @@ Three layers, from the outside in:
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Anki integration  (__init__.py)                                       │
-│  • Tools → Sheets2Anki menu     • 10 keyboard shortcuts (Ctrl+Shift+…) │
+│  • Tools → Sheets2Anki menu     • 11 keyboard shortcuts (Ctrl+Shift+…) │
 │  • webview_did_receive_js_message hook (AI button pycmd messages)      │
 └───────────────────────────────┬──────────────────────────────────────┘
                                 │
@@ -88,7 +89,7 @@ sheets2anki/
 ├── manifest.json               # Add-on metadata (version lives here + pyproject.toml)
 ├── meta.json                   # User settings + connected decks (gitignored; runtime)
 ├── src/                        # All add-on logic (see module map below)
-│   └── ui/                     # Qt dialogs (10 modules + url_helpers.py)
+│   └── ui/                     # Qt dialogs (11 modules + url_helpers.py)
 ├── libs/                       # Vendored third-party deps — never edit or lint
 ├── tests/                      # pytest suite (Anki is mocked; no Anki install needed)
 ├── scripts/                    # Build/packaging tooling for .ankiaddon files
@@ -119,7 +120,12 @@ split-out module:
 - **`data_processor.py`** — downloads and parses the spreadsheet
   (`getRemoteDeck()`, `parse_tsv_data()`, `build_remote_deck_from_tsv()` → a
   `RemoteDeck`) and applies changes to the collection
-  (`create_or_update_notes()`); detects Cloze cards (`has_cloze_deletion()`).
+  (`create_or_update_notes()`); detects Cloze rows (`row_has_cloze()` /
+  `has_cloze_deletion()`) and builds each row's tags (`build_tags()`) and target
+  subdeck (`determine_target_deck()`).
+- **`column_model.py`** — the free-form column model: which headers are reserved, and
+  how a header row is sorted into a `ColumnPlan` (`plan_columns()`). Also the per-row
+  readers `row_is_marked_for_sync()`, `deck_path()`, `tags_of()`.
 - **`deck_manager.py`** — deck CRUD and the selection entry point
   (`syncDecksWithSelection()`).
 - **`name_consistency_manager.py`** — keeps dynamically-created note-type names in sync
@@ -128,13 +134,21 @@ split-out module:
 ### Configuration & utilities
 - **`config_manager.py`** — the only module that reads/writes `meta.json`/`config.json`
   (`get_meta()` / `save_meta()`); AI prompt defaults live in **`ai_prompts.py`**.
+- **`sync_config.py`** — the settings that must follow the user between machines: the
+  per-deck **card layouts**, stored in Anki's own collection config
+  (`get_card_layout()`, `set_card_layout()`, `ensure_card_layout()`,
+  `forget_card_layout()`, `DEFAULT_LAYOUT`).
+- **`card_layout.py`** — turns a layout dict into Anki card templates
+  (`build_templates()`), including the optional reverse template and the timer/AI
+  blocks (`ai_components_for()`).
 - **`utils.py`** — URL conversion (`convert_edit_url_to_tsv()`,
-  `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), and other
-  helpers; errors/debug/deck-options were split into **`errors.py`**, **`debug.py`**,
-  **`deck_options.py`**.
-- **`templates_and_definitions.py`** — column definitions (`ALL_AVAILABLE_COLUMNS`,
-  `REQUIRED_HEADERS`), note-type/model construction (`create_model()`), and the card
-  template assembly; the large CSS/HTML/JS strings live in **`card_assets.py`**.
+  `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), subdeck
+  naming (`get_subdeck_name()`), and other helpers; errors/debug/deck-options were split
+  into **`errors.py`**, **`debug.py`**, **`deck_options.py`**.
+- **`templates_and_definitions.py`** — note-type provisioning against the sheet's columns
+  and the deck's layout (`ensure_custom_models()`, `create_model()`,
+  `add_missing_fields()`, `apply_templates()`), plus `IS_DEVELOPMENT_MODE` and
+  `TAG_ROOT`; the large CSS/HTML/JS strings live in **`card_assets.py`**.
 
 ### Features & integrations
 - **`ai_service.py`** — desktop AI calls (`call_ai_api_async()`) to Gemini / Claude /
@@ -147,10 +161,18 @@ split-out module:
 - **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
 ### UI (`src/ui/`)
-Ten Qt dialogs (add deck, sync, disconnect, backup, debug, deck-options config, AnkiWeb
-config, AI-assistance config, image-processor config, timer config), plus
-`url_helpers.py` (shared clean-URL / copy-to-clipboard helpers). Modules in `src/ui/`
-import siblings one level up (`from ..compat import …`).
+Eleven Qt dialogs (add deck, sync, disconnect, backup, debug, deck-options config,
+AnkiWeb config, **card-layout config**, AI-assistance config, image-processor config,
+timer config), plus `url_helpers.py` (shared clean-URL / copy-to-clipboard helpers).
+Modules in `src/ui/` import siblings one level up (`from ..compat import …`).
+
+**`card_layout_dialog.py`** is the editor for a deck's card layout: it moves field
+*names* between the front and back lists and never writes HTML itself — that is
+`card_layout.build_templates()`' job. Its live preview only *approximates* Anki's
+template syntax in a `QTextBrowser` (every section is taken, `<script>` blocks are
+stripped, since the widget runs no JavaScript). Its user-facing strings are Vietnamese,
+matching the add-on's audience; the surrounding code stays English like the rest of the
+repository.
 
 ## Sync data flow
 
@@ -162,9 +184,16 @@ Per deck:
    `get_spreadsheet_id_from_url()`. Downloads are restricted to Google hosts.
 2. **Download & parse.** `data_processor.getRemoteDeck()` downloads the TSV, runs
    `parse_tsv_data()` and `build_remote_deck_from_tsv()`, and returns a `RemoteDeck`
-   (which tracks `valid_note_lines`, `invalid_note_lines`, etc.).
-3. **Apply changes.** `data_processor.create_or_update_notes()` creates, updates, and
-   deletes Anki notes to match the sheet.
+   (which tracks `valid_note_lines`, `invalid_note_lines`, etc.). The header row is
+   sorted into a `ColumnPlan` by `column_model.plan_columns()` and carried on the deck
+   as `RemoteDeck.plan`; every later step takes it as its `plan` argument.
+3. **Provision the note types.** `data_processor.get_deck_layout()` reads the deck's
+   card layout — creating it from the sheet's column order the first time the deck is
+   seen — and `templates_and_definitions.ensure_custom_models()` makes the Basic and
+   Cloze note types match `plan` (fields) and `layout` (templates).
+4. **Apply changes.** `data_processor.create_or_update_notes()` creates, updates, and
+   deletes Anki notes to match the sheet. (Steps 3 and 4 are one call: `get_deck_layout()`
+   and `ensure_custom_models()` run at the top of `create_or_update_notes()`.)
 
 > **Safety guard:** if a parsed sheet has `valid_note_lines == 0` (e.g. an empty or
 > failed fetch), the deletion pass is skipped so a transient blank download can't wipe
@@ -172,32 +201,88 @@ Per deck:
 
 ## Column model & note keying
 
-- **Columns** are centralized in `templates_and_definitions.py`:
-  **24 available columns** (`ALL_AVAILABLE_COLUMNS`), of which **3 are required
-  headers** (`REQUIRED_HEADERS = ID, QUESTION, ANSWER`). `ID` is the stable per-row key
-  — never regenerate it.
-- **Note keying.** Notes are matched/tracked by the plain spreadsheet `ID`
-  (`data_processor.get_existing_notes_by_id()`); a row whose `REVERSE` column has content
-  yields a second note keyed **`{id}_REV`**. Matching prefers a whole key over stripping
-  the `_REV` suffix, so a spreadsheet ID that itself ends in `_REV` still resolves to its
-  own row. The `[MISSING_IMPORTANCE]` / `[MISSING_TOPIC]` / `[MISSING_SUBTOPIC]` /
-  `[MISSING_CONCEPT]` sentinels are real values handled specially.
+There is **no fixed column list**. The spreadsheet drives the schema: a handful of
+headers are reserved, and every other column becomes a note field named exactly like the
+header — so a sheet can use whatever vocabulary its subject calls for ("Hán tự",
+"Pinyin", "Nghĩa") instead of a column list baked into the code. This all lives in
+`column_model.py`.
+
+- **Reserved headers**, matched case-insensitively with surrounding whitespace and any
+  BOM stripped (`column_model.normalize()` / `clean()`):
+
+  | Header | Role |
+  | :--- | :--- |
+  | `ID` | The row's stable key. **Required** — a row with an empty `ID` is not synced. Never regenerate it. |
+  | `SYNC` | Per-row gate (`row_is_marked_for_sync()`, truthy values in `SYNC_TRUE_VALUES`). **A sheet with no `SYNC` column syncs every row** — absence means "no gating", not "nothing syncs". |
+  | `SUBDECK 1..N` | One level of the deck path each, ordered **by the number, not the column position** (`subdeck_level()`); empty levels are dropped (`deck_path()`). |
+  | `TAGS` | Extra tags for the row, split on commas and semicolons (`tags_of()`). |
+
+- **`ColumnPlan`.** `plan_columns(headers)` sorts a header row into `id_header`,
+  `sync_header`, `tags_header`, `subdeck_headers` and `content_headers` (everything else,
+  in sheet order). A header repeated in the sheet is honoured once — the first occurrence
+  wins and the rest are recorded in `duplicates`.
+- **Note keying.** Notes are matched by the plain spreadsheet `ID`, read straight out of
+  the note's `ID` field (`data_processor.get_existing_notes_by_id()`). One row is always
+  exactly one note; there are no `_REV` keys and no `[MISSING_*]` sentinels any more.
+  Duplicate non-empty IDs are detected during the build and reported
+  (`RemoteDeck.duplicate_ids`), because they would silently collapse into one note.
 - **Note types (models)** are created dynamically, one set per
-  `Sheets2Anki - {deck} - Basic|Cloze|Reverse`
-  (`utils.get_note_type_name()`, `templates_and_definitions.create_model()`).
-  `name_consistency_manager.py` keeps these names aligned when a deck is renamed.
-- **Cloze** cards are auto-detected from `{{c1::…}}` patterns
-  (`data_processor.has_cloze_deletion()`).
-- **Deck hierarchy:**
-  `Sheets2Anki::{deck}::{importance}::{topic}::{subtopic}::{concept}`
-  (`utils.get_subdeck_name()`, `data_processor.determine_target_deck()`).
-- **Tags:** hierarchical `sheets2anki::…` derived from the categorization columns.
+  `Sheets2Anki - {deck} - Basic` / `- Cloze` (`utils.get_note_type_name()`,
+  `templates_and_definitions.ensure_custom_models()` / `create_model()`). Their fields are
+  `plan.note_type_fields()` — `["ID"] + content_headers`, with `ID` first because Anki
+  uses the first field for duplicate detection. There is **no `- Reverse` note type**: the
+  reverse direction is a second card *template* on the same note type (see
+  [Card layout](#card-layout)). `name_consistency_manager.py` keeps the names aligned when
+  a deck is renamed.
+- **Schema drift is deliberately asymmetric.** Adding a column adds the field
+  (`add_missing_fields()`) and appends it to the back of the card (`sync_config._coerce()`).
+  **Removing a column stops the field being rendered but never removes it** — dropping it
+  would silently delete content the user already collected.
+- **Cloze** is decided per row by scanning **every content column** for `{{c1::…}}`
+  (`data_processor.row_has_cloze()` → `has_cloze_deletion()`), which routes the row to the
+  Cloze note type.
+- **Deck hierarchy:** `Sheets2Anki::{deck}` followed by the row's `SUBDECK` levels
+  (`utils.get_subdeck_name()`, `data_processor.determine_target_deck()`). A sheet with no
+  `SUBDECK` columns keeps every note in the deck root.
+- **Tags** (`data_processor.build_tags()`): `sheets2anki` on every note the add-on owns,
+  `sheets2anki::<subdeck path>` mirroring the deck path, plus whatever the `TAGS` column
+  lists. Each component is folded to a safe lower-case tag by `clean_tag_text()`.
+
+## Card layout
+
+How a card looks is a **per-deck layout dict**, not a property of the sheet.
+`sync_config.DEFAULT_LAYOUT` defines its keys: `front`, `back`, `show_labels`,
+`front_size`, `back_size`, `align`, `reverse_card`, `timer`, `timer_position`,
+`hand_edited`. On first sight of a deck, `default_layout_for()` seeds it from the sheet's
+own column order — first content column on the front, the rest on the back, the same
+convention as Anki's CSV import.
+
+`card_layout.build_templates(layout, is_cloze, ai_components)` renders it into the
+`{"name", "qfmt", "afmt"}` template list:
+
+- **Reverse cards are a second template on the same note type** (`"Card 2 (reverse)"`),
+  not a second note. Anki then schedules both directions independently off one row, and
+  switching the option off later removes those cards without touching the note's content
+  (`apply_templates()` prunes templates the layout no longer produces). Cloze note types
+  support exactly one template, so the reverse card is skipped for them.
+- A layout with an empty `front` falls back to the first field it does have, since Anki
+  refuses to generate a card from a blank prompt.
+- Cloze backs repeat the prompt through `{{cloze:Field}}` rather than `{{FrontSide}}`,
+  because Anki validates that a cloze template references the filter on both sides.
+- `hand_edited: True` makes sync stop regenerating that deck's templates
+  (`ensure_custom_models()`, `update_existing_note_type_templates()`), so template work
+  the user did by hand in Anki survives a sync.
+
+`src/ui/card_layout_dialog.py` is the editor, reachable at
+`Tools → Sheets2Anki → Configure Card Layout` (`Ctrl+Shift+C`).
 
 ## Card-side features & the AI layer
 
-`templates_and_definitions.py` / `card_assets.py` hold the CSS/JS rendered into card
-HTML: the study **timer** and the **AI Help / AI Ask / AI Checker** buttons. The AI
-layer has two execution paths that must stay in sync:
+`card_assets.py` holds the CSS/HTML/JS rendered into cards — the study **timer** and the
+**AI Help / AI Ask / AI Checker** buttons — and `card_layout.py` composes them into the
+templates (`_timer_parts()` picks the CSS/JS for the layout's `timer_position`;
+`ai_components_for()` / `templates_and_definitions.ai_components()` assemble the AI block
+appended to the back). The AI layer has two execution paths that must stay in sync:
 
 - **Desktop:** card JS calls `pycmd(...)` → handled in `__init__.py`
   (`sheets2anki_ai_help/ask/checker:` messages) → `ai_service.call_ai_api_async()`.
@@ -214,14 +299,23 @@ functions are duplicated.
 > [`CLAUDE.md`](../CLAUDE.md). The AI output is sanitized (`escapeHtml`/`sanitizeHtml`)
 > before it is injected into the webview.
 
-## Configuration: config.json vs meta.json
+## Configuration: where settings live
+
+Settings are split by whether they should follow the user to their other machines.
 
 - **`config.json`** (committed) — default settings only.
 - **`meta.json`** (gitignored, auto-created by Anki in the add-on dir) — **the source of
-  truth** for user settings and all connected remote decks.
+  truth** for machine-local user settings and all connected remote decks. The AI provider
+  API key lives here deliberately: it must not be uploaded to AnkiWeb.
+- **Anki's collection config** (`col.get_config()` / `col.set_config()`) — the per-deck
+  **card layouts**, under the single key `sheets2anki::card_layouts` holding
+  `{sheet_id: layout}`. Anki's `config` table carries a `usn`, so entries there sync
+  through AnkiWeb along with the notes and note types; a layout configured on one machine
+  shows up on the next one with no Google API and no extra setup.
 
-Both are managed *exclusively* through `config_manager.py` (`get_meta()` /
-`save_meta()`). Never read or write these files directly from other modules.
+`config.json`/`meta.json` are managed *exclusively* through `config_manager.py`
+(`get_meta()` / `save_meta()`), and the collection config *exclusively* through
+`sync_config.py`. Never read or write either store directly from other modules.
 
 ## Development setup
 
@@ -270,6 +364,8 @@ Current test modules:
 | File | Covers |
 | :--- | :--- |
 | `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
+| `test_column_model.py` | Header normalization, `plan_columns()`, SYNC gating, deck path, tags |
+| `test_card_layout.py` | Layout defaults/reconciliation and template generation |
 | `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
 | `test_config_manager.py` | Settings CRUD and persistence |
 | `test_utils.py` | URL/hash/validation utilities |

@@ -446,28 +446,24 @@ def get_model_suffix_from_url(url):
     return hashlib.sha1(url.encode()).hexdigest()[:8]
 
 
-def get_note_type_name(url, remote_deck_name, is_cloze=False, is_reverse=False):
+def get_note_type_name(url, remote_deck_name, is_cloze=False):
     """
     Generates standardized name for Sheets2Anki note types.
 
-    Format: "Sheets2Anki - {remote_deck_name} - Basic/Cloze/Reverse"
+    Format: "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
     The remote_deck_name already has conflict resolution applied by config_manager.
+    The reverse direction is a second card template on the same note type, so it
+    does not get a name of its own.
 
     Args:
         url (str): Remote deck URL
         remote_deck_name (str): Remote deck name from spreadsheet (with suffix if necessary)
         is_cloze (bool): If it's a Cloze note type
-        is_reverse (bool): If it's a Reverse note type
 
     Returns:
         str: Standardized note type name
     """
-    if is_reverse:
-        note_type = "Reverse"
-    elif is_cloze:
-        note_type = "Cloze"
-    else:
-        note_type = "Basic"
+    note_type = "Cloze" if is_cloze else "Basic"
 
     # Use remote name directly (already comes with conflict suffix from config_manager)
     clean_remote_name = remote_deck_name.strip() if remote_deck_name else "RemoteDeck"
@@ -967,20 +963,18 @@ def validate_url(url):
 # ========================================================================================
 
 
-def get_subdeck_name(main_deck_name, fields):
+def get_subdeck_name(main_deck_name, path_levels):
     """
-    Generates subdeck name based on main deck and IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT fields.
+    Generates subdeck name from the main deck and a row's SUBDECK levels.
 
     Args:
         main_deck_name (str): Main deck name
-        fields (dict): Note fields with IMPORTANCE, TOPIC, SUBTOPIC and CONCEPT
+        path_levels (list): Deck path levels, outermost first (see column_model.deck_path)
 
     Returns:
-        str: Full subdeck name in the format "MainDeck::Importance::Topic::Subtopic::Concept"
+        str: Full subdeck name in the format "MainDeck::Level1::Level2::..."
     """
     import re
-
-    from . import templates_and_definitions as cols
 
     def clean_deck_text(text):
         """Cleans text for use as Anki deck name (single value, NOT list)."""
@@ -995,19 +989,12 @@ def get_subdeck_name(main_deck_name, fields):
         cleaned = re.sub(r"\s+", " ", cleaned)
         return cleaned
 
-    # Build the hierarchy from the levels that actually carry a value. Empty levels are
-    # skipped rather than filled with a placeholder, so a sheet that only uses TOPIC gets
-    # "Deck::Topic" instead of a chain of empty [MISSING_*] subdecks. A level whose text
+    # Only levels that actually carry a value become subdecks — a level whose text
     # survives cleaning as an empty string (e.g. it held only invalid characters) is
-    # skipped for the same reason.
+    # skipped as well, so the deck never gains a nameless level.
     parts = [main_deck_name]
-    for level in (
-        cols.hierarchy_1,
-        cols.hierarchy_2,
-        cols.hierarchy_3,
-        cols.hierarchy_4,
-    ):
-        cleaned = clean_deck_text(fields.get(level, "").strip())
+    for level in path_levels or []:
+        cleaned = clean_deck_text(str(level).strip())
         if cleaned:
             parts.append(cleaned)
 

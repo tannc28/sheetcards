@@ -14,14 +14,12 @@ python tests/run_tests.py                  # all tests
 python tests/run_tests.py --unit           # only @pytest.mark.unit
 python tests/run_tests.py --fast           # skip @pytest.mark.slow
 python tests/run_tests.py --coverage       # coverage report → htmlcov/
-python tests/run_tests.py --info           # list available tests
 python tests/run_tests.py --file core_logic
 python tests/run_tests.py --file core_logic --function test_duplicate_ids_detected
 ```
 
-Supported runner flags: `--unit`, `--integration`, `--fast`, `--coverage`, `--verbose`,
-`--file <name>`, `--function <name>`. (`--info`, which just lists the available tests,
-must be passed on its own — it is not combinable with the other flags.)
+Supported runner flags: `--unit`, `--integration`, `--fast`, `--coverage`,
+`--verbose`/`-v`, `--file`/`-f <name>`, `--function`/`-k <name>`.
 
 ### Running pytest directly
 
@@ -45,6 +43,8 @@ Coverage is **opt-in** via `--coverage` (it is not always-on).
 | File | Covers |
 | :--- | :--- |
 | `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
+| `test_column_model.py` | Header normalization, `plan_columns()`, the SYNC gate, deck path, tags |
+| `test_card_layout.py` | Layout defaults and reconciliation, and the templates they generate |
 | `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
 | `test_config_manager.py` | Settings CRUD and persistence |
 | `test_utils.py` | URL / hash / validation utilities |
@@ -69,14 +69,17 @@ unknown markers fail).
 
 | Fixture | Provides |
 | :--- | :--- |
-| `sample_tsv_content` | A TSV string with the English headers (`ID`, `QUESTION`, `ANSWER`, …) |
-| `sample_tsv_data` | Row dicts in the same schema (kept for older tests) |
-| `temp_config_file` | A temporary config path under pytest's `tmp_path` |
+| `sample_tsv_content` | A small, valid TSV document with the headers `ID`, `QUESTION`, `ANSWER`, `SYNC`, `TOPIC`, `SUBTOPIC`, `CONCEPT`, `IMPORTANCE` and two rows (one of them cloze) |
+| `sample_tsv_data` | Row dicts using a subset of the same headers (legacy fixture, kept for older tests) |
+| `temp_config_file` | A temporary `test_config.json` (`{"config": {}, "decks": {}}`) under pytest's `tmp_path`, as a path string |
 | `sample_edit_url` | An example Google Sheets **edit** URL |
-| `mock_mw` | A mock of Anki's main window (`mw`) |
+| `mock_mw` | A `MagicMock` of Anki's main window, with `mw.col` also mocked |
 
-> The schema is **English** (`ID`, `QUESTION`, `ANSWER`, `SYNC`, `TOPIC`, …) — the old
-> Portuguese headers (`PERGUNTA`, …) are no longer used.
+> The add-on has **no fixed schema**: apart from the reserved headers (`ID`, `SYNC`,
+> `SUBDECK n`, `TAGS`) every column becomes a note field named after its header. The
+> header names in these fixtures are therefore just sample content, not a contract — a
+> test that needs different columns should build its own header row rather than assume
+> `QUESTION`/`ANSWER` exist. See `test_column_model.py` for the reserved-header rules.
 
 ## Writing tests
 

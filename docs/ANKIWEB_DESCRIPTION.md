@@ -7,9 +7,11 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 ## 🚀 Key Features
 
 *   **Bulk Creation:** Write hundreds of cards as fast as you can type.
+*   **Your Own Columns:** Apart from a few reserved headers, every column you add becomes a note field with the same name — in any language you like.
+*   **Custom Card Layout:** Choose per deck which fields go on the front, which on the back, and how they look — no note-type editing required.
 *   **🤖 AI Integration:** Use **Gemini**, **Claude**, or **OpenAI** to get explanations directly in your cards.
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
-*   **Smart Sync:** Cards are automatically organized into subdecks (Topic > Subtopic).
+*   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
 *   **Rich Media:** Supports HTML, Images, and Videos (YouTube/Vimeo).
 *   **Cloze Support:** Automatically detects `{{c1::cloze}}` cards.
 
@@ -23,11 +25,13 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 ## 📋 How it Works
 
-Simply fill in the columns in the spreadsheet:
-- **ID**: Unique identifier for updates. | `Q101`
-- **SYNC**: Mark the checkbox to sync this row. | `TRUE`
-- **QUESTION**: The front of your flashcard. | `Capital of France?`
-- **ANSWER**: The back of your flashcard. | `Paris`
+The spreadsheet decides the schema. Only these headers are reserved:
+- **ID**: Unique identifier for updates (required). | `Q101`
+- **SYNC**: Mark the checkbox to sync this row — leave the column out entirely and every row syncs. | `TRUE`
+- **SUBDECK 1**, **SUBDECK 2**, …: One level of the deck path each. | `Geography`
+- **TAGS**: Extra tags, separated by commas. | `capitals, europe`
+
+Every other column you add becomes a note field with the same name — `Question`, `Answer`, `Pinyin`, whatever your subject calls for. Then open `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) to decide which of those fields go on the front, which on the back, and how they are styled.
 
 The add-on handles the rest, creating beautiful, organized notes in your collection.
 

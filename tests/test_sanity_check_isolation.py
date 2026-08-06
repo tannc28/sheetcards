@@ -254,25 +254,26 @@ def test_config_manager_no_sanity_references():
     print("✅ CONFIG MANAGER: No sanity check references in config_manager.py")
 
 
-def test_card_template_does_not_render_sanity_check():
+def test_card_template_only_renders_fields_the_layout_names():
+    """The card can only show fields the user put in the layout.
+
+    With the free-form column model there is no fixed "sanity check" column any
+    more: a template references exactly the fields named in the layout, so no
+    column can leak onto the card — and from there into the AI capture — unless
+    the user placed it there deliberately.
     """
-    The card no longer renders the sanity check at all, so its data cannot reach the
-    AI capture in the first place. This is the strongest form of the isolation the
-    rest of this file checks, so assert the field stays off the card.
-    """
-    from src.templates_and_definitions import create_card_template
+    from src.card_layout import build_templates
 
-    tpl = create_card_template(timer_position="hidden")
+    layout = {"front": ["Front"], "back": ["Back"]}
+    for tpl in build_templates(layout):
+        rendered = tpl["qfmt"] + tpl["afmt"]
+        assert "{{Secret}}" not in rendered
+        assert "sanity-check-container" not in rendered
 
-    for side in ("qfmt", "afmt"):
-        assert (
-            "sanity-check-container" not in tpl[side]
-        ), f"Sanity check must not be rendered on the card ({side})"
-        assert (
-            "SANITY CHECK" not in tpl[side]
-        ), f"Sanity check field must not be referenced on the card ({side})"
+    with_secret = {"front": ["Front"], "back": ["Back", "Secret"]}
+    assert "{{Secret}}" in build_templates(with_secret)[0]["afmt"]
 
-    print("✅ TEMPLATE: Sanity check is not rendered on the card at all")
+    print("✅ TEMPLATE: only fields named in the layout are rendered")
 
 
 def test_ai_js_still_guards_sanity_check_container():
@@ -361,7 +362,7 @@ if __name__ == "__main__":
         test_python_ai_handlers_no_sanity_references,
         test_ai_service_no_sanity_references,
         test_config_manager_no_sanity_references,
-        test_card_template_does_not_render_sanity_check,
+        test_card_template_only_renders_fields_the_layout_names,
         test_ai_js_still_guards_sanity_check_container,
         test_debug_log_no_sanity_in_ai_context,
         test_ai_assistance_config_dialog_no_sanity,

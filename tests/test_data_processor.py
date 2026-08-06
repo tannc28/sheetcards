@@ -10,7 +10,7 @@ import-mocking that lets ``src`` import without a real Anki.
 import pytest
 
 from src import data_processor as d
-from src import templates_and_definitions as cols
+from src.column_model import plan_columns
 
 DECK_URL = "https://docs.google.com/spreadsheets/d/ABC/edit"
 
@@ -51,13 +51,11 @@ class TestPotentialNoteMetrics:
         deck = _deck("ID\tQUESTION\tANSWER\tSYNC\nQ1\tq\ta\ttrue")
         assert deck.total_potential_anki_notes == 1
 
-    def test_reverse_row_counts_as_two_notes(self):
-        deck = _deck(f"ID\tQUESTION\tANSWER\tSYNC\t{cols.reverse}\nQ1\tq\ta\ttrue\tr")
+    def test_every_valid_row_is_exactly_one_note(self):
+        # The reverse direction is a second card template on the same note type,
+        # not a second note, so the count tracks rows one-for-one.
+        deck = _deck("ID\tFront\tBack\tSYNC\nQ1\tq\ta\ttrue\nQ2\tq2\ta2\ttrue")
         assert deck.total_potential_anki_notes == 2
-
-    def test_empty_reverse_cell_still_counts_as_one(self):
-        deck = _deck(f"ID\tQUESTION\tANSWER\tSYNC\t{cols.reverse}\nQ1\tq\ta\ttrue\t")
-        assert deck.total_potential_anki_notes == 1
 
 
 @pytest.mark.unit
@@ -67,25 +65,26 @@ class TestClozeFormatting:
         assert d.has_cloze_deletion("{{C2::x::hint}}")
         assert not d.has_cloze_deletion("no cloze")
 
-    def test_clean_strips_markup_and_hint(self):
-        assert d.clean_cloze_formatting("{{c1::Hello}}") == "Hello"
-        assert d.clean_cloze_formatting("{{c2::World::hint}}") == "World"
-
-    def test_clean_preserves_colons_inside_content(self):
-        # Regression: content with colons (times, ions, ratios) must survive.
-        assert d.clean_cloze_formatting("{{c1::10:30}}") == "10:30"
-        assert d.clean_cloze_formatting("{{c1::Na+ : K+}}") == "Na+ : K+"
-        assert d.clean_cloze_formatting("{{c1::a::b::c}}") == "a"
-
-    def test_clean_handles_multiple_clozes_and_case(self):
-        assert d.clean_cloze_formatting("a {{c1::X}} b {{c2::Y::h}} c") == "a X b Y c"
-        assert d.clean_cloze_formatting("{{C1::upper}}") == "upper"
-
 
 @pytest.mark.unit
 class TestTagsGeneration:
-    def test_other_tags_split_and_namespaced(self):
-        note = {cols.identifier: "Q1", cols.tags_4: "review, hard"}
-        tags = d.create_tags_from_fields(note)
-        assert any("other_tags::review" in t for t in tags)
-        assert any("other_tags::hard" in t for t in tags)
+    def test_root_tag_deck_path_and_user_tags(self):
+        plan = plan_columns(["ID", "SUBDECK 1", "SUBDECK 2", "TAGS", "Front"])
+        row = {
+            "ID": "Q1",
+            "SUBDECK 1": "Bài 3",
+            "SUBDECK 2": "Động từ",
+            "TAGS": "review, hard",
+            "Front": "q",
+        }
+        tags = d.build_tags(row, plan)
+
+        assert tags[0] == "sheets2anki"
+        assert "sheets2anki::bài_3::động_từ" in tags
+        assert "review" in tags and "hard" in tags
+
+    def test_no_placeholder_tags_for_blank_levels(self):
+        # The old model emitted [missing_subtopic]-style tags; nothing should now.
+        plan = plan_columns(["ID", "SUBDECK 1", "Front"])
+        tags = d.build_tags({"ID": "Q1", "SUBDECK 1": "", "Front": "q"}, plan)
+        assert tags == ["sheets2anki"]
