@@ -40,10 +40,13 @@ looks and sounds too, in an optional second header row.
   has for the languages the sheet asks for**, and a preview.
 
 ### 🤖 Release process
+- **Releasing is driven by the version, not by remembering to push a tag.** Merging to
+  `main` with `manifest.json` and `pyproject.toml` bumped tags, builds and publishes;
+  merging without a bump finds the tag already present and stops.
 - Release notes are now the matching section of this changelog, so a release always
-  says what changed. The build **fails** when a tagged version has no section here,
-  rather than publishing an empty release. Notes for v3.1.0 through v5.0.0 were
-  backfilled.
+  says what changed. The run **fails before tagging** when a version has no section
+  here, rather than leaving a tag pointing at a release that says nothing. Notes for
+  v3.1.0 through v5.0.0 were backfilled.
 
 ---
 
