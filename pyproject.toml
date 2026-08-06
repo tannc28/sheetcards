@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sheets2anki"
-version = "4.0.1"
+version = "5.0.0"
 description = "Anki add-on that syncs flashcard decks from Google Sheets, with multi-student decks, hierarchical organization, and optional AI study assistance."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -81,7 +81,6 @@ include = [
     "/tests",
     "/docs",
     "/scripts",
-    "/libs",
     "README.md",
     "LICENSE",
     "docs/CHANGELOG.md",
@@ -134,7 +133,6 @@ extend-exclude = '''
     | \.venv
     | build
     | dist
-    | libs
 )/
 '''
 
@@ -145,7 +143,6 @@ extend-exclude = '''
 target-version = "py313"
 line-length = 88
 extend-exclude = [
-    "libs/",
     "build/",
     ".venv/",
     "__pycache__/",
@@ -237,7 +234,6 @@ source = ["src"]
 branch = true
 omit = [
     "tests/*",
-    "libs/*",
     "build/*",
     ".venv/*",
     "*/__pycache__/*",

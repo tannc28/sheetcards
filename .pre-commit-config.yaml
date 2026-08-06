@@ -2,8 +2,6 @@
 #   Install:  pip install pre-commit && pre-commit install
 #   Refresh:  pre-commit autoupdate
 #
-# Vendored third-party code under libs/ is never linted or reformatted.
-exclude: '^libs/'
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit

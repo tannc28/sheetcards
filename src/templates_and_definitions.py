@@ -5,7 +5,6 @@ The spreadsheet defines its own columns (see ``column_model``) and the card layo
 lives in the collection config (see ``sync_config``), so this module no longer knows
 any column names. What is left is:
 - the add-on's fixed names and the development-mode switch
-- the AI-assistance JavaScript composition (blocks live in ``card_assets``)
 - creating and reconciling the per-deck note types
 
 Consolidated from:
@@ -37,101 +36,9 @@ DEFAULT_PARENT_DECK_NAME = "Sheets2Anki"
 # Tag prefix (lowercase for consistency - Anki tags are case-insensitive)
 TAG_ROOT = "sheets2anki"
 
-# Template constants for card generation
-# --- Re-exported from card_assets (split out of this file) ---
-from .card_assets import _AI_JS_ASK_MODAL  # noqa: F401
-from .card_assets import _AI_JS_CAPTURE  # noqa: F401
-from .card_assets import _AI_JS_COLLECT  # noqa: F401
-from .card_assets import _AI_JS_HEAD  # noqa: F401
-from .card_assets import _AI_JS_RENDER  # noqa: F401
-from .card_assets import _AI_JS_RESET_ASK  # noqa: F401
-from .card_assets import _AI_JS_TAIL  # noqa: F401
-from .card_assets import AI_HELP_BUTTON_HTML  # noqa: F401
-from .card_assets import AI_HELP_CSS  # noqa: F401
-from .card_assets import AI_HELP_JS  # noqa: F401
-from .card_assets import AI_HELP_JS_DESKTOP  # noqa: F401
-from .card_assets import AI_HELP_JS_MOBILE_TEMPLATE  # noqa: F401
-
-
-def generate_ai_assistance_js(
-    mobile_enabled=False,
-    service="gemini",
-    model="",
-    api_key="",
-    prompt_help="",
-    prompt_ask="",
-    prompt_checker="",
-):
-    """
-    Generates AI Assistance JavaScript based on configuration.
-
-    Args:
-        mobile_enabled: If True, embed API config for mobile support
-        service: AI service (gemini, claude, openai)
-        model: Model ID
-        api_key: API key
-        prompt_help: Custom prompt template for AI Help
-        prompt_ask: Custom prompt template for AI Ask
-        prompt_checker: Custom prompt template for AI Checker
-
-    Returns:
-        str: JavaScript code for AI Help
-    """
-    import base64
-    import json
-
-    if not mobile_enabled:
-        return AI_HELP_JS_DESKTOP
-
-    # Encode prompts as Base64 to prevent corruption by:
-    # 1. HTML parser interpreting XML tags (<command>, <output_format>, etc.)
-    # 2. Anki's template engine interpreting {{...}} as field references
-    # 3. Python's .format() interpreting {...} as format placeholders
-    # The JS code decodes them at runtime using _b64decode()
-    def encode_prompt_b64(p):
-        return base64.b64encode(p.encode("utf-8")).decode("ascii")
-
-    prompt_help_b64 = encode_prompt_b64(prompt_help)
-    prompt_ask_b64 = encode_prompt_b64(prompt_ask)
-    prompt_checker_b64 = encode_prompt_b64(prompt_checker)
-
-    # Safely serialize string values to prevent JS injection from special chars
-    service_json = json.dumps(service)
-    model_json = json.dumps(model)
-    api_key_json = json.dumps(api_key)
-
-    return (
-        AI_HELP_JS_MOBILE_TEMPLATE.replace("{service_json}", service_json)
-        .replace("{model_json}", model_json)
-        .replace("{api_key_json}", api_key_json)
-        .replace("{prompt_help_b64}", prompt_help_b64)
-        .replace("{prompt_ask_b64}", prompt_ask_b64)
-        .replace("{prompt_checker_b64}", prompt_checker_b64)
-    )
-
-
 # =============================================================================
 # NOTE TYPES
 # =============================================================================
-
-
-def ai_components():
-    """
-    Builds the AI button assets for the current settings.
-
-    Returns:
-        str: CSS/HTML/JS to append to the back of every card, or "" when the
-             feature is off or its configuration cannot be read
-    """
-    try:
-        from .card_layout import ai_components_for
-        from .config_manager import get_ai_assistance_config
-
-        return ai_components_for(get_ai_assistance_config())
-    except Exception:
-        # A card without the AI button is still a usable card, so a broken/absent
-        # AI configuration must never abort note type creation.
-        return ""
 
 
 def get_model_field_names(model):
@@ -295,7 +202,6 @@ def ensure_custom_models(col, url, plan, layout, debug_messages=None):
     remote_deck_name = get_deck_remote_name(url) or "RemoteDeck"
     existing_note_types = get_deck_note_type_ids(url) or {}
     fields = plan.note_type_fields()
-    components = ai_components()
     hand_edited = bool(layout.get("hand_edited"))
 
     add_debug_msg(f"Searching note types for remote_deck_name='{remote_deck_name}'")
@@ -326,7 +232,7 @@ def ensure_custom_models(col, url, plan, layout, debug_messages=None):
     for key, is_cloze in (("standard", False), ("cloze", True)):
         label = "Cloze" if is_cloze else "Basic"
         expected_name = get_note_type_name(url, remote_deck_name, is_cloze=is_cloze)
-        templates = build_templates(layout, is_cloze=is_cloze, ai_components=components)
+        templates = build_templates(layout, is_cloze=is_cloze)
 
         model = find_registered_note_type(f" - {label}")
         registered = model is not None
@@ -399,7 +305,6 @@ def update_existing_note_type_templates(col, debug_messages=None):
     from .sync_config import get_card_layout
 
     updated_count = 0
-    components = ai_components()
     remote_decks = get_remote_decks() or {}
 
     debug_messages.append(
@@ -434,11 +339,7 @@ def update_existing_note_type_templates(col, debug_messages=None):
                     continue
 
                 model_name = model.get("name", "")
-                templates = build_templates(
-                    layout,
-                    is_cloze=model.get("type") == 1,
-                    ai_components=components,
-                )
+                templates = build_templates(layout, is_cloze=model.get("type") == 1)
 
                 if apply_templates(col, model, templates):
                     col.models.save(model)

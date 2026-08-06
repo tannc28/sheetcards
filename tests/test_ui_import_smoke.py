@@ -13,7 +13,6 @@ import pytest
 
 UI_MODULES = [
     "add_deck_dialog",
-    "ai_assistance_config_dialog",
     "ankiweb_sync_config_dialog",
     "backup_dialog",
     "debug_dialog",
@@ -21,7 +20,6 @@ UI_MODULES = [
     "disconnect_dialog",
     "image_processor_config_dialog",
     "sync_dialog",
-    "timer_config_dialog",
 ]
 
 

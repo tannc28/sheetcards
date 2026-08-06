@@ -10,7 +10,7 @@ root. There is no server and no `main()`; all code runs inside Anki's Python/Qt6
 
 - `__init__.py` — Anki integration entry point (menu, shortcuts, hooks).
 - `src/` — all add-on logic (sync, data processing, dialogs, config, AI, …).
-- `libs/` — **vendored** third-party dependencies. Never edit or lint these.
+- The add-on has **no runtime third-party dependencies** — only the Python standard library and what Anki already provides. Do not reintroduce vendored packages.
 - `tests/` — the pytest suite (Anki is mocked, so no Anki install is needed).
 - `scripts/` — build/packaging tooling for `.ankiaddon` files.
 - `docs/` — changelog and the long-form developer guide.

@@ -140,6 +140,16 @@ class TestBuildTemplates:
         tpls = build_templates(sync_config.default_layout_for(FIELDS))
         assert tpls[0]["afmt"].startswith("{{FrontSide}}")
 
+    def test_only_fields_named_in_the_layout_are_rendered(self):
+        # With the free-form column model a template references exactly the fields
+        # the layout names, so no spreadsheet column can leak onto the card unless
+        # the user placed it there deliberately.
+        for tpl in build_templates({"front": ["Front"], "back": ["Back"]}):
+            assert "{{Secret}}" not in tpl["qfmt"] + tpl["afmt"]
+
+        with_secret = {"front": ["Front"], "back": ["Back", "Secret"]}
+        assert "{{Secret}}" in build_templates(with_secret)[0]["afmt"]
+
 
 @pytest.mark.unit
 class TestNonAsciiFields:

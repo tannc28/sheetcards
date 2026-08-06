@@ -11,8 +11,6 @@ data, and turning the reverse card off later removes its cards without touching 
 note's content.
 """
 
-from .card_assets import AI_HELP_BUTTON_HTML
-from .card_assets import AI_HELP_CSS
 from .card_assets import TIMER_CSS_BETWEEN_SECTIONS
 from .card_assets import TIMER_CSS_TOP_MIDDLE
 from .card_assets import TIMER_HTML
@@ -75,7 +73,7 @@ def _timer_parts(layout):
     return css, TIMER_HTML, TIMER_JS_FRONT, TIMER_JS_BACK
 
 
-def _one_template(front_fields, back_fields, layout, is_cloze, ai_components):
+def _one_template(front_fields, back_fields, layout, is_cloze):
     """Builds a single {qfmt, afmt} pair from one front/back split."""
     timer_css, timer_html, timer_js_front, timer_js_back = _timer_parts(layout)
 
@@ -111,20 +109,18 @@ def _one_template(front_fields, back_fields, layout, is_cloze, ai_components):
         + '<div class="s2a-wrap">\n'
         + _rows(back_fields, layout, "s2a-back", is_cloze=False)
         + "\n</div>"
-        + ai_components
         + timer_js_back
     )
 
     return {"qfmt": qfmt, "afmt": afmt}
 
 
-def build_templates(layout, is_cloze=False, ai_components=""):
+def build_templates(layout, is_cloze=False):
     """Every card template the layout calls for.
 
     Args:
         layout (dict): a layout as stored by ``sync_config``
         is_cloze (bool): render the front through Anki's ``cloze:`` filter
-        ai_components (str): AI button CSS/HTML/JS to append to the back, if enabled
 
     Returns:
         list[dict]: ``{"name", "qfmt", "afmt"}`` per template, front card first
@@ -140,7 +136,7 @@ def build_templates(layout, is_cloze=False, ai_components=""):
     templates = [
         dict(
             name=FRONT_TEMPLATE_NAME,
-            **_one_template(front, back, layout, is_cloze, ai_components),
+            **_one_template(front, back, layout, is_cloze),
         )
     ]
 
@@ -150,33 +146,8 @@ def build_templates(layout, is_cloze=False, ai_components=""):
         templates.append(
             dict(
                 name=REVERSE_TEMPLATE_NAME,
-                **_one_template(back, front, layout, False, ai_components),
+                **_one_template(back, front, layout, False),
             )
         )
 
     return templates
-
-
-def ai_components_for(ai_config):
-    """Assembles the AI button assets, or nothing when the feature is off."""
-    if not ai_config or not ai_config.get("enabled"):
-        return ""
-
-    from .templates_and_definitions import generate_ai_assistance_js
-
-    if ai_config.get("mobile_enabled"):
-        js = generate_ai_assistance_js(
-            mobile_enabled=True,
-            service=ai_config.get("service", "gemini"),
-            model=ai_config.get("model", ""),
-            api_key=ai_config.get("api_key", ""),
-            prompt_help=ai_config.get("prompt", ""),
-            prompt_ask=ai_config.get("prompt_ask", ""),
-            prompt_checker=ai_config.get("prompt_checker", ""),
-        )
-    else:
-        from .card_assets import AI_HELP_JS_DESKTOP
-
-        js = AI_HELP_JS_DESKTOP
-
-    return AI_HELP_CSS + AI_HELP_BUTTON_HTML + js

@@ -19,7 +19,7 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 - [Sync data flow](#sync-data-flow)
 - [Column model & note keying](#column-model--note-keying)
 - [Card layout](#card-layout)
-- [Card-side features & the AI layer](#card-side-features--the-ai-layer)
+- [Card-side features](#card-side-features)
 - [Configuration: where settings live](#configuration-where-settings-live)
 - [Development setup](#development-setup)
 - [Testing](#testing)
@@ -31,8 +31,8 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 
 Sheets2Anki is an **Anki add-on**, not a standalone application. The repository root
 *is* the add-on directory: Anki loads `__init__.py` from the root, which registers a
-`Tools → Sheets2Anki` menu, binds keyboard shortcuts, and wires the card webview hooks.
-There is no server and no `main()` — all code runs inside Anki's Python/Qt6 process.
+`Tools → Sheets2Anki` menu and binds keyboard shortcuts. There is no server and no
+`main()` — all code runs inside Anki's Python/Qt6 process.
 
 The architecture is **function-oriented**, organized around a handful of cohesive
 modules plus a few small types (`RemoteDeck`, `DebugManager`). It is *not* a class-based
@@ -44,24 +44,32 @@ MVC framework; sync is driven by module-level functions such as `syncDecks()` an
 Three layers, from the outside in:
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────────────────────┐
 │  Anki integration  (__init__.py)                                       │
-│  • Tools → Sheets2Anki menu     • 11 keyboard shortcuts (Ctrl+Shift+…) │
-│  • webview_did_receive_js_message hook (AI button pycmd messages)      │
-└───────────────────────────────┬──────────────────────────────────────┘
-                                │
-┌───────────────────────────────▼──────────────────────────────────────┐
-│  Add-on logic  (src/)                                                   │
+│  • Tools → Sheets2Anki menu     • 9 keyboard shortcuts (Ctrl+Shift+…)  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│  Add-on logic  (src/)                                                  │
 │  • sync engine / data processing  • configuration management           │
-│  • dialogs (src/ui/)              • AI, backup, AnkiWeb, images         │
+│  • dialogs (src/ui/)              • backup, AnkiWeb, images            │
 │  • compat.py — the single Qt/Anki gateway                              │
-└───────────────────────────────┬──────────────────────────────────────┘
-                                │
-┌───────────────────────────────▼──────────────────────────────────────┐
-│  Vendored libraries  (libs/)  — added to sys.path at runtime           │
-│  • beautifulsoup4 (+ soupsieve)  • chardet  • org_to_anki              │
-└──────────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│  Python stdlib + whatever Anki already provides                        │
+│  • no vendored code  • no runtime third-party dependencies             │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+
+The nine user-facing shortcuts are `Ctrl+Shift+` `A S D O W C P B L`; `Ctrl+Shift+T`
+("Import Test Deck") is bound only while `IS_DEVELOPMENT_MODE` is `True` and never ships.
+
+**No runtime third-party dependencies.** The add-on imports nothing but the standard
+library and the modules Anki itself exposes. The old vendored `libs/` tree
+(`beautifulsoup4` + `soupsieve`, `chardet`, `org_to_anki`) and the `sys.path` bootstrap
+that loaded it were deleted — do not reintroduce vendoring or add a runtime dependency.
+Dev/test tooling is separate and lives in `[project.optional-dependencies] dev`.
 
 **`src/compat.py` is the Qt/Anki gateway.** All Qt and Anki UI imports must go through
 `compat.py` (which re-exports widgets and defines Qt6 enum constants), never directly
@@ -84,16 +92,14 @@ Preserve this pattern when editing `src/`.
 
 ```
 sheets2anki/
-├── __init__.py                 # Anki entry point: menu, shortcuts, webview hooks
+├── __init__.py                 # Anki entry point: menu and shortcuts
 ├── config.json                 # Default settings (committed)
 ├── manifest.json               # Add-on metadata (version lives here + pyproject.toml)
 ├── meta.json                   # User settings + connected decks (gitignored; runtime)
 ├── src/                        # All add-on logic (see module map below)
-│   └── ui/                     # Qt dialogs (11 modules + url_helpers.py)
-├── libs/                       # Vendored third-party deps — never edit or lint
+│   └── ui/                     # Qt dialogs (9 modules + url_helpers.py)
 ├── tests/                      # pytest suite (Anki is mocked; no Anki install needed)
 ├── scripts/                    # Build/packaging tooling for .ankiaddon files
-├── tools/js-harnesses/         # Manual JS/HTML harnesses for card-template work
 └── docs/                       # This guide, the changelog, and the AnkiWeb listing
 ```
 
@@ -108,8 +114,6 @@ split-out module:
 | :--- | :--- |
 | `utils.py` | `errors.py`, `debug.py` (`DebugManager`, `add_debug_message`), `deck_options.py` |
 | `sync.py` | `sync_report.py` (sync-summary HTML) |
-| `config_manager.py` | `ai_prompts.py` (AI prompt dictionaries) |
-| `templates_and_definitions.py` | `card_assets.py` (card CSS/HTML/JS strings) |
 
 ## Module map
 
@@ -133,14 +137,13 @@ split-out module:
 
 ### Configuration & utilities
 - **`config_manager.py`** — the only module that reads/writes `meta.json`/`config.json`
-  (`get_meta()` / `save_meta()`); AI prompt defaults live in **`ai_prompts.py`**.
+  (`get_meta()` / `save_meta()`).
 - **`sync_config.py`** — the settings that must follow the user between machines: the
   per-deck **card layouts**, stored in Anki's own collection config
   (`get_card_layout()`, `set_card_layout()`, `ensure_card_layout()`,
   `forget_card_layout()`, `DEFAULT_LAYOUT`).
 - **`card_layout.py`** — turns a layout dict into Anki card templates
-  (`build_templates()`), including the optional reverse template and the timer/AI
-  blocks (`ai_components_for()`).
+  (`build_templates()`), including the optional reverse template and the timer block.
 - **`utils.py`** — URL conversion (`convert_edit_url_to_tsv()`,
   `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), subdeck
   naming (`get_subdeck_name()`), and other helpers; errors/debug/deck-options were split
@@ -148,11 +151,11 @@ split-out module:
 - **`templates_and_definitions.py`** — note-type provisioning against the sheet's columns
   and the deck's layout (`ensure_custom_models()`, `create_model()`,
   `add_missing_fields()`, `apply_templates()`), plus `IS_DEVELOPMENT_MODE` and
-  `TAG_ROOT`; the large CSS/HTML/JS strings live in **`card_assets.py`**.
+  `TAG_ROOT`.
+- **`card_assets.py`** — the CSS/HTML/JS strings rendered into cards, imported directly
+  by `card_layout.py`.
 
 ### Features & integrations
-- **`ai_service.py`** — desktop AI calls (`call_ai_api_async()`) to Gemini / Claude /
-  OpenAI.
 - **`ankiweb_sync.py`** — optional AnkiWeb auto-sync after changes.
 - **`backup_system.py`** — configuration/deck backup & restore.
 - **`image_processor.py`** + **`image_processor_script.py`** — the in-Anki image
@@ -161,18 +164,17 @@ split-out module:
 - **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
 ### UI (`src/ui/`)
-Eleven Qt dialogs (add deck, sync, disconnect, backup, debug, deck-options config,
-AnkiWeb config, **card-layout config**, AI-assistance config, image-processor config,
-timer config), plus `url_helpers.py` (shared clean-URL / copy-to-clipboard helpers).
+Nine Qt dialogs — add deck, sync, disconnect, backup, debug, deck-options config,
+AnkiWeb config, **card-layout config**, image-processor config — plus `url_helpers.py`
+(shared clean-URL / copy-to-clipboard helpers), one dialog per menu entry.
 Modules in `src/ui/` import siblings one level up (`from ..compat import …`).
 
 **`card_layout_dialog.py`** is the editor for a deck's card layout: it moves field
 *names* between the front and back lists and never writes HTML itself — that is
 `card_layout.build_templates()`' job. Its live preview only *approximates* Anki's
 template syntax in a `QTextBrowser` (every section is taken, `<script>` blocks are
-stripped, since the widget runs no JavaScript). Its user-facing strings are Vietnamese,
-matching the add-on's audience; the surrounding code stays English like the rest of the
-repository.
+stripped, since the widget runs no JavaScript). It also owns the **study timer** toggle
+and position, since the timer is part of the layout.
 
 ## Sync data flow
 
@@ -258,7 +260,7 @@ How a card looks is a **per-deck layout dict**, not a property of the sheet.
 own column order — first content column on the front, the rest on the back, the same
 convention as Anki's CSV import.
 
-`card_layout.build_templates(layout, is_cloze, ai_components)` renders it into the
+`card_layout.build_templates(layout, is_cloze)` renders it into the
 `{"name", "qfmt", "afmt"}` template list:
 
 - **Reverse cards are a second template on the same note type** (`"Card 2 (reverse)"`),
@@ -277,28 +279,18 @@ convention as Anki's CSV import.
 `src/ui/card_layout_dialog.py` is the editor, reachable at
 `Tools → Sheets2Anki → Configure Card Layout` (`Ctrl+Shift+C`).
 
-## Card-side features & the AI layer
+## Card-side features
 
-`card_assets.py` holds the CSS/HTML/JS rendered into cards — the study **timer** and the
-**AI Help / AI Ask / AI Checker** buttons — and `card_layout.py` composes them into the
-templates (`_timer_parts()` picks the CSS/JS for the layout's `timer_position`;
-`ai_components_for()` / `templates_and_definitions.ai_components()` assemble the AI block
-appended to the back). The AI layer has two execution paths that must stay in sync:
+`card_assets.py` holds the CSS/HTML/JS rendered into cards — currently the study
+**timer** — and `card_layout.py` imports it and composes it into the templates:
+`_timer_parts()` picks the CSS/JS matching the layout's `timer` and `timer_position`
+keys, so the timer is a per-deck setting like the rest of the layout.
 
-- **Desktop:** card JS calls `pycmd(...)` → handled in `__init__.py`
-  (`sheets2anki_ai_help/ask/checker:` messages) → `ai_service.call_ai_api_async()`.
-- **Mobile / Web (AnkiMobile, AnkiWeb):** `pycmd` is unavailable, so the JS calls the
-  provider API directly using config embedded into the template
-  (`AI_HELP_JS_MOBILE_TEMPLATE`, with base64-encoded prompts).
-
-The two JS blocks (`AI_HELP_JS_DESKTOP`, `AI_HELP_JS_MOBILE_TEMPLATE`) share their
-identical parts via single-source `_AI_JS_*` constants; only genuinely-divergent
-functions are duplicated.
-
-> **Card-JS changes are render-sensitive.** Verify any template edit by byte-diffing the
-> *rendered* strings against a pre-edit snapshot — see the card-JS note in
-> [`CLAUDE.md`](../CLAUDE.md). The AI output is sanitized (`escapeHtml`/`sanitizeHtml`)
-> before it is injected into the webview.
+> The timer is **per-deck only**. There is no global timer setting: the separate
+> `Configure Timer` dialog and `config_manager.get_timer_position()` /
+> `set_timer_position()` were removed once it turned out nothing read them — the
+> templates had always been driven by the layout dict. Configure it in the card-layout
+> dialog (`Ctrl+Shift+C`).
 
 ## Configuration: where settings live
 
@@ -306,8 +298,7 @@ Settings are split by whether they should follow the user to their other machine
 
 - **`config.json`** (committed) — default settings only.
 - **`meta.json`** (gitignored, auto-created by Anki in the add-on dir) — **the source of
-  truth** for machine-local user settings and all connected remote decks. The AI provider
-  API key lives here deliberately: it must not be uploaded to AnkiWeb.
+  truth** for machine-local user settings and all connected remote decks.
 - **Anki's collection config** (`col.get_config()` / `col.set_config()`) — the per-deck
   **card layouts**, under the single key `sheets2anki::card_layouts` holding
   `{sheet_id: layout}`. Anki's `config` table carries a `usn`, so entries there sync
@@ -371,9 +362,9 @@ Current test modules:
 | `test_config_manager.py` | Settings CRUD and persistence |
 | `test_utils.py` | URL/hash/validation utilities |
 | `test_url_simplification.py` | Edit-URL → TSV conversion |
+| `test_deck_title.py` | Deriving a deck name from the localised Google Sheets page title |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
-| `test_sanity_check_isolation.py` | Template/prompt assertions on evaluated assets |
 | `test_theme.py` | Design-system tokens and `get_colors()` |
 | `test_backup_threading.py` | Backup/restore stays on the calling thread |
 | `test_ui_import_smoke.py` | Every dialog module imports cleanly |
@@ -410,22 +401,28 @@ from .debug import add_debug_message
 add_debug_message("Consistency check started", "NAME_CONSISTENCY")
 ```
 
-A **Debug Mode** dialog (`Ctrl+Shift+L`) lets you toggle debug mode, view the log, and
-reset configuration from inside Anki. `DebugManager` (in `src/debug.py`) owns the log
-file's lifecycle.
+A **Debug Mode** dialog (`Ctrl+Shift+L`) lets you toggle debug mode (and whether logs
+accumulate across sessions), view the log inline, clear it, and open its folder — all
+from inside Anki. `DebugManager` (in `src/debug.py`) owns the log file's lifecycle;
+nothing is written to the file while debug mode is off.
 
 ## Conventions
 
 - **Qt6 only.** Import Qt/Anki symbols through `compat.py`; do not reintroduce Qt5
   fallbacks or version-detection.
 - **Dual-import pattern** in every `src/` module (see above).
-- **Vendored `libs/`** is never edited, linted, or reformatted.
+- **No runtime third-party dependencies.** Nothing is vendored; the add-on uses only the
+  stdlib and Anki's own modules. Reach for a new dependency only after checking the
+  stdlib cannot do the job.
 - **Formatting & lint:** `black` (line length 88) and `ruff` are **blocking** CI gates;
   `mypy` is advisory. The ruff config intentionally tolerates camelCase Anki-API names
   (`syncDecks`, `getRemoteDeck`) and the dual-import pattern — see `[tool.ruff.lint]` in
   `pyproject.toml`. Run them (or the pre-commit hooks) before pushing.
-- **Version** is `3.0.3` in both `manifest.json` and `pyproject.toml`; keep them in sync
-  on release.
+- **Version** lives in `manifest.json` and `pyproject.toml`, and the two must always
+  agree. Don't copy the current number into prose — read it from the files. Releases are
+  tag-driven and `.github/workflows/release.yml` **fails before packaging** if the tag,
+  `manifest.json` and `pyproject.toml` disagree, so bump both files in the commit you
+  tag.
 
 ---
 

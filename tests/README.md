@@ -49,9 +49,9 @@ Coverage is **opt-in** via `--coverage` (it is not always-on).
 | `test_config_manager.py` | Settings CRUD and persistence |
 | `test_utils.py` | URL / hash / validation utilities |
 | `test_url_simplification.py` | Edit-URL → TSV export-URL conversion |
+| `test_deck_title.py` | `strip_google_title_suffix()` — deriving a deck name from the localised Google Sheets page title |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
-| `test_sanity_check_isolation.py` | Assertions on evaluated templates / imported prompt dicts |
 | `test_theme.py` | Design-system tokens and `get_colors()` coverage |
 | `test_backup_threading.py` | Backup/restore must run on the calling thread |
 | `test_ui_import_smoke.py` | Import-smoke for every dialog module in `src/ui/` |
@@ -100,7 +100,8 @@ class TestUrlConversion:
 ```
 
 Guidelines: test behavior rather than implementation, cover edge cases (empty / `None` /
-malformed input), keep fixtures for shared data, and don't test the vendored `libs/`.
+malformed input), and keep fixtures for shared data. Everything under `src/` is fair
+game — the add-on has no vendored or third-party runtime code to skip over.
 
 ## Coverage
 
@@ -110,7 +111,7 @@ open htmlcov/index.html          # or: xdg-open / start
 ```
 
 Coverage is configured in `pyproject.toml` (`[tool.coverage.*]`): source is `src`,
-`libs/` and `tests/` are omitted, branch coverage is on.
+`tests/`, `build/`, `.venv/` and `__pycache__/` are omitted, branch coverage is on.
 
 ## Debugging tests
 

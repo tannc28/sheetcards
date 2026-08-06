@@ -12,14 +12,6 @@ import pytest
 
 DIALOGS = [
     ("add_deck_dialog", "AddDeckDialog"),
-    # ai_assistance is skipped: its _load_current_config does numeric (>=)
-    # comparisons on config values that the bare conftest mock returns as
-    # MagicMock (Anki returns real numbers). Mock-harness limitation, not a bug.
-    pytest.param(
-        "ai_assistance_config_dialog",
-        "AIAssistanceConfigDialog",
-        marks=pytest.mark.skip(reason="mock returns MagicMock for numeric config"),
-    ),
     ("ankiweb_sync_config_dialog", "AnkiWebSyncConfigDialog"),
     ("backup_dialog", "BackupDialog"),
     ("debug_dialog", "DebugModeDialog"),
@@ -27,7 +19,6 @@ DIALOGS = [
     ("disconnect_dialog", "DisconnectDialog"),
     ("image_processor_config_dialog", "ImageProcessorConfigDialog"),
     ("sync_dialog", "SyncDialog"),
-    ("timer_config_dialog", "TimerConfigDialog"),
 ]
 
 
