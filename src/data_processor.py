@@ -27,6 +27,9 @@ from .column_model import deck_path
 from .column_model import plan_columns
 from .column_model import row_is_marked_for_sync
 from .column_model import tags_of
+from .sheet_config import SheetConfig
+from .sheet_config import is_config_row
+from .sheet_config import parse_config_row
 from .templates_and_definitions import TAG_ROOT
 from .templates_and_definitions import ensure_custom_models
 from .utils import add_debug_message
@@ -75,7 +78,7 @@ class RemoteDeck:
     - Settings and metadata
     """
 
-    def __init__(self, name="", url="", plan=None):
+    def __init__(self, name="", url="", plan=None, sheet_config=None):
         """
         Initializes an empty remote deck.
 
@@ -83,12 +86,15 @@ class RemoteDeck:
             name (str): Deck name
             url (str): Data source URL
             plan (ColumnPlan): how this sheet's headers map onto Anki
+            sheet_config (SheetConfig): the sheet's parsed settings row; a
+                default-constructed one (``present`` False) when the sheet has none
         """
         self.name = name
         self.url = url
         self.notes = []  # List of dictionaries representing notes
         self.headers = []  # List of spreadsheet headers
         self.plan = plan or plan_columns([])
+        self.sheet_config = sheet_config or SheetConfig()
 
         # Refactored metrics per specification
         self.total_table_lines = 0  # 1. Total table lines
@@ -431,6 +437,21 @@ def parse_tsv_data(tsv_data, debug_messages=None):
         raise RemoteDeckError(f"Unexpected parsing error: {e}")
 
 
+def _row_to_dict(row, headers):
+    """One TSV row as a dict keyed by the sheet's own (cleaned) headers.
+
+    A header repeated in the sheet keeps its first column, matching ``plan_columns``.
+    """
+    note_data = {}
+    for col_index, header in enumerate(headers):
+        cleaned = column_model.clean(header)
+        if not cleaned or cleaned in note_data:
+            continue
+        value = row[col_index] if col_index < len(row) else ""
+        note_data[cleaned] = value.strip() if isinstance(value, str) else ""
+    return note_data
+
+
 def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     """
     Builds RemoteDeck object from processed TSV data.
@@ -456,8 +477,27 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     rows = parsed_data["rows"]
     plan = parsed_data.get("plan") or plan_columns(headers)
 
+    # The sheet may describe how its cards look in the row right under the headers.
+    # It is a directive row, not data: it is removed here so it never reaches
+    # add_note() and therefore never shows up in any metric.
+    sheet_config = SheetConfig()
+    first_row_offset = 0
+    if rows and is_config_row(_row_to_dict(rows[0], headers), plan):
+        sheet_config = parse_config_row(_row_to_dict(rows[0], headers), plan)
+        rows = rows[1:]
+        first_row_offset = 1  # keeps the row numbers in the log matching the sheet
+        add_debug_msg(
+            f"Settings row found: {len(sheet_config.fields)} column(s) configured"
+        )
+        for warning in sheet_config.warnings:
+            message = f"⚠️ Settings row: {warning}"
+            add_debug_msg(message)
+            # Also into the global log: getRemoteDeck is called without a debug list
+            # during a normal sync, and a typo nobody sees is a typo nobody fixes.
+            add_debug_message(message, "SHEET_CONFIG")
+
     # Create remote deck
-    remote_deck = RemoteDeck(url=url, plan=plan)
+    remote_deck = RemoteDeck(url=url, plan=plan, sheet_config=sheet_config)
     remote_deck.headers = headers
 
     add_debug_msg(f"Content columns: {plan.content_headers}")
@@ -465,15 +505,10 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
 
     # Process each row
     for row_index, row in enumerate(rows):
+        sheet_row = row_index + 2 + first_row_offset
         try:
             # Create note dictionary keyed by the sheet's own headers
-            note_data = {}
-            for col_index, header in enumerate(headers):
-                cleaned = column_model.clean(header)
-                if not cleaned or cleaned in note_data:
-                    continue
-                value = row[col_index] if col_index < len(row) else ""
-                note_data[cleaned] = value.strip() if isinstance(value, str) else ""
+            note_data = _row_to_dict(row, headers)
 
             # ALWAYS add to deck for correct metrics accounting
             # Empty ID validation will be done inside add_note() method
@@ -481,18 +516,18 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
 
             note_id = str(note_data.get(plan.id_header, "")).strip()
             if not note_id:
-                add_debug_msg(f"Row {row_index + 2}: invalid note (empty ID)")
+                add_debug_msg(f"Row {sheet_row}: invalid note (empty ID)")
                 continue
 
             if not row_is_marked_for_sync(note_data, plan):
-                add_debug_msg(f"Row {row_index + 2}: note not marked for sync")
+                add_debug_msg(f"Row {sheet_row}: note not marked for sync")
                 continue
 
             # Attach the tags this row will carry
             note_data["tags"] = build_tags(note_data, plan)
 
         except Exception as e:
-            add_debug_msg(f"Error processing row {row_index + 2}: {e}")
+            add_debug_msg(f"Error processing row {sheet_row}: {e}")
             continue
 
     # Detect duplicate (non-empty) IDs. These silently collapse during sync because
@@ -600,28 +635,43 @@ def has_cloze_deletion(text):
 # =============================================================================
 
 
-def get_deck_layout(deck_url, plan):
+def get_deck_sheet_config(deck_url):
     """
-    Returns the card layout of a deck, built from its column order on first sight.
+    The sheet settings the last sync cached for this deck.
+
+    Used on the paths that provision a note type without holding the downloaded deck
+    (a model that went missing mid-sync). The current sync writes the cache before
+    any note is processed, so this is the same settings row the rest of the sync uses.
 
     Args:
         deck_url (str): Remote deck URL
-        plan (ColumnPlan): How this sheet's headers map onto Anki
 
     Returns:
-        dict: Layout as stored by sync_config
+        SheetConfig: the cached settings, or the plain defaults when none are cached
     """
     from .config_manager import get_deck_id
-    from .sync_config import default_layout_for
-    from .sync_config import ensure_card_layout
+    from .sync_config import cached_plan_and_config
 
     try:
-        return ensure_card_layout(get_deck_id(deck_url), plan.content_headers)
+        _, sheet_config = cached_plan_and_config(get_deck_id(deck_url))
     except Exception as e:
-        # No usable spreadsheet id (URL missing or malformed): fall back to the
-        # sheet's own column order instead of failing the whole sync.
-        add_debug_msg(f"Could not read stored layout ({e}); using column order")
-        return default_layout_for(plan.content_headers)
+        # No usable spreadsheet id (URL missing or malformed): render the sheet's own
+        # column order instead of failing the whole sync.
+        add_debug_msg(f"Could not read cached sheet settings ({e}); using defaults")
+        return SheetConfig()
+
+    return sheet_config or SheetConfig()
+
+
+def cache_deck_sheet_config(deck_url, plan, sheet_config):
+    """Records this sync's settings row so later rebuilds can render without it."""
+    from .config_manager import get_deck_id
+    from .sync_config import cache_sheet_settings
+
+    try:
+        cache_sheet_settings(get_deck_id(deck_url), plan, sheet_config)
+    except Exception as e:
+        add_debug_msg(f"Could not cache the sheet's settings ({e})")
 
 
 def row_has_cloze(note_data, plan):
@@ -673,7 +723,7 @@ def get_target_model(col, plan, deck_url, is_cloze, debug_messages=None):
         col,
         deck_url,
         plan,
-        get_deck_layout(deck_url, plan),
+        get_deck_sheet_config(deck_url),
         debug_messages=debug_messages,
     )
     return models.get("cloze" if is_cloze else "standard"), note_type_name
@@ -738,6 +788,12 @@ def create_or_update_notes(
 
     # Surface duplicate spreadsheet IDs (detected during deck build) so the user can fix
     # them — duplicates silently strand notes that share the same key.
+    # Anything the settings row got wrong belongs in the sync summary, not only in
+    # the debug log — the log is written only while Debug Mode is on, so a typo like
+    # "siz=48" would otherwise be invisible and the setting would just never apply.
+    for warning in getattr(remoteDeck.sheet_config, "warnings", []):
+        stats.warnings.append(f"Settings row — {warning}")
+
     if getattr(remoteDeck, "duplicate_ids", None):
         shown = ", ".join(remoteDeck.duplicate_ids[:10])
         suffix = " ..." if len(remoteDeck.duplicate_ids) > 10 else ""
@@ -764,10 +820,15 @@ def create_or_update_notes(
         )
         add_debug_msg(f"🎯 Note keys for synchronization: {len(expected_note_ids)}")
 
-        # 2. Ensure the deck's note types match the sheet's columns and its layout
-        # (this provisions the basic and cloze models in one call).
-        layout = get_deck_layout(deck_url, plan)
-        ensure_custom_models(col, deck_url, plan, layout, debug_messages=debug_messages)
+        # 2. Ensure the deck's note types match the sheet's columns and its settings
+        # row (this provisions the basic and cloze models in one call). The settings
+        # are cached first so anything that rebuilds a model later in this sync —
+        # or outside one — renders exactly what the sheet just asked for.
+        sheet_config = remoteDeck.sheet_config
+        cache_deck_sheet_config(deck_url, plan, sheet_config)
+        ensure_custom_models(
+            col, deck_url, plan, sheet_config, debug_messages=debug_messages
+        )
 
         # 3. Get existing notes by note key
         existing_notes = get_existing_notes_by_id(col, deck_id)

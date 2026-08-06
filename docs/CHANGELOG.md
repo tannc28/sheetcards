@@ -4,6 +4,49 @@
 
 ---
 
+## 💥 **v6.0.0** - August 2026 *(Breaking — the sheet now declares the card)*
+
+The spreadsheet already decided what a note contains. Now it decides how the card
+looks and sounds too, in an optional second header row.
+
+### ✨ The settings row
+- If the cell under `ID` in row 2 begins with `#config`, that row is read as
+  presentation directives and data starts at row 3. **Without the marker there is no
+  settings row and row 2 is ordinary data**, so sheets written before this release
+  keep working untouched.
+- Each cell holds `key=value` pairs separated by `;`; a bare key is a switch; an empty
+  cell means "use the defaults". Per column: `side` (front / back / **hide**), `label`,
+  `size`, `color`, `bold`, `italic`, `align`, `hint`, `furigana`, `tts`, `voices`,
+  `speed`. Deck-wide, after the marker in the same cell: `align`, `speed`, `reverse`.
+- **Speech.** `tts=zh_CN` speaks a field through the operating system's voice — no
+  account, no API key, offline, and it works on AnkiDroid and AnkiMobile. The **full**
+  language code is required: Anki compares it against installed voices with an exact
+  string match, so a bare `zh` would match nothing and play silently. The parser
+  rejects short codes with a warning rather than guessing a region.
+- **`hint`** renders a field behind Anki's native click-to-reveal link, and
+  **`furigana`** draws a reading above the text (`推迟[tuī chí]`) — both are Anki
+  filters, not markup this add-on invents.
+- **`muted` and `accent`** follow the card's light/dark theme, because a hard-coded
+  `black` disappears in night mode.
+- **Typos are reported, not ignored.** `siz=48` or `color=notacolour` produce a warning
+  naming the column, in the sync log and in the Card Layout window.
+
+### 💥 Breaking
+- **The Card Layout window is now read-only** (`Ctrl+Shift+C`, renamed *View Card
+  Layout*). Layouts stored by v5 are no longer applied — the sheet is the only source
+  of presentation. Two places editing one setting is precisely how this add-on ended up
+  with a Timer dialog whose setting nothing read. The window now shows what the last
+  sync understood per column, the warnings, **which speech voices this machine actually
+  has for the languages the sheet asks for**, and a preview.
+
+### 🤖 Release process
+- Release notes are now the matching section of this changelog, so a release always
+  says what changed. The build **fails** when a tagged version has no section here,
+  rather than publishing an empty release. Notes for v3.1.0 through v5.0.0 were
+  backfilled.
+
+---
+
 ## 💥 **v5.0.0** - August 2026 *(Breaking — features removed)*
 
 A deliberate cut: the add-on now does one thing — sync a spreadsheet into Anki — and

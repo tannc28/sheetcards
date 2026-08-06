@@ -89,9 +89,10 @@ deleted. Your cards are ready to study.
 ### 5. Decide what the card looks like
 
 By default the **first** content column is the front and the rest are the back, so the
-example above gives you `Question` → `Answer`. To change that, open
-**Configure Card Layout** (`Ctrl+Shift+C`), move fields between Front and Back, and sync
-again.
+example above gives you `Question` → `Answer`. To change that — or to set text sizes,
+colours, hints, furigana or text-to-speech — add a [settings row](#the-settings-row) to
+the sheet and sync again. **Configure Card Layout** (`Ctrl+Shift+C`) shows you what the
+add-on read out of that row, but the sheet is where you edit it.
 
 ---
 
@@ -100,6 +101,10 @@ again.
 **Row 1 is the header row. Every other row is one Anki note.** Header names are matched
 case-insensitively with surrounding whitespace and any BOM ignored, so `id`, `ID ` and
 `Id` are the same column.
+
+Row 2 is an ordinary note like any other — *unless* its `ID` cell starts with `#config`,
+which turns it into the optional [settings row](#the-settings-row) that describes how the
+columns are presented.
 
 ### Reserved headers
 
@@ -122,9 +127,9 @@ Two rules govern content columns:
 
 - **The sheet must have at least one.** A sheet containing only reserved headers is
   rejected with *"The sheet has no content columns"*.
-- **Their left-to-right order is the default card order.** The first content column goes
-  on the front, all the others on the back. Reordering columns in a *new* sheet
-  reorders the card; once a deck has a stored layout, use the Card Layout dialog instead.
+- **Their left-to-right order is the card order.** The first content column goes on the
+  front, all the others on the back, so reordering columns reorders the card. To override
+  that per column, use `side=` in the [settings row](#the-settings-row).
 
 If the same header appears twice, the **first** occurrence wins and the duplicate is
 ignored (it is noted in the debug log).
@@ -150,6 +155,135 @@ This produces:
 - **Card** — front `Word`, back `Reading` + `Meaning` + `Example`.
 - **Deck** — `Sheets2Anki::<sheet title>::Japanese::Kanji`.
 - **Tags** — `sheets2anki`, `sheets2anki::japanese::kanji`, `jlpt-n5`, `nature`.
+
+### The settings row
+
+Everything above describes a sheet that only holds *content*. A sheet can also describe
+**how** its columns are presented — which side of the card they land on, how big they
+are, whether they are read aloud — by adding one optional row directly under the header
+row.
+
+**Row 2 becomes the settings row when its `ID` cell starts with `#config`.** Data then
+starts at row 3. Without that marker there is no settings row at all and row 2 is an
+ordinary note, so **every sheet written before this feature keeps working exactly as it
+did** — you only get a settings row if you ask for one.
+
+| ID | Word | Reading | Meaning |
+| :--- | :--- | :--- | :--- |
+| `#config` | `side=front; size=48` | `color=muted` | |
+| 1 | 推迟 | 推迟[tuī chí] | to postpone |
+
+**Syntax.** Each cell holds `key=value` pairs separated by `;`. A key written on its own
+is a switch (`bold`, `hint`). An **empty cell means "use the defaults"**, so a sheet only
+spells out what it actually changes. The marker itself is case-insensitive (`#CONFIG`
+works) and must be followed by a space if you put deck-wide settings after it:
+
+```text
+#config align=left; speed=0.9; reverse
+```
+
+#### Per-column keys
+
+Written in that column's cell of the settings row.
+
+| Key | Values | Default | What it does |
+| :--- | :--- | :--- | :--- |
+| `side` | `front`, `back`, `hide` | first content column front, all others back | Which side the column appears on. `hide` keeps the field and its content in Anki but shows it on neither side |
+| `label` | any text | no caption | Prints a small caption above the value. Without it the value stands alone |
+| `size` | a number of pixels, **6–200** (`size=48` or `size=48px`) | 40 px on the front, 18 px on the back | Font size for that column |
+| `color` | `muted`, `accent`, a CSS colour name (`crimson`), or a `#hex` value | the card's normal text colour | `muted` and `accent` **follow Anki's light/dark theme**; a fixed colour does not, so a hard-coded `black` disappears in night mode |
+| `bold` | switch | off | Bold text |
+| `italic` | switch | off | Italic text |
+| `align` | `left`, `center`, `right` | the deck-wide `align`, otherwise centred | Alignment for that column only |
+| `hint` | switch | off | Renders the field through Anki's `hint:` filter: the value stays hidden behind a link until you click it |
+| `furigana` | switch | off | Renders the field through Anki's `furigana:` filter, printing the reading above the text. **Requires the cell to be written `推迟[tuī chí]`** — text, then the reading in square brackets |
+| `tts` | a **full** language code (`zh_CN`, `en_US`, `pt_BR`; `zh-CN` is accepted too) | no speech | Has Anki read the field aloud with the system voices |
+| `voices` | comma-separated voice names (`voices=Huihui,Yaoyao`) | Anki picks | A *preference*, not a requirement — see below |
+| `speed` | a number **0.5–2.0** | the deck-wide `speed`, otherwise Anki's own default | Speaking rate for that column; overrides the deck-wide value |
+
+#### Deck-wide keys
+
+Written after the marker, in the `#config` cell itself.
+
+| Key | Values | What it does |
+| :--- | :--- | :--- |
+| `align` | `left`, `center`, `right` | Alignment for the whole card (a column's own `align` still wins) |
+| `speed` | a number — keep it inside 0.5–2.0 | Speaking rate for every spoken column that does not set its own. Unlike the per-column `speed`, the deck-wide one is **not** range-checked, so an absurd value reaches Anki unchallenged |
+| `reverse` | switch | Adds a second card template that asks the back and answers with the front. Skipped for cloze rows, and for a card that has nothing on one of its sides |
+
+#### Worked example
+
+Header row (row 1):
+
+```text
+ID | Word | Reading | Meaning | Example
+```
+
+Settings row (row 2), cell by cell:
+
+| Column | Its cell in the settings row |
+| :--- | :--- |
+| `ID` | `#config reverse` |
+| `Word` | `side=front; size=48; tts=zh_CN; voices=Huihui` |
+| `Reading` | `label=Pinyin; furigana; color=muted` |
+| `Meaning` | `size=20` |
+| `Example` | `size=16; color=muted; hint` |
+
+One data row (row 3):
+
+```text
+42 | 推迟 | 推迟[tuī chí] | to postpone, to delay | 会议推迟到下周。
+```
+
+That produces:
+
+- **Front** — `推迟` on its own at 48 px, spoken in Mandarin (preferring the *Huihui*
+  voice if that machine has it).
+- **Back** — `Reading` with the pinyin printed above the characters, captioned *Pinyin*
+  and in the theme's muted grey; `Meaning` at 20 px; `Example` at 16 px, muted, and
+  hidden behind a hint link until you click it.
+- **A second card** (`reverse`) that asks the back and answers with `推迟`.
+
+Everything not mentioned keeps its default, which is why `Meaning` only needs `size=20`.
+
+#### Caveats
+
+- **Text-to-speech needs the full language code.** `tts=zh` is rejected with a warning
+  instead of being guessed at. Anki compares the code against your installed voices with
+  an **exact string match**, so a short code matches nothing and plays *silently* —
+  the parser refuses rather than shipping you silence.
+- **A missing system voice is silence, not an error.** `tts=zh_CN` on a machine with no
+  Chinese voice installed plays nothing at all, and nothing warns you: the sheet is fine,
+  the machine is not. On Windows, voices are added under
+  **Settings → Time & Language → Speech**; macOS has them under
+  **System Settings → Accessibility → Spoken Content**.
+- **`voices` is a preference, not a requirement.** If none of the named voices exist,
+  Anki falls back to any voice for that language — so naming voices stays portable
+  across your machines and phones.
+- **One cell, one language.** Anki reads the *whole* field, so a cell holding a Chinese
+  sentence and its English translation is read end to end by the Chinese voice. Give each
+  language its own column if you want each spoken properly.
+- **`hint` hides text, not sound.** A column that is both `hint` and `tts` is still read
+  aloud when the side appears, even while its text is collapsed.
+- **`furigana` does nothing visible without the `text[reading]` shape.** A plain `tuī chí`
+  cell simply prints as-is.
+- **A switch has no "off" form.** Write `bold` when you want bold and leave it out when
+  you don't — `bold=false` still turns it *on*.
+- **Typos are reported, not ignored.** `siz=48` or `color=notacolour` produce a warning
+  naming the column (*"'Word': 'notacolour' is not a colour name or #hex value"*), and a
+  per-column value outside its range (`size=400`, `speed=9`) is refused rather than
+  clamped. Every warning is listed in the Card Layout window (`Ctrl+Shift+C`) and written
+  to the debug log; the rest of the row still applies.
+- **The settings row is never a note.** It is removed before anything is counted, so it
+  does not appear in the sync summary's row totals and cannot become a card.
+- **Only content columns carry directives.** Anything typed into the settings row's
+  `SYNC`, `TAGS` or `SUBDECK n` cells is ignored.
+- **Separate the marker from its settings with a space.** `#config align=left` is a
+  settings row; `#config;align=left` is not recognised as the marker and the whole line
+  is imported as a note.
+- **On a cloze row, `cloze:` wins.** A column carrying `{{c1::…}}` is rendered through
+  Anki's cloze filter, so `hint` and `furigana` do not apply to it — Anki refuses to save
+  a cloze note type whose template does not reference the field through `cloze:`.
 
 ### How tags are built
 
@@ -221,7 +355,8 @@ selection is remembered next time (even if you then press Cancel). Pressing
 **Synchronize Selected** runs, in order:
 
 1. an automatic backup, if enabled;
-2. a rebuild of the card templates of every connected deck from its stored layout;
+2. a rebuild of the card templates of every connected deck from the settings its last
+   sync read out of the sheet;
 3. per deck: optional image processing → download → parse → create/update/delete notes
    → name-consistency pass;
 4. removal of subdecks that ended up empty;
@@ -270,69 +405,51 @@ are cleaned up afterwards.
 
 ### Configure Card Layout
 
-**What it does** — decides, per deck, which fields appear on which side of the card and
-how they look. This is the feature that replaces hand-editing note types.
+**What it does** — shows, per deck, what the add-on read out of the sheet's
+[settings row](#the-settings-row): which fields it put on which side, how they are
+styled, what it did not understand, and which text-to-speech voices this machine has.
 **Where** — Tools → Sheets2Anki → *Configure Card Layout* (`Ctrl+Shift+C`).
 
-**Controls**
+> **This window is read-only.** The spreadsheet is the only place a card's appearance is
+> edited. That is deliberate: with two places able to change one setting, the loser is
+> silently overwritten on the next sync and the control that "does nothing" is impossible
+> to diagnose. To change something, edit the settings row and sync again.
 
-| Control | Effect |
+**What it shows**
+
+| Panel | Contents |
 | :--- | :--- |
-| **Front** / **Back** lists, `→` `←` `↑` `↓` | Which fields go where, and in what order. `ID` is reserved and never offered |
-| **Show field labels** | Prints the field name as a small caption above each value |
-| **Front text size** / **Back text size** | 10–120 px (defaults 40 / 18) |
-| **Alignment** | Left / Center / Right |
-| **Add a reverse card (back asks the front)** | Adds a second card template that swaps the sides |
-| **Show the timer** + **Position** | Turns the study timer on/off and places it *between sections* or *top middle* — see below |
-| **I edit the templates myself** | Freezes the templates: syncing stops rebuilding them |
+| **Front** / **Back** | The fields the sheet put on each side, in order — and which columns `side=hide` kept off the card entirely |
+| **Settings** | Each column's parsed directives — size, colour, alignment, hint, furigana, speech |
+| **Warnings** | Everything the settings row asked for that the add-on could not understand, named per column |
+| **Voices** | The text-to-speech voices installed on *this* computer, so you can tell a wrong `tts=` code from a missing voice |
+| **Preview** | An approximation of the generated templates, with `[FieldName]` placeholders |
 
-A live preview shows the generated templates with `[FieldName]` placeholders.
+**How it works.** Every sync parses the settings row, renders it into the actual Anki
+card templates (`qfmt`/`afmt`), and writes those into the deck's note types. Each field
+is wrapped in Anki's `{{#Field}}…{{/Field}}` conditional, so a row that leaves a cell
+blank shows nothing there instead of an empty gap.
 
-**How it works.** The layout is a small settings record; from it the add-on generates the
-actual Anki card templates (`qfmt`/`afmt`) and writes them into the deck's note types on
-the next sync. Each field is wrapped in Anki's `{{#Field}}…{{/Field}}` conditional, so a
-row that leaves a cell blank simply shows nothing there instead of an empty gap.
+The parsed result of the last sync is cached in **Anki's own collection config** (key
+`sheets2anki::sheet_settings`), not in the add-on's local files. Anki's config table is
+part of what AnkiWeb synchronizes, so a second machine renders identical cards before it
+has ever downloaded the sheet itself — and this window can show a deck's settings without
+going back to Google.
 
-The layout is stored in **Anki's own collection config** (key
-`sheets2anki::card_layouts`), not in the add-on's local files. Anki's config table is
-part of what AnkiWeb synchronizes, so **your layout follows you to your other machines
-for free** — no Google API, no export, no re-setup.
-
-The reverse card is a *second template on the same note type*, not a second note. Both
-directions are scheduled independently from one spreadsheet row, and switching the
-reverse card off later removes those cards without touching your content.
+The reverse card (deck-wide `reverse`) is a *second template on the same note type*, not
+a second note. Both directions are scheduled independently from one spreadsheet row, and
+removing `reverse` from the sheet later removes those cards without touching your
+content.
 
 **Caveats**
 
 - **Changes only reach the cards on the next sync** (`Ctrl+Shift+S`).
 - **Reverse cards are not available for cloze notes** — Anki allows a cloze note type
   exactly one template.
-- A deck with no stored layout yet (never synced) is skipped by the template rebuild;
-  its layout is created from its column order the first time it syncs.
-- If no collection is open, saving fails with an explicit message — the layout has
-  nowhere to go.
-- With **I edit the templates myself** on, changing the layout dialog's other options has
-  no visible effect; syncing leaves your hand-written templates alone.
-
-#### The study timer
-
-The same dialog carries the study timer, because the timer is part of the card layout —
-it is a **per-deck** setting, not a global one.
-
-**What it does** — shows a `⏱️ 00:00` counter on the card that starts when the question
-appears and freezes to `🏁` when you reveal the answer. It is **on by default**,
-positioned *between sections*; the *Position* dropdown moves it to *top middle*, where it
-is pinned to the top of the screen, and unticking *Show the timer* removes it entirely.
-
-**How it works.** It is not an Anki feature — it is a `<div>`, a `<style>` block and a
-small `<script>` that the add-on writes into the card templates. The front-side script
-records `Date.now()` in the browser's `sessionStorage` and ticks a `setInterval` once a
-second; the back-side script clears that interval, reads the stored start time back, and
-prints the final elapsed time. Because it lives in the template itself, it works on
-AnkiMobile and AnkiWeb too.
-
-**Caveats** — like every other layout setting, a timer change only reaches the cards on
-the next sync, and it is ignored entirely on a deck marked *I edit the templates myself*.
+- A deck that has never been synced has nothing cached yet, so it is skipped by the
+  template rebuild and shows nothing here until its first sync.
+- Hand-editing a Sheets2Anki note type in Anki's own card editor does not stick: the next
+  sync rebuilds those templates from the sheet.
 
 ### Configure Image Processor
 
@@ -537,6 +654,7 @@ Consequences worth internalizing:
 | Remove a column | **Keeps the field and its content in Anki** and stops rendering it. Nothing you have already collected is deleted |
 | Rename a column | Reads as "old column removed, new column added": a new empty field appears; the old field keeps its data |
 | Add `{{c1::…}}` to a row | The note is recreated as a Cloze note (see below) |
+| Edit the [settings row](#the-settings-row) | Rebuilds the deck's card templates. Notes, fields and scheduling are untouched — only the presentation changes |
 
 ### Safety guards
 
@@ -591,7 +709,7 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 
 | Setting | Stored in | Travels via AnkiWeb? |
 | :--- | :--- | :--- |
-| Card layouts (fields, sizes, alignment, timer, reverse card) | Anki's collection config, key `sheets2anki::card_layouts` | **Yes** |
+| The parsed settings row (sides, sizes, colours, speech, reverse card) | Anki's collection config, key `sheets2anki::sheet_settings` — a cache of what the last sync read; the sheet stays the source of truth | **Yes** |
 | Note types and card templates | Anki's collection | **Yes** |
 | Connected decks, deck-options mode, AnkiWeb mode, backup settings, ImgBB key, Web App URL, debug flags | `meta.json` in the add-on folder | No — machine-local |
 
@@ -634,12 +752,38 @@ Two or more rows share an `ID`. Only one of them ends up in Anki. Make every `ID
 Nothing was deleted — on purpose. Check that the *first tab* is the one with your cards,
 that row 1 is the header row, and that the `ID` column is filled, then sync again.
 
-**Cards appear but the layout / timer change did nothing.**
-Layout and timer changes are written into the note types during a sync — press
-`Ctrl+Shift+S`. If the deck has *I edit the templates myself* enabled, the add-on will
-never rebuild its templates; turn that off first.
+**Cards appear but a change to the settings row did nothing.**
+The settings row is only read during a sync — press `Ctrl+Shift+S`. Then open
+`Ctrl+Shift+C` and read the **Warnings** panel: a mistyped key (`siz=48`) or an
+out-of-range value is reported there instead of being applied. The same warnings are
+written to the debug log (`Ctrl+Shift+L`) while debug mode is on.
 
-**The reverse card option does nothing for some notes.**
+**My first note was swallowed / a row full of `key=value` text became a card.**
+The settings row is recognised only when its `ID` cell *starts with* `#config`. Write
+`#config` on its own, or `#config` followed by a **space** and the deck-wide settings —
+`#config;align=left` is not the marker and the whole line is imported as a note.
+Conversely, a row that accidentally begins with `#config` is treated as settings and
+never becomes a card.
+
+**Text-to-speech is silent.**
+Three separate causes, in the order worth checking: (1) the code is short — `tts=zh`
+matches no voice, use `tts=zh_CN`; the add-on refuses short codes with a warning;
+(2) that language has no voice installed on this computer — Anki says nothing, it just
+plays silence (Windows: **Settings → Time & Language → Speech**; macOS:
+**System Settings → Accessibility → Spoken Content**). The Card Layout window
+(`Ctrl+Shift+C`) lists the voices this machine actually has; (3) the field is empty for
+that row — an empty field is never spoken.
+
+**The wrong language is read out for part of a card.**
+Anki reads the whole field with one voice. A cell that holds a sentence *and* its
+translation is read end to end by that column's voice — split them into two columns, each
+with its own `tts=`.
+
+**`furigana` prints nothing above the text.**
+The cell has to be written `推迟[tuī chí]`: text, then the reading in square brackets. A
+cell without that shape renders unchanged.
+
+**Deck-wide `reverse` does nothing for some notes.**
 Those rows are cloze notes. Anki's cloze note types support exactly one template.
 
 **Anki renamed my deck back after I renamed it.**

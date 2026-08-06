@@ -8,7 +8,8 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 *   **Bulk Creation:** Write hundreds of cards as fast as you can type.
 *   **Your Own Columns:** Apart from a few reserved headers, every column you add becomes a note field with the same name — in any language you like.
-*   **Custom Card Layout:** Choose per deck which fields go on the front, which on the back, and how they look — no note-type editing required.
+*   **Custom Card Layout:** An optional `#config` row in the sheet says which fields go on the front, which on the back, and how they look — sizes, colours, labels, hints, furigana — with no note-type editing at all. Leave the row out and nothing changes, so existing sheets keep working.
+*   **Text-to-Speech:** Add `tts=zh_CN` (or `en_US`, `pt_BR`, …) to a column and Anki reads it aloud with your system voices, on desktop and mobile.
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
 *   **Rich Media:** Supports HTML, Images, and Videos (YouTube/Vimeo).
@@ -30,7 +31,9 @@ The spreadsheet decides the schema. Only these headers are reserved:
 - **SUBDECK 1**, **SUBDECK 2**, …: One level of the deck path each. | `Geography`
 - **TAGS**: Extra tags, separated by commas. | `capitals, europe`
 
-Every other column you add becomes a note field with the same name — `Question`, `Answer`, `Pinyin`, whatever your subject calls for. Then open `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) to decide which of those fields go on the front, which on the back, and how they are styled.
+Every other column you add becomes a note field with the same name — `Question`, `Answer`, `Pinyin`, whatever your subject calls for. By default the first of them is the front of the card and the rest are the back.
+
+To change that, put one optional **settings row** right under the headers: write `#config` in its `ID` cell and, in each column's cell, what that column should do — `side=front; size=48; tts=zh_CN`, `color=muted; hint`, `furigana`. Without that `#config` cell there is no settings row and row 2 is just another card, so sheets made before this feature keep working untouched. `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) shows you what the add-on read, including any typo it could not understand.
 
 The add-on handles the rest, creating beautiful, organized notes in your collection.
 

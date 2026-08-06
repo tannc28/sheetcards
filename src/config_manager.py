@@ -1178,7 +1178,7 @@ def ensure_deck_configurations_consistency():
 
 
 # =============================================================================
-# TIMER POSITION SETTINGS
+# ANKIWEB SYNCHRONIZATION SETTINGS
 # =============================================================================
 
 

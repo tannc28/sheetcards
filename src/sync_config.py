@@ -1,41 +1,34 @@
-"""Settings that must follow the user between machines.
+"""A cache of what the last sync read out of each sheet's settings row.
+
+The spreadsheet is the single source of truth for how a card looks: the ``#config``
+row is parsed on every sync and rendered straight into the note type's templates.
+Nothing here is editable — this module only remembers the *result* of the last parse,
+so a dialog can show a deck's current settings (and the warnings the parse produced)
+without downloading the sheet again, and so a template rebuild that runs outside a
+sync still knows what the sheet asked for.
 
 Anki's own collection config (``col.get_config`` / ``col.set_config``) lives in the
 ``config`` table, which carries a ``usn`` column and therefore travels through
-AnkiWeb along with the notes and note types. Anything stored here is available on
-every machine the collection syncs to, with no Google API and no extra setup.
+AnkiWeb along with the notes and note types. Storing the cache there means a second
+machine renders identical cards before it has ever downloaded the sheet itself.
 
 ``meta.json`` stays the home for machine-local settings, such as API keys and
 directory paths, which should not be uploaded to AnkiWeb.
 """
 
-import copy
+from .column_model import IDENTIFIER
+from .column_model import plan_columns
+from .sheet_config import FieldConfig
+from .sheet_config import SheetConfig
 
 try:
     from .compat import mw
 except ImportError:  # pragma: no cover - direct (non-package) import in tests
     from compat import mw
 
-# One collection-config key holding {sheet_id: layout}. A single key keeps the
+# One collection-config key holding {sheet_id: settings}. A single key keeps the
 # collection's config table tidy and makes the whole set easy to read at once.
-LAYOUT_KEY = "sheets2anki::card_layouts"
-
-# Card layout defaults. `front`/`back` are filled per deck from the sheet's own
-# column order the first time a deck is synced.
-DEFAULT_LAYOUT = {
-    "front": [],
-    "back": [],
-    "show_labels": False,
-    "front_size": 40,
-    "back_size": 18,
-    "align": "center",
-    "reverse_card": False,
-    "timer": True,
-    "timer_position": "between_sections",  # or "top_middle"
-    # Set from the dialog's "let me edit the template myself" switch. While true,
-    # sync leaves the note type's templates alone instead of regenerating them.
-    "hand_edited": False,
-}
+SETTINGS_KEY = "sheets2anki::sheet_settings"
 
 
 def _collection():
@@ -44,110 +37,118 @@ def _collection():
 
 
 def _read_all():
-    """Every stored layout, keyed by sheet id. Never raises."""
+    """Every cached sheet's settings, keyed by sheet id. Never raises."""
     col = _collection()
     if col is None:
         return {}
     try:
-        stored = col.get_config(LAYOUT_KEY, default=None)
+        stored = col.get_config(SETTINGS_KEY, default=None)
     except Exception:
         return {}
     return stored if isinstance(stored, dict) else {}
 
 
-def _write_all(layouts):
-    """Persists the whole layout map. Returns True when it reached the collection."""
+def _write_all(settings):
+    """Persists the whole cache. Returns True when it reached the collection."""
     col = _collection()
     if col is None:
         return False
     try:
-        col.set_config(LAYOUT_KEY, layouts)
+        col.set_config(SETTINGS_KEY, settings)
         return True
     except Exception:
         return False
 
 
-def default_layout_for(content_headers):
-    """Builds the starting layout for a sheet from its column order.
+def field_to_dict(field_config):
+    """One column's settings as JSON-safe primitives."""
+    return dict(vars(field_config))
 
-    The first content column is the prompt and the rest are the answer — the same
-    convention as Anki's own CSV import, and it means reordering columns in the
-    sheet reorders the card without touching any setting.
+
+def field_from_dict(data):
+    """Rebuilds a :class:`FieldConfig`, ignoring keys it no longer knows."""
+    field_config = FieldConfig()
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key in vars(field_config):
+                setattr(field_config, key, value)
+    return field_config
+
+
+def to_dict(plan, sheet_config):
+    """The cache entry for one sheet: its columns plus everything the row said."""
+    return {
+        "content_headers": list(plan.content_headers),
+        "present": bool(sheet_config.present),
+        "align": sheet_config.align,
+        "speed": sheet_config.speed,
+        "reverse": bool(sheet_config.reverse),
+        "warnings": list(sheet_config.warnings),
+        "fields": {
+            header: field_to_dict(field_config)
+            for header, field_config in sheet_config.fields.items()
+        },
+    }
+
+
+def from_dict(stored):
+    """Turns a cache entry back into the ``(plan, sheet_config)`` pair that renders it.
+
+    Returns ``(None, None)`` for an entry that carries no columns: rendering templates
+    from it would produce a card with no fields on it at all.
     """
-    headers = [h for h in (content_headers or []) if h]
-    layout = copy.deepcopy(DEFAULT_LAYOUT)
-    if headers:
-        layout["front"] = [headers[0]]
-        layout["back"] = headers[1:]
-    return layout
+    if not isinstance(stored, dict):
+        return None, None
+
+    headers = [h for h in stored.get("content_headers") or [] if isinstance(h, str)]
+    if not headers:
+        return None, None
+
+    plan = plan_columns([IDENTIFIER] + headers)
+
+    sheet_config = SheetConfig()
+    sheet_config.present = bool(stored.get("present"))
+    sheet_config.align = stored.get("align")
+    sheet_config.speed = stored.get("speed")
+    sheet_config.reverse = bool(stored.get("reverse"))
+    sheet_config.warnings = list(stored.get("warnings") or [])
+    fields = stored.get("fields")
+    if isinstance(fields, dict):
+        sheet_config.fields = {
+            header: field_from_dict(data)
+            for header, data in fields.items()
+            if header in headers
+        }
+
+    return plan, sheet_config
 
 
-def _coerce(layout, content_headers=None):
-    """Fills in missing keys and drops fields the sheet no longer has."""
-    merged = copy.deepcopy(DEFAULT_LAYOUT)
-    if isinstance(layout, dict):
-        merged.update(layout)
-
-    def field_list(value):
-        return (
-            [f for f in value if isinstance(f, str)] if isinstance(value, list) else []
-        )
-
-    front = field_list(merged.get("front"))
-    back = field_list(merged.get("back"))
-
-    if content_headers is not None:
-        known = set(content_headers)
-        # A column removed from the sheet stops being rendered, but the note's field
-        # is left in place — dropping it here would silently delete the user's data.
-        front = [f for f in front if f in known]
-        back = [f for f in back if f in known]
-
-        # A newly added column has to surface somewhere, or it would look like the
-        # add-on ignored it.
-        placed = set(front) | set(back)
-        back += [h for h in content_headers if h not in placed]
-
-    merged["front"] = front
-    merged["back"] = back
-    return merged
+def cache_sheet_settings(sheet_id, plan, sheet_config):
+    """Records what this sync parsed. Returns True when it reached the collection."""
+    settings = _read_all()
+    settings[sheet_id] = to_dict(plan, sheet_config)
+    return _write_all(settings)
 
 
-def get_card_layout(sheet_id, content_headers=None):
-    """The layout for one sheet, defaulted and reconciled against its columns."""
+def get_sheet_snapshot(sheet_id):
+    """The raw cache entry for one sheet, or None when it has never been synced.
+
+    Plain primitives, for a dialog that only wants to *show* what the sheet asked
+    for. Rendering goes through :func:`cached_plan_and_config` instead.
+    """
     stored = _read_all().get(sheet_id)
-    if stored is None:
-        return (
-            default_layout_for(content_headers)
-            if content_headers
-            else copy.deepcopy(DEFAULT_LAYOUT)
-        )
-    return _coerce(stored, content_headers)
+    return stored if isinstance(stored, dict) else None
 
 
-def set_card_layout(sheet_id, layout):
-    """Stores one sheet's layout. Returns True when it reached the collection."""
-    layouts = _read_all()
-    layouts[sheet_id] = _coerce(layout)
-    return _write_all(layouts)
+def cached_plan_and_config(sheet_id):
+    """The ``(plan, sheet_config)`` last parsed for a sheet, or ``(None, None)``."""
+    return from_dict(_read_all().get(sheet_id))
 
 
-def ensure_card_layout(sheet_id, content_headers):
-    """Returns the stored layout, creating it from column order on first sight."""
-    layouts = _read_all()
-    if sheet_id in layouts:
-        return _coerce(layouts[sheet_id], content_headers)
-
-    layout = default_layout_for(content_headers)
-    layouts[sheet_id] = layout
-    _write_all(layouts)
-    return layout
-
-
-def forget_card_layout(sheet_id):
-    """Drops a sheet's layout, e.g. when its deck is disconnected."""
-    layouts = _read_all()
-    if sheet_id in layouts:
-        del layouts[sheet_id]
-        return _write_all(layouts)
+def forget_sheet_settings(sheet_id):
+    """Drops a sheet's cached settings, e.g. when its deck is disconnected."""
+    settings = _read_all()
+    if sheet_id in settings:
+        del settings[sheet_id]
+        return _write_all(settings)
     return False

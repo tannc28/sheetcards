@@ -201,11 +201,13 @@ def open_debug_mode():
 
 def configure_card_layout():
     """
-    Opens the card layout dialog.
+    Opens the card layout viewer.
 
-    This function allows the user to choose, per connected deck:
-    1. Which fields appear on the front and on the back, and in which order
-    2. How the card is styled (labels, font sizes, alignment, reverse card, timer)
+    The layout is declared in the spreadsheet's '#config' row, so this window is
+    read-only. Per connected deck it shows:
+    1. What the last sync understood for each column, and anything it could not read
+    2. Which speech voices this machine has for the languages the sheet asks for
+    3. An approximate preview of the resulting card
     """
     try:
         from .src.ui.card_layout_dialog import show_card_layout_dialog
@@ -282,8 +284,8 @@ if mw is not None:
     qconnect(ankiWebSyncConfigAction.triggered, configure_ankiweb_sync)
     remoteDecksSubMenu.addAction(ankiWebSyncConfigAction)
 
-    # Action: Configure card layout
-    cardLayoutAction = QAction("Configure Card Layout", mw)
+    # Action: View card layout (declared in the sheet, so read-only)
+    cardLayoutAction = QAction("View Card Layout", mw)
     cardLayoutAction.setShortcut(QKeySequence("Ctrl+Shift+C"))
     qconnect(cardLayoutAction.triggered, configure_card_layout)
     remoteDecksSubMenu.addAction(cardLayoutAction)

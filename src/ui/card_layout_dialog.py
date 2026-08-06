@@ -1,62 +1,271 @@
-"""Dialog for editing one deck's card layout.
+"""Read-only view of the card layout a spreadsheet declares.
 
-The spreadsheet no longer dictates how a card looks: every column that is not
-reserved (``ID``, ``SYNC``, ``SUBDECK n``, ``TAGS``) becomes a note field, and the
-card is generated from the per-deck layout edited here and stored by
-``sync_config``. The dialog therefore only ever moves field *names* around — it
-never writes HTML, that is ``card_layout.build_templates``' job.
+The sheet is the single source of truth: the optional ``#config`` row under the
+header row says which column goes on which side and how it looks. Nothing here is
+editable — a dialog that also wrote the layout would give one setting two owners,
+and the sheet would silently win on the next sync.
+
+So this window only ever *explains*: what the last sync understood, what it could
+not understand, which speech voices this machine actually has for the languages the
+sheet asks for, and roughly what the resulting card looks like.
 """
 
 import re
+from html import escape
 
-from ..card_layout import build_templates
 from ..compat import DialogAccepted
-from ..compat import QCheckBox
 from ..compat import QComboBox
 from ..compat import QDialog
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
-from ..compat import QListWidget
 from ..compat import QPushButton
-from ..compat import QSpinBox
 from ..compat import QTextBrowser
 from ..compat import QVBoxLayout
 from ..compat import QWidget
 from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_remote_decks
-from ..styled_messages import StyledMessageBox
-from ..sync_config import default_layout_for
-from ..sync_config import get_card_layout
-from ..sync_config import set_card_layout
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
-from ..theme import primary_button_qss
 from ..theme import secondary_button_qss
 
-# The row key is not a note field and must never be offered as a card field.
-RESERVED_FIELDS = {"ID"}
+# =============================================================================
+# sync_config adapter
+# -----------------------------------------------------------------------------
+# ``sync_config`` caches what the last sync parsed out of each sheet's ``#config``
+# row. Everything this dialog assumes about that cache lives in
+# ``_read_sheet_snapshot`` and nowhere else, so a change to the cache shape is a
+# one-place edit here.
+# =============================================================================
 
-# Preview rendering. Anki's template syntax is only approximated here: sections are
-# always taken (every field gets a sample value) and scripts are dropped, because a
-# QTextBrowser runs no JavaScript and would otherwise print the source.
+# Per-column settings the ``#config`` row can carry (see ``sheet_config``).
+_FIELD_KEYS = (
+    "side",
+    "size",
+    "color",
+    "align",
+    "tts",
+    "voices",
+    "speed",
+    "label",
+    "bold",
+    "italic",
+    "hint",
+    "furigana",
+)
+_FLAG_KEYS = ("bold", "italic", "hint", "furigana")
+_DECK_KEYS = ("align", "speed", "reverse")
+
+
+def _empty_snapshot():
+    """The shape every caller in this module can rely on."""
+    return {
+        "sheet_id": None,
+        "synced": False,
+        "config_present": False,
+        "content_headers": [],
+        "fields": {},
+        "deck": {},
+        "warnings": [],
+        "raw": None,
+    }
+
+
+def _as_mapping(value):
+    """A plain dict for either a mapping or a small settings object."""
+    if isinstance(value, dict):
+        return dict(value)
+    if hasattr(value, "__dict__"):
+        return {k: v for k, v in vars(value).items() if not k.startswith("_")}
+    return {}
+
+
+def _clean_names(values):
+    """Non-empty strings from an iterable, order preserved."""
+    if not isinstance(values, (list, tuple)):
+        return []
+    return [str(v).strip() for v in values if str(v).strip()]
+
+
+def _field_settings(raw):
+    """One column's settings as a plain dict with every key present."""
+    data = _as_mapping(raw)
+    settings = {key: data.get(key) for key in _FIELD_KEYS}
+    for flag in _FLAG_KEYS:
+        settings[flag] = bool(settings[flag])
+    settings["voices"] = _clean_names(settings["voices"])
+    return settings
+
+
+def _read_sheet_snapshot(sheet_id):
+    """What the last sync parsed for one sheet, as a plain dict.
+
+    Returns the ``_empty_snapshot()`` shape when the module, the accessor or the
+    entry is missing — a deck that has never been synced is a normal state, not an
+    error, and the dialog reports it as such.
+    """
+    snapshot = _empty_snapshot()
+    if not sheet_id:
+        return snapshot
+    snapshot["sheet_id"] = sheet_id
+
+    try:
+        from .. import sync_config
+    except ImportError:  # pragma: no cover - direct (non-package) import in tests
+        try:
+            import sync_config  # type: ignore[no-redef]
+        except ImportError:
+            return snapshot
+
+    try:
+        raw = sync_config.get_sheet_snapshot(sheet_id)
+    except Exception:
+        raw = None
+
+    if not raw:
+        return snapshot
+
+    data = _as_mapping(raw)
+    snapshot["raw"] = raw
+
+    headers = _clean_names(
+        data.get("content_headers") or data.get("headers") or data.get("columns")
+    )
+    if not headers:
+        # A layout-shaped cache names the columns through its two sides instead.
+        headers = _clean_names(
+            list(data.get("front") or []) + list(data.get("back") or [])
+        )
+
+    fields_raw = (
+        data.get("fields") or data.get("field_settings") or data.get("field_config")
+    )
+    if isinstance(fields_raw, dict):
+        for header, cfg in fields_raw.items():
+            header = str(header).strip()
+            if header:
+                snapshot["fields"][header] = _field_settings(cfg)
+
+    # Columns only mentioned in the per-field map still have to be listed.
+    for header in snapshot["fields"]:
+        if header not in headers:
+            headers.append(header)
+    snapshot["content_headers"] = headers
+
+    deck_raw = data.get("deck") or data.get("deck_settings")
+    deck = _as_mapping(deck_raw) if deck_raw else data
+    snapshot["deck"] = {key: deck.get(key) for key in _DECK_KEYS}
+
+    snapshot["warnings"] = [
+        str(w).strip() for w in (data.get("warnings") or []) if str(w).strip()
+    ]
+
+    present = data.get("config_present")
+    if present is None:
+        present = data.get("present")
+    if present is None:
+        present = bool(
+            snapshot["fields"]
+            or snapshot["warnings"]
+            or any(v not in (None, False, "") for v in snapshot["deck"].values())
+        )
+    snapshot["config_present"] = bool(present)
+
+    # No columns means no sync has ever described this sheet to us.
+    snapshot["synced"] = bool(headers)
+    return snapshot
+
+
+# =============================================================================
+# Installed speech voices
+# =============================================================================
+
+
+def _installed_voices():
+    """``(voices, error)`` where voices is ``[(name, lang)]`` or None on failure.
+
+    ``aqt.tts`` is imported here rather than at module level: it is not part of the
+    add-on's Qt gateway, it is absent outside Anki, and a machine with a broken
+    speech stack must still be able to open this window.
+    """
+    try:
+        from aqt.tts import all_tts_voices
+
+        found = all_tts_voices()
+    except Exception as error:
+        return None, str(error) or error.__class__.__name__
+
+    voices = []
+    for voice in found or []:
+        name = str(getattr(voice, "name", "") or "").strip()
+        lang = str(getattr(voice, "lang", "") or "").strip()
+        if name or lang:
+            voices.append((name, lang))
+    voices.sort(key=lambda entry: (entry[1].lower(), entry[0].lower()))
+    return voices, None
+
+
+# =============================================================================
+# Preview rendering
+# -----------------------------------------------------------------------------
+# Anki's template syntax is only approximated: sections are always taken (every
+# field gets a sample value) and scripts are dropped, because a QTextBrowser runs no
+# JavaScript and would otherwise print the source.
+# =============================================================================
+
 _SCRIPT_RE = re.compile(r"<script\b.*?</script>", re.DOTALL | re.IGNORECASE)
 _SECTION_RE = re.compile(r"\{\{[#^/][^}]*\}\}")
 _FIELD_RE = re.compile(r"\{\{([^}]*)\}\}")
 _FRONT_SIDE_MARK = "\x00frontside\x00"
 
-ALIGN_CHOICES = (
-    ("Left", "left"),
-    ("Center", "center"),
-    ("Right", "right"),
-)
 
-TIMER_POSITION_CHOICES = (
-    ("Between sections", "between_sections"),
-    ("Top middle", "top_middle"),
-)
+def _usable_templates(templates):
+    """True when ``build_templates`` returned something we can actually render."""
+    if not isinstance(templates, list) or not templates:
+        return False
+    return all(
+        isinstance(t, dict) and t.get("qfmt") and t.get("afmt") for t in templates
+    )
+
+
+def _build_templates_for(snapshot):
+    """The real card templates for this sheet, or ``[]`` when unavailable.
+
+    ``card_layout`` builds the templates from exactly what ``sync_config`` cached,
+    so the cached object is handed straight back to it. Anything unexpected falls
+    through to the simpler preview below instead of breaking the dialog.
+    """
+    sheet_id = snapshot.get("sheet_id")
+    if not sheet_id:
+        return []
+    try:
+        from .. import sync_config
+        from ..card_layout import build_templates
+
+        plan, sheet_config = sync_config.cached_plan_and_config(sheet_id)
+        if plan is None:
+            return []
+        templates = build_templates(plan, sheet_config)
+    except Exception:
+        return []
+    return templates if _usable_templates(templates) else []
+
+
+def _sample_for(match):
+    """Sample text for one ``{{Field}}`` reference, filters stripped."""
+    token = match.group(1).strip()
+    name = token.split(":")[-1].strip()
+    return f"[{name}]" if name else ""
+
+
+def _render_template(template_html):
+    """Turns one template into previewable HTML with placeholder content."""
+    html = _SCRIPT_RE.sub("", template_html)
+    # Every field has a sample value, so conditional sections always render.
+    html = _SECTION_RE.sub("", html)
+    return _FIELD_RE.sub(_sample_for, html)
 
 
 def _deck_label(sheet_id, deck_info):
@@ -69,20 +278,19 @@ def _deck_label(sheet_id, deck_info):
 
 
 class CardLayoutDialog(QDialog):
-    """Lets the user decide which field goes where, and how the card is styled."""
+    """Shows what the sheet's ``#config`` row asked for, and what came of it."""
 
     def __init__(self, parent=None):
         super().__init__(parent or mw)
-        self.setWindowTitle("Configure Card Layout")
+        self.setWindowTitle("Card Layout")
         self.setMinimumSize(900, 640)
-        self.resize(980, 720)
+        self.resize(1000, 740)
 
         self.colors = get_colors()
         self.decks = self._load_decks()
         self.sheet_id = None
-        self.fields = []
-        # Guards the preview/refresh chain while widgets are being repopulated.
-        self._loading = False
+        self.snapshot = _empty_snapshot()
+        self.voices, self.voices_error = _installed_voices()
 
         self._setup_ui()
         self._apply_styles()
@@ -103,70 +311,14 @@ class CardLayoutDialog(QDialog):
         decks.sort(key=lambda entry: entry[1].lower())
         return decks
 
-    def _note_types_for(self, deck_info):
-        """The deck's Sheets2Anki note types, "Basic" first (it is the reference)."""
-        col = getattr(mw, "col", None)
-        models = getattr(col, "models", None) if col else None
-        if models is None:
-            return []
-
-        found = []
-        for raw_id in (deck_info.get("note_types") or {}).keys():
-            try:
-                note_type = models.get(int(raw_id))
-            except Exception:
-                note_type = None
-            if note_type:
-                found.append(note_type)
-
-        # A deck synced before note types were registered (or renamed outside the
-        # add-on) still resolves by name.
-        if not found:
-            remote = (deck_info.get("remote_deck_name") or "").strip()
-            prefix = f"Sheets2Anki - {remote}" if remote else None
-            if prefix:
-                try:
-                    entries = list(models.all_names_and_ids())
-                except Exception:
-                    entries = []
-                for entry in entries:
-                    name = getattr(entry, "name", "")
-                    if not name.startswith(prefix):
-                        continue
-                    try:
-                        note_type = models.get(entry.id)
-                    except Exception:
-                        note_type = None
-                    if note_type:
-                        found.append(note_type)
-
-        found.sort(key=lambda nt: 0 if str(nt.get("name", "")).endswith("Basic") else 1)
-        return found
-
-    def _fields_for(self, deck_info, layout):
-        """Candidate field names for the deck.
-
-        Read from the note type when it exists — that is the authoritative list of
-        names a template may reference. Before the deck's first sync no note type
-        exists yet, so the stored layout's own fields stand in; that keeps the
-        dialog usable (and non-destructive) on a freshly added deck.
-        """
-        names = []
-        for note_type in self._note_types_for(deck_info):
-            for field in note_type.get("flds", []):
-                name = str(field.get("name", "")).strip()
-                if name and name not in RESERVED_FIELDS and name not in names:
-                    names.append(name)
-
-        if not names:
-            for name in list(layout.get("front") or []) + list(
-                layout.get("back") or []
-            ):
-                name = str(name).strip()
-                if name and name not in RESERVED_FIELDS and name not in names:
-                    names.append(name)
-
-        return names
+    def _requested_languages(self):
+        """Every TTS language the sheet asks for, deduplicated and sorted."""
+        languages = set()
+        for settings in self.snapshot["fields"].values():
+            language = (settings.get("tts") or "").strip()
+            if language:
+                languages.add(language)
+        return sorted(languages)
 
     # ------------------------------------------------------------------
     # UI construction
@@ -181,8 +333,8 @@ class CardLayoutDialog(QDialog):
             make_header(
                 self.colors,
                 "Card Layout",
-                "Choose which fields appear on the front and the back, and how the "
-                "card is styled. Every column in the spreadsheet is a field.",
+                "How your spreadsheet says the cards should look. This window only "
+                "reports what the last sync understood — nothing here is editable.",
             )
         )
 
@@ -200,7 +352,8 @@ class CardLayoutDialog(QDialog):
 
         self.empty_label = QLabel(
             "No decks are connected yet. Add a deck from Google Sheets "
-            "(Ctrl+Shift+A) first, then come back here to edit its card layout."
+            "(Ctrl+Shift+A) first, then come back here to see how its cards "
+            "are laid out."
         )
         self.empty_label.setWordWrap(True)
         self.empty_label.setObjectName("emptyState")
@@ -213,164 +366,86 @@ class CardLayoutDialog(QDialog):
 
         left_column = QVBoxLayout()
         left_column.setSpacing(15)
-        left_column.addWidget(self._build_fields_group())
-        left_column.addWidget(self._build_format_group())
-        left_column.addWidget(self._build_hand_edited_group())
-        left_column.addStretch()
+        left_column.addWidget(self._build_fields_group(), 3)
+        left_column.addWidget(self._build_warnings_group(), 2)
         body_layout.addLayout(left_column, 3)
-        body_layout.addWidget(self._build_preview_group(), 2)
+
+        right_column = QVBoxLayout()
+        right_column.setSpacing(15)
+        right_column.addWidget(self._build_preview_group(), 3)
+        right_column.addWidget(self._build_voices_group(), 2)
+        body_layout.addLayout(right_column, 2)
 
         root.addWidget(self.body, 1)
 
+        source_note = QLabel(
+            "These settings come from the '#config' row of your spreadsheet — edit "
+            "that row and sync again (Ctrl+Shift+S) to change how the cards look."
+        )
+        source_note.setWordWrap(True)
+        source_note.setObjectName("sourceNote")
+        root.addWidget(source_note)
+
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 10, 0, 0)
-
-        self.reset_button = QPushButton("↺ Restore Defaults")
-        self.reset_button.setStyleSheet(secondary_button_qss(self.colors))
-        buttons.addWidget(self.reset_button)
         buttons.addStretch()
 
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-        buttons.addWidget(self.cancel_button)
-
-        self.save_button = QPushButton("✓ Save")
-        self.save_button.setStyleSheet(primary_button_qss(self.colors, "success"))
-        self.save_button.setDefault(True)
-        buttons.addWidget(self.save_button)
+        self.close_button = QPushButton("Close")
+        self.close_button.setStyleSheet(secondary_button_qss(self.colors))
+        self.close_button.setDefault(True)
+        buttons.addWidget(self.close_button)
 
         root.addLayout(buttons)
         self.setLayout(root)
 
         has_decks = bool(self.decks)
         self.empty_label.setVisible(not has_decks)
-        self.body.setEnabled(has_decks)
+        self.body.setVisible(has_decks)
         self.deck_combo.setEnabled(has_decks)
-        self.save_button.setEnabled(has_decks)
-        self.reset_button.setEnabled(has_decks)
+
+    def _make_browser(self):
+        """A read-only rich-text panel — the shared building block of this window."""
+        browser = QTextBrowser()
+        browser.setOpenExternalLinks(False)
+        return browser
 
     def _build_fields_group(self):
-        group = QGroupBox("Fields Shown")
-        layout = QHBoxLayout()
-        layout.setSpacing(10)
+        group = QGroupBox("What the add-on understood")
+        layout = QVBoxLayout()
+        layout.setSpacing(8)
 
-        self.front_list = QListWidget()
-        self.back_list = QListWidget()
+        self.fields_view = self._make_browser()
+        layout.addWidget(self.fields_view, 1)
 
-        layout.addLayout(self._build_list_column("Front", self.front_list), 1)
-
-        move_column = QVBoxLayout()
-        move_column.addStretch()
-        self.to_back_button = QPushButton("→")
-        self.to_front_button = QPushButton("←")
-        for button in (self.to_back_button, self.to_front_button):
-            button.setStyleSheet(secondary_button_qss(self.colors))
-            button.setFixedWidth(58)
-            move_column.addWidget(button)
-        move_column.addStretch()
-        layout.addLayout(move_column)
-
-        layout.addLayout(self._build_list_column("Back", self.back_list), 1)
+        caption = QLabel(
+            "A column with no settings uses the defaults: the first content column "
+            "is the front of the card and the rest are the back."
+        )
+        caption.setWordWrap(True)
+        caption.setObjectName("caption")
+        layout.addWidget(caption)
 
         group.setLayout(layout)
         return group
 
-    def _build_list_column(self, title, list_widget):
-        """One side's list plus its reorder buttons."""
-        column = QVBoxLayout()
-        column.setSpacing(8)
-
-        label = QLabel(title)
-        label.setStyleSheet(
-            f"font-size: 12pt; font-weight: bold; color: {self.colors['text']};"
-        )
-        column.addWidget(label)
-
-        list_widget.setMinimumHeight(150)
-        column.addWidget(list_widget, 1)
-
-        reorder = QHBoxLayout()
-        reorder.setSpacing(8)
-        up_button = QPushButton("↑")
-        down_button = QPushButton("↓")
-        for button in (up_button, down_button):
-            button.setStyleSheet(secondary_button_qss(self.colors))
-            reorder.addWidget(button)
-        reorder.addStretch()
-        column.addLayout(reorder)
-
-        up_button.clicked.connect(lambda: self._move_within(list_widget, -1))
-        down_button.clicked.connect(lambda: self._move_within(list_widget, 1))
-        return column
-
-    def _build_format_group(self):
-        group = QGroupBox("Formatting")
+    def _build_warnings_group(self):
+        self.warnings_group = QGroupBox("Warnings")
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
-        self.show_labels_check = QCheckBox("Show field labels")
-        layout.addWidget(self.show_labels_check)
+        self.warnings_view = self._make_browser()
+        layout.addWidget(self.warnings_view, 1)
 
-        sizes = QHBoxLayout()
-        sizes.setSpacing(10)
+        self.warnings_group.setLayout(layout)
+        return self.warnings_group
 
-        sizes.addWidget(QLabel("Front text size:"))
-        self.front_size_spin = QSpinBox()
-        self.front_size_spin.setRange(10, 120)
-        self.front_size_spin.setSuffix(" px")
-        sizes.addWidget(self.front_size_spin)
-
-        sizes.addSpacing(15)
-        sizes.addWidget(QLabel("Back text size:"))
-        self.back_size_spin = QSpinBox()
-        self.back_size_spin.setRange(10, 120)
-        self.back_size_spin.setSuffix(" px")
-        sizes.addWidget(self.back_size_spin)
-
-        sizes.addSpacing(15)
-        sizes.addWidget(QLabel("Alignment:"))
-        self.align_combo = QComboBox()
-        for label, value in ALIGN_CHOICES:
-            self.align_combo.addItem(label, value)
-        sizes.addWidget(self.align_combo)
-        sizes.addStretch()
-        layout.addLayout(sizes)
-
-        self.reverse_check = QCheckBox("Add a reverse card (back asks the front)")
-        layout.addWidget(self.reverse_check)
-
-        timer_row = QHBoxLayout()
-        timer_row.setSpacing(10)
-        self.timer_check = QCheckBox("Show the timer")
-        timer_row.addWidget(self.timer_check)
-        timer_row.addWidget(QLabel("Position:"))
-        self.timer_position_combo = QComboBox()
-        for label, value in TIMER_POSITION_CHOICES:
-            self.timer_position_combo.addItem(label, value)
-        timer_row.addWidget(self.timer_position_combo)
-        timer_row.addStretch()
-        layout.addLayout(timer_row)
-
-        group.setLayout(layout)
-        return group
-
-    def _build_hand_edited_group(self):
-        group = QGroupBox("Hand-Edited Templates")
+    def _build_voices_group(self):
+        group = QGroupBox("Voices on this machine")
         layout = QVBoxLayout()
-        layout.setSpacing(6)
+        layout.setSpacing(8)
 
-        self.hand_edited_check = QCheckBox("I edit the templates myself")
-        layout.addWidget(self.hand_edited_check)
-
-        note = QLabel(
-            "When enabled, syncing no longer rebuilds the templates, so any changes "
-            "you make in Anki's card editor are kept."
-        )
-        note.setWordWrap(True)
-        note.setStyleSheet(
-            f"font-size: 11pt; color: {self.colors['text_secondary']}; font-weight: normal;"
-        )
-        layout.addWidget(note)
+        self.voices_view = self._make_browser()
+        layout.addWidget(self.voices_view, 1)
 
         group.setLayout(layout)
         return group
@@ -380,8 +455,7 @@ class CardLayoutDialog(QDialog):
         layout = QVBoxLayout()
         layout.setSpacing(8)
 
-        self.preview_view = QTextBrowser()
-        self.preview_view.setOpenExternalLinks(False)
+        self.preview_view = self._make_browser()
         layout.addWidget(self.preview_view, 1)
 
         caption = QLabel(
@@ -389,9 +463,7 @@ class CardLayoutDialog(QDialog):
             "the real card in Anki may look slightly different."
         )
         caption.setWordWrap(True)
-        caption.setStyleSheet(
-            f"font-size: 11pt; color: {self.colors['text_secondary']}; font-weight: normal;"
-        )
+        caption.setObjectName("caption")
         layout.addWidget(caption)
 
         group.setLayout(layout)
@@ -413,31 +485,12 @@ class CardLayoutDialog(QDialog):
                 border-radius: 8px;
                 padding: 14px;
             }}
-            QCheckBox {{
-                color: {self.colors['text']};
-                font-size: 12pt;
-                font-weight: normal;
-                spacing: 8px;
-            }}
-            QListWidget {{
-                background-color: {self.colors['list_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 4px;
-                font-size: 12pt;
+            QLabel#caption, QLabel#sourceNote {{
+                font-size: 11pt;
+                color: {self.colors['text_secondary']};
                 font-weight: normal;
             }}
-            QListWidget::item {{
-                padding: 6px 8px;
-                border-radius: 6px;
-            }}
-            QListWidget::item:hover {{ background-color: {self.colors['row_hover']}; }}
-            QListWidget::item:selected {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
-            }}
-            QComboBox, QSpinBox {{
+            QComboBox {{
                 background-color: {self.colors['input_bg']};
                 color: {self.colors['text']};
                 border: 1px solid {self.colors['border']};
@@ -461,217 +514,373 @@ class CardLayoutDialog(QDialog):
                 border: 1px solid {self.colors['border']};
                 border-radius: 8px;
                 padding: 8px;
+                font-size: 11pt;
                 font-weight: normal;
             }}
         """)
 
     def _connect_signals(self):
         self.deck_combo.currentIndexChanged.connect(self._load_selected_deck)
-        self.to_back_button.clicked.connect(
-            lambda: self._move_between(self.front_list, self.back_list)
-        )
-        self.to_front_button.clicked.connect(
-            lambda: self._move_between(self.back_list, self.front_list)
-        )
-        self.show_labels_check.stateChanged.connect(self._refresh_preview)
-        self.front_size_spin.valueChanged.connect(self._refresh_preview)
-        self.back_size_spin.valueChanged.connect(self._refresh_preview)
-        self.align_combo.currentIndexChanged.connect(self._refresh_preview)
-        self.reverse_check.stateChanged.connect(self._refresh_preview)
-        self.timer_check.stateChanged.connect(self._on_timer_toggled)
-        self.timer_position_combo.currentIndexChanged.connect(self._refresh_preview)
-        self.reset_button.clicked.connect(self._reset_layout)
-        self.cancel_button.clicked.connect(self.reject)
-        self.save_button.clicked.connect(self._save_layout)
+        self.close_button.clicked.connect(self.accept)
 
     # ------------------------------------------------------------------
-    # Loading / editing state
+    # Loading
     # ------------------------------------------------------------------
 
     def _load_selected_deck(self):
-        """Loads the stored layout of the deck currently selected in the combo."""
+        """Reads the cached parse of the deck currently selected in the combo."""
         if not self.decks:
             return
 
         index = max(0, self.deck_combo.currentIndex())
-        self.sheet_id, _label, deck_info = self.decks[index]
+        self.sheet_id, _label, _deck_info = self.decks[index]
+        self.snapshot = _read_sheet_snapshot(self.sheet_id)
 
-        layout = get_card_layout(self.sheet_id)
-        self.fields = self._fields_for(deck_info, layout)
-        self._apply_layout(layout)
-
-    def _apply_layout(self, layout):
-        """Pushes a layout dict into the widgets."""
-        self._loading = True
-        try:
-            front = [f for f in (layout.get("front") or []) if f in self.fields]
-            back = [
-                f
-                for f in (layout.get("back") or [])
-                if f in self.fields and f not in front
-            ]
-            # Anything the layout does not mention has to surface somewhere, or the
-            # user would think the add-on lost the column.
-            placed = set(front) | set(back)
-            back.extend(f for f in self.fields if f not in placed)
-
-            self.front_list.clear()
-            self.front_list.addItems(front)
-            self.back_list.clear()
-            self.back_list.addItems(back)
-
-            self.show_labels_check.setChecked(bool(layout.get("show_labels", False)))
-            self.front_size_spin.setValue(int(layout.get("front_size", 40) or 40))
-            self.back_size_spin.setValue(int(layout.get("back_size", 18) or 18))
-            self._select_data(self.align_combo, layout.get("align", "center"))
-            self.reverse_check.setChecked(bool(layout.get("reverse_card", False)))
-            self.timer_check.setChecked(bool(layout.get("timer", True)))
-            self._select_data(
-                self.timer_position_combo,
-                layout.get("timer_position", "between_sections"),
-            )
-            self.hand_edited_check.setChecked(bool(layout.get("hand_edited", False)))
-            self.timer_position_combo.setEnabled(self.timer_check.isChecked())
-        finally:
-            self._loading = False
+        self._refresh_fields()
+        self._refresh_warnings()
+        self._refresh_voices()
         self._refresh_preview()
-
-    @staticmethod
-    def _select_data(combo, value):
-        """Selects the combo entry carrying ``value``, falling back to the first."""
-        index = combo.findData(value)
-        combo.setCurrentIndex(index if index >= 0 else 0)
-
-    @staticmethod
-    def _items(list_widget):
-        return [list_widget.item(row).text() for row in range(list_widget.count())]
-
-    def _move_between(self, source, target):
-        """Moves the selected field to the other side, keeping it in exactly one."""
-        row = source.currentRow()
-        if row < 0:
-            return
-        item = source.takeItem(row)
-        target.addItem(item.text())
-        target.setCurrentRow(target.count() - 1)
-        source.setCurrentRow(min(row, source.count() - 1))
-        self._refresh_preview()
-
-    def _move_within(self, list_widget, delta):
-        """Reorders the selected field inside its own list."""
-        row = list_widget.currentRow()
-        target = row + delta
-        if row < 0 or target < 0 or target >= list_widget.count():
-            return
-        item = list_widget.takeItem(row)
-        list_widget.insertItem(target, item.text())
-        list_widget.setCurrentRow(target)
-        self._refresh_preview()
-
-    def _on_timer_toggled(self):
-        self.timer_position_combo.setEnabled(self.timer_check.isChecked())
-        self._refresh_preview()
-
-    def _current_layout(self):
-        """The layout described by the widgets right now."""
-        return {
-            "front": self._items(self.front_list),
-            "back": self._items(self.back_list),
-            "show_labels": self.show_labels_check.isChecked(),
-            "front_size": self.front_size_spin.value(),
-            "back_size": self.back_size_spin.value(),
-            "align": self.align_combo.currentData() or "center",
-            "reverse_card": self.reverse_check.isChecked(),
-            "timer": self.timer_check.isChecked(),
-            "timer_position": self.timer_position_combo.currentData()
-            or "between_sections",
-            "hand_edited": self.hand_edited_check.isChecked(),
-        }
 
     # ------------------------------------------------------------------
-    # Preview
+    # Rendering helpers
+    # ------------------------------------------------------------------
+
+    def _note(self, text, color=None):
+        """One paragraph of explanatory text, used for every empty/error state."""
+        return (
+            f'<p style="color:{color or self.colors["text_secondary"]};">'
+            f"{escape(text)}</p>"
+        )
+
+    def _never_synced_note(self):
+        return self._note(
+            "This deck has not been synced yet, so the add-on has not read its "
+            "columns. Run a sync (Ctrl+Shift+S) and open this window again."
+        )
+
+    # ------------------------------------------------------------------
+    # Section: what the add-on understood
+    # ------------------------------------------------------------------
+
+    def _refresh_fields(self):
+        if not self.snapshot["synced"]:
+            self.fields_view.setHtml(self._never_synced_note())
+            return
+
+        blocks = [self._config_row_summary(), self._fields_table()]
+        self.fields_view.setHtml("".join(blocks))
+
+    def _config_row_summary(self):
+        """Whether a ``#config`` row was found, plus any deck-wide settings."""
+        if not self.snapshot["config_present"]:
+            return self._note(
+                "This sheet has no '#config' row, so every column uses the "
+                "defaults shown below."
+            )
+
+        parts = []
+        deck = self.snapshot["deck"]
+        align = deck.get("align")
+        if align:
+            parts.append(f"text aligned {align}")
+        speed = deck.get("speed")
+        if speed not in (None, ""):
+            parts.append(f"speech speed {speed}")
+        if deck.get("reverse"):
+            parts.append("a reverse card is generated")
+
+        detail = "; ".join(parts) if parts else "no deck-wide settings"
+        return self._note(f"Config row found — {detail}.")
+
+    def _fields_table(self):
+        headers = ("Column", "Side", "Text", "Style", "Label", "Speech")
+        border = self.colors["border"]
+        head_bg = self.colors["background_secondary"]
+
+        rows = [
+            "<tr>"
+            + "".join(
+                f'<td style="background-color:{head_bg};"><b>{escape(h)}</b></td>'
+                for h in headers
+            )
+            + "</tr>"
+        ]
+
+        for index, header in enumerate(self.snapshot["content_headers"]):
+            settings = self.snapshot["fields"].get(header) or _field_settings(None)
+            cells = (
+                escape(header),
+                escape(self._side_text(settings, index)),
+                escape(self._text_style_text(settings)),
+                escape(self._flags_text(settings)),
+                escape(str(settings.get("label") or "—")),
+                escape(self._speech_text(settings)),
+            )
+            rows.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+
+        return (
+            f'<table width="100%" cellspacing="0" cellpadding="6" '
+            f'style="border:1px solid {border};">' + "".join(rows) + "</table>"
+        )
+
+    @staticmethod
+    def _side_text(settings, index):
+        side = (settings.get("side") or "").strip().lower()
+        if side == "hide":
+            return "hidden"
+        if side:
+            return side
+        return "front (default)" if index == 0 else "back (default)"
+
+    @staticmethod
+    def _text_style_text(settings):
+        parts = []
+        size = settings.get("size")
+        if size not in (None, ""):
+            parts.append(f"{size}px")
+        color = settings.get("color")
+        if color:
+            parts.append(str(color))
+        align = settings.get("align")
+        if align:
+            parts.append(f"aligned {align}")
+        return " · ".join(parts) if parts else "default"
+
+    @staticmethod
+    def _flags_text(settings):
+        flags = [flag for flag in _FLAG_KEYS if settings.get(flag)]
+        return ", ".join(flags) if flags else "—"
+
+    @staticmethod
+    def _speech_text(settings):
+        language = (settings.get("tts") or "").strip()
+        if not language:
+            return "—"
+        parts = [language]
+        voices = settings.get("voices") or []
+        if voices:
+            parts.append("voices: " + ", ".join(voices))
+        speed = settings.get("speed")
+        if speed not in (None, ""):
+            parts.append(f"speed {speed}")
+        return " · ".join(parts)
+
+    # ------------------------------------------------------------------
+    # Section: warnings
+    # ------------------------------------------------------------------
+
+    def _refresh_warnings(self):
+        warnings = self.snapshot["warnings"]
+
+        if not self.snapshot["synced"]:
+            self.warnings_group.setTitle("Warnings")
+            self.warnings_view.setHtml(self._never_synced_note())
+            return
+
+        if not warnings:
+            self.warnings_group.setTitle("Warnings")
+            self.warnings_view.setHtml(
+                self._note(
+                    "No problems found — the add-on understood every setting in "
+                    "the config row.",
+                    self.colors["accent_success"],
+                )
+            )
+            return
+
+        count = len(warnings)
+        self.warnings_group.setTitle(
+            f"Warnings — {count} problem{'s' if count != 1 else ''} found"
+        )
+        items = "".join(f"<li>{escape(w)}</li>" for w in warnings)
+        self.warnings_view.setHtml(
+            self._note(
+                "The add-on ignored these settings because it could not read them. "
+                "Fix them in the spreadsheet and sync again.",
+                self.colors["accent_warning"],
+            )
+            + f'<ul style="color:{self.colors["text"]};">{items}</ul>'
+        )
+
+    # ------------------------------------------------------------------
+    # Section: voices
+    # ------------------------------------------------------------------
+
+    def _refresh_voices(self):
+        if self.voices is None:
+            self.voices_view.setHtml(
+                self._note(
+                    "The installed speech voices could not be listed on this "
+                    f"machine ({self.voices_error}). Any 'tts' setting below may "
+                    "or may not work here.",
+                    self.colors["accent_warning"],
+                )
+            )
+            return
+
+        self.voices_view.setHtml(self._language_check_html() + self._voice_list_html())
+
+    def _language_check_html(self):
+        """Compares the languages the sheet asks for against the installed voices.
+
+        Anki matches a ``{{tts}}`` tag to a voice by comparing the language strings
+        exactly, and plays nothing at all when none matches — so an unmatched
+        language has to be called out here or the card is just silent.
+        """
+        languages = self._requested_languages()
+        if not languages:
+            if not self.snapshot["synced"]:
+                return ""
+            return self._note("This sheet does not ask for any spoken field.")
+
+        installed = {lang for _name, lang in self.voices}
+        lines = []
+        for language in languages:
+            matches = [name for name, lang in self.voices if lang == language]
+            if matches:
+                lines.append(
+                    f'<li style="color:{self.colors["accent_success"]};">'
+                    f"{escape(language)} — {len(matches)} voice"
+                    f"{'s' if len(matches) != 1 else ''} installed"
+                    f' <span style="color:{self.colors["text_secondary"]};">'
+                    f"({escape(', '.join(matches[:3]))}"
+                    f"{'…' if len(matches) > 3 else ''})</span></li>"
+                )
+            else:
+                near = sorted(
+                    lang
+                    for lang in installed
+                    if lang.split("_")[0].lower() == language.split("_")[0].lower()
+                )
+                hint = (
+                    f" Your system does have {escape(', '.join(near))}, "
+                    "which Anki treats as a different language."
+                    if near
+                    else ""
+                )
+                lines.append(
+                    f'<li style="color:{self.colors["accent_danger"]};">'
+                    f"{escape(language)} — no voice installed for this language, "
+                    f"so these fields will stay silent.{hint}</li>"
+                )
+
+        return (
+            self._note("Languages this sheet asks for:")
+            + f'<ul style="color:{self.colors["text"]};">{"".join(lines)}</ul>'
+        )
+
+    def _voice_list_html(self):
+        if not self.voices:
+            return self._note(
+                "No speech voices are installed on this machine, so no field can "
+                "be read aloud here.",
+                self.colors["accent_warning"],
+            )
+
+        grouped = {}
+        for name, lang in self.voices:
+            grouped.setdefault(lang or "(unknown language)", []).append(name)
+
+        items = "".join(
+            f"<li><b>{escape(lang)}</b> — {escape(', '.join(names))}</li>"
+            for lang, names in sorted(grouped.items())
+        )
+        return (
+            self._note(f"Installed on this machine ({len(self.voices)}):")
+            + f'<ul style="color:{self.colors["text"]};">{items}</ul>'
+        )
+
+    # ------------------------------------------------------------------
+    # Section: preview
     # ------------------------------------------------------------------
 
     def _refresh_preview(self):
-        if self._loading:
+        if not self.snapshot["synced"]:
+            self.preview_view.setHtml(self._never_synced_note())
             return
         try:
-            html = self._preview_html(self._current_layout())
-        except Exception as error:  # a broken preview must not block editing
-            html = f"<p>Could not build the preview: {error}</p>"
+            html = self._preview_html()
+        except Exception as error:  # a broken preview must not blank the window
+            html = self._note(f"Could not build the preview: {error}")
         self.preview_view.setHtml(html)
 
-    def _preview_html(self, layout):
-        """Renders every template the layout produces, with sample field values."""
+    def _preview_html(self):
+        """Renders every template the sheet's layout produces, with sample values."""
+        templates = _build_templates_for(self.snapshot)
+        if not templates:
+            return self._approximate_preview_html()
+
         blocks = []
-        for template in build_templates(layout):
-            front = self._render(template["qfmt"])
-            back = self._render(
+        for template in templates:
+            front = _render_template(template["qfmt"])
+            back = _render_template(
                 template["afmt"].replace("{{FrontSide}}", _FRONT_SIDE_MARK)
             ).replace(_FRONT_SIDE_MARK, front)
-            blocks.append(self._preview_block(template["name"], "Front", front))
-            blocks.append(self._preview_block(template["name"], "Back", back))
+            name = str(template.get("name") or "Card")
+            blocks.append(self._preview_block(name, "Front", front))
+            blocks.append(self._preview_block(name, "Back", back))
         return "".join(blocks)
+
+    def _approximate_preview_html(self):
+        """Fallback when the real templates are unavailable: the two sides only."""
+        front, back = [], []
+        for index, header in enumerate(self.snapshot["content_headers"]):
+            settings = self.snapshot["fields"].get(header) or _field_settings(None)
+            side = self._side_text(settings, index)
+            if side == "hidden":
+                continue
+            (front if side.startswith("front") else back).append(
+                self._preview_field(header, settings, side.startswith("front"))
+            )
+
+        if not front and not back:
+            return self._note("This sheet has no content columns to show.")
+
+        body = "".join(front) + "<hr>" + "".join(back)
+        return self._preview_block("Card", "Front and back", body)
+
+    def _preview_color(self, color):
+        """A colour this preview can actually paint with.
+
+        The sheet's theme colours (``muted``, ``accent``) become CSS variables on
+        the real card, which a QTextBrowser cannot resolve — so they are shown in
+        the equivalent dialog colour instead of silently rendering as no colour.
+        """
+        value = str(color or "").strip()
+        if not value:
+            return self.colors["text"]
+        lowered = value.lower()
+        if lowered == "muted" or lowered.startswith("var("):
+            return self.colors["text_secondary"]
+        if lowered == "accent":
+            return self.colors["accent_primary"]
+        return value
+
+    def _preview_field(self, header, settings, is_front):
+        """One field as it would appear, honouring size, colour and alignment."""
+        size = settings.get("size") or (40 if is_front else 18)
+        color = self._preview_color(settings.get("color"))
+        align = settings.get("align") or self.snapshot["deck"].get("align") or "center"
+
+        label = settings.get("label") or header
+        head = (
+            f'<div style="font-size:9pt;color:{self.colors["text_secondary"]};">'
+            f"{escape(str(label))}</div>"
+        )
+        return (
+            f'<div style="text-align:{escape(str(align))};">{head}'
+            f'<div style="font-size:{size}px;color:{color};">'
+            f"[{escape(header)}]</div></div>"
+        )
 
     def _preview_block(self, template_name, side, body):
         return (
             f'<p style="color:{self.colors["text_secondary"]};font-size:10pt;'
-            f'margin-bottom:2px;">{template_name} · {side}</p>'
+            f'margin-bottom:2px;">{escape(template_name)} · {escape(side)}</p>'
             f'<div style="border:1px solid {self.colors["border"]};'
             f'background-color:{self.colors["background"]};padding:10px;">{body}</div>'
             "<p>&nbsp;</p>"
         )
-
-    @staticmethod
-    def _render(template_html):
-        """Turns one template into previewable HTML with placeholder content."""
-        html = _SCRIPT_RE.sub("", template_html)
-        # Every field has a sample value, so conditional sections always render.
-        html = _SECTION_RE.sub("", html)
-        return _FIELD_RE.sub(CardLayoutDialog._sample_for, html)
-
-    @staticmethod
-    def _sample_for(match):
-        """Sample text for one ``{{Field}}`` reference, filters stripped."""
-        token = match.group(1).strip()
-        name = token.split(":")[-1].strip()
-        return f"[{name}]" if name else ""
-
-    # ------------------------------------------------------------------
-    # Actions
-    # ------------------------------------------------------------------
-
-    def _reset_layout(self):
-        """Back to the default split for the deck's current fields."""
-        self._apply_layout(default_layout_for(self.fields))
-
-    def _save_layout(self):
-        if not self.sheet_id:
-            return
-
-        layout = self._current_layout()
-        if set_card_layout(self.sheet_id, layout):
-            StyledMessageBox.success(
-                self,
-                "Card Layout Saved",
-                "The card layout has been saved.",
-                detailed_text=(
-                    "Run a sync (Ctrl+Shift+S) so Anki rebuilds the templates with the new layout."
-                    if not layout["hand_edited"]
-                    else "You enabled 'I edit the templates myself', so syncing will not rebuild the templates."
-                ),
-            )
-            self.accept()
-        else:
-            StyledMessageBox.critical(
-                self,
-                "Save Failed",
-                "The card layout could not be saved.",
-                detailed_text=(
-                    "The layout is stored in the Anki collection, but no collection is "
-                    "currently open. Open an Anki profile and try again."
-                ),
-            )
 
 
 def show_card_layout_dialog(parent=None):
@@ -682,7 +891,7 @@ def show_card_layout_dialog(parent=None):
         parent: Parent widget (optional)
 
     Returns:
-        bool: True if user saved changes, False otherwise
+        bool: True if the dialog was closed normally, False otherwise
     """
     dialog = CardLayoutDialog(parent)
     result = safe_exec_dialog(dialog)

@@ -1,9 +1,9 @@
 """
 Note types and card assets for the Sheets2Anki addon.
 
-The spreadsheet defines its own columns (see ``column_model``) and the card layout
-lives in the collection config (see ``sync_config``), so this module no longer knows
-any column names. What is left is:
+The spreadsheet defines its own columns (see ``column_model``) and its own
+presentation (see ``sheet_config``), so this module no longer knows any column names.
+What is left is:
 - the add-on's fixed names and the development-mode switch
 - creating and reconciling the per-deck note types
 
@@ -89,10 +89,10 @@ def add_missing_fields(col, model, fields, add_debug_msg=None):
 
 def apply_templates(col, model, templates):
     """
-    Makes a note type's card templates match the ones the layout calls for.
+    Makes a note type's card templates match the ones the sheet calls for.
 
-    A template the layout no longer produces (the reverse card switched off) is
-    removed together with its cards — that is exactly what switching it off means.
+    A template the sheet no longer produces (``reverse`` taken out of the settings
+    row) is removed together with its cards — that is exactly what removing it means.
 
     Args:
         col: Anki collection object
@@ -172,19 +172,19 @@ def create_model(
     return model
 
 
-def ensure_custom_models(col, url, plan, layout, debug_messages=None):
+def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
     """
     Ensures both models (standard and cloze) exist and match the sheet.
 
-    Fields come from the sheet's own columns and card templates from the deck's
-    layout, so adding a column to the sheet adds a field here. Uses IDs stored in
+    Fields come from the sheet's own columns and card templates from its settings
+    row, so adding a column to the sheet adds a field here. Uses IDs stored in
     meta.json to find existing note types, instead of searching only by name.
 
     Args:
         col: Anki collection object
         url (str): Remote deck URL
         plan (ColumnPlan): how this sheet's headers map onto Anki
-        layout (dict): the deck's card layout, as stored by ``sync_config``
+        sheet_config (SheetConfig): the sheet's parsed settings row
         debug_messages (list, optional): List for debug
 
     Returns:
@@ -202,7 +202,6 @@ def ensure_custom_models(col, url, plan, layout, debug_messages=None):
     remote_deck_name = get_deck_remote_name(url) or "RemoteDeck"
     existing_note_types = get_deck_note_type_ids(url) or {}
     fields = plan.note_type_fields()
-    hand_edited = bool(layout.get("hand_edited"))
 
     add_debug_msg(f"Searching note types for remote_deck_name='{remote_deck_name}'")
     add_debug_msg(f"Existing note types: {len(existing_note_types)} found")
@@ -232,7 +231,7 @@ def ensure_custom_models(col, url, plan, layout, debug_messages=None):
     for key, is_cloze in (("standard", False), ("cloze", True)):
         label = "Cloze" if is_cloze else "Basic"
         expected_name = get_note_type_name(url, remote_deck_name, is_cloze=is_cloze)
-        templates = build_templates(layout, is_cloze=is_cloze)
+        templates = build_templates(plan, sheet_config, is_cloze=is_cloze)
 
         model = find_registered_note_type(f" - {label}")
         registered = model is not None
@@ -258,11 +257,7 @@ def ensure_custom_models(col, url, plan, layout, debug_messages=None):
         model_name = model.get("name", expected_name)
         changed = add_missing_fields(col, model, fields, add_debug_msg)
 
-        if hand_edited:
-            add_debug_msg(
-                f"Templates of '{model_name}' left alone (layout is hand-edited)"
-            )
-        elif apply_templates(col, model, templates):
+        if apply_templates(col, model, templates):
             changed = True
             add_debug_msg(f"Templates regenerated for '{model_name}'")
 
@@ -286,10 +281,9 @@ def update_existing_note_type_templates(col, debug_messages=None):
     """
     Regenerates the card templates of every connected deck's note types.
 
-    A deck whose layout is marked ``hand_edited`` is skipped: the user maintains
-    those templates themselves and regenerating them would throw that work away.
-    A deck with no layout yet is skipped too — its columns are only known once it
-    is downloaded, and rendering the empty default would blank out its cards.
+    The sheet is the source of truth, so this rebuilds from the settings the last
+    sync cached. A deck that has never been synced is skipped — its columns are only
+    known once it is downloaded, and rendering nothing would blank out its cards.
 
     Args:
         col: Anki collection object
@@ -302,7 +296,7 @@ def update_existing_note_type_templates(col, debug_messages=None):
         debug_messages = []
 
     from .config_manager import get_remote_decks
-    from .sync_config import get_card_layout
+    from .sync_config import cached_plan_and_config
 
     updated_count = 0
     remote_decks = get_remote_decks() or {}
@@ -313,17 +307,11 @@ def update_existing_note_type_templates(col, debug_messages=None):
 
     for sheet_id, deck_info in remote_decks.items():
         deck_name = deck_info.get("remote_deck_name") or sheet_id
-        layout = get_card_layout(sheet_id)
+        plan, sheet_config = cached_plan_and_config(sheet_id)
 
-        if layout.get("hand_edited"):
+        if plan is None:
             debug_messages.append(
-                f"[UPDATE_TEMPLATES] ⏭️ {deck_name}: layout is hand-edited, templates preserved"
-            )
-            continue
-
-        if not layout.get("front") and not layout.get("back"):
-            debug_messages.append(
-                f"[UPDATE_TEMPLATES] ⏭️ {deck_name}: no layout stored yet, templates left to the deck's own sync"
+                f"[UPDATE_TEMPLATES] ⏭️ {deck_name}: no settings cached yet, templates left to the deck's own sync"
             )
             continue
 
@@ -339,7 +327,9 @@ def update_existing_note_type_templates(col, debug_messages=None):
                     continue
 
                 model_name = model.get("name", "")
-                templates = build_templates(layout, is_cloze=model.get("type") == 1)
+                templates = build_templates(
+                    plan, sheet_config, is_cloze=model.get("type") == 1
+                )
 
                 if apply_templates(col, model, templates):
                     col.models.save(model)

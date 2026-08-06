@@ -19,7 +19,6 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 - [Sync data flow](#sync-data-flow)
 - [Column model & note keying](#column-model--note-keying)
 - [Card layout](#card-layout)
-- [Card-side features](#card-side-features)
 - [Configuration: where settings live](#configuration-where-settings-live)
 - [Development setup](#development-setup)
 - [Testing](#testing)
@@ -130,6 +129,10 @@ split-out module:
 - **`column_model.py`** — the free-form column model: which headers are reserved, and
   how a header row is sorted into a `ColumnPlan` (`plan_columns()`). Also the per-row
   readers `row_is_marked_for_sync()`, `deck_path()`, `tags_of()`.
+- **`sheet_config.py`** — the optional **settings row**: `is_config_row()` recognises it,
+  `parse_config_row()` turns it into a `SheetConfig` (`FieldConfig` per column, the
+  deck-wide `align`/`speed`/`reverse`, and `warnings`). Also `normalize_tts_language()`
+  and the validation tables (`SIDES`, `ALIGNMENTS`, `THEME_COLORS`, the CSS colour names).
 - **`deck_manager.py`** — deck CRUD and the selection entry point
   (`syncDecksWithSelection()`).
 - **`name_consistency_manager.py`** — keeps dynamically-created note-type names in sync
@@ -138,22 +141,22 @@ split-out module:
 ### Configuration & utilities
 - **`config_manager.py`** — the only module that reads/writes `meta.json`/`config.json`
   (`get_meta()` / `save_meta()`).
-- **`sync_config.py`** — the settings that must follow the user between machines: the
-  per-deck **card layouts**, stored in Anki's own collection config
-  (`get_card_layout()`, `set_card_layout()`, `ensure_card_layout()`,
-  `forget_card_layout()`, `DEFAULT_LAYOUT`).
-- **`card_layout.py`** — turns a layout dict into Anki card templates
-  (`build_templates()`), including the optional reverse template and the timer block.
+- **`sync_config.py`** — the **cache** of what the last sync parsed out of each sheet's
+  settings row, stored in Anki's own collection config so it follows the user between
+  machines (`cache_sheet_settings()`, `cached_plan_and_config()`, `get_cached_settings()`,
+  `forget_sheet_settings()`, `to_dict()` / `from_dict()`). Nothing here is editable — the
+  spreadsheet is the source of truth and every sync overwrites the entry.
+- **`card_layout.py`** — turns a `ColumnPlan` plus a `SheetConfig` into Anki card
+  templates (`split_sides()`, `build_templates()`), including the per-field styling, the
+  `hint:`/`furigana:`/`cloze:` references, the TTS tags and the optional reverse template.
 - **`utils.py`** — URL conversion (`convert_edit_url_to_tsv()`,
   `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), subdeck
   naming (`get_subdeck_name()`), and other helpers; errors/debug/deck-options were split
   into **`errors.py`**, **`debug.py`**, **`deck_options.py`**.
 - **`templates_and_definitions.py`** — note-type provisioning against the sheet's columns
-  and the deck's layout (`ensure_custom_models()`, `create_model()`,
-  `add_missing_fields()`, `apply_templates()`), plus `IS_DEVELOPMENT_MODE` and
-  `TAG_ROOT`.
-- **`card_assets.py`** — the CSS/HTML/JS strings rendered into cards, imported directly
-  by `card_layout.py`.
+  and its settings row (`ensure_custom_models()`, `create_model()`,
+  `add_missing_fields()`, `apply_templates()`, `update_existing_note_type_templates()`),
+  plus `IS_DEVELOPMENT_MODE` and `TAG_ROOT`.
 
 ### Features & integrations
 - **`ankiweb_sync.py`** — optional AnkiWeb auto-sync after changes.
@@ -169,12 +172,14 @@ AnkiWeb config, **card-layout config**, image-processor config — plus `url_hel
 (shared clean-URL / copy-to-clipboard helpers), one dialog per menu entry.
 Modules in `src/ui/` import siblings one level up (`from ..compat import …`).
 
-**`card_layout_dialog.py`** is the editor for a deck's card layout: it moves field
-*names* between the front and back lists and never writes HTML itself — that is
+**`card_layout_dialog.py`** is a **read-only viewer** of a deck's card layout: the sides
+the settings row produced, each column's parsed directives, the warnings the parse
+collected, the TTS voices installed on this machine, and a preview. It never writes a
+setting — the spreadsheet is the only place they are edited (see
+[Card layout](#card-layout) for why) — and it never writes HTML; that is
 `card_layout.build_templates()`' job. Its live preview only *approximates* Anki's
 template syntax in a `QTextBrowser` (every section is taken, `<script>` blocks are
-stripped, since the widget runs no JavaScript). It also owns the **study timer** toggle
-and position, since the timer is part of the layout.
+stripped, since the widget runs no JavaScript).
 
 ## Sync data flow
 
@@ -189,13 +194,17 @@ Per deck:
    (which tracks `valid_note_lines`, `invalid_note_lines`, etc.). The header row is
    sorted into a `ColumnPlan` by `column_model.plan_columns()` and carried on the deck
    as `RemoteDeck.plan`; every later step takes it as its `plan` argument.
-3. **Provision the note types.** `data_processor.get_deck_layout()` reads the deck's
-   card layout — creating it from the sheet's column order the first time the deck is
-   seen — and `templates_and_definitions.ensure_custom_models()` makes the Basic and
-   Cloze note types match `plan` (fields) and `layout` (templates).
-4. **Apply changes.** `data_processor.create_or_update_notes()` creates, updates, and
-   deletes Anki notes to match the sheet. (Steps 3 and 4 are one call: `get_deck_layout()`
-   and `ensure_custom_models()` run at the top of `create_or_update_notes()`.)
+3. **Read the settings row.** If the row under the header is one
+   (`sheet_config.is_config_row()`), `parse_config_row()` turns it into a `SheetConfig`
+   carried as `RemoteDeck.sheet_config`, and the row is **dropped from `rows` before any
+   counting happens** — it is a directive row, so it must never reach `add_note()` or
+   appear in a metric. Its warnings go to the debug log under `SHEET_CONFIG`.
+4. **Provision the note types.** `templates_and_definitions.ensure_custom_models()` makes
+   the Basic and Cloze note types match `plan` (fields) and `sheet_config` (templates),
+   and `data_processor.cache_deck_sheet_config()` records the parse for later rebuilds.
+5. **Apply changes.** `data_processor.create_or_update_notes()` creates, updates, and
+   deletes Anki notes to match the sheet. (Steps 4 and 5 are one call: the caching and
+   `ensure_custom_models()` run at the top of `create_or_update_notes()`.)
 
 > **Safety guard:** if a parsed sheet has `valid_note_lines == 0` (e.g. an empty or
 > failed fetch), the deletion pass is skipped so a transient blank download can't wipe
@@ -251,46 +260,122 @@ in `column_model.py`.
   `sheets2anki::<subdeck path>` mirroring the deck path, plus whatever the `TAGS` column
   lists. Each component is folded to a safe lower-case tag by `clean_tag_text()`.
 
+### The settings row (`src/sheet_config.py`)
+
+Row 1 names the columns. **Row 2 is the settings row when its `ID` cell is `#config` or
+starts with `#config ` — otherwise it is an ordinary data row.** `is_config_row()` tests
+the *leading token*, lower-cased, because the deck-wide settings ride along in the same
+cell (`#config align=left; reverse`); a cell like `#config;align=left` therefore does
+**not** match and that line is imported as a note.
+
+That marker is the whole backward-compatibility story: a sheet written before this
+feature has no `#config` cell, so nothing changes for it.
+
+`parse_config_row(row, plan)` reads the row into a `SheetConfig`:
+
+| Attribute | Contents |
+| :--- | :--- |
+| `present` | True when a settings row was found |
+| `fields` | `{header: FieldConfig}` — only for columns whose cell was non-empty |
+| `align`, `speed`, `reverse` | the deck-wide settings from the `#config` cell |
+| `warnings` | every directive the parser did not understand, each naming its column |
+
+Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
+`plan.content_headers` (plus the ID cell) are read, so a directive typed into `SYNC`,
+`TAGS` or a `SUBDECK n` cell is ignored. An empty cell means "defaults", and no
+`FieldConfig` is stored for it — `SheetConfig.for_field()` hands back a blank one.
+
+**Per-column keys** (`_FIELD_KEYS`), each landing on a `FieldConfig` attribute:
+
+| Key | Accepted | Validation |
+| :--- | :--- | :--- |
+| `side` | `front`, `back`, `hide` | `SIDES`; `hide` sets the `hidden` property |
+| `label` | any text | none — used as the caption above the value |
+| `size` | integer px (a `px` suffix is stripped, floats truncated) | **6–200**, else a warning and no value |
+| `color` | `muted`/`accent` (→ `var(--s2a-muted)` / `var(--s2a-accent)`), a **real** CSS colour name, or `#rgb`/`#rrggbb` | validated against `_CSS_COLOR_NAMES`, not a loose `[a-z]+` rule, so `grey1` is caught |
+| `align` | `left`, `center`, `right` | `ALIGNMENTS` |
+| `tts` | a full language code | `_LANG_RE` = `^[a-zA-Z]{2,3}[-_][a-zA-Z0-9]{2,4}$`, normalised to `zh_CN` shape |
+| `voices` | comma-separated names | at least one non-empty name |
+| `speed` | float | **0.5–2.0** |
+| `bold`, `italic`, `hint`, `furigana` | flags | set to True by their mere presence |
+
+**Deck-wide keys** (`_DECK_KEYS`), parsed out of the remainder of the `#config` cell:
+`align` (validated), `speed` (parsed as a float but **not** range-checked, unlike the
+per-column one), and the `reverse` flag.
+
+Two design points worth keeping:
+
+- **A flag is only ever turned on.** `_apply_field_pair()` sets the attribute True as soon
+  as the key appears, so `bold=false` means bold. Flags are opt-in by omission.
+- **Nothing is guessed and nothing is silently dropped.** An unknown key, a bad value or a
+  number outside its range appends to `warnings` and is refused rather than clamped. The
+  warnings reach the debug log (`SHEET_CONFIG`) during the sync and the card-layout dialog
+  through the cache.
+
+### Text-to-speech, and why the language code must be complete
+
+Anki's tag is `{{tts LANG [voices=A,B] [speed=N]:Field}}` and it picks a voice by
+comparing the language strings **exactly** (`aqt/tts.py`: `if avail.lang == tag.lang`),
+against voice languages that are always the full `language_REGION` form. A bare `zh`
+therefore matches no voice and plays **silence**, which is why `_LANG_RE` rejects short
+codes with a warning instead of guessing a region — guessing `zh_CN` for someone studying
+Traditional Chinese would be wrong *and* inaudible. `normalize_tts_language()` only
+touches the separator and the casing, which cannot change which voice is selected.
+
+Three consequences to keep in mind when touching this code or its docs:
+
+- **`voices` is a preference, not a requirement.** Anki falls back to any voice for the
+  language, so naming voices stays portable across machines.
+- **A missing system voice is silent, not an error.** No Chinese voice installed means
+  `tts=zh_CN` plays nothing, with nothing to diagnose from — which is why the dialog lists
+  the voices installed on the machine.
+- **One cell, one language.** Anki reads the entire field with one voice, so a cell
+  holding a sentence and its translation is read end to end by that column's voice.
+
 ## Card layout
 
-How a card looks is a **per-deck layout dict**, not a property of the sheet.
-`sync_config.DEFAULT_LAYOUT` defines its keys: `front`, `back`, `show_labels`,
-`front_size`, `back_size`, `align`, `reverse_card`, `timer`, `timer_position`,
-`hand_edited`. On first sight of a deck, `default_layout_for()` seeds it from the sheet's
-own column order — first content column on the front, the rest on the back, the same
-convention as Anki's CSV import.
+**How a card looks is a property of the sheet, not of the deck.** There is no editable
+layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` renders the
+`ColumnPlan` and the parsed settings row straight into the
+`{"name", "qfmt", "afmt"}` template list.
 
-`card_layout.build_templates(layout, is_cloze)` renders it into the
-`{"name", "qfmt", "afmt"}` template list:
-
+- **`split_sides(plan, sheet_config)`** decides the sides. The default is the sheet's own
+  order — first content column is the prompt, the rest are the answer, the same convention
+  as Anki's CSV import — so reordering columns reorders the card with no settings at all.
+  `side=` overrides it per column and `side=hide` drops the column from both sides. A
+  layout that ends up with an empty front promotes the first still-visible back field,
+  since Anki refuses to generate a card from a blank prompt.
+- **Per-field rendering.** `_inline_style()` emits `size`/`color`/`bold`/`italic`/`align`
+  as one `style` attribute; `_reference()` picks the plain `{{Field}}`, `{{hint:Field}}`
+  or `{{furigana:Field}}`; `_tts_tag()` emits the TTS tag, with a field-level `speed`
+  outranking the deck-wide one. Both the field's `<div>` and its TTS tag are wrapped in
+  `{{#Field}}…{{/Field}}`, so an empty cell renders nothing *and* speaks nothing.
+- **The theme colours are CSS custom properties.** `_css()` declares `--s2a-muted` and
+  `--s2a-accent` twice — once as the light default and once under `.night_mode`, the class
+  Anki puts on the card body in dark mode. A single fixed value would make one of the two
+  themes unreadable, which is the entire reason the named colours exist.
+- **Cloze.** `cloze:` outranks `hint`/`furigana` in `_reference()`, and the cloze back
+  repeats the prompt through `{{cloze:Field}}` rather than `{{FrontSide}}`, because
+  **Anki validates that a cloze template references the field through that filter on both
+  sides** and refuses to save the note type otherwise. Cloze note types also support
+  exactly one template, so the reverse card is skipped for them.
 - **Reverse cards are a second template on the same note type** (`"Card 2 (reverse)"`),
-  not a second note. Anki then schedules both directions independently off one row, and
-  switching the option off later removes those cards without touching the note's content
-  (`apply_templates()` prunes templates the layout no longer produces). Cloze note types
-  support exactly one template, so the reverse card is skipped for them.
-- A layout with an empty `front` falls back to the first field it does have, since Anki
-  refuses to generate a card from a blank prompt.
-- Cloze backs repeat the prompt through `{{cloze:Field}}` rather than `{{FrontSide}}`,
-  because Anki validates that a cloze template references the filter on both sides.
-- `hand_edited: True` makes sync stop regenerating that deck's templates
-  (`ensure_custom_models()`, `update_existing_note_type_templates()`), so template work
-  the user did by hand in Anki survives a sync.
+  not a second note. Anki schedules both directions independently off one row, and
+  removing `reverse` from the sheet later removes those cards without touching the note's
+  content (`apply_templates()` prunes templates the settings no longer produce).
 
-`src/ui/card_layout_dialog.py` is the editor, reachable at
-`Tools → Sheets2Anki → Configure Card Layout` (`Ctrl+Shift+C`).
+`sync_config.py` **caches** the `(plan, sheet_config)` pair each sync parsed, under
+`sheets2anki::sheet_settings`. That is what lets
+`templates_and_definitions.update_existing_note_type_templates()` rebuild a deck's
+templates outside a sync, and what the dialog reads. A cached entry with no
+`content_headers` deliberately yields `(None, None)`: rendering from it would produce a
+card with no fields on it.
 
-## Card-side features
-
-`card_assets.py` holds the CSS/HTML/JS rendered into cards — currently the study
-**timer** — and `card_layout.py` imports it and composes it into the templates:
-`_timer_parts()` picks the CSS/JS matching the layout's `timer` and `timer_position`
-keys, so the timer is a per-deck setting like the rest of the layout.
-
-> The timer is **per-deck only**. There is no global timer setting: the separate
-> `Configure Timer` dialog and `config_manager.get_timer_position()` /
-> `set_timer_position()` were removed once it turned out nothing read them — the
-> templates had always been driven by the layout dict. Configure it in the card-layout
-> dialog (`Ctrl+Shift+C`).
+`src/ui/card_layout_dialog.py` (`Tools → Sheets2Anki → Configure Card Layout`,
+`Ctrl+Shift+C`) is a **read-only** view of that cache. Do not add editing controls to it:
+with two places able to change one setting, the loser is silently overwritten on the next
+sync, and a control that "does nothing" is close to undiagnosable. Settings are changed by
+editing the sheet and re-syncing.
 
 ## Configuration: where settings live
 
@@ -299,11 +384,13 @@ Settings are split by whether they should follow the user to their other machine
 - **`config.json`** (committed) — default settings only.
 - **`meta.json`** (gitignored, auto-created by Anki in the add-on dir) — **the source of
   truth** for machine-local user settings and all connected remote decks.
-- **Anki's collection config** (`col.get_config()` / `col.set_config()`) — the per-deck
-  **card layouts**, under the single key `sheets2anki::card_layouts` holding
-  `{sheet_id: layout}`. Anki's `config` table carries a `usn`, so entries there sync
-  through AnkiWeb along with the notes and note types; a layout configured on one machine
-  shows up on the next one with no Google API and no extra setup.
+- **Anki's collection config** (`col.get_config()` / `col.set_config()`) — the **cache of
+  each sheet's parsed settings row**, under the single key `sheets2anki::sheet_settings`
+  holding `{sheet_id: entry}`. Anki's `config` table carries a `usn`, so entries there
+  sync through AnkiWeb along with the notes and note types; a second machine renders
+  identical cards before it has ever downloaded the sheet, with no Google API and no extra
+  setup. It is a cache, not a store: the spreadsheet is the source of truth and every sync
+  overwrites the entry.
 
 `config.json`/`meta.json` are managed *exclusively* through `config_manager.py`
 (`get_meta()` / `save_meta()`), and the collection config *exclusively* through
@@ -357,7 +444,8 @@ Current test modules:
 | :--- | :--- |
 | `test_core_logic.py` | URL conversion, note keying, duplicate-ID detection, core helpers |
 | `test_column_model.py` | Header normalization, `plan_columns()`, SYNC gating, deck path, tags |
-| `test_card_layout.py` | Layout defaults/reconciliation and template generation |
+| `test_card_layout.py` | Side splitting and template generation from a `SheetConfig` |
+| `test_sync_config.py` | The settings cache: round-tripping a parse through the collection config |
 | `test_data_processor.py` | TSV parsing, validation, Cloze detection, `RemoteDeck` |
 | `test_config_manager.py` | Settings CRUD and persistence |
 | `test_utils.py` | URL/hash/validation utilities |

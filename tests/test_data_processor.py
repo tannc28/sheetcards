@@ -59,6 +59,73 @@ class TestPotentialNoteMetrics:
 
 
 @pytest.mark.unit
+class TestSettingsRow:
+    """The optional ``#config`` row is a directive, not data."""
+
+    TSV = (
+        "ID\tQUESTION\tANSWER\tSYNC\n"
+        "#config reverse; align=left\tsize=48; tts=en_US\tcolor=muted\t\n"
+        "Q1\tq\ta\ttrue\n"
+    )
+
+    def test_settings_row_is_not_a_note(self):
+        deck = _deck(self.TSV)
+        assert [n["ID"] for n in deck.notes] == ["Q1"]
+
+    def test_settings_row_is_in_no_metric(self):
+        # Not a valid line, not an invalid line, not a ghost row: it is not a line of
+        # the table at all as far as the sync report is concerned.
+        deck = _deck(self.TSV)
+        assert deck.total_table_lines == 1
+        assert deck.valid_note_lines == 1
+        assert deck.invalid_note_lines == 0
+        assert deck.ignored_ghost_rows == 0
+        assert deck.total_potential_anki_notes == 1
+        deck.validate_metrics()
+
+    def test_settings_reach_the_deck(self):
+        deck = _deck(self.TSV)
+        assert deck.sheet_config.present is True
+        assert deck.sheet_config.reverse is True
+        assert deck.sheet_config.align == "left"
+        assert deck.sheet_config.for_field("QUESTION").size == 48
+        assert deck.sheet_config.for_field("QUESTION").tts == "en_US"
+        assert deck.sheet_config.for_field("ANSWER").color == "muted"
+
+    def test_sheet_without_a_settings_row_keeps_every_row_as_data(self):
+        deck = _deck("ID\tQUESTION\tANSWER\nQ1\tq\ta\nQ2\tq2\ta2")
+        assert deck.sheet_config.present is False
+        assert deck.total_table_lines == 2
+        assert [n["ID"] for n in deck.notes] == ["Q1", "Q2"]
+
+    def test_a_config_row_further_down_is_ordinary_data(self):
+        # Only the row directly under the headers is the settings row; anything else
+        # is a note, and silently swallowing it would lose the user's row.
+        deck = _deck("ID\tQUESTION\tANSWER\nQ1\tq\ta\n#config\tx\ty")
+        assert deck.sheet_config.present is False
+        assert deck.total_table_lines == 2
+
+    def test_typos_surface_in_the_debug_log(self):
+        messages = []
+        _deck(
+            "ID\tQUESTION\tANSWER\n#config\tsize=huge\t\nQ1\tq\ta",
+            debug_messages=messages,
+        )
+        joined = "\n".join(messages)
+        assert "Settings row" in joined
+        assert "size must be a number of pixels" in joined
+
+    def test_row_numbers_in_the_log_still_match_the_sheet(self):
+        messages = []
+        _deck(
+            "ID\tQUESTION\tANSWER\n#config\t\t\n\tq\ta",
+            debug_messages=messages,
+        )
+        # Header is row 1, settings row 2, so the broken note is row 3.
+        assert any("Row 3: invalid note (empty ID)" in m for m in messages)
+
+
+@pytest.mark.unit
 class TestClozeFormatting:
     def test_has_cloze_detects_basic_and_uppercase(self):
         assert d.has_cloze_deletion("{{c1::x}}")
