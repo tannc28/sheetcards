@@ -139,6 +139,18 @@ class TestTags:
         # inside a single tag component.
         plan = cm.plan_columns(["ID", "SUBDECK 1", "Front"])
         tags = d.build_tags(
+            {"ID": "Q1", "SUBDECK 1": "Unit 3: opening", "Front": "q"}, plan
+        )
+        assert not any(" " in t for t in tags)
+        assert "sheets2anki::unit_3_opening" in tags
+
+    def test_spaces_and_colons_are_neutralised_in_non_ascii_deck_names(self):
+        # Unicode coverage: multi-byte deck names are exactly where tag cleaning
+        # could break — lower-casing and the space/colon substitutions have to work
+        # on characters, and \w must keep the non-ASCII letters instead of stripping
+        # them.
+        plan = cm.plan_columns(["ID", "SUBDECK 1", "Front"])
+        tags = d.build_tags(
             {"ID": "Q1", "SUBDECK 1": "Bài 3: mở đầu", "Front": "q"}, plan
         )
         assert not any(" " in t for t in tags)

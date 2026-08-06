@@ -542,7 +542,7 @@ def clean_tag_text(text):
     cleaned = text.strip().replace(" ", "_").replace("::", "_").replace(":", "_")
     cleaned = cleaned.replace(";", "_")
     cleaned = re.sub(r"[^\w\-_\[\]]", "", cleaned, flags=re.UNICODE)
-    # "Bài 3: mở đầu" would otherwise become "bài_3__mở_đầu" — collapse the runs so
+    # "Unit 3: intro" would otherwise become "unit_3__intro" — collapse the runs so
     # punctuation next to a space doesn't leave a visible scar in the tag.
     cleaned = re.sub(r"_+", "_", cleaned).strip("_")
     return cleaned.lower()

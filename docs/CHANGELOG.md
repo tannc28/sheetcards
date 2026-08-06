@@ -4,6 +4,29 @@
 
 ---
 
+## 🔧 **v4.0.1** - August 2026 *(Maintenance)*
+
+### 🐛 Fixes
+- **Deck names kept a localised "Google Sheets" suffix.** The page title Google serves
+  is translated — "… - Google Trang tính", "… - Google Планшети", "… - Google Tabellen" —
+  but only the English and Portuguese forms were stripped, so everyone else ended up with
+  a deck literally named `HSK4 - Google Trang tính`. The suffix is now matched by shape
+  rather than by a list of locales, with a word cap so a sheet genuinely named after a
+  Google product keeps its name. Extracted as `deck_manager.strip_google_title_suffix`
+  and covered by tests.
+
+### 🌍 Language
+- The **Configure Card Layout** dialog shipped with Vietnamese strings; it is now English
+  like the rest of the add-on.
+- Worked examples in `README.md`, `docs/README.md` and the docstrings switched to English
+  headers (`Word`, `Reading`, `Meaning`, `Example`). The point that headers may be in any
+  language or script is kept — it is now stated rather than demonstrated, so the primary
+  example reads for everyone.
+- Test sample data is English by default, with explicit non-ASCII cases retained per test
+  module so Unicode headers, deck levels and tags stay covered.
+
+---
+
 ## 💥 **v4.0.0** - August 2026 *(Breaking — the sheet now defines the schema)*
 
 The fixed 24-column schema is gone. A sheet declares its own fields, and the card is

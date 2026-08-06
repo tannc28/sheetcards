@@ -3,7 +3,8 @@
 The spreadsheet drives the schema: only a handful of column names carry special
 meaning, and every other column becomes an Anki note field named exactly like the
 header. That way a sheet can use whatever vocabulary its subject calls for —
-"Hán tự", "Pinyin", "Nghĩa" — instead of a fixed column list baked into the code.
+"Word", "Reading", "Meaning" — instead of a fixed column list baked into the code.
+Headers may be in any language or script; the text becomes the field name verbatim.
 
 Reserved headers (matched case-insensitively, surrounding whitespace ignored):
 

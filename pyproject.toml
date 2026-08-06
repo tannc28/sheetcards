@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sheets2anki"
-version = "4.0.0"
+version = "4.0.1"
 description = "Anki add-on that syncs flashcard decks from Google Sheets, with multi-student decks, hierarchical organization, and optional AI study assistance."
 readme = "README.md"
 license = { file = "LICENSE" }

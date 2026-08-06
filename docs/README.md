@@ -203,9 +203,10 @@ Per deck:
 
 There is **no fixed column list**. The spreadsheet drives the schema: a handful of
 headers are reserved, and every other column becomes a note field named exactly like the
-header — so a sheet can use whatever vocabulary its subject calls for ("Hán tự",
-"Pinyin", "Nghĩa") instead of a column list baked into the code. This all lives in
-`column_model.py`.
+header — so a sheet can use whatever vocabulary its subject calls for ("Word",
+"Reading", "Meaning") instead of a column list baked into the code. Headers may be in any
+language or script, since the header text becomes the field name verbatim. This all lives
+in `column_model.py`.
 
 - **Reserved headers**, matched case-insensitively with surrounding whitespace and any
   BOM stripped (`column_model.normalize()` / `clean()`):
