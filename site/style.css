@@ -132,6 +132,17 @@ button:disabled { opacity: .45; cursor: default; }
 .status.bad { color: var(--bad); }
 .hint-line { margin: 0 0 26px; font-size: 13px; color: var(--muted); max-width: 78ch; }
 
+/* Says why a report appeared without the visitor asking for one. */
+.demo-note {
+  margin: 10px 0 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 0 6px 6px 0;
+}
+
 /* ---- panels ------------------------------------------------------------ */
 
 .panel {

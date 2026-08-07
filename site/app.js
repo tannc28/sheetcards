@@ -13,6 +13,12 @@ import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
+// A filled-in report is a better landing page than an empty form: a first-time
+// visitor sees what the tool actually answers instead of having to supply a sheet
+// to find out. Overridden by ?url=, and by anything typed into the field.
+const DEMO_SHEET =
+  "https://docs.google.com/spreadsheets/d/1rDmjG7k82PJpAfQE4iT6XTUf3yy_o5GaW7M_CDQaRhE/edit";
+
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
 const PURE_MODULES = ["errors", "column_model", "sheet_config", "card_layout", "tsv_model"];
@@ -198,9 +204,15 @@ async function preview() {
     if (state.row < 0) state.row = 0;
     state.template = 0;
 
-    const url = new URL(location.href);
-    url.searchParams.set("url", input);
-    history.replaceState(null, "", url);
+    // The example is what you get with no query string, so putting it back into
+    // the address bar would only make the landing URL longer for no gain.
+    const isDemo = input === DEMO_SHEET;
+    $("#demo-note").hidden = !isDemo;
+    if (!isDemo) {
+      const url = new URL(location.href);
+      url.searchParams.set("url", input);
+      history.replaceState(null, "", url);
+    }
 
     render();
     status(`Read ${state.analysis.stats.total_table_lines} rows.`, "ok");
@@ -587,9 +599,8 @@ addEventListener("message", (e) => {
   if (frame && e.data?.h) frame.style.height = `${e.data.h + 8}px`;
 });
 
-const fromQuery = new URLSearchParams(location.search).get("url");
-if (fromQuery) $("#url").value = fromQuery;
+$("#url").value = new URLSearchParams(location.search).get("url") || DEMO_SHEET;
 
 boot()
-  .then(() => fromQuery && preview())
+  .then(preview)
   .catch((err) => status(`Could not start Python: ${err.message}`, "bad"));
