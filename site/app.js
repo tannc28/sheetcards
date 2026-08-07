@@ -542,6 +542,9 @@ function cardView(a) {
   const { front, back } = renderCard(template, row.values, { ordinal });
 
   const doc = `<!doctype html><meta charset="utf-8">
+    <!-- Same reason as the referrerpolicy on the frame itself: an embed with no
+         referrer is refused by YouTube with "Error 153". -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <style>
       html { color-scheme: light dark; }
       body { margin: 0; padding: 18px; font-family: arial, sans-serif; font-size: 20px;

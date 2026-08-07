@@ -4,6 +4,25 @@
 
 ---
 
+## ✨ **v6.6.1** - August 2026 *(Fix)*
+
+### 🐞 "Error 153" where a video should be, on the phone only
+
+- A `video` column played on the desktop and showed *"Error 153: Video player
+  configuration error"* in AnkiDroid. The frame was loading fine — everything else on
+  the card did too, image and TTS and hint and ruby — but a webview does not send an
+  HTTP `Referer` the way a browser does, and YouTube refuses an embed that arrives
+  without one.
+- The card template now sets `referrerpolicy="strict-origin-when-cross-origin"`, the
+  documented fix, and the preview's own card frame carries the matching
+  `<meta name="referrer">`.
+- **Correcting what v6.3.0 and the README said:** framed players are *not* "blocked on
+  the mobile clients". They load. YouTube declines them on a referrer technicality,
+  which is a different problem with a different fix, and saying otherwise sent anyone
+  hitting it looking in the wrong place.
+
+---
+
 ## ✨ **v6.6.0** - August 2026 *(Feature)*
 
 ### 📦 The preview builds an `.apkg`, in the browser

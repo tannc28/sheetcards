@@ -93,8 +93,14 @@ _MEDIA_ELEMENTS = {
     # covers both and the sheet only ever has to say "video".
     # The aspect ratio lives in the stylesheet because an iframe, unlike <video>,
     # has no intrinsic size and would otherwise collapse to a 150px-tall box.
+    # referrerpolicy is not decoration. A webview does not send an HTTP Referer
+    # the way a browser does, and YouTube refuses to play an embed without one —
+    # the card comes back reading "Error 153: Video player configuration error"
+    # on the phone while working perfectly on the desktop. Naming the policy makes
+    # the webview send the origin it does have.
     "video": (
         '<iframe src="{ref}" class="s2a-embed" allowfullscreen '
+        'referrerpolicy="strict-origin-when-cross-origin" '
         'allow="encrypted-media; picture-in-picture"{style}></iframe>'
     ),
 }

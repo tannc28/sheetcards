@@ -373,10 +373,13 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
   `video` is a tidier spreadsheet; what you pay is a card that needs a connection. If a
   deck must work offline, put the files in `collection.media` and reference them the
   ordinary Anki way.
-- **A framed player is blocked on the mobile clients.** AnkiDroid and AnkiMobile are far
-  stricter about third-party frames than the desktop, so a `video` column that plays fine
-  on a computer will usually show nothing on a phone. Anything you must be able to review
-  on mobile belongs in the text of the card, not in a frame.
+- **A framed player needs a referrer, and a webview barely sends one.** The frame itself
+  loads on AnkiDroid and AnkiMobile — but YouTube refuses to play an embed that arrives
+  without an HTTP `Referer` header, and answers with *"Error 153: Video player
+  configuration error"*. The card templates set
+  `referrerpolicy="strict-origin-when-cross-origin"`, which is the documented fix, and it
+  is worth checking on your own phone: the desktop never shows the problem, so this is
+  the one thing you cannot verify from a computer.
 - **`tts` and `furigana` are refused on a media column.** They would act on the address:
   `tts` would read the URL out loud, so it is dropped with a warning, and `furigana` is
   turned off with one. `hint`, on the other hand, is *accepted and currently has no

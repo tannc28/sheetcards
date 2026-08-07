@@ -695,3 +695,17 @@ class TestClozeIsASheetLevelChoice:
         deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
         assert deck.sheet_config.cloze_field == "Example"
         assert deck.sheet_config.warnings == []
+
+
+@pytest.mark.unit
+def test_a_framed_player_names_a_referrer_policy():
+    """Without it the card reads "Error 153" on a phone and plays on a desktop.
+
+    A webview does not send an HTTP Referer the way a browser does, and YouTube
+    refuses an embed that arrives without one. Naming the policy is what makes the
+    webview send the origin it has.
+    """
+    plan = plan_columns(["ID", "Word", "Clip"])
+    config = parse_config_row({"ID": "#config", "Clip": "video"}, plan)
+    afmt = build_templates(plan, config)[0]["afmt"]
+    assert 'referrerpolicy="strict-origin-when-cross-origin"' in afmt
