@@ -12,7 +12,8 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 *   **Text-to-Speech:** Add `tts=zh_CN` (or `en_US`, `pt_BR`, …) to a column and Anki reads it aloud with your system voices, on desktop and mobile.
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
-*   **Rich Media:** Supports HTML, Images, and Videos (YouTube/Vimeo).
+*   **Media from a link:** Mark a column `image`, `audio` or `video` and a cell holding a bare URL becomes the picture or the player (`size=320` caps the width). These are links, so the card fetches them each time it is shown — great for a tidy sheet, but nothing shows offline, and mobile clients are stricter about remote content. For media that works on a plane, use Anki's own `collection.media`.
+*   **Rich Media:** A field's HTML is rendered as written, so pasting an `<iframe>` embed (YouTube, Vimeo) straight into a cell works — a YouTube page link will *not* play in a `video` column, which expects a media file.
 *   **Cloze Support:** Automatically detects `{{c1::cloze}}` cards.
 
 ## ⚡ Quick Start
@@ -33,7 +34,7 @@ The spreadsheet decides the schema. Only these headers are reserved:
 
 Every other column you add becomes a note field with the same name — `Question`, `Answer`, `Pinyin`, whatever your subject calls for. By default the first of them is the front of the card and the rest are the back.
 
-To change that, put one optional **settings row** right under the headers: write `#config` in its `ID` cell and, in each column's cell, what that column should do — `side=front; size=48; tts=zh_CN`, `color=muted; hint`, `furigana`. Without that `#config` cell there is no settings row and row 2 is just another card, so sheets made before this feature keep working untouched. `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) shows you what the add-on read, including any typo it could not understand.
+To change that, put one optional **settings row** right under the headers: write `#config` in its `ID` cell and, in each column's cell, what that column should do — `side=front; size=48; tts=zh_CN`, `color=muted; hint`, `furigana`, `image; size=320`. Without that `#config` cell there is no settings row and row 2 is just another card, so sheets made before this feature keep working untouched. `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) shows you what the add-on read, including any typo it could not understand.
 
 The add-on handles the rest, creating beautiful, organized notes in your collection.
 

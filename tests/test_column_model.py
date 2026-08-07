@@ -263,3 +263,17 @@ class TestFlagNegation:
         parsed = parse_config_row({"ID": "#config speed=9"}, plan)
         assert parsed.speed is None
         assert any("outside" in w for w in parsed.warnings)
+
+
+@pytest.mark.unit
+def test_the_layout_dialog_knows_every_field_setting():
+    """The dialog keeps its own copy of the key list, which silently went stale.
+
+    A key missing there renders the column as having no settings at all, which
+    reads as "the add-on ignored my sheet" — so pin the two lists together.
+    """
+    from src.sheet_config import FieldConfig
+    from src.ui.card_layout_dialog import _FIELD_KEYS
+
+    missing = [k for k in vars(FieldConfig()) if k not in _FIELD_KEYS]
+    assert not missing, f"card_layout_dialog._FIELD_KEYS is missing: {missing}"

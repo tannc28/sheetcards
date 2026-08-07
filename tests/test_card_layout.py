@@ -339,3 +339,102 @@ class TestNonAsciiFields:
         afmt = build_templates(plan, config)[0]["afmt"]
         assert "font-size: 22px" in afmt and "color: var(--s2a-muted)" in afmt
         assert "Ví dụ" not in afmt
+
+
+@pytest.mark.unit
+class TestMediaColumns:
+    """A media column holds a URL, which is wrapped rather than printed."""
+
+    def _cfg(self, cell):
+        from src.column_model import plan_columns
+        from src.sheet_config import parse_config_row
+
+        plan = plan_columns(["ID", "Word", "Link"])
+        return plan, parse_config_row({"ID": "#config", "Link": cell}, plan)
+
+    @pytest.mark.parametrize(
+        "cell,tag",
+        [("image", "<img"), ("audio", "<audio"), ("video", "<video")],
+    )
+    def test_each_kind_wraps_the_field_in_its_element(self, cell, tag):
+        plan, sheet_config = self._cfg(cell)
+        afmt = build_templates(plan, sheet_config)[0]["afmt"]
+        assert f'{tag} src="{{{{Link}}}}"' in afmt
+
+    def test_playable_media_always_gets_controls(self):
+        # A sound the learner cannot replay is worse than no sound.
+        for kind in ("audio", "video"):
+            plan, sheet_config = self._cfg(kind)
+            assert "controls" in build_templates(plan, sheet_config)[0]["afmt"]
+
+    def test_size_caps_the_width_not_the_font(self):
+        plan, sheet_config = self._cfg("image; size=320")
+        afmt = build_templates(plan, sheet_config)[0]["afmt"]
+        assert "max-width: 320px" in afmt
+        assert "font-size: 320px" not in afmt
+
+    def test_size_may_be_written_before_the_kind(self):
+        _, sheet_config = self._cfg("size=480; video")
+        assert sheet_config.for_field("Link").size == 480
+
+    def test_media_width_allows_sizes_a_font_size_would_reject(self):
+        _, sheet_config = self._cfg("image; size=320")
+        assert sheet_config.for_field("Link").size == 320
+        assert sheet_config.warnings == []
+
+    def test_a_text_column_still_rejects_a_font_size_of_320(self):
+        _, sheet_config = self._cfg("size=320")
+        assert sheet_config.for_field("Link").size is None
+        assert any("font size" in w for w in sheet_config.warnings)
+
+    def test_two_kinds_on_one_column_keeps_the_first_and_warns(self):
+        _, sheet_config = self._cfg("image; video")
+        assert sheet_config.for_field("Link").media == "image"
+        assert any("one kind of media" in w for w in sheet_config.warnings)
+
+    def test_tts_is_dropped_from_a_media_column(self):
+        # Speaking a media column would read the URL out loud.
+        _, sheet_config = self._cfg("image; tts=zh_CN")
+        cfg = sheet_config.for_field("Link")
+        assert cfg.tts is None and cfg.voices == []
+        assert any("read the URL aloud" in w for w in sheet_config.warnings)
+
+    def test_hint_really_hides_media_behind_a_disclosure(self):
+        # Regression: this used to assert only `{{#Link}}`, which the field guard
+        # always supplies — so it passed while `hint` did nothing at all. Anki's
+        # {{hint:}} reveals the field's text, i.e. the URL, so media needs its own
+        # disclosure element.
+        plan, sheet_config = self._cfg("image; hint")
+        afmt = build_templates(plan, sheet_config)[0]["afmt"]
+
+        assert "<details" in afmt and "<summary>" in afmt
+        assert afmt.index("<summary>") < afmt.index("<img")
+        assert "{{hint:Link}}" not in afmt
+
+    def test_hint_summary_uses_the_label_when_one_is_given(self):
+        plan, sheet_config = self._cfg("image; hint; label=Picture")
+        assert (
+            "<summary>Picture</summary>"
+            in build_templates(plan, sheet_config)[0]["afmt"]
+        )
+
+    def test_media_without_hint_is_not_wrapped_in_a_disclosure(self):
+        plan, sheet_config = self._cfg("image")
+        assert "<details" not in build_templates(plan, sheet_config)[0]["afmt"]
+
+    @pytest.mark.parametrize(
+        "cell", ["image; color=red", "image; bold", "image; align=left"]
+    )
+    def test_text_styling_on_a_media_column_is_reported(self, cell):
+        # These have nothing to style, and silence would read as "it applied".
+        _, sheet_config = self._cfg(cell)
+        assert any("does nothing on a image column" in w for w in sheet_config.warnings)
+
+    def test_size_on_audio_is_reported_since_it_cannot_apply(self):
+        _, sheet_config = self._cfg("audio; size=300")
+        assert sheet_config.for_field("Link").size is None
+        assert any("size does nothing on an audio" in w for w in sheet_config.warnings)
+
+    def test_a_url_with_query_parameters_survives_into_the_src(self):
+        plan, sheet_config = self._cfg("image")
+        assert '<img src="{{Link}}"' in build_templates(plan, sheet_config)[0]["afmt"]

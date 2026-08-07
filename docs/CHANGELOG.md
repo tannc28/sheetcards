@@ -4,6 +4,33 @@
 
 ---
 
+## ✨ **v6.1.0** - August 2026 *(Feature)*
+
+### ✨ Media columns
+- Three new settings-row keys turn a column holding a bare URL into the element that
+  plays it, instead of printing the address as text: **`image`**, **`audio`** and
+  **`video`**. Written as `Picture` → `image; size=320`, the column renders as
+  `<img src="…" style="max-width: 320px">`; audio and video always carry `controls`,
+  because a sound the learner cannot replay is worse than no sound.
+- `size` now means what it should for each kind: a font size on a text column
+  (6–200px) and a width on a media one (1–2000px). It may be written before or after
+  the kind — `size=480; video` works.
+- Conflicting or meaningless combinations are reported rather than silently applied:
+  two kinds on one column keeps the first; `tts` on a media column is removed, since
+  it would read the URL out loud; `furigana` on one does nothing. `hint` still works,
+  so a picture can hide behind a click-to-reveal link.
+
+### ⚠️ Worth knowing
+- These are **links**, so the media is fetched over the network: it will not appear
+  offline, and mobile clients are stricter than the desktop about loading remote
+  content. Anki's own design keeps media inside `collection.media`, which syncs and
+  works offline — the trade for a tidier spreadsheet is a card that needs a
+  connection.
+- A YouTube page URL will not play in a `video` column; that needs an `<iframe>`,
+  which you can still paste into a cell directly since a field's HTML renders as-is.
+
+---
+
 ## 💥 **v6.0.0** - August 2026 *(Breaking — the sheet now declares the card)*
 
 The spreadsheet already decided what a note contains. Now it decides how the card

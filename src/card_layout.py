@@ -55,6 +55,8 @@ def _css(sheet_config):
         " margin-top: 14px; }\n"
         ".s2a-label { font-size: 12px; letter-spacing: .06em;"
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
+        ".s2a-reveal > summary { cursor: pointer; font-size: 13px;"
+        " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
         "</style>\n"
     )
 
@@ -75,6 +77,16 @@ def _inline_style(cfg):
     return "; ".join(parts)
 
 
+# A media column holds nothing but a URL, so the cell is wrapped in the element that
+# plays it rather than printed. `controls` is always on: a sound the learner cannot
+# replay is worse than no sound.
+_MEDIA_ELEMENTS = {
+    "image": '<img src="{ref}"{style}>',
+    "audio": '<audio src="{ref}" controls></audio>',
+    "video": '<video src="{ref}" controls{style}></video>',
+}
+
+
 def _reference(field, cfg, as_cloze):
     """How the field's value is pulled in: plain, or through one of Anki's filters.
 
@@ -89,6 +101,19 @@ def _reference(field, cfg, as_cloze):
     if cfg.furigana:
         return f"{{{{furigana:{field}}}}}"
     return f"{{{{{field}}}}}"
+
+
+def _media_html(field, cfg):
+    """The media element for a URL column, sized by ``size`` when given.
+
+    ``size`` means a font size everywhere else, but a picture has no font — here it
+    caps the width instead, which is what someone writing ``image; size=200`` means.
+    """
+    template = _MEDIA_ELEMENTS[cfg.media]
+    style = f' style="max-width: {cfg.size}px"' if cfg.size else ""
+    # The URL comes from the field, so it goes through Anki's own substitution and is
+    # never built by string-joining here.
+    return template.format(ref=f"{{{{{field}}}}}", style=style)
 
 
 def _speed_text(speed):
@@ -129,12 +154,25 @@ def _rows(fields, sheet_config, css_class, as_cloze=False):
             continue
 
         cfg = sheet_config.for_field(name)
-        style = _inline_style(cfg)
+        style = "" if cfg.media else _inline_style(cfg)
         style_attr = f' style="{style}"' if style else ""
         # The caption is user text from the sheet, so it is escaped; the field name is
         # not, because Anki matches ``{{Field}}`` on the name exactly as written.
         label = f'<div class="s2a-label">{escape(cfg.label)}</div>' if cfg.label else ""
-        reference = _reference(field, cfg, as_cloze)
+        if cfg.media:
+            reference = _media_html(field, cfg)
+            if cfg.hint:
+                # Anki's {{hint:}} reveals the field's *text*, which for a media
+                # column is the URL — useless. A <details> disclosure hides the
+                # element itself, needs no JavaScript, and works on mobile.
+                caption = escape(cfg.label) if cfg.label else cfg.media.capitalize()
+                reference = (
+                    f'<details class="s2a-reveal"><summary>{caption}</summary>'
+                    f"{reference}</details>"
+                )
+                label = ""  # the summary already names it
+        else:
+            reference = _reference(field, cfg, as_cloze)
 
         out.append(
             f"{{{{#{field}}}}}"

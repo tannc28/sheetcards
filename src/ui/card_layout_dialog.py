@@ -41,11 +41,14 @@ from ..theme import secondary_button_qss
 # =============================================================================
 
 # Per-column settings the ``#config`` row can carry (see ``sheet_config``).
+# Kept in step with sheet_config.FieldConfig — a key missing here shows the column
+# as having no settings at all, which reads as "the add-on ignored my sheet".
 _FIELD_KEYS = (
     "side",
     "size",
     "color",
     "align",
+    "media",
     "tts",
     "voices",
     "speed",

@@ -90,9 +90,10 @@ deleted. Your cards are ready to study.
 
 By default the **first** content column is the front and the rest are the back, so the
 example above gives you `Question` → `Answer`. To change that — or to set text sizes,
-colours, hints, furigana or text-to-speech — add a [settings row](#the-settings-row) to
-the sheet and sync again. **Configure Card Layout** (`Ctrl+Shift+C`) shows you what the
-add-on read out of that row, but the sheet is where you edit it.
+colours, hints, furigana, text-to-speech, or to turn a column of URLs into pictures, sound
+or video — add a [settings row](#the-settings-row) to the sheet and sync again.
+**Configure Card Layout** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
+but the sheet is where you edit it.
 
 ---
 
@@ -160,8 +161,8 @@ This produces:
 
 Everything above describes a sheet that only holds *content*. A sheet can also describe
 **how** its columns are presented — which side of the card they land on, how big they
-are, whether they are read aloud — by adding one optional row directly under the header
-row.
+are, whether they are read aloud, whether a URL becomes a picture or a player — by adding
+one optional row directly under the header row.
 
 **Row 2 becomes the settings row when its `ID` cell starts with `#config`.** Data then
 starts at row 3. Without that marker there is no settings row at all and row 2 is an
@@ -190,7 +191,7 @@ Written in that column's cell of the settings row.
 | :--- | :--- | :--- | :--- |
 | `side` | `front`, `back`, `hide` | first content column front, all others back | Which side the column appears on. `hide` keeps the field and its content in Anki but shows it on neither side |
 | `label` | any text | no caption | Prints a small caption above the value. Without it the value stands alone |
-| `size` | a number of pixels, **6–200** (`size=48` or `size=48px`) | 40 px on the front, 18 px on the back | Font size for that column |
+| `size` | a number of pixels — **6–200** on a text column, **1–2000** on a media one (`size=48` or `size=48px`) | 40 px on the front, 18 px on the back; no width cap on media | **Font size** on a text column, maximum **width** on an `image` or `video` column. The range that applies is the one for whatever the cell turned out to be, so `size=480; video` works as well as `video; size=480` |
 | `color` | `muted`, `accent`, a CSS colour name (`crimson`), or a `#hex` value | the card's normal text colour | `muted` and `accent` **follow Anki's light/dark theme**; a fixed colour does not, so a hard-coded `black` disappears in night mode |
 | `bold` | switch | off | Bold text |
 | `italic` | switch | off | Italic text |
@@ -200,6 +201,29 @@ Written in that column's cell of the settings row.
 | `tts` | a **full** language code (`zh_CN`, `en_US`, `pt_BR`; `zh-CN` is accepted too) | no speech | Has Anki read the field aloud with the system voices |
 | `voices` | comma-separated voice names (`voices=Huihui,Yaoyao`) | Anki picks | A *preference*, not a requirement — see below |
 | `speed` | a number **0.5–2.0** | the deck-wide `speed`, otherwise Anki's own default | Speaking rate for that column; overrides the deck-wide value |
+| `image` | switch | off | The column holds a **bare image URL**: the card shows the picture instead of printing the address. `size` caps its width |
+| `audio` | switch | off | The column holds a **bare audio URL**: the card shows a player, always with `controls` so it can be replayed |
+| `video` | switch | off | The column holds a **bare video URL**: the card shows a video player with `controls`. `size` caps its width |
+
+#### Media columns
+
+`image`, `audio` and `video` say *what the cell contains*, so a column of links becomes
+the thing the links point at:
+
+| Its cell in the settings row | What the card renders |
+| :--- | :--- |
+| `image; size=320` | `<img src="{{Picture}}" style="max-width: 320px">` |
+| `audio` | `<audio src="{{Sound}}" controls></audio>` |
+| `video; size=480` | `<video src="{{Clip}}" controls style="max-width: 480px"></video>` |
+
+The cell in a *data* row holds nothing but the URL — the add-on builds the tag around it.
+A column carries **one** kind of media: `image; video` keeps `image` and warns.
+
+**This is not the [Image Processor](#configure-image-processor).** `image` means *"I
+already have a URL"*; the Image Processor means *"I have a picture pasted into the cell"*
+and needs a Google Apps Script you deploy yourself to upload it and write an `<img>` tag
+into a separate `HTML IMAGE` column. They can live in the same sheet; they solve
+different problems.
 
 #### Deck-wide keys
 
@@ -267,8 +291,31 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
   aloud when the side appears, even while its text is collapsed.
 - **`furigana` does nothing visible without the `text[reading]` shape.** A plain `tuī chí`
   cell simply prints as-is.
-- **A switch has no "off" form.** Write `bold` when you want bold and leave it out when
-  you don't — `bold=false` still turns it *on*.
+- **Media columns are *links*, and links need the network.** The URL is fetched every time
+  the card is shown, so the picture or player is blank offline, and mobile clients are
+  stricter than the desktop about loading remote content. Anki's own design is the
+  opposite: media lives in your `collection.media` folder, which syncs with your
+  collection and works with the plane in the air. What you buy with `image`/`audio`/
+  `video` is a tidier spreadsheet; what you pay is a card that needs a connection. If a
+  deck must work offline, put the files in `collection.media` and reference them the
+  ordinary Anki way.
+- **A YouTube *page* URL will not play in a `video` column.** `<video>` plays a media file,
+  not a web page; a `youtube.com/watch?v=…` link needs an `<iframe>`. That still works —
+  paste the embed HTML straight into the cell and leave the settings row alone, because a
+  field's HTML is rendered as-is.
+- **`tts` and `furigana` are refused on a media column.** They would act on the address:
+  `tts` would read the URL out loud, so it is dropped with a warning, and `furigana` is
+  turned off with one. `hint`, on the other hand, is *accepted and currently has no
+  effect* — the element still appears as soon as its side does, and nothing warns you.
+- **Text styling does not apply to a media column.** `color`, `bold`, `italic` and the
+  column's own `align` are skipped for `image`/`audio`/`video`; only `size` (as a width),
+  `side`, `label` and the deck-wide `align` reach the card. `size` on an `audio` column is
+  accepted but changes nothing visible.
+- **The Card Layout window does not list the media kind.** Its **Settings** panel predates
+  these three keys, so a media column looks bare there; the **Preview** panel and the real
+  card do show the element.
+- **A switch can be written off.** `bold` turns bold on; `bold=false` (or `no`, `0`,
+  `off`, `none`) turns it off, so a shared sheet can spell out both.
 - **Typos are reported, not ignored.** `siz=48` or `color=notacolour` produce a warning
   naming the column (*"'Word': 'notacolour' is not a colour name or #hex value"*), and a
   per-column value outside its range (`size=400`, `speed=9`) is refused rather than
@@ -279,7 +326,8 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
 - **Only content columns carry directives.** Anything typed into the settings row's
   `SYNC`, `TAGS` or `SUBDECK n` cells is ignored.
 - **Separate the marker from its settings with a space.** `#config align=left` is a
-  settings row; `#config;align=left` is not recognised as the marker and the whole line
+  settings row; the marker is followed by a separator, so both `#config align=left`
+  and `#config;align=left` are recognised, while a real column value like
   is imported as a note.
 - **On a cloze row, `cloze:` wins.** A column carrying `{{c1::…}}` is rendered through
   Anki's cloze filter, so `hint` and `furigana` do not apply to it — Anki refuses to save
@@ -456,6 +504,12 @@ content.
 **What it does** — turns images pasted *into cells* of your spreadsheet into `<img>` tags
 that display on every device, including AnkiMobile.
 **Where** — Tools → Sheets2Anki → *Configure Image Processor* (`Ctrl+Shift+P`).
+
+> **Not the same thing as the `image` key.** Use the [`image` setting](#media-columns)
+> when a column already holds an image **URL** — nothing to deploy, nothing to upload.
+> Use the Image Processor when the picture is **pasted into the cell** and therefore
+> missing from the TSV export entirely. Both end up as an `<img>` on the card, and both
+> load over the network.
 
 **How it works.** In-cell Google Sheets images are not part of the TSV export, so they
 cannot be downloaded the way text is. Instead the add-on drives a **Google Apps Script
@@ -761,7 +815,7 @@ written to the debug log (`Ctrl+Shift+L`) while debug mode is on.
 **My first note was swallowed / a row full of `key=value` text became a card.**
 The settings row is recognised only when its `ID` cell *starts with* `#config`. Write
 `#config` on its own, or `#config` followed by a **space** and the deck-wide settings —
-`#config;align=left` is not the marker and the whole line is imported as a note.
+`#configuration` is a value, not the marker, so that row is imported as a note.
 Conversely, a row that accidentally begins with `#config` is treated as settings and
 never becomes a card.
 

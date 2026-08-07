@@ -37,16 +37,25 @@ SIDES = ("front", "back", "hide")
 ALIGNMENTS = ("left", "center", "right")
 
 _FLAGS = ("bold", "italic", "hint", "furigana")
+
+# Turn a bare URL in the cell into a media element instead of printing it as
+# text. One field is one kind of media, so these are recorded as a single
+# value rather than three independent switches.
+MEDIA_KINDS = ("image", "audio", "video")
 _FIELD_KEYS = (
-    "side",
-    "size",
-    "color",
-    "align",
-    "tts",
-    "voices",
-    "speed",
-    "label",
-) + _FLAGS
+    (
+        "side",
+        "size",
+        "color",
+        "align",
+        "tts",
+        "voices",
+        "speed",
+        "label",
+    )
+    + _FLAGS
+    + MEDIA_KINDS
+)
 _DECK_KEYS = ("align", "speed", "reverse")
 
 _HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
@@ -140,6 +149,7 @@ class FieldConfig:
         self.voices = []
         self.speed = None
         self.label = None
+        self.media = None  # "image" | "audio" | "video"
         self.bold = False
         self.italic = False
         self.hint = False
@@ -181,6 +191,18 @@ _FALSEY = frozenset({"false", "no", "0", "off", "none"})
 
 
 def _apply_field_pair(cfg, key, value, header, warn):
+    if key in MEDIA_KINDS:
+        if value is not None and value.strip().lower() in _FALSEY:
+            return
+        if cfg.media and cfg.media != key:
+            warn(
+                f"'{header}': already set to {cfg.media}, ignoring '{key}' — "
+                f"a column holds one kind of media"
+            )
+            return
+        cfg.media = key
+        return
+
     if key in _FLAGS:
         setattr(cfg, key, value is None or value.strip().lower() not in _FALSEY)
         return
@@ -201,14 +223,9 @@ def _apply_field_pair(cfg, key, value, header, warn):
             warn(f"'{header}': align must be left, center or right — got '{value}'")
     elif key == "size":
         try:
-            size = int(float(value.rstrip("px").strip()))
+            cfg.size = int(float(value.rstrip("px").strip()))
         except ValueError:
             warn(f"'{header}': size must be a number of pixels — got '{value}'")
-            return
-        if not 6 <= size <= 200:
-            warn(f"'{header}': size {size} is outside 6–200px")
-            return
-        cfg.size = size
     elif key == "color":
         lowered = value.lower()
         if lowered in THEME_COLORS or lowered in _CSS_COLOR_NAMES:
@@ -299,6 +316,53 @@ def parse_config_row(row, plan):
                 warn(f"'{header}': unknown setting '{key}'")
                 continue
             _apply_field_pair(cfg, key, value, header, warn)
+
+        # `size` is a font size on a text column and a width on a media one, so the
+        # sane range depends on a key that may be written after it in the same cell.
+        # Checking here rather than while parsing makes `size=320; image` work.
+        if cfg.size is not None:
+            low, high = (1, 2000) if cfg.media else (6, 200)
+            if not low <= cfg.size <= high:
+                what = "width" if cfg.media else "font size"
+                warn(f"'{header}': {what} {cfg.size}px is outside {low}–{high}px")
+                cfg.size = None
+
+        # A media column holds a URL, so these would act on the address itself:
+        # tts would read the URL out loud, furigana would try to annotate it.
+        if cfg.media:
+            if cfg.tts:
+                warn(
+                    f"'{header}': tts on a {cfg.media} column would read the URL "
+                    f"aloud — removed"
+                )
+                cfg.tts = None
+                cfg.voices = []
+            if cfg.furigana:
+                warn(f"'{header}': furigana does nothing on a {cfg.media} column")
+                cfg.furigana = False
+
+            # Text styling has nothing to style: the cell renders as an element,
+            # not as words. Saying so beats leaving the setting quietly inert.
+            inert = [
+                name
+                for name, on in (
+                    ("color", cfg.color),
+                    ("bold", cfg.bold),
+                    ("italic", cfg.italic),
+                    ("align", cfg.align),
+                )
+                if on
+            ]
+            if inert:
+                warn(
+                    f"'{header}': {', '.join(inert)} "
+                    f"{'do' if len(inert) > 1 else 'does'} nothing on a "
+                    f"{cfg.media} column"
+                )
+            if cfg.media == "audio" and cfg.size is not None:
+                warn(f"'{header}': size does nothing on an audio column")
+                cfg.size = None
+
         config.fields[header] = cfg
 
     return config

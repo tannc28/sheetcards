@@ -132,7 +132,8 @@ split-out module:
 - **`sheet_config.py`** — the optional **settings row**: `is_config_row()` recognises it,
   `parse_config_row()` turns it into a `SheetConfig` (`FieldConfig` per column, the
   deck-wide `align`/`speed`/`reverse`, and `warnings`). Also `normalize_tts_language()`
-  and the validation tables (`SIDES`, `ALIGNMENTS`, `THEME_COLORS`, the CSS colour names).
+  and the validation tables (`SIDES`, `ALIGNMENTS`, `THEME_COLORS`, `MEDIA_KINDS`, the CSS
+  colour names).
 - **`deck_manager.py`** — deck CRUD and the selection entry point
   (`syncDecksWithSelection()`).
 - **`name_consistency_manager.py`** — keeps dynamically-created note-type names in sync
@@ -148,7 +149,8 @@ split-out module:
   spreadsheet is the source of truth and every sync overwrites the entry.
 - **`card_layout.py`** — turns a `ColumnPlan` plus a `SheetConfig` into Anki card
   templates (`split_sides()`, `build_templates()`), including the per-field styling, the
-  `hint:`/`furigana:`/`cloze:` references, the TTS tags and the optional reverse template.
+  `hint:`/`furigana:`/`cloze:` references, the `<img>`/`<audio>`/`<video>` wrappers for
+  media columns (`_MEDIA_ELEMENTS`), the TTS tags and the optional reverse template.
 - **`utils.py`** — URL conversion (`convert_edit_url_to_tsv()`,
   `get_spreadsheet_id_from_url()`), note-type naming (`get_note_type_name()`), subdeck
   naming (`get_subdeck_name()`), and other helpers; errors/debug/deck-options were split
@@ -179,7 +181,10 @@ setting — the spreadsheet is the only place they are edited (see
 [Card layout](#card-layout) for why) — and it never writes HTML; that is
 `card_layout.build_templates()`' job. Its live preview only *approximates* Anki's
 template syntax in a `QTextBrowser` (every section is taken, `<script>` blocks are
-stripped, since the widget runs no JavaScript).
+stripped, since the widget runs no JavaScript). Its own `_FIELD_KEYS` tuple is a second,
+hand-maintained copy of the per-column key list and **does not yet include `media`**, so
+the settings panel shows nothing for an `image`/`audio`/`video` column even though the
+preview renders the element.
 
 ## Sync data flow
 
@@ -265,7 +270,8 @@ in `column_model.py`.
 Row 1 names the columns. **Row 2 is the settings row when its `ID` cell is `#config` or
 starts with `#config ` — otherwise it is an ordinary data row.** `is_config_row()` tests
 the *leading token*, lower-cased, because the deck-wide settings ride along in the same
-cell (`#config align=left; reverse`); a cell like `#config;align=left` therefore does
+cell (`#config align=left; reverse`); the marker only needs a non-alphanumeric
+separator after it, so `#config;align=left` also counts, while `#configuration` does
 **not** match and that line is imported as a note.
 
 That marker is the whole backward-compatibility story: a sheet written before this
@@ -298,6 +304,20 @@ Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
 | `voices` | comma-separated names | at least one non-empty name |
 | `speed` | float | **0.5–2.0** |
 | `bold`, `italic`, `hint`, `furigana` | flags | set to True by their mere presence |
+| `image`, `audio`, `video` (`MEDIA_KINDS`) | flags | all three land on the single `media` attribute (`"image"`/`"audio"`/`"video"`), not on three independent switches — one column holds one kind. A second, different kind is ignored with a warning |
+
+**Media columns** turn a cell that holds nothing but a URL into the element that plays it
+(`card_layout._MEDIA_ELEMENTS`), and they make two checks *post-parse*, in
+`parse_config_row()` rather than in `_apply_field_pair()`:
+
+- **`size` is range-checked once the whole cell is known.** It means a font size on a text
+  column (**6–200**) and a max width on a media one (**1–2000**), and the deciding key may
+  be written after it — so the check has to wait until the cell is fully parsed, which is
+  what makes `size=480; video` behave identically to `video; size=480`. Out of range, it
+  warns naming `font size` or `width` and drops the value rather than clamping it.
+- **`tts` and `furigana` are stripped from a media column**, both with a warning: they
+  would act on the address itself (speech would read the URL out loud). `hint` survives
+  the parse.
 
 **Deck-wide keys** (`_DECK_KEYS`), parsed out of the remainder of the `#config` cell:
 `align` (validated), `speed` (parsed as a float but **not** range-checked, unlike the
@@ -306,7 +326,7 @@ per-column one), and the `reverse` flag.
 Two design points worth keeping:
 
 - **A flag is only ever turned on.** `_apply_field_pair()` sets the attribute True as soon
-  as the key appears, so `bold=false` means bold. Flags are opt-in by omission.
+  `false`/`no`/`0`/`off`/`none` as an explicit off, so `bold=false` means no bold.
 - **Nothing is guessed and nothing is silently dropped.** An unknown key, a bad value or a
   number outside its range appends to `warnings` and is refused rather than clamped. The
   warnings reach the debug log (`SHEET_CONFIG`) during the sync and the card-layout dialog
@@ -350,6 +370,21 @@ layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` rende
   or `{{furigana:Field}}`; `_tts_tag()` emits the TTS tag, with a field-level `speed`
   outranking the deck-wide one. Both the field's `<div>` and its TTS tag are wrapped in
   `{{#Field}}…{{/Field}}`, so an empty cell renders nothing *and* speaks nothing.
+- **Media fields take a different branch.** When `cfg.media` is set, `_rows()` skips
+  `_inline_style()` and `_reference()` entirely and calls `_media_html()`, which formats
+  `_MEDIA_ELEMENTS[cfg.media]` around `{{Field}}` — `<img src="{{F}}"…>`,
+  `<audio src="{{F}}" controls>`, `<video src="{{F}}" controls…>`. `controls` is
+  unconditional (unreplayable audio is worse than none), `size` becomes
+  `style="max-width: Npx"` on image and video (the audio element has no `{style}` slot, so
+  a `size` there parses and then does nothing), and `color`/`bold`/`italic`/the per-column
+  `align` are silently dropped. The URL is never string-joined here: it reaches the `src`
+  through Anki's own field substitution.
+  **Known gap:** the `cfg.hint` branch inside that path only re-wraps the element in a
+  second `{{#Field}}…{{/Field}}` guard — identical to the one `_rows()` already emits — so
+  `hint` on a media column is a no-op with no warning, and
+  `test_hint_still_hides_media_behind_a_link` passes on an assertion the outer guard
+  already satisfies. Real click-to-reveal would need markup of its own; `{{hint:Field}}`
+  would only reveal the URL as text.
 - **The theme colours are CSS custom properties.** `_css()` declares `--s2a-muted` and
   `--s2a-accent` twice — once as the light default and once under `.night_mode`, the class
   Anki puts on the card body in dark mode. A single fixed value would make one of the two
@@ -359,6 +394,13 @@ layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` rende
   **Anki validates that a cloze template references the field through that filter on both
   sides** and refuses to save the note type otherwise. Cloze note types also support
   exactly one template, so the reverse card is skipped for them.
+- **Media is referenced, not imported.** The three media kinds emit a remote `src`; nothing
+  is ever downloaded into `collection.media`. That is the opposite of Anki's own model
+  (collection media syncs and works offline), so the cards need a live connection and
+  mobile clients apply stricter rules to remote content — a trade worth restating in any
+  user-facing text rather than burying. It also bounds what the feature can do: `<video>`
+  plays a media file, so a YouTube *page* URL needs an `<iframe>`, which users can paste
+  into the cell directly since field HTML renders as-is.
 - **Reverse cards are a second template on the same note type** (`"Card 2 (reverse)"`),
   not a second note. Anki schedules both directions independently off one row, and
   removing `reverse` from the sheet later removes those cards without touching the note's
