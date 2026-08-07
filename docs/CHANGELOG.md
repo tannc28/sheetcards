@@ -4,6 +4,26 @@
 
 ---
 
+## ✨ **v6.5.0** - August 2026 *(Feature)*
+
+### 🌐 The preview site speaks Vietnamese
+
+- An **EN / VI** switch in the control bar. The choice is remembered, and a first
+  visit follows the browser's own language, so nobody has to find the button.
+- Switching is a repaint, not a reload: the sheet stays loaded and the row you were
+  looking at stays selected.
+- **What is deliberately not translated:** the warnings labelled *Settings row*.
+  Those are the add-on's own words, produced by `sheet_config.py` running in the
+  browser, and they are exactly what Anki will say at sync time. Translating them
+  would make the preview say something the add-on never says — the one thing this
+  page exists not to do. The panel says so. The page's *own* diagnostics — a cloze
+  column that is not on the front, duplicate IDs — are page text and are translated.
+- `tests/test_site_i18n.py` fails the build on a key that is missing a language, a
+  `t()` call naming a key that does not exist, a string nothing uses any more, and a
+  translation that takes fewer arguments than its English original.
+
+---
+
 ## ✨ **v6.4.0** - August 2026 *(Feature)*
 
 ### 🎯 A sheet declares its cloze column — and the broken-card bug goes away

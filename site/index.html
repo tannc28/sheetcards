@@ -12,45 +12,44 @@
 <header class="bar">
   <div class="brand">
     <strong>Sheets2Anki</strong>
-    <span>preview</span>
+    <span data-i18n="brandTag">preview</span>
   </div>
 
   <div class="controls">
     <input id="url" type="url" spellcheck="false" autocomplete="off"
-           aria-label="Google Sheets link"
-           placeholder="https://docs.google.com/spreadsheets/d/…/edit">
+           data-i18n-attr="placeholder:urlPlaceholder,aria-label:urlLabel">
     <input id="deck" type="text" spellcheck="false" autocomplete="off"
-           aria-label="Deck name" placeholder="deck name">
-    <button id="go" disabled>Preview</button>
+           data-i18n-attr="placeholder:deckPlaceholder,aria-label:deckLabel">
+    <button id="go" data-i18n="go" disabled>Preview</button>
   </div>
 
   <p id="status" class="status" role="status" aria-live="polite">
-    <span class="spinner" aria-hidden="true"></span><span id="status-text">Loading…</span>
+    <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
   </p>
 
+  <nav id="langs" class="langs" aria-label="Language"></nav>
   <a class="ghost" href="https://github.com/tannc28/sheets2anki">GitHub</a>
 </header>
 
-<p id="demo-note" class="demo-note" hidden>Showing an example sheet — an HSK 4 deck
-  with a settings row, so you can see what the directives do. Paste your own link
-  above to read yours instead.</p>
+<p id="demo-note" class="demo-note" data-i18n="demoNote" hidden></p>
 
 <div id="stats" class="strip" hidden></div>
 
 <main id="app" class="app" hidden>
 
   <aside class="pane side">
-    <h2>Decks</h2>
+    <h2 data-i18n="decks">Decks</h2>
     <div id="tree"></div>
 
-    <h2 class="spaced">Rows <span id="rowcount" class="count"></span></h2>
+    <h2 class="spaced"><span data-i18n="rows">Rows</span> <span id="rowcount" class="count"></span></h2>
+    <p id="rows-legend" class="muted small"></p>
     <div id="rowlist"></div>
 
     <div class="side-foot">
       <button id="details-btn" class="detail-toggle" type="button" aria-expanded="false"
               aria-controls="detail">
         <span class="chev" aria-hidden="true">▸</span>
-        <span class="label">Sheet detail</span>
+        <span class="label" data-i18n="sheetDetail">Sheet detail</span>
         <span id="warncount" class="badge" hidden></span>
       </button>
     </div>

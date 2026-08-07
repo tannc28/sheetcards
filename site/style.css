@@ -403,3 +403,14 @@ iframe#card {
 
 .deckwide { margin: 0 0 10px; }
 
+
+/* ---- language picker ------------------------------------------------------ */
+
+.langs { display: flex; flex: none; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.langs button {
+  padding: 5px 9px; font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+  background: transparent; color: var(--muted); border: 0; border-radius: 0;
+}
+.langs button + button { border-left: 1px solid var(--line); }
+.langs button:hover { color: var(--ink); }
+.langs button.on { background: var(--accent); color: var(--panel); }
