@@ -4,6 +4,27 @@
 
 ---
 
+## ✨ **v6.3.3** - August 2026 *(Refinement)*
+
+### 🗂 Two panes, and the reference material out of the way
+
+- The middle column is gone. Columns, the settings row, the note types and the
+  warnings were never the point of the page — they explain *how the sheet is
+  configured*, which you look up when debugging and never again once you know the
+  system. They now sit behind **Sheet detail** in the sidebar, with a badge when
+  there is something to see.
+- The card pane gained a tab bar the way Anki puts one beside a card:
+  **front · both · back · template**. The generated template is a view of the card,
+  not a separate document, so it belongs there rather than in a panel of its own.
+- The left pane is navigation only — the deck tree, then the rows of whichever deck
+  is selected, each row showing its prompt so it is recognisable without opening it.
+- The footer explaining that the page runs the add-on's own Python through Pyodide
+  is gone from every screen. It justified the architecture rather than telling you
+  anything you needed while working; it now lives under **Sheet detail**, next to
+  the rest of the "how does this work" material.
+
+---
+
 ## ✨ **v6.3.2** - August 2026 *(Fix)*
 
 ### 🗂 The preview reads like Anki now

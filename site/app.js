@@ -113,9 +113,14 @@ def analyze(tsv, deck_name):
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
-  analysis: null, row: 0, side: "both", template: 0, ordinal: 1,
-  deckName: "", deckFilter: null,
+  analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
+  // What the main pane shows. The first three are the card; "template" is its
+  // source, the way Anki puts the template editor beside the card. "detail" is
+  // everything about how the *sheet* is configured — reference material you open
+  // to debug, not something to look at while reading cards.
+  tab: "both",
 };
+const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 
 // ---------------------------------------------------------------------------
@@ -248,7 +253,7 @@ async function preview() {
 }
 
 // ---------------------------------------------------------------------------
-// Deck tree
+// Left pane — navigation only
 // ---------------------------------------------------------------------------
 
 /** The deck hierarchy, with each level counting everything beneath it. */
@@ -311,86 +316,27 @@ function visibleRows() {
     .filter(({ r }) => !f || r.deck === f || r.deck.startsWith(`${f}::`));
 }
 
-// ---------------------------------------------------------------------------
-// Panels
-// ---------------------------------------------------------------------------
+function rowList() {
+  const visible = visibleRows();
+  if (!visible.length) return `<p class="empty">No rows in this deck.</p>`;
 
-const roleOf = (header, plan) => {
-  if (header === plan.id) return ["ID", "the row's key — never regenerated"];
-  if (header === plan.sync) return ["SYNC", "gates whether the row syncs"];
-  if (header === plan.tags) return ["TAGS", "extra Anki tags"];
-  if (plan.subdecks.includes(header)) return ["SUBDECK", "one level of the deck path"];
-  return ["field", "becomes a note field of this name"];
-};
-
-function columnsPanel({ plan, sides }) {
-  const rows = plan.headers
-    .map((h) => {
-      const [role, why] = roleOf(h, plan);
-      const dup = plan.duplicates.includes(h);
-      const where = sides.front.includes(h)
-        ? '<span class="pill front">front</span>'
-        : sides.back.includes(h)
-          ? '<span class="pill">back</span>'
-          : role === "field"
-            ? '<span class="pill hidden">hidden</span>'
-            : "";
-      return `<tr class="${dup ? "dup" : ""}">
-        <td><code>${escapeHtml(h)}</code></td>
-        <td><span class="role role-${role.toLowerCase()}">${role}</span></td>
-        <td>${where}</td>
-        <td class="muted">${dup ? "repeated header — only the first is used" : why}</td>
-      </tr>`;
-    })
+  const prompt = state.analysis.sides.front[0];
+  return visible
+    .map(
+      ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
+        data-row="${i}" title="row ${r.line} — ${escapeHtml(r.kind)}">
+        <span class="n">${r.line}</span>
+        <span class="dot ${r.kind}"></span>
+        <span class="txt">${escapeHtml(r.values[prompt] || r.id || "—")}</span>
+        ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
+      </button>`,
+    )
     .join("");
-
-  return `<table class="grid">
-    <thead><tr><th>Column</th><th>Role</th><th>Card</th><th></th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
 }
 
-const SETTING_LABEL = {
-  side: "side", size: "size", color: "colour", align: "align", tts: "speak",
-  voices: "voices", speed: "speed", label: "caption", media: "media",
-  bold: "bold", italic: "italic", hint: "hint", furigana: "furigana",
-};
-
-function settingsPanel({ config, plan }) {
-  if (!config.present) {
-    return `<p class="empty">This sheet has no settings row, so the defaults apply:
-      the first content column is the front, everything else is the back.
-      Add a row under the headers with <code>#config</code> in the ID cell to change that.</p>`;
-  }
-
-  const deckWide = [
-    config.align && `align=${config.align}`,
-    config.speed && `speed=${config.speed}`,
-    config.reverse && "reverse",
-  ].filter(Boolean);
-
-  const perField = plan.content
-    .map((h) => {
-      const cfg = config.fields[h] || {};
-      const chips = Object.entries(cfg)
-        .map(([k, v]) => {
-          const label = SETTING_LABEL[k] || k;
-          const text = v === true ? label : `${label} ${Array.isArray(v) ? v.join(", ") : v}`;
-          return `<span class="chip">${escapeHtml(text)}</span>`;
-        })
-        .join("");
-      return `<tr><td><code>${escapeHtml(h)}</code></td>
-        <td>${chips || '<span class="muted">defaults</span>'}</td></tr>`;
-    })
-    .join("");
-
-  return `
-    <p class="deckwide">Deck-wide: ${
-      deckWide.length
-        ? deckWide.map((d) => `<span class="chip">${escapeHtml(d)}</span>`).join("")
-        : '<span class="muted">nothing set</span>'
-    }</p>
-    <table class="grid"><tbody>${perField}</tbody></table>`;
-}
+// ---------------------------------------------------------------------------
+// Warnings — surfaced, not buried
+// ---------------------------------------------------------------------------
 
 /**
  * Rows whose cloze deletion sits in a column the template does not cloze.
@@ -412,7 +358,7 @@ function clozeTrouble({ rows, sides }) {
   );
 }
 
-function warningsPanel(analysis) {
+function warningItems(analysis) {
   const { config, duplicateIds, sides } = analysis;
   const items = config.warnings.map(
     (w) => `<li><strong>Settings row</strong> — ${escapeHtml(w)}</li>`,
@@ -440,44 +386,140 @@ function warningsPanel(analysis) {
        each survives the sync.</li>`,
     );
   }
-  if (!items.length) return "";
-  return `<section class="block warn">
-    <h2>Warnings <span class="count">${items.length}</span></h2>
-    <ul class="warnings">${items.join("")}</ul>
-  </section>`;
+  return items;
 }
 
-function rowsPanel() {
-  const visible = visibleRows();
-  if (!visible.length) return `<p class="empty">No rows in this deck.</p>`;
+// ---------------------------------------------------------------------------
+// Right pane — the card, and behind it the reference material
+// ---------------------------------------------------------------------------
 
-  const body = visible
-    .map(
-      ({ r, i }) => `<tr class="row-${r.kind} ${i === state.row ? "selected" : ""}"
-        data-row="${i}" tabindex="0">
-        <td class="num">${r.line}</td>
-        <td><span class="dot ${r.kind}" title="${r.kind}"></span></td>
-        <td><code>${escapeHtml(r.id) || '<span class="muted">— no ID —</span>'}</code></td>
-        <td class="clip">${escapeHtml(r.values[state.analysis.sides.front[0]] || "")}</td>
-        <td class="muted clip">${escapeHtml(r.deck.split("::").slice(1).join(" › "))}</td>
-        <td>${r.cloze ? '<span class="pill cloze">cloze</span>' : ""}</td>
-      </tr>`,
-    )
+const roleOf = (header, plan) => {
+  if (header === plan.id) return ["ID", "the row's key — never regenerated"];
+  if (header === plan.sync) return ["SYNC", "gates whether the row syncs"];
+  if (header === plan.tags) return ["TAGS", "extra Anki tags"];
+  if (plan.subdecks.includes(header)) return ["SUBDECK", "one level of the deck path"];
+  return ["field", "becomes a note field of this name"];
+};
+
+const SETTING_LABEL = {
+  side: "side", size: "size", color: "colour", align: "align", tts: "speak",
+  voices: "voices", speed: "speed", label: "caption", media: "media",
+  bold: "bold", italic: "italic", hint: "hint", furigana: "furigana",
+};
+
+function detailView(a) {
+  const warnings = warningItems(a);
+
+  const columns = a.plan.headers
+    .map((h) => {
+      const [role, why] = roleOf(h, a.plan);
+      const dup = a.plan.duplicates.includes(h);
+      const where = a.sides.front.includes(h)
+        ? '<span class="pill front">front</span>'
+        : a.sides.back.includes(h)
+          ? '<span class="pill">back</span>'
+          : role === "field"
+            ? '<span class="pill hidden">hidden</span>'
+            : "";
+      return `<tr class="${dup ? "dup" : ""}">
+        <td><code>${escapeHtml(h)}</code></td>
+        <td><span class="role role-${role.toLowerCase()}">${role}</span></td>
+        <td>${where}</td>
+        <td class="muted">${dup ? "repeated header — only the first is used" : why}</td>
+      </tr>`;
+    })
     .join("");
 
-  return `<table class="grid rows">
-    <thead><tr><th>Row</th><th></th><th>ID</th>
-      <th>${escapeHtml(state.analysis.sides.front[0] || "")}</th>
-      <th>Deck</th><th></th></tr></thead>
-    <tbody>${body}</tbody></table>`;
+  const deckWide = [
+    a.config.align && `align=${a.config.align}`,
+    a.config.speed && `speed=${a.config.speed}`,
+    a.config.reverse && "reverse",
+  ].filter(Boolean);
+
+  const settings = !a.config.present
+    ? `<p class="empty">This sheet has no settings row, so the defaults apply: the
+       first content column is the front, everything else is the back. Add a row
+       under the headers with <code>#config</code> in the ID cell to change that.</p>`
+    : `<p class="deckwide">Deck-wide: ${
+        deckWide.length
+          ? deckWide.map((d) => `<span class="chip">${escapeHtml(d)}</span>`).join("")
+          : '<span class="muted">nothing set</span>'
+      }</p>
+      <table class="grid"><tbody>${a.plan.content
+        .map((h) => {
+          const cfg = a.config.fields[h] || {};
+          const chips = Object.entries(cfg)
+            .map(([k, v]) => {
+              const label = SETTING_LABEL[k] || k;
+              const text = v === true ? label : `${label} ${Array.isArray(v) ? v.join(", ") : v}`;
+              return `<span class="chip">${escapeHtml(text)}</span>`;
+            })
+            .join("");
+          return `<tr><td><code>${escapeHtml(h)}</code></td>
+            <td>${chips || '<span class="muted">defaults</span>'}</td></tr>`;
+        })
+        .join("")}</tbody></table>`;
+
+  return `<div class="detail">
+    ${
+      warnings.length
+        ? `<h2>Warnings</h2><ul class="warnings">${warnings.join("")}</ul>
+           <p class="muted small">Nothing is silently ignored — a value the add-on
+             does not understand is refused, never guessed at, so the column keeps
+             its default until the sheet is fixed.</p>`
+        : ""
+    }
+
+    <h2>Columns</h2>
+    <p class="muted small">Only <code>ID</code>, <code>SYNC</code>,
+      <code>SUBDECK n</code> and <code>TAGS</code> are reserved. Every other column
+      becomes a note field named exactly like its header, in any language.</p>
+    <table class="grid">
+      <thead><tr><th>Column</th><th>Role</th><th>Card</th><th></th></tr></thead>
+      <tbody>${columns}</tbody></table>
+
+    <h2>Settings row</h2>
+    ${settings}
+
+    <h2>Note types</h2>
+    <p class="small"><code>${escapeHtml(a.noteTypes.basic)}</code></p>
+    ${a.rows.some((r) => r.cloze) ? `<p class="small"><code>${escapeHtml(a.noteTypes.cloze)}</code></p>` : ""}
+    <p class="muted small">Fields, in order — <code>ID</code> leads because Anki uses
+      the first field for duplicate detection:</p>
+    <p>${a.plan.fields.map((f) => `<span class="chip">${escapeHtml(f)}</span>`).join("")}</p>
+
+    <h2>How this preview works</h2>
+    <p class="muted small">The page loads <code>column_model.py</code>,
+      <code>sheet_config.py</code>, <code>card_layout.py</code>,
+      <code>tsv_model.py</code> and <code>errors.py</code> straight from the add-on
+      and runs them through <a href="https://pyodide.org">Pyodide</a>, so the columns,
+      settings, warnings, decks and templates above are computed by the code that
+      will run at sync time — not by a second implementation of it. Only the card
+      picture is drawn by this page; inside Anki that last step belongs to Anki's own
+      renderer, so read the template as exact and the layout as an approximation.</p>
+  </div>`;
 }
 
-function cardFrame(analysis) {
-  const row = analysis.rows[state.row];
+function templateView(a) {
+  const row = a.rows[state.row];
+  const templates = row?.cloze ? a.templates.cloze : a.templates.basic;
+  const template = templates[Math.min(state.template, templates.length - 1)];
+  return `
+    <p class="muted small">The exact text the add-on writes into Anki for
+      <code>${escapeHtml(row?.cloze ? a.noteTypes.cloze : a.noteTypes.basic)}</code>,
+      produced here by the same <code>card_layout.py</code> that runs in the add-on.</p>
+    <h2>Front template</h2>
+    <pre class="source">${escapeHtml(template.qfmt)}</pre>
+    <h2 class="spaced">Back template</h2>
+    <pre class="source">${escapeHtml(template.afmt)}</pre>`;
+}
+
+function cardView(a) {
+  const row = a.rows[state.row];
   if (!row) return `<p class="empty">No rows to show.</p>`;
 
   const isCloze = row.cloze;
-  const templates = isCloze ? analysis.templates.cloze : analysis.templates.basic;
+  const templates = isCloze ? a.templates.cloze : a.templates.basic;
   const template = templates[Math.min(state.template, templates.length - 1)];
 
   const ordinals = isCloze
@@ -502,8 +544,8 @@ function cardFrame(analysis) {
       img, video, iframe { max-width: 100%; }
     </style>
     <body class="card">
-      ${state.side === "back" ? back.html : front.html}
-      ${state.side === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
+      ${state.tab === "back" ? back.html : front.html}
+      ${state.tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
       <script>
         document.addEventListener("click", (e) => {
           const b = e.target.closest("[data-tts]");
@@ -526,35 +568,28 @@ function cardFrame(analysis) {
 
   const unknown = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
   const missing = [...new Set([...front.missingFields, ...back.missingFields])];
-  const visible = visibleRows();
-  const at = visible.findIndex(({ i }) => i === state.row);
 
   return `
-    <div class="cardbar">
-      <div class="segmented">
-        ${["front", "both", "back"]
-          .map((s) => `<button data-side="${s}" class="${state.side === s ? "on" : ""}">${s}</button>`)
-          .join("")}
-      </div>
-      ${
-        templates.length > 1
-          ? `<select id="tpl" aria-label="Card template">${templates
-              .map((t, i) => `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
-              .join("")}</select>`
-          : `<span class="muted mono">${escapeHtml(template.name)}</span>`
-      }
-      ${
-        ordinals.length > 1
-          ? `<select id="ord" aria-label="Cloze card">${ordinals
-              .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>card c${n}</option>`)
-              .join("")}</select>`
-          : ""
-      }
-      <span class="spacer"></span>
-      <button id="prev" title="Previous row">←</button>
-      <span class="mono muted">${at + 1} / ${visible.length}</span>
-      <button id="next" title="Next row">→</button>
-    </div>
+    ${
+      templates.length > 1 || ordinals.length > 1
+        ? `<div class="cardbar">
+            ${
+              templates.length > 1
+                ? `<select id="tpl" aria-label="Card template">${templates
+                    .map((t, i) => `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
+                    .join("")}</select>`
+                : ""
+            }
+            ${
+              ordinals.length > 1
+                ? `<select id="ord" aria-label="Cloze card">${ordinals
+                    .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>card c${n}</option>`)
+                    .join("")}</select>`
+                : ""
+            }
+          </div>`
+        : ""
+    }
     <iframe id="card" sandbox="allow-scripts allow-popups allow-presentation"
             allow="fullscreen; encrypted-media; picture-in-picture"
             srcdoc="${escapeHtml(doc)}"></iframe>
@@ -568,7 +603,7 @@ function cardFrame(analysis) {
         : ""
     }
     ${
-      row.clozeIn.length && !row.clozeIn.some((h) => analysis.sides.front.includes(h))
+      row.clozeIn.length && !row.clozeIn.some((h) => a.sides.front.includes(h))
         ? `<p class="note invalid">The deletion in
            <code>${row.clozeIn.map(escapeHtml).join("</code>, <code>")}</code> is not on
            the front, so Anki blanks the prompt and prints the raw
@@ -577,16 +612,32 @@ function cardFrame(analysis) {
     }
     ${missing.length ? `<p class="note">Template references a field the row has no column for: <code>${missing.map(escapeHtml).join("</code>, <code>")}</code></p>` : ""}
     ${unknown.length ? `<p class="note">Filter not reproduced here: <code>${unknown.map(escapeHtml).join("</code>, <code>")}</code></p>` : ""}
-    <p class="muted small" style="margin-top:10px">Tags:
-      ${row.tags.map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("")}</p>
-    <p class="muted small">The template is exactly what the add-on generates. Turning
-      it into this picture is done by this page, not by Anki — treat the layout as a
-      close approximation.</p>`;
+    <p class="muted small" style="margin-top:10px">Deck
+      <code>${escapeHtml(row.deck)}</code> · tags
+      ${row.tags.map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("")}</p>`;
 }
 
 /** The answer side minus the repeated question, when the template used FrontSide. */
 function backOnly(backHtml, frontHtml) {
   return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
+}
+
+function tabBar() {
+  if (state.tab === "detail") {
+    return `<button data-tab="both" class="on">← Back to the card</button>`;
+  }
+  const visible = visibleRows();
+  const at = visible.findIndex(({ i }) => i === state.row);
+  return `
+    ${CARD_TABS.map(
+      (t) => `<button data-tab="${t}" class="${state.tab === t ? "on" : ""}">${t}</button>`,
+    ).join("")}
+    <span class="spacer"></span>
+    <span class="nav">
+      <button id="prev" title="Previous row">←</button>
+      <span class="at">${at + 1} / ${visible.length}</span>
+      <button id="next" title="Next row">→</button>
+    </span>`;
 }
 
 function statStrip({ stats, rows }) {
@@ -613,23 +664,18 @@ function render() {
   $("#stats").hidden = false;
   $("#stats").innerHTML = statStrip(a);
   $("#tree").innerHTML = deckPanel(a);
-  $("#warnings").innerHTML = warningsPanel(a);
-  $("#rowlist").innerHTML = rowsPanel();
+  $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
-  $("#columns").innerHTML = columnsPanel(a);
-  $("#settings").innerHTML = settingsPanel(a);
-  $("#card-panel").innerHTML = cardFrame(a);
-  $("#notetypes").innerHTML = `
-    <p class="small"><code>${escapeHtml(a.noteTypes.basic)}</code></p>
-    ${a.rows.some((r) => r.cloze) ? `<p class="small"><code>${escapeHtml(a.noteTypes.cloze)}</code></p>` : ""}
-    <p class="muted small">Fields, in order — <code>ID</code> leads because Anki uses
-      the first field for duplicate detection:</p>
-    <p>${a.plan.fields.map((f) => `<span class="chip">${escapeHtml(f)}</span>`).join("")}</p>`;
+  $("#tabs").innerHTML = tabBar();
+  $("#view").innerHTML =
+    state.tab === "detail" ? detailView(a)
+    : state.tab === "template" ? templateView(a)
+    : cardView(a);
 
-  const templates = a.rows[state.row]?.cloze ? a.templates.cloze : a.templates.basic;
-  $("#source").textContent = templates
-    .map((t) => `═══ ${t.name} — front ═══\n${t.qfmt}\n\n═══ ${t.name} — back ═══\n${t.afmt}`)
-    .join("\n\n");
+  const warnings = warningItems(a).length;
+  $("#warncount").hidden = !warnings;
+  $("#warncount").textContent = warnings;
+  $("#details-btn").classList.toggle("on", state.tab === "detail");
 }
 
 // ---------------------------------------------------------------------------
@@ -638,8 +684,17 @@ function render() {
 
 $("#go").addEventListener("click", preview);
 $("#url").addEventListener("keydown", (e) => e.key === "Enter" && preview());
+$("#details-btn").addEventListener("click", () => {
+  state.tab = state.tab === "detail" ? "both" : "detail";
+  render();
+});
 
 document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) {
+    state.tab = tab.dataset.tab;
+    return render();
+  }
   const deckEl = e.target.closest("[data-deck]");
   if (deckEl) {
     state.deckFilter = deckEl.dataset.deck || null;
@@ -651,11 +706,7 @@ document.addEventListener("click", (e) => {
   if (rowEl) {
     state.row = Number(rowEl.dataset.row);
     state.template = 0;
-    return render();
-  }
-  const side = e.target.closest("[data-side]");
-  if (side) {
-    state.side = side.dataset.side;
+    if (state.tab === "detail") state.tab = "both";
     return render();
   }
   if (e.target.id === "prev" || e.target.id === "next") {

@@ -1,10 +1,12 @@
 /* Sheets2Anki preview.
-   Laid out as a tool, not a document: a fixed control bar, then three panes that
-   fill the window and scroll independently — decks on the left the way Anki puts
-   them, the sheet in the middle, the card on the right. Monospace carries the
-   structure, because column names, ids and directives are all literal strings from
-   a spreadsheet; colour is spent on meaning (a row's fate, a warning) and never on
-   decoration. */
+   Laid out as a tool, not a document: a control bar, then two panes that fill the
+   window and scroll independently — navigation on the left the way Anki puts its
+   decks, the card on the right under a tab bar. Everything that explains how the
+   sheet is *configured* is reference material and sits behind "Sheet detail",
+   because you open it to debug, not to read cards.
+   Monospace carries the structure, since column names, ids and directives are all
+   literal strings from a spreadsheet; colour is spent on meaning — a row's fate, a
+   warning — and never on decoration. */
 
 :root {
   --ground: #f5f6f8;
@@ -108,6 +110,12 @@ button {
   background: var(--accent); color: #fff; cursor: pointer; flex: none;
 }
 button:disabled { opacity: .45; cursor: default; }
+a.ghost {
+  flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+  text-decoration: none; padding: 5px 8px; border: 1px solid var(--line);
+  border-radius: 6px;
+}
+a.ghost:hover { color: var(--accent); border-color: var(--accent); }
 @media (prefers-color-scheme: dark) { button { color: #0f1216; } }
 
 .status {
@@ -164,51 +172,103 @@ button:disabled { opacity: .45; cursor: default; }
 .stat span { font-size: 11.5px; color: var(--muted); }
 .stat.zero b { color: var(--bad); }
 
-/* ---- three panes -------------------------------------------------------- */
+/* ---- two panes ---------------------------------------------------------- */
 
 .app {
   flex: 1 1 auto;
   min-height: 0;                       /* lets the children scroll, not the page */
   display: grid;
-  grid-template-columns: minmax(230px, 17%) minmax(0, 1fr) minmax(400px, 32%);
+  grid-template-columns: minmax(250px, 20%) minmax(0, 1fr);
 }
-.pane { overflow: auto; padding: 14px 16px; min-width: 0; }
-.pane.decks { border-right: 1px solid var(--line); background: var(--panel); }
-.pane.card { border-left: 1px solid var(--line); background: var(--panel); }
+.pane { overflow: auto; min-width: 0; }
+/* Navigation on the left — which card am I looking at — and the card itself on
+   the right. Everything explaining *how the sheet is configured* is reference
+   material: it lives behind "Sheet detail" because you only open it to debug. */
+.pane.side {
+  border-right: 1px solid var(--line); background: var(--panel);
+  padding: 14px 12px 0; display: flex; flex-direction: column;
+}
+.pane.main { padding: 0; display: flex; flex-direction: column; }
 
-.pane > h2, .block > h2, .block > summary > h2 {
+.pane > h2, .detail > h2 {
   margin: 0 0 8px;
   font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted); font-weight: 600;
 }
 h2.spaced { margin-top: 26px; }
 
-.block {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 14px;
-}
-.block > p { margin: 0 0 10px; }
 .muted { color: var(--muted); }
 .small { font-size: 12.5px; }
 .empty { color: var(--muted); font-size: 13px; margin: 0; }
 
-/* Two panes on a laptop, one on a phone — the card follows the sheet rather than
-   fighting it for width. */
-@media (max-width: 1180px) {
-  .app { grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); }
-  .pane.card { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
-}
 @media (max-width: 760px) {
   body { overflow: auto; }
   .app { grid-template-columns: 1fr; }
   .pane { overflow: visible; }
-  .pane.decks { border-right: 0; border-bottom: 1px solid var(--line); }
+  .pane.side { border-right: 0; border-bottom: 1px solid var(--line); }
   .bar { height: auto; flex-wrap: wrap; padding: 10px 12px; }
   .controls { flex-wrap: wrap; }
 }
+
+/* ---- sidebar rows and footer --------------------------------------------- */
+
+.side > div { flex: none; }
+#rowlist { flex: 1 1 auto; min-height: 0; overflow: auto; margin: 0 -4px; }
+.side-foot {
+  flex: none; margin: 0 -12px; padding: 8px 12px;
+  border-top: 1px solid var(--line); background: var(--panel);
+  position: sticky; bottom: 0;
+}
+.linkish {
+  background: transparent; color: var(--muted); border: 0; padding: 3px 4px;
+  font-family: var(--mono); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 7px; width: 100%;
+}
+.linkish:hover, .linkish.on { color: var(--accent); }
+.badge {
+  font-family: var(--mono); font-size: 10.5px; padding: 0 6px; border-radius: 999px;
+  background: var(--warn); color: var(--panel); font-weight: 700;
+}
+
+.rowitem {
+  display: flex; align-items: baseline; gap: 8px; width: 100%;
+  padding: 4px 8px; border: 0; border-radius: 5px; background: transparent;
+  color: var(--ink); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.rowitem:hover { background: var(--accent-soft); }
+.rowitem.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.rowitem .n {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  font-variant-numeric: tabular-nums; flex: none; min-width: 2ch; text-align: right;
+}
+.rowitem .txt { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowitem.row-skipped .txt, .rowitem.row-invalid .txt { opacity: .55; }
+
+/* ---- tabs ---------------------------------------------------------------- */
+
+.tabs {
+  flex: none; display: flex; align-items: center; gap: 2px;
+  padding: 0 14px; background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.tabs button {
+  background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; padding: 9px 12px; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs .spacer { flex: 1; }
+.tabs .nav { display: flex; align-items: center; gap: 6px; }
+.tabs .nav button {
+  border: 1px solid var(--line); border-radius: 5px; padding: 2px 9px;
+  font-family: var(--mono); font-size: 12px; background: var(--ground); color: var(--ink);
+}
+.tabs .nav .at { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+#view { flex: 1 1 auto; overflow: auto; padding: 14px 16px; min-height: 0; }
+.detail { max-width: 105ch; }
+.detail > h2 { margin-top: 26px; }
+.detail > h2:first-child { margin-top: 0; }
 
 /* ---- deck tree ---------------------------------------------------------- */
 
@@ -246,11 +306,6 @@ h2.spaced { margin-top: 26px; }
 .grid .num { font-variant-numeric: tabular-nums; color: var(--muted); font-family: var(--mono); }
 .grid tr.dup td { background: var(--warn-soft); }
 .grid .clip { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.rows tbody tr { cursor: pointer; }
-.rows tbody tr:hover td { background: var(--accent-soft); }
-.rows tbody tr.selected td { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
-.rows tr.row-skipped code, .rows tr.row-invalid code { opacity: .6; }
 
 /* ---- badges and marks --------------------------------------------------- */
 
@@ -290,8 +345,6 @@ h2.spaced { margin-top: 26px; }
 
 /* ---- warnings ----------------------------------------------------------- */
 
-.block.warn { border-color: var(--warn); background: var(--warn-soft); }
-.block.warn > h2 { color: var(--warn); }
 .warnings { margin: 0; padding-left: 18px; }
 .warnings li { margin-bottom: 5px; font-size: 12.5px; }
 
@@ -304,10 +357,6 @@ h2.spaced { margin-top: 26px; }
   background: var(--ground); color: var(--ink);
   border: 1px solid var(--line); border-radius: 5px;
 }
-.segmented { display: flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
-.segmented button { border: 0; border-radius: 0; background: var(--ground); }
-.segmented button + button { border-left: 1px solid var(--line); }
-.segmented button.on { background: var(--accent); color: var(--panel); }
 
 iframe#card {
   width: 100%; min-height: 260px; border: 1px solid var(--line);
@@ -323,12 +372,6 @@ iframe#card {
 
 /* ---- template source ---------------------------------------------------- */
 
-details.block > summary { cursor: pointer; list-style: none; }
-details.block > summary::-webkit-details-marker { display: none; }
-details.block > summary h2 { display: inline; }
-details.block > summary::after { content: " ▾"; color: var(--muted); }
-details[open].block > summary::after { content: " ▴"; }
-
 .source {
   margin: 0; padding: 12px; overflow-x: auto; font-size: 11.5px; line-height: 1.5;
   background: var(--ground); border: 1px solid var(--line); border-radius: 6px;
@@ -337,9 +380,3 @@ details[open].block > summary::after { content: " ▴"; }
 
 .deckwide { margin: 0 0 10px; }
 
-footer {
-  flex: none; padding: 8px 16px; font-size: 11.5px; color: var(--muted);
-  background: var(--panel); border-top: 1px solid var(--line);
-}
-footer p { margin: 0; }
-@media (max-width: 1180px) { footer { display: none; } }
