@@ -54,6 +54,11 @@ dev = [
     "pytest-mock>=3.10.0",
     "ruff==0.15.16",
     "pre-commit>=3.5.0",
+    # Test-only, never a runtime dependency: the add-on runs inside Anki and takes
+    # `anki` from the host. tests/test_apkg.py needs the real library because a
+    # mock cannot tell a valid .apkg from a broken one, and tests/conftest.py's
+    # import hook still shadows it for every other module.
+    "anki>=25.0",
 ]
 test = [
     "pytest>=8.0.0",

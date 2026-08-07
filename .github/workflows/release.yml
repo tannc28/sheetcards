@@ -67,7 +67,8 @@ jobs:
       - name: Run test suite
         if: steps.version.outputs.release == 'true'
         run: |
-          python -m pip install --upgrade pip pytest pytest-mock
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
           python tests/run_tests.py
 
       # Both scripts are stdlib-only and non-interactive. They copy the tree into

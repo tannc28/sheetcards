@@ -20,7 +20,12 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest pytest-mock
+        run: |
+          python -m pip install --upgrade pip
+          # The dev extras, not a hand-listed subset: tests/test_apkg.py needs the
+          # real anki library, and a list that drifts from pyproject is a test that
+          # silently stops running.
+          pip install -e ".[dev]"
       - name: Run test suite
         run: python tests/run_tests.py
 

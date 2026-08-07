@@ -970,6 +970,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "anki" },
     { name = "black" },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -990,6 +991,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anki", marker = "extra == 'dev'", specifier = ">=25.0" },
     { name = "aqt", specifier = ">=25.7.2" },
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "black", marker = "extra == 'dev'", specifier = "==26.5.1" },

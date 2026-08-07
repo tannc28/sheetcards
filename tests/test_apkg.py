@@ -6,6 +6,7 @@ mock-based test and fail only in front of someone with a phone — and the whole
 point of this format is that it reaches a phone without a desktop in between.
 """
 
+import importlib.util
 import io
 import json
 import os
@@ -160,6 +161,15 @@ class TestCloze:
 # ---------------------------------------------------------------------------
 
 
+# Installed by the dev extras. Skipping rather than failing keeps the suite usable
+# for anyone who has not installed it, while CI always has it and always runs these.
+_HAS_ANKI = importlib.util.find_spec("anki") is not None
+needs_anki = pytest.mark.skipif(
+    not _HAS_ANKI,
+    reason="the real anki library is not installed (pip install -e '.[dev]')",
+)
+
+
 def _real_anki(code):
     """Runs code in a subprocess where `anki` is the real package, not the mock."""
     return subprocess.run(
@@ -199,6 +209,7 @@ col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
 
 
 @pytest.mark.slow
+@needs_anki
 def test_real_anki_imports_the_package():
     """The decisive check: a mock cannot tell a valid package from a broken one."""
     result = _real_anki(_HARNESS + """
@@ -231,6 +242,7 @@ col.close()
 
 
 @pytest.mark.slow
+@needs_anki
 def test_importing_twice_updates_instead_of_duplicating():
     """The property that makes this usable more than once."""
     result = _real_anki(_HARNESS + """
