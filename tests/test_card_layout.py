@@ -709,3 +709,40 @@ def test_a_framed_player_names_a_referrer_policy():
     config = parse_config_row({"ID": "#config", "Clip": "video"}, plan)
     afmt = build_templates(plan, config)[0]["afmt"]
     assert 'referrerpolicy="strict-origin-when-cross-origin"' in afmt
+
+
+@pytest.mark.unit
+class TestFramedPlayerOnMobile:
+    """A frame cannot play on a phone, so the card must not depend on one.
+
+    The mobile clients load a card from a `file://` origin. No HTTP Referer is
+    sent, YouTube answers "Error 153: Video player configuration error", and a
+    referrerpolicy cannot help because there is no origin to send. Anki marks
+    those clients with a `mobile` class, which is the only reliable way to tell.
+    """
+
+    def _templates(self, cell="video"):
+        plan = plan_columns(["ID", "Word", "Clip"])
+        config = parse_config_row({"ID": "#config", "Clip": cell}, plan)
+        return build_templates(plan, config)[0]
+
+    def test_a_link_stands_beside_the_frame(self):
+        afmt = self._templates()["afmt"]
+        assert 's2a-embed-link" href="{{Clip}}"' in afmt
+
+    def test_the_frame_is_hidden_and_the_link_shown_on_mobile(self):
+        both = _both(self._templates())
+        assert ".mobile .s2a-embed { display: none; }" in both
+        assert ".mobile .s2a-embed-link { display: inline-block;" in both
+
+    def test_the_link_is_hidden_everywhere_else(self):
+        # On a desktop the frame plays, so a second way in is only clutter.
+        assert ".s2a-embed-link { display: none; }" in _both(self._templates())
+
+    def test_the_label_names_the_link_when_the_sheet_gave_one(self):
+        afmt = self._templates("video; label=Bài giảng")["afmt"]
+        assert ">Bài giảng</a>" in afmt
+
+    def test_the_caption_is_escaped(self):
+        afmt = self._templates("video; label=A & <b>B</b>")["afmt"]
+        assert "A &amp; &lt;b&gt;B&lt;/b&gt;" in afmt

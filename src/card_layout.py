@@ -59,6 +59,17 @@ def _css(sheet_config):
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
         ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
+        ".s2a-embed-link { display: none; }\n"
+        # A framed player cannot work on the mobile clients: their webview loads
+        # the card from a file:// origin, so no HTTP Referer is sent and YouTube
+        # answers with "Error 153: Video player configuration error" — a
+        # referrerpolicy cannot help, because there is no origin to send. Anki
+        # marks those clients with a `mobile` class, so the frame is simply not
+        # shown there and a link that opens the video properly takes its place.
+        ".mobile .s2a-embed { display: none; }\n"
+        ".mobile .s2a-embed-link { display: inline-block;"
+        " padding: 10px 18px; border: 1px solid currentColor; border-radius: 8px;"
+        " text-decoration: none; font-size: 16px; }\n"
         "</style>\n"
     )
 
@@ -102,6 +113,7 @@ _MEDIA_ELEMENTS = {
         '<iframe src="{ref}" class="s2a-embed" allowfullscreen '
         'referrerpolicy="strict-origin-when-cross-origin" '
         'allow="encrypted-media; picture-in-picture"{style}></iframe>'
+        '<a class="s2a-embed-link" href="{ref}">{caption}</a>'
     ),
 }
 
@@ -133,8 +145,13 @@ def _media_html(field, cfg):
     template = _MEDIA_ELEMENTS[cfg.media]
     style = f' style="max-width: {cfg.size}px"' if cfg.size else ""
     # The URL comes from the field, so it goes through Anki's own substitution and is
-    # never built by string-joining here.
-    return template.format(ref=f"{{{{{field}}}}}", style=style)
+    # never built by string-joining here. `caption` is only read by the video
+    # element, whose mobile fallback needs something to say.
+    return template.format(
+        ref=f"{{{{{field}}}}}",
+        style=style,
+        caption=escape(cfg.label) if cfg.label else "▶ Watch the video",
+    )
 
 
 def _speed_text(speed):

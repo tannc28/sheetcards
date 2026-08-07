@@ -4,6 +4,23 @@
 
 ---
 
+## ✨ **v6.6.2** - August 2026 *(Fix)*
+
+### 🎬 A video column now works on a phone, by not being a frame there
+
+- v6.6.1 added `referrerpolicy` to the frame. **It was not enough, and could not
+  be:** AnkiMobile and AnkiDroid load a card from a `file://` origin, so there is
+  no origin to send a referrer *from*, and YouTube keeps answering *"Error 153"*.
+- The card now carries a frame **and** a link, and the stylesheet shows exactly
+  one of them. Anki marks the mobile clients with a `mobile` class on the card, so
+  there the frame is hidden and the link takes its place — tap it and the video
+  opens properly, with no error box. On the desktop the frame still plays inline
+  and the link stays hidden.
+- The link is named by the column's `label` when the settings row gives one, and
+  reads "▶ Watch the video" otherwise.
+
+---
+
 ## ✨ **v6.6.1** - August 2026 *(Fix)*
 
 ### 🐞 "Error 153" where a video should be, on the phone only
