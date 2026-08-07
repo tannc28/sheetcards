@@ -41,6 +41,13 @@ _FLAGS = ("bold", "italic", "hint", "furigana")
 # Turn a bare URL in the cell into a media element instead of printing it as
 # text. One field is one kind of media, so these are recorded as a single
 # value rather than three independent switches.
+#
+# `video` covers every video link, because what people actually paste is a
+# YouTube or Drive address — a page with a player on it, not a video file. Those
+# have to be framed, so the column renders an <iframe> and the address is
+# rewritten to that site's player URL at sync time by
+# tsv_model.normalize_embed_url. A direct .mp4 is passed through and plays in the
+# frame as well, so one word covers both and nobody has to know which they have.
 MEDIA_KINDS = ("image", "audio", "video")
 _FIELD_KEYS = (
     (

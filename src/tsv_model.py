@@ -173,6 +173,96 @@ def build_tags(note_data, plan):
 
 
 # =============================================================================
+# EMBEDDED PLAYERS
+# =============================================================================
+
+# A card template can only substitute a field, never transform one: Anki replaces
+# `{{Link}}` with the cell exactly as written. So a YouTube *watch* address cannot
+# become a player at render time — and it cannot be framed as-is either, because
+# YouTube refuses to be put in an iframe outside its /embed path. The address is
+# therefore rewritten here, once, on the way into the note, which is also the value
+# the sync compares against to decide whether a row changed.
+
+_YOUTUBE_ID = r"[\w-]{6,}"
+_EMBED_PATTERNS = (
+    # (what the user pastes, what it becomes) — the id is group 1 throughout.
+    (re.compile(rf"youtu\.be/({_YOUTUBE_ID})"), "https://www.youtube.com/embed/{}"),
+    (
+        re.compile(rf"youtube\.com/(?:watch\?(?:.*&)?v=)({_YOUTUBE_ID})"),
+        "https://www.youtube.com/embed/{}",
+    ),
+    (
+        re.compile(rf"youtube\.com/(?:shorts|live|v)/({_YOUTUBE_ID})"),
+        "https://www.youtube.com/embed/{}",
+    ),
+    # Already an embed address: left alone, so re-syncing is idempotent.
+    (
+        re.compile(rf"youtube\.com/embed/({_YOUTUBE_ID})"),
+        "https://www.youtube.com/embed/{}",
+    ),
+    (
+        re.compile(r"drive\.google\.com/file/d/([\w-]+)"),
+        "https://drive.google.com/file/d/{}/preview",
+    ),
+    (
+        re.compile(r"drive\.google\.com/open\?id=([\w-]+)"),
+        "https://drive.google.com/file/d/{}/preview",
+    ),
+    (re.compile(r"vimeo\.com/(?:video/)?(\d+)"), "https://player.vimeo.com/video/{}"),
+)
+
+# "?t=90", "?t=1m30s", "&start=90" — a link copied at a particular moment.
+_START_AT = re.compile(r"[?&](?:t|start)=(?:(\d+)h)?(?:(\d+)m)?(\d+)s?(?:&|$)")
+
+
+def _start_seconds(url):
+    """The moment a shared link points at, in seconds, or None."""
+    match = _START_AT.search(url)
+    if not match:
+        return None
+    hours, minutes, seconds = (int(g or 0) for g in match.groups())
+    total = hours * 3600 + minutes * 60 + seconds
+    return total or None
+
+
+def normalize_embed_url(value):
+    """Turns a page address into the address of that site's own player.
+
+    Args:
+        value (str): whatever the cell holds — a watch link, a share link, or
+            already a player address
+
+    Returns:
+        tuple[str, str | None]: the address to put in the field, and a warning
+        when the cell looks like a site this understands but no id could be read
+        (a channel page, a Drive folder) — those would frame an error message.
+    """
+    url = str(value or "").strip()
+    if not url:
+        return "", None
+
+    for pattern, template in _EMBED_PATTERNS:
+        found = pattern.search(url)
+        if not found:
+            continue
+        embed = template.format(found.group(1))
+        start = _start_seconds(url)
+        return (f"{embed}?start={start}" if start else embed), None
+
+    lowered = url.lower()
+    for host in ("youtube.com", "youtu.be", "drive.google.com", "vimeo.com"):
+        if host in lowered:
+            return url, (
+                f"'{url}' is a {host} address with no video in it — a channel, a "
+                f"playlist or a folder cannot be embedded, only a single video or file"
+            )
+
+    # Anything else is passed through: a direct .mp4 shows in an iframe too, and
+    # refusing an address this function simply does not know would be worse.
+    return url, None
+
+
+# =============================================================================
 # WHAT A ROW BECOMES
 # =============================================================================
 
@@ -475,12 +565,31 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     add_debug_msg(f"Content columns: {plan.content_headers}")
     add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
 
+    # A `video` column holds a page address that has to become the address of that
+    # page's own player before it reaches the note — see normalize_embed_url.
+    embed_headers = [
+        header
+        for header in plan.content_headers
+        if sheet_config.for_field(header).media == "video"
+    ]
+    embed_warnings = set()
+
     # Process each row
     for row_index, row in enumerate(rows):
         sheet_row = row_index + 2 + first_row_offset
         try:
             # Create note dictionary keyed by the sheet's own headers
             note_data = row_to_dict(row, headers)
+
+            # Rewritten here rather than at render time because a card template can
+            # substitute a field but cannot transform one. Doing it before add_note
+            # means the sync's change comparison sees the same value it stores, so a
+            # row does not read as modified on every single sync.
+            for header in embed_headers:
+                fixed, problem = normalize_embed_url(note_data.get(header, ""))
+                note_data[header] = fixed
+                if problem:
+                    embed_warnings.add(f"'{header}' row {sheet_row}: {problem}")
 
             # ALWAYS add to deck for correct metrics accounting
             # Empty ID validation will be done inside add_note() method
@@ -502,10 +611,18 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
             add_debug_msg(f"Error processing row {sheet_row}: {e}")
             continue
 
+    # An address that cannot be embedded frames an error message on the card, which
+    # looks like the add-on broke rather than like a link that needs fixing.
+    for warning in sorted(embed_warnings):
+        message = f"⚠️ Embed: {warning}"
+        add_debug_msg(message)
+        log_to_addon(message, "SHEET_CONFIG")
+        sheet_config.warnings.append(warning)
+
     # Detect duplicate (non-empty) IDs. These silently collapse during sync because
     # notes are keyed by their ID — only one survives and the others are
     # stranded/un-updated. Record them so the user can be warned.
-    seen_ids = {}
+    seen_ids: dict[str, int] = {}
     for note_data in remote_deck.notes:
         nid = str(note_data.get(plan.id_header, "")).strip()
         if nid:

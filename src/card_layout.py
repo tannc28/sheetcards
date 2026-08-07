@@ -57,6 +57,8 @@ def _css(sheet_config):
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
         ".s2a-reveal > summary { cursor: pointer; font-size: 13px;"
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
+        ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
+        " display: block; margin: 0 auto; }\n"
         "</style>\n"
     )
 
@@ -83,7 +85,18 @@ def _inline_style(cfg):
 _MEDIA_ELEMENTS = {
     "image": '<img src="{ref}"{style}>',
     "audio": '<audio src="{ref}" controls></audio>',
-    "video": '<video src="{ref}" controls{style}></video>',
+    # A frame rather than <video>, because the address a learner pastes is almost
+    # always a YouTube or Drive *page*: the site's own player has to do the playing,
+    # and YouTube refuses to be framed anywhere but its /embed path — which is why
+    # tsv_model.normalize_embed_url rewrites the address on the way into the note.
+    # A direct .mp4 also plays when a frame is pointed at it, so this one element
+    # covers both and the sheet only ever has to say "video".
+    # The aspect ratio lives in the stylesheet because an iframe, unlike <video>,
+    # has no intrinsic size and would otherwise collapse to a 150px-tall box.
+    "video": (
+        '<iframe src="{ref}" class="s2a-embed" allowfullscreen '
+        'allow="encrypted-media; picture-in-picture"{style}></iframe>'
+    ),
 }
 
 

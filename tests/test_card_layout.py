@@ -354,18 +354,22 @@ class TestMediaColumns:
 
     @pytest.mark.parametrize(
         "cell,tag",
-        [("image", "<img"), ("audio", "<audio"), ("video", "<video")],
+        [
+            ("image", "<img"),
+            ("audio", "<audio"),
+            ("video", "<iframe"),
+        ],
     )
     def test_each_kind_wraps_the_field_in_its_element(self, cell, tag):
         plan, sheet_config = self._cfg(cell)
         afmt = build_templates(plan, sheet_config)[0]["afmt"]
         assert f'{tag} src="{{{{Link}}}}"' in afmt
 
-    def test_playable_media_always_gets_controls(self):
-        # A sound the learner cannot replay is worse than no sound.
-        for kind in ("audio", "video"):
-            plan, sheet_config = self._cfg(kind)
-            assert "controls" in build_templates(plan, sheet_config)[0]["afmt"]
+    def test_sound_can_always_be_replayed(self):
+        # A sound the learner cannot replay is worse than no sound. Video gets its
+        # controls from the framed player instead of from an attribute here.
+        plan, sheet_config = self._cfg("audio")
+        assert "controls" in build_templates(plan, sheet_config)[0]["afmt"]
 
     def test_size_caps_the_width_not_the_font(self):
         plan, sheet_config = self._cfg("image; size=320")
@@ -438,3 +442,124 @@ class TestMediaColumns:
     def test_a_url_with_query_parameters_survives_into_the_src(self):
         plan, sheet_config = self._cfg("image")
         assert '<img src="{{Link}}"' in build_templates(plan, sheet_config)[0]["afmt"]
+
+
+class TestEmbeddedPlayers:
+    """`video` hands playback to the site hosting the video.
+
+    The distinguishing constraint is that a card template can substitute a field
+    but cannot transform one, so the address has to be rewritten on the way into
+    the note. These tests pin both halves: the rewrite and the element.
+    """
+
+    def _cfg(self, cell="video"):
+        plan = plan_columns(["ID", "Word", "Link"])
+        return plan, parse_config_row({"ID": "#config", "Link": cell}, plan)
+
+    def test_the_frame_carries_an_aspect_ratio(self):
+        # An iframe has no intrinsic size; without this it collapses to ~150px.
+        # The rule lives in the stylesheet, which the answer inherits through
+        # {{FrontSide}} — hence checking both sides rather than the answer alone.
+        plan, sheet_config = self._cfg()
+        template = build_templates(plan, sheet_config)[0]
+        assert "s2a-embed" in template["afmt"]
+        assert "aspect-ratio: 16 / 9" in _both(template)
+
+    def test_size_caps_the_width(self):
+        plan, sheet_config = self._cfg("video; size=480")
+        assert "max-width: 480px" in build_templates(plan, sheet_config)[0]["afmt"]
+
+    def test_it_is_allowed_to_go_fullscreen(self):
+        plan, sheet_config = self._cfg()
+        assert "allowfullscreen" in build_templates(plan, sheet_config)[0]["afmt"]
+
+    @pytest.mark.parametrize(
+        "pasted,expected",
+        [
+            (
+                "https://www.youtube.com/watch?v=gdBu8kLulMM",
+                "https://www.youtube.com/embed/gdBu8kLulMM",
+            ),
+            (
+                "https://youtu.be/gdBu8kLulMM",
+                "https://www.youtube.com/embed/gdBu8kLulMM",
+            ),
+            (
+                "https://www.youtube.com/shorts/gdBu8kLulMM",
+                "https://www.youtube.com/embed/gdBu8kLulMM",
+            ),
+            (
+                "https://www.youtube.com/watch?list=PLxyz&v=gdBu8kLulMM",
+                "https://www.youtube.com/embed/gdBu8kLulMM",
+            ),
+            (
+                "https://drive.google.com/file/d/1AbC_dEF/view?usp=sharing",
+                "https://drive.google.com/file/d/1AbC_dEF/preview",
+            ),
+            (
+                "https://drive.google.com/open?id=1AbC_dEF",
+                "https://drive.google.com/file/d/1AbC_dEF/preview",
+            ),
+            ("https://vimeo.com/123456789", "https://player.vimeo.com/video/123456789"),
+        ],
+    )
+    def test_a_pasted_address_becomes_a_player_address(self, pasted, expected):
+        from src.tsv_model import normalize_embed_url
+
+        assert normalize_embed_url(pasted) == (expected, None)
+
+    def test_an_embed_address_is_left_alone(self):
+        # Re-syncing must not keep rewriting a value it already rewrote, or every
+        # row would read as changed forever.
+        from src.tsv_model import normalize_embed_url
+
+        already = "https://www.youtube.com/embed/gdBu8kLulMM"
+        once, _ = normalize_embed_url(already)
+        twice, _ = normalize_embed_url(once)
+        assert once == twice == already
+
+    def test_the_moment_a_link_points_at_is_kept(self):
+        from src.tsv_model import normalize_embed_url
+
+        url, _ = normalize_embed_url("https://youtu.be/gdBu8kLulMM?t=1m30s")
+        assert url == "https://www.youtube.com/embed/gdBu8kLulMM?start=90"
+
+    def test_a_channel_or_folder_is_reported_rather_than_framed(self):
+        # Framing one of these shows an error page where the video should be,
+        # which reads as the add-on being broken.
+        from src.tsv_model import normalize_embed_url
+
+        _, warning = normalize_embed_url("https://www.youtube.com/@SomeChannel")
+        assert warning and "cannot be embedded" in warning
+
+    def test_an_unknown_address_passes_through(self):
+        from src.tsv_model import normalize_embed_url
+
+        direct = "https://example.com/lesson.mp4"
+        assert normalize_embed_url(direct) == (direct, None)
+
+    def test_the_sync_stores_the_player_address_not_the_pasted_one(self):
+        """End to end: what lands in the note is what the template can play."""
+        from src.tsv_model import build_remote_deck_from_tsv
+        from src.tsv_model import parse_tsv_data
+
+        tsv = (
+            "ID\tWord\tLink\n"
+            "#config\t\tvideo\n"
+            "1\t熟悉\thttps://www.youtube.com/watch?v=gdBu8kLulMM\n"
+        )
+        deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
+
+        assert deck.notes[0]["Link"] == "https://www.youtube.com/embed/gdBu8kLulMM"
+        assert deck.sheet_config.warnings == []
+
+    def test_a_column_without_the_directive_is_untouched(self):
+        """Only a column that asked for it is rewritten."""
+        from src.tsv_model import build_remote_deck_from_tsv
+        from src.tsv_model import parse_tsv_data
+
+        pasted = "https://www.youtube.com/watch?v=gdBu8kLulMM"
+        tsv = f"ID\tWord\tLink\n1\t熟悉\t{pasted}\n"
+        deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
+
+        assert deck.notes[0]["Link"] == pasted

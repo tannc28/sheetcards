@@ -4,6 +4,37 @@
 
 ---
 
+## ✨ **v6.3.0** - August 2026 *(Feature)*
+
+### 🎬 `video` now takes the link from your address bar
+
+- Write `video` in the settings row and paste whatever the browser shows —
+  `youtube.com/watch?v=…`, `youtu.be/…`, a YouTube Short, a Drive share link, a Vimeo
+  link, or a direct `.mp4`. The add-on turns it into the address of that site's own
+  player as it syncs, and the card shows the player. One word covers every case, so
+  nobody has to know which kind of link they are holding.
+- A link copied at a particular moment keeps it: `youtu.be/ID?t=1m30s` becomes
+  `…/embed/ID?start=90`.
+- A link that names no single video — a channel, a playlist, a Drive folder — is left
+  alone and **reported**, because framing one shows an error page where the video
+  should be. An address already in `/embed` form is untouched, so re-syncing never
+  rewrites what it just wrote and no row reads as changed for no reason.
+
+### ⚠️ Changed behaviour
+
+- A `video` column now renders an `<iframe>` (16 : 9, `size` sets the width) instead of
+  `<video controls>`. This is what makes a YouTube or Drive link work at all; a direct
+  `.mp4` still plays, because a frame pointed at a video file shows a player too.
+- The rewrite happens **on the way into the note**, not at render time — a card template
+  can substitute a field but cannot transform one, and YouTube refuses to be framed
+  anywhere except its `/embed` path. So the note stores the player address, not the
+  address you pasted. The sheet stays the source of truth: change the cell and the next
+  sync rewrites it again.
+- **Framed players are blocked on AnkiDroid and AnkiMobile.** They work on the desktop.
+  Anything that has to be reviewable on a phone does not belong in a `video` column.
+
+---
+
 ## ✨ **v6.2.0** - August 2026 *(Feature)*
 
 ### 🔎 Preview a sheet in the browser — <https://tannc28.github.io/sheets2anki/>

@@ -235,7 +235,7 @@ Written in that column's cell of the settings row.
 | `speed` | a number **0.5–2.0** | the deck-wide `speed`, otherwise Anki's own default | Speaking rate for that column; overrides the deck-wide value |
 | `image` | switch | off | The column holds a **bare image URL**: the card shows the picture instead of printing the address. `size` caps its width |
 | `audio` | switch | off | The column holds a **bare audio URL**: the card shows a player, always with `controls` so it can be replayed |
-| `video` | switch | off | The column holds a **bare video URL**: the card shows a video player with `controls`. `size` caps its width |
+| `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
 
 #### Media columns
 
@@ -246,10 +246,31 @@ the thing the links point at:
 | :--- | :--- |
 | `image; size=320` | `<img src="{{Picture}}" style="max-width: 320px">` |
 | `audio` | `<audio src="{{Sound}}" controls></audio>` |
-| `video; size=480` | `<video src="{{Clip}}" controls style="max-width: 480px"></video>` |
+| `video; size=480` | `<iframe src="{{Clip}}" class="s2a-embed" allowfullscreen …>` |
 
 The cell in a *data* row holds nothing but the URL — the add-on builds the tag around it.
 A column carries **one** kind of media: `image; video` keeps `image` and warns.
+
+##### Video: paste the link from the address bar
+
+Write `video` and paste whatever your browser's address bar shows. The add-on turns it
+into the address of that site's own player while it syncs, because a card template can
+substitute a field but cannot transform one — `{{Clip}}` becomes the cell exactly as
+written, and YouTube refuses to be framed anywhere except its `/embed` path:
+
+| What you paste | What ends up in the note |
+| :--- | :--- |
+| `youtube.com/watch?v=ID` · `youtu.be/ID` · `youtube.com/shorts/ID` | `youtube.com/embed/ID` |
+| `youtu.be/ID?t=1m30s` | `youtube.com/embed/ID?start=90` — the moment is kept |
+| `drive.google.com/file/d/ID/view?usp=sharing` | `drive.google.com/file/d/ID/preview` |
+| `vimeo.com/123456789` | `player.vimeo.com/video/123456789` |
+| `example.com/lesson.mp4` | unchanged — a direct file plays in the frame too |
+
+So one word covers every case and you never have to know which kind of link you have.
+A link that names no single video — a channel, a playlist, a Drive *folder* — is left
+alone and **reported as a warning**, because framing one shows an error page where the
+video should be. An address already in `/embed` form is left as it is, so re-syncing
+never rewrites what it just wrote.
 
 **This is not the [Image Processor](#configure-image-processor).** `image` means *"I
 already have a URL"*; the Image Processor means *"I have a picture pasted into the cell"*
@@ -331,10 +352,10 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
   `video` is a tidier spreadsheet; what you pay is a card that needs a connection. If a
   deck must work offline, put the files in `collection.media` and reference them the
   ordinary Anki way.
-- **A YouTube *page* URL will not play in a `video` column.** `<video>` plays a media file,
-  not a web page; a `youtube.com/watch?v=…` link needs an `<iframe>`. That still works —
-  paste the embed HTML straight into the cell and leave the settings row alone, because a
-  field's HTML is rendered as-is.
+- **A framed player is blocked on the mobile clients.** AnkiDroid and AnkiMobile are far
+  stricter about third-party frames than the desktop, so a `video` column that plays fine
+  on a computer will usually show nothing on a phone. Anything you must be able to review
+  on mobile belongs in the text of the card, not in a frame.
 - **`tts` and `furigana` are refused on a media column.** They would act on the address:
   `tts` would read the URL out loud, so it is dropped with a warning, and `furigana` is
   turned off with one. `hint`, on the other hand, is *accepted and currently has no
@@ -342,7 +363,8 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
 - **Text styling does not apply to a media column.** `color`, `bold`, `italic` and the
   column's own `align` are skipped for `image`/`audio`/`video`; only `size` (as a width),
   `side`, `label` and the deck-wide `align` reach the card. `size` on an `audio` column is
-  accepted but changes nothing visible.
+  accepted but changes nothing visible. A `video` column keeps a 16 : 9 shape, so `size`
+  sets its width and the height follows.
 - **The Card Layout window does not list the media kind.** Its **Settings** panel predates
   these three keys, so a media column looks bare there; the **Preview** panel and the real
   card do show the element.
