@@ -391,7 +391,10 @@ class TestMediaColumns:
     def test_each_kind_wraps_the_field_in_its_element(self, cell, tag):
         plan, sheet_config = self._cfg(cell)
         afmt = build_templates(plan, sheet_config)[0]["afmt"]
-        assert f'{tag} src="{{{{Link}}}}"' in afmt
+        # A video frame reaches the field through the player page, which is what
+        # gives the request an origin — see TestFramedPlayerOnMobile.
+        assert f"{tag} src=" in afmt
+        assert "{{Link}}" in afmt
 
     def test_sound_can_always_be_replayed(self):
         # A sound the learner cannot replay is worse than no sound. Video gets its
@@ -726,13 +729,27 @@ class TestFramedPlayerOnMobile:
         config = parse_config_row({"ID": "#config", "Clip": cell}, plan)
         return build_templates(plan, config)[0]
 
-    def test_a_link_stands_beside_the_frame(self):
+    def test_the_frame_goes_through_a_page_with_an_origin(self):
+        """This is what lets the video play at all on a phone.
+
+        A card has no origin to lend, so it frames an https page and that page
+        frames the video — the request YouTube finally sees carries a referrer.
+        """
+        from src.card_layout import EMBED_PROXY
+
+        afmt = self._templates()["afmt"]
+        assert f'src="{EMBED_PROXY}{{{{Clip}}}}"' in afmt
+        assert EMBED_PROXY.startswith("https://")
+
+    def test_the_note_keeps_the_plain_address(self):
+        """Only the template knows about that page, so dropping it is a re-sync."""
         afmt = self._templates()["afmt"]
         assert 's2a-embed-link" href="{{Clip}}"' in afmt
 
-    def test_the_frame_is_hidden_and_the_link_shown_on_mobile(self):
+    def test_the_link_is_the_way_through_on_mobile(self):
+        # Kept small rather than hidden: if that page is ever unreachable, this
+        # is the only thing left that opens the video.
         both = _both(self._templates())
-        assert ".mobile .s2a-embed { display: none; }" in both
         assert ".mobile .s2a-embed-link { display: inline-block;" in both
 
     def test_the_link_is_hidden_everywhere_else(self):

@@ -17,6 +17,19 @@ from html import escape
 from .sheet_config import ALIGNMENTS
 from .sheet_config import THEME_COLORS
 
+# A card frames this page, and this page frames the video.
+#
+# Anki's mobile clients load a card from a `file://` origin, so their webview
+# sends no HTTP Referer and YouTube refuses the embed with "Error 153". A
+# referrerpolicy cannot help — there is no origin to send from. Framing an https
+# page first gives the request a real referrer, and the video plays.
+#
+# The address lives here rather than in the notes: a template is rebuilt on every
+# sync, so changing or dropping this is one re-sync instead of an edit to every
+# row. The cost is that a video needs this page to be reachable, on top of needing
+# YouTube — which is why the mobile link below stays as a way through.
+EMBED_PROXY = "https://tannc28.github.io/sheets2anki/player.html?src="
+
 FRONT_TEMPLATE_NAME = "Card 1"
 REVERSE_TEMPLATE_NAME = "Card 2 (reverse)"
 
@@ -66,10 +79,8 @@ def _css(sheet_config):
         # referrerpolicy cannot help, because there is no origin to send. Anki
         # marks those clients with a `mobile` class, so the frame is simply not
         # shown there and a link that opens the video properly takes its place.
-        ".mobile .s2a-embed { display: none; }\n"
-        ".mobile .s2a-embed-link { display: inline-block;"
-        " padding: 10px 18px; border: 1px solid currentColor; border-radius: 8px;"
-        " text-decoration: none; font-size: 16px; }\n"
+        ".mobile .s2a-embed-link { display: inline-block; margin-top: 6px;"
+        " font-size: 13px; opacity: .7; }\n"
         "</style>\n"
     )
 
@@ -110,7 +121,7 @@ _MEDIA_ELEMENTS = {
     # on the phone while working perfectly on the desktop. Naming the policy makes
     # the webview send the origin it does have.
     "video": (
-        '<iframe src="{ref}" class="s2a-embed" allowfullscreen '
+        '<iframe src="' + EMBED_PROXY + '{ref}" class="s2a-embed" allowfullscreen '
         'referrerpolicy="strict-origin-when-cross-origin" '
         'allow="encrypted-media; picture-in-picture"{style}></iframe>'
         '<a class="s2a-embed-link" href="{ref}">{caption}</a>'

@@ -4,6 +4,27 @@
 
 ---
 
+## ✨ **v6.7.0** - August 2026 *(Feature)*
+
+### 🎬 Video plays inline on a phone, by borrowing an origin
+
+- v6.6.1 added a `referrerpolicy`; v6.6.2 replaced the frame with a link on mobile.
+  Neither was what was wanted: a link opens the video *elsewhere*, and the point of a
+  `video` column is a video on the card.
+- The card now frames **`player.html`** on the preview site, and that page frames the
+  video. The page is served over https, so the request that finally reaches YouTube
+  carries a real referrer — which is the whole of what "Error 153" was complaining
+  about. The video plays inline, on the phone, in the card.
+- That page refuses anything that is not a YouTube, Vimeo or Google Drive video
+  address. Without the check it would frame any address anyone put in a query string,
+  under that domain.
+- **The address is in the card template, not in your notes.** Templates are rebuilt on
+  every sync, so changing or dropping this costs one re-sync rather than an edit to
+  every row. A small link stays under the frame on mobile, so if the page is ever
+  unreachable there is still a way to the video.
+
+---
+
 ## ✨ **v6.6.2** - August 2026 *(Fix)*
 
 ### 🎬 A video column now works on a phone, by not being a frame there

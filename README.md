@@ -373,14 +373,21 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
   `video` is a tidier spreadsheet; what you pay is a card that needs a connection. If a
   deck must work offline, put the files in `collection.media` and reference them the
   ordinary Anki way.
-- **On a phone the frame is replaced by a link, on purpose.** AnkiMobile and AnkiDroid
-  load a card from a `file://` origin, so the webview sends no HTTP `Referer` and YouTube
-  refuses to play the embed — *"Error 153: Video player configuration error"*. No
-  `referrerpolicy` can fix that, because there is no origin to send. So the card carries
-  both a frame and a link, and the stylesheet shows exactly one: Anki marks the mobile
-  clients with a `mobile` class, and there the frame is hidden and the link takes its
-  place. Tap it and the video opens properly. The link's text is the column's `label` if
-  it has one.
+- **A video frame reaches the video through a page, not directly.** AnkiMobile and
+  AnkiDroid load a card from a `file://` origin, so the webview sends no HTTP `Referer`
+  and YouTube refuses the embed — *"Error 153: Video player configuration error"*. No
+  `referrerpolicy` fixes that: there is no origin to send *from*. So the card frames
+  `player.html` on the preview site, which is served over https, and that page frames the
+  video — the request YouTube finally sees carries a real referrer, and it plays inline on
+  a phone.
+  That page only ever frames YouTube, Vimeo and Google Drive addresses; anything else is
+  refused rather than displayed.
+  The address lives in the card template, not in your notes, so it is rebuilt on every
+  sync — dropping it later costs one re-sync rather than an edit to every row. The price
+  is that a video now needs that page reachable as well as YouTube, which is why the card
+  also carries a small link under the frame on mobile: if the page ever goes, that link
+  still opens the video. Its text is the column's `label` when the settings row gives
+  one.
 - **`tts` and `furigana` are refused on a media column.** They would act on the address:
   `tts` would read the URL out loud, so it is dropped with a warning, and `furigana` is
   turned off with one. `hint`, on the other hand, is *accepted and currently has no
