@@ -9,7 +9,7 @@
  * Anki's own template renderer — see that file for why that one cannot be reused.
  */
 
-import { renderCard, clozeOrdinals, escapeHtml, sanitizeFieldValue } from "./anki.js";
+import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
@@ -498,11 +498,11 @@ function detailView(a) {
       will run at sync time — not by a second implementation of it. Only the card
       picture is drawn by this page; inside Anki that last step belongs to Anki's own
       renderer, so read the template as exact and the layout as an approximation.</p>
-    <p class="muted small">One deliberate difference: script inside a cell is removed
-      before the card is drawn here. Anki would run it. A preview is for looking at a
-      spreadsheet, sometimes somebody else's, and running their code is not part of
-      the job — the card frame needs same-origin so that embedded players work, and
-      that grant is only safe alongside this.</p>
+    <p class="muted small">The card is drawn the way Anki draws it, with nothing
+      filtered out — a cell containing script runs here because it would run there,
+      and a preview that quietly removed it would be reporting on a card you are never
+      going to see. That also means previewing a spreadsheet is trusting it, the same
+      way syncing one is.</p>
   </div>`;
 }
 
@@ -533,12 +533,7 @@ function cardView(a) {
     : [1];
   const ordinal = ordinals.includes(state.ordinal) ? state.ordinal : ordinals[0] || 1;
 
-  // Cleaned before substitution, never after: the hint link this page generates
-  // carries its own onclick, and that has to survive.
-  const values = Object.fromEntries(
-    Object.entries(row.values).map(([k, v]) => [k, sanitizeFieldValue(v)]),
-  );
-  const { front, back } = renderCard(template, values, { ordinal });
+  const { front, back } = renderCard(template, row.values, { ordinal });
 
   const doc = `<!doctype html><meta charset="utf-8">
     <style>
@@ -603,8 +598,9 @@ function cardView(a) {
     }
     <!-- allow-same-origin is required, not incidental: a nested player inherits
          these flags, and in an opaque origin YouTube and Drive render a dead black
-         box. The grant is paid for by sanitizeFieldValue() above, which takes
-         script out of the cells before they reach this frame. -->
+         box. Cells go in exactly as written, script and all, because Anki's webview
+         runs them too and a preview that quietly filtered them would be reporting on
+         a card nobody is going to see. -->
     <iframe id="card" title="Card preview"
             sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
             allow="fullscreen; encrypted-media; picture-in-picture; autoplay"

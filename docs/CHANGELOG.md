@@ -4,6 +4,21 @@
 
 ---
 
+## ✨ **v6.3.5** - August 2026 *(Fix)*
+
+### 🔁 The preview stopped filtering what Anki would run
+
+- v6.3.4 stripped `<script>`, inline handlers and `javascript:` addresses out of a
+  cell before drawing the card. That was wrong: **a preview that behaves differently
+  from Anki's webview is a preview that lies**, which is the one thing this page must
+  never do. Cells now go onto the card exactly as written, script and all, because
+  Anki runs them too.
+- The consequence is stated plainly under **Sheet detail** rather than hidden:
+  previewing a spreadsheet trusts it, the same way syncing one does. The card frame
+  keeps `allow-same-origin`, which embedded players need in order not to render black.
+
+---
+
 ## ✨ **v6.3.4** - August 2026 *(Fix)*
 
 ### 🐞 Embedded video was a dead black box

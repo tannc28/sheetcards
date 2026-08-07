@@ -27,27 +27,6 @@ function stripHtml(value) {
   return String(value ?? "").replace(/<[^>]+>/g, "");
 }
 
-/**
- * Removes script from a cell before it is put on a card.
- *
- * The frame the card is drawn in has to carry `allow-same-origin`, because a
- * nested player — YouTube, Drive — inherits the outer frame's sandbox flags and
- * renders black in an opaque origin. That grant means a script inside the frame
- * could reach this page, and cells come from whatever spreadsheet is being
- * previewed, so the cells are cleaned instead.
- *
- * This is a deliberate difference from Anki, which does run script in a field.
- * A preview is for looking at somebody's sheet, sometimes a stranger's; running
- * their code is not part of the job.
- */
-export function sanitizeFieldValue(value) {
-  return String(value ?? "")
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, "")
-    .replace(/<script\b[^>]*>/gi, "")
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/(href|src|xlink:href)\s*=\s*(["']?)\s*javascript:[^"'\s>]*/gi, '$1=$2#');
-}
-
 // Anki: `kanji[reading]` becomes ruby text. Its own pattern is roughly
 // /(?:^| )([^ >]+?)\[(.+?)\]/ — the space before the base is consumed so
 // "推迟 [tuī chí]" and "推迟[tuī chí]" both work.
