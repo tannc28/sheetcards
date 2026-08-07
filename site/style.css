@@ -178,7 +178,11 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); }
   flex: 1 1 auto;
   min-height: 0;                       /* lets the children scroll, not the page */
   display: grid;
-  grid-template-columns: minmax(250px, 20%) minmax(0, 1fr);
+  /* An even split: the card is small, and the left pane has to hold the deck
+     tree, the row list and the detail drawer without any of them feeling cramped.
+     The card stays on screen the whole time — opening the detail must never take
+     it away, which is the reason the drawer lives on this side. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 .pane { overflow: auto; min-width: 0; }
 /* Navigation on the left — which card am I looking at — and the card itself on
@@ -213,18 +217,37 @@ h2.spaced { margin-top: 26px; }
 /* ---- sidebar rows and footer --------------------------------------------- */
 
 .side > div { flex: none; }
-#rowlist { flex: 1 1 auto; min-height: 0; overflow: auto; margin: 0 -4px; }
+#rowlist { flex: 1 1 auto; min-height: 90px; overflow: auto; margin: 0 -4px; }
+/* With the drawer open the two share the pane rather than one pushing the other
+   out of reach. */
+.side.open #rowlist { flex: 0 1 34%; }
 .side-foot {
   flex: none; margin: 0 -12px; padding: 8px 12px;
   border-top: 1px solid var(--line); background: var(--panel);
-  position: sticky; bottom: 0;
 }
-.linkish {
-  background: transparent; color: var(--muted); border: 0; padding: 3px 4px;
-  font-family: var(--mono); font-size: 12px; cursor: pointer;
-  display: flex; align-items: center; gap: 7px; width: 100%;
+.detail-toggle {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; font-size: 13px; font-weight: 500;
+  background: var(--ground); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
 }
-.linkish:hover, .linkish.on { color: var(--accent); }
+.detail-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.detail-toggle[aria-expanded="true"] {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+}
+.detail-toggle .label { flex: 1 1 auto; text-align: left; }
+.detail-toggle .chev {
+  font-size: 10px; color: var(--muted); transition: transform .12s ease;
+}
+.detail-toggle[aria-expanded="true"] .chev { transform: rotate(90deg); color: var(--accent); }
+
+/* Opens downward, inside the left pane, so the card on the right is never
+   displaced by something you only opened to look something up. */
+.drawer {
+  flex: 1 1 auto; min-height: 0; overflow: auto;
+  margin: 0 -12px; padding: 12px 12px 16px;
+  border-top: 1px solid var(--line);
+}
 .badge {
   font-family: var(--mono); font-size: 10.5px; padding: 0 6px; border-radius: 999px;
   background: var(--warn); color: var(--panel); font-weight: 700;
@@ -266,7 +289,7 @@ h2.spaced { margin-top: 26px; }
 .tabs .nav .at { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 
 #view { flex: 1 1 auto; overflow: auto; padding: 14px 16px; min-height: 0; }
-.detail { max-width: 105ch; }
+.detail { max-width: 100%; }
 .detail > h2 { margin-top: 26px; }
 .detail > h2:first-child { margin-top: 0; }
 

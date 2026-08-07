@@ -4,6 +4,31 @@
 
 ---
 
+## ✨ **v6.3.4** - August 2026 *(Fix)*
+
+### 🐞 Embedded video was a dead black box
+
+- A `video` column showed nothing on the preview site and could not be clicked. The
+  card is drawn in a sandboxed frame, and **a nested frame inherits the outer
+  sandbox flags** — without `allow-same-origin` the YouTube or Drive player is
+  forced into an opaque origin, cannot reach its own storage, and renders black.
+- The frame now carries `allow-same-origin`. That grant would let script in a cell
+  reach the page, so cells are stripped of `<script>`, inline `on…=` handlers and
+  `javascript:` addresses before the card is drawn. Anki itself would run that
+  script; a preview looks at spreadsheets that are not always your own, so it does
+  not. Everything else — markup, ruby, media, the page's own hint link — is
+  untouched.
+
+### 🗂 An even split, and the detail opens where you are
+
+- The two panes are now **50 / 50**. A card is small; the left pane needed the room
+  more than the card did.
+- **Sheet detail** is a real button that opens a drawer *downward in the left pane*,
+  so the card stays on screen while you look something up. It used to take the card
+  away, which is the opposite of what a preview is for.
+
+---
+
 ## ✨ **v6.3.3** - August 2026 *(Refinement)*
 
 ### 🗂 Two panes, and the reference material out of the way

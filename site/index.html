@@ -47,10 +47,14 @@
     <div id="rowlist"></div>
 
     <div class="side-foot">
-      <button id="details-btn" class="linkish" type="button">
-        Sheet detail <span id="warncount" class="badge" hidden></span>
+      <button id="details-btn" class="detail-toggle" type="button" aria-expanded="false"
+              aria-controls="detail">
+        <span class="chev" aria-hidden="true">▸</span>
+        <span class="label">Sheet detail</span>
+        <span id="warncount" class="badge" hidden></span>
       </button>
     </div>
+    <div id="detail" class="drawer" hidden></div>
   </aside>
 
   <section class="pane main">

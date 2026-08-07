@@ -9,7 +9,7 @@
  * Anki's own template renderer — see that file for why that one cannot be reused.
  */
 
-import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
+import { renderCard, clozeOrdinals, escapeHtml, sanitizeFieldValue } from "./anki.js";
 
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
@@ -114,11 +114,12 @@ def analyze(tsv, deck_name):
 const $ = (sel) => document.querySelector(sel);
 const state = {
   analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
-  // What the main pane shows. The first three are the card; "template" is its
-  // source, the way Anki puts the template editor beside the card. "detail" is
-  // everything about how the *sheet* is configured — reference material you open
-  // to debug, not something to look at while reading cards.
+  // What the right pane shows: the card, or its source the way Anki puts the
+  // template editor beside it. The card is never taken away — the sheet's
+  // configuration opens as a drawer in the *left* pane instead, because it is
+  // reference material you consult while still looking at the card.
   tab: "both",
+  detailOpen: false,
 };
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
@@ -497,6 +498,11 @@ function detailView(a) {
       will run at sync time — not by a second implementation of it. Only the card
       picture is drawn by this page; inside Anki that last step belongs to Anki's own
       renderer, so read the template as exact and the layout as an approximation.</p>
+    <p class="muted small">One deliberate difference: script inside a cell is removed
+      before the card is drawn here. Anki would run it. A preview is for looking at a
+      spreadsheet, sometimes somebody else's, and running their code is not part of
+      the job — the card frame needs same-origin so that embedded players work, and
+      that grant is only safe alongside this.</p>
   </div>`;
 }
 
@@ -527,7 +533,12 @@ function cardView(a) {
     : [1];
   const ordinal = ordinals.includes(state.ordinal) ? state.ordinal : ordinals[0] || 1;
 
-  const { front, back } = renderCard(template, row.values, { ordinal });
+  // Cleaned before substitution, never after: the hint link this page generates
+  // carries its own onclick, and that has to survive.
+  const values = Object.fromEntries(
+    Object.entries(row.values).map(([k, v]) => [k, sanitizeFieldValue(v)]),
+  );
+  const { front, back } = renderCard(template, values, { ordinal });
 
   const doc = `<!doctype html><meta charset="utf-8">
     <style>
@@ -590,8 +601,13 @@ function cardView(a) {
           </div>`
         : ""
     }
-    <iframe id="card" sandbox="allow-scripts allow-popups allow-presentation"
-            allow="fullscreen; encrypted-media; picture-in-picture"
+    <!-- allow-same-origin is required, not incidental: a nested player inherits
+         these flags, and in an opaque origin YouTube and Drive render a dead black
+         box. The grant is paid for by sanitizeFieldValue() above, which takes
+         script out of the cells before they reach this frame. -->
+    <iframe id="card" title="Card preview"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+            allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
             srcdoc="${escapeHtml(doc)}"></iframe>
     ${
       row.kind !== "synced"
@@ -623,9 +639,6 @@ function backOnly(backHtml, frontHtml) {
 }
 
 function tabBar() {
-  if (state.tab === "detail") {
-    return `<button data-tab="both" class="on">← Back to the card</button>`;
-  }
   const visible = visibleRows();
   const at = visible.findIndex(({ i }) => i === state.row);
   return `
@@ -667,15 +680,16 @@ function render() {
   $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
   $("#tabs").innerHTML = tabBar();
-  $("#view").innerHTML =
-    state.tab === "detail" ? detailView(a)
-    : state.tab === "template" ? templateView(a)
-    : cardView(a);
+  $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
+
+  $("#detail").hidden = !state.detailOpen;
+  $("#detail").innerHTML = state.detailOpen ? detailView(a) : "";
+  $("#details-btn").setAttribute("aria-expanded", String(state.detailOpen));
+  document.querySelector(".side").classList.toggle("open", state.detailOpen);
 
   const warnings = warningItems(a).length;
   $("#warncount").hidden = !warnings;
   $("#warncount").textContent = warnings;
-  $("#details-btn").classList.toggle("on", state.tab === "detail");
 }
 
 // ---------------------------------------------------------------------------
@@ -685,7 +699,7 @@ function render() {
 $("#go").addEventListener("click", preview);
 $("#url").addEventListener("keydown", (e) => e.key === "Enter" && preview());
 $("#details-btn").addEventListener("click", () => {
-  state.tab = state.tab === "detail" ? "both" : "detail";
+  state.detailOpen = !state.detailOpen;
   render();
 });
 
@@ -706,7 +720,6 @@ document.addEventListener("click", (e) => {
   if (rowEl) {
     state.row = Number(rowEl.dataset.row);
     state.template = 0;
-    if (state.tab === "detail") state.tab = "both";
     return render();
   }
   if (e.target.id === "prev" || e.target.id === "next") {
