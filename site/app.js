@@ -55,6 +55,10 @@ def analyze(tsv, deck_name):
     listed = []
     for i, raw in enumerate(rows):
         note = tm.row_to_dict(raw, headers)
+        # The same rewrite the sync performs. Skipping it would frame the address
+        # the user pasted — the one address that cannot be framed — so a perfectly
+        # good card would preview as a blank box.
+        tm.apply_media_rewrites(note, plan, cfg)
         kind = tm.classify_row(note, plan)
         if kind == tm.GHOST:
             continue
@@ -474,7 +478,9 @@ function cardFrame(analysis) {
       <span class="mono muted">row ${row.line}</span>
       <button id="next" title="Next row">→</button>
     </div>
-    <iframe id="card" sandbox="allow-scripts" srcdoc="${escapeHtml(doc)}"></iframe>
+    <iframe id="card" sandbox="allow-scripts allow-popups allow-presentation"
+            allow="fullscreen; encrypted-media; picture-in-picture"
+            srcdoc="${escapeHtml(doc)}"></iframe>
     ${
       row.kind !== "synced"
         ? `<p class="note ${row.kind}">This row ${

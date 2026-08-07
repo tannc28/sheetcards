@@ -563,3 +563,29 @@ class TestEmbeddedPlayers:
         deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
 
         assert deck.notes[0]["Link"] == pasted
+
+
+@pytest.mark.unit
+def test_the_shared_rewrite_matches_what_the_sync_stores():
+    """One function, so a preview and a sync cannot disagree about a link.
+
+    They did disagree once: the site rebuilt each row from the raw cells and never
+    called this, so it framed the un-rewritten address.
+    """
+    from src.tsv_model import apply_media_rewrites
+    from src.tsv_model import build_remote_deck_from_tsv
+    from src.tsv_model import parse_tsv_data
+    from src.tsv_model import row_to_dict
+
+    pasted = "https://www.youtube.com/watch?v=gdBu8kLulMM"
+    tsv = f"ID\tWord\tClip\n#config\t\tvideo\n1\t熟悉\t{pasted}\n"
+
+    parsed = parse_tsv_data(tsv)
+    deck = build_remote_deck_from_tsv(parsed, "url")
+
+    # What anything else rendering this row would compute for itself.
+    row = row_to_dict(parsed["rows"][1], parsed["headers"])
+    apply_media_rewrites(row, deck.plan, deck.sheet_config)
+
+    assert row["Clip"] == deck.notes[0]["Clip"]
+    assert row["Clip"] == "https://www.youtube.com/embed/gdBu8kLulMM"

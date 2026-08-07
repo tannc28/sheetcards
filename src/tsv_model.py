@@ -262,6 +262,33 @@ def normalize_embed_url(value):
     return url, None
 
 
+def apply_media_rewrites(note_data, plan, sheet_config):
+    """Rewrites a row's video cells in place, and says what looked wrong.
+
+    Anything that renders a row has to go through this, not just the sync: a
+    preview that skipped it would frame the address the user pasted, which is
+    precisely the address that cannot be framed — so the preview would show a
+    blank box for a card that is actually fine.
+
+    Args:
+        note_data (dict): one row, keyed by header; modified in place
+        plan (ColumnPlan): the sheet's column roles
+        sheet_config (SheetConfig): the parsed settings row
+
+    Returns:
+        list[str]: warnings about addresses that name no single video
+    """
+    warnings = []
+    for header in plan.content_headers:
+        if sheet_config.for_field(header).media != "video":
+            continue
+        fixed, problem = normalize_embed_url(note_data.get(header, ""))
+        note_data[header] = fixed
+        if problem:
+            warnings.append(f"'{header}': {problem}")
+    return warnings
+
+
 # =============================================================================
 # WHAT A ROW BECOMES
 # =============================================================================
@@ -565,13 +592,6 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     add_debug_msg(f"Content columns: {plan.content_headers}")
     add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
 
-    # A `video` column holds a page address that has to become the address of that
-    # page's own player before it reaches the note — see normalize_embed_url.
-    embed_headers = [
-        header
-        for header in plan.content_headers
-        if sheet_config.for_field(header).media == "video"
-    ]
     embed_warnings = set()
 
     # Process each row
@@ -585,11 +605,8 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
             # substitute a field but cannot transform one. Doing it before add_note
             # means the sync's change comparison sees the same value it stores, so a
             # row does not read as modified on every single sync.
-            for header in embed_headers:
-                fixed, problem = normalize_embed_url(note_data.get(header, ""))
-                note_data[header] = fixed
-                if problem:
-                    embed_warnings.add(f"'{header}' row {sheet_row}: {problem}")
+            for problem in apply_media_rewrites(note_data, plan, sheet_config):
+                embed_warnings.add(f"row {sheet_row}: {problem}")
 
             # ALWAYS add to deck for correct metrics accounting
             # Empty ID validation will be done inside add_note() method

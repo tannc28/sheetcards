@@ -134,3 +134,22 @@ def test_site_loads_the_same_modules():
         "site/app.js loads a different set of modules than this test pins.\n"
         f"  site: {names}\n  test: {PURE_MODULES}"
     )
+
+
+@pytest.mark.unit
+def test_the_site_rewrites_media_links_like_the_sync_does():
+    """The preview must not render the address the user pasted.
+
+    A `video` cell holds a YouTube *watch* address, and that is exactly the one
+    address YouTube refuses to be framed at — the sync rewrites it on the way into
+    the note. A preview that skipped the rewrite would show a blank box for a card
+    that is perfectly fine, which is worse than showing nothing at all: it accuses
+    the sheet of a fault it does not have. This shipped broken once.
+    """
+    app = (REPO / "site" / "app.js").read_text(encoding="utf-8")
+    analyzer = app.split("const ANALYZER = String.raw`", 1)[1].split("`;", 1)[0]
+
+    assert "apply_media_rewrites" in analyzer, (
+        "site/app.js builds each row's values without applying the same media "
+        "rewrite the sync applies, so a video column will preview as an empty frame"
+    )

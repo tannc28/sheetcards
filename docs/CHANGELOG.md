@@ -4,6 +4,20 @@
 
 ---
 
+## ✨ **v6.3.1** - August 2026 *(Fix)*
+
+### 🐞 The preview framed the address you pasted
+
+- A `video` column previewed as an empty box on the site. The page rebuilt each row
+  from the raw cells and never applied the rewrite the sync applies, so it framed the
+  `watch?v=…` address — the one address YouTube refuses to be framed at. The card was
+  fine; only the preview was wrong, which is the worse failure of the two: it accuses
+  the sheet of a fault it does not have.
+- Both halves now call one shared `tsv_model.apply_media_rewrites`, and a test reads
+  `site/app.js` to make sure the page keeps calling it.
+
+---
+
 ## ✨ **v6.3.0** - August 2026 *(Feature)*
 
 ### 🎬 `video` now takes the link from your address bar
