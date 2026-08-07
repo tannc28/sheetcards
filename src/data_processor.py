@@ -16,22 +16,29 @@ Consolidated from:
 # IMPORTS
 # =============================================================================
 
-import csv
-import io
-import re
 import urllib.error
 import urllib.request
 
 from . import column_model
+from . import tsv_model
 from .column_model import deck_path
-from .column_model import plan_columns
 from .column_model import row_is_marked_for_sync
-from .column_model import tags_of
+
+# Re-exported so `from .data_processor import X` keeps resolving for everything that
+# already imported these from here. The definitions live in the pure layer because
+# the preview site runs those very files in the browser and must not need Anki;
+# see tsv_model's docstring.
+from .errors import RemoteDeckError  # noqa: F401  (facade)
 from .sheet_config import SheetConfig
-from .sheet_config import is_config_row
-from .sheet_config import parse_config_row
-from .templates_and_definitions import TAG_ROOT
 from .templates_and_definitions import ensure_custom_models
+from .tsv_model import TAG_ROOT  # noqa: F401  (facade)
+from .tsv_model import RemoteDeck  # noqa: F401  (facade)
+from .tsv_model import build_remote_deck_from_tsv  # noqa: F401  (facade)
+from .tsv_model import build_tags  # noqa: F401  (facade)
+from .tsv_model import clean_tag_text  # noqa: F401  (facade)
+from .tsv_model import has_cloze_deletion  # noqa: F401  (facade)
+from .tsv_model import parse_tsv_data  # noqa: F401  (facade)
+from .tsv_model import row_has_cloze
 from .utils import add_debug_message
 from .utils import ensure_subdeck_exists
 from .utils import get_subdeck_name
@@ -40,6 +47,11 @@ from .utils import get_subdeck_name
 def add_debug_msg(message, category="DATA_PROCESSOR"):
     """Local helper for debug messages."""
     add_debug_message(message, category)
+
+
+# The pure layer cannot import utils (that import is what would stop it loading in
+# the browser), so the add-on hands it the real debug log here instead.
+tsv_model.set_addon_logger(add_debug_message)
 
 
 # Import mw safely
@@ -53,175 +65,8 @@ except ImportError:
         mw = None
 
 # =============================================================================
-# CUSTOM EXCEPTIONS
-# =============================================================================
-
-
-class RemoteDeckError(Exception):
-    """Custom exception for errors related to remote decks."""
-
-    pass
-
-
-# =============================================================================
 # DATA CLASSES
 # =============================================================================
-
-
-class RemoteDeck:
-    """
-    Class representing a deck loaded from a remote source.
-
-    This class encapsulates all data from a remote deck, including:
-    - List of notes with their respective fields
-    - Remote deck name
-    - Settings and metadata
-    """
-
-    def __init__(self, name="", url="", plan=None, sheet_config=None):
-        """
-        Initializes an empty remote deck.
-
-        Args:
-            name (str): Deck name
-            url (str): Data source URL
-            plan (ColumnPlan): how this sheet's headers map onto Anki
-            sheet_config (SheetConfig): the sheet's parsed settings row; a
-                default-constructed one (``present`` False) when the sheet has none
-        """
-        self.name = name
-        self.url = url
-        self.notes = []  # List of dictionaries representing notes
-        self.headers = []  # List of spreadsheet headers
-        self.plan = plan or plan_columns([])
-        self.sheet_config = sheet_config or SheetConfig()
-
-        # Refactored metrics per specification
-        self.total_table_lines = 0  # 1. Total table lines
-        self.valid_note_lines = 0  # 2. Lines with filled ID
-        self.invalid_note_lines = 0  # 3. Lines with empty ID
-        self.sync_marked_lines = 0  # 4. Lines marked for sync
-        self.total_potential_anki_notes = 0  # 5. Total potential Anki notes
-        self.ignored_ghost_rows = 0  # 6. Ghost Rows (ignored)
-
-        self.duplicate_ids = []  # Non-empty IDs that appear on more than one row
-
-    def add_note(self, note_data):
-        """
-        Adds a note to the deck and updates metrics.
-
-        Args:
-            note_data (dict): Note data
-        """
-        if not note_data:
-            return
-
-        plan = self.plan
-        note_id = (
-            str(note_data.get(plan.id_header, "")).strip() if plan.id_header else ""
-        )
-
-        if not note_id:
-            # Check if there is any content in columns OTHER than SYNC. Checkbox
-            # columns are routinely dragged far below the last real row, leaving a
-            # tail of rows whose only value is an unticked SYNC; counting those as
-            # broken rows would bury the real ones in noise.
-            other_content = any(
-                value and str(value).strip()
-                for key, value in note_data.items()
-                if key != plan.sync_header
-            )
-
-            if not other_content:
-                self.ignored_ghost_rows += 1
-                self.total_table_lines += 1  # Ghost rows are still lines in the table
-                return
-
-        self.notes.append(note_data)
-
-        # 1. Total table lines (always increments)
-        self.total_table_lines += 1
-
-        # 2 and 3. Valid vs invalid lines (based on ID)
-        if note_id:
-            self.valid_note_lines += 1
-        else:
-            self.invalid_note_lines += 1
-            # Invalid lines are counted but not processed further.
-            return
-
-        # 4. Lines marked for sync (only for valid lines)
-        if row_is_marked_for_sync(note_data, plan):
-            self.sync_marked_lines += 1
-
-        # 5. One Anki note per valid row. The reverse direction, when enabled, is a
-        # second card on the same note rather than a second note.
-        self.total_potential_anki_notes += 1
-
-    def finalize_metrics(self):
-        """
-        Finalizes metric calculation after all notes have been added.
-        Should be called at the end of deck processing.
-        """
-        # Validate automatically
-        try:
-            self.validate_metrics()
-        except ValueError as e:
-            # Warning log but not a failure
-            add_debug_msg(
-                f"⚠️ Warning: Inconsistency detected in remote deck metrics: {e}",
-                category="METRICS",
-            )
-
-    def get_statistics(self):
-        """
-        Returns remote deck statistics - REFACTORED.
-
-        Returns:
-            dict: Deck statistics according to new specification
-        """
-        return {
-            # Basic table metrics
-            "total_table_lines": self.total_table_lines,  # 1. Total lines
-            "valid_note_lines": self.valid_note_lines,  # 2. Lines with filled ID
-            "invalid_note_lines": self.invalid_note_lines,  # 3. Lines with empty ID
-            "ignored_ghost_rows": self.ignored_ghost_rows,  # 6. Ghost Rows
-            "sync_marked_lines": self.sync_marked_lines,  # 4. Lines marked for sync
-            # Anki potential metrics
-            "total_potential_anki_notes": self.total_potential_anki_notes,  # 5. Total potential in Anki
-            # Additional info
-            "headers": self.headers,
-        }
-
-    def validate_metrics(self):
-        """
-        Validates the consistency of calculated metrics.
-
-        Raises:
-            ValueError: If there are inconsistencies in the metrics
-        """
-        # 1. Validate that valid lines + invalid lines + ghost rows = total
-        total_calculated = (
-            self.valid_note_lines + self.invalid_note_lines + self.ignored_ghost_rows
-        )
-        if total_calculated != self.total_table_lines:
-            raise ValueError(
-                f"Inconsistency: valid({self.valid_note_lines}) + invalid({self.invalid_note_lines}) + ghost({self.ignored_ghost_rows}) != total({self.total_table_lines})"
-            )
-
-        # 2. Validate that sync_marked_lines does not exceed valid_note_lines
-        if self.sync_marked_lines > self.valid_note_lines:
-            raise ValueError(
-                f"Inconsistency: lines marked for sync({self.sync_marked_lines}) > valid lines({self.valid_note_lines})"
-            )
-
-        # 3. Each valid line yields exactly one note; the reverse direction is a
-        # second card on that note, not a second note.
-        if self.total_potential_anki_notes != self.valid_note_lines:
-            raise ValueError(
-                f"Inconsistency: potential notes({self.total_potential_anki_notes}) "
-                f"!= valid lines({self.valid_note_lines})"
-            )
 
 
 # =============================================================================
@@ -368,268 +213,6 @@ def download_tsv_data(url, timeout=30):
         raise RemoteDeckError(f"Unexpected download error: {str(e)}")
 
 
-def parse_tsv_data(tsv_data, debug_messages=None):
-    """
-    Parses TSV data and returns processed structure.
-
-    Args:
-        tsv_data (str): TSV data as string
-        debug_messages (list, optional): Debug list
-
-    Returns:
-        dict: Processed data with headers and rows
-
-    Raises:
-        RemoteDeckError: If there's an error in parsing
-    """
-
-    def add_debug_msg(message, category="TSV_PARSE"):
-        from datetime import datetime
-
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        formatted_msg = f"[{timestamp}] [{category}] {message}"
-        if debug_messages is not None:
-            debug_messages.append(formatted_msg)
-
-    try:
-        # Parse with csv.reader over the raw text stream (NOT a pre-split list of lines)
-        # so that quoted cells containing embedded newlines — common for multi-line
-        # answers/explanations from Google Sheets — are preserved instead of being
-        # silently flattened. Outer .strip() only trims the whole document's edges; it
-        # does not touch newlines inside quoted cells.
-        if not tsv_data.strip():
-            raise RemoteDeckError("Empty TSV data")
-
-        reader = csv.reader(io.StringIO(tsv_data.strip()), delimiter="\t")
-        rows = list(reader)
-
-        if not rows:
-            raise RemoteDeckError("No rows found in TSV data")
-
-        # First row is headers
-        headers = rows[0]
-        data_rows = rows[1:]
-
-        add_debug_msg(f"Headers found: {len(headers)}")
-        add_debug_msg(f"Data rows: {len(data_rows)}")
-
-        # The sheet defines its own fields, so ID is the only header the add-on
-        # insists on — it is the key every note is matched by.
-        plan = plan_columns(headers)
-        if not plan.has_id:
-            raise RemoteDeckError(
-                f"Mandatory header missing: '{column_model.IDENTIFIER}'"
-            )
-        if not plan.content_headers:
-            raise RemoteDeckError(
-                "The sheet has no content columns — add at least one column besides "
-                f"'{column_model.IDENTIFIER}', '{column_model.SYNC}', "
-                f"'{column_model.TAGS}' and 'SUBDECK n'."
-            )
-        if plan.duplicates:
-            add_debug_msg(f"⚠️ Duplicate headers ignored: {plan.duplicates}")
-
-        return {"headers": headers, "rows": data_rows, "plan": plan}
-
-    except csv.Error as e:
-        raise RemoteDeckError(f"Error processing TSV data: {e}")
-    except Exception as e:
-        raise RemoteDeckError(f"Unexpected parsing error: {e}")
-
-
-def _row_to_dict(row, headers):
-    """One TSV row as a dict keyed by the sheet's own (cleaned) headers.
-
-    A header repeated in the sheet keeps its first column, matching ``plan_columns``.
-    """
-    note_data = {}
-    for col_index, header in enumerate(headers):
-        cleaned = column_model.clean(header)
-        if not cleaned or cleaned in note_data:
-            continue
-        value = row[col_index] if col_index < len(row) else ""
-        note_data[cleaned] = value.strip() if isinstance(value, str) else ""
-    return note_data
-
-
-def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
-    """
-    Builds RemoteDeck object from processed TSV data.
-
-    Args:
-        parsed_data (dict): Processed TSV data, including the sheet's ColumnPlan
-        url (str): Source URL
-        debug_messages (list, optional): Debug list
-
-    Returns:
-        RemoteDeck: Built remote deck object
-    """
-
-    def add_debug_msg(message, category="DECK_BUILD"):
-        from datetime import datetime
-
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        formatted_msg = f"[{timestamp}] [{category}] {message}"
-        if debug_messages is not None:
-            debug_messages.append(formatted_msg)
-
-    headers = parsed_data["headers"]
-    rows = parsed_data["rows"]
-    plan = parsed_data.get("plan") or plan_columns(headers)
-
-    # The sheet may describe how its cards look in the row right under the headers.
-    # It is a directive row, not data: it is removed here so it never reaches
-    # add_note() and therefore never shows up in any metric.
-    sheet_config = SheetConfig()
-    first_row_offset = 0
-    if rows and is_config_row(_row_to_dict(rows[0], headers), plan):
-        sheet_config = parse_config_row(_row_to_dict(rows[0], headers), plan)
-        rows = rows[1:]
-        first_row_offset = 1  # keeps the row numbers in the log matching the sheet
-        add_debug_msg(
-            f"Settings row found: {len(sheet_config.fields)} column(s) configured"
-        )
-        for warning in sheet_config.warnings:
-            message = f"⚠️ Settings row: {warning}"
-            add_debug_msg(message)
-            # Also into the global log: getRemoteDeck is called without a debug list
-            # during a normal sync, and a typo nobody sees is a typo nobody fixes.
-            add_debug_message(message, "SHEET_CONFIG")
-
-    # Create remote deck
-    remote_deck = RemoteDeck(url=url, plan=plan, sheet_config=sheet_config)
-    remote_deck.headers = headers
-
-    add_debug_msg(f"Content columns: {plan.content_headers}")
-    add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
-
-    # Process each row
-    for row_index, row in enumerate(rows):
-        sheet_row = row_index + 2 + first_row_offset
-        try:
-            # Create note dictionary keyed by the sheet's own headers
-            note_data = _row_to_dict(row, headers)
-
-            # ALWAYS add to deck for correct metrics accounting
-            # Empty ID validation will be done inside add_note() method
-            remote_deck.add_note(note_data)
-
-            note_id = str(note_data.get(plan.id_header, "")).strip()
-            if not note_id:
-                add_debug_msg(f"Row {sheet_row}: invalid note (empty ID)")
-                continue
-
-            if not row_is_marked_for_sync(note_data, plan):
-                add_debug_msg(f"Row {sheet_row}: note not marked for sync")
-                continue
-
-            # Attach the tags this row will carry
-            note_data["tags"] = build_tags(note_data, plan)
-
-        except Exception as e:
-            add_debug_msg(f"Error processing row {sheet_row}: {e}")
-            continue
-
-    # Detect duplicate (non-empty) IDs. These silently collapse during sync because
-    # notes are keyed by their ID — only one survives and the others are
-    # stranded/un-updated. Record them so the user can be warned.
-    seen_ids = {}
-    for note_data in remote_deck.notes:
-        nid = str(note_data.get(plan.id_header, "")).strip()
-        if nid:
-            seen_ids[nid] = seen_ids.get(nid, 0) + 1
-    remote_deck.duplicate_ids = sorted(
-        nid for nid, count in seen_ids.items() if count > 1
-    )
-    if remote_deck.duplicate_ids:
-        shown = ", ".join(remote_deck.duplicate_ids[:20])
-        suffix = " ..." if len(remote_deck.duplicate_ids) > 20 else ""
-        add_debug_msg(
-            f"⚠️ Duplicate IDs detected ({len(remote_deck.duplicate_ids)}): {shown}{suffix}"
-        )
-
-    # Finalize calculation of metrics
-    remote_deck.finalize_metrics()
-
-    # Validate consistency of calculated metrics
-    try:
-        remote_deck.validate_metrics()
-        add_debug_msg("✅ Metrics validated - all consistent")
-    except ValueError as e:
-        add_debug_msg(f"⚠️ Metrics inconsistency: {e}")
-
-    stats = remote_deck.get_statistics()
-    add_debug_msg(
-        f"Final deck: {stats['sync_marked_lines']} lines marked for sync, {stats['total_potential_anki_notes']} potential Anki notes"
-    )
-
-    return remote_deck
-
-
-def clean_tag_text(text):
-    """Cleans text for use as an Anki tag — always lower-case.
-
-    Anki treats '::' as tag nesting and spaces as tag separators, so both have to go
-    before the value can be used as a single tag component.
-    """
-    if not text or not isinstance(text, str):
-        return ""
-    cleaned = text.strip().replace(" ", "_").replace("::", "_").replace(":", "_")
-    cleaned = cleaned.replace(";", "_")
-    cleaned = re.sub(r"[^\w\-_\[\]]", "", cleaned, flags=re.UNICODE)
-    # "Unit 3: intro" would otherwise become "unit_3__intro" — collapse the runs so
-    # punctuation next to a space doesn't leave a visible scar in the tag.
-    cleaned = re.sub(r"_+", "_", cleaned).strip("_")
-    return cleaned.lower()
-
-
-def build_tags(note_data, plan):
-    """Builds the tag list for one row.
-
-    Three kinds of tag, and no placeholders for anything the row left blank:
-
-    1. ``sheets2anki`` — marks every note the add-on owns, so they can be found or
-       bulk-removed without touching the user's own notes.
-    2. ``sheets2anki::<subdeck path>`` — mirrors the deck path, which makes the
-       hierarchy searchable from the browser sidebar.
-    3. whatever the TAGS column lists, verbatim (comma or semicolon separated).
-    """
-    tags = [TAG_ROOT]
-
-    path = [clean_tag_text(level) for level in deck_path(note_data, plan)]
-    path = [level for level in path if level]
-    if path:
-        tags.append(f"{TAG_ROOT}::" + "::".join(path))
-
-    for tag in tags_of(note_data, plan):
-        cleaned = clean_tag_text(tag)
-        if cleaned:
-            tags.append(cleaned)
-
-    # Preserve order while dropping repeats.
-    return list(dict.fromkeys(tags))
-
-
-def has_cloze_deletion(text):
-    """
-    Checks if a text contains Anki cloze formatting in a robust way.
-    Checks for {{c1::...}} or {{C1::...}} formats.
-
-    Args:
-        text (str): Text to check
-
-    Returns:
-        bool: True if it contains cloze, False otherwise
-    """
-    if not text or not isinstance(text, str):
-        return False
-
-    # Pattern to detect cloze: {{c1::text}} or {{c1::text::hint}}
-    # Added re.IGNORECASE to catch {{C1::...}} which Anki also supports
-    cloze_pattern = r"\{\{c\d+::[^}]+\}\}"
-    return bool(re.search(cloze_pattern, text, re.IGNORECASE))
-
-
 # =============================================================================
 # NOTE PROCESSING FUNCTIONS
 # =============================================================================
@@ -672,26 +255,6 @@ def cache_deck_sheet_config(deck_url, plan, sheet_config):
         cache_sheet_settings(get_deck_id(deck_url), plan, sheet_config)
     except Exception as e:
         add_debug_msg(f"Could not cache the sheet's settings ({e})")
-
-
-def row_has_cloze(note_data, plan):
-    """
-    Checks whether any of the row's content columns carries a cloze deletion.
-
-    Every content column is inspected because the sheet decides its own columns —
-    a cloze can live in any of them.
-
-    Args:
-        note_data (dict): Spreadsheet row keyed by the sheet's headers
-        plan (ColumnPlan): How this sheet's headers map onto Anki
-
-    Returns:
-        bool: True if the row produces a cloze note
-    """
-    return any(
-        has_cloze_deletion(str(note_data.get(header, "")))
-        for header in plan.content_headers
-    )
 
 
 def get_target_model(col, plan, deck_url, is_cloze, debug_messages=None):

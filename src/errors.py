@@ -23,3 +23,15 @@ class ConfigurationError(Exception):
     """Exception raised for configuration-related issues."""
 
     pass
+
+
+class RemoteDeckError(Exception):
+    """Custom exception for errors related to remote decks.
+
+    Lives here rather than in :mod:`data_processor` so the pure layer
+    (:mod:`tsv_model`) can raise it without importing a module that needs Anki.
+    ``data_processor`` re-exports it, so ``from .data_processor import
+    RemoteDeckError`` still resolves.
+    """
+
+    pass

@@ -446,31 +446,6 @@ def get_model_suffix_from_url(url):
     return hashlib.sha1(url.encode()).hexdigest()[:8]
 
 
-def get_note_type_name(url, remote_deck_name, is_cloze=False):
-    """
-    Generates standardized name for Sheets2Anki note types.
-
-    Format: "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
-    The remote_deck_name already has conflict resolution applied by config_manager.
-    The reverse direction is a second card template on the same note type, so it
-    does not get a name of its own.
-
-    Args:
-        url (str): Remote deck URL
-        remote_deck_name (str): Remote deck name from spreadsheet (with suffix if necessary)
-        is_cloze (bool): If it's a Cloze note type
-
-    Returns:
-        str: Standardized note type name
-    """
-    note_type = "Cloze" if is_cloze else "Basic"
-
-    # Use remote name directly (already comes with conflict suffix from config_manager)
-    clean_remote_name = remote_deck_name.strip() if remote_deck_name else "RemoteDeck"
-
-    return f"Sheets2Anki - {clean_remote_name} - {note_type}"
-
-
 def register_note_type_for_deck(url, note_type_id, note_type_name, debug_messages=None):
     """
     Registers a note type ID at creation/use time (intelligent approach).
@@ -963,44 +938,6 @@ def validate_url(url):
 # ========================================================================================
 
 
-def get_subdeck_name(main_deck_name, path_levels):
-    """
-    Generates subdeck name from the main deck and a row's SUBDECK levels.
-
-    Args:
-        main_deck_name (str): Main deck name
-        path_levels (list): Deck path levels, outermost first (see column_model.deck_path)
-
-    Returns:
-        str: Full subdeck name in the format "MainDeck::Level1::Level2::..."
-    """
-    import re
-
-    def clean_deck_text(text):
-        """Cleans text for use as Anki deck name (single value, NOT list)."""
-        if not text or not isinstance(text, str):
-            return ""
-        # Remove problematic characters but keep spaces intact
-        # Deck names can't contain :: as it's the separator
-        cleaned = text.strip().replace("::", "_").replace(":", "_")
-        # Remove special characters that may cause issues, but allow brackets and basic punctuation
-        cleaned = re.sub(r"[^\w\s\-_\[\]()]", "", cleaned)
-        # Normalize multiple spaces to single space (keep spaces, don't replace with underscores)
-        cleaned = re.sub(r"\s+", " ", cleaned)
-        return cleaned
-
-    # Only levels that actually carry a value become subdecks — a level whose text
-    # survives cleaning as an empty string (e.g. it held only invalid characters) is
-    # skipped as well, so the deck never gains a nameless level.
-    parts = [main_deck_name]
-    for level in path_levels or []:
-        cleaned = clean_deck_text(str(level).strip())
-        if cleaned:
-            parts.append(cleaned)
-
-    return "::".join(parts)
-
-
 def ensure_subdeck_exists(deck_name):
     """
     Ensures that a subdeck exists, creating it if necessary.
@@ -1089,3 +1026,10 @@ def remove_empty_subdecks(remote_decks):
                     add_debug_message(f"Error removing subdeck: {e}", "SUBDECK")
 
     return removed_count
+
+
+# Re-exported from the pure layer: both are plain string formatting the
+# preview site needs too, and it cannot import this module (utils reaches for
+# Anki). See tsv_model's docstring.
+from .tsv_model import get_note_type_name  # noqa: F401,E402  (facade)
+from .tsv_model import get_subdeck_name  # noqa: F401,E402  (facade)

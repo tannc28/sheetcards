@@ -16,6 +16,7 @@ of truth, Anki is the copy.
 ## Table of contents
 
 - [Requirements](#requirements)
+- [Preview a sheet in your browser](#preview-a-sheet-in-your-browser)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [Spreadsheet reference](#spreadsheet-reference)
@@ -37,6 +38,37 @@ of truth, Anki is the copy.
 
 There is no Qt5 / Anki 2.1.4x fallback. A Google account is needed only to *write* the
 sheet — Anki reads it anonymously over a public link.
+
+## Preview a sheet in your browser
+
+**<https://tannc28.github.io/sheets2anki/>**
+
+Paste a Google Sheets link and the page shows what the add-on would make of it —
+before anything is installed and before your collection is touched:
+
+| It shows | Why that helps |
+|---|---|
+| Which column became `ID`, `SYNC`, `SUBDECK n`, `TAGS`, and which became fields | The commonest cause of "it synced nothing" is a column the add-on did not recognise |
+| Every row's fate: syncs, not ticked, or no ID — with the same counts the sync reports | Answers "why 0 notes?" without installing anything |
+| Whatever the settings row got wrong, spelled out | Otherwise these only appear in the debug log |
+| The deck tree and the tags each row lands in | Catches a `SUBDECK` typo before it creates a stray deck |
+| The card itself — front, back, reverse, cloze, media, and a TTS button that speaks through your computer's voices | The TTS button is a real test of whether a language code has a voice on this machine |
+
+The page is not a second implementation. It downloads the add-on's own
+`column_model.py`, `sheet_config.py`, `card_layout.py`, `tsv_model.py` and
+`errors.py` and runs them in the browser through [Pyodide](https://pyodide.org),
+so the columns, settings, warnings and card templates it shows are produced by the
+code that will produce them at sync time. Only the last step — drawing the finished
+template as a picture — is written for the page; inside Anki that step is Anki's own
+renderer, so treat the card image as a close approximation and the template text as
+exact.
+
+The sheet needs the same sharing the add-on needs (**Anyone with the link →
+Viewer**), so if the preview can read your sheet, so can Anki.
+
+To run it locally: `python scripts/build_site.py --serve`.
+
+---
 
 ## Install
 
@@ -352,6 +384,14 @@ All tag text is normalized: lower-cased, spaces and `:`/`;` turned into `_`, run
 If **any** content cell in a row contains `{{c1::…}}` (case-insensitive, any number),
 that row is created as a **Cloze** note instead of a Basic one. Detection is per row,
 not per deck, so a sheet can freely mix the two.
+
+> **Put the deletion in the column that is on the front.** Detection looks at every
+> column, but the card only applies Anki's `cloze:` filter to the front. Anki renders
+> a clozed field that holds no deletion as *nothing at all*, so a row whose `{{c1::…}}`
+> sits in a later column produces a card with a blank prompt and the literal
+> `{{c1::…}}` text printed on the answer. Either keep the cloze sentence in the first
+> content column, or give its column `side=front` in the settings row. The
+> [preview site](#preview-a-sheet-in-your-browser) flags any row that trips this.
 
 ---
 

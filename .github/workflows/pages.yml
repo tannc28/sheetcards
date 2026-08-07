@@ -1,0 +1,61 @@
+name: Preview site
+
+# The site serves the add-on's own Python, copied out of src/ at build time, so a
+# change to either half has to redeploy — otherwise the page would keep previewing
+# an older version of the code than the one being released.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "src/**"
+      - "scripts/build_site.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A queued deploy of an older commit must not land after a newer one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # The site cannot load a module that reaches for Anki, and finding that out
+      # here is far better than finding it out from a blank page. The build script
+      # refuses to copy such a module; the test proves the whole set imports with
+      # aqt and anki absent.
+      - name: Check the pure layer really is pure
+        run: |
+          python -m pip install --upgrade pip pytest pytest-mock
+          python tests/run_tests.py --file pure_modules
+
+      - name: Build the site
+        run: python scripts/build_site.py
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

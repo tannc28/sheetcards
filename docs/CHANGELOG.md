@@ -4,6 +4,45 @@
 
 ---
 
+## ✨ **v6.2.0** - August 2026 *(Feature)*
+
+### 🔎 Preview a sheet in the browser — <https://tannc28.github.io/sheets2anki/>
+
+- A static page that takes a Google Sheets link and shows what the add-on would make
+  of it, before installing anything and without touching a collection: which column
+  became `ID` / `SYNC` / `SUBDECK n` / `TAGS` and which became fields, every row's
+  fate with the same counts the sync reports, whatever the settings row got wrong,
+  the deck tree, the tags, and the card itself — front, back, reverse, cloze and
+  media, with a TTS button that speaks through the computer's own voices.
+- **It is not a second implementation.** The page loads the add-on's own
+  `column_model.py`, `sheet_config.py`, `card_layout.py`, `tsv_model.py` and
+  `errors.py` and runs them in the browser through Pyodide, so what it shows is
+  computed by the code that will run at sync time. Only drawing the finished template
+  as a picture is written for the page; in Anki that step belongs to Anki's renderer.
+
+### 🧱 A pure layer, so the two can never drift
+
+- New `src/tsv_model.py` holds the code that turns a sheet into notes — TSV parsing,
+  `RemoteDeck` and its metrics, tags, cloze detection, row classification, deck and
+  note-type names — with no Anki import anywhere in it. `data_processor.py` and
+  `utils.py` re-export everything, so every existing import still resolves.
+- `RemoteDeckError` moved to `errors.py`, where the add-on's exceptions live.
+- `tests/test_pure_modules.py` runs the whole set in a fresh interpreter with `aqt`
+  and `anki` deliberately absent, and `scripts/build_site.py` refuses to publish a
+  module that reaches outside that set — so the preview cannot quietly stop matching
+  the add-on.
+
+### 🐞 Found by the new preview, documented here
+
+- A row whose `{{c1::…}}` sits in a column that is **not on the front** produces a
+  broken card: Anki renders a clozed field with no deletion as nothing, so the prompt
+  comes out blank and the raw `{{c1::…}}` text prints on the answer. Confirmed against
+  a real collection. Keep the cloze sentence in the first content column, or give its
+  column `side=front`; the preview flags any row that trips this. A proper fix needs
+  changes to how note types are provisioned and is not in this release.
+
+---
+
 ## ✨ **v6.1.0** - August 2026 *(Feature)*
 
 ### ✨ Media columns
