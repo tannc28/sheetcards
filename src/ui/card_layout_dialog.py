@@ -49,6 +49,7 @@ _FIELD_KEYS = (
     "color",
     "align",
     "media",
+    "type_answer",
     "tts",
     "voices",
     "speed",
@@ -57,6 +58,7 @@ _FIELD_KEYS = (
     "italic",
     "hint",
     "furigana",
+    "cloze",
 )
 _FLAG_KEYS = ("bold", "italic", "hint", "furigana")
 _DECK_KEYS = ("align", "speed", "reverse")

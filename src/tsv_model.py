@@ -599,6 +599,7 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
 
     embed_warnings = set()
+    cloze_rows = []
 
     # Process each row
     for row_index, row in enumerate(rows):
@@ -613,6 +614,13 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
             # row does not read as modified on every single sync.
             for problem in apply_media_rewrites(note_data, plan, sheet_config):
                 embed_warnings.add(f"row {sheet_row}: {problem}")
+
+            # A sheet says once which column carries its deletions. A row that has
+            # cloze markup anywhere else would print `{{c1::…}}` on the card as
+            # literal text, so it is reported rather than left to be discovered
+            # during a review.
+            if not sheet_config.cloze_field and row_has_cloze(note_data, plan):
+                cloze_rows.append(sheet_row)
 
             # ALWAYS add to deck for correct metrics accounting
             # Empty ID validation will be done inside add_note() method
@@ -633,6 +641,18 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
         except Exception as e:
             add_debug_msg(f"Error processing row {sheet_row}: {e}")
             continue
+
+    if cloze_rows:
+        shown = ", ".join(str(r) for r in cloze_rows[:10])
+        suffix = " …" if len(cloze_rows) > 10 else ""
+        message = (
+            f"{len(cloze_rows)} row(s) contain {{{{c1::…}}}} but no column is marked "
+            f"`cloze` in the settings row (rows {shown}{suffix}) — the markup will "
+            f"show as text. Add `cloze` to the column holding the sentences."
+        )
+        add_debug_msg(f"⚠️ {message}")
+        log_to_addon(message, "SHEET_CONFIG")
+        sheet_config.warnings.append(message)
 
     # An address that cannot be embedded frames an error message on the card, which
     # looks like the add-on broke rather than like a link that needs fixing.

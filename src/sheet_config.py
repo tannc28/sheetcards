@@ -36,7 +36,10 @@ THEME_COLORS = {
 SIDES = ("front", "back", "hide")
 ALIGNMENTS = ("left", "center", "right")
 
-_FLAGS = ("bold", "italic", "hint", "furigana")
+# `cloze` marks the one column whose text carries {{c1::…}} deletions. It is a
+# property of the sheet, not of a row: the note type and its template are shared by
+# every row, so the column has to be declared once rather than guessed per row.
+_FLAGS = ("bold", "italic", "hint", "furigana", "cloze")
 
 # Turn a bare URL in the cell into a media element instead of printing it as
 # text. One field is one kind of media, so these are recorded as a single
@@ -59,6 +62,7 @@ _FIELD_KEYS = (
         "voices",
         "speed",
         "label",
+        "type",
     )
     + _FLAGS
     + MEDIA_KINDS
@@ -157,10 +161,12 @@ class FieldConfig:
         self.speed = None
         self.label = None
         self.media = None  # "image" | "audio" | "video"
+        self.type_answer = None  # None | "plain" | "nc" — Anki's {{type:…}} box
         self.bold = False
         self.italic = False
         self.hint = False
         self.furigana = False
+        self.cloze = False
 
     @property
     def hidden(self):
@@ -186,6 +192,11 @@ class SheetConfig:
         self.speed = None
         self.reverse = False
         self.warnings = []
+        # The column carrying cloze deletions, and the one Anki asks the learner to
+        # type. Both are single because a note type has one template set and Anki
+        # honours one {{type:…}} per card.
+        self.cloze_field = None
+        self.type_field = None
 
     def for_field(self, header):
         return self.fields.get(header) or FieldConfig()
@@ -212,6 +223,17 @@ def _apply_field_pair(cfg, key, value, header, warn):
 
     if key in _FLAGS:
         setattr(cfg, key, value is None or value.strip().lower() not in _FALSEY)
+        return
+
+    if key == "type":
+        # Anki compares what the learner types against this field. Bare `type` is an
+        # exact comparison; `type=nc` ignores diacritics, which is what someone
+        # typing pinyin without tone marks wants.
+        mode = (value or "plain").strip().lower()
+        if mode in ("plain", "nc"):
+            cfg.type_answer = mode
+        else:
+            warn(f"'{header}': type must be written bare or as type=nc — got '{value}'")
         return
 
     if value is None:
@@ -371,5 +393,37 @@ def parse_config_row(row, plan):
                 cfg.size = None
 
         config.fields[header] = cfg
+
+    # A note type has one template set, and Anki honours one {{type:…}} per card, so
+    # each of these names exactly one column. Resolved after the whole row is read so
+    # the warning can name every column that asked, not just the second one.
+    for key, attribute, what in (
+        ("cloze", "cloze_field", "carry the cloze deletions"),
+        ("type_answer", "type_field", "be typed in"),
+    ):
+        claimed = [h for h in plan.content_headers if getattr(config.for_field(h), key)]
+        if not claimed:
+            continue
+        setattr(config, attribute, claimed[0])
+        if len(claimed) > 1:
+            warn(
+                f"only one column can {what} — keeping '{claimed[0]}', ignoring "
+                + ", ".join(f"'{h}'" for h in claimed[1:])
+            )
+            for header in claimed[1:]:
+                setattr(
+                    config.fields[header], key, None if key == "type_answer" else False
+                )
+
+    # Both act on the text of a field, and a media column holds an address.
+    for attribute, key, label in (
+        ("cloze_field", "cloze", "cloze"),
+        ("type_field", "type_answer", "type"),
+    ):
+        header = getattr(config, attribute)
+        if header and config.for_field(header).media:
+            warn(f"'{header}': {label} does nothing on a media column")
+            setattr(config, attribute, None)
+            setattr(config.fields[header], key, None if key == "type_answer" else False)
 
     return config

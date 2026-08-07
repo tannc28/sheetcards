@@ -280,29 +280,55 @@ class TestTemplates:
         config = _config(plan, deck="reverse")
         assert len(build_templates(plan, config, is_cloze=True)) == 1
 
-    def test_cloze_wraps_the_prompt_on_both_sides(self):
+    def test_cloze_wraps_the_declared_column_on_both_sides(self):
         # Anki refuses to save a cloze note type unless {{cloze:Field}} appears on
         # BOTH sides; {{FrontSide}} does not satisfy it. Regression guard for a
         # sync that aborted with "Card template 1 ... has a problem".
-        templates = build_templates(_plan(), SheetConfig(), is_cloze=True)
+        plan = _plan()
+        config = _config(plan, {"Word": "cloze"})
+        templates = build_templates(plan, config, is_cloze=True)
         assert "{{cloze:Word}}" in templates[0]["qfmt"]
         assert "{{cloze:Word}}" in templates[0]["afmt"]
         assert "{{FrontSide}}" not in templates[0]["afmt"]
 
-    def test_cloze_prompt_keeps_the_filter_even_with_hint_asked_for(self):
-        # hint: would replace cloze: and take the whole note type down with it.
+    def test_only_the_declared_column_goes_through_the_filter(self):
+        """The others must stay plain.
+
+        Anki renders a clozed field holding no deletion as nothing at all, so
+        wrapping every column would blank the whole card except the sentence.
+        """
         plan = _plan()
-        config = _config(plan, {"Word": "hint"})
+        config = _config(plan, {"Example": "cloze"})
+        both = _both(build_templates(plan, config, is_cloze=True)[0])
+        assert "{{cloze:Example}}" in both
+        for other in ("Word", "Reading", "Meaning"):
+            assert f"{{{{cloze:{other}}}}}" not in both
+            assert f"{{{{{other}}}}}" in both
+
+    def test_the_clozed_column_is_the_prompt_wherever_it_sits(self):
+        """Its deletions are the question, so column order does not get a vote."""
+        plan = _plan()
+        config = _config(plan, {"Meaning": "cloze"})
+        front, _ = split_sides(plan, config)
+        assert front[0] == "Meaning" or "Meaning" in front
+        assert (
+            "{{cloze:Meaning}}"
+            in build_templates(plan, config, is_cloze=True)[0]["qfmt"]
+        )
+
+    def test_cloze_prompt_keeps_the_filter_even_with_hint_asked_for(self):
+        # hint: would replace cloze: and leave nothing to reveal.
+        plan = _plan()
+        config = _config(plan, {"Word": "cloze; hint"})
         templates = build_templates(plan, config, is_cloze=True)
         assert "{{cloze:Word}}" in templates[0]["qfmt"]
         assert "{{cloze:Word}}" in templates[0]["afmt"]
 
-    def test_cloze_prompt_moved_by_side_is_still_wrapped_on_both_sides(self):
+    def test_two_columns_cannot_both_be_the_cloze_column(self):
         plan = _plan()
-        config = _config(plan, {"Word": "side=back", "Meaning": "side=front"})
-        templates = build_templates(plan, config, is_cloze=True)
-        assert "{{cloze:Meaning}}" in templates[0]["qfmt"]
-        assert "{{cloze:Meaning}}" in templates[0]["afmt"]
+        config = _config(plan, {"Word": "cloze", "Meaning": "cloze"})
+        assert config.cloze_field == "Word"
+        assert any("only one column" in w for w in config.warnings)
 
     def test_sheet_with_a_single_column_still_renders(self):
         plan = _plan(["Word"])
@@ -327,7 +353,9 @@ class TestNonAsciiFields:
     def test_non_ascii_cloze_field_is_wrapped_on_both_sides(self):
         # Unicode handling: the cloze filter has to name the field exactly, or Anki
         # refuses to save the note type.
-        templates = build_templates(_plan(UNICODE_FIELDS), SheetConfig(), is_cloze=True)
+        plan = _plan(UNICODE_FIELDS)
+        config = _config(plan, {"Hán tự": "cloze"})
+        templates = build_templates(plan, config, is_cloze=True)
         assert "{{cloze:Hán tự}}" in templates[0]["qfmt"]
         assert "{{cloze:Hán tự}}" in templates[0]["afmt"]
 
@@ -589,3 +617,81 @@ def test_the_shared_rewrite_matches_what_the_sync_stores():
 
     assert row["Clip"] == deck.notes[0]["Clip"]
     assert row["Clip"] == "https://www.youtube.com/embed/gdBu8kLulMM"
+
+
+@pytest.mark.unit
+class TestTypedAnswer:
+    """`type` asks Anki to draw an input box and diff what the learner types."""
+
+    def _cfg(self, cells, deck=""):
+        plan = _plan()
+        return plan, _config(plan, cells, deck=deck)
+
+    def test_the_box_goes_on_the_question(self):
+        # Anki draws the input where {{type:…}} sits and diffs it on the answer, so
+        # the tag belongs to the prompt even though the field itself is an answer.
+        plan, config = self._cfg({"Meaning": "type"})
+        assert "{{type:Meaning}}" in build_templates(plan, config)[0]["qfmt"]
+
+    def test_nc_ignores_diacritics(self):
+        # Someone typing pinyin without tone marks still wants a match.
+        plan, config = self._cfg({"Reading": "type=nc"})
+        assert "{{type:nc:Reading}}" in build_templates(plan, config)[0]["qfmt"]
+
+    def test_the_reverse_card_does_not_ask_the_same_question(self):
+        plan, config = self._cfg({"Meaning": "type"}, deck="reverse")
+        templates = build_templates(plan, config)
+        assert "{{type:" in templates[0]["qfmt"]
+        assert "{{type:" not in templates[1]["qfmt"]
+
+    def test_a_clozed_column_is_typed_through_the_cloze_filter(self):
+        plan, config = self._cfg({"Example": "cloze; type"})
+        qfmt = build_templates(plan, config, is_cloze=True)[0]["qfmt"]
+        assert "{{type:cloze:Example}}" in qfmt
+
+    def test_only_one_column_can_be_typed(self):
+        # Anki honours one {{type:…}} per card.
+        plan, config = self._cfg({"Meaning": "type", "Reading": "type"})
+        assert config.type_field == "Reading"  # sheet order, not cell order
+        assert any("only one column" in w for w in config.warnings)
+
+    def test_a_bad_mode_is_refused_with_a_warning(self):
+        plan, config = self._cfg({"Meaning": "type=fuzzy"})
+        assert config.type_field is None
+        assert any("type=nc" in w for w in config.warnings)
+
+    def test_typing_a_media_column_is_refused(self):
+        plan, config = self._cfg({"Meaning": "image; type"})
+        assert config.type_field is None
+        assert any("does nothing on a media column" in w for w in config.warnings)
+
+
+@pytest.mark.unit
+class TestClozeIsASheetLevelChoice:
+    def test_a_sheet_that_declares_nothing_is_not_a_cloze_sheet(self):
+        plan = _plan()
+        assert _config(plan, {}).cloze_field is None
+
+    def test_cloze_markup_with_no_declared_column_is_reported(self):
+        """Otherwise the markup prints on the card as literal text."""
+        from src.tsv_model import build_remote_deck_from_tsv
+        from src.tsv_model import parse_tsv_data
+
+        tsv = (
+            "ID\tWord\tExample\n" "#config\t\t\n" "1\t熟悉\t我对这里{{c1::很熟悉}}。\n"
+        )
+        deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
+        assert any("no column is marked" in w for w in deck.sheet_config.warnings)
+
+    def test_a_declared_sheet_reports_nothing(self):
+        from src.tsv_model import build_remote_deck_from_tsv
+        from src.tsv_model import parse_tsv_data
+
+        tsv = (
+            "ID\tWord\tExample\n"
+            "#config\t\tcloze\n"
+            "1\t熟悉\t我对这里{{c1::很熟悉}}。\n"
+        )
+        deck = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
+        assert deck.sheet_config.cloze_field == "Example"
+        assert deck.sheet_config.warnings == []

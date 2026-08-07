@@ -235,6 +235,8 @@ Written in that column's cell of the settings row.
 | `speed` | a number **0.5–2.0** | the deck-wide `speed`, otherwise Anki's own default | Speaking rate for that column; overrides the deck-wide value |
 | `image` | switch | off | The column holds a **bare image URL**: the card shows the picture instead of printing the address. `size` caps its width |
 | `audio` | switch | off | The column holds a **bare audio URL**: the card shows a player, always with `controls` so it can be replayed |
+| `cloze` | switch | off | The column holds the sentences with `{{c1::…}}` deletions. **Declaring it makes the whole sheet a cloze sheet**, and the column becomes the prompt wherever it sits |
+| `type` | switch, or `type=nc` | off | Anki draws a box on the question and diffs what you type against this column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`. One column per sheet |
 | `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
 
 #### Media columns
@@ -403,17 +405,47 @@ All tag text is normalized: lower-cased, spaces and `:`/`;` turned into `_`, run
 
 ### Cloze cards
 
-If **any** content cell in a row contains `{{c1::…}}` (case-insensitive, any number),
-that row is created as a **Cloze** note instead of a Basic one. Detection is per row,
-not per deck, so a sheet can freely mix the two.
+**A sheet is a cloze sheet or it is not — say which column carries the deletions:**
 
-> **Put the deletion in the column that is on the front.** Detection looks at every
-> column, but the card only applies Anki's `cloze:` filter to the front. Anki renders
-> a clozed field that holds no deletion as *nothing at all*, so a row whose `{{c1::…}}`
-> sits in a later column produces a card with a blank prompt and the literal
-> `{{c1::…}}` text printed on the answer. Either keep the cloze sentence in the first
-> content column, or give its column `side=front` in the settings row. The
-> [preview site](#preview-a-sheet-in-your-browser) flags any row that trips this.
+```
+ID        Word      Example
+#config             cloze
+1         熟悉       我对这里{{c1::很熟悉}}，也{{c2::常来}}。
+```
+
+That column becomes the prompt wherever it sits in the sheet, and Anki makes **one
+card per deletion** — two, above. Every other column renders normally beside it.
+
+The declaration is not bureaucracy. A note type has **one** template set shared by
+every row, so "which column is clozed" has to be answered once for the sheet; and
+Anki renders a field wrapped in `{{cloze:…}}` that holds *no* deletion as **nothing
+at all**, so the wrong guess silently blanks a column. Declaring it also keeps the
+template a function of your settings row alone — a template that changed with your
+*data* could rewrite the note type mid-sync, and removing a template deletes its
+cards and their review history.
+
+A row containing `{{c1::…}}` in a sheet that declares no `cloze` column is
+**reported** — in the debug log and on the [preview site](#preview-a-sheet-in-your-browser) —
+because that markup would otherwise print on the card as literal text.
+
+Cloze note types carry exactly one template, so `reverse` is skipped for them.
+
+### Typed answers
+
+`type` on a column makes Anki draw an input box on the question and compare what you
+type against that column:
+
+```
+ID        Hán tự    Pinyin        Ví dụ
+#config             type=nc       cloze
+```
+
+`type=nc` drops diacritics from the comparison, so typing `shuxi` matches `shúxī` —
+which is what you want when the tone marks are the hard part but not the point. Anki
+honours **one** `{{type:…}}` per card, so one column per sheet; a second is ignored
+with a warning. The box is not repeated on the `reverse` card, which asks the other
+direction. On a cloze sheet, `type` on the clozed column types the deletions
+themselves (`{{type:cloze:…}}`).
 
 ---
 

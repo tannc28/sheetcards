@@ -103,9 +103,11 @@ _MEDIA_ELEMENTS = {
 def _reference(field, cfg, as_cloze):
     """How the field's value is pulled in: plain, or through one of Anki's filters.
 
-    ``cloze:`` wins over ``hint``/``furigana`` because Anki refuses to save a cloze
-    note type whose template does not reference the field through that filter — a
-    hidden or furigana'd prompt would take the whole note type down with it.
+    ``cloze:`` wins over ``hint``/``furigana``: a cloze card's prompt has to reach
+    the field through that filter, and hiding it behind a hint would leave nothing
+    to reveal. Only the column the sheet declared as ``cloze`` takes this branch —
+    Anki renders a clozed field that holds no deletion as *nothing at all*, so
+    wrapping any other column would silently blank it.
     """
     if as_cloze:
         return f"{{{{cloze:{field}}}}}"
@@ -158,6 +160,22 @@ def _tts_tag(field, cfg, deck_speed):
     return f"{{{{#{field}}}}}{tag}{{{{/{field}}}}}"
 
 
+def _type_box(field, cfg, cloze_field):
+    """Anki's typed-answer box for this field, or "" when it did not ask for one.
+
+    The box goes on the *question*: Anki draws an input there and, on the answer,
+    diffs what was typed against the field. ``nc`` drops diacritics from the
+    comparison, which is what someone typing pinyin without tone marks means.
+    """
+    if not cfg.type_answer:
+        return ""
+    prefix = "nc:" if cfg.type_answer == "nc" else ""
+    if field == cloze_field:
+        # Typing the deletions themselves rather than the whole sentence.
+        return f"<div>{{{{type:cloze:{field}}}}}</div>"
+    return f"<div>{{{{type:{prefix}{field}}}}}</div>"
+
+
 def _rows(fields, sheet_config, css_class, as_cloze=False):
     """Renders one side's fields, each wrapped so an empty field leaves no trace."""
     out = []
@@ -185,7 +203,7 @@ def _rows(fields, sheet_config, css_class, as_cloze=False):
                 )
                 label = ""  # the summary already names it
         else:
-            reference = _reference(field, cfg, as_cloze)
+            reference = _reference(field, cfg, as_cloze and cfg.cloze)
 
         out.append(
             f"{{{{#{field}}}}}"
@@ -200,12 +218,29 @@ def _rows(fields, sheet_config, css_class, as_cloze=False):
     return "\n".join(out)
 
 
-def _one_template(front_fields, back_fields, sheet_config, is_cloze):
-    """Builds a single {qfmt, afmt} pair from one front/back split."""
+def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True):
+    """Builds a single {qfmt, afmt} pair from one front/back split.
+
+    ``typed`` is False for the reverse card: the typed-answer box belongs to the
+    direction the sheet described, and asking for the same answer from both sides
+    would be asking the same question twice.
+    """
+    type_field = sheet_config.type_field if typed else None
+    type_box = (
+        _type_box(
+            _escape_field(type_field),
+            sheet_config.for_field(type_field),
+            sheet_config.cloze_field,
+        )
+        if type_field
+        else ""
+    )
+
     qfmt = (
         _css(sheet_config)
         + '<div class="s2a-wrap">\n'
         + _rows(front_fields, sheet_config, "s2a-front", as_cloze=is_cloze)
+        + type_box
         + "\n</div>"
     )
 
@@ -257,7 +292,10 @@ def split_sides(plan, sheet_config):
         cfg = sheet_config.for_field(header)
         if cfg.hidden:
             continue
-        side = cfg.side or ("front" if index == 0 else "back")
+        # The clozed column *is* the prompt — its deletions are what the card asks
+        # about — so it goes on the front whatever the column order says.
+        default = "front" if (index == 0 or cfg.cloze) else "back"
+        side = "front" if cfg.cloze else (cfg.side or default)
         (front if side == "front" else back).append(header)
 
     # An empty front would produce a blank prompt and Anki would refuse to generate
@@ -295,7 +333,7 @@ def build_templates(plan, sheet_config, is_cloze=False):
         templates.append(
             dict(
                 name=REVERSE_TEMPLATE_NAME,
-                **_one_template(back, front, sheet_config, False),
+                **_one_template(back, front, sheet_config, False, typed=False),
             )
         )
 

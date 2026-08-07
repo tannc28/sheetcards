@@ -38,7 +38,7 @@ from .tsv_model import build_tags  # noqa: F401  (facade)
 from .tsv_model import clean_tag_text  # noqa: F401  (facade)
 from .tsv_model import has_cloze_deletion  # noqa: F401  (facade)
 from .tsv_model import parse_tsv_data  # noqa: F401  (facade)
-from .tsv_model import row_has_cloze
+from .tsv_model import row_has_cloze  # noqa: F401  (facade)
 from .utils import add_debug_message
 from .utils import ensure_subdeck_exists
 from .utils import get_subdeck_name
@@ -407,7 +407,8 @@ def create_or_update_notes(
                         note_data,
                         plan,
                         deck_url,
-                        debug_messages,
+                        sheet_config=sheet_config,
+                        debug_messages=debug_messages,
                     )
                     if not success:
                         stats.add_error(f"Error updating note: {note_id}")
@@ -434,7 +435,8 @@ def create_or_update_notes(
                     plan,
                     deck_id,
                     deck_url,
-                    debug_messages,
+                    sheet_config=sheet_config,
+                    debug_messages=debug_messages,
                 ):
                     stats.created += 1
                     preview = str(note_data.get(preview_header, ""))
@@ -654,7 +656,9 @@ def get_existing_notes_by_id(col, deck_id):
     return existing_notes
 
 
-def create_new_note(col, note_data, plan, deck_id, deck_url, debug_messages=None):
+def create_new_note(
+    col, note_data, plan, deck_id, deck_url, sheet_config=None, debug_messages=None
+):
     """
     Creates a new Anki note from a spreadsheet row.
 
@@ -680,8 +684,12 @@ def create_new_note(col, note_data, plan, deck_id, deck_url, debug_messages=None
         note_id = str(note_data.get(plan.id_header, "")).strip()
         add_debug_msg(f"Creating new note: {note_id}")
 
-        # Determine note type (cloze or basic)
-        is_cloze = row_has_cloze(note_data, plan)
+        # Whether a sheet is a cloze sheet is a property of the sheet, not of a
+        # row: one note type and one template set serve every row, so the column
+        # carrying the deletions is declared once in the settings row. Deciding it
+        # per row is what used to produce cards whose prompt was blank.
+        settings = sheet_config or get_deck_sheet_config(deck_url)
+        is_cloze = bool(settings.cloze_field)
         model, note_type_name = get_target_model(
             col, plan, deck_url, is_cloze, debug_messages
         )
@@ -824,7 +832,7 @@ def note_fields_need_update(existing_note, new_data, plan, debug_messages=None):
 
 
 def update_existing_note(
-    col, existing_note, new_data, plan, deck_url, debug_messages=None
+    col, existing_note, new_data, plan, deck_url, sheet_config=None, debug_messages=None
 ):
     """
     Updates an existing note.
@@ -852,8 +860,9 @@ def update_existing_note(
         note_id = str(new_data.get(plan.id_header, "")).strip()
         add_debug_msg(f"Checking if note {note_id} needs update")
 
-        # Determine expected note type for the current state
-        is_cloze = row_has_cloze(new_data, plan)
+        # Same sheet-level answer as when the note was created — see create_note.
+        settings = sheet_config or get_deck_sheet_config(deck_url)
+        is_cloze = bool(settings.cloze_field)
         target_model, _ = get_target_model(
             col, plan, deck_url, is_cloze, debug_messages
         )
@@ -895,7 +904,8 @@ def update_existing_note(
                     plan,
                     current_deck_id,
                     deck_url,
-                    debug_messages,
+                    sheet_config=settings,
+                    debug_messages=debug_messages,
                 )
 
                 if success:

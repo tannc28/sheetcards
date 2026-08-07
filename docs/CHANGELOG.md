@@ -4,6 +4,41 @@
 
 ---
 
+## ✨ **v6.4.0** - August 2026 *(Feature)*
+
+### 🎯 A sheet declares its cloze column — and the broken-card bug goes away
+
+- New `cloze` directive. The column carrying `{{c1::…}}` says so once in the settings
+  row, and **that column becomes the prompt wherever it sits**, with Anki making one
+  card per deletion. Every other column renders normally beside it.
+- This replaces per-row auto-detection, which is what produced the defect reported in
+  v6.2.0: routing looked at *every* column while the template clozed only the *front*
+  one, so a deletion in a later column gave a blank prompt and printed the raw markup
+  on the answer. Verified fixed against a real collection — two deletions in the third
+  column now yield two cards with a visible prompt.
+- Declaring it also keeps the template a function of the settings row alone. A
+  template that changed with your *data* could rewrite the note type mid-sync, and
+  removing a template deletes its cards and their review history.
+- A row with `{{c1::…}}` in a sheet that declares no `cloze` column is **reported**
+  rather than silently turned into a card that shows the markup as text.
+
+### ⌨️ Typed answers
+
+- New `type` directive: Anki draws an input box on the question and diffs what you
+  type against that column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`.
+- One column per sheet, because Anki honours one `{{type:…}}` per card; a second is
+  ignored with a warning. The box is not repeated on the `reverse` card, which asks
+  the other direction. On a cloze sheet, `type` on the clozed column types the
+  deletions themselves.
+
+### ⚠️ Changed behaviour
+
+- **A sheet is now a cloze sheet or it is not.** Previously a single sheet could mix
+  cloze and basic rows. If you relied on that, add `cloze` to the column holding the
+  sentences and keep the rest in another sheet.
+
+---
+
 ## ✨ **v6.3.5** - August 2026 *(Fix)*
 
 ### 🔁 The preview stopped filtering what Anki would run
