@@ -15,9 +15,12 @@ const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
 // A filled-in report is a better landing page than an empty form: a first-time
 // visitor sees what the tool actually answers instead of having to supply a sheet
-// to find out. Overridden by ?url=, and by anything typed into the field.
+// to find out. This one carries a settings row — sizes, two `tts=zh_CN` columns, a
+// muted colour, a hint and a SUBDECK level — so the example shows the directives
+// doing something rather than only the defaults.
+// Overridden by ?url=, and by anything typed into the field.
 const DEMO_SHEET =
-  "https://docs.google.com/spreadsheets/d/1rDmjG7k82PJpAfQE4iT6XTUf3yy_o5GaW7M_CDQaRhE/edit";
+  "https://docs.google.com/spreadsheets/d/1ze2znekyf6dduvQ_N6fYc3SEodWnz_CaY2WWLVkvuiI/edit";
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
