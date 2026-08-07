@@ -66,6 +66,25 @@ exact.
 The sheet needs the same sharing the add-on needs (**Anyone with the link →
 Viewer**), so if the preview can read your sheet, so can Anki.
 
+### Download an `.apkg` — no desktop needed
+
+The preview page can also build the deck as an `.apkg` file, right in the browser.
+**AnkiDroid and AnkiMobile import it directly**, so a sheet can reach your phone
+without Anki for desktop being involved at all.
+
+It is built by the add-on's own code — same fields, same note type, same templates
+— and a note's identity comes from its `ID`, so **importing again updates those
+notes instead of duplicating them**.
+
+What it cannot do is **delete**. Anki's importer never removes a note that is
+missing from the file, so a row you delete from the sheet stays in your collection
+until you delete it there. That is the real difference between an import and a
+sync, and it is why the add-on still exists.
+
+> Uploading straight to AnkiWeb is not possible: AnkiWeb has no public API, sends
+> no CORS headers (so a browser refuses the request before it leaves your machine),
+> and is a sync target for a collection rather than a place decks are created.
+
 To run it locally: `python scripts/build_site.py --serve`.
 
 ---

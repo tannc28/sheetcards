@@ -23,7 +23,14 @@ SRC = REPO / "src"
 
 # The exact set the preview site loads. Keep this in step with site/app.js —
 # test_site_loads_the_same_modules below fails if they drift apart.
-PURE_MODULES = ["errors", "column_model", "sheet_config", "card_layout", "tsv_model"]
+PURE_MODULES = [
+    "errors",
+    "column_model",
+    "sheet_config",
+    "card_layout",
+    "tsv_model",
+    "apkg",
+]
 
 
 def _run_isolated(code):

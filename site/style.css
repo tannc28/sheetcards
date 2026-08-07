@@ -414,3 +414,8 @@ iframe#card {
 .langs button + button { border-left: 1px solid var(--line); }
 .langs button:hover { color: var(--ink); }
 .langs button.on { background: var(--accent); color: var(--panel); }
+
+/* ---- package download ----------------------------------------------------- */
+
+.apkg-btn { width: 100%; padding: 8px 10px; font-size: 13px; margin-bottom: 6px; }
+.side-foot > p { margin: 0 0 8px; font-size: 11.5px; line-height: 1.45; }

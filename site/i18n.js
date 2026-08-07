@@ -100,6 +100,27 @@ const STRINGS = {
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
   noRowsAtAll: { en: "No rows to show.", vi: "Không có dòng nào để hiện." },
   sheetDetail: { en: "Sheet detail", vi: "Chi tiết sheet" },
+  downloadApkg: { en: "Download .apkg", vi: "Tải .apkg" },
+  apkgNote: {
+    en:
+      "Import it straight into AnkiDroid or AnkiMobile — no desktop needed. " +
+      "Importing again updates these notes rather than duplicating them, but it " +
+      "cannot delete: a row you remove from the sheet stays in Anki. That is what " +
+      "the add-on is still for.",
+    vi:
+      "Import thẳng vào AnkiDroid hoặc AnkiMobile — không cần máy tính. Import lại " +
+      "sẽ cập nhật chứ không nhân đôi, nhưng không xoá được: dòng bạn xoá khỏi sheet " +
+      "vẫn còn trong Anki. Đó là chỗ add-on vẫn cần thiết.",
+  },
+  packing: { en: "Building the package…", vi: "Đang dựng gói…" },
+  packed: {
+    en: (kb) => `Package ready — ${kb} KB`,
+    vi: (kb) => `Gói đã xong — ${kb} KB`,
+  },
+  packFailed: {
+    en: (m) => `Could not build the package: ${m}`,
+    vi: (m) => `Không dựng được gói: ${m}`,
+  },
 
   // --- tabs ---------------------------------------------------------------
   tabFront: { en: "front", vi: "mặt trước" },

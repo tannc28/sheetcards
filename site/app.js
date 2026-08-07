@@ -25,7 +25,7 @@ const DEMO_SHEET =
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
-const PURE_MODULES = ["errors", "column_model", "sheet_config", "card_layout", "tsv_model"];
+const PURE_MODULES = ["errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg"];
 
 /** Everything the page needs, computed by the add-on's own code. */
 const ANALYZER = String.raw`
@@ -34,6 +34,19 @@ from s2a import tsv_model as tm
 from s2a.card_layout import build_templates, split_sides
 from s2a.column_model import deck_path
 from s2a.sheet_config import is_config_row
+from s2a.apkg import build_package
+
+# The last analysis, so the package can be built from exactly the rows the page
+# drew rather than by parsing the sheet a second time.
+_STATE = {}
+
+
+def package_bytes(sheet_id):
+    deck = _STATE["deck"]
+    return build_package(
+        sheet_id, _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"]
+    )
+
 
 def _settings(cfg):
     """A FieldConfig as a plain dict of only what the sheet actually set."""
@@ -57,7 +70,7 @@ def analyze(tsv, deck_name):
     if rows and is_config_row(tm.row_to_dict(rows[0], headers), plan):
         rows, offset = rows[1:], 1
 
-    listed = []
+    listed, kept = [], []
     for i, raw in enumerate(rows):
         note = tm.row_to_dict(raw, headers)
         # The same rewrite the sync performs. Skipping it would frame the address
@@ -67,6 +80,7 @@ def analyze(tsv, deck_name):
         kind = tm.classify_row(note, plan)
         if kind == tm.GHOST:
             continue
+        kept.append(note)
         listed.append({
             "line": i + 2 + offset,
             "kind": kind,
@@ -82,6 +96,10 @@ def analyze(tsv, deck_name):
             ],
             "values": {h: note.get(h, "") for h in ["ID"] + plan.content_headers},
         })
+
+    _STATE["deck"] = deck
+    _STATE["rows"] = kept
+    _STATE["name"] = deck_name
 
     front, back = split_sides(plan, cfg)
     return json.dumps({
@@ -124,6 +142,7 @@ const state = {
 };
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
+let buildPackage = null;
 
 // ---------------------------------------------------------------------------
 // Boot
@@ -158,10 +177,14 @@ async function boot() {
     }),
   );
   py.runPython('import sys; sys.path.insert(0, "/")');
+  // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
+  await py.loadPackage("sqlite3");
   py.runPython(ANALYZER);
 
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
+  const pack = py.globals.get("package_bytes");
+  buildPackage = (sheetId) => pack(sheetId).toJs();
   $("#go").disabled = false;
 }
 
@@ -616,6 +639,33 @@ function backOnly(backHtml, frontHtml) {
   return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
 }
 
+/** Hands the built package to the browser as a download. */
+function downloadPackage() {
+  const button = $("#apkg");
+  const sheetId =
+    (toTsvUrl($("#url").value).match(/\/d\/([\w-]+)/) || [])[1] || "sheet";
+  button.disabled = true;
+  status(t("packing"), "", true);
+  try {
+    // A copy, because the array Pyodide hands over is a view onto its heap and
+    // the next Python call is free to reuse that memory.
+    const bytes = new Uint8Array(buildPackage(sheetId));
+    const url = URL.createObjectURL(
+      new Blob([bytes], { type: "application/octet-stream" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${state.deckName || "deck"}.apkg`;
+    link.click();
+    URL.revokeObjectURL(url);
+    status(t("packed", Math.round(bytes.length / 1024)), "ok");
+  } catch (err) {
+    status(t("packFailed", err.message), "bad");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function tabBar() {
   const visible = visibleRows();
   const at = visible.findIndex(({ i }) => i === state.row);
@@ -737,6 +787,7 @@ document.addEventListener("click", (e) => {
     state.template = 0;
     return render();
   }
+  if (e.target.id === "apkg") return downloadPackage();
   if (e.target.id === "prev" || e.target.id === "next") {
     const visible = visibleRows();
     if (!visible.length) return;

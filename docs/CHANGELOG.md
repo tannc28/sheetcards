@@ -4,6 +4,39 @@
 
 ---
 
+## ✨ **v6.6.0** - August 2026 *(Feature)*
+
+### 📦 The preview builds an `.apkg`, in the browser
+
+- A **Download .apkg** button on the preview site. Pyodide loads `sqlite3`, and
+  `src/apkg.py` writes a real Anki package — legacy schema 11, read out of a file
+  Anki itself exported rather than transcribed from documentation.
+- **AnkiDroid and AnkiMobile import it directly**, so a sheet can reach a phone
+  without the desktop app. Verified end to end: package built through the site's own
+  bundle, then imported into a real collection — 9 notes, 18 cards, the full deck
+  hierarchy, tags, furigana ruby, the TTS tag, the image and the YouTube frame all
+  arriving intact.
+- Only the packaging is new. Fields come from `plan.note_type_fields()`, templates
+  from `build_templates()`, the deck path from `get_subdeck_name()`, tags from
+  `build_tags()` — nothing about a card is decided twice.
+- A note's guid is derived from its row `ID`, so **importing again updates rather
+  than duplicates**; Anki applies the update only when the incoming note is newer,
+  so ids are derived while `mod` comes from the clock. Both proved against a real
+  collection in `tests/test_apkg.py`, which runs Anki in a subprocess because the
+  suite's `anki` mock cannot tell a valid package from a broken one.
+
+### ⚠️ What an import is not
+
+- **It cannot delete.** Anki's importer never removes a note missing from the file,
+  so a row deleted from the sheet lives on in the collection. That is the honest
+  difference between this and a sync.
+- **Uploading straight to AnkiWeb is not possible**, and was checked rather than
+  assumed: no public API (Anki's own docs point to AnkiConnect instead), no CORS
+  headers on any endpoint — a browser refuses before the request leaves — and
+  AnkiWeb is a sync target for a collection, not a place where decks are created.
+
+---
+
 ## ✨ **v6.5.0** - August 2026 *(Feature)*
 
 ### 🌐 The preview site speaks Vietnamese
