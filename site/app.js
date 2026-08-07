@@ -3,10 +3,10 @@
  *
  * The point of this page is that it does not reimplement anything. Pyodide loads
  * the very files under src/ that the add-on runs inside Anki, so the column
- * roles, the settings row, the warnings and the card templates shown here are
- * produced by the same code that will produce them at sync time. The only part
- * written for the browser is site/anki.js, which stands in for Anki's own
- * template renderer — see that file for why that one cannot be reused.
+ * roles, the settings row, the warnings, the deck paths and the card templates
+ * shown here are produced by the same code that will produce them at sync time.
+ * The only part written for the browser is site/anki.js, which stands in for
+ * Anki's own template renderer — see that file for why that one cannot be reused.
  */
 
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
@@ -47,6 +47,10 @@ def analyze(tsv, deck_name):
     deck = tm.build_remote_deck_from_tsv(parsed, "", log)
     cfg = deck.sheet_config
 
+    # Every deck the add-on makes hangs under this one — determine_target_deck
+    # builds exactly this path, so the tree below is the tree Anki will show.
+    root = tm.DEFAULT_PARENT_DECK_NAME + "::" + deck_name
+
     rows = parsed["rows"]
     offset = 0
     if rows and is_config_row(tm.row_to_dict(rows[0], headers), plan):
@@ -62,16 +66,15 @@ def analyze(tsv, deck_name):
         kind = tm.classify_row(note, plan)
         if kind == tm.GHOST:
             continue
-        path = deck_path(note, plan)
         listed.append({
             "line": i + 2 + offset,
             "kind": kind,
             "id": str(note.get(plan.id_header, "")).strip(),
-            "deck": tm.get_subdeck_name(deck_name, path),
+            "deck": tm.get_subdeck_name(root, deck_path(note, plan)),
             "tags": tm.build_tags(note, plan),
             "cloze": tm.row_has_cloze(note, plan),
             # Which columns carry the deletion, so the page can tell whether the
-            # template will actually cloze them. See clozeTrouble() in app.js.
+            # template will actually cloze them. See clozeTrouble() below.
             "clozeIn": [
                 h for h in plan.content_headers
                 if tm.has_cloze_deletion(str(note.get(h, "")))
@@ -109,24 +112,33 @@ def analyze(tsv, deck_name):
 `;
 
 const $ = (sel) => document.querySelector(sel);
-const state = { analysis: null, row: 0, side: "both", template: 0, ordinal: 1, deckName: "" };
+const state = {
+  analysis: null, row: 0, side: "both", template: 0, ordinal: 1,
+  deckName: "", deckFilter: null,
+};
 let analyze = null;
 
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 
-function status(text, kind = "") {
-  const el = $("#status");
-  el.textContent = text;
-  el.className = `status ${kind}`;
+/**
+ * @param {string} text
+ * @param {""|"ok"|"bad"} kind
+ * @param {boolean} busy  spin while something is genuinely running, so a still
+ *   page reads as finished rather than as hung
+ */
+function status(text, kind = "", busy = false) {
+  $("#status-text").textContent = text;
+  $("#status").className = `status ${kind} ${busy ? "busy" : ""}`;
 }
 
 async function boot() {
-  status("Starting Python…");
+  status("Starting Python…", "", true);
   const { loadPyodide } = await import(PYODIDE);
   const py = await loadPyodide({ indexURL: PYODIDE.replace("pyodide.mjs", "") });
 
+  status("Loading the add-on's code…", "", true);
   // Rebuild the add-on's package layout so the relative imports between these
   // files resolve exactly as they do inside Anki.
   py.FS.mkdir("/s2a");
@@ -143,7 +155,6 @@ async function boot() {
 
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
-  status("Ready.", "ok");
   $("#go").disabled = false;
 }
 
@@ -180,7 +191,7 @@ async function preview() {
   $("#go").disabled = true;
   try {
     const tsvUrl = toTsvUrl(input);
-    status("Downloading the sheet…");
+    status("Downloading the sheet…", "", true);
 
     let res;
     try {
@@ -188,8 +199,7 @@ async function preview() {
     } catch {
       throw new Error(
         "The browser could not reach the sheet. This is what the add-on sees " +
-          "when a sheet is private: open it in Google Sheets → Share → " +
-          "“Anyone with the link” → Viewer.",
+          "when a sheet is private: Share → “Anyone with the link” → Viewer.",
       );
     }
     if (!res.ok) {
@@ -205,11 +215,12 @@ async function preview() {
     state.deckName = $("#deck").value.trim() || deckNameFromHeaders(res) || "Deck";
     $("#deck").value = state.deckName;
 
-    status("Running the add-on's code…");
+    status("Running the add-on's code…", "", true);
     state.analysis = analyze(tsv, state.deckName);
     state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
     if (state.row < 0) state.row = 0;
     state.template = 0;
+    state.deckFilter = null;
 
     // The example is what you get with no query string, so putting it back into
     // the address bar would only make the landing URL longer for no gain.
@@ -222,17 +233,86 @@ async function preview() {
     }
 
     render();
-    status(`Read ${state.analysis.stats.total_table_lines} rows.`, "ok");
+    const s = state.analysis.stats;
+    status(
+      `${s.total_table_lines} rows · ${s.sync_marked_lines} will sync`,
+      s.sync_marked_lines ? "ok" : "bad",
+    );
   } catch (err) {
     status(err.message, "bad");
-    $("#results").hidden = true;
+    $("#app").hidden = true;
+    $("#stats").hidden = true;
   } finally {
     $("#go").disabled = false;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Rendering the report
+// Deck tree
+// ---------------------------------------------------------------------------
+
+/** The deck hierarchy, with each level counting everything beneath it. */
+function deckTree(rows) {
+  const root = { name: null, path: "", count: 0, children: new Map() };
+  for (const r of rows) {
+    if (r.kind !== "synced") continue;
+    root.count++;
+    let node = root;
+    const parts = [];
+    for (const part of r.deck.split("::")) {
+      parts.push(part);
+      if (!node.children.has(part)) {
+        node.children.set(part, {
+          name: part, path: parts.join("::"), count: 0, children: new Map(),
+        });
+      }
+      node = node.children.get(part);
+      node.count++;
+    }
+  }
+  return root;
+}
+
+function treeHtml(node, depth = 0) {
+  return [...node.children.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(
+      (child) => `<li>
+        <button data-deck="${escapeHtml(child.path)}" style="--depth:${depth}"
+                class="${state.deckFilter === child.path ? "on" : ""}">
+          <span class="name">${escapeHtml(child.name)}</span>
+          <span class="count">${child.count}</span>
+        </button>
+        ${child.children.size ? `<ul class="tree">${treeHtml(child, depth + 1)}</ul>` : ""}
+      </li>`,
+    )
+    .join("");
+}
+
+function deckPanel({ rows }) {
+  const tree = deckTree(rows);
+  if (!tree.count) return `<p class="empty">No rows are marked for sync.</p>`;
+
+  return `<ul class="tree">
+    <li><button data-deck="" style="--depth:0"
+        class="${state.deckFilter === null ? "on" : ""}">
+      <span class="name">All decks</span><span class="count">${tree.count}</span>
+    </button></li>
+    ${treeHtml(tree, 0)}
+  </ul>`;
+}
+
+/** Rows the deck selection lets through, with their index into the full list. */
+function visibleRows() {
+  const all = state.analysis.rows;
+  const f = state.deckFilter;
+  return all
+    .map((r, i) => ({ r, i }))
+    .filter(({ r }) => !f || r.deck === f || r.deck.startsWith(`${f}::`));
+}
+
+// ---------------------------------------------------------------------------
+// Panels
 // ---------------------------------------------------------------------------
 
 const roleOf = (header, plan) => {
@@ -251,7 +331,7 @@ function columnsPanel({ plan, sides }) {
       const where = sides.front.includes(h)
         ? '<span class="pill front">front</span>'
         : sides.back.includes(h)
-          ? '<span class="pill back">back</span>'
+          ? '<span class="pill">back</span>'
           : role === "field"
             ? '<span class="pill hidden">hidden</span>'
             : "";
@@ -288,18 +368,20 @@ function settingsPanel({ config, plan }) {
     config.reverse && "reverse",
   ].filter(Boolean);
 
-  const perField = plan.content.map((h) => {
-    const cfg = config.fields[h] || {};
-    const chips = Object.entries(cfg)
-      .map(([k, v]) => {
-        const label = SETTING_LABEL[k] || k;
-        const text = v === true ? label : `${label} ${Array.isArray(v) ? v.join(", ") : v}`;
-        return `<span class="chip">${escapeHtml(text)}</span>`;
-      })
-      .join("");
-    return `<tr><td><code>${escapeHtml(h)}</code></td>
-      <td>${chips || '<span class="muted">defaults</span>'}</td></tr>`;
-  }).join("");
+  const perField = plan.content
+    .map((h) => {
+      const cfg = config.fields[h] || {};
+      const chips = Object.entries(cfg)
+        .map(([k, v]) => {
+          const label = SETTING_LABEL[k] || k;
+          const text = v === true ? label : `${label} ${Array.isArray(v) ? v.join(", ") : v}`;
+          return `<span class="chip">${escapeHtml(text)}</span>`;
+        })
+        .join("");
+      return `<tr><td><code>${escapeHtml(h)}</code></td>
+        <td>${chips || '<span class="muted">defaults</span>'}</td></tr>`;
+    })
+    .join("");
 
   return `
     <p class="deckwide">Deck-wide: ${
@@ -359,30 +441,34 @@ function warningsPanel(analysis) {
     );
   }
   if (!items.length) return "";
-  return `<section class="panel warn">
+  return `<section class="block warn">
     <h2>Warnings <span class="count">${items.length}</span></h2>
     <ul class="warnings">${items.join("")}</ul>
-    <p class="muted">Nothing here is silently ignored — the add-on refuses the value
-      rather than guessing, so the column keeps its default until the sheet is fixed.</p>
   </section>`;
 }
 
-function rowsPanel({ rows }) {
-  const body = rows
+function rowsPanel() {
+  const visible = visibleRows();
+  if (!visible.length) return `<p class="empty">No rows in this deck.</p>`;
+
+  const body = visible
     .map(
-      (r, i) => `<tr class="row-${r.kind} ${i === state.row ? "selected" : ""}"
+      ({ r, i }) => `<tr class="row-${r.kind} ${i === state.row ? "selected" : ""}"
         data-row="${i}" tabindex="0">
         <td class="num">${r.line}</td>
         <td><span class="dot ${r.kind}" title="${r.kind}"></span></td>
         <td><code>${escapeHtml(r.id) || '<span class="muted">— no ID —</span>'}</code></td>
-        <td class="muted">${escapeHtml(r.deck)}</td>
+        <td class="clip">${escapeHtml(r.values[state.analysis.sides.front[0]] || "")}</td>
+        <td class="muted clip">${escapeHtml(r.deck.split("::").slice(1).join(" › "))}</td>
         <td>${r.cloze ? '<span class="pill cloze">cloze</span>' : ""}</td>
       </tr>`,
     )
     .join("");
 
   return `<table class="grid rows">
-    <thead><tr><th>Row</th><th></th><th>ID</th><th>Deck</th><th></th></tr></thead>
+    <thead><tr><th>Row</th><th></th><th>ID</th>
+      <th>${escapeHtml(state.analysis.sides.front[0] || "")}</th>
+      <th>Deck</th><th></th></tr></thead>
     <tbody>${body}</tbody></table>`;
 }
 
@@ -404,18 +490,16 @@ function cardFrame(analysis) {
   const doc = `<!doctype html><meta charset="utf-8">
     <style>
       html { color-scheme: light dark; }
-      body { margin: 0; padding: 20px; font-family: arial, sans-serif; font-size: 20px;
+      body { margin: 0; padding: 18px; font-family: arial, sans-serif; font-size: 20px;
              text-align: center; color: #111; background: #fff; }
-      @media (prefers-color-scheme: dark) {
-        body { color: #e6e9ee; background: #1b1f25; }
-      }
-      hr#answer { margin: 18px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }
+      @media (prefers-color-scheme: dark) { body { color: #e6e9ee; background: #1b1f25; } }
+      hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }
       .cloze { color: #2f6fd0; font-weight: 700; }
       a.hint { color: #2f6fd0; font-size: 15px; }
       button.tts { font: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer;
                    border: 1px solid currentColor; border-radius: 999px;
                    background: transparent; color: inherit; opacity: .8; }
-      img, video { max-width: 100%; }
+      img, video, iframe { max-width: 100%; }
     </style>
     <body class="card">
       ${state.side === "back" ? back.html : front.html}
@@ -440,42 +524,35 @@ function cardFrame(analysis) {
         addEventListener("load", post); new ResizeObserver(post).observe(document.body);
       <\/script>`;
 
-  const notes = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
+  const unknown = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
   const missing = [...new Set([...front.missingFields, ...back.missingFields])];
+  const visible = visibleRows();
+  const at = visible.findIndex(({ i }) => i === state.row);
 
   return `
     <div class="cardbar">
       <div class="segmented">
         ${["front", "both", "back"]
-          .map(
-            (s) =>
-              `<button data-side="${s}" class="${state.side === s ? "on" : ""}">${s}</button>`,
-          )
+          .map((s) => `<button data-side="${s}" class="${state.side === s ? "on" : ""}">${s}</button>`)
           .join("")}
       </div>
       ${
         templates.length > 1
-          ? `<select id="tpl">${templates
-              .map(
-                (t, i) =>
-                  `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`,
-              )
+          ? `<select id="tpl" aria-label="Card template">${templates
+              .map((t, i) => `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
               .join("")}</select>`
           : `<span class="muted mono">${escapeHtml(template.name)}</span>`
       }
       ${
         ordinals.length > 1
-          ? `<select id="ord">${ordinals
-              .map(
-                (n) =>
-                  `<option value="${n}" ${n === ordinal ? "selected" : ""}>card c${n}</option>`,
-              )
+          ? `<select id="ord" aria-label="Cloze card">${ordinals
+              .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>card c${n}</option>`)
               .join("")}</select>`
           : ""
       }
       <span class="spacer"></span>
       <button id="prev" title="Previous row">←</button>
-      <span class="mono muted">row ${row.line}</span>
+      <span class="mono muted">${at + 1} / ${visible.length}</span>
       <button id="next" title="Next row">→</button>
     </div>
     <iframe id="card" sandbox="allow-scripts allow-popups allow-presentation"
@@ -499,34 +576,17 @@ function cardFrame(analysis) {
         : ""
     }
     ${missing.length ? `<p class="note">Template references a field the row has no column for: <code>${missing.map(escapeHtml).join("</code>, <code>")}</code></p>` : ""}
-    ${notes.length ? `<p class="note">Filter not reproduced here: <code>${notes.map(escapeHtml).join("</code>, <code>")}</code></p>` : ""}
-    <p class="muted small">The template above is exactly what the add-on generates.
-      Turning it into this picture is done by this page, not by Anki — treat the
-      layout as a close approximation.</p>`;
+    ${unknown.length ? `<p class="note">Filter not reproduced here: <code>${unknown.map(escapeHtml).join("</code>, <code>")}</code></p>` : ""}
+    <p class="muted small" style="margin-top:10px">Tags:
+      ${row.tags.map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("")}</p>
+    <p class="muted small">The template is exactly what the add-on generates. Turning
+      it into this picture is done by this page, not by Anki — treat the layout as a
+      close approximation.</p>`;
 }
 
 /** The answer side minus the repeated question, when the template used FrontSide. */
 function backOnly(backHtml, frontHtml) {
   return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
-}
-
-function deckTree({ rows }) {
-  const counts = new Map();
-  for (const r of rows) {
-    if (r.kind !== "synced") continue;
-    counts.set(r.deck, (counts.get(r.deck) || 0) + 1);
-  }
-  if (!counts.size) return `<p class="empty">No rows are marked for sync.</p>`;
-
-  return `<ul class="tree">${[...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, n]) => {
-      const parts = name.split("::");
-      return `<li style="--depth:${parts.length - 1}">
-        <code>${escapeHtml(parts[parts.length - 1])}</code>
-        <span class="count">${n}</span></li>`;
-    })
-    .join("")}</ul>`;
 }
 
 function statStrip({ stats, rows }) {
@@ -536,6 +596,7 @@ function statStrip({ stats, rows }) {
     ["marked for sync", stats.sync_marked_lines],
     ["notes in Anki", stats.total_potential_anki_notes],
     ["cloze rows", rows.filter((r) => r.cloze && r.kind === "synced").length],
+    ["decks", new Set(rows.filter((r) => r.kind === "synced").map((r) => r.deck)).size],
   ];
   return cells
     .map(
@@ -548,19 +609,21 @@ function statStrip({ stats, rows }) {
 
 function render() {
   const a = state.analysis;
-  $("#results").hidden = false;
+  $("#app").hidden = false;
+  $("#stats").hidden = false;
   $("#stats").innerHTML = statStrip(a);
+  $("#tree").innerHTML = deckPanel(a);
+  $("#warnings").innerHTML = warningsPanel(a);
+  $("#rowlist").innerHTML = rowsPanel();
+  $("#rowcount").textContent = `${visibleRows().length}`;
   $("#columns").innerHTML = columnsPanel(a);
   $("#settings").innerHTML = settingsPanel(a);
-  $("#warnings").innerHTML = warningsPanel(a);
-  $("#rowlist").innerHTML = rowsPanel(a);
   $("#card-panel").innerHTML = cardFrame(a);
-  $("#tree").innerHTML = deckTree(a);
   $("#notetypes").innerHTML = `
-    <p><code>${escapeHtml(a.noteTypes.basic)}</code></p>
-    ${a.rows.some((r) => r.cloze) ? `<p><code>${escapeHtml(a.noteTypes.cloze)}</code></p>` : ""}
-    <p class="muted">Fields, in order — <code>ID</code> leads because Anki uses the
-      first field for duplicate detection:</p>
+    <p class="small"><code>${escapeHtml(a.noteTypes.basic)}</code></p>
+    ${a.rows.some((r) => r.cloze) ? `<p class="small"><code>${escapeHtml(a.noteTypes.cloze)}</code></p>` : ""}
+    <p class="muted small">Fields, in order — <code>ID</code> leads because Anki uses
+      the first field for duplicate detection:</p>
     <p>${a.plan.fields.map((f) => `<span class="chip">${escapeHtml(f)}</span>`).join("")}</p>`;
 
   const templates = a.rows[state.row]?.cloze ? a.templates.cloze : a.templates.basic;
@@ -577,6 +640,13 @@ $("#go").addEventListener("click", preview);
 $("#url").addEventListener("keydown", (e) => e.key === "Enter" && preview());
 
 document.addEventListener("click", (e) => {
+  const deckEl = e.target.closest("[data-deck]");
+  if (deckEl) {
+    state.deckFilter = deckEl.dataset.deck || null;
+    const first = visibleRows()[0];
+    if (first) state.row = first.i;
+    return render();
+  }
   const rowEl = e.target.closest("[data-row]");
   if (rowEl) {
     state.row = Number(rowEl.dataset.row);
@@ -589,9 +659,11 @@ document.addEventListener("click", (e) => {
     return render();
   }
   if (e.target.id === "prev" || e.target.id === "next") {
+    const visible = visibleRows();
+    if (!visible.length) return;
+    const at = visible.findIndex(({ i }) => i === state.row);
     const step = e.target.id === "next" ? 1 : -1;
-    const n = state.analysis.rows.length;
-    state.row = (state.row + step + n) % n;
+    state.row = visible[(at + step + visible.length) % visible.length].i;
     return render();
   }
 });

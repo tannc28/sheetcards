@@ -4,117 +4,95 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sheets2Anki — preview a sheet before you sync it</title>
-<meta name="description" content="Paste a Google Sheets link and see the columns, settings, decks and cards the Sheets2Anki add-on would produce — running the add-on's own code in your browser.">
+<meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the Sheets2Anki add-on would produce — running the add-on's own code in your browser.">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-<header class="top">
-  <div class="wrap">
-    <p class="eyebrow">Sheets2Anki</p>
-    <h1>See what your sheet becomes<br>before it touches your collection.</h1>
-    <p class="lede">Paste a Google Sheets link. This page runs the add-on's own Python
-      in your browser and shows the columns it recognises, the settings row it read,
-      the decks and tags each row lands in, and the cards it would build.
-      Nothing is downloaded to Anki and nothing is changed.</p>
+<header class="bar">
+  <div class="brand">
+    <strong>Sheets2Anki</strong>
+    <span>preview</span>
   </div>
+
+  <div class="controls">
+    <input id="url" type="url" spellcheck="false" autocomplete="off"
+           aria-label="Google Sheets link"
+           placeholder="https://docs.google.com/spreadsheets/d/…/edit">
+    <input id="deck" type="text" spellcheck="false" autocomplete="off"
+           aria-label="Deck name" placeholder="deck name">
+    <button id="go" disabled>Preview</button>
+  </div>
+
+  <p id="status" class="status" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span><span id="status-text">Loading…</span>
+  </p>
 </header>
 
-<div class="wrap">
+<p id="demo-note" class="demo-note" hidden>Showing an example sheet — an HSK 4 deck
+  with a settings row, so you can see what the directives do. Paste your own link
+  above to read yours instead.</p>
 
-  <section class="controls">
-    <label class="field grow">
-      <span>Google Sheets link</span>
-      <input id="url" type="url" spellcheck="false" autocomplete="off"
-             placeholder="https://docs.google.com/spreadsheets/d/…/edit">
-    </label>
-    <label class="field">
-      <span>Deck name</span>
-      <input id="deck" type="text" spellcheck="false" autocomplete="off"
-             placeholder="read from the sheet">
-    </label>
-    <button id="go" disabled>Preview</button>
-  </section>
+<div id="stats" class="strip" hidden></div>
 
-  <p id="status" class="status">Loading…</p>
+<main id="app" class="app" hidden>
 
-  <p id="demo-note" class="demo-note" hidden>Showing an example sheet — an HSK 4
-    vocabulary deck with a settings row, so you can see what the directives do.
-    Paste your own link above to read yours instead.</p>
+  <aside class="pane decks">
+    <h2>Decks</h2>
+    <div id="tree"></div>
+    <h2 class="spaced">Note types</h2>
+    <div id="notetypes"></div>
+  </aside>
 
-  <p class="hint-line">The sheet has to be shared — <strong>Share → “Anyone with the
-    link” → Viewer</strong>. That is the same access the add-on needs, so if the
-    preview can read it, so can Anki.</p>
-
-  <main id="results" hidden>
-
-    <div id="stats" class="strip"></div>
+  <section class="pane middle">
     <div id="warnings"></div>
 
-    <div class="split">
-      <div class="col">
-        <section class="panel">
-          <h2>Columns</h2>
-          <p class="muted">Only <code>ID</code>, <code>SYNC</code>,
-            <code>SUBDECK n</code> and <code>TAGS</code> are reserved. Every other
-            column becomes a note field named exactly like its header, in any language.</p>
-          <div id="columns"></div>
-        </section>
+    <section class="block">
+      <h2>Rows <span id="rowcount" class="count"></span></h2>
+      <p class="muted small">Click a row to see its card.
+        <span class="dot synced"></span> syncs ·
+        <span class="dot skipped"></span> not ticked in SYNC ·
+        <span class="dot invalid"></span> no ID. Blank rows are ignored entirely.</p>
+      <div id="rowlist"></div>
+    </section>
 
-        <section class="panel">
-          <h2>Settings row</h2>
-          <div id="settings"></div>
-        </section>
+    <section class="block">
+      <h2>Columns</h2>
+      <p class="muted small">Only <code>ID</code>, <code>SYNC</code>,
+        <code>SUBDECK n</code> and <code>TAGS</code> are reserved. Every other column
+        becomes a note field named exactly like its header, in any language.</p>
+      <div id="columns"></div>
+    </section>
 
-        <section class="panel">
-          <h2>Rows</h2>
-          <p class="muted">Click a row to see its card.
-            <span class="dot synced"></span> syncs ·
-            <span class="dot skipped"></span> not ticked in SYNC ·
-            <span class="dot invalid"></span> no ID. Blank rows are ignored entirely.</p>
-          <div id="rowlist" class="scroll"></div>
-        </section>
-      </div>
+    <section class="block">
+      <h2>Settings row</h2>
+      <div id="settings"></div>
+    </section>
 
-      <div class="col sticky">
-        <section class="panel">
-          <h2>The card</h2>
-          <div id="card-panel"></div>
-        </section>
-
-        <section class="panel">
-          <h2>Decks</h2>
-          <div id="tree"></div>
-        </section>
-
-        <section class="panel">
-          <h2>Note types</h2>
-          <div id="notetypes"></div>
-        </section>
-      </div>
-    </div>
-
-    <details class="panel">
+    <details class="block">
       <summary><h2>Card templates, as generated</h2></summary>
-      <p class="muted">This is the exact text the add-on writes into Anki — produced
-        here by the same <code>card_layout.py</code> that runs inside the add-on.</p>
+      <p class="muted small">The exact text the add-on writes into Anki, produced here
+        by the same <code>card_layout.py</code> that runs inside the add-on.</p>
       <pre id="source" class="source"></pre>
     </details>
+  </section>
 
-  </main>
+  <aside class="pane card">
+    <h2>Card</h2>
+    <div id="card-panel"></div>
+  </aside>
 
-  <footer>
-    <p>This page loads <code>column_model.py</code>, <code>sheet_config.py</code>,
-      <code>card_layout.py</code>, <code>tsv_model.py</code> and <code>errors.py</code>
-      straight from the add-on and runs them through
-      <a href="https://pyodide.org">Pyodide</a>, so what you see is what the add-on
-      computes — not a second implementation of it. Only the card picture is drawn
-      by this page; inside Anki that final step is Anki's own renderer.</p>
-    <p><a href="https://github.com/tannc28/sheets2anki">Source and add-on downloads
-      on GitHub</a></p>
-  </footer>
+</main>
 
-</div>
+<footer id="footer">
+  <p>This page loads <code>column_model.py</code>, <code>sheet_config.py</code>,
+    <code>card_layout.py</code>, <code>tsv_model.py</code> and <code>errors.py</code>
+    straight from the add-on and runs them through
+    <a href="https://pyodide.org">Pyodide</a>, so what you see is what the add-on
+    computes — not a second implementation of it. Only the card picture is drawn by
+    this page; inside Anki that final step is Anki's own renderer.
+    <a href="https://github.com/tannc28/sheets2anki">Source on GitHub</a></p>
+</footer>
 
 <script type="module" src="./app.js"></script>
 </body>

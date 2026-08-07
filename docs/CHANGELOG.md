@@ -4,6 +4,29 @@
 
 ---
 
+## ✨ **v6.3.2** - August 2026 *(Fix)*
+
+### 🗂 The preview reads like Anki now
+
+- Laid out as a tool rather than a page: a control bar, the **deck tree on the left**
+  the way Anki puts it, the sheet in the middle and the card on the right — three
+  panes that fill the window and scroll independently, so a wide screen shows the
+  whole picture at once instead of a narrow column.
+- Clicking a deck in the tree filters the rows to it, and the card navigation follows
+  that selection. Each level counts everything beneath it.
+- The status line now **spins while something is running** — starting Python,
+  downloading the sheet, running the add-on's code — so a slow first load reads as
+  working rather than as frozen.
+
+### 🐞 The deck path was missing its root
+
+- The tree showed `HSK4::Bài 1`, but every deck the add-on makes hangs under
+  `Sheets2Anki`, so the real path is `Sheets2Anki::HSK4::Bài 1`. The constant now
+  lives in the pure layer next to `TAG_ROOT` and `templates_and_definitions`
+  re-exports it, so the preview and `determine_target_deck` cannot disagree again.
+
+---
+
 ## ✨ **v6.3.1** - August 2026 *(Fix)*
 
 ### 🐞 The preview framed the address you pasted

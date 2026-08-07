@@ -33,6 +33,12 @@ from .sheet_config import parse_config_row
 # browser without touching notes the user made themselves.
 TAG_ROOT = "sheets2anki"
 
+# Every deck the add-on creates hangs under this one, so a collection keeps its own
+# decks and the synced ones apart. The real path a row lands in is
+# "Sheets2Anki::{sheet name}::{SUBDECK levels}" — see data_processor's
+# determine_target_deck, which builds exactly that.
+DEFAULT_PARENT_DECK_NAME = "Sheets2Anki"
+
 
 # =============================================================================
 # TSV PARSING
