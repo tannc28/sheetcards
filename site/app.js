@@ -133,6 +133,11 @@ def analyze(tsv, deck_name):
 const $ = (sel) => document.querySelector(sel);
 const state = {
   analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
+  sheetId: "",
+  // What the .apkg derives its note ids from — a spreadsheet id for a link, the
+  // file and tab for an upload. Either way it has to be the same next time or a
+  // re-import duplicates every note instead of updating it.
+  sheetId: "",
   // What the right pane shows: the card, or its source the way Anki puts the
   // template editor beside it. The card is never taken away — the sheet's
   // configuration opens as a drawer in the *left* pane instead, because it is
@@ -143,6 +148,15 @@ const state = {
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 let buildPackage = null;
+let readUpload = null;
+
+// The file last dropped on the page, kept as bytes because changing tab re-reads
+// it: a File object is gone once its input has moved on.
+let upload = null;
+
+// Whether the deck name on screen was typed rather than derived. Without this a
+// name filled in from one sheet would quietly become the name of the next one.
+let deckNameEdited = false;
 
 // ---------------------------------------------------------------------------
 // Boot
@@ -176,6 +190,13 @@ async function boot() {
       py.FS.writeFile(`/s2a/${name}.py`, await res.text());
     }),
   );
+  // Not part of the add-on and not under s2a/ for that reason: turning an
+  // uploaded file into TSV is the one job the add-on never has, because a Google
+  // Sheet arrives as TSV already.
+  const reader = await fetch("./workbook.py");
+  if (!reader.ok) throw new Error(`could not load workbook.py (${reader.status})`);
+  py.FS.writeFile("/workbook.py", await reader.text());
+
   py.runPython('import sys; sys.path.insert(0, "/")');
   // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
   await py.loadPackage("sqlite3");
@@ -185,7 +206,24 @@ async function boot() {
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
   const pack = py.globals.get("package_bytes");
   buildPackage = (sheetId) => pack(sheetId).toJs();
+  const wb = py.pyimport("workbook");
+  readUpload = (bytes, name, index) =>
+    JSON.parse(wb.read_upload(bytes, name, index));
   $("#go").disabled = false;
+  $("#pick").disabled = false;
+}
+
+/**
+ * The last line of a Python traceback, which is the part written for a person.
+ *
+ * Pyodide surfaces a raised exception as a JS Error carrying the whole traceback
+ * in its message. Put in the status bar unedited it buries the sentence
+ * workbook.py wrote under twenty lines of frames.
+ */
+function pythonMessage(err) {
+  const lines = String(err?.message || err).trimEnd().split("\n");
+  const last = lines[lines.length - 1].trim();
+  return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
 }
 
 // ---------------------------------------------------------------------------
@@ -214,6 +252,42 @@ function deckNameFromHeaders(res) {
   return (cut > 0 ? name.slice(0, cut) : name).trim();
 }
 
+/** The name to put on the deck, unless the field on screen was typed into. */
+function chooseDeckName(fallback) {
+  const typed = $("#deck").value.trim();
+  return (deckNameEdited && typed) || fallback || "Deck";
+}
+
+/** Everything from "we have the text" to "the page is drawn". */
+function analyse(tsv, deckName, sheetId) {
+  state.deckName = deckName;
+  // Kept rather than recovered from the URL field at download time: a file has
+  // no link to recover it from, and the id is what makes a second import of the
+  // same sheet update its notes instead of duplicating them.
+  state.sheetId = sheetId;
+  $("#deck").value = deckName;
+
+  status(t("analysing"), "", true);
+  state.analysis = analyze(tsv, deckName);
+  state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
+  if (state.row < 0) state.row = 0;
+  state.template = 0;
+  state.deckFilter = null;
+  render();
+
+  const s = state.analysis.stats;
+  status(
+    t("readRows", s.total_table_lines, s.sync_marked_lines),
+    s.sync_marked_lines ? "ok" : "bad",
+  );
+}
+
+function failed(message) {
+  status(message, "bad");
+  $("#app").hidden = true;
+  $("#stats").hidden = true;
+}
+
 async function preview() {
   const input = $("#url").value.trim();
   if (!input) return;
@@ -238,15 +312,8 @@ async function preview() {
     }
 
     const tsv = await res.text();
-    state.deckName = $("#deck").value.trim() || deckNameFromHeaders(res) || "Deck";
-    $("#deck").value = state.deckName;
-
-    status(t("analysing"), "", true);
-    state.analysis = analyze(tsv, state.deckName);
-    state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
-    if (state.row < 0) state.row = 0;
-    state.template = 0;
-    state.deckFilter = null;
+    upload = null;
+    paintTabs();
 
     // The example is what you get with no query string, so putting it back into
     // the address bar would only make the landing URL longer for no gain.
@@ -258,19 +325,92 @@ async function preview() {
       history.replaceState(null, "", url);
     }
 
-    render();
-    const s = state.analysis.stats;
-    status(
-      t("readRows", s.total_table_lines, s.sync_marked_lines),
-      s.sync_marked_lines ? "ok" : "bad",
+    analyse(
+      tsv,
+      chooseDeckName(deckNameFromHeaders(res)),
+      (tsvUrl.match(/\/d\/([\w-]+)/) || [])[1] || "sheet",
     );
   } catch (err) {
-    status(err.message, "bad");
-    $("#app").hidden = true;
-    $("#stats").hidden = true;
+    failed(err.message);
   } finally {
     $("#go").disabled = false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Reading an uploaded file
+// ---------------------------------------------------------------------------
+
+/** The tab picker, drawn only for a workbook that has more than one grid. */
+function paintTabs() {
+  const el = $("#tabpick");
+  const tabs = upload?.tabs || [];
+  el.hidden = !tabs.length;
+  el.innerHTML = tabs
+    .map(
+      (name, i) =>
+        `<option value="${i}" ${i === upload.index ? "selected" : ""}>` +
+        `${escapeHtml(name)}</option>`,
+    )
+    .join("");
+}
+
+/**
+ * Reads the held bytes and draws the result.
+ *
+ * A workbook's tabs are separate sheets that happen to travel together, so each
+ * one gets its own deck name — naming fourteen decks after the file they came in
+ * would make the download button produce fourteen indistinguishable packages.
+ */
+function showUpload(index) {
+  $("#pick").disabled = true;
+  try {
+    let out;
+    try {
+      out = readUpload(upload.bytes, upload.name, index);
+    } catch (err) {
+      throw new Error(pythonMessage(err));
+    }
+
+    upload.tabs = out.tabs;
+    upload.index = index;
+    paintTabs();
+
+    const base = upload.name.replace(/\.[^.]+$/, "").trim();
+    analyse(
+      out.tsv,
+      chooseDeckName(out.tabs.length ? out.tab : base),
+      `file:${upload.name}#${out.tab}`,
+    );
+  } catch (err) {
+    failed(err.message);
+  } finally {
+    $("#pick").disabled = false;
+  }
+}
+
+async function previewFile(file) {
+  status(t("reading"), "", true);
+  try {
+    upload = {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      name: file.name,
+      tabs: [],
+      index: 0,
+    };
+  } catch (err) {
+    return failed(t("unreadableFile", err.message));
+  }
+
+  // Nothing about a local file can go in the address bar, so a ?url= left over
+  // from a link would send the next person who opens it somewhere else entirely.
+  const url = new URL(location.href);
+  url.searchParams.delete("url");
+  history.replaceState(null, "", url);
+  $("#demo-note").hidden = true;
+  $("#url").value = "";
+
+  showUpload(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -645,8 +785,7 @@ function backOnly(backHtml, frontHtml) {
 /** Hands the built package to the browser as a download. */
 function downloadPackage() {
   const button = $("#apkg");
-  const sheetId =
-    (toTsvUrl($("#url").value).match(/\/d\/([\w-]+)/) || [])[1] || "sheet";
+  const sheetId = state.sheetId || "sheet";
   button.disabled = true;
   status(t("packing"), "", true);
   try {
@@ -766,9 +905,46 @@ document.addEventListener("click", (e) => {
 
 $("#go").addEventListener("click", preview);
 $("#url").addEventListener("keydown", (e) => e.key === "Enter" && preview());
+$("#deck").addEventListener("input", () => (deckNameEdited = true));
 $("#details-btn").addEventListener("click", () => {
   state.detailOpen = !state.detailOpen;
   render();
+});
+
+$("#pick").addEventListener("click", () => $("#file").click());
+$("#file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  // Cleared so that choosing the same file twice fires a change event again —
+  // the obvious thing to do after editing it and wanting the new version.
+  e.target.value = "";
+  if (file) previewFile(file);
+});
+
+// ---- drag and drop --------------------------------------------------------
+
+// Counted rather than toggled: dragging across a child element fires leave on the
+// one being left before enter on the one being entered, so a plain flag flickers.
+let dragDepth = 0;
+const draggingFile = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
+
+addEventListener("dragenter", (e) => {
+  if (!draggingFile(e) || $("#pick").disabled) return;
+  e.preventDefault();
+  dragDepth += 1;
+  $("#drop").hidden = false;
+});
+addEventListener("dragover", (e) => draggingFile(e) && e.preventDefault());
+addEventListener("dragleave", () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) $("#drop").hidden = true;
+});
+addEventListener("drop", (e) => {
+  if (!draggingFile(e)) return;
+  e.preventDefault();
+  dragDepth = 0;
+  $("#drop").hidden = true;
+  const file = e.dataTransfer.files[0];
+  if (file && !$("#pick").disabled) previewFile(file);
 });
 
 document.addEventListener("click", (e) => {
@@ -802,6 +978,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("change", (e) => {
+  if (e.target.id === "tabpick") return showUpload(Number(e.target.value));
   if (e.target.id === "tpl") state.template = Number(e.target.value);
   else if (e.target.id === "ord") state.ordinal = Number(e.target.value);
   else return;

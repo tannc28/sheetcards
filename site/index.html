@@ -18,9 +18,17 @@
   <div class="controls">
     <input id="url" type="url" spellcheck="false" autocomplete="off"
            data-i18n-attr="placeholder:urlPlaceholder,aria-label:urlLabel">
+    <button id="go" data-i18n="go" disabled>Preview</button>
+
+    <span class="or" data-i18n="or">or</span>
+    <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+           data-i18n-attr="aria-label:pickLabel">
+    <button id="pick" class="secondary" disabled
+            data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
+    <select id="tabpick" hidden data-i18n-attr="aria-label:tabLabel"></select>
+
     <input id="deck" type="text" spellcheck="false" autocomplete="off"
            data-i18n-attr="placeholder:deckPlaceholder,aria-label:deckLabel">
-    <button id="go" data-i18n="go" disabled>Preview</button>
   </div>
 
   <p id="status" class="status" role="status" aria-live="polite">
@@ -64,6 +72,15 @@
   </section>
 
 </main>
+
+<!-- Covers the whole window while a file is over it, so a drop lands here rather
+     than inside the card's iframe — which would navigate the frame to the file. -->
+<div id="drop" class="dropzone" hidden aria-hidden="true">
+  <div>
+    <strong data-i18n="dropHere">Drop the file to preview it</strong>
+    <span data-i18n="dropTypes"></span>
+  </div>
+</div>
 
 <script type="module" src="./app.js"></script>
 </body>

@@ -66,6 +66,27 @@ exact.
 The sheet needs the same sharing the add-on needs (**Anyone with the link →
 Viewer**), so if the preview can read your sheet, so can Anki.
 
+### Or upload a file instead of a link
+
+**Upload a file** — or drag one onto the page — reads `.xlsx`, `.xlsm`, `.csv` and
+`.tsv` from your computer. Useful when the sheet is private, when you are still
+drafting it offline, or when you keep your cards in Excel and have no Google Sheet
+at all. A workbook with several tabs gets a picker beside the button; each tab is
+read on its own and becomes its own deck, named after the tab.
+
+The file never leaves your browser — Pyodide reads it in the page, and there is no
+server to send it to.
+
+Two things to know:
+
+- **The add-on itself still needs a link.** Only the preview reads files, so the
+  `.apkg` download is how an uploaded workbook reaches Anki. To *sync* a sheet —
+  which is what lets a deleted row disappear from your collection — it has to live
+  in Google Sheets.
+- **A cell is read as the sheet shows it.** A date column comes out as
+  `2025-01-21`, and a whole number as `1` rather than `1.0`, so the `ID` column
+  keys the same notes it would have if the same sheet had arrived as a link.
+
 ### Download an `.apkg` — no desktop needed
 
 The preview page can also build the deck as an `.apkg` file, right in the browser.

@@ -4,6 +4,40 @@
 
 ---
 
+## ✨ **v6.8.0** - August 2026 *(Feature)*
+
+### 📄 The preview reads uploaded files, not only links
+
+- **Upload a file** on <https://tannc28.github.io/sheets2anki/> — or drag one onto the
+  page — reads `.xlsx`, `.xlsm`, `.csv` and `.tsv`. For a private sheet, a draft that
+  is not in Google Sheets yet, or cards kept in Excel, there was previously no way to
+  see what the add-on would make of them.
+- **A workbook's tabs each become their own deck.** A file with more than one tab gets
+  a picker beside the button, and the deck is named after the tab rather than the file
+  — fourteen tabs named after the file they arrived in would download as fourteen
+  indistinguishable packages.
+- The file is read in the browser by Pyodide. There is no server, and nothing is
+  uploaded anywhere.
+- **A whole number keeps its digits.** Google stores `1` in an `.xlsx` as `1.0`, and
+  the ID column is the key a note is matched by — read literally, an uploaded workbook
+  would have made a *second* set of notes beside the ones the same sheet syncs as a
+  link. Verified the other way round too: the demo sheet as `.xlsx` and as Google's own
+  TSV export build byte-identical notes.
+- Dates come out as dates rather than as the serial number a spreadsheet stores, and a
+  cell holding a newline or a tab survives into the parser instead of splitting its
+  row.
+- A file the page cannot read says so in a sentence — an `.xls`, or something merely
+  named `.xlsx` — rather than a Python traceback.
+
+### 🔧 Fixed
+
+- `scripts/build_site.py` stopped with `IsADirectoryError` once anything had imported
+  `site/workbook.py` and left a `__pycache__` beside it. It copies files only now, and
+  checks that the uploaded-file reader actually reached the output — app.js fetches it
+  at boot, so its absence would take the whole page down, not just the upload button.
+
+---
+
 ## ✨ **v6.7.0** - August 2026 *(Feature)*
 
 ### 🎬 Video plays inline on a phone, by borrowing an origin

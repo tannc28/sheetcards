@@ -34,6 +34,32 @@ def modules_the_site_loads():
     ]
 
 
+def reader_the_site_loads():
+    """The site-only Python named in app.js: the reader for uploaded files.
+
+    Named there rather than here for the same reason PURE_MODULES is — one place
+    decides what the page loads. Unlike the modules under s2a/ this one is not
+    copied out of src/: turning a workbook into TSV is a job the add-on never
+    has, because a Google Sheet arrives as TSV already.
+    """
+    app = (SITE / "app.js").read_text(encoding="utf-8")
+    match = re.search(r'fetch\("\./(\w+\.py)"\)', app)
+    if not match:
+        sys.exit("site/app.js no longer fetches a .py file for uploaded workbooks")
+
+    name = match.group(1)
+    path = SITE / name
+    if not path.exists():
+        sys.exit(
+            f"site/app.js loads {name}, which does not exist — the page would "
+            f"boot and then fail on the first upload"
+        )
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if re.match(r"\s*(from|import)\s+(aqt|anki|PyQt6)\b", line):
+            sys.exit(f"{name} imports {line.strip()!r} — it cannot run in the browser")
+    return name
+
+
 def check_purity(names):
     """Refuses to ship a module that reaches outside the standard library.
 
@@ -67,13 +93,16 @@ def build():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
 
+    # Files only: importing site/workbook.py — which the test suite does — leaves a
+    # __pycache__ beside it, and a directory here used to stop the build dead.
     for item in sorted(SITE.iterdir()):
-        if item.name.startswith("."):
+        if item.name.startswith(".") or not item.is_file():
             continue
         shutil.copy2(item, OUT / item.name)
 
     names = modules_the_site_loads()
     check_purity(names)
+    reader = reader_the_site_loads()
 
     pkg = OUT / "s2a"
     pkg.mkdir()
@@ -85,10 +114,14 @@ def build():
     # silently drops files and directories whose names begin with an underscore.
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
 
+    if not (OUT / reader).exists():
+        sys.exit(f"{reader} did not reach the output — uploads would fail")
+
     total = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
     print(f"built {OUT.relative_to(REPO)}")
     print(f"  page      : {len(list(OUT.glob('*')))} files")
-    print(f"  python    : {', '.join(names)}")
+    print(f"  from src/ : {', '.join(names)}")
+    print(f"  site only : {reader}")
     print(f"  total     : {total / 1024:.0f} KB (Pyodide itself loads from a CDN)")
     return OUT
 

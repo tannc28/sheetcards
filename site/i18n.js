@@ -23,6 +23,18 @@ const STRINGS = {
   deckPlaceholder: { en: "deck name", vi: "tên deck" },
   deckLabel: { en: "Deck name", vi: "Tên deck" },
   go: { en: "Preview", vi: "Xem trước" },
+  or: { en: "or", vi: "hoặc" },
+  pick: { en: "Upload a file", vi: "Tải file lên" },
+  pickLabel: {
+    en: "Preview a file from this computer — .xlsx, .xlsm, .csv or .tsv",
+    vi: "Xem trước file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
+  },
+  tabLabel: { en: "Sheet in the workbook", vi: "Trang trong file" },
+  dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
+  dropTypes: {
+    en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
+    vi: ".xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt",
+  },
 
   // --- status -------------------------------------------------------------
   booting: { en: "Starting Python…", vi: "Đang khởi động Python…" },
@@ -31,6 +43,7 @@ const STRINGS = {
     vi: "Đang tải code của add-on…",
   },
   downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet…" },
+  reading: { en: "Reading the file…", vi: "Đang đọc file…" },
   analysing: {
     en: "Running the add-on's code…",
     vi: "Đang chạy code của add-on…",
@@ -49,6 +62,10 @@ const STRINGS = {
   notASheet: {
     en: "That is not a Google Sheets link.",
     vi: "Đây không phải link Google Sheets.",
+  },
+  unreadableFile: {
+    en: (m) => `The browser could not read that file: ${m}`,
+    vi: (m) => `Trình duyệt không đọc được file đó: ${m}`,
   },
   unreachable: {
     en:
