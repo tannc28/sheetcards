@@ -16,6 +16,7 @@ this can go quietly wrong on a collection that already exists:
 import pytest
 
 from src.config_manager import get_deck_id
+from src.tsv_model import deck_root_name
 from src.utils import convert_edit_url_to_tsv
 from src.utils import convert_edit_url_to_xlsx
 from src.utils import sheet_name_from_url
@@ -252,12 +253,14 @@ class TestDeckNaming:
     then shoves them apart with "#conflict1", every sync, for ever.
     """
 
-    def test_a_deck_is_named_after_its_file_and_its_sheet(self):
+    def test_a_deck_is_named_after_its_sheet(self):
+        """The sheet, not the file it travelled in: a deck is named for what is
+        in it."""
         from src.deck_manager import DeckNameManager
 
         assert (
             DeckNameManager._with_sheet(url_for_sheet(EDIT, "vocab"), "English")
-            == "English::vocab"
+            == "vocab"
         )
 
     def test_two_sheets_do_not_land_on_the_same_name(self):
@@ -435,12 +438,11 @@ class TestTheDeckNameSurvivesSanitising:
         """The two are computed in different modules from the same remote name;
         if they ever disagree again, Anki grows a duplicate deck."""
         from src.deck_manager import DeckNameManager
-        from src.templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 
-        remote = "my-vocab-sheet::vocab"
+        remote = "vocab"
         registered = DeckNameManager.generate_local_name(remote)
         # data_processor.determine_target_deck builds exactly this prefix.
-        filed_under = f"{DEFAULT_PARENT_DECK_NAME}::{remote}"
+        filed_under = deck_root_name(remote)
         assert registered == filed_under
 
     def test_a_lone_colon_is_still_replaced(self):
@@ -459,3 +461,59 @@ class TestTheDeckNameSurvivesSanitising:
         from src.deck_manager import DeckNameManager
 
         assert "::" not in DeckNameManager.clean_name("morning: verbs")
+
+
+@pytest.mark.unit
+class TestTheSyncKeepsHoldOfTheSheet:
+    """The deck's URL must reach the download, not an export URL built from it.
+
+    This is what shipped broken in 6.9.0–6.9.2 and it was invisible: the sync
+    validated the deck's URL, kept what `validate_url` returned — an
+    `/export?format=tsv` URL, which has no fragment — and downloaded *that*. A
+    URL naming no sheet falls back to the file's first sheet, so every deck of one
+    file synced the same sheet. The second deck came out with the first one's
+    columns, its note type and its rows, and nothing anywhere reported an error.
+    """
+
+    def test_converting_to_a_download_url_loses_the_sheet(self):
+        """Not a defect in the converter — the download URL has no room for it.
+        Pinned so it is on the record why the deck's own URL must be kept."""
+        from src.utils import convert_edit_url_to_tsv
+
+        pointed = url_for_sheet(EDIT, "grammar")
+        assert sheet_name_from_url(pointed) == "grammar"
+        assert sheet_name_from_url(convert_edit_url_to_tsv(pointed)) is None
+
+    def test_the_sync_downloads_from_the_url_that_names_the_sheet(self):
+        """Reads the source: the call has to be handed the deck's URL."""
+        import inspect
+
+        from src import sync
+
+        body = inspect.getsource(sync)
+        assert "getRemoteDeck(remote_deck_url)" in body, (
+            "sync passes something other than the deck's own URL to getRemoteDeck; "
+            "if it is an export URL the sheet is gone and every deck of a file "
+            "will sync the file's first sheet"
+        )
+
+    def test_each_sheet_resolves_to_its_own_download(self, monkeypatch):
+        """End to end through the router, with the network stubbed out."""
+        import src.workbook as workbook_module
+        from src import data_processor
+
+        monkeypatch.setattr(
+            data_processor, "download_workbook", lambda url, timeout=30: b"FILE"
+        )
+        monkeypatch.setattr(
+            workbook_module, "sheet_tsv", lambda data, name: f"tsv-for-{name}"
+        )
+
+        assert (
+            data_processor.download_deck_tsv(url_for_sheet(EDIT, "vocab"))
+            == "tsv-for-vocab"
+        )
+        assert (
+            data_processor.download_deck_tsv(url_for_sheet(EDIT, "grammar"))
+            == "tsv-for-grammar"
+        )

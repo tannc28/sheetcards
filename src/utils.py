@@ -38,6 +38,7 @@ from .errors import CollectionSaveError  # noqa: F401
 from .errors import ConfigurationError  # noqa: F401
 from .errors import NoteProcessingError  # noqa: F401
 from .errors import SyncError  # noqa: F401
+from .tsv_model import is_addon_deck  # noqa: F401
 
 
 def safe_find_cards(search_query):
@@ -420,8 +421,8 @@ def get_or_create_deck(col, deckName, remote_deck_name=None):
         deck_id = deck["id"]
         actual_name = deck["name"]
 
-    # Apply options based on mode (new or existing that is Sheets2Anki)
-    if deckName.startswith("Sheets2Anki::") or deck_was_created:
+    # Apply options based on mode (new, or an existing deck this add-on owns)
+    if is_addon_deck(deckName) or deck_was_created:
         try:
             apply_sheets2anki_options_to_deck(deck_id, remote_deck_name)
         except Exception as e:

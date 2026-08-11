@@ -33,11 +33,27 @@ from .sheet_config import parse_config_row
 # browser without touching notes the user made themselves.
 TAG_ROOT = "sheets2anki"
 
-# Every deck the add-on creates hangs under this one, so a collection keeps its own
-# decks and the synced ones apart. The real path a row lands in is
-# "Sheets2Anki::{sheet name}::{SUBDECK levels}" — see data_processor's
-# determine_target_deck, which builds exactly that.
-DEFAULT_PARENT_DECK_NAME = "Sheets2Anki"
+# Every deck the add-on creates is named for its sheet and marked with this, so a
+# collection keeps its own decks and the synced ones apart without burying the
+# synced ones a level down. The full path a row lands in is
+# "s2a_{sheet name}::{SUBDECK levels}" — see data_processor's determine_target_deck,
+# which builds exactly that.
+DECK_NAME_PREFIX = "s2a_"
+
+
+def deck_root_name(remote_deck_name):
+    """The top-level deck a sheet's notes live under.
+
+    The single place this name is built. It used to be spelled out as an f-string
+    in four modules, and the day one of them disagreed with the others the add-on
+    registered one deck and filed its notes into a different one.
+    """
+    return f"{DECK_NAME_PREFIX}{remote_deck_name}"
+
+
+def is_addon_deck(deck_name):
+    """Whether a deck name is one this add-on makes."""
+    return bool(deck_name) and str(deck_name).startswith(DECK_NAME_PREFIX)
 
 
 # =============================================================================

@@ -70,7 +70,7 @@ Viewer**), so if the preview can read your sheet, so can Anki.
 
 A Google Sheets file holds several **sheets** — the tabs along the bottom — and
 Sheets2Anki connects **every one of them as its own deck**. Paste the file's link
-once and each sheet becomes `Sheets2Anki::{file}::{sheet}`, with its own columns,
+once and each sheet becomes its own top-level deck `s2a_{sheet}`, with its own columns,
 its own settings row and its own note type. One spreadsheet can hold your whole
 collection.
 
@@ -171,7 +171,7 @@ dialog validates it as you type (with a ~1.2 s pause after you stop), downloads 
 sheet, and shows how many rows it found and what the deck will be called.
 
 You do **not** name the deck — the name is read from the spreadsheet's title, and the
-deck is always created as `Sheets2Anki::<spreadsheet title>`.
+deck is always created as `s2a_<sheet name>`.
 
 ### 4. Sync
 
@@ -247,7 +247,7 @@ This produces:
 - **Note fields** — `ID`, `Word`, `Reading`, `Meaning`, `Example` (in that order; `ID`
   is always the first field).
 - **Card** — front `Word`, back `Reading` + `Meaning` + `Example`.
-- **Deck** — `Sheets2Anki::<sheet title>::Japanese::Kanji`.
+- **Deck** — `s2a_<sheet name>::Japanese::Kanji`.
 - **Tags** — `sheets2anki`, `sheets2anki::japanese::kanji`, `jlpt-n5`, `nature`.
 
 ### The settings row
@@ -539,7 +539,7 @@ recognised as the same deck.
 
 The deck name is derived automatically, in this order: the spreadsheet's HTML `<title>`,
 then the download's `Content-Disposition` filename, then a generated fallback built from
-the spreadsheet ID. The deck is created as `Sheets2Anki::<that name>`. If the name
+the spreadsheet ID. The deck is created as `s2a_<that name>`. If the name
 collides with an existing remote deck, a ` #conflict1`, ` #conflict2`, … suffix is added
 and the dialog tells you.
 
@@ -845,7 +845,7 @@ log or appends to the existing one.
 ### Notes are keyed by `ID`
 
 Each row's `ID` is written into the note's first field, also called `ID`. On every sync
-the add-on searches `deck:"Sheets2Anki::<name>" OR deck:"Sheets2Anki::<name>::*"`, reads
+the add-on searches `deck:"s2a_<name>" OR deck:"s2a_<name>::*"`, reads
 that field on each note it finds, and matches rows to notes by it.
 
 Consequences worth internalizing:
@@ -857,7 +857,7 @@ Consequences worth internalizing:
   detected: duplicates are listed as an error in the sync summary
   (*"Duplicate IDs in the spreadsheet (n): …"*).
 - **A row with a blank `ID` is never synced** — it is counted as *Rows skipped (Missing ID)*.
-- Moving a Sheets2Anki note out of the `Sheets2Anki::<deck>` tree in Anki makes it
+- Moving a Sheets2Anki note out of its `s2a_<deck>` tree in Anki makes it
   invisible to the matcher, and the next sync will recreate the row as a new note.
 
 ### What each change to the sheet does
@@ -893,7 +893,7 @@ Consequences worth internalizing:
 
 The remote deck name is re-read from the spreadsheet's title on every sync. When it
 changes, the add-on renames, in one cascade: the Anki deck
-(`Sheets2Anki::<new name>`), the note types (`Sheets2Anki - <new name> - Basic` / `-
+(`s2a_<new name>`), the note types (`Sheets2Anki - <new name> - Basic` / `-
 Cloze`), and — in *Individual* deck-options mode — the options preset.
 
 > ⚠️ **Renaming a Sheets2Anki deck or note type inside Anki does not stick.** The next

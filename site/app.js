@@ -66,9 +66,9 @@ def analyze(tsv, deck_name):
     deck = tm.build_remote_deck_from_tsv(parsed, "", log)
     cfg = deck.sheet_config
 
-    # Every deck the add-on makes hangs under this one — determine_target_deck
-    # builds exactly this path, so the tree below is the tree Anki will show.
-    root = tm.DEFAULT_PARENT_DECK_NAME + "::" + deck_name
+    # determine_target_deck builds exactly this name, so the tree below is the
+    # tree Anki will show.
+    root = tm.deck_root_name(deck_name)
 
     rows = parsed["rows"]
     offset = 0

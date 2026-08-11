@@ -2,10 +2,10 @@
 
 try:
     from .compat import mw
-    from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+    from .templates_and_definitions import DECK_NAME_PREFIX
 except ImportError:
     from compat import mw
-    from templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+    from templates_and_definitions import DECK_NAME_PREFIX
 
 from .debug import add_debug_message
 
@@ -771,103 +771,27 @@ def apply_automatic_deck_options_system():
 
 
 def ensure_root_deck_has_root_options():
-    """
-    Ensures that the root deck 'Sheets2Anki' uses the specific options group
-    "Sheets2Anki - Root Options".
+    """Nothing to do: the add-on no longer puts its decks under a parent.
+
+    Decks are named ``s2a_{sheet}`` and sit at the top level, so there is no
+    single deck for a root options preset to hang on and no inheritance for it to
+    drive. Every deck gets its options applied directly instead — see
+    ``apply_sheets2anki_options_to_deck``, which the add and sync paths call per
+    deck.
+
+    Kept as a no-op rather than deleted because the options system reports on it
+    and would otherwise have to grow a special case for a step that is simply
+    over.
 
     Returns:
-        bool: True if successfully applied, False otherwise
+        bool: always False — no root deck was configured, because there is none.
     """
-    from .config_manager import get_deck_options_mode
-
-    if not mw or not mw.col:
-        add_debug_message("Anki is not available", "DECK_OPTIONS")
-        return False
-
-    # Check if manual mode is active
-    mode = get_deck_options_mode()
-    if mode == "manual":
-        add_debug_message(
-            "Manual mode active - not applying options to root deck", "DECK_OPTIONS"
-        )
-        return False
-
-    try:
-        add_debug_message(
-            f"Checking root deck: '{DEFAULT_PARENT_DECK_NAME}'", "DECK_OPTIONS"
-        )
-
-        # Get or create the root deck
-        parent_deck = mw.col.decks.by_name(DEFAULT_PARENT_DECK_NAME)
-
-        if not parent_deck:
-            add_debug_message(
-                f"Root deck '{DEFAULT_PARENT_DECK_NAME}' does not exist, creating...",
-                "DECK_OPTIONS",
-            )
-            # Create root deck if it doesn't exist
-            parent_deck_id = mw.col.decks.id(DEFAULT_PARENT_DECK_NAME)
-            if parent_deck_id is not None:
-                parent_deck = mw.col.decks.get(parent_deck_id)
-                add_debug_message(
-                    f"Root deck created with ID: {parent_deck_id}", "DECK_OPTIONS"
-                )
-            else:
-                add_debug_message("❌ Failed to create root deck", "DECK_OPTIONS")
-                return False
-        else:
-            add_debug_message(
-                f"Root deck found: ID {parent_deck['id']}", "DECK_OPTIONS"
-            )
-
-        if parent_deck:
-            # Get current root options group of the deck
-            current_conf_id = parent_deck.get("conf", 1)  # 1 is Anki default
-            add_debug_message(
-                f"Current root deck configuration: {current_conf_id}", "DECK_OPTIONS"
-            )
-
-            # Apply specific root deck group
-            add_debug_message(
-                "Calling get_or_create_root_options_group()...", "DECK_OPTIONS"
-            )
-            root_options_group_id = get_or_create_root_options_group()
-            add_debug_message(
-                f"get_or_create_root_options_group() returned: {root_options_group_id}",
-                "DECK_OPTIONS",
-            )
-
-            if root_options_group_id:
-                if current_conf_id != root_options_group_id:
-                    parent_deck["conf"] = root_options_group_id
-                    mw.col.decks.save(parent_deck)
-                    add_debug_message(
-                        f"✅ Root options applied to deck '{DEFAULT_PARENT_DECK_NAME}' (ID: {root_options_group_id})",
-                        "DECK_OPTIONS",
-                    )
-                else:
-                    add_debug_message(
-                        f"✅ Root deck already uses the correct options (ID: {root_options_group_id})",
-                        "DECK_OPTIONS",
-                    )
-                return True
-            else:
-                add_debug_message(
-                    "❌ Failed to get/create root options group", "DECK_OPTIONS"
-                )
-                return False
-        else:
-            add_debug_message("❌ Failed to get/create root deck", "DECK_OPTIONS")
-            return False
-
-    except Exception as e:
-        add_debug_message(
-            f"❌ Error applying root options to parent deck: {e}", "DECK_OPTIONS"
-        )
-        import traceback
-
-        traceback.print_exc()
-        return False
+    add_debug_message(
+        "No root deck to configure: decks are top-level and named "
+        f"'{DECK_NAME_PREFIX}…'",
+        "DECK_OPTIONS",
+    )
+    return False
 
 
 def get_or_create_root_options_group():

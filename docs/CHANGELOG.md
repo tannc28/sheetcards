@@ -4,6 +4,48 @@
 
 ---
 
+## ✨ **v6.10.0** - August 2026 *(Feature + Fix)*
+
+### 🚨 Every deck of a file was syncing the same sheet
+
+The one that mattered. `sync` validated the deck's URL and then downloaded from what
+the validator *returned* — an `/export?format=tsv` URL, which has no room for a
+fragment, so `#sheet=grammar` was gone. A URL naming no sheet falls back to the file's
+first sheet, so **both decks downloaded `vocab`**: the second deck came out with the
+first one's columns, its note type and its rows, and nothing reported an error.
+
+The sync now downloads from the deck's own URL. A test reads `sync.py` for that call,
+because this failure is silent — no exception, no warning, just the wrong rows.
+
+It was invisible to the previous release's testing because every check went through
+the download router directly. The sync's own entry point was the one path not
+exercised, and it was the one that dropped the sheet.
+
+### 🗂️ Decks are named `s2a_{sheet}`, at the top level
+
+The `Sheets2Anki::` parent deck is gone. A sheet's deck is now `s2a_vocab` rather than
+`Sheets2Anki::my-file::vocab` — named for what is in it, not for the file it travelled
+in, and not pushed a level down the deck list. The prefix is what keeps synced decks
+apart from the ones you made yourself.
+
+Two files with a sheet of the same name collide, and that is resolved the way any
+other name collision already was.
+
+The name is now built in exactly one place (`tsv_model.deck_root_name`). It used to be
+spelled out as an f-string in four modules, which is how v6.9.2's "vocab+" happened.
+
+**This renames existing decks.** Anki's rename keeps the cards; the empty
+`Sheets2Anki` parent is left behind for you to delete.
+
+### 🔧 Also
+
+- The root deck options preset has nothing to attach to now and is a no-op; every deck
+  still gets its options applied directly, as it already did.
+- The **Tools** menu is still called Sheets2Anki — that is the add-on's name, which
+  only ever happened to be spelled the same as the deck prefix.
+
+---
+
 ## 🐛 **v6.9.2** - August 2026 *(Fix)*
 
 ### The deck name lost Anki's own separator, and decks grew a "+"

@@ -37,10 +37,10 @@ import zipfile
 
 from .card_layout import build_templates
 from .column_model import deck_path
-from .tsv_model import DEFAULT_PARENT_DECK_NAME
 from .tsv_model import SYNCED
 from .tsv_model import build_tags
 from .tsv_model import classify_row
+from .tsv_model import deck_root_name
 from .tsv_model import get_subdeck_name
 
 # Read from a package exported by Anki 25.x, not from memory. The comment inside
@@ -339,7 +339,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
     model_name = f"Sheets2Anki - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
     model_id = _stable_id("model", sheet_id, model_name)
 
-    root = f"{DEFAULT_PARENT_DECK_NAME}::{deck_name}"
+    root = deck_root_name(deck_name)
     decks = {"1": _deck(1, "Default", now)}
 
     def deck_id_for(full_name):

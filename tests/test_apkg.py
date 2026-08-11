@@ -104,9 +104,8 @@ class TestPackageShape:
         """Anki nests by name, but a package listing only the leaf imports oddly."""
         (_, _, decks, _), _, _ = _collection(_package(BASIC))
         names = {d["name"] for d in json.loads(decks).values()}
-        assert "Sheets2Anki" in names
-        assert "Sheets2Anki::HSK4" in names
-        assert "Sheets2Anki::HSK4::Unit 1" in names
+        assert "s2a_HSK4" in names
+        assert "s2a_HSK4::Unit 1" in names
 
     def test_the_note_type_is_the_one_the_sync_would_make(self):
         (_, models, _, _), _, _ = _collection(_package(BASIC))
@@ -222,7 +221,7 @@ print(json.dumps({
     "notes": col.note_count(),
     "cards": col.card_count(),
     "decks": sorted(d.name for d in col.decks.all_names_and_ids()
-                    if d.name.startswith("Sheets2Anki")),
+                    if d.name.startswith("s2a_")),
     "models": [m.name for m in col.models.all_names_and_ids()
                if m.name.startswith("Sheets2Anki")],
 }))
@@ -233,11 +232,7 @@ col.close()
     out = json.loads(result.stdout.strip().splitlines()[-1])
     assert out["notes"] == 1  # the SYNC=FALSE row never left the sheet
     assert out["cards"] == 2  # forward and reverse
-    assert out["decks"] == [
-        "Sheets2Anki",
-        "Sheets2Anki::HSK4",
-        "Sheets2Anki::HSK4::Unit 1",
-    ]
+    assert out["decks"] == ["s2a_HSK4", "s2a_HSK4::Unit 1"]
     assert out["models"] == ["Sheets2Anki - HSK4 - Basic"]
 
 

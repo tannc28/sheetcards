@@ -17,8 +17,11 @@ from .card_layout import build_templates
 # Defined in the pure layer, which is what actually builds the tags; re-exported
 # here so the long-standing `from .templates_and_definitions import TAG_ROOT`
 # keeps working and the constant has exactly one definition.
-from .tsv_model import DEFAULT_PARENT_DECK_NAME  # noqa: F401  (facade)
+ADDON_MENU_NAME = "Sheets2Anki"
+
+from .tsv_model import DECK_NAME_PREFIX  # noqa: F401  (facade)
 from .tsv_model import TAG_ROOT  # noqa: F401  (facade)
+from .tsv_model import deck_root_name  # noqa: F401  (facade)
 
 # =============================================================================
 # CONSTANTS AND TEMPLATES

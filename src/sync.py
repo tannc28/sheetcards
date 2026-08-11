@@ -1787,8 +1787,10 @@ def _sync_single_deck(
     # Update info in configuration with actual name used
     currentRemoteInfo["local_deck_name"] = deckName
 
-    # Validate URL before trying to sync and get TSV URL for download
-    tsv_url = validate_url(remote_deck_url)
+    # Reachability check only. What it returns is deliberately not used: it is an
+    # export URL with the "#sheet=" fragment stripped, which is the wrong thing to
+    # download from (see getRemoteDeck below).
+    validate_url(remote_deck_url)
 
     # 1. Download
     msg = f"📥 {deckName}: Downloading data..."
@@ -1822,7 +1824,12 @@ def _sync_single_deck(
         status_msgs.append("  ⚠️ Image processing failed (continuing sync)")
         _update_progress_text(progress, status_msgs)
 
-    remoteDeck = getRemoteDeck(tsv_url)
+    # The deck's own URL, not the export URL validate_url just built: converting to
+    # "/export?format=tsv" drops the "#sheet=" fragment, and a deck with no sheet
+    # named falls back to downloading the file's *first* sheet. Every deck of one
+    # file then synced the same sheet — the second deck ending up with the first
+    # one's columns, note type and rows. getRemoteDeck converts the URL itself.
+    remoteDeck = getRemoteDeck(remote_deck_url)
 
     # NEW: Debug to check loaded notes
     notes_count = (

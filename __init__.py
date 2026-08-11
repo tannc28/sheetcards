@@ -47,7 +47,7 @@ try:
     from .src.deck_manager import import_test_deck
     from .src.deck_manager import removeRemoteDeck as rDecks
     from .src.deck_manager import syncDecksWithSelection as sDecks
-    from .src.templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+    from .src.templates_and_definitions import ADDON_MENU_NAME
     from .src.ui.backup_dialog import show_backup_dialog
 
 except Exception as e:
@@ -244,7 +244,7 @@ def configure_image_processor():
 # Check if Anki is available before configuring the interface
 if mw is not None:
     # Create main submenu for Sheets2Anki features
-    remoteDecksSubMenu = QMenu(DEFAULT_PARENT_DECK_NAME, mw)
+    remoteDecksSubMenu = QMenu(ADDON_MENU_NAME, mw)
     mw.form.menuTools.addMenu(remoteDecksSubMenu)
 
     # =========================================================================

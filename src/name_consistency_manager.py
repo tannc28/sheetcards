@@ -8,6 +8,8 @@ from anki.decks import DeckId
 from anki.models import NotetypeId
 from aqt import mw
 
+from .tsv_model import deck_root_name
+
 
 class NameConsistencyManager:
     """
@@ -30,8 +32,8 @@ class NameConsistencyManager:
         Returns:
             Dict with all standard strings: local_deck_name, note_types, deck_option_name
         """
-        # 2. recreate local_deck_name in the pattern "Sheets2Anki::{remote_deck_name}"
-        local_deck_name = f"Sheets2Anki::{remote_deck_name}"
+        # 2. recreate local_deck_name in the pattern "s2a_{remote_deck_name}"
+        local_deck_name = deck_root_name(remote_deck_name)
 
         # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
         note_type_names = {

@@ -556,7 +556,7 @@ def removeRemoteDeck():
 import re
 from typing import Any
 
-from .templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+from .tsv_model import deck_root_name
 
 
 class DeckNameManager:
@@ -605,37 +605,36 @@ class DeckNameManager:
 
     @staticmethod
     def _with_sheet(url: str, file_name: str) -> str:
-        """``{file}::{sheet}`` when the deck names a sheet, else just the file.
+        """The sheet's own name when the deck names one, else the file's.
 
-        Every deck of one file would otherwise be called after the file, and the
-        automatic name sync — which recomputes this on each run — would rename
-        them all onto one another and then push them apart with "#conflict1".
+        The sheet rather than "{file} then {sheet}": a deck is named for what is
+        in it, and the file it travelled in is not that. Two files with a sheet of
+        the same name collide, and resolve_remote_name_conflict handles that the
+        way it handles any other collision.
+
+        Whatever this returns is recomputed on *every* sync by the name
+        consistency pass, so it has to distinguish the decks of one file — leaving
+        the sheet out renamed them all onto each other, every run.
         """
         from .utils import sheet_name_from_url
 
-        name = DeckNameManager.clean_name(_without_file_extension(file_name))
         sheet = sheet_name_from_url(url)
-        return f"{name}::{DeckNameManager.clean_name(sheet)}" if sheet else name
+        if sheet:
+            return DeckNameManager.clean_name(sheet)
+        return DeckNameManager.clean_name(_without_file_extension(file_name))
 
     @staticmethod
-    def generate_local_name(
-        remote_name: str, parent_name: str = DEFAULT_PARENT_DECK_NAME
-    ) -> str:
-        """
-        Generates hierarchical local name: {parent}::{remote_name}
+    def generate_local_name(remote_name: str) -> str:
+        """The deck's name in Anki: ``s2a_{remote_name}``.
 
-        Args:
-            remote_name: Remote deck name
-            parent_name: Parent deck name
-
-        Returns:
-            Local name in hierarchical format
+        A top-level deck rather than a child of one called "Sheets2Anki". The
+        prefix is what keeps synced decks apart from the ones you made yourself,
+        without pushing every one of them a level down the deck list.
         """
         if not remote_name:
-            return f"{parent_name}::UnknownDeck"
+            return deck_root_name("UnknownDeck")
 
-        clean_remote_name = DeckNameManager.clean_name(remote_name)
-        return f"{parent_name}::{clean_remote_name}"
+        return deck_root_name(DeckNameManager.clean_name(remote_name))
 
     @staticmethod
     def generate_complete_names(url: str) -> tuple[str, str]:
@@ -1286,8 +1285,8 @@ class DeckRecreationManager:
         else:
             # Fallback to name saved in configuration
             local_deck_id = deck_info.get("local_deck_id")
-            desired_local_name = (
-                deck_info.get("local_deck_name") or f"Sheets2Anki::Deck_{local_deck_id}"
+            desired_local_name = deck_info.get("local_deck_name") or deck_root_name(
+                f"Deck_{local_deck_id}"
             )
 
         add_debug_message(
@@ -1350,7 +1349,7 @@ class DeckRecreationManager:
                 import time
 
                 unique_suffix = str(int(time.time()))[-6:]
-                fallback_name = f"Sheets2Anki::Deck_{unique_suffix}"
+                fallback_name = deck_root_name(f"Deck_{unique_suffix}")
 
                 add_debug_message(
                     f"🔄 Creating with fallback name: {fallback_name}",

@@ -25,12 +25,12 @@ from ..config_manager import is_deck_disconnected
 from ..data_processor import RemoteDeckError
 from ..data_processor import read_all_sheets
 from ..styled_messages import StyledMessageBox
-from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 from ..theme import base_dialog_qss
 from ..theme import get_colors
 from ..theme import make_header
 from ..theme import primary_button_qss
 from ..theme import secondary_button_qss
+from ..tsv_model import deck_root_name
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
 from ..utils import get_spreadsheet_id_from_url
@@ -677,8 +677,24 @@ class AddDeckDialog(QDialog):
             current_url, self.suggested_name
         )
 
-        parent_name = DEFAULT_PARENT_DECK_NAME
-        full_name = f"{parent_name}::{final_remote_name}"
+        # One deck per sheet, so the preview lists them rather than showing one
+        # name that is not what any of the decks will be called.
+        from ..utils import url_for_sheet
+
+        usable = [o for o in self.offers if o.usable]
+        if usable:
+            names = [
+                deck_root_name(
+                    DeckNameManager.resolve_remote_name_conflict(
+                        url_for_sheet(current_url, o.name),
+                        DeckNameManager.clean_name(o.name),
+                    )
+                )
+                for o in usable
+            ]
+            full_name = "\n".join(names)
+        else:
+            full_name = deck_root_name(final_remote_name)
 
         if final_remote_name != self.suggested_name:
             # CONFLICT - Show warning
@@ -754,7 +770,6 @@ class AddDeckDialog(QDialog):
             )
             return
 
-        parent_name = DEFAULT_PARENT_DECK_NAME
         file_name = DeckNameManager.resolve_remote_name_conflict(
             url, self.suggested_name
         )
@@ -766,7 +781,7 @@ class AddDeckDialog(QDialog):
         added = []
         try:
             for offer in fresh:
-                added.append(self._add_one_sheet(url, file_name, offer, parent_name))
+                added.append(self._add_one_sheet(url, file_name, offer))
 
             self.accept()
 
@@ -784,21 +799,17 @@ class AddDeckDialog(QDialog):
 
         self.added_urls = [u for u, _ in added]
 
-    def _add_one_sheet(self, url, file_name, offer, parent_name):
-        """Connects one sheet of the file as its own deck.
-
-        The deck sits under the file it came from — ``Sheets2Anki::{file}::{sheet}``
-        — so every sheet of one spreadsheet lands in one branch of the deck tree
-        rather than scattered through it, and two files that happen to have a
-        sheet called "vocab" do not collide.
-        """
+    def _add_one_sheet(self, url, file_name, offer):
+        """Connects one sheet of the file as its own deck, named ``s2a_{sheet}``."""
         from ..config_manager import create_deck_info
         from ..deck_manager import DeckNameManager
         from ..utils import url_for_sheet
 
         sheet_url = url_for_sheet(url, offer.name)
-        remote_name = f"{file_name}::{offer.name}"
-        full_name = f"{parent_name}::{remote_name}"
+        remote_name = DeckNameManager.resolve_remote_name_conflict(
+            sheet_url, DeckNameManager.clean_name(offer.name)
+        )
+        full_name = deck_root_name(remote_name)
 
         deck_id, actual_name = get_or_create_deck(mw.col, full_name)
 
