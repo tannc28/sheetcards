@@ -25,7 +25,12 @@ const DEMO_SHEET =
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
-const PURE_MODULES = ["errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg"];
+const PURE_MODULES = [
+  "errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg",
+  // Reads an uploaded file, and the file a Google Sheets link downloads to when a
+  // deck names a sheet inside it. Shared with the add-on, so both agree.
+  "workbook",
+];
 
 /** Everything the page needs, computed by the add-on's own code. */
 const ANALYZER = String.raw`
@@ -190,13 +195,6 @@ async function boot() {
       py.FS.writeFile(`/s2a/${name}.py`, await res.text());
     }),
   );
-  // Not part of the add-on and not under s2a/ for that reason: turning an
-  // uploaded file into TSV is the one job the add-on never has, because a Google
-  // Sheet arrives as TSV already.
-  const reader = await fetch("./workbook.py");
-  if (!reader.ok) throw new Error(`could not load workbook.py (${reader.status})`);
-  py.FS.writeFile("/workbook.py", await reader.text());
-
   py.runPython('import sys; sys.path.insert(0, "/")');
   // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
   await py.loadPackage("sqlite3");
@@ -206,7 +204,7 @@ async function boot() {
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
   const pack = py.globals.get("package_bytes");
   buildPackage = (sheetId) => pack(sheetId).toJs();
-  const wb = py.pyimport("workbook");
+  const wb = py.pyimport("s2a.workbook");
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
   $("#go").disabled = false;

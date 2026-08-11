@@ -14,21 +14,13 @@ through the same assumptions that built the file.
 """
 
 import csv
-import importlib.util
 import io
 import json
 import zipfile
-from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parent.parent
-
-_spec = importlib.util.spec_from_file_location(
-    "workbook", REPO / "site" / "workbook.py"
-)
-workbook = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(workbook)
+from src import workbook
 
 MAIN = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
 DOC_REL = (
@@ -111,6 +103,58 @@ ONE_SHEET = f'<row r="1">{txt("A1", "ID")}</row>'
 
 
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestNamedSheets:
+    """How a deck asks for its sheet: by name, because that is what it remembers."""
+
+    def test_the_names_come_back_in_file_order(self):
+        data = book([("vocab", ONE_SHEET), ("grammar", ""), ("phrases", "")])
+        assert workbook.sheet_names(data) == ["vocab", "grammar", "phrases"]
+
+    def test_a_sheet_is_fetched_by_name_not_position(self):
+        """A sheet dragged to a new position in the file is the same sheet."""
+        data = book(
+            [
+                ("vocab", f'<row r="1">{txt("A1", "first")}</row>'),
+                ("grammar", f'<row r="1">{txt("A1", "second")}</row>'),
+            ]
+        )
+        assert workbook.sheet_tsv(data, "grammar").strip() == "second"
+
+    def test_a_missing_sheet_says_which_ones_exist(self):
+        """This is what a sheet renamed since the deck was connected looks like."""
+        data = book([("vocab", ONE_SHEET), ("grammar", "")])
+        with pytest.raises(workbook.WorkbookError) as raised:
+            workbook.sheet_tsv(data, "vocabulary")
+        assert "'vocab'" in str(raised.value)
+        assert "connected again" in str(raised.value)
+
+    def test_a_hidden_sheet_is_not_offered(self):
+        """Hiding a sheet is how you put it away; a deck for it is the opposite."""
+        out = io.BytesIO()
+        with zipfile.ZipFile(out, "w") as zf:
+            zf.writestr(
+                "xl/workbook.xml",
+                f"<workbook {MAIN} {DOC_REL}><sheets>"
+                '<sheet name="vocab" sheetId="1" r:id="rId1"/>'
+                '<sheet name="scratch" sheetId="2" state="hidden" r:id="rId2"/>'
+                "</sheets></workbook>",
+            )
+            zf.writestr(
+                "xl/_rels/workbook.xml.rels",
+                f"<Relationships {PKG_REL}>"
+                '<Relationship Id="rId1" Target="worksheets/sheet1.xml"/>'
+                '<Relationship Id="rId2" Target="worksheets/sheet2.xml"/>'
+                "</Relationships>",
+            )
+            for i in (1, 2):
+                zf.writestr(
+                    f"xl/worksheets/sheet{i}.xml",
+                    f"<worksheet {MAIN}><sheetData>{ONE_SHEET}</sheetData></worksheet>",
+                )
+        assert workbook.sheet_names(out.getvalue()) == ["vocab"]
 
 
 @pytest.mark.unit

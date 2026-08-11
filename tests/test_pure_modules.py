@@ -12,6 +12,7 @@ browser imposes.
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ PURE_MODULES = [
     "card_layout",
     "tsv_model",
     "apkg",
+    "workbook",
 ]
 
 
@@ -134,6 +136,9 @@ def test_site_loads_the_same_modules():
     assert marker in app, "site/app.js no longer declares PURE_MODULES"
 
     listed = app.split(marker, 1)[1].split("]", 1)[0]
+    # Comments out first: a `//` note about why a module is listed will contain a
+    # comma eventually, and half that sentence would then read as a module name.
+    listed = re.sub(r"//[^\n]*", "", listed)
     names = [chunk.strip().strip("\"'") for chunk in listed.split(",")]
     names = [n for n in names if n]
 

@@ -1,21 +1,25 @@
-"""Turns an uploaded file into the TSV the add-on's parser already expects.
+"""Reading a spreadsheet file, so one file can hold more than one deck.
 
-This is the one piece of Python on the preview site with no counterpart in the
-add-on, and it is deliberately small. The add-on only ever downloads a Google
-Sheet, which arrives as TSV; a file dragged onto the page has to be turned into
-that same TSV first. From there nothing is special-cased — the column roles, the
-settings row, the warnings, the deck paths and the cards all come out of the
-add-on's own code, exactly as they do for a link.
+A Google Sheets *file* holds several *sheets* — the tabs along the bottom — and
+people keep a deck per sheet. The TSV export the add-on downloads can only ever
+return one of them, and there is no official way to ask for a named sheet: the
+`gviz` endpoint that takes a name folds the header row and the settings row into
+a single line, so `ID` arrives as `ID #config` and every column name is wrong.
+Downloading the whole file is what is left, and this turns it into the TSV the
+add-on's parser already expects. From there nothing is special-cased — the column
+roles, the settings row, the warnings, the deck paths and the cards all come from
+the same code that reads a single-sheet download.
 
-The .xlsx reader is written against the standard library rather than openpyxl on
-purpose. Pyodide does not ship openpyxl, so the alternative is fetching it from
-PyPI at load time: a second CDN for the page to depend on, and one more thing
-that can be down. A workbook is a ZIP of XML, and the part of it a sheet of
-flashcards uses is a small part.
+It also reads a file someone uploads to the preview site, which is the same job.
 
-Nothing here is imported by the add-on, so it is not subject to the purity rule
-that governs src/ — but it stays standard-library-only for the same reason those
-modules do: it has to run in a browser.
+The reader is written against the standard library rather than openpyxl. Pyodide
+does not ship openpyxl, so using it would mean the preview site fetching a wheel
+from PyPI at load time — a second CDN to depend on. A spreadsheet file is a ZIP
+of XML, and the part of it a page of flashcards uses is a small part.
+
+This module is part of the **pure layer**: it imports nothing but the standard
+library, so it runs unchanged inside Anki and in the browser. Do not give it an
+Anki, Qt or `compat` import.
 """
 
 import csv
@@ -184,7 +188,11 @@ def _column_index(ref):
 
 
 def _tabs(book):
-    """(name, path) for every tab, in the order the workbook lists them."""
+    """(name, path) for every visible sheet, in the order the file lists them.
+
+    A hidden sheet is left out. Someone hides a sheet to get it out of the way,
+    and a deck appearing in Anki for it would be the opposite of that.
+    """
     try:
         root = ET.fromstring(book.read("xl/workbook.xml"))
         rels = {
@@ -197,7 +205,7 @@ def _tabs(book):
     tabs = []
     for sheet in root.iter(f"{MAIN}sheet"):
         target = rels.get(sheet.get(f"{DOC_REL}id"), "")
-        if not target:
+        if not target or sheet.get("state", "visible") != "visible":
             continue
         path = target[1:] if target.startswith("/") else "xl/" + target
         tabs.append((sheet.get("name", "Sheet"), path))
@@ -268,12 +276,12 @@ def _tsv(rows):
 
 
 # ---------------------------------------------------------------------------
-# What the page calls
+# What the add-on and the page call
 # ---------------------------------------------------------------------------
 
 
 def _read_workbook(data, index):
-    """(tab names, chosen tab name, that tab as TSV)."""
+    """(sheet names, chosen sheet's name, that sheet as TSV)."""
     with zipfile.ZipFile(io.BytesIO(data)) as book:
         sheets = _tabs(book)
         if not 0 <= index < len(sheets):
@@ -286,6 +294,33 @@ def _read_workbook(data, index):
             _epoch(book),
         )
     return [name for name, _ in sheets], sheets[index][0], _tsv(_trimmed(rows))
+
+
+def sheet_names(data):
+    """The visible sheets in a spreadsheet file, in the order it lists them."""
+    with zipfile.ZipFile(io.BytesIO(bytes(data))) as book:
+        return [name for name, _ in _tabs(book)]
+
+
+def sheet_tsv(data, name):
+    """One named sheet as TSV.
+
+    Named rather than numbered because a deck remembers which sheet it syncs, and
+    a sheet dragged to a different position in the file is still the same sheet.
+
+    Raises:
+        WorkbookError: when the file holds no sheet by that name — which is what
+            a sheet renamed or deleted since the deck was connected looks like,
+            and is worth saying rather than silently syncing a different one.
+    """
+    names = sheet_names(data)
+    if name not in names:
+        raise WorkbookError(
+            f"This file has no sheet called {name!r}. It has: "
+            + ", ".join(repr(n) for n in names)
+            + ". A sheet renamed in Google Sheets has to be connected again."
+        )
+    return _read_workbook(bytes(data), names.index(name))[2]
 
 
 def read_upload(data, name, index=0):
