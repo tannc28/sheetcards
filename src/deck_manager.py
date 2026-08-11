@@ -1002,8 +1002,15 @@ class DeckNameManager:
             r"\s*-\s*Google\s+(Drive|Sheets)\s*$", "", name, flags=re.IGNORECASE
         )
 
-        # Remove problematic characters, but keep spaces
+        # Remove problematic characters, but keep spaces — and keep "::", which is
+        # not a problematic character here but Anki's own separator between a deck
+        # and its parent. A deck of one sheet of a file is named "{file}::{sheet}",
+        # and flattening that to "{file}__{sheet}" makes the registered deck's name
+        # disagree with the name notes are actually filed under, which ends with
+        # Anki uniquifying one of them into "…vocab+".
+        name = name.replace("::", "\x00")
         name = re.sub(r'[<>:"/\\|?*]', "_", name)
+        name = name.replace("\x00", "::")
 
         if not name:
             return "auto name fatal fail"

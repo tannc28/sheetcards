@@ -410,3 +410,52 @@ class TestClozeNoteTypeProvisioning:
         td.ensure_custom_models(_Col(), "https://x/d/ABC/edit", plan, config)
 
         assert [name for name, is_cloze in made if is_cloze], made
+
+
+@pytest.mark.unit
+class TestTheDeckNameSurvivesSanitising:
+    """`::` is Anki's separator, not a character to scrub out.
+
+    A deck for one sheet is named `{file}::{sheet}`. The sanitiser replaced every
+    `:` with `_`, so the deck the add-on *registered* was the flat
+    `Sheets2Anki::my-vocab-sheet__vocab` while the notes were filed under the
+    nested `Sheets2Anki::my-vocab-sheet::vocab::…`. Two trees for one deck, and
+    renaming one onto the other made Anki uniquify it to `…vocab+` — which is
+    exactly what showed up in the deck list.
+    """
+
+    def test_the_separator_is_kept(self):
+        from src.deck_manager import DeckNameManager
+
+        assert DeckNameManager.clean_name("my-vocab-sheet::vocab") == (
+            "my-vocab-sheet::vocab"
+        )
+
+    def test_the_registered_name_matches_where_notes_are_filed(self):
+        """The two are computed in different modules from the same remote name;
+        if they ever disagree again, Anki grows a duplicate deck."""
+        from src.deck_manager import DeckNameManager
+        from src.templates_and_definitions import DEFAULT_PARENT_DECK_NAME
+
+        remote = "my-vocab-sheet::vocab"
+        registered = DeckNameManager.generate_local_name(remote)
+        # data_processor.determine_target_deck builds exactly this prefix.
+        filed_under = f"{DEFAULT_PARENT_DECK_NAME}::{remote}"
+        assert registered == filed_under
+
+    def test_a_lone_colon_is_still_replaced(self):
+        """It is not a separator and Anki has no use for it in a name."""
+        from src.deck_manager import DeckNameManager
+
+        assert DeckNameManager.clean_name("10:30 review") == "10_30 review"
+
+    def test_the_other_awkward_characters_are_still_replaced(self):
+        from src.deck_manager import DeckNameManager
+
+        assert DeckNameManager.clean_name('a<b>c/d\\e|f?g*h"i') == "a_b_c_d_e_f_g_h_i"
+
+    def test_a_sheet_named_with_a_colon_cannot_forge_a_subdeck(self):
+        """Otherwise a sheet called "a::b" would silently nest a deck."""
+        from src.deck_manager import DeckNameManager
+
+        assert "::" not in DeckNameManager.clean_name("morning: verbs")

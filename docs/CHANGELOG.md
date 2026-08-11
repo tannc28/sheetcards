@@ -4,6 +4,28 @@
 
 ---
 
+## 🐛 **v6.9.2** - August 2026 *(Fix)*
+
+### The deck name lost Anki's own separator, and decks grew a "+"
+
+A deck for one sheet is named `{file}::{sheet}`. The name sanitiser replaced every
+`:` with `_` — reasonable for a filename, wrong for a deck name, where `::` is what
+Anki puts between a deck and its parent.
+
+So the deck the add-on **registered** was the flat
+`Sheets2Anki::my-vocab-sheet__vocab`, while the notes were **filed** under the nested
+`Sheets2Anki::my-vocab-sheet::vocab::…` — two deck trees for one deck, computed in two
+different modules from the same name. Renaming one onto the other left Anki to
+uniquify it, which it does by appending `+`, and the deck list showed a stray empty
+`vocab+` and `grammar+` beside the real decks.
+
+`::` is now kept. A lone `:` is still replaced, so a sheet called `morning: verbs`
+cannot quietly forge a subdeck, and `< > " / \ | ? *` are still replaced as before.
+A test now pins the registered name and the filed-under name to each other, since
+they are built in separate modules and nothing else would notice them drifting.
+
+---
+
 ## 🐛 **v6.9.1** - August 2026 *(Fix)*
 
 ### Three faults a real sync found, that no test had
