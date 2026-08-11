@@ -4,6 +4,31 @@
 
 ---
 
+## ✨ **v6.11.0** - August 2026 *(Feature)*
+
+### 🗂️ A sheet's deck is a subdeck of its file
+
+One spreadsheet is one collapsible branch of the deck list rather than a scatter of
+top-level decks:
+
+```
+s2a_my-vocab-sheet
+   vocab                 56 notes · Word, IPA, POS, Meaning, Collocation, Example
+      2026-08-11
+   grammar               11 notes · Original, Corrected, Fixes
+      2026-08-11
+```
+
+A subdeck is a deck in every other respect — its own options, its own study queue, its
+own row in the sync dialog — and **each sheet keeps its own note type**, holding only
+that sheet's columns. Note types are named from the sheet rather than from the deck
+tree, so nesting the decks does not make the sheets share one.
+
+(v6.10.0 shipped these as flat top-level decks, `s2a_vocab`; the release below
+describes the rest of what it changed.)
+
+---
+
 ## ✨ **v6.10.0** - August 2026 *(Feature + Fix)*
 
 ### 🚨 Every deck of a file was syncing the same sheet
