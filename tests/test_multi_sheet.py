@@ -253,14 +253,14 @@ class TestDeckNaming:
     then shoves them apart with "#conflict1", every sync, for ever.
     """
 
-    def test_a_deck_is_named_after_its_sheet(self):
-        """The sheet, not the file it travelled in: a deck is named for what is
-        in it."""
+    def test_a_sheet_becomes_a_subdeck_of_its_file(self):
+        """One spreadsheet is one collapsible branch, not a scatter of top-level
+        decks — and a subdeck is a deck in every other respect."""
         from src.deck_manager import DeckNameManager
 
         assert (
             DeckNameManager._with_sheet(url_for_sheet(EDIT, "vocab"), "English")
-            == "vocab"
+            == "English::vocab"
         )
 
     def test_two_sheets_do_not_land_on_the_same_name(self):
@@ -439,7 +439,7 @@ class TestTheDeckNameSurvivesSanitising:
         if they ever disagree again, Anki grows a duplicate deck."""
         from src.deck_manager import DeckNameManager
 
-        remote = "vocab"
+        remote = "my-vocab-sheet::vocab"
         registered = DeckNameManager.generate_local_name(remote)
         # data_processor.determine_target_deck builds exactly this prefix.
         filed_under = deck_root_name(remote)
@@ -516,4 +516,35 @@ class TestTheSyncKeepsHoldOfTheSheet:
         assert (
             data_processor.download_deck_tsv(url_for_sheet(EDIT, "grammar"))
             == "tsv-for-grammar"
+        )
+
+
+@pytest.mark.unit
+class TestEachSheetKeepsItsOwnNoteType:
+    """Nesting the decks must not make the sheets share a note type.
+
+    They are separate concerns in Anki — a note type belongs to notes, not to a
+    deck — but the two names are built from the same string here, so it is worth
+    pinning that the string still tells the sheets apart.
+    """
+
+    def test_two_sheets_of_one_file_get_two_note_types(self):
+        from src.tsv_model import get_note_type_name
+
+        vocab = get_note_type_name("", "my-vocab-sheet::vocab")
+        grammar = get_note_type_name("", "my-vocab-sheet::grammar")
+        assert vocab != grammar
+
+    def test_the_cloze_note_type_is_told_apart_too(self):
+        from src.tsv_model import get_note_type_name
+
+        assert get_note_type_name("", "f::a", is_cloze=True) != get_note_type_name(
+            "", "f::b", is_cloze=True
+        )
+
+    def test_sheets_of_different_files_do_not_share_one(self):
+        from src.tsv_model import get_note_type_name
+
+        assert get_note_type_name("", "fileA::vocab") != get_note_type_name(
+            "", "fileB::vocab"
         )

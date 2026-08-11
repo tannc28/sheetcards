@@ -21,15 +21,24 @@ It was invisible to the previous release's testing because every check went thro
 the download router directly. The sync's own entry point was the one path not
 exercised, and it was the one that dropped the sheet.
 
-### 🗂️ Decks are named `s2a_{sheet}`, at the top level
+### 🗂️ Decks are named `s2a_{file}::{sheet}`
 
-The `Sheets2Anki::` parent deck is gone. A sheet's deck is now `s2a_vocab` rather than
-`Sheets2Anki::my-file::vocab` — named for what is in it, not for the file it travelled
-in, and not pushed a level down the deck list. The prefix is what keeps synced decks
-apart from the ones you made yourself.
+The `Sheets2Anki::` parent deck is gone — one less level, and the prefix is what keeps
+synced decks apart from the ones you made yourself. A spreadsheet is one collapsible
+branch and each sheet is a deck inside it:
 
-Two files with a sheet of the same name collide, and that is resolved the way any
-other name collision already was.
+```
+s2a_my-vocab-sheet
+   vocab                      56 notes · Word, IPA, POS, Meaning, Collocation, Example
+      2026-08-11
+   grammar                    11 notes · Original, Corrected, Fixes
+      2026-08-11
+```
+
+A subdeck is a deck in every other respect — its own options, its own study queue, its
+own row in the sync dialog — and **each sheet keeps its own note type**, holding only
+that sheet's columns. Note types are named from the sheet, not from the deck tree, so
+nesting the decks does not make the sheets share one.
 
 The name is now built in exactly one place (`tsv_model.deck_root_name`). It used to be
 spelled out as an f-string in four modules, which is how v6.9.2's "vocab+" happened.

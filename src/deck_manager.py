@@ -605,23 +605,28 @@ class DeckNameManager:
 
     @staticmethod
     def _with_sheet(url: str, file_name: str) -> str:
-        """The sheet's own name when the deck names one, else the file's.
+        """``{file}::{sheet}`` when the deck names a sheet, else just the file.
 
-        The sheet rather than "{file} then {sheet}": a deck is named for what is
-        in it, and the file it travelled in is not that. Two files with a sheet of
-        the same name collide, and resolve_remote_name_conflict handles that the
-        way it handles any other collision.
+        The "::" makes the sheet a *subdeck* of its file, so one spreadsheet is one
+        collapsible branch of the deck list instead of a scatter of top-level
+        decks. A subdeck in Anki is a deck in every other respect — its own
+        options, its own study queue, its own row in the sync dialog — and the note
+        type is named from this same string, so each sheet keeps a note type of its
+        own with only its own columns in it.
 
-        Whatever this returns is recomputed on *every* sync by the name
-        consistency pass, so it has to distinguish the decks of one file — leaving
-        the sheet out renamed them all onto each other, every run.
+        Cleaning happens per part: clean_name keeps "::" (it is Anki's separator)
+        but replaces a lone ":", so a sheet called "morning: verbs" cannot forge a
+        level of its own.
+
+        Whatever this returns is recomputed on *every* sync by the name consistency
+        pass, so it has to tell the decks of one file apart — leaving the sheet out
+        renamed them all onto each other, every run.
         """
         from .utils import sheet_name_from_url
 
+        name = DeckNameManager.clean_name(_without_file_extension(file_name))
         sheet = sheet_name_from_url(url)
-        if sheet:
-            return DeckNameManager.clean_name(sheet)
-        return DeckNameManager.clean_name(_without_file_extension(file_name))
+        return f"{name}::{DeckNameManager.clean_name(sheet)}" if sheet else name
 
     @staticmethod
     def generate_local_name(remote_name: str) -> str:

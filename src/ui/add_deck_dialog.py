@@ -687,7 +687,7 @@ class AddDeckDialog(QDialog):
                 deck_root_name(
                     DeckNameManager.resolve_remote_name_conflict(
                         url_for_sheet(current_url, o.name),
-                        DeckNameManager.clean_name(o.name),
+                        f"{final_remote_name}::{DeckNameManager.clean_name(o.name)}",
                     )
                 )
                 for o in usable
@@ -800,14 +800,14 @@ class AddDeckDialog(QDialog):
         self.added_urls = [u for u, _ in added]
 
     def _add_one_sheet(self, url, file_name, offer):
-        """Connects one sheet of the file as its own deck, named ``s2a_{sheet}``."""
+        """Connects one sheet of the file as its own deck: ``s2a_{file}::{sheet}``."""
         from ..config_manager import create_deck_info
         from ..deck_manager import DeckNameManager
         from ..utils import url_for_sheet
 
         sheet_url = url_for_sheet(url, offer.name)
         remote_name = DeckNameManager.resolve_remote_name_conflict(
-            sheet_url, DeckNameManager.clean_name(offer.name)
+            sheet_url, f"{file_name}::{DeckNameManager.clean_name(offer.name)}"
         )
         full_name = deck_root_name(remote_name)
 

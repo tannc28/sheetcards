@@ -70,7 +70,7 @@ Viewer**), so if the preview can read your sheet, so can Anki.
 
 A Google Sheets file holds several **sheets** — the tabs along the bottom — and
 Sheets2Anki connects **every one of them as its own deck**. Paste the file's link
-once and each sheet becomes its own top-level deck `s2a_{sheet}`, with its own columns,
+once and each sheet becomes a deck of its own — `s2a_{file}::{sheet}` — with its own columns,
 its own settings row and its own note type. One spreadsheet can hold your whole
 collection.
 
@@ -171,7 +171,7 @@ dialog validates it as you type (with a ~1.2 s pause after you stop), downloads 
 sheet, and shows how many rows it found and what the deck will be called.
 
 You do **not** name the deck — the name is read from the spreadsheet's title, and the
-deck is always created as `s2a_<sheet name>`.
+deck is always created as `s2a_<file name>::<sheet name>`.
 
 ### 4. Sync
 
@@ -247,7 +247,7 @@ This produces:
 - **Note fields** — `ID`, `Word`, `Reading`, `Meaning`, `Example` (in that order; `ID`
   is always the first field).
 - **Card** — front `Word`, back `Reading` + `Meaning` + `Example`.
-- **Deck** — `s2a_<sheet name>::Japanese::Kanji`.
+- **Deck** — `s2a_<file>::<sheet>::Japanese::Kanji`.
 - **Tags** — `sheets2anki`, `sheets2anki::japanese::kanji`, `jlpt-n5`, `nature`.
 
 ### The settings row
