@@ -526,9 +526,10 @@ class AddDeckDialog(QDialog):
             self.offers = read_all_sheets(url)
             usable = [o for o in self.offers if o.usable]
             if not usable:
-                skipped = "; ".join(
-                    f"{o.name}: {o.problem}" for o in self.offers
-                ) or "the file has no sheets in it"
+                skipped = (
+                    "; ".join(f"{o.name}: {o.problem}" for o in self.offers)
+                    or "the file has no sheets in it"
+                )
                 self._show_status(
                     f"No sheet in this file can become a deck — {skipped}", "error"
                 )
@@ -830,7 +831,9 @@ class AddDeckDialog(QDialog):
 
             reconnect_deck(sheet_url)
 
-        add_debug_message(f"Connected sheet '{offer.name}' as {actual_name}", "ADD_DECK")
+        add_debug_message(
+            f"Connected sheet '{offer.name}' as {actual_name}", "ADD_DECK"
+        )
         return sheet_url, actual_name
 
     def get_deck_info(self):
