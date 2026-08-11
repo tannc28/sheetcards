@@ -4,6 +4,33 @@
 
 ---
 
+## 🐛 **v6.9.1** - August 2026 *(Fix)*
+
+### Three faults a real sync found, that no test had
+
+Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
+
+- **Every deck of a file was renamed onto the same name.** The automatic name sync
+  recomputes a deck's name from its URL on *every* run, and that name left the sheet
+  out — so `…::vocab` and `…::grammar` both became `…my-vocab-sheet`, collided, and
+  were pushed apart again as `#conflict1`. Every sync, for ever. The name now carries
+  the sheet, and two sheets can no longer land on one name.
+
+- **A Cloze note type was built for sheets that never mentioned cloze**, and Anki
+  refuses it: *"Expected to find '{{cloze:Text}}' or similar on the front and back of
+  the card template."* That one error failed the whole sync. Cloze is a sheet-level
+  choice — a column declares it — and with no such column there is no `{{cloze:…}}` to
+  put in the template and nothing that needs the model, since note routing already
+  keys off the declared column. It is no longer provisioned unless a column asks.
+  **This one predates multi-sheet**: any sheet without a `cloze` directive hit it.
+
+- **An uploaded spreadsheet brought its file extension into Anki**, giving decks like
+  `Sheets2Anki::my-vocab-sheet.xlsx::vocab`. A Google Sheets document has no
+  extension; it is left over from the file it was uploaded from, and Drive keeps the
+  name it arrived with.
+
+---
+
 ## ✨ **v6.9.0** - August 2026 *(Feature)*
 
 ### 📚 One Google Sheets file, one deck per sheet

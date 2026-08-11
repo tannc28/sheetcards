@@ -229,7 +229,19 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
 
     models = {}
 
+    # Cloze is a sheet-level choice: a column declares `cloze` and the templates
+    # apply Anki's filter to that column. With no such column there is no
+    # `{{cloze:…}}` to put in the template, and Anki refuses the note type outright
+    # — "Expected to find '{{cloze:Text}}' or similar" — which fails the whole sync
+    # for a sheet that has nothing to do with cloze. Nothing needs the model
+    # either: create_new_note routes on bool(sheet_config.cloze_field).
+    wants_cloze = bool(getattr(sheet_config, "cloze_field", None))
+    if not wants_cloze:
+        add_debug_msg("No column declares 'cloze' — not provisioning a Cloze note type")
+
     for key, is_cloze in (("standard", False), ("cloze", True)):
+        if is_cloze and not wants_cloze:
+            continue
         label = "Cloze" if is_cloze else "Basic"
         expected_name = get_note_type_name(url, remote_deck_name, is_cloze=is_cloze)
         templates = build_templates(plan, sheet_config, is_cloze=is_cloze)

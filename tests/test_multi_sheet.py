@@ -241,3 +241,172 @@ class TestSelectingWhichDecksSync:
     def test_a_sheet_that_is_not_connected_selects_nothing(self):
         table = {f"{FILE_ID}#vocab": {}}
         assert self._keys(table, [url_for_sheet(EDIT, "grammar")]) == []
+
+
+@pytest.mark.unit
+class TestDeckNaming:
+    """What a deck ends up called, which the automatic name sync recomputes.
+
+    It recomputes it on *every* run, so a name that leaves the sheet out does not
+    just look wrong once — it renames every deck of a file onto the same name and
+    then shoves them apart with "#conflict1", every sync, for ever.
+    """
+
+    def test_a_deck_is_named_after_its_file_and_its_sheet(self):
+        from src.deck_manager import DeckNameManager
+
+        assert (
+            DeckNameManager._with_sheet(url_for_sheet(EDIT, "vocab"), "English")
+            == "English::vocab"
+        )
+
+    def test_two_sheets_do_not_land_on_the_same_name(self):
+        from src.deck_manager import DeckNameManager
+
+        vocab = DeckNameManager._with_sheet(url_for_sheet(EDIT, "vocab"), "English")
+        grammar = DeckNameManager._with_sheet(url_for_sheet(EDIT, "grammar"), "English")
+        assert vocab != grammar
+
+    def test_a_deck_with_no_sheet_keeps_the_plain_file_name(self):
+        from src.deck_manager import DeckNameManager
+
+        assert DeckNameManager._with_sheet(EDIT, "English") == "English"
+
+    def test_an_uploaded_file_does_not_bring_its_extension_into_anki(self):
+        """A Google Sheets document has no extension; one is left over from the
+        file it was uploaded from, and reads as a mistake in the deck list."""
+        from src.deck_manager import _without_file_extension
+
+        assert _without_file_extension("my-vocab-sheet.xlsx") == "my-vocab-sheet"
+        assert _without_file_extension("notes.csv") == "notes"
+        assert _without_file_extension("HSK 4") == "HSK 4"
+        assert _without_file_extension("v1.2 words") == "v1.2 words"
+
+
+@pytest.mark.unit
+class TestClozeNoteTypeProvisioning:
+    """A Cloze note type is only made when a column asks for one.
+
+    Anki refuses a cloze note type whose template holds no `{{cloze:…}}` — and a
+    sheet that never mentions cloze produces exactly that, so provisioning one
+    unconditionally failed the entire sync of a sheet with nothing to do with
+    cloze. Verified against a real collection: "Expected to find '{{cloze:Text}}'
+    or similar on the front and back of the card template."
+    """
+
+    def _config(self, tsv):
+        from src.tsv_model import build_remote_deck_from_tsv
+        from src.tsv_model import parse_tsv_data
+
+        return build_remote_deck_from_tsv(parse_tsv_data(tsv), "u").sheet_config
+
+    def test_a_sheet_with_no_cloze_column_declares_none(self):
+        config = self._config("ID\tWord\tMeaning\n1\tx\ty\n")
+        assert config.cloze_field is None
+
+    def test_a_sheet_that_declares_cloze_names_the_column(self):
+        config = self._config(
+            "ID\tWord\tSentence\n#config\t\tcloze\n1\tx\ta {{c1::b}} c\n"
+        )
+        assert config.cloze_field == "Sentence"
+
+    def test_cloze_markup_alone_does_not_declare_a_column(self):
+        """Markup in a cell is a warning, not a declaration — wrapping a column
+        that holds no deletion would blank it."""
+        config = self._config("ID\tWord\tSentence\n1\tx\ta {{c1::b}} c\n")
+        assert config.cloze_field is None
+
+    def test_the_template_has_no_cloze_filter_to_offer(
+        self,
+    ):
+        """Why the note type cannot be made: there is nothing to put in it."""
+        from src.card_layout import build_templates
+        from src.column_model import plan_columns
+        from src.sheet_config import SheetConfig
+
+        plan = plan_columns(["ID", "Word", "Meaning"])
+        templates = build_templates(plan, SheetConfig(), is_cloze=True)
+        assert "cloze:" not in templates[0]["qfmt"]
+
+    def test_no_cloze_note_type_is_built_for_a_sheet_that_never_asked(
+        self, monkeypatch
+    ):
+        """The other half of it: Anki refuses such a model, so we must not offer one.
+
+        Checked at the point of creation rather than through the return value,
+        because the failure being prevented is the *call* — col.models.add() is
+        what raises, and by then the sync is already over.
+        """
+        from src import templates_and_definitions as td
+        from src.column_model import plan_columns
+        from src.sheet_config import SheetConfig
+
+        made = []
+        monkeypatch.setattr(
+            td,
+            "create_model",
+            lambda col, name, fields, templates, is_cloze=False, **kw: made.append(
+                (name, is_cloze)
+            ),
+        )
+        monkeypatch.setattr(td, "get_deck_note_type_ids", lambda url: {}, raising=False)
+
+        import src.config_manager as config_manager
+        import src.utils as utils
+
+        monkeypatch.setattr(config_manager, "get_deck_note_type_ids", lambda url: {})
+        monkeypatch.setattr(config_manager, "get_deck_remote_name", lambda url: "Deck")
+        monkeypatch.setattr(
+            utils, "register_note_type_for_deck", lambda *a, **k: None, raising=False
+        )
+
+        class _Models:
+            def by_name(self, name):
+                return None
+
+        class _Col:
+            models = _Models()
+
+        plan = plan_columns(["ID", "Word", "Meaning"])
+        td.ensure_custom_models(_Col(), "https://x/d/ABC/edit", plan, SheetConfig())
+
+        assert made, "the Basic note type should still be built"
+        assert not [
+            name for name, is_cloze in made if is_cloze
+        ], f"built a Cloze note type Anki will refuse: {made}"
+
+    def test_a_sheet_that_declares_cloze_still_gets_its_note_type(self, monkeypatch):
+        """Otherwise the guard above would pass by never building one at all."""
+        from src import templates_and_definitions as td
+        from src.column_model import plan_columns
+        from src.sheet_config import parse_config_row
+
+        made = []
+        monkeypatch.setattr(
+            td,
+            "create_model",
+            lambda col, name, fields, templates, is_cloze=False, **kw: made.append(
+                (name, is_cloze)
+            ),
+        )
+        import src.config_manager as config_manager
+        import src.utils as utils
+
+        monkeypatch.setattr(config_manager, "get_deck_note_type_ids", lambda url: {})
+        monkeypatch.setattr(config_manager, "get_deck_remote_name", lambda url: "Deck")
+        monkeypatch.setattr(
+            utils, "register_note_type_for_deck", lambda *a, **k: None, raising=False
+        )
+
+        class _Models:
+            def by_name(self, name):
+                return None
+
+        class _Col:
+            models = _Models()
+
+        plan = plan_columns(["ID", "Word", "Sentence"])
+        config = parse_config_row({"ID": "#config", "Sentence": "cloze"}, plan)
+        td.ensure_custom_models(_Col(), "https://x/d/ABC/edit", plan, config)
+
+        assert [name for name, is_cloze in made if is_cloze], made

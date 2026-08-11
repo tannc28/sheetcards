@@ -44,6 +44,17 @@ def strip_google_title_suffix(title: str) -> str:
     ).strip()
 
 
+def _without_file_extension(name: str) -> str:
+    """Drops a spreadsheet file extension from a document's name.
+
+    A Google Sheets document has no extension — one is only there because the
+    document came from an uploaded file and Drive kept the name it arrived with.
+    Carrying it into a deck name gives you "my-vocab-sheet.xlsx" in Anki's deck
+    list, which reads like a mistake because it more or less is one.
+    """
+    return re.sub(r"\.(xlsx|xlsm|xls|csv|tsv)$", "", (name or "").strip(), flags=re.I)
+
+
 def add_debug_msg(message, category="DECK_MANAGER"):
     """Local helper for debug messages."""
     add_debug_message(message, category)
@@ -579,18 +590,32 @@ class DeckNameManager:
             # Strategy 1: Spreadsheet title via HTML
             title = DeckNameManager._extract_spreadsheet_title(url)
             if title and title != "auto name fail":
-                return DeckNameManager.clean_name(title)
+                return DeckNameManager._with_sheet(url, title)
 
             # Strategy 2: Filename via Content-Disposition
             filename = DeckNameManager._extract_filename_from_headers(url)
             if filename and filename != "auto name fail":
-                return DeckNameManager.clean_name(filename)
+                return DeckNameManager._with_sheet(url, filename)
 
             # Strategy 3: Fallback to spreadsheet ID and GID
             return DeckNameManager._generate_fallback_name(url)
 
         except Exception:
             return "auto name fatal fail"
+
+    @staticmethod
+    def _with_sheet(url: str, file_name: str) -> str:
+        """``{file}::{sheet}`` when the deck names a sheet, else just the file.
+
+        Every deck of one file would otherwise be called after the file, and the
+        automatic name sync — which recomputes this on each run — would rename
+        them all onto one another and then push them apart with "#conflict1".
+        """
+        from .utils import sheet_name_from_url
+
+        name = DeckNameManager.clean_name(_without_file_extension(file_name))
+        sheet = sheet_name_from_url(url)
+        return f"{name}::{DeckNameManager.clean_name(sheet)}" if sheet else name
 
     @staticmethod
     def generate_local_name(
