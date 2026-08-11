@@ -836,6 +836,79 @@ def convert_edit_url_to_tsv(url):
     )
 
 
+# =============================================================================
+# WHICH SHEET INSIDE THE FILE
+# =============================================================================
+#
+# A Google Sheets *file* holds several *sheets* — the tabs along the bottom — and
+# people keep a deck per sheet. Which one a deck syncs is carried in the deck's
+# stored URL as a `#sheet=` fragment, because the deck's identity is derived from
+# its URL in twenty-odd places (all of them through config_manager.get_deck_id).
+# Putting it anywhere else would mean teaching every one of them about sheets.
+#
+# A stored URL with no fragment is a deck connected before this existed. It keeps
+# the identity it has always had and keeps downloading the file's first sheet, so
+# upgrading the add-on changes nothing about a collection until the user connects
+# that file again.
+#
+# The fragment rather than a query parameter: Google ignores it, so the URL still
+# opens the right file in a browser, and `#gid=` already lives there.
+
+SHEET_FRAGMENT = "sheet="
+
+
+def sheet_name_from_url(url):
+    """The sheet a deck syncs, or None when the URL names no sheet."""
+    if not url or not isinstance(url, str) or "#" not in url:
+        return None
+    from urllib.parse import unquote
+
+    fragment = url.split("#", 1)[1]
+    for part in fragment.split("&"):
+        if part.startswith(SHEET_FRAGMENT):
+            return unquote(part[len(SHEET_FRAGMENT) :]) or None
+    return None
+
+
+def url_for_sheet(url, sheet_name):
+    """The same file's URL, pointed at one named sheet.
+
+    Every `gid` already on the URL comes off first — the browser puts one in the
+    query *and* one in the fragment — because a gid names a sheet by a number the
+    export does not carry, so it is an answer to the same question that nothing
+    here can read. Leaving one on would make the stored URL contradict itself.
+    """
+    from urllib.parse import parse_qsl
+    from urllib.parse import quote
+    from urllib.parse import urlencode
+    from urllib.parse import urlsplit
+    from urllib.parse import urlunsplit
+
+    parts = urlsplit(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if key != "gid"
+    ]
+    base = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ""))
+    if not sheet_name:
+        return base
+    return f"{base}#{SHEET_FRAGMENT}{quote(str(sheet_name), safe='')}"
+
+
+def convert_edit_url_to_xlsx(url):
+    """The download URL for the whole file, every sheet in it.
+
+    There is no official way to ask for one sheet by name — the `gviz` endpoint
+    that takes a name folds the header row and the settings row into one line, so
+    `ID` arrives as `ID #config` and every column name comes out wrong — and the
+    file's own export carries no `gid` to ask by number. So the file is fetched
+    whole and the sheet is picked out of it locally.
+    """
+    tsv_url = convert_edit_url_to_tsv(url)
+    return tsv_url.replace("/export?format=tsv", "/export?format=xlsx")
+
+
 def validate_url(url):
     """
     Validates if the URL is a valid Google Sheets edit URL.

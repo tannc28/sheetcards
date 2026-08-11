@@ -228,26 +228,32 @@ function pythonMessage(err) {
 // Fetching the sheet
 // ---------------------------------------------------------------------------
 
-// Same conversion the add-on does in utils.convert_edit_url_to_tsv.
-function toTsvUrl(url) {
-  const trimmed = url.trim();
-  if (trimmed.includes("/export?format=tsv")) return trimmed;
-  const m = trimmed.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+/** The spreadsheet id in a Google Sheets link, the way the add-on reads it. */
+function spreadsheetId(url) {
+  const m = url.trim().match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   if (!m) throw new Error(t("notASheet"));
-  return `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=tsv`;
+  return m[1];
 }
 
-/** Google names the download "{spreadsheet} - {tab}.tsv", which is close enough
- *  to seed the deck name — the add-on reads the page title instead, so this is a
- *  starting point the user can correct rather than a promise. */
+// The whole file rather than one sheet, exactly as the add-on downloads it in
+// utils.convert_edit_url_to_xlsx. A Google Sheets file holds several sheets and
+// each becomes its own deck; the TSV export hands over only the first one, and
+// there is no official way to ask for another by name. Downloading the file is
+// what lets this page show the same sheet picker an uploaded file already gets —
+// and, more to the point, the same sheets the add-on will sync.
+function toWorkbookUrl(url) {
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId(url)}/export?format=xlsx`;
+}
+
+/** Google names the download after the spreadsheet, which is close enough to seed
+ *  the deck name — the add-on reads the page title instead, so this is a starting
+ *  point the user can correct rather than a promise. */
 function deckNameFromHeaders(res) {
   const raw = res.headers.get("content-disposition") || "";
   const utf8 = raw.match(/filename\*=UTF-8''([^;]+)/i);
   const plain = raw.match(/filename="([^"]+)"/i);
   let name = utf8 ? decodeURIComponent(utf8[1]) : plain ? plain[1] : "";
-  name = name.replace(/\.tsv$/i, "");
-  const cut = name.lastIndexOf(" - ");
-  return (cut > 0 ? name.slice(0, cut) : name).trim();
+  return name.replace(/\.(xlsx|tsv|csv)$/i, "").trim();
 }
 
 /** The name to put on the deck, unless the field on screen was typed into. */
@@ -292,12 +298,12 @@ async function preview() {
 
   $("#go").disabled = true;
   try {
-    const tsvUrl = toTsvUrl(input);
+    const workbookUrl = toWorkbookUrl(input);
     status(t("downloading"), "", true);
 
     let res;
     try {
-      res = await fetch(tsvUrl);
+      res = await fetch(workbookUrl);
     } catch {
       throw new Error(t("unreachable"));
     }
@@ -309,9 +315,18 @@ async function preview() {
       );
     }
 
-    const tsv = await res.text();
-    upload = null;
-    paintTabs();
+    // From here a link and a dropped file are the same thing: a spreadsheet file
+    // with sheets in it. The sheet picker, the deck name and the package all come
+    // out of the one path, so the page cannot treat them differently.
+    upload = {
+      bytes: new Uint8Array(await res.arrayBuffer()),
+      name: `${deckNameFromHeaders(res) || "Deck"}.xlsx`,
+      // The key the add-on stores this deck under, so a package downloaded here
+      // and a sync from the add-on agree about which notes are which.
+      idBase: spreadsheetId(input),
+      tabs: [],
+      index: 0,
+    };
 
     // The example is what you get with no query string, so putting it back into
     // the address bar would only make the landing URL longer for no gain.
@@ -323,11 +338,7 @@ async function preview() {
       history.replaceState(null, "", url);
     }
 
-    analyse(
-      tsv,
-      chooseDeckName(deckNameFromHeaders(res)),
-      (tsvUrl.match(/\/d\/([\w-]+)/) || [])[1] || "sheet",
-    );
+    showUpload(0);
   } catch (err) {
     failed(err.message);
   } finally {
@@ -377,8 +388,8 @@ function showUpload(index) {
     const base = upload.name.replace(/\.[^.]+$/, "").trim();
     analyse(
       out.tsv,
-      chooseDeckName(out.tabs.length ? out.tab : base),
-      `file:${upload.name}#${out.tab}`,
+      chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
+      `${upload.idBase}#${out.tab}`,
     );
   } catch (err) {
     failed(err.message);
@@ -393,6 +404,7 @@ async function previewFile(file) {
     upload = {
       bytes: new Uint8Array(await file.arrayBuffer()),
       name: file.name,
+      idBase: `file:${file.name}`,
       tabs: [],
       index: 0,
     };

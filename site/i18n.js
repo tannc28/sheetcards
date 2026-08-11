@@ -42,7 +42,7 @@ const STRINGS = {
     en: "Loading the add-on's code…",
     vi: "Đang tải code của add-on…",
   },
-  downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet…" },
+  downloading: { en: "Downloading the file…", vi: "Đang tải file…" },
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
   analysing: {
     en: "Running the add-on's code…",

@@ -420,11 +420,12 @@ def addNewDeck():
     success, deck_info = show_add_deck_dialog(mw)
 
     if success and deck_info:
-        # Sync only the newly added deck
-        url = deck_info["url"]
+        # One link connects every sheet in the file, so this is a list. Older
+        # callers stored a single "url"; keep reading that when "urls" is absent.
+        urls = deck_info.get("urls") or [deck_info["url"]]
         from .sync import syncDecks
 
-        syncDecks(selected_deck_urls=[url])
+        syncDecks(selected_deck_urls=urls)
 
 
 def removeRemoteDeck():
@@ -442,11 +443,12 @@ def removeRemoteDeck():
         disconnected_decks = []
 
         for url in selected_urls:
-            # Get deck info before disconnecting
-            from .utils import get_spreadsheet_id_from_url
+            # The key this deck is stored under. Not the bare spreadsheet id:
+            # several decks can live in one file, and disconnecting one of them
+            # has to find that one.
+            from .config_manager import get_deck_id
 
-            # Generate spreadsheet ID
-            spreadsheet_id = get_spreadsheet_id_from_url(url)
+            spreadsheet_id = get_deck_id(url)
 
             remote_decks = get_remote_decks()
             if spreadsheet_id in remote_decks:

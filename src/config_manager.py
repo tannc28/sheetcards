@@ -21,11 +21,13 @@ try:
     from .styled_messages import StyledMessageBox
     from .utils import add_debug_message
     from .utils import get_spreadsheet_id_from_url
+    from .utils import sheet_name_from_url
 except ImportError:
     # For standalone tests
     from compat import mw
     from utils import add_debug_message
     from utils import get_spreadsheet_id_from_url
+    from utils import sheet_name_from_url
 
 
 def add_debug_msg(message, category="CONFIG"):
@@ -40,18 +42,28 @@ def add_debug_msg(message, category="CONFIG"):
 
 def get_deck_id(url):
     """
-    Gets the spreadsheet ID to identify a deck.
+    The key a deck is stored and looked up under.
+
+    A Google Sheets file holds several sheets and a deck syncs exactly one of
+    them, so the spreadsheet id alone cannot tell two decks of one file apart —
+    they would share a configuration entry and a settings-row cache, and each
+    sync would overwrite the other's. The sheet the deck names comes into the key.
+
+    A URL naming no sheet keeps the plain spreadsheet id it has always had, so a
+    deck connected before this existed is found exactly where it was left.
 
     Args:
         url (str): Remote deck edit URL
 
     Returns:
-        str: Google Sheets spreadsheet ID
+        str: ``{spreadsheet id}`` or ``{spreadsheet id}#{sheet name}``
 
     Raises:
         ValueError: If the URL is not a valid edit URL
     """
-    return get_spreadsheet_id_from_url(url)
+    spreadsheet_id = get_spreadsheet_id_from_url(url)
+    sheet = sheet_name_from_url(url)
+    return f"{spreadsheet_id}#{sheet}" if sheet else spreadsheet_id
 
 
 # =============================================================================
@@ -231,6 +243,72 @@ def save_remote_decks(remote_decks):
     save_meta(meta)
 
     add_debug_message("✓ Deck info successfully saved to meta.json", "Config Manager")
+
+
+def legacy_whole_file_deck(url):
+    """A deck connected before one file could hold several decks, if there is one.
+
+    Such a deck is stored under the bare spreadsheet id and syncs whichever sheet
+    the export happens to hand over — the first one. Returns ``(key, deck_info)``
+    or ``(None, None)``.
+    """
+    try:
+        spreadsheet_id = get_spreadsheet_id_from_url(url)
+    except ValueError:
+        return None, None
+    decks = get_remote_decks()
+    return (
+        (spreadsheet_id, decks[spreadsheet_id])
+        if spreadsheet_id in decks
+        else (None, None)
+    )
+
+
+def adopt_sheet_into_legacy_deck(url, sheet_name):
+    """Points an already-connected whole-file deck at the sheet it was syncing.
+
+    The deck keeps its local deck, its notes, its options and its history — only
+    its key and its stored URL gain the sheet's name, so the rest of the file's
+    sheets can be connected beside it instead of the add-on refusing the file as
+    already registered.
+
+    ``sheet_name`` must be the file's *first* sheet, because that is the one the
+    export was handing this deck all along. Pointing it at any other sheet would
+    silently reassign a deck full of notes to different rows.
+
+    Returns True when an entry was moved.
+    """
+    from .utils import url_for_sheet
+
+    old_key, deck_info = legacy_whole_file_deck(url)
+    if not old_key or not sheet_name:
+        return False
+
+    sheet_url = url_for_sheet(deck_info.get("remote_deck_url") or url, sheet_name)
+    new_key = get_deck_id(sheet_url)
+    if new_key == old_key:
+        return False
+
+    decks = get_remote_decks()
+    deck_info = dict(deck_info)
+    deck_info["remote_deck_url"] = sheet_url
+    decks[new_key] = deck_info
+    decks.pop(old_key, None)
+    save_remote_decks(decks)
+
+    # The settings cache is keyed the same way, so its old entry is now
+    # unreachable. Dropping it keeps the collection config from carrying a row
+    # nothing will ever read again; the next sync writes the entry under the new
+    # key regardless.
+    try:
+        from .sync_config import forget_sheet_settings
+
+        forget_sheet_settings(old_key)
+    except Exception as e:
+        add_debug_msg(f"Could not drop the old settings cache entry: {e}")
+
+    add_debug_msg(f"Deck {old_key} now names its sheet: {new_key}")
+    return True
 
 
 def add_remote_deck(url, deck_info):

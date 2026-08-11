@@ -23,7 +23,7 @@ from ..config_manager import add_remote_deck
 from ..config_manager import get_remote_decks
 from ..config_manager import is_deck_disconnected
 from ..data_processor import RemoteDeckError
-from ..data_processor import getRemoteDeck
+from ..data_processor import read_all_sheets
 from ..styled_messages import StyledMessageBox
 from ..templates_and_definitions import DEFAULT_PARENT_DECK_NAME
 from ..theme import base_dialog_qss
@@ -50,6 +50,10 @@ class AddDeckDialog(QDialog):
 
         self.remote_deck = None
         self.suggested_name = ""
+        # Every sheet in the file, judged one by one. A Google Sheets file holds
+        # several sheets and each becomes its own deck, so connecting a link is a
+        # decision about a file rather than about a single grid.
+        self.offers = []
         self.validation_timer = QTimer()
 
         # Get colors based on current theme
@@ -411,6 +415,8 @@ class AddDeckDialog(QDialog):
             tuple: (is_duplicate, deck_info, is_disconnected)
         """
         try:
+            # A deck connected before sheets could be told apart is stored under
+            # the bare spreadsheet id, so that is still a duplicate of this file.
             spreadsheet_id = get_spreadsheet_id_from_url(url)
             remote_decks = get_remote_decks()
             if spreadsheet_id in remote_decks:
@@ -421,12 +427,35 @@ class AddDeckDialog(QDialog):
         except ValueError:
             return False, None, False
 
+    def _unconnected_sheets(self, url):
+        """The usable sheets of this file that are not decks yet.
+
+        A file is not all-or-nothing: someone adds a sheet to a spreadsheet they
+        connected last month and expects connecting it again to pick up the new
+        one, not to be told the whole thing is already registered.
+        """
+        from ..config_manager import get_deck_id
+        from ..utils import url_for_sheet
+
+        remote_decks = get_remote_decks()
+        fresh = []
+        for offer in self.offers:
+            if not offer.usable:
+                continue
+            try:
+                if get_deck_id(url_for_sheet(url, offer.name)) not in remote_decks:
+                    fresh.append(offer)
+            except ValueError:
+                continue
+        return fresh
+
     def _on_url_changed(self):
         """Called when URL is changed - starts automatic validation."""
         self.add_button.setEnabled(False)
         self.step2_group.setVisible(False)
         self.remote_deck = None
         self.suggested_name = ""
+        self.offers = []
         self._adjust_dialog_size()
 
         url = self.url_edit.text().strip()
@@ -471,23 +500,44 @@ class AddDeckDialog(QDialog):
                     "This spreadsheet will reconnect an existing deck", "warning"
                 )
             else:
+                # A whole-file deck from before sheets could be told apart. It is
+                # not a dead end: the first sheet is the one it has been syncing,
+                # so it can adopt that sheet and the rest can join it as decks of
+                # their own. Said here, done on Add.
                 deck_name = (
                     deck_info.get("remote_deck_name", "Unknown")
                     if deck_info
                     else "Unknown"
                 )
-                self._show_status(f"Already registered as: {deck_name}", "error")
-                self.add_button.setEnabled(False)
-                return
+                self._show_status(
+                    f"'{deck_name}' already covers this file — adding will keep it "
+                    "and connect the other sheets beside it",
+                    "warning",
+                )
 
         self._show_progress(True)
 
         try:
-            # Validate URL format and get TSV URL
+            # Validate URL format
             self.tsv_url = validate_url(url)
 
-            # Try to load deck
-            self.remote_deck = getRemoteDeck(self.tsv_url)
+            # Read every sheet in the file. One download serves all of them, and
+            # what comes back decides how many decks this link becomes.
+            self.offers = read_all_sheets(url)
+            usable = [o for o in self.offers if o.usable]
+            if not usable:
+                skipped = "; ".join(
+                    f"{o.name}: {o.problem}" for o in self.offers
+                ) or "the file has no sheets in it"
+                self._show_status(
+                    f"No sheet in this file can become a deck — {skipped}", "error"
+                )
+                self.add_button.setEnabled(False)
+                return
+
+            # The first usable sheet fills the preview, which shows one set of
+            # numbers; the sheet list below it says what else is coming.
+            self.remote_deck = usable[0].deck
 
             # Extract suggested name
             self.suggested_name = DeckNameManager.extract_remote_name_from_url(url)
@@ -495,7 +545,16 @@ class AddDeckDialog(QDialog):
             # Show preview
             self._show_deck_preview()
 
-            self._show_status("URL validated successfully!", "success")
+            fresh = self._unconnected_sheets(url)
+            if not fresh:
+                self._show_status(
+                    f"All {len(usable)} sheets in this file are already connected",
+                    "error",
+                )
+                self.add_button.setEnabled(False)
+                return
+
+            self._show_status(self._sheet_summary(fresh), "success")
             self.add_button.setEnabled(True)
 
         except RemoteDeckError as e:
@@ -547,6 +606,19 @@ class AddDeckDialog(QDialog):
             padding: 4px 0;
             font-weight: {'bold' if status_type in ['success', 'error'] else 'normal'};
         """)
+
+    def _sheet_summary(self, fresh):
+        """What this link is about to become, in one line."""
+        skipped = [o for o in self.offers if not o.usable]
+        names = ", ".join(o.name for o in fresh)
+        head = (
+            f"1 sheet: {names}"
+            if len(fresh) == 1
+            else f"{len(fresh)} sheets, one deck each: {names}"
+        )
+        if skipped:
+            head += f" (skipping {len(skipped)}: {', '.join(o.name for o in skipped)})"
+        return head
 
     def _show_deck_preview(self):
         """Shows preview of validated deck with statistics."""
@@ -656,75 +728,46 @@ class AddDeckDialog(QDialog):
             )
             return
 
-        # Final validation
-        is_duplicate, deck_info, is_disconnected = self._check_duplicate_spreadsheet(
-            url
-        )
-        if is_duplicate and not is_disconnected:
-            deck_name = (
-                deck_info.get("remote_deck_name", "Unknown") if deck_info else "Unknown"
-            )
+        # A file already connected as one whole deck, from before sheets could be
+        # told apart. Connecting it again would sit a per-sheet deck beside it and
+        # sync the same rows twice.
+        usable = [o for o in self.offers if o.usable]
+        if usable:
+            # The old deck has been syncing the first sheet all along, so that is
+            # the only sheet it can be pointed at without reassigning its notes to
+            # different rows. Done before the fresh list is worked out, so the
+            # sheet it adopts is not offered again as a second deck.
+            from ..config_manager import adopt_sheet_into_legacy_deck
+
+            if adopt_sheet_into_legacy_deck(url, usable[0].name):
+                add_debug_message(
+                    f"Existing deck now names its sheet: {usable[0].name}", "ADD_DECK"
+                )
+
+        fresh = self._unconnected_sheets(url)
+        if not fresh:
             StyledMessageBox.warning(
                 self,
                 "Already Registered",
-                "This spreadsheet is already connected.",
-                detailed_text=f"It is currently registered as: {deck_name}\n\nYou don't need to add it again.",
+                "Every sheet in this file is already connected.",
             )
             return
 
-        # Generate deck name
         parent_name = DEFAULT_PARENT_DECK_NAME
-        final_remote_name = DeckNameManager.resolve_remote_name_conflict(
+        file_name = DeckNameManager.resolve_remote_name_conflict(
             url, self.suggested_name
         )
-        full_name = f"{parent_name}::{final_remote_name}"
 
         self._show_progress(True)
         self.add_button.setEnabled(False)
         self.add_button.setText("Adding...")
 
+        added = []
         try:
-            # Create deck in Anki
-            deck_id, actual_name = get_or_create_deck(mw.col, full_name)
-
-            # Add to configuration
-            from ..config_manager import create_deck_info
-
-            deck_info = create_deck_info(
-                url=url,
-                local_deck_id=deck_id,
-                local_deck_name=actual_name,
-                remote_deck_name=final_remote_name,
-            )
-
-            add_remote_deck(url, deck_info)
-
-            # Sync deck name
-            sync_result = DeckNameManager.sync_deck_with_config(url)
-            if sync_result:
-                synced_deck_id, synced_name = sync_result
-                add_debug_message(
-                    f"Deck synchronized: {actual_name} → {synced_name}", "ADD_DECK"
-                )
-
-            # Apply options
-            try:
-                from ..utils import apply_sheets2anki_options_to_deck
-
-                apply_sheets2anki_options_to_deck(deck_id)
-            except Exception as e:
-                add_debug_message(f"Warning: Error applying options: {e}", "ADD_DECK")
-
-            # Reconnect if disconnected
-            if is_deck_disconnected(url):
-                from ..config_manager import reconnect_deck
-
-                reconnect_deck(url)
+            for offer in fresh:
+                added.append(self._add_one_sheet(url, file_name, offer, parent_name))
 
             self.accept()
-
-            # Show success message (optional, but nice)
-            # StyledMessageBox.success(self.parent(), "Success", f"Deck '{final_remote_name}' added successfully!")
 
         except Exception as e:
             StyledMessageBox.critical(
@@ -738,22 +781,69 @@ class AddDeckDialog(QDialog):
         finally:
             self._show_progress(False)
 
-    def get_deck_info(self):
-        """Returns information about the added deck."""
+        self.added_urls = [u for u, _ in added]
+
+    def _add_one_sheet(self, url, file_name, offer, parent_name):
+        """Connects one sheet of the file as its own deck.
+
+        The deck sits under the file it came from — ``Sheets2Anki::{file}::{sheet}``
+        — so every sheet of one spreadsheet lands in one branch of the deck tree
+        rather than scattered through it, and two files that happen to have a
+        sheet called "vocab" do not collide.
+        """
+        from ..config_manager import create_deck_info
         from ..deck_manager import DeckNameManager
+        from ..utils import url_for_sheet
 
-        url = self.url_edit.text().strip()
-        from ..config_manager import get_deck_local_name
+        sheet_url = url_for_sheet(url, offer.name)
+        remote_name = f"{file_name}::{offer.name}"
+        full_name = f"{parent_name}::{remote_name}"
 
-        final_remote_name = DeckNameManager.resolve_remote_name_conflict(
-            url, self.suggested_name
+        deck_id, actual_name = get_or_create_deck(mw.col, full_name)
+
+        add_remote_deck(
+            sheet_url,
+            create_deck_info(
+                url=sheet_url,
+                local_deck_id=deck_id,
+                local_deck_name=actual_name,
+                remote_deck_name=remote_name,
+            ),
         )
-        parent_name = DEFAULT_PARENT_DECK_NAME
-        full_name = f"{parent_name}::{final_remote_name}"
 
-        actual_name = get_deck_local_name(url) or full_name
+        sync_result = DeckNameManager.sync_deck_with_config(sheet_url)
+        if sync_result:
+            _, synced_name = sync_result
+            add_debug_message(
+                f"Deck synchronized: {actual_name} → {synced_name}", "ADD_DECK"
+            )
 
-        return {"url": url, "name": actual_name, "is_automatic": True}
+        try:
+            from ..utils import apply_sheets2anki_options_to_deck
+
+            apply_sheets2anki_options_to_deck(deck_id)
+        except Exception as e:
+            add_debug_message(f"Warning: Error applying options: {e}", "ADD_DECK")
+
+        if is_deck_disconnected(sheet_url):
+            from ..config_manager import reconnect_deck
+
+            reconnect_deck(sheet_url)
+
+        add_debug_message(f"Connected sheet '{offer.name}' as {actual_name}", "ADD_DECK")
+        return sheet_url, actual_name
+
+    def get_deck_info(self):
+        """What was connected, so the caller can sync exactly those decks."""
+        urls = getattr(self, "added_urls", [])
+        if not urls:
+            return None
+        return {
+            "url": urls[0],
+            "urls": urls,
+            "name": f"{len(urls)} decks" if len(urls) > 1 else urls[0],
+            "is_automatic": True,
+        }
 
 
 def show_add_deck_dialog(parent=None):

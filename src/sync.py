@@ -48,7 +48,6 @@ from .utils import SyncError
 from .utils import add_debug_message
 from .utils import capture_deck_note_type_ids
 from .utils import clear_debug_messages
-from .utils import get_spreadsheet_id_from_url
 from .utils import remove_empty_subdecks
 from .utils import validate_url
 
@@ -1041,6 +1040,14 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
 
     col = mw.col
 
+    # Several decks can live in one Google Sheets file, and each of them needs the
+    # whole file. Downloading it once per run is the difference between one
+    # request and one per deck; keeping it any longer than the run would mean
+    # syncing a sheet as it was hours ago.
+    from .data_processor import clear_workbook_cache
+
+    clear_workbook_cache()
+
     remote_decks = get_remote_decks()
 
     # Clear previous debug messages and initialize log file
@@ -1310,15 +1317,18 @@ def _get_deck_keys_to_sync(remote_decks, selected_deck_names, selected_deck_urls
         list: List of hash keys to be synchronized
     """
 
-    # If specific URLs were provided, convert to spreadsheet IDs
+    # If specific URLs were provided, convert them to the keys decks are stored
+    # under. get_deck_id rather than the bare spreadsheet id: several decks can
+    # live in one file, and a URL naming a sheet has to resolve to that deck
+    # rather than to nothing at all.
     if selected_deck_urls is not None:
+        from .config_manager import get_deck_id
+
         filtered_keys = []
         for url in selected_deck_urls:
-            # Extract spreadsheet ID
-            spreadsheet_id = get_spreadsheet_id_from_url(url)
-
-            if spreadsheet_id in remote_decks:
-                filtered_keys.append(spreadsheet_id)
+            key = get_deck_id(url)
+            if key in remote_decks:
+                filtered_keys.append(key)
         return filtered_keys
 
     # Check if mw.col and mw.col.decks are available

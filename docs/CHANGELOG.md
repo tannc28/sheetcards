@@ -4,6 +4,44 @@
 
 ---
 
+## ✨ **v6.9.0** - August 2026 *(Feature)*
+
+### 📚 One Google Sheets file, one deck per sheet
+
+- Paste a file's link once and **every sheet in it becomes its own deck**, named
+  `Sheets2Anki::{file}::{sheet}`, each with its own columns, settings row and note
+  type. One spreadsheet can now hold a whole collection. `Ctrl+Shift+S` lists one row
+  per sheet with no change to that dialog — it lists connected decks, and now there
+  are more of them.
+- Until now a file could only ever be one deck: a deck is identified by its URL, and
+  every sheet of a file shares one URL. The sheet's name is now part of that identity.
+- **A sheet with no `ID` column is skipped and named**, rather than the whole file
+  being refused. A file people actually keep has drafts and notes in it beside the
+  vocabulary. Hidden sheets are skipped too — hiding a sheet is how you put it away.
+- **A deck remembers its sheet by name, not by position**, so reordering the tabs
+  does not reassign decks. A *renamed* sheet stops being found, and the sync says so
+  and lists the names that do exist — better than silently syncing a different sheet
+  into a deck full of notes.
+- **Existing decks are untouched.** A deck connected before this keeps the exact key
+  it had and keeps syncing the file's first sheet. Connect the file again and that
+  deck adopts that sheet — keeping its notes, review history, options and note types
+  — while the other sheets join it as new decks.
+- The whole file is downloaded once per sync run and shared by every deck in it, so
+  five decks from one spreadsheet are five decks' work but one request.
+- The preview site takes the same path, so the sheet picker it already had for
+  uploaded files now works for a pasted link — and what it previews is what the
+  add-on syncs.
+
+### 🔧 Fixed
+
+- **Two lookups would have made per-sheet decks unusable**, both by resolving a URL to
+  the bare spreadsheet id instead of the deck's key: choosing decks in the sync dialog
+  matched nothing and the run reported success over an empty list, and disconnecting a
+  deck found nothing to disconnect. Caught by running the flow end to end rather than
+  by the type checker — there was nothing wrong with the types.
+
+---
+
 ## ✨ **v6.8.0** - August 2026 *(Feature)*
 
 ### 📄 The preview reads uploaded files, not only links

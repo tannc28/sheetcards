@@ -104,8 +104,13 @@ def getRemoteDeck(url, debug_messages=None):
     try:
         add_debug_msg(f"Starting remote deck download: {url}")
 
-        # 1. Download TSV data
-        tsv_data = download_tsv_data(url)
+        # 1. Download the sheet this deck syncs.
+        #
+        # A deck that names a sheet needs the whole file, because Google's export
+        # can only hand over one sheet and offers no way to say which. A deck that
+        # names none was connected before sheets could be told apart, and keeps
+        # downloading exactly what it always did.
+        tsv_data = download_deck_tsv(url)
         add_debug_msg(f"Download complete: {len(tsv_data)} bytes")
 
         # 2. Parse TSV data
@@ -130,6 +135,64 @@ def getRemoteDeck(url, debug_messages=None):
         raise RemoteDeckError(f"Error obtaining remote deck: {str(e)}")
 
 
+def _download(download_url, timeout):
+    """The bytes at a Google export URL, or a RemoteDeckError saying why not.
+
+    Shared by the TSV and whole-file paths so both carry the same host check and
+    the same explanation of a 400, which is nearly always an unshared sheet.
+    """
+    # Defense-in-depth (SSRF): only ever fetch from Google hosts. The deck URL is
+    # user-supplied at add time, and the "/export?format=" pass-through in the
+    # callers does not go through convert_edit_url_to_tsv's host check — so a
+    # stored URL like "http://169.254.169.254/...export?format=tsv" would
+    # otherwise be fetched verbatim.
+    from urllib.parse import urlparse
+
+    host = (urlparse(download_url).hostname or "").lower()
+    if not (
+        host == "google.com"
+        or host.endswith(".google.com")
+        or host.endswith(".googleusercontent.com")
+    ):
+        raise RemoteDeckError(
+            f"Refusing to download from non-Google host '{host}'. "
+            f"The deck URL must be a Google Sheets link."
+        )
+
+    headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
+    request = urllib.request.Request(download_url, headers=headers)
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            if response.getcode() != 200:
+                raise RemoteDeckError(
+                    f"HTTP {response.getcode()}: Failed to access URL"
+                )
+            return response.read()
+
+    except TimeoutError:
+        raise RemoteDeckError(f"Timeout of {timeout}s while accessing the URL")
+    except urllib.error.HTTPError as e:
+        if e.code == 400:
+            raise RemoteDeckError(
+                "HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
+                "To fix:\n"
+                "1. Open spreadsheet in Google Sheets\n"
+                "2. Click 'Share'\n"
+                "3. Change access to 'Anyone with the link'\n"
+                "4. Set permission to 'Viewer'\n\n"
+                "Alternatively: File → Share → Publish to web"
+            )
+        else:
+            raise RemoteDeckError(f"HTTP Error {e.code}: {e.reason}")
+    except urllib.error.URLError as e:
+        raise RemoteDeckError(f"URL Error: {str(e.reason)}")
+    except RemoteDeckError:
+        raise
+    except Exception as e:
+        raise RemoteDeckError(f"Unexpected download error: {str(e)}")
+
+
 def download_tsv_data(url, timeout=30):
     """
     Downloads TSV data from a URL.
@@ -149,68 +212,123 @@ def download_tsv_data(url, timeout=30):
     from .utils import convert_edit_url_to_tsv
 
     try:
-        # Convert edition URL to TSV format (if necessary)
-        try:
-            # If URL is already in TSV format, use directly
-            if "/export?format=tsv" in url:
-                tsv_url = url
-            else:
-                tsv_url = convert_edit_url_to_tsv(url)
-        except ValueError as e:
-            raise RemoteDeckError(f"Invalid URL: {str(e)}")
-
-        # Defense-in-depth (SSRF): only ever fetch from Google hosts. The deck URL is
-        # user-supplied at add time, and the "/export?format=tsv" pass-through above does
-        # not go through convert_edit_url_to_tsv's host check — so a stored URL like
-        # "http://169.254.169.254/...export?format=tsv" would otherwise be fetched verbatim.
-        from urllib.parse import urlparse
-
-        host = (urlparse(tsv_url).hostname or "").lower()
-        if not (
-            host == "google.com"
-            or host.endswith(".google.com")
-            or host.endswith(".googleusercontent.com")
-        ):
-            raise RemoteDeckError(
-                f"Refusing to download from non-Google host '{host}'. "
-                f"The deck URL must be a Google Sheets link."
-            )
-
-        headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
-        request = urllib.request.Request(tsv_url, headers=headers)
-
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            if response.getcode() != 200:
-                raise RemoteDeckError(
-                    f"HTTP {response.getcode()}: Failed to access URL"
-                )
-
-            # Read and decode data. Use utf-8-sig so a UTF-8 BOM that some Google
-            # export paths prepend is stripped instead of corrupting the first header
-            # (e.g. "﻿ID"), which would fail the required-header check.
-            data = response.read().decode("utf-8-sig")
-            return data
-
-    except TimeoutError:
-        raise RemoteDeckError(f"Timeout of {timeout}s while accessing the URL")
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            raise RemoteDeckError(
-                "HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
-                "To fix:\n"
-                "1. Open spreadsheet in Google Sheets\n"
-                "2. Click 'Share'\n"
-                "3. Change access to 'Anyone with the link'\n"
-                "4. Set permission to 'Viewer'\n\n"
-                "Alternatively: File → Share → Publish to web"
-            )
+        # If URL is already in TSV format, use directly
+        if "/export?format=tsv" in url:
+            tsv_url = url
         else:
-            raise RemoteDeckError(f"HTTP Error {e.code}: {e.reason}")
-    except urllib.error.URLError as e:
+            tsv_url = convert_edit_url_to_tsv(url)
+    except ValueError as e:
+        raise RemoteDeckError(f"Invalid URL: {str(e)}")
 
-        raise RemoteDeckError(f"URL Error: {str(e.reason)}")
-    except Exception as e:
-        raise RemoteDeckError(f"Unexpected download error: {str(e)}")
+    # utf-8-sig so a UTF-8 BOM that some Google export paths prepend is stripped
+    # instead of corrupting the first header (e.g. "﻿ID"), which would fail the
+    # required-header check.
+    return _download(tsv_url, timeout).decode("utf-8-sig")
+
+
+# The file behind each spreadsheet id, for the length of one sync run. Syncing
+# five decks that live in one Google Sheets file is five decks' worth of work but
+# one download — without this it would fetch the same file five times.
+_WORKBOOK_CACHE = {}
+
+
+def clear_workbook_cache():
+    """Forgets the downloaded files. Called at the start of every sync run.
+
+    Held any longer and a sync would show the sheet as it was the last time Anki
+    was opened, which is the one thing a sync must not do.
+    """
+    _WORKBOOK_CACHE.clear()
+
+
+def download_workbook(url, timeout=30):
+    """The whole spreadsheet file, every sheet in it, cached for this sync run."""
+    from .utils import convert_edit_url_to_xlsx
+    from .utils import get_spreadsheet_id_from_url
+
+    try:
+        spreadsheet_id = get_spreadsheet_id_from_url(url)
+        xlsx_url = convert_edit_url_to_xlsx(url)
+    except ValueError as e:
+        raise RemoteDeckError(f"Invalid URL: {str(e)}")
+
+    if spreadsheet_id not in _WORKBOOK_CACHE:
+        _WORKBOOK_CACHE[spreadsheet_id] = _download(xlsx_url, timeout)
+    return _WORKBOOK_CACHE[spreadsheet_id]
+
+
+def download_sheet_names(url, timeout=30):
+    """The sheets inside the file a URL points at, in the order it lists them."""
+    from .workbook import WorkbookError
+    from .workbook import sheet_names
+
+    try:
+        return sheet_names(download_workbook(url, timeout))
+    except WorkbookError as e:
+        raise RemoteDeckError(str(e))
+
+
+class SheetOffer:
+    """One sheet in a file, and whether it can become a deck.
+
+    ``deck`` is the built RemoteDeck when the sheet is usable, and ``problem`` is
+    the plain reason when it is not. A file people actually keep has drafts,
+    notes and a colour key in it alongside the vocabulary; refusing the whole
+    file because one sheet has no ID column would make the feature useless.
+    """
+
+    def __init__(self, name, deck=None, problem=None):
+        self.name = name
+        self.deck = deck
+        self.problem = problem
+
+    @property
+    def usable(self):
+        return self.deck is not None
+
+    def __repr__(self):
+        state = "usable" if self.usable else f"skipped: {self.problem}"
+        return f"<SheetOffer {self.name!r} {state}>"
+
+
+def read_all_sheets(url, timeout=30, debug_messages=None):
+    """Every sheet in the file behind a URL, each judged on its own.
+
+    One download serves all of them. Used when a link is connected, to decide
+    what it becomes, and by the same code that then syncs each one.
+    """
+    from .utils import url_for_sheet
+
+    offers = []
+    for name in download_sheet_names(url, timeout):
+        sheet_url = url_for_sheet(url, name)
+        try:
+            tsv = download_deck_tsv(sheet_url, timeout)
+            parsed = parse_tsv_data(tsv, debug_messages)
+            deck = build_remote_deck_from_tsv(parsed, sheet_url, debug_messages)
+            offers.append(SheetOffer(name, deck=deck))
+        except RemoteDeckError as e:
+            offers.append(SheetOffer(name, problem=str(e)))
+    return offers
+
+
+def download_deck_tsv(url, timeout=30):
+    """One deck's sheet as TSV, whichever way that deck has to be fetched."""
+    from .utils import sheet_name_from_url
+    from .workbook import WorkbookError
+    from .workbook import sheet_tsv
+
+    sheet = sheet_name_from_url(url)
+    if not sheet:
+        return download_tsv_data(url, timeout)
+
+    try:
+        return sheet_tsv(download_workbook(url, timeout), sheet)
+    except WorkbookError as e:
+        # A sheet renamed or deleted in Google Sheets since the deck was
+        # connected. Saying which sheets do exist is the difference between a
+        # fixable message and a mystery.
+        raise RemoteDeckError(str(e))
 
 
 # =============================================================================

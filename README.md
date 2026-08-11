@@ -66,6 +66,27 @@ exact.
 The sheet needs the same sharing the add-on needs (**Anyone with the link →
 Viewer**), so if the preview can read your sheet, so can Anki.
 
+### One file, one deck per sheet
+
+A Google Sheets file holds several **sheets** — the tabs along the bottom — and
+Sheets2Anki connects **every one of them as its own deck**. Paste the file's link
+once and each sheet becomes `Sheets2Anki::{file}::{sheet}`, with its own columns,
+its own settings row and its own note type. One spreadsheet can hold your whole
+collection.
+
+`Ctrl+Shift+S` then lists one row per sheet, so you choose which to sync.
+
+- **A sheet with no `ID` column is skipped**, and the dialog says which — a file
+  people actually use has drafts, notes and a colour key in it beside the
+  vocabulary. Hidden sheets are skipped too.
+- **A deck remembers its sheet by name.** Move a sheet to a different position in
+  the file and its deck follows it. **Rename a sheet and the deck stops finding
+  it** — the sync says so and lists the names that do exist; connect the file
+  again to pick the renamed sheet up.
+- **Decks connected before this keep working untouched.** They stay pointed at the
+  file's first sheet. Connect the file again and that deck keeps its notes and its
+  review history while the other sheets join it as decks of their own.
+
 ### Or upload a file instead of a link
 
 **Upload a file** — or drag one onto the page — reads `.xlsx`, `.xlsm`, `.csv` and
