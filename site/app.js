@@ -228,11 +228,47 @@ function pythonMessage(err) {
 // Fetching the sheet
 // ---------------------------------------------------------------------------
 
-/** The spreadsheet id in a Google Sheets link, the way the add-on reads it. */
+/** The spreadsheet id in a Google Sheets link, or null when it is not one. */
 function spreadsheetId(url) {
   const m = url.trim().match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  if (!m) throw new Error(t("notASheet"));
-  return m[1];
+  return m ? m[1] : null;
+}
+
+// A deck's source does not have to be a Google Sheet: a .xlsx at a plain address
+// holds the same sheets and is read by the same reader. Mirrors
+// utils.is_spreadsheet_file_url / normalize_file_url — the add-on accepts exactly
+// these, and a page that accepted more would be previewing something that cannot
+// then be synced.
+const FILE_SUFFIXES = [".xlsx", ".xlsm"];
+
+function isFileUrl(url) {
+  const path = url.trim().split("#")[0].split("?")[0].toLowerCase();
+  return !spreadsheetId(url) && FILE_SUFFIXES.some((s) => path.endsWith(s));
+}
+
+/** GitHub's /blob/ address serves an HTML page; the raw host serves the file —
+ *  and sends `access-control-allow-origin: *`, so this page can read it. */
+function normalizeFileUrl(url) {
+  const base = url.trim().split("#")[0];
+  const blob = base.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/(?:blob|raw)\/(.+)$/i);
+  return blob
+    ? `https://raw.githubusercontent.com/${blob[1]}/${blob[2]}/${blob[3]}`
+    : base;
+}
+
+/** A stable id for whatever the URL points at — the same one the add-on keys the
+ *  deck by, so a package built here and a sync agree about which notes are which. */
+async function sourceId(url) {
+  const id = spreadsheetId(url);
+  if (id) return id;
+  const digest = await crypto.subtle.digest(
+    "SHA-1",
+    new TextEncoder().encode(normalizeFileUrl(url)),
+  );
+  const hex = [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `file_${hex.slice(0, 16)}`;
 }
 
 // The whole file rather than one sheet, exactly as the add-on downloads it in
@@ -242,12 +278,21 @@ function spreadsheetId(url) {
 // what lets this page show the same sheet picker an uploaded file already gets —
 // and, more to the point, the same sheets the add-on will sync.
 function toWorkbookUrl(url) {
-  return `https://docs.google.com/spreadsheets/d/${spreadsheetId(url)}/export?format=xlsx`;
+  if (isFileUrl(url)) return normalizeFileUrl(url);
+  const id = spreadsheetId(url);
+  if (!id) throw new Error(t("notASheet"));
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
 }
 
 /** Google names the download after the spreadsheet, which is close enough to seed
  *  the deck name — the add-on reads the page title instead, so this is a starting
  *  point the user can correct rather than a promise. */
+/** A file's own name, for a URL that serves no Content-Disposition. */
+function fileNameFromUrl(url) {
+  const path = normalizeFileUrl(url).split("?")[0];
+  return decodeURIComponent(path.split("/").pop() || "").replace(/\.[^.]+$/, "");
+}
+
 function deckNameFromHeaders(res) {
   const raw = res.headers.get("content-disposition") || "";
   const utf8 = raw.match(/filename\*=UTF-8''([^;]+)/i);
@@ -320,10 +365,10 @@ async function preview() {
     // out of the one path, so the page cannot treat them differently.
     upload = {
       bytes: new Uint8Array(await res.arrayBuffer()),
-      name: `${deckNameFromHeaders(res) || "Deck"}.xlsx`,
+      name: `${deckNameFromHeaders(res) || fileNameFromUrl(input) || "Deck"}.xlsx`,
       // The key the add-on stores this deck under, so a package downloaded here
       // and a sync from the add-on agree about which notes are which.
-      idBase: spreadsheetId(input),
+      idBase: await sourceId(input),
       tabs: [],
       index: 0,
     };

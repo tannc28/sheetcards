@@ -302,6 +302,11 @@ def sheet_names(data):
         return [name for name, _ in _tabs(book)]
 
 
+def sheet_tsv_by_index(data, index=0):
+    """One sheet by position — used when nothing has named one yet."""
+    return _read_workbook(bytes(data), index)[2]
+
+
 def sheet_tsv(data, name):
     """One named sheet as TSV.
 

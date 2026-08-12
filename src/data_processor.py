@@ -136,29 +136,63 @@ def getRemoteDeck(url, debug_messages=None):
         raise RemoteDeckError(f"Error obtaining remote deck: {str(e)}")
 
 
-def _download(download_url, timeout):
-    """The bytes at a Google export URL, or a RemoteDeckError saying why not.
+def _refuse_unsafe_url(download_url):
+    """Refuses an address the add-on has no business fetching.
 
-    Shared by the TSV and whole-file paths so both carry the same host check and
-    the same explanation of a 400, which is nearly always an unshared sheet.
+    Defence in depth against SSRF. A deck URL is typed or pasted in, and a URL
+    someone else supplies is a URL someone else chose: Anki runs on the user's own
+    machine, inside their own network, so an address like
+    ``http://192.168.1.1/admin`` or ``http://169.254.169.254/`` would have the
+    add-on knock on doors nothing outside that network can reach.
+
+    Google's own hosts used to be the only ones allowed. A deck can now be a file
+    at a plain address — a .xlsx in a GitHub repository, say — so the rule is what
+    is left once the arbitrary-host part is given up:
+
+    * https only, so nothing is read over a connection that can be tampered with
+      and no other scheme (``file://``, ``ftp://``) gets in;
+    * every address the name resolves to must be a public one.
+
+    Resolving first and checking the answers is the point: a hostname is under
+    whoever owns it, and "internal.example.com" pointing at 10.0.0.1 is the
+    ordinary way this is abused.
     """
-    # Defense-in-depth (SSRF): only ever fetch from Google hosts. The deck URL is
-    # user-supplied at add time, and the "/export?format=" pass-through in the
-    # callers does not go through convert_edit_url_to_tsv's host check — so a
-    # stored URL like "http://169.254.169.254/...export?format=tsv" would
-    # otherwise be fetched verbatim.
+    import ipaddress
+    import socket
     from urllib.parse import urlparse
 
-    host = (urlparse(download_url).hostname or "").lower()
-    if not (
-        host == "google.com"
-        or host.endswith(".google.com")
-        or host.endswith(".googleusercontent.com")
-    ):
+    parts = urlparse(download_url)
+    if parts.scheme != "https":
         raise RemoteDeckError(
-            f"Refusing to download from non-Google host '{host}'. "
-            f"The deck URL must be a Google Sheets link."
+            f"Refusing to download over '{parts.scheme}': the deck URL must be https."
         )
+
+    host = (parts.hostname or "").lower()
+    if not host:
+        raise RemoteDeckError("The deck URL has no host in it.")
+
+    try:
+        addresses = {info[4][0] for info in socket.getaddrinfo(host, parts.port or 443)}
+    except OSError as e:
+        raise RemoteDeckError(f"Could not look up '{host}': {e}")
+
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if not ip.is_global:
+            raise RemoteDeckError(
+                f"Refusing to download from '{host}': it resolves to {address}, "
+                f"which is inside a private network. A deck has to come from a "
+                f"public address."
+            )
+
+
+def _download(download_url, timeout):
+    """The bytes at a URL a deck may legitimately come from.
+
+    Shared by the TSV and whole-file paths so both carry the same address check
+    and the same explanation of a 400, which is nearly always an unshared sheet.
+    """
+    _refuse_unsafe_url(download_url)
 
     headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
     request = urllib.request.Request(download_url, headers=headers)
@@ -245,17 +279,17 @@ def clear_workbook_cache():
 def download_workbook(url, timeout=30):
     """The whole spreadsheet file, every sheet in it, cached for this sync run."""
     from .utils import convert_edit_url_to_xlsx
-    from .utils import get_spreadsheet_id_from_url
+    from .utils import source_id
 
     try:
-        spreadsheet_id = get_spreadsheet_id_from_url(url)
+        key = source_id(url)
         xlsx_url = convert_edit_url_to_xlsx(url)
     except ValueError as e:
         raise RemoteDeckError(f"Invalid URL: {str(e)}")
 
-    if spreadsheet_id not in _WORKBOOK_CACHE:
-        _WORKBOOK_CACHE[spreadsheet_id] = _download(xlsx_url, timeout)
-    return _WORKBOOK_CACHE[spreadsheet_id]
+    if key not in _WORKBOOK_CACHE:
+        _WORKBOOK_CACHE[key] = _download(xlsx_url, timeout)
+    return _WORKBOOK_CACHE[key]
 
 
 def download_sheet_names(url, timeout=30):
@@ -315,12 +349,19 @@ def read_all_sheets(url, timeout=30, debug_messages=None):
 
 def download_deck_tsv(url, timeout=30):
     """One deck's sheet as TSV, whichever way that deck has to be fetched."""
+    from .utils import is_spreadsheet_file_url
     from .utils import sheet_name_from_url
     from .workbook import WorkbookError
     from .workbook import sheet_tsv
+    from .workbook import sheet_tsv_by_index
 
     sheet = sheet_name_from_url(url)
     if not sheet:
+        # A file has no per-sheet download to fall back to, so its first sheet is
+        # read out of the file the same way a named one is. Only a Google Sheet
+        # has the TSV export, and only a deck predating named sheets uses it.
+        if is_spreadsheet_file_url(url):
+            return sheet_tsv_by_index(download_workbook(url, timeout), 0)
         return download_tsv_data(url, timeout)
 
     try:

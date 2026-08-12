@@ -87,6 +87,25 @@ collection.
   file's first sheet. Connect the file again and that deck keeps its notes and its
   review history while the other sheets join it as decks of their own.
 
+### Or point at an `.xlsx` file instead of a Google Sheet
+
+A deck's source does not have to be a Google Sheet. Paste a link that ends in
+`.xlsx` or `.xlsm` — a file in a GitHub repository, or on any https host — and it
+is read by the same reader, one deck per sheet, exactly as a Google Sheet is.
+
+GitHub's own address works: paste the `.../blob/main/decks.xlsx` link the browser
+shows you and the add-on fetches the raw file behind it.
+
+Two things follow from the file being a file:
+
+- **There is no "edit and it's synced".** A Google Sheet you change is changed;
+  a file has to be uploaded again before a sync sees it. For anything you edit
+  often, a Sheet is still the better home.
+- **The address must be public and `https`.** The add-on refuses `http`, other
+  schemes, and any address that resolves inside a private network — it runs on
+  your machine, inside your network, so an address someone else chose is not one
+  it should be knocking on.
+
 ### Or upload a file instead of a link
 
 **Upload a file** — or drag one onto the page — reads `.xlsx`, `.xlsm`, `.csv` and

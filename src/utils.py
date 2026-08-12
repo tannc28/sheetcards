@@ -857,6 +857,78 @@ def convert_edit_url_to_tsv(url):
 
 SHEET_FRAGMENT = "sheet="
 
+# =============================================================================
+# A SPREADSHEET FILE AT A PLAIN URL
+# =============================================================================
+#
+# A deck's source does not have to be a Google Sheet. A .xlsx sitting in a GitHub
+# repository — or on any https host — holds the same sheets and is read by the
+# same reader; only getting hold of the bytes differs. Everything downstream of
+# the download is unchanged.
+
+FILE_SUFFIXES = (".xlsx", ".xlsm")
+
+
+def is_google_sheets_url(url):
+    return bool(url) and "docs.google.com/spreadsheets" in str(url)
+
+
+def is_spreadsheet_file_url(url):
+    """Whether a URL points at a spreadsheet file rather than a Google Sheet."""
+    if not url or not isinstance(url, str) or is_google_sheets_url(url):
+        return False
+    from urllib.parse import urlsplit
+
+    return urlsplit(url.split("#", 1)[0]).path.lower().endswith(FILE_SUFFIXES)
+
+
+def normalize_file_url(url):
+    """The address the file actually downloads from.
+
+    GitHub's `/blob/` address is the one the browser shows and the one people
+    copy, and it serves an HTML page rather than the file. The raw host serves the
+    bytes — and sends `access-control-allow-origin: *`, so the preview site can
+    read it too.
+    """
+    import re
+
+    base = url.split("#", 1)[0]
+    blob = re.match(
+        r"https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$", base, re.I
+    )
+    if blob:
+        owner, repo, path = blob.groups()
+        return f"https://raw.githubusercontent.com/{owner}/{repo}/{path}"
+    return base
+
+
+def source_id(url):
+    """A stable id for whatever a deck's URL points at.
+
+    A Google Sheet keeps the spreadsheet id it has always had, so no connected
+    deck moves. A file has no such id, so its address is hashed — short, stable,
+    and it cannot be mistaken for a spreadsheet id.
+    """
+    if is_google_sheets_url(url):
+        return get_spreadsheet_id_from_url(url)
+    if is_spreadsheet_file_url(url):
+        digest = hashlib.sha1(normalize_file_url(url).encode("utf-8")).hexdigest()
+        return f"file_{digest[:16]}"
+    raise ValueError(
+        "URL must be a Google Sheets link or point at an .xlsx/.xlsm file:\n"
+        "https://docs.google.com/spreadsheets/d/{ID}/edit\n"
+        "https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{file}.xlsx"
+    )
+
+
+def file_name_from_url(url):
+    """The file's own name, minus its extension — a deck name to start from."""
+    from urllib.parse import unquote
+    from urllib.parse import urlsplit
+
+    path = urlsplit(normalize_file_url(url)).path
+    return unquote(path.rsplit("/", 1)[-1]).rsplit(".", 1)[0].strip()
+
 
 def sheet_name_from_url(url):
     """The sheet a deck syncs, or None when the URL names no sheet."""
@@ -900,12 +972,17 @@ def url_for_sheet(url, sheet_name):
 def convert_edit_url_to_xlsx(url):
     """The download URL for the whole file, every sheet in it.
 
-    There is no official way to ask for one sheet by name — the `gviz` endpoint
-    that takes a name folds the header row and the settings row into one line, so
-    `ID` arrives as `ID #config` and every column name comes out wrong — and the
-    file's own export carries no `gid` to ask by number. So the file is fetched
-    whole and the sheet is picked out of it locally.
+    For a Google Sheet there is no official way to ask for one sheet by name — the
+    `gviz` endpoint that takes a name folds the header row and the settings row
+    into one line, so `ID` arrives as `ID #config` and every column name comes out
+    wrong — and the export carries no `gid` to ask by number. So the file is
+    fetched whole and the sheet is picked out of it locally.
+
+    A URL that already points at a file needs no conversion beyond finding the
+    address that serves the bytes.
     """
+    if is_spreadsheet_file_url(url):
+        return normalize_file_url(url)
     tsv_url = convert_edit_url_to_tsv(url)
     return tsv_url.replace("/export?format=tsv", "/export?format=xlsx")
 
@@ -936,6 +1013,12 @@ def validate_url(url):
     # Validate URL format
     if not url.startswith(("http://", "https://")):
         raise ValueError("Invalid URL: Must start with http:// or https://")
+
+    # A deck can be a spreadsheet file at a plain address rather than a Google
+    # Sheet. There is nothing to convert and no page to probe — whether it can
+    # actually be fetched is settled by the download, which checks the address.
+    if is_spreadsheet_file_url(url):
+        return normalize_file_url(url)
 
     # If URL is already in TSV format, return it directly
     if "/export?format=tsv" in url:

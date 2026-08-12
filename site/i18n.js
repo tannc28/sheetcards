@@ -16,10 +16,13 @@ const STRINGS = {
   // --- control bar --------------------------------------------------------
   brandTag: { en: "preview", vi: "xem trước" },
   urlPlaceholder: {
-    en: "https://docs.google.com/spreadsheets/d/…/edit",
-    vi: "https://docs.google.com/spreadsheets/d/…/edit",
+    en: "Google Sheets link, or a link to an .xlsx file",
+    vi: "Link Google Sheets, hoặc link tới file .xlsx",
   },
-  urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
+  urlLabel: {
+    en: "Google Sheets link or .xlsx file link",
+    vi: "Link Google Sheets hoặc link file .xlsx",
+  },
   deckPlaceholder: { en: "deck name", vi: "tên deck" },
   deckLabel: { en: "Deck name", vi: "Tên deck" },
   go: { en: "Preview", vi: "Xem trước" },
@@ -60,8 +63,12 @@ const STRINGS = {
 
   // --- errors -------------------------------------------------------------
   notASheet: {
-    en: "That is not a Google Sheets link.",
-    vi: "Đây không phải link Google Sheets.",
+    en:
+      "That is neither a Google Sheets link nor a link to an .xlsx file. " +
+      "A file's address has to end in .xlsx or .xlsm.",
+    vi:
+      "Đây không phải link Google Sheets, cũng không phải link tới file .xlsx. " +
+      "Link tới file phải kết thúc bằng .xlsx hoặc .xlsm.",
   },
   unreadableFile: {
     en: (m) => `The browser could not read that file: ${m}`,

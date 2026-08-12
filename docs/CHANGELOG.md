@@ -4,6 +4,42 @@
 
 ---
 
+## ✨ **v6.12.0** - August 2026 *(Feature)*
+
+### 🔗 A deck can be an `.xlsx` at a plain address
+
+Paste a link ending in `.xlsx` or `.xlsm` — a file in a GitHub repository, or on any
+https host — and it is read exactly as a Google Sheet is: one deck per sheet, the same
+reader, the same settings row, the same note types. Only fetching the bytes differs.
+
+- **GitHub's own address works.** The `.../blob/main/decks.xlsx` link a browser shows
+  you serves an HTML page, not the file; it is converted to the raw address, which also
+  happens to send `access-control-allow-origin: *`, so the preview site can read it too.
+- **A file has no spreadsheet id**, so its address is hashed into a stable one
+  (`file_…`). The browser address and the raw address of one file give the same id, so
+  connecting from either is the same deck rather than two.
+- The deck is named after the file: `s2a_english::vocab`.
+
+### 🔒 The address check changed shape
+
+The add-on used to refuse anything that was not a Google host. It cannot any more, so
+the rule is what is left once arbitrary hosts are allowed:
+
+- **https only** — no `http`, no `file://`, no other scheme;
+- **every address the name resolves to must be public.** Resolving first and checking
+  the answers is the point: a hostname belongs to whoever owns it, and pointing
+  `internal.example.com` at `10.0.0.1` is the ordinary way this gets abused.
+
+This matters because Anki runs on your machine, inside your network. `192.168.1.1`,
+`127.0.0.1` and the cloud metadata address `169.254.169.254` are all refused by name in
+the tests.
+
+**A file is a file.** A Google Sheet you edit is edited; an `.xlsx` has to be uploaded
+again before a sync sees it. For anything you change often, a Sheet is still the better
+home.
+
+---
+
 ## ✨ **v6.11.0** - August 2026 *(Feature)*
 
 ### 🗂️ A sheet's deck is a subdeck of its file

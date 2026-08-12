@@ -587,6 +587,16 @@ class DeckNameManager:
             Extracted remote name or fallback
         """
         try:
+            # A file at a plain address has no page to read a title from, and its
+            # own name is the obvious thing to call the deck.
+            from .utils import file_name_from_url
+            from .utils import is_spreadsheet_file_url
+
+            if is_spreadsheet_file_url(url):
+                return DeckNameManager._with_sheet(
+                    url, file_name_from_url(url) or "Deck"
+                )
+
             # Strategy 1: Spreadsheet title via HTML
             title = DeckNameManager._extract_spreadsheet_title(url)
             if title and title != "auto name fail":

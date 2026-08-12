@@ -22,12 +22,14 @@ try:
     from .utils import add_debug_message
     from .utils import get_spreadsheet_id_from_url
     from .utils import sheet_name_from_url
+    from .utils import source_id
 except ImportError:
     # For standalone tests
     from compat import mw
     from utils import add_debug_message
     from utils import get_spreadsheet_id_from_url
     from utils import sheet_name_from_url
+    from utils import source_id
 
 
 def add_debug_msg(message, category="CONFIG"):
@@ -61,9 +63,9 @@ def get_deck_id(url):
     Raises:
         ValueError: If the URL is not a valid edit URL
     """
-    spreadsheet_id = get_spreadsheet_id_from_url(url)
+    base = source_id(url)
     sheet = sheet_name_from_url(url)
-    return f"{spreadsheet_id}#{sheet}" if sheet else spreadsheet_id
+    return f"{base}#{sheet}" if sheet else base
 
 
 # =============================================================================
