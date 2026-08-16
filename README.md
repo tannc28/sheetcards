@@ -162,7 +162,9 @@ https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.x
 ```
 
 Fifteen sheets, each one its own deck, ordered from *the smallest sheet that
-works* to *every directive at once*:
+works* to *every directive at once*. Where a column carries the meaning of a
+word it is glossed in Vietnamese; everything else is English. Nothing about the
+add-on is language-specific — a deck of anatomy or case law works the same way:
 
 | Sheet | What it shows |
 | :--- | :--- |

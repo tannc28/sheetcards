@@ -17,6 +17,14 @@ Each sheet becomes its own deck, `s2a_sheets2anki-examples::<sheet name>`, with
 its own columns, its own settings row and its own note type. That is the same
 thing that happens to a Google Sheets file with several tabs.
 
+**Where a column carries the meaning of a word, it is glossed in Vietnamese** —
+this workbook is demonstrated to Vietnamese learners. Everything else is English:
+the headers, the settings rows, the labels printed on the cards, the explanatory
+notes, and the three sheets that are documentation rather than vocabulary (`02`,
+`09`, `15`). Nothing about the add-on is language-specific — what a sheet teaches
+is only ever the content of a cell, and a deck of pharmacology or case law works
+exactly the same way.
+
 ## Editing it
 
 The workbook is generated, not hand-maintained. Its grids live in `SHEETS` at the
@@ -46,9 +54,7 @@ configuration at all.
 
 `Front` and `Back` are *your* names for those columns, not the add-on's — the
 same sheet works with `Term`/`Definition` or `Từ`/`Nghĩa`. And nothing here knows
-what Korean is: a language is only ever the content of a cell. Vocabulary is
-simply the shortest way to show a deck working; every other sheet in this file
-is something else.
+what Korean is: a language is only ever the content of a cell.
 
 ### 02 Sync and subdecks
 
