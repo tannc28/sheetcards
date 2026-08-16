@@ -43,7 +43,6 @@ const STRINGS = {
   panelCard: { en: "Card", vi: "Thẻ" },
 
   // --- what each column turned into ---------------------------------------
-  columns: { en: "Columns", vi: "Cột" },
   roleId: {
     en: "ID — the key every note is matched by",
     vi: "ID — khoá để nhận lại từng note",

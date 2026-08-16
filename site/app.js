@@ -1018,6 +1018,7 @@ function render() {
   $("#cells").hidden = !shown;
   if (shown) {
     $("#cellhead").textContent = t("valueInRow", shown.line);
+    $("#colcount").textContent = `${a.plan.headers.length}`;
     $("#celllist").innerHTML = rowCells(a);
     for (const el of document.querySelectorAll(".stepper")) {
       const back = el.dataset.step === "-1";
@@ -1026,10 +1027,6 @@ function render() {
     }
   }
 
-  $("#columns").hidden = false;
-  $("#colcount").textContent = `${a.plan.headers.length}`;
-  $("#collist").innerHTML = columnList(a);
-  $("#coldetail").innerHTML = state.column == null ? "" : columnDetail(a);
   // The flash and the scroll both mark *choosing a column*. Every other repaint
   // — a row picked, a language switched — would otherwise blink a panel nobody
   // was looking at, and move the page under a reader who asked for nothing.
@@ -1121,18 +1118,24 @@ function columnRole(name, index, a) {
 function rowCells(a) {
   const row = a.rows[state.row];
   if (!row) return "";
-  const first = new Map();
-  a.plan.headers.forEach((h, i) => first.has(h) || first.set(h, i));
 
-  return [...first]
-    .map(([name, i]) => {
-      const value = String(row.values[name] ?? "").trim();
-      return `<button class="cellrow${state.column === i ? " on" : ""}" data-col="${i}">
+  return a.plan.headers
+    .map((name, i) => {
+      // A header written twice is one column. The later one has no cell of its
+      // own, and saying which of the two was honoured is why both are listed.
+      const repeat = a.plan.headers.indexOf(name) !== i;
+      const value = repeat ? "" : String(row.values[name] ?? "").trim();
+      const line = `<button class="cellrow${repeat ? " dead" : ""}${
+        state.column === i ? " on" : ""
+      }" data-col="${i}">
         <span class="k">${escapeHtml(name)}</span>
         <span class="v${value ? "" : " none"}">${escapeHtml(
-          value || t("cellEmpty"),
+          value || t(repeat ? "roleDuplicate" : "cellEmpty"),
         )}</span>
       </button>`;
+      // The answer opens under the question rather than at the foot of the
+      // block: on a phone the two would otherwise be a screen apart.
+      return state.column === i ? line + columnDetail(a) : line;
     })
     .join("");
 }
@@ -1246,17 +1249,6 @@ function directives(name, a) {
   });
 }
 
-function columnList(a) {
-  return a.plan.headers
-    .map((name, i) => {
-      const role = columnRole(name, i, a);
-      const on = state.column === i ? " on" : "";
-      return `<button class="col col-${role.kind}${on}" data-col="${i}"
-        aria-pressed="${state.column === i}">${escapeHtml(name)}</button>`;
-    })
-    .join("");
-}
-
 /**
  * The chosen column, opened up: what it became, what the settings row said, what
  * this row actually holds in it, and anything the add-on could not understand.
@@ -1267,8 +1259,6 @@ function columnDetail(a) {
 
   const role = columnRole(name, state.column, a);
   const set = directives(name, a);
-  const row = a.rows[state.row];
-  const value = row ? String(row.values[name] ?? "") : "";
   // The warnings name their column in single quotes, which is also how a person
   // reading them finds the one they are looking at.
   const said = (a.config.warnings || []).filter((w) => w.startsWith(`'${name}':`));
@@ -1281,17 +1271,6 @@ function columnDetail(a) {
             .map((d) => `<span class="chip">${escapeHtml(d)}</span>`)
             .join("")}</p>`
         : `<p class="muted small">${escapeHtml(t("nothingSet"))}</p>`
-    }
-    ${
-      row
-        ? `<p class="colvalue"><span class="k">${escapeHtml(
-            t("valueInRow", row.line),
-          )}</span> ${
-            value
-              ? `<code>${escapeHtml(value)}</code>`
-              : `<span class="muted">${escapeHtml(t("cellEmpty"))}</span>`
-          }</p>`
-        : ""
     }
     ${said
       .map((w) => `<p class="colwarn">${escapeHtml(w)}</p>`)

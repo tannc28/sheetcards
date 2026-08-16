@@ -350,9 +350,9 @@ select { cursor: pointer; }
 .summary .zero, .summary .zero b { color: var(--bad); }
 
 .side { padding: 12px var(--pad) 0; }
-/* #columns lives in panel 1 rather than in .side, and without this it fell
-   back to the browser's own h3 — 1.17em bold with a 1em margin above and below,
-   which is most of a screenful of nothing on a phone. */
+/* Every section heading inside a panel. Written as `.side h3` this missed the
+   one in panel 1, which fell back to the browser's own — 1.17em bold with a 1em
+   margin above and below, most of a screenful of nothing on a phone. */
 .panel-body h3, .stage-h {
   margin: 0 0 8px;
   display: flex; align-items: baseline; gap: 8px;
@@ -415,28 +415,10 @@ h3.spaced { margin-top: 18px; }
 
 /* ---- panel 1: what each column turned into ------------------------------- */
 
-/* Tighter than the surrounding form: this is one control made of many small
-   parts, not four unrelated fields stacked up. */
-#columns { gap: 8px; }
-.collist { display: flex; flex-wrap: wrap; gap: 4px; }
-
-/* Monospace because these are strings out of a spreadsheet, not words the page
-   chose — the same rule the row numbers and the template source follow. */
-.col {
-  font-family: var(--mono); font-size: var(--t-xs);
-  padding: 3px 9px; border-radius: 999px;
-  background: var(--sunken); color: var(--ink);
-  border: 1px solid var(--line);
-  max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.col:hover { border-color: var(--accent); }
-.col.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-/* A column that reaches nothing — written twice, or a header the sheet does not
-   use — reads as switched off rather than as one more chip to consider. */
-.col-dead { opacity: .5; text-decoration: line-through; }
-
+#cells { gap: 8px; }
+/* Opened under the line it explains, inset so it reads as belonging to it. */
 .coldetail {
-  margin-top: 8px; padding: 10px 12px;
+  margin: 2px 0 8px 8px; padding: 10px 12px;
   background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-md);
 }
 .coldetail p { margin: 0 0 6px; }
@@ -511,6 +493,9 @@ h3.spaced { margin-top: 18px; }
 }
 .cellrow:hover { background: var(--sunken); }
 .cellrow.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+/* A header the sheet wrote twice reaches nothing, and reads as switched off. */
+.cellrow.dead .k { text-decoration: line-through; }
+.cellrow.dead { opacity: .55; }
 .cellrow .k {
   font-family: var(--mono); font-size: var(--t-xs); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
