@@ -787,7 +787,11 @@ function cardView(a) {
       html { color-scheme: light dark; }
       body { margin: 0; padding: 18px; font-family: arial, sans-serif; font-size: 20px;
              text-align: center; color: #111; background: #fff; }
-      @media (prefers-color-scheme: dark) { body { color: #e6e9ee; background: #1b1f25; } }
+      ${
+        dark()
+          ? "body { color: #e6e9ee; background: #1b1f25; }"
+          : ""
+      }
       hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }
       .cloze { color: #2f6fd0; font-weight: 700; }
       a.hint { color: #2f6fd0; font-size: 15px; }
@@ -976,6 +980,39 @@ function summaryLine(a) {
     .join("");
 }
 
+/**
+ * Light unless somebody said otherwise.
+ *
+ * Not `prefers-color-scheme`: a page that opens dark because the laptop is set
+ * dark looks broken to a reader who did not ask for it, and this one is mostly
+ * read on a phone in daylight. The choice is explicit and remembered.
+ */
+function dark() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function setTheme(on) {
+  if (on) document.documentElement.dataset.theme = "dark";
+  else delete document.documentElement.dataset.theme;
+  try {
+    localStorage.setItem("s2a-theme", on ? "dark" : "light");
+  } catch {
+    // A browser refusing storage is not a reason to refuse the theme.
+  }
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", on ? "#0f1216" : "#ffffff");
+  paintTheme();
+  // The card is a separate document that was handed the old palette.
+  if (state.analysis) render();
+}
+
+function paintTheme() {
+  const button = $("#theme");
+  button.textContent = dark() ? "☀" : "☾";
+  button.title = button.ariaLabel = t(dark() ? "toLight" : "toDark");
+}
+
 /** Text that lives in index.html rather than in a render function. */
 function paintStatic() {
   for (const el of document.querySelectorAll("[data-i18n]")) {
@@ -993,6 +1030,7 @@ function paintStatic() {
     `<span class="dot invalid"></span> ${escapeHtml(t("legendInvalid"))}. ` +
     escapeHtml(t("legendGhost"));
 
+  paintTheme();
   $("#langs").innerHTML = LANGUAGES.map(
     (l) =>
       `<button data-lang="${l.code}" class="${lang() === l.code ? "on" : ""}"` +
@@ -1282,6 +1320,7 @@ function columnDetail(a) {
 // ---------------------------------------------------------------------------
 
 document.addEventListener("click", (e) => {
+  if (e.target.closest("#theme")) return setTheme(!dark());
   const picker = e.target.closest("[data-lang]");
   if (!picker) return;
   setLang(picker.dataset.lang);

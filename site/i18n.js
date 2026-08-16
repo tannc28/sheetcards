@@ -16,6 +16,8 @@ const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
   brandTag: { en: "preview", vi: "xem trước" },
   skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
+  toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
+  toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
     vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",

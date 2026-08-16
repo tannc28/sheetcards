@@ -3,10 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1216" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff">
 <title>Sheets2Anki — preview a sheet before you sync it</title>
 <meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the Sheets2Anki add-on would produce — running the add-on's own code in your browser.">
+<script>
+  // Read before the first paint: applied from the stylesheet instead, the page
+  // would flash light on its way to the dark somebody chose.
+  try {
+    var t = localStorage.getItem("s2a-theme");
+    if (t === "dark") document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+</script>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -18,6 +25,7 @@
     <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
   </div>
 
+  <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Language"></nav>
   <a class="ghost" href="https://github.com/tannc28/sheets2anki" rel="noopener">GitHub</a>
 </header>

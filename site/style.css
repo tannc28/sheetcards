@@ -17,7 +17,7 @@
    meaning — a row's fate, a warning — and never on decoration. */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   --ground: #f5f6f9;
   --panel: #ffffff;
@@ -63,16 +63,19 @@
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ground: #0e1116; --panel: #171c24; --sunken: #11151b;
-    --line: #262d38; --line-soft: #1e242d;
-    --ink: #e6eaf1; --muted: #96a0af;
-    --accent: #86a2f2; --accent-ink: #0e1116; --accent-soft: #1b2440;
-    --ok: #58cb90; --warn: #e0ad4d; --warn-soft: #241d10; --warn-line: #4a3c1c;
-    --bad: #f28a80; --bad-soft: #2c1a19;
-    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px -10px rgb(0 0 0 / .6);
-  }
+/* Chosen, never guessed: the toggle in the masthead writes data-theme onto the
+   root and localStorage remembers it. A page that opens dark because the laptop
+   is dark is a page that looks broken to someone who did not ask for it — and
+   this one is mostly read on phones, in daylight. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e1116; --panel: #171c24; --sunken: #11151b;
+  --line: #262d38; --line-soft: #1e242d;
+  --ink: #e6eaf1; --muted: #96a0af;
+  --accent: #86a2f2; --accent-ink: #0e1116; --accent-soft: #1b2440;
+  --ok: #58cb90; --warn: #e0ad4d; --warn-soft: #241d10; --warn-line: #4a3c1c;
+  --bad: #f28a80; --bad-soft: #2c1a19;
+  --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px -10px rgb(0 0 0 / .6);
 }
 
 * { box-sizing: border-box; }
@@ -159,6 +162,13 @@ a { color: var(--accent); }
 .langs button + button { border-left: 1px solid var(--line); }
 .langs button:hover { color: var(--ink); background: var(--sunken); }
 .langs button.on { background: var(--accent); color: var(--accent-ink); }
+
+.themebtn {
+  flex: none; width: 34px; height: 34px; padding: 0; line-height: 1;
+  font-size: 15px;
+  background: transparent; border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.themebtn:hover { border-color: var(--accent); background: var(--accent-soft); }
 
 a.ghost {
   flex: none;
@@ -546,7 +556,7 @@ iframe#card {
   background: #fff; border: 1px solid var(--line);
   border-radius: var(--r-lg); box-shadow: var(--shadow);
 }
-@media (prefers-color-scheme: dark) { iframe#card { background: #1b1f25; } }
+:root[data-theme="dark"] iframe#card { background: #1b1f25; }
 
 .note {
   margin: 12px 0 0; padding: 9px 12px;
