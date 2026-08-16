@@ -70,11 +70,11 @@ _FIELD_KEYS = (
         "speed",
         "label",
         "type",
-        # Which level of the deck path this column is. A column that says so is
-        # still an ordinary content column — it becomes a field and renders like
-        # any other — which is the whole point: a reserved `SUBDECK n` column can
-        # only ever file the note, so a value wanted on the card *and* in the deck
-        # name had to be typed into the sheet twice.
+        # Which level of the deck path this column is — the same job a reserved
+        # `SUBDECK n` header does, said from an ordinary column instead, so the
+        # sheet does not have to give a column one of the add-on's own names.
+        # The column stays a field on the note and is never drawn on the card:
+        # where a note is filed is a bigger thing than how one card looks.
         "subdeck",
     )
     + _FLAGS
@@ -110,6 +110,36 @@ _CSS_COLOR_NAMES = frozenset(
     snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white
     whitesmoke yellow yellowgreen transparent currentcolor""".split()
 )
+
+
+# Everything a column can say that only affects how a card looks. A `subdeck=n`
+# column is not part of the card, so all of these are inert on one — named rather
+# than silently dropped, like every other refused setting.
+_CARD_KEYS = (
+    "side",
+    "size",
+    "color",
+    "align",
+    "tts",
+    "voices",
+    "speed",
+    "label",
+    "type_answer",
+    "bold",
+    "italic",
+    "hint",
+    "furigana",
+    "cloze",
+    "draw",
+)
+_SAID_AS = {"type_answer": "type"}
+_EMPTY = dict.fromkeys(_FLAGS, False)
+_EMPTY.update(
+    dict.fromkeys(
+        ("side", "size", "color", "align", "tts", "speed", "label", "type_answer")
+    )
+)
+_EMPTY["voices"] = []
 
 
 def is_config_row(row, plan):
@@ -346,6 +376,39 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
         def warn(_message):
             return None
 
+    # A media column holds an address. Filing notes under a deck named after a URL
+    # is not something anyone meant, and get_subdeck_name would strip it to
+    # something unrecognisable rather than fail, so it is refused here instead.
+    # Media wins: it is the cell's *content* that is wrong for a deck name.
+    for header in content_headers:
+        cfg = config.for_field(header)
+        if cfg.subdeck and cfg.media:
+            warn(f"'{header}': a {cfg.media} column cannot be a deck level")
+            cfg.subdeck = None
+
+    # A deck level is a deck level. Where a note is filed is a bigger thing than
+    # how one card looks, so a column working at that level is not part of the card
+    # at all — not drawn, not styled, not spoken. Every card key in the cell is
+    # therefore inert, and an inert setting is named rather than left to be found.
+    #
+    # Done before the two resolutions below so that neither can pick a column that
+    # is only there to file the note.
+    for header in content_headers:
+        cfg = config.for_field(header)
+        if not cfg.subdeck:
+            continue
+        inert = [key for key in _CARD_KEYS if getattr(cfg, key)]
+        if not inert:
+            continue
+        warn(
+            f"'{header}': a deck level is not part of the card, so "
+            + ", ".join(_SAID_AS.get(key, key) for key in inert)
+            + (" do" if len(inert) > 1 else " does")
+            + " nothing here"
+        )
+        for key in inert:
+            setattr(cfg, key, _EMPTY[key])
+
     # A note type has one template set, and Anki honours one {{type:…}} per card, so
     # each of these names exactly one column. Resolved after the whole row is read so
     # the warning can name every column that asked, not just the second one.
@@ -377,15 +440,6 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
             warn(f"'{header}': {label} does nothing on a media column")
             setattr(config, attribute, None)
             setattr(config.fields[header], key, None if key == "type_answer" else False)
-
-    # A media column holds an address. Filing notes under a deck named after a URL
-    # is not something anyone meant, and get_subdeck_name would strip it to
-    # something unrecognisable rather than fail, so it is refused here instead.
-    for header in content_headers:
-        cfg = config.for_field(header)
-        if cfg.subdeck and cfg.media:
-            warn(f"'{header}': a {cfg.media} column cannot be a deck level")
-            config.fields[header].subdeck = None
 
     # The deck path, outermost first — by the level number, not by where the column
     # sits in the sheet, which is how `SUBDECK n` has always behaved.

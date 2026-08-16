@@ -4,25 +4,40 @@
 
 ---
 
+## 🐛 **v6.18.0** - August 2026 *(Fix)*
+
+### A deck level is a deck level
+
+`subdeck=n` shipped in v6.15.0 also rendering the column on the card. v6.17.0 made
+that need an explicit `side=`. Both were the same mistake at different sizes, and
+this removes it: **a `subdeck=n` column is not part of the card at all.**
+
+Where a note is *filed* is a bigger thing than how one card looks. A directive
+working at that level has no business reaching down into the card, and the reserved
+`SUBDECK n` columns never have — so there is one rule here rather than two.
+
+Every card key written on such a column is now refused **by name** in the warnings:
+`side`, `size`, `color`, `align`, `tts`, `voices`, `speed`, `label`, `type`, `bold`,
+`italic`, `hint`, `furigana`, `cloze`, `draw`. The column is still a field on the
+note — the value is kept, searchable and exportable — it is simply never drawn,
+styled or spoken.
+
+Nothing is lost by not printing it: the note is *in* the deck named after that
+value, and Anki shows the deck. Printing it on the card would say twice what the
+deck tree already says once. If you want it on the card as well, that is a second
+column — a decision for the sheet, not for the settings row.
+
+---
+
 ## 🐛 **v6.17.0** - August 2026 *(Fix + feature)*
 
 ### `subdeck=n` no longer puts the column on the card
 
-**This is a behaviour change, and the old behaviour was wrong.** `subdeck=n` shipped
-in v6.15.0 rendering the column as a field as well, on the reasoning that a value
-wanted in the deck name *and* on the card should not have to be typed twice. The
-first person to use it asked why their subdeck column had appeared on the back of
-every card — which is the right question. Filing a note and printing on it are
-different jobs, a directive named after the deck does the first, and the reserved
-`SUBDECK n` columns have never done the second.
-
-```text
-#config  subdeck=1                        → deck level only
-#config  subdeck=1; side=front; size=14   → deck level, and on the card
-```
-
-The capability is still there; it now takes saying so. If you were relying on the
-old behaviour, add `side=front` or `side=back` to that column.
+Superseded by v6.18.0 above, which removes the `side=` escape hatch this release
+added. `subdeck=n` shipped in v6.15.0 rendering the column as a field as well, on
+the reasoning that a value wanted in the deck name *and* on the card should not have
+to be typed twice. The first person to use it asked why their subdeck column had
+appeared on the back of every card, which was the right question.
 
 ### `side=hide` + `tts` — heard without being read
 

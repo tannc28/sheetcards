@@ -178,7 +178,7 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `08 Audio` | `audio`, listen-then-recall |
 | `09 Video` | every YouTube link form the add-on rewrites, plus a direct file |
 | `10 Speech` | `tts=zh_CN`, deck-wide `speed`, a per-column `speed` override |
-| `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` on a column that is *also* printed on it |
+| `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` filing it by HSK level |
 | `12 Chinese drawing` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Japanese furigana` | `furigana` over kanji |
 | `14 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
@@ -366,14 +366,13 @@ Written in that column's cell of the settings row.
 | `type` | switch, or `type=nc` | off | Anki draws a box on the question and diffs what you type against this column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`. One column per sheet |
 | `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
 | `draw` | switch | off | The column holds a **Chinese character**, and the card turns it into a writing box: on the question you draw it stroke by stroke and each stroke is marked, on the answer the correct strokes are animated. `size` is the side of the box in pixels — see below |
-| `subdeck` | a level number (`subdeck=1`) | off | This column is that level of the **deck path**, exactly as a `SUBDECK n` header would be. It is not drawn on the card unless you also say `side=front` or `side=back`. See below |
+| `subdeck` | a level number (`subdeck=1`) | off | This column is that level of the **deck path**, exactly as a `SUBDECK n` header would be. It is never drawn on the card. See below |
 
 #### Filing notes with a column you also show (`subdeck`)
 
-A `SUBDECK n` column can only ever file the note: it is reserved, so it never
-becomes a field. `subdeck=n` says the same thing from an ordinary column's own
-settings cell — so the column is still a field on the note, and can also be
-*shown*, which a reserved column cannot.
+`SUBDECK 1`, `SUBDECK 2` are names the *add-on* chose. `subdeck=n` says the same
+thing from an ordinary column's own settings cell, so a sheet never has to give
+one of its columns a reserved name:
 
 ```text
 ID       Level        Word     Meaning
@@ -382,16 +381,18 @@ w01      HSK 1        写       to write
 w02      HSK 2        山       mountain
 ```
 
-→ `s2a_{file}::{sheet}::HSK 1`, and nothing extra on the card.
+→ `s2a_{file}::{sheet}::HSK 1`, and nothing on the card.
 
-**Filing a note and printing on it are different jobs, and this does only the
-first.** A directive named after the deck should not quietly start putting a line
-of text on every card. To have both — the HSK level in the deck name *and* on the
-card, without typing it into the sheet twice — say which side it goes on:
+**Where a note is filed is a bigger thing than how one card looks**, so a column
+working at deck level is not part of the card at all — not drawn, not styled, not
+spoken. `size`, `color`, `side`, `tts` and the rest are refused on it, by name, in
+the warnings. That is the same rule a reserved `SUBDECK n` column has always
+followed; there is one rule here, not two.
 
-```text
-#config  subdeck=1; side=front; size=14; color=muted
-```
+Nothing is lost by not printing it: the note is *in* the deck named after that
+value, and Anki shows the deck. Printing it on the card would say twice what the
+deck tree already says once. If you want it on the card as well, that is a second
+column — and the sheet is the place to decide that, not the settings row.
 
 - **The number is the level**, exactly as in `SUBDECK 1` / `SUBDECK 2`, so the
   order comes from the numbers rather than from where the columns sit.

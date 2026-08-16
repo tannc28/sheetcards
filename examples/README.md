@@ -130,11 +130,10 @@ you to write the character and diffs it stroke for stroke; the answer then shows
 the character large, speaks it, and hides a **stroke-order animation** behind a
 `hint` so you only look when you did not know. 25 characters.
 
-`Level` is the one to look at twice: `subdeck=1` makes it the first level of the
-deck path — `…::HSK 1`, `…::HSK 2` — while it stays an ordinary column and prints
-on the card under its own label. A reserved `SUBDECK 1` column could do the
-filing but never the printing, so this value would have had to be typed into the
-sheet twice.
+`Level` says `subdeck=1`, which makes it the first level of the deck path —
+`…::HSK 1`, `…::HSK 2` — without the column having to be named `SUBDECK 1`. It is
+a field on the note and never appears on the card: where a note is filed is a
+bigger thing than how one card looks.
 
 ### 12 Chinese drawing
 

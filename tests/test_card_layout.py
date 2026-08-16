@@ -938,13 +938,37 @@ class TestDeckFromAColumn:
         front, back = split_sides(plan, config)
         assert "Word" not in front and "Word" not in back
 
-    def test_saying_a_side_puts_it_on_the_card_as_well(self):
-        # The thing a reserved SUBDECK column cannot do, and the reason
-        # `subdeck=n` exists: one value, filing the note *and* printed, without
-        # being typed into the sheet twice.
+    def test_a_side_cannot_put_it_on_the_card_either(self):
+        """Where a note is filed is a bigger thing than how one card looks.
+
+        A directive working at deck level has no business reaching down into the
+        card, so there is one rule rather than two: a deck level is a deck level,
+        exactly as a reserved SUBDECK column has always been.
+        """
         plan, config = self._levels({"Reading": "subdeck=1; side=back"})
         assert config.subdeck_columns == ["Reading"]
-        assert "{{Reading}}" in build_templates(plan, config)[0]["afmt"]
+        assert "{{Reading}}" not in _both(build_templates(plan, config)[0])
+        assert any("not part of the card" in w and "side" in w for w in config.warnings)
+
+    def test_nothing_about_a_card_survives_on_a_deck_level(self):
+        # Inert settings are named rather than left to be discovered, the same
+        # way they are on a media column.
+        _, config = self._levels(
+            {"Reading": "subdeck=1; size=20; color=accent; bold; tts=zh_CN; hint"}
+        )
+        cfg = config.for_field("Reading")
+        assert cfg.subdeck == 1
+        assert (cfg.size, cfg.color, cfg.tts) == (None, None, None)
+        assert not cfg.bold and not cfg.hint
+        said = " ".join(config.warnings)
+        for key in ("size", "color", "tts", "bold", "hint"):
+            assert key in said
+
+    def test_a_deck_level_is_never_spoken_either(self):
+        # `side=hide` + `tts` is heard without being read, but that is about the
+        # card too — and a deck level is not on the card at all.
+        plan, config = self._levels({"Reading": "subdeck=1; tts=zh_CN"})
+        assert "tts" not in _both(build_templates(plan, config)[0])
 
     def test_the_field_exists_on_the_note_either_way(self):
         # Not rendering it is a decision about the card, not about the note: the

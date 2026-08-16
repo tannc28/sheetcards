@@ -183,10 +183,10 @@ SHEETS = {
         ["k05", "多少钱", "duōshao qián", "bao nhiêu tiền", "多少钱"],
         ["k06", "洗手间在哪儿", "xǐshǒujiān zài nǎr", "nhà vệ sinh ở đâu", "洗手间在哪儿"],
     ],
-    # write the character, and a column that is both a field and a deck level
+    # write the character; a column that files the note without reaching the card
     "11 Chinese writing": [
         ["ID", "TAGS", "Level", "Meaning", "Pinyin", "Hanzi", "Strokes", "Example"],
-        ["#config", "", "subdeck=1; side=front; size=14; color=muted; label=HSK level", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
+        ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["w01", "hanzi, hsk1", "HSK 1", "tôi", "wǒ", "我", "https://upload.wikimedia.org/wikipedia/commons/b/b3/%E6%88%91-order.gif", "我是学生。"],
         ["w02", "hanzi, hsk1", "HSK 1", "bạn", "nǐ", "你", "https://upload.wikimedia.org/wikipedia/commons/e/ee/%E4%BD%A0-order.gif", "你好吗？"],
         ["w03", "hanzi, hsk1", "HSK 1", "tốt; khỏe", "hǎo", "好", "https://upload.wikimedia.org/wikipedia/commons/6/6e/%E5%A5%BD-order.gif", "今天天气很好。"],
@@ -267,7 +267,7 @@ SHEETS = {
     # wrong on purpose, so every warning has something to point at
     "16 Edge cases": [
         ["ID", "SYNC", "Word", "Meaning", "Picture", "Clip", "Sentence", "Extra", "Meaning"],
-        ["#config align=middle; spid=3; reverse", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align", "size=20"],
+        ["#config align=middle; spid=3; reverse", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
         ["x01", "yes", "{{c1::重复}}的表头", "duplicated header — only the first 'Meaning' is a field", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "https://www.youtube.com/@nationalgeographic", "A channel link is not a video: it is passed through with a warning.", "", "this cell is ignored"],
         ["x02", "yes", "{{c1::网盘}}链接", "a Google Drive link is rewritten to its /preview player", "", "https://drive.google.com/file/d/1PLACEHOLDER_FILE_ID_HERE/view", "The id here is a placeholder, so the frame will not play anything."],
         ["", "yes", "{{c1::无编号}}的一行", "a row with no ID is counted and skipped", "", "", "Nothing is written to Anki for it."],

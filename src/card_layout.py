@@ -481,16 +481,17 @@ def split_sides(plan, sheet_config):
 def _is_drawn(cfg):
     """Whether this column is rendered on the card at all.
 
-    ``side=hide`` is the explicit way to say no. A ``subdeck=n`` column is the
-    implicit one: it was written to file the note, and a directive named after
-    the deck should not also start printing on the card without being asked —
-    the reserved ``SUBDECK n`` columns never do. Saying ``side=front`` or
-    ``side=back`` puts it on the card as well, which is the thing a reserved
-    column cannot do and the reason ``subdeck=n`` exists.
+    ``side=hide`` is the explicit way to say no. A ``subdeck=n`` column is never
+    drawn at all: where a note is *filed* is a bigger thing than how one card
+    looks, and a directive working at that level has no business reaching down
+    into the card. The reserved ``SUBDECK n`` columns have never done so either,
+    so there is one rule rather than two — a deck level is a deck level.
+
+    Nothing is lost by not printing it: the note is in the deck named after that
+    value, and Anki shows the deck. Printing it on the card as well says twice
+    what the deck tree already says once.
     """
-    if cfg.hidden:
-        return False
-    return not (cfg.subdeck and not cfg.side)
+    return not (cfg.hidden or cfg.subdeck)
 
 
 def _side_of(index, cfg):

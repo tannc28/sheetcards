@@ -66,12 +66,8 @@ const STRINGS = {
     vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên thẻ`,
   },
   roleSubdeckOnly: {
-    en: (level) => `Deck level ${level} — add side=front or side=back to show it too`,
-    vi: (level) => `Tầng deck ${level} — thêm side=front hoặc side=back nếu muốn hiện trên thẻ`,
-  },
-  roleSubdeckField: {
-    en: (level, where) => `Deck level ${level}, and a field on the ${where}`,
-    vi: (level, where) => `Tầng deck ${level}, đồng thời là field ở ${where}`,
+    en: (level) => `Deck level ${level} — files the note, never drawn on the card`,
+    vi: (level) => `Tầng deck ${level} — xếp deck cho note, không hiện trên thẻ`,
   },
   roleField: {
     en: (where) => `A field on the ${where}`,
