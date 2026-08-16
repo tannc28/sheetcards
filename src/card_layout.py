@@ -234,7 +234,11 @@ _DRAW_SCRIPT = (
     "        box.appendChild(cell);\n"
     "        var writer = HanziWriter.create(cell, ch, {\n"
     "          width: size, height: size, padding: 6,\n"
-    "          showCharacter: !quiz, showOutline: true,\n"
+    # The question is a blank square. HanziWriter's outline is the whole
+    # character in a pale colour, which on the side that is *asking* is the
+    # answer sitting there to be traced — so it is only drawn on the answer.
+    # Getting a stroke wrong twice still lights up where the next one starts.
+    "          showCharacter: !quiz, showOutline: !quiz,\n"
     "          strokeColor: ink, drawingColor: ink, outlineColor: faint,\n"
     "          delayBetweenStrokes: 150,\n"
     # A character the data set does not have — a letter, a digit, a rare variant —

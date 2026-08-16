@@ -801,6 +801,16 @@ class TestDrawnColumn:
         assert 'data-s2a-quiz="1"' in front
         assert 'data-s2a-quiz="0"' in back
 
+    def test_the_question_is_a_blank_square(self):
+        """The outline is the whole character in a pale colour.
+
+        Drawn on the side that is *asking*, it is the answer sitting there to be
+        traced over, which is not the same exercise at all.
+        """
+        assert (
+            "showCharacter: !quiz, showOutline: !quiz" in self._templates()[0]["qfmt"]
+        )
+
     def test_the_library_is_loaded_once_per_side_that_needs_it(self):
         template, _ = self._templates()
         assert template["qfmt"].count("hanzi-writer") >= 1

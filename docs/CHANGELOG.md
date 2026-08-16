@@ -4,6 +4,23 @@
 
 ---
 
+## 🐛 **v6.14.1** - August 2026 *(Fix)*
+
+### The `draw` question showed the answer
+
+HanziWriter's outline is not a faint guide line — it is the **whole character**, drawn
+in a pale colour. On the side that is *asking*, that is the answer sitting in the box
+waiting to be traced over, which is a completely different exercise from writing it
+from memory. The question is now an empty square; the answer still animates the
+correct strokes over its outline, which is where an outline belongs. Getting a stroke
+wrong twice still lights up where the next one starts.
+
+Checked by driving a real stroke through a real card in a headless browser, in the
+same sandbox the preview site puts a card in: the box takes the stroke, marks it and
+renders it as the proper glyph.
+
+---
+
 ## ✨ **v6.14.0** - August 2026 *(Feature)*
 
 ### ✍️ `draw` — write the character, do not type it
