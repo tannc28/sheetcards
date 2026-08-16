@@ -48,10 +48,6 @@ const STRINGS = {
 
   // --- what each column turned into ---------------------------------------
   columns: { en: "Columns", vi: "Cột" },
-  columnsIntro: {
-    en: "Tap one to see what it became and what the settings row said about it.",
-    vi: "Bấm vào một cột để xem nó thành gì và settings row đã nói gì về nó.",
-  },
   roleId: {
     en: "ID — the key every note is matched by",
     vi: "ID — khoá để nhận lại từng note",

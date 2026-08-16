@@ -351,7 +351,10 @@ select { cursor: pointer; }
 .summary .zero, .summary .zero b { color: var(--bad); }
 
 .side { padding: 12px var(--pad) 0; }
-.side h3, .stage-h {
+/* #columns lives in panel 1 rather than in .side, and without this it fell
+   back to the browser's own h3 — 1.17em bold with a 1em margin above and below,
+   which is most of a screenful of nothing on a phone. */
+.side h3, .stage-h, #columns h3 {
   margin: 0 0 8px;
   display: flex; align-items: baseline; gap: 8px;
   font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
@@ -413,6 +416,9 @@ h3.spaced { margin-top: 18px; }
 
 /* ---- panel 1: what each column turned into ------------------------------- */
 
+/* Tighter than the surrounding form: this is one control made of many small
+   parts, not four unrelated fields stacked up. */
+#columns { gap: 8px; }
 .collist { display: flex; flex-wrap: wrap; gap: 4px; }
 
 /* Monospace because these are strings out of a spreadsheet, not words the page
