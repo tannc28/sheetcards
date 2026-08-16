@@ -143,7 +143,27 @@ const state = {
   // What the stage shows: the card, or its source the way Anki puts the template
   // editor beside it.
   tab: "both",
+  // The three panels — where the sheet comes from, what deck it makes, what one
+  // card looks like. Each one collapses to its own header, which is what makes
+  // the page usable on a phone and what lets a wide window be given entirely to
+  // whichever of the three is being read.
+  panels: { source: true, deck: true, card: true },
 };
+
+const PANEL_ID = { source: "p-source", deck: "p-deck", card: "p-card" };
+
+/** True on the layout where the panels are stacked rather than side by side. */
+const narrow = () => matchMedia("(max-width: 55.99rem)").matches;
+
+function setPanel(name, open) {
+  state.panels[name] = open;
+  const el = document.getElementById(PANEL_ID[name]);
+  el.dataset.open = String(open);
+  el.querySelector(".panel-toggle").setAttribute("aria-expanded", String(open));
+  // The grid needs to know, because collapsing one pane drops the two-column
+  // split and hands the window to the other.
+  if (name !== "source") document.body.classList.toggle(`${name}-closed`, !open);
+}
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 let buildPackage = null;
@@ -330,30 +350,24 @@ function analyse(tsv, deckName, sheetId) {
 function failed(message) {
   status(message, "bad");
   $("#app").hidden = true;
-  $("#summary").hidden = true;
   $("#warnbar").hidden = true;
-  // Back to the full entry: something has to be corrected, and the field that
-  // needs correcting is the one the collapsed state hides.
-  expandEntry();
+  // Back open: something has to be corrected, and the field that needs
+  // correcting is the one a collapsed panel hides.
+  setPanel("source", true);
 }
 
 /**
- * Collapses the masthead and the link field once a sheet is in hand.
+ * Names the loaded sheet in panel 1's header and folds the panel away.
  *
- * Before one is, the page has a question to ask and asks it properly. After, the
- * two together are a quarter of the window spent on a question already answered,
- * while the row list — the surface you actually work on — is the thing running
- * out of room. The sheet picker and the deck name stay put: walking a workbook
- * means changing them.
+ * A panel that is shut has only its header left to say what is inside it, so the
+ * header carries the answer — and once the answer is there, the question is a
+ * quarter of the window spent on something already settled.
  */
-function collapseEntry(name, tab) {
-  $("#source").textContent = tab ? `${name} · ${tab}` : name;
-  $("#source").title = $("#source").textContent;
-  document.body.classList.add("loaded");
-}
-
-function expandEntry() {
-  document.body.classList.remove("loaded");
+function noteSource(name, tab) {
+  const text = tab ? `${name} · ${tab}` : name;
+  $("#source").textContent = text;
+  $("#source").title = text;
+  setPanel("source", false);
 }
 
 async function preview() {
@@ -470,7 +484,7 @@ function showUpload(index) {
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       `${upload.idBase}#${out.tab}`,
     );
-    collapseEntry(base, out.tabs.length ? out.tab : "");
+    noteSource(base, out.tabs.length ? out.tab : "");
   } catch (err) {
     failed(err.message);
   } finally {
@@ -889,13 +903,26 @@ function render() {
   const a = state.analysis;
   paintStatic();
   $("#app").hidden = false;
-  $("#summary").hidden = false;
   $("#summary").innerHTML = summaryLine(a);
   $("#tree").innerHTML = deckPanel(a);
   $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
   $("#tabs").innerHTML = tabBar();
   $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
+
+  // Each header says what its panel holds, because that sentence is all a shut
+  // panel has left.
+  const synced = a.rows.filter((r) => r.kind === "synced");
+  $("#deck-note").textContent = t(
+    "deckNote",
+    a.stats.sync_marked_lines,
+    a.stats.total_table_lines,
+    new Set(synced.map((r) => r.deck)).size,
+  );
+  const row = a.rows[state.row];
+  $("#card-note").textContent = row
+    ? t("cardNote", row.line, rowLabel(row, a.sides.front))
+    : "";
 
   // Above the working area rather than behind a drawer: a sheet that warns is
   // telling you the cards will come out wrong, which is the one thing on this
@@ -927,10 +954,17 @@ $("#entry-form").addEventListener("submit", (e) => {
   preview();
 });
 
-$("#change").addEventListener("click", () => {
-  expandEntry();
-  $("#url").focus();
-  $("#url").select();
+document.addEventListener("click", (e) => {
+  const head = e.target.closest(".panel-toggle");
+  if (!head) return;
+  const name = head.id.replace("-toggle", "").replace("src", "source");
+  setPanel(name, !state.panels[name]);
+  // Re-opening panel 1 means the link is about to be replaced, so put the cursor
+  // where the work is.
+  if (name === "source" && state.panels.source) {
+    $("#url").focus();
+    $("#url").select();
+  }
 });
 
 $("#deck").addEventListener("input", () => (deckNameEdited = true));
@@ -993,7 +1027,15 @@ document.addEventListener("click", (e) => {
   if (rowEl) {
     state.row = Number(rowEl.dataset.row);
     state.template = 0;
-    return render();
+    render();
+    // Stacked, the card is below a list long enough to scroll: picking a row is
+    // the moment you stop browsing and start reading, so the list folds away and
+    // the card comes to you. Side by side it is already on screen.
+    if (narrow()) {
+      setPanel("deck", false);
+      document.getElementById("p-card").scrollIntoView({ block: "start" });
+    }
+    return;
   }
   if (e.target.id === "apkg") return downloadPackage();
   if (e.target.id === "prev" || e.target.id === "next") {
@@ -1020,6 +1062,9 @@ addEventListener("message", (e) => {
 });
 
 paintStatic();
+// Written into the DOM rather than left implicit, so `data-open` and
+// `aria-expanded` say the same thing from the first paint.
+for (const name of Object.keys(state.panels)) setPanel(name, state.panels[name]);
 status(t("loading"), "", true);
 $("#url").value = new URLSearchParams(location.search).get("url") || DEMO_SHEET;
 

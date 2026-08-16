@@ -20,7 +20,6 @@ const STRINGS = {
     en: "See what your sheet becomes in Anki — decks, rows and cards — before you sync it.",
     vi: "Xem sheet của bạn thành gì trong Anki — deck, dòng và thẻ — trước khi sync.",
   },
-  entryTitle: { en: "Choose a sheet", vi: "Chọn sheet" },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
     vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",
@@ -39,8 +38,22 @@ const STRINGS = {
     vi: "hoặc thả file vào bất kỳ đâu trên trang.",
   },
   tabLabel: { en: "Sheet", vi: "Trang" },
-  sourceLabel: { en: "Source", vi: "Nguồn" },
-  change: { en: "Change", vi: "Đổi" },
+
+  // --- the three panels -----------------------------------------------------
+  // Each header doubles as what a shut panel has left to say, so the notes name
+  // what is inside rather than repeating the title.
+  panelSource: { en: "Source", vi: "Nguồn" },
+  panelDeck: { en: "Deck", vi: "Deck" },
+  panelCard: { en: "Card", vi: "Thẻ" },
+  deckNote: {
+    en: (sync, total, decks) =>
+      `${sync} of ${total} rows sync · ${decks} deck${decks === 1 ? "" : "s"}`,
+    vi: (sync, total, decks) => `${sync}/${total} dòng sẽ sync · ${decks} deck`,
+  },
+  cardNote: {
+    en: (line, label) => `Row ${line} — ${label}`,
+    vi: (line, label) => `Dòng ${line} — ${label}`,
+  },
   dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",

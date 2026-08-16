@@ -46,15 +46,22 @@ anywhere. It read as a debugger, and the people it is for are learning a languag
 - **One type scale, six steps, and one sans-serif family** for everything the page
   says. Monospace is kept for the strings that really did come out of a spreadsheet:
   column names, ids, tags, template source.
+- **Three panels, one job each, and every one of them folds.** *Source* — where the
+  sheet comes from. *Deck* — what it makes. *Card* — what one card looks like. Each
+  collapses to a header that says what is inside it (`demo · 14 Everything`, `6 of 7
+  rows sync · 3 decks`, `Row 3 — 北京`), so a folded panel still tells you something.
+  Panel 1 folds itself as soon as a sheet is in hand; on a wide screen, folding 2 or 3
+  hands the whole window to the other.
 - **The row list is the point, so it gets the room.** An Anki card is a narrow thing
-  however much room it is given, so the card sits in a capped column and the width goes
-  to the list you actually work in. Inside the sidebar the deck tree and the list both
+  however much room it is given, so the card column is capped at 46rem and the width
+  goes to the list you actually work in. Inside panel 2 the deck tree and the list both
   give way when the window is short, instead of a five-level hierarchy leaving the list
   two rows.
-- **The top collapses once a sheet is loaded.** The tagline and the link field become a
-  one-line `Source: name · sheet` with a *Change* button; the sheet picker and the deck
-  name stay, because walking a workbook means changing them. Together they were a
-  quarter of a 900px window spent on a question already answered.
+- **The page is mobile-first now, not a desktop layout with a fallback.** On a phone the
+  three panels simply stack and the page scrolls; tapping a row folds the list away and
+  brings the card up, because that is the moment you stop browsing and start reading.
+  The sheet picker sits in panel 1's header rather than its body, so it survives the
+  panel folding away.
 - **Warnings are a banner above the working area.** They used to be a small count on a
   collapsed drawer at the bottom of a scrolling sidebar — the most actionable thing on
   the page, hidden behind the most clicks.
