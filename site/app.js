@@ -946,7 +946,7 @@ function tabBar() {
     ).join("")}
     <span class="spacer"></span>
     <span class="nav">
-      <button id="prev" type="button" aria-label="${escapeHtml(t("prevRow"))}"
+      <button data-step="-1" type="button" aria-label="${escapeHtml(t("prevRow"))}"
               title="${escapeHtml(t("prevRow"))}">←</button>
       <span class="at">${at + 1} / ${visible.length}</span>
       <button id="next" type="button" aria-label="${escapeHtml(t("nextRow"))}"
@@ -1013,6 +1013,18 @@ function render() {
   $("#rowcount").textContent = `${visibleRows().length}`;
   $("#tabs").innerHTML = tabBar();
   $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
+
+  const shown = a.rows[state.row];
+  $("#cells").hidden = !shown;
+  if (shown) {
+    $("#cellhead").textContent = t("valueInRow", shown.line);
+    $("#celllist").innerHTML = rowCells(a);
+    for (const el of document.querySelectorAll(".stepper")) {
+      const back = el.dataset.step === "-1";
+      el.textContent = back ? "←" : "→";
+      el.title = el.ariaLabel = t(back ? "prevRow" : "nextRow");
+    }
+  }
 
   $("#columns").hidden = false;
   $("#colcount").textContent = `${a.plan.headers.length}`;
@@ -1094,6 +1106,37 @@ function columnRole(name, index, a) {
  * @returns {{name: string|null, field: string|null, deck: string|null,
  *            tags: boolean, stat: string|null}}
  */
+/**
+ * The chosen row, one line per column of the sheet.
+ *
+ * The obvious reading of "preview the sheet" is a grid, and a grid is the wrong
+ * shape for the people who use this: 14 columns on a phone is a sideways scroll
+ * inside a downwards one. It is also the wrong *question* — what people come to
+ * check is a row, and a row is a list.
+ *
+ * So this is one component at every width rather than a table that becomes
+ * something else below a breakpoint, and each line doubles as the way to open
+ * that column in the block above it.
+ */
+function rowCells(a) {
+  const row = a.rows[state.row];
+  if (!row) return "";
+  const first = new Map();
+  a.plan.headers.forEach((h, i) => first.has(h) || first.set(h, i));
+
+  return [...first]
+    .map(([name, i]) => {
+      const value = String(row.values[name] ?? "").trim();
+      return `<button class="cellrow${state.column === i ? " on" : ""}" data-col="${i}">
+        <span class="k">${escapeHtml(name)}</span>
+        <span class="v${value ? "" : " none"}">${escapeHtml(
+          value || t("cellEmpty"),
+        )}</span>
+      </button>`;
+    })
+    .join("");
+}
+
 /** True only while drawing the repaint that a column was just chosen on. */
 function popping() {
   return state.columnFlash ? " pop" : "";
@@ -1370,11 +1413,12 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (e.target.id === "apkg") return downloadPackage();
-  if (e.target.id === "prev" || e.target.id === "next") {
+  const stepper = e.target.closest("[data-step]");
+  if (stepper) {
     const visible = visibleRows();
     if (!visible.length) return;
     const at = visible.findIndex(({ i }) => i === state.row);
-    const step = e.target.id === "next" ? 1 : -1;
+    const step = Number(stepper.dataset.step);
     state.row = visible[(at + step + visible.length) % visible.length].i;
     return render();
   }

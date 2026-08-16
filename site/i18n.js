@@ -16,10 +16,6 @@ const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
   brandTag: { en: "preview", vi: "xem trước" },
   skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
-  tagline: {
-    en: "See what your sheet becomes in Anki — decks, rows and cards — before you sync it.",
-    vi: "Xem sheet của bạn thành gì trong Anki — deck, dòng và thẻ — trước khi sync.",
-  },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
     vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",

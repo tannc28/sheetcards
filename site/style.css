@@ -147,7 +147,6 @@ a { color: var(--accent); }
   text-transform: uppercase; color: var(--accent);
   vertical-align: .35em; margin-left: 2px;
 }
-.tagline { margin: 2px 0 0; font-size: var(--t-sm); color: var(--muted); }
 
 .langs {
   flex: none; display: flex;
@@ -354,7 +353,7 @@ select { cursor: pointer; }
 /* #columns lives in panel 1 rather than in .side, and without this it fell
    back to the browser's own h3 — 1.17em bold with a 1em margin above and below,
    which is most of a screenful of nothing on a phone. */
-.side h3, .stage-h, #columns h3 {
+.panel-body h3, .stage-h {
   margin: 0 0 8px;
   display: flex; align-items: baseline; gap: 8px;
   font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
@@ -489,6 +488,37 @@ h3.spaced { margin-top: 18px; }
   from { background: var(--accent-soft); border-color: var(--accent); }
 }
 .coldetail.flash { animation: s2a-colflash .6s ease-out; }
+
+/* ---- panel 1: the chosen row, cell by cell ------------------------------- */
+
+.rownav { margin-left: auto; display: flex; gap: 2px; }
+.stepper {
+  width: 24px; height: 22px; padding: 0; line-height: 1;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.stepper:hover { color: var(--accent); border-color: var(--accent); }
+
+/* A grid of name and value rather than a table of columns: it is the one shape
+   that reads the same on a phone and on a desktop, and the page never has to
+   scroll sideways to show it. */
+.cellrow {
+  display: grid; grid-template-columns: minmax(4.5rem, 7rem) 1fr; gap: 10px;
+  width: 100%; padding: 5px 8px; text-align: left;
+  background: transparent; color: var(--ink);
+  border: 0; border-radius: var(--r-sm);
+  font-size: var(--t-sm); font-weight: 400;
+}
+.cellrow:hover { background: var(--sunken); }
+.cellrow.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.cellrow .k {
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Wrapped rather than cut: a long cell is usually the one being checked, and
+   `anywhere` is what stops a URL from pushing the panel wider than the screen. */
+.cellrow .v { min-width: 0; overflow-wrap: anywhere; }
+.cellrow .v.none { color: var(--muted); font-style: italic; }
 
 /* ---- panel 3: the card --------------------------------------------------- */
 
@@ -692,7 +722,6 @@ iframe#card {
   .masthead { padding: 10px var(--pad); gap: 8px; flex-wrap: nowrap; }
   .brand { flex: 1 1 auto; }
   .brand h1 { font-size: var(--t-lg); }
-  .tagline { display: none; }
   .langs button { padding: 5px 9px; }
   a.ghost { padding: 6px 10px; }
 

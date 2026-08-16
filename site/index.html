@@ -16,7 +16,6 @@
 <header class="masthead">
   <div class="brand">
     <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
-    <p class="tagline" data-i18n="tagline">See what your sheet becomes in Anki.</p>
   </div>
 
   <nav id="langs" class="langs" aria-label="Language"></nav>
@@ -96,6 +95,18 @@
           <span class="count" id="colcount"></span></h3>
         <div id="collist" class="collist"></div>
         <div id="coldetail" aria-live="polite"></div>
+      </div>
+
+      <!-- The chosen row, cell by cell. Not a grid: a spreadsheet on a phone is
+           a sideways scroll inside a downwards one, and most people are on a
+           phone. One column of name/value reads the same at every width. -->
+      <div class="stack" id="cells" hidden>
+        <h3><span id="cellhead"></span>
+          <span class="rownav">
+            <button type="button" data-step="-1" class="stepper"></button>
+            <button type="button" data-step="1" class="stepper"></button>
+          </span></h3>
+        <div id="celllist"></div>
       </div>
     </div>
   </section>
