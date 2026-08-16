@@ -576,10 +576,12 @@ iframe#card {
   .app .panel-body > .tabs { flex: none; }
   #src-body { overflow: auto; overscroll-behavior: contain; }
 
-  /* The tree and the row list share the column and both give way when it is
-     short. A five-level hierarchy would otherwise take its full height on a
-     720px screen and leave the list two rows: the tree is what you glance at,
-     the list is what you work in, so the list keeps the larger floor. */
+  /* The tree keeps its own height up to a ceiling; the row list takes what is
+     left. Letting the tree shrink instead looked reasonable and was not: flex
+     spreads a deficit in proportion to how much each child asked for, so a list
+     of fifty rows asks for so much more than a five-deck tree that the tree is
+     squeezed to its floor and shows two of its five. The ceiling is what stops a
+     deep hierarchy from starving the list on a short screen. */
   .side {
     flex: 1 1 auto; min-height: 0;
     display: flex; flex-direction: column;
@@ -587,7 +589,7 @@ iframe#card {
   }
   .side > h3, .side > p { flex: none; }
   #tree {
-    flex: 0 1 auto; min-height: 4rem; max-height: 40vh;
+    flex: 0 0 auto; max-height: 35vh;
     overflow: auto; overscroll-behavior: contain;
   }
   #rowlist {
