@@ -210,12 +210,7 @@ const STRINGS = {
   tabFront: { en: "front", vi: "mặt trước" },
   tabBoth: { en: "both", vi: "cả hai" },
   tabBack: { en: "back", vi: "mặt sau" },
-  tabFlow: { en: "row → card", vi: "dòng → thẻ" },
   tabTemplate: { en: "template", vi: "template" },
-  flowReplay: { en: "▶ replay", vi: "▶ chạy lại" },
-  flowKey: { en: "note key", vi: "khoá note" },
-  flowGate: { en: "SYNC gate", vi: "cổng SYNC" },
-  flowFields: { en: "note fields", vi: "field của note" },
   prevRow: { en: "Previous row", vi: "Dòng trước" },
   nextRow: { en: "Next row", vi: "Dòng sau" },
 

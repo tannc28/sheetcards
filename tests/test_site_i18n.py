@@ -74,9 +74,9 @@ def _keys_called():
 def _tab_keys():
     """The keys tabBar() builds, read off ``CARD_TABS`` rather than listed here.
 
-    Spelled out by hand, this was a list that could only ever go stale: adding a
-    tab left its string looking like dead weight, and the failure named the new
-    key rather than the stale test.
+    Spelled out by hand this was a list that could only go stale: adding a tab
+    left its string looking like dead weight, and the failure named the new key
+    rather than the test that had not kept up.
     """
     text = (SITE / "app.js").read_text(encoding="utf-8")
     match = re.search(r"const CARD_TABS = \[(.*?)\]", text, re.S)

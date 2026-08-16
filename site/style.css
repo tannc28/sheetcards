@@ -533,67 +533,6 @@ iframe#card {
 }
 @media (prefers-color-scheme: dark) { iframe#card { background: #1b1f25; } }
 
-/* ---- the stage: a row on its way to a deck and a card -------------------- */
-
-.flow-head {
-  display: flex; align-items: baseline; gap: 10px;
-  margin: 0 0 10px; font-size: var(--t-xs); color: var(--muted);
-  letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
-}
-.flow-head .mono { font-family: var(--mono); letter-spacing: 0; text-transform: none; }
-.flow-head button { margin-left: auto; text-transform: none; letter-spacing: 0; }
-
-/* The row as it arrives: value above, column under it, because the value is
-   what you are following and the header is only there to say where it came
-   from. */
-.flow-cells { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
-.fcell {
-  display: flex; flex-direction: column; gap: 1px;
-  padding: 5px 9px; max-width: 12rem;
-  background: var(--sunken); border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-}
-.fcell b { font-size: var(--t-sm); font-weight: 500; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; }
-.fcell i {
-  font-family: var(--mono); font-style: normal;
-  font-size: var(--t-xs); color: var(--muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.fcell .none, .fdest.none { color: var(--muted); font-style: italic; }
-
-.flow-out { display: flex; flex-direction: column; gap: 14px; }
-.fgroup h4, .fside h5 {
-  margin: 0 0 5px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
-}
-.frow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
-.fdest {
-  padding: 4px 10px; font-size: var(--t-sm);
-  background: var(--accent-soft); color: var(--accent);
-  border-radius: var(--r-sm);
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.frow > .fdest { max-width: 22rem; }
-.fdest.tag { font-family: var(--mono); font-size: var(--t-xs); border-radius: 999px; }
-.fdest.ok { background: transparent; color: var(--ok); border: 1px solid var(--ok); }
-.fdest.bad { background: var(--bad-soft); color: var(--bad); }
-.fsep { color: var(--muted); font-family: var(--mono); }
-.fside { flex: 1 1 12rem; min-width: 0; }
-.fside .fdest { display: block; margin-bottom: 4px; }
-
-/* Where a row stops, and why. Red because it is the answer to "why did nothing
-   sync", which is what most people came here to ask. */
-.fstop {
-  margin: 0; padding: 9px 12px;
-  font-size: var(--t-sm); border-radius: var(--r-md);
-  background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad);
-}
-
-.flow-card { margin-top: 20px; }
-.flow-card .stagebox { max-width: none; }
-
 .note {
   margin: 12px 0 0; padding: 9px 12px;
   font-size: var(--t-sm); line-height: 1.5; border-radius: var(--r-md);
