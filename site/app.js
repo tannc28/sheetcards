@@ -152,18 +152,36 @@ const state = {
 
 const PANEL_ID = { source: "p-source", deck: "p-deck", card: "p-card" };
 
+const WIDE = matchMedia("(min-width: 56rem)");
 /** True on the layout where the panels are stacked rather than side by side. */
-const narrow = () => matchMedia("(max-width: 55.99rem)").matches;
+const narrow = () => !WIDE.matches;
 
 function setPanel(name, open) {
   state.panels[name] = open;
   const el = document.getElementById(PANEL_ID[name]);
   el.dataset.open = String(open);
   el.querySelector(".panel-toggle").setAttribute("aria-expanded", String(open));
-  // The grid needs to know, because collapsing one pane drops the two-column
-  // split and hands the window to the other.
-  if (name !== "source") document.body.classList.toggle(`${name}-closed`, !open);
 }
+
+/**
+ * Folding is a narrow-screen affordance.
+ *
+ * Side by side there is nothing to fold away — all three columns are already in
+ * view — so the headers become plain labels: out of the tab order, and saying so
+ * rather than announcing a button that will not do anything. Stacked, the three
+ * columns are three screenfuls on top of each other and folding is the only way
+ * to reach the third without scrolling past the first two.
+ */
+function applyWidth() {
+  const wide = WIDE.matches;
+  for (const id of Object.values(PANEL_ID)) {
+    const toggle = document.querySelector(`#${id} .panel-toggle`);
+    toggle.tabIndex = wide ? -1 : 0;
+    toggle.setAttribute("aria-disabled", String(wide));
+  }
+  if (wide) for (const name of Object.keys(state.panels)) setPanel(name, true);
+}
+WIDE.addEventListener("change", applyWidth);
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 let buildPackage = null;
@@ -349,25 +367,27 @@ function analyse(tsv, deckName, sheetId) {
 
 function failed(message) {
   status(message, "bad");
-  $("#app").hidden = true;
+  document.body.classList.remove("ready");
+  $("#p-deck").hidden = true;
+  $("#p-card").hidden = true;
   $("#warnbar").hidden = true;
   // Back open: something has to be corrected, and the field that needs
-  // correcting is the one a collapsed panel hides.
+  // correcting is the one a folded panel hides.
   setPanel("source", true);
 }
 
 /**
- * Names the loaded sheet in panel 1's header and folds the panel away.
+ * Names the loaded sheet in panel 1's header.
  *
- * A panel that is shut has only its header left to say what is inside it, so the
- * header carries the answer — and once the answer is there, the question is a
- * quarter of the window spent on something already settled.
+ * A folded panel has only its header left to say what is inside it, so the
+ * header carries the answer — and stacked, once the answer is there, the
+ * question is a screenful in front of the two panels you came to read.
  */
 function noteSource(name, tab) {
   const text = tab ? `${name} · ${tab}` : name;
   $("#source").textContent = text;
   $("#source").title = text;
-  setPanel("source", false);
+  if (narrow()) setPanel("source", false);
 }
 
 async function preview() {
@@ -902,7 +922,9 @@ function paintStatic() {
 function render() {
   const a = state.analysis;
   paintStatic();
-  $("#app").hidden = false;
+  document.body.classList.add("ready");
+  $("#p-deck").hidden = false;
+  $("#p-card").hidden = false;
   $("#summary").innerHTML = summaryLine(a);
   $("#tree").innerHTML = deckPanel(a);
   $("#rowlist").innerHTML = rowList();
@@ -956,7 +978,7 @@ $("#entry-form").addEventListener("submit", (e) => {
 
 document.addEventListener("click", (e) => {
   const head = e.target.closest(".panel-toggle");
-  if (!head) return;
+  if (!head || !narrow()) return;
   const name = head.id.replace("-toggle", "").replace("src", "source");
   setPanel(name, !state.panels[name]);
   // Re-opening panel 1 means the link is about to be replaced, so put the cursor
@@ -1065,6 +1087,7 @@ paintStatic();
 // Written into the DOM rather than left implicit, so `data-open` and
 // `aria-expanded` say the same thing from the first paint.
 for (const name of Object.keys(state.panels)) setPanel(name, state.panels[name]);
+applyWidth();
 status(t("loading"), "", true);
 $("#url").value = new URLSearchParams(location.search).get("url") || DEMO_SHEET;
 

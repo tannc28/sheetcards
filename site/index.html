@@ -23,64 +23,6 @@
   <a class="ghost" href="https://github.com/tannc28/sheets2anki" rel="noopener">GitHub</a>
 </header>
 
-<!-- Three panels, one job each: where the sheet comes from, what deck it makes,
-     what one card looks like. Each collapses to its own header, which is what
-     makes the page work on a phone — and what lets a wide screen give the whole
-     window to whichever of the three you are actually reading. -->
-
-<section class="panel" id="p-source">
-  <h2 class="panel-head">
-    <button class="panel-toggle" id="src-toggle" aria-expanded="true" aria-controls="src-body">
-      <span class="chev" aria-hidden="true"></span>
-      <span class="step" aria-hidden="true">1</span>
-      <span class="panel-name" data-i18n="panelSource">Source</span>
-      <span class="panel-note" id="source"></span>
-    </button>
-
-    <!-- Outside the toggle, so it survives the panel folding away: walking a
-         workbook means changing this, and a select cannot live inside a button
-         anyway. -->
-    <span class="head-extra" id="tabfield" hidden>
-      <label for="tabpick" class="sr-only" data-i18n="tabLabel">Sheet</label>
-      <select id="tabpick"></select>
-    </span>
-  </h2>
-
-  <div class="panel-body" id="src-body">
-    <div class="entry-row">
-      <form id="entry-form" class="entry-main">
-        <p class="field grow">
-          <label for="url" data-i18n="urlLabel">Sheet link</label>
-          <input id="url" name="url" type="url" spellcheck="false" autocomplete="off"
-                 enterkeyhint="go" data-i18n-attr="placeholder:urlPlaceholder">
-        </p>
-        <p class="field submit">
-          <button id="go" type="submit" data-i18n="go" disabled>Preview</button>
-        </p>
-      </form>
-
-      <p class="field">
-        <label for="deck" data-i18n="deckLabel">Deck name</label>
-        <input id="deck" name="deck" type="text" spellcheck="false" autocomplete="off"
-               enterkeyhint="done" data-i18n-attr="placeholder:deckPlaceholder">
-      </p>
-
-      <p class="entry-alt">
-        <span class="pickline">
-          <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
-                 data-i18n-attr="aria-label:pickLabel">
-          <button id="pick" class="linky" type="button" disabled
-                  data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
-          <span data-i18n="orDrop">or drop one anywhere on this page.</span>
-        </span>
-        <span id="status" class="status" role="status" aria-live="polite">
-          <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
-        </span>
-      </p>
-    </div>
-  </div>
-</section>
-
 <p id="demo-note" class="demo-note" data-i18n="demoNote" hidden></p>
 
 <section id="warnbar" class="warnbar" hidden aria-labelledby="warnbar-title">
@@ -91,9 +33,64 @@
   <p class="muted small" data-i18n="warningsFrom"></p>
 </section>
 
-<main id="app" class="app" hidden>
+<!-- Three columns, one job each: where the sheet comes from, what deck it makes,
+     what one card looks like. Side by side on a wide screen, because all three
+     are things you look at while changing one of the others. On a phone there is
+     no side by side, so they stack and each folds to its own header instead. -->
 
-  <section class="panel" id="p-deck">
+<main id="app" class="app">
+
+  <section class="panel" id="p-source">
+    <h2 class="panel-head">
+      <button class="panel-toggle" id="src-toggle" aria-expanded="true" aria-controls="src-body">
+        <span class="chev" aria-hidden="true"></span>
+        <span class="step" aria-hidden="true">1</span>
+        <span class="panel-name" data-i18n="panelSource">Source</span>
+        <span class="panel-note" id="source"></span>
+      </button>
+    </h2>
+
+    <div class="panel-body" id="src-body">
+      <form id="entry-form" class="stack">
+        <p class="field">
+          <label for="url" data-i18n="urlLabel">Sheet link</label>
+          <input id="url" name="url" type="url" spellcheck="false" autocomplete="off"
+                 enterkeyhint="go" data-i18n-attr="placeholder:urlPlaceholder">
+        </p>
+        <p class="field submit">
+          <button id="go" class="btn" type="submit" data-i18n="go" disabled>Preview</button>
+        </p>
+      </form>
+
+      <div class="stack">
+        <p class="field" id="tabfield" hidden>
+          <label for="tabpick" data-i18n="tabLabel">Sheet</label>
+          <select id="tabpick"></select>
+        </p>
+
+        <p class="field">
+          <label for="deck" data-i18n="deckLabel">Deck name</label>
+          <input id="deck" name="deck" type="text" spellcheck="false" autocomplete="off"
+                 enterkeyhint="done" data-i18n-attr="placeholder:deckPlaceholder">
+        </p>
+
+        <p class="entry-alt">
+          <span class="pickline">
+            <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+                   data-i18n-attr="aria-label:pickLabel">
+            <button id="pick" class="linky" type="button" disabled
+                    data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
+            <span data-i18n="orDrop">or drop one anywhere on this page.</span>
+          </span>
+          <span id="status" class="status" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+          </span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-deck" hidden>
     <h2 class="panel-head">
       <button class="panel-toggle" id="deck-toggle" aria-expanded="true" aria-controls="deck-body">
         <span class="chev" aria-hidden="true"></span>
@@ -115,14 +112,14 @@
         <div id="rowlist"></div>
 
         <div class="side-foot">
-          <button id="apkg" class="apkg-btn" type="button"
+          <button id="apkg" class="btn apkg-btn" type="button"
                   data-i18n="downloadApkg" data-i18n-attr="title:apkgTitle"></button>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="panel" id="p-card">
+  <section class="panel" id="p-card" hidden>
     <h2 class="panel-head">
       <button class="panel-toggle" id="card-toggle" aria-expanded="true" aria-controls="card-body">
         <span class="chev" aria-hidden="true"></span>

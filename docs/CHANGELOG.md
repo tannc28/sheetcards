@@ -25,6 +25,30 @@ workbook's own link, which the README hands you, was rejected.
 `tests/test_add_deck_dialog_urls.py` covers the gate itself rather than the URL
 helpers underneath it — the helpers were never wrong.
 
+### The preview site is three columns
+
+v6.13.0 gave the card a pane of its own opposite the deck, and the card spent it on
+empty ground: a card is a narrow thing however much room it is given, so a 46rem card
+sat in a 70rem stage with two hundred pixels of nothing either side, while the row
+list — the surface the work actually happens on — was squeezed against it.
+
+- **Source, Deck, Card, side by side.** Each is something you look at while changing
+  one of the others: switch the sheet and the deck tree and the card both answer
+  without anything leaving the screen. The card is capped rather than stretched, and
+  the two columns in front of it are sized for the form and the list they hold.
+- **The whole top bar is gone.** The link field, the sheet picker and the deck name are
+  column 1 rather than a band above everything, so nothing is spent on a question
+  already answered and nothing has to fold on a desktop to get the room back.
+- **On a phone the three columns stack and each folds to its header**, which says what
+  is inside it (`demo · 14 Everything`, `6 of 7 rows sync · 3 decks`, `Row 3 — 北京`).
+  The first folds itself once a sheet is loaded, and tapping a row folds the list away
+  and brings the card up — that is the moment you stop browsing and start reading.
+- Two layout defects went with it: a grid item's `min-height: auto` let the card column
+  grow past the bottom of a window that does not scroll, putting the row list out of
+  reach with no scrollbar anywhere; and a filled `button:hover` default out-specified
+  every quiet button's own hover, so row list entries turned solid accent under the
+  pointer. The filled look is opt-in now.
+
 ---
 
 ## ✨ **v6.13.0** - August 2026 *(Feature)*

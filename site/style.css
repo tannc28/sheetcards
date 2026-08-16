@@ -53,11 +53,13 @@
 
   --shadow: 0 1px 2px rgb(16 22 32 / .05), 0 6px 20px -8px rgb(16 22 32 / .12);
 
-  /* An Anki card is a narrow thing however much room it is given, so the card
-     column is capped and the width goes to the row list, which is the surface you
-     actually work in. */
+  /* Three columns: the source, the deck it makes, the card it makes. The first
+     two are forms and lists and want a fixed, readable width; the third takes
+     what is left, and an Anki card is a narrow thing however much room it is
+     given, so it is capped rather than stretched. */
+  --src-w: clamp(13rem, 18vw, 19rem);
+  --deck-w: clamp(15rem, 21vw, 23rem);
   --card-w: 46rem;
-  --side-w: clamp(19rem, 30vw, 32rem);
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
@@ -175,13 +177,6 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
   margin: 0; font-size: inherit; font-weight: inherit;
   display: flex; align-items: center; min-width: 0;
 }
-.head-extra {
-  flex: none; min-width: 0;
-  padding-right: max(var(--pad), env(safe-area-inset-right));
-}
-.head-extra[hidden] { display: none; }
-.head-extra select { width: 12rem; max-width: 40vw; padding: 5px 8px; font-size: var(--t-sm); }
-
 .panel-toggle {
   flex: 1 1 auto; min-width: 0;
   display: flex; align-items: center; gap: 9px;
@@ -226,39 +221,41 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
 }
 .panel-toggle[aria-expanded="true"] .step { background: var(--accent-soft); color: var(--accent); }
 
-.panel[data-open="false"] > .panel-body { display: none; }
-
 /* ---- panel 1: the source ------------------------------------------------- */
 
-#src-body { padding: 0 var(--pad) 14px; }
-.entry-row, .entry-main {
-  display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin: 0;
-}
-.entry-main { flex: 1 1 26rem; min-width: 0; }
-.field { display: flex; flex-direction: column; gap: 4px; margin: 0; flex: 1 1 11rem; }
-.field.grow { flex: 1 1 22rem; min-width: 0; }
-.field.submit { flex: none; align-self: flex-end; }
+#src-body { padding: 4px var(--pad) 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; margin: 0 0 12px; }
+.stack:last-child { margin-bottom: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; margin: 0; min-width: 0; }
 .field label {
   font-size: var(--t-xs); font-weight: 600; letter-spacing: .02em; color: var(--muted);
 }
 #tabfield[hidden] { display: none; }
 
 .entry-alt {
-  flex: 1 1 16rem; min-width: 0;
-  display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
   margin: 0; font-size: var(--t-sm); color: var(--muted);
 }
-.pickline { display: inline-flex; align-items: baseline; gap: 6px; }
+.pickline { display: inline; }
 
+/* Bare `button` is only reset, never styled: a filled default meant every rule
+   that wanted a quiet button — the panel headers, the row list, the language
+   picker — had to out-specify `button:hover`, and the ones that did not turned
+   solid accent under the pointer. The filled look is opt-in through `.btn`. */
 button {
-  font: inherit; font-size: var(--t-sm); font-weight: 600;
-  padding: 9px 18px; cursor: pointer;
-  border: 1px solid transparent; border-radius: var(--r-sm);
-  background: var(--accent); color: var(--accent-ink);
+  font: inherit; padding: 0; cursor: pointer;
+  background: none; color: inherit; border: 0; border-radius: var(--r-sm);
   transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
-button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 86%, var(--ink)); }
 button:disabled { opacity: .45; cursor: default; }
+
+.btn {
+  font-size: var(--t-sm); font-weight: 600;
+  padding: 9px 18px;
+  border: 1px solid transparent;
+  background: var(--accent); color: var(--accent-ink);
+}
+.btn:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 86%, var(--ink)); }
 
 button.linky {
   padding: 0; border: 0; background: none;
@@ -524,12 +521,13 @@ iframe#card {
 .dropzone strong { font-size: var(--t-lg); }
 .dropzone span { font-size: var(--t-sm); color: var(--muted); }
 
-/* ---- wide: the deck and the card become two panes ------------------------ */
+/* ---- wide: three columns ------------------------------------------------- */
 
-/* Below this the three panels are just three stacked, collapsible sections and
-   the page scrolls, because a phone has no room for nested scrollers. Above it
-   the window is filled instead: panels 2 and 3 sit side by side and scroll
-   inside themselves, and collapsing either hands the whole window to the other. */
+/* Below this the three panels are three stacked, collapsible sections and the
+   page scrolls, because a phone has no room for side by side and none for nested
+   scrollers either. Above it the window is filled: the three sit as columns and
+   each scrolls inside itself, so changing the sheet, picking a row and reading
+   the card never take anything else off the screen. */
 @media (min-width: 56rem) {
   html, body { height: 100%; }
   body { display: flex; flex-direction: column; overflow: hidden; }
@@ -541,24 +539,13 @@ iframe#card {
   .app {
     flex: 1 1 auto; min-height: 0;
     display: grid;
-    grid-template-columns: var(--side-w) minmax(0, 1fr);
+    /* Only column 1 until there is a sheet: the other two have nothing in them
+       yet, and an empty pane is not a preview. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
-  .app[hidden] { display: none; }
-
-  /* Collapsing one panel drops the two-column split entirely and gives the
-     window to the other, which is the point of a header you can press. */
-  body.deck-closed .app {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-  body.card-closed .app {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-  body.deck-closed.card-closed .app {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
+  body.ready .app {
+    grid-template-columns: var(--src-w) var(--deck-w) minmax(0, 1fr);
   }
 
   .app > .panel {
@@ -566,10 +553,19 @@ iframe#card {
     border-bottom: 0;
   }
   .app > .panel + .panel { border-left: 1px solid var(--line); }
-  body.deck-closed .app > .panel + .panel,
-  body.card-closed .app > .panel + .panel {
-    border-left: 0; border-top: 1px solid var(--line);
-  }
+  .app > .panel[hidden] { display: none; }
+
+  /* Side by side there is nothing to fold away — every column is already in
+     view, so the headers are labels. The toggles are taken out of the tab order
+     in app.js to match. */
+  .app .panel-toggle { cursor: default; }
+  .app .panel-toggle:hover { background: transparent; }
+  .app .chev { display: none; }
+
+  /* A note earns its place only when the panel might be shut. Open, in a 16rem
+     column, these two just repeat the body underneath them with an ellipsis on
+     the end; the card's names the row, which its own column has room for. */
+  #p-source .panel-note, #p-deck .panel-note { display: none; }
 
   .app .panel-head { flex: none; }
   .app .panel-body {
@@ -578,11 +574,12 @@ iframe#card {
   }
   .app .panel-body > .summary,
   .app .panel-body > .tabs { flex: none; }
+  #src-body { overflow: auto; overscroll-behavior: contain; }
 
-  /* The tree and the row list share the pane and both give way when it is short.
-     A five-level hierarchy would otherwise take its full height on a 720px
-     screen and leave the list two rows: the tree is what you glance at, the list
-     is what you work in, so the list keeps the larger floor. */
+  /* The tree and the row list share the column and both give way when it is
+     short. A five-level hierarchy would otherwise take its full height on a
+     720px screen and leave the list two rows: the tree is what you glance at,
+     the list is what you work in, so the list keeps the larger floor. */
   .side {
     flex: 1 1 auto; min-height: 0;
     display: flex; flex-direction: column;
@@ -602,7 +599,7 @@ iframe#card {
   #view { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 }
 
-/* ---- narrow -------------------------------------------------------------- */
+/* ---- narrow: three stacked, foldable sections ---------------------------- */
 
 @media (max-width: 55.99rem) {
   /* The masthead on one line. Wrapped, the tagline threaded itself around the
@@ -615,10 +612,13 @@ iframe#card {
   .langs button { padding: 5px 9px; }
   a.ghost { padding: 6px 10px; }
 
+  /* Folding is a narrow-screen affordance: it exists because the three columns
+     have become three screenfuls stacked on top of each other. */
+  .panel[data-open="false"] > .panel-body { display: none; }
+  .panel[hidden] { display: none; }
+
   /* Room to press with a thumb, and the panel header is the main control here. */
   .panel-toggle { padding-top: 12px; padding-bottom: 12px; }
-  .field.submit, .field.submit button { width: 100%; flex-basis: 100%; }
-  .field.grow { flex-basis: 100%; }
   /* Long enough to be worth scrolling past, short enough to still see the card
      header underneath it. */
   #rowlist { max-height: 60vh; overflow: auto; overscroll-behavior: contain; }
