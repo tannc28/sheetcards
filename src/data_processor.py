@@ -878,7 +878,7 @@ def create_new_note(
         # Determine target subdeck
         add_debug_msg(f"Determining target deck for note: {note_id}")
         target_deck_id = determine_target_deck(
-            col, deck_id, note_data, plan, deck_url, debug_messages
+            col, deck_id, note_data, plan, deck_url, sheet_config, debug_messages
         )
         add_debug_msg(f"Target deck determined: {target_deck_id}")
 
@@ -1118,7 +1118,13 @@ def update_existing_note(
         if cards:
             current_deck_id = cards[0].did
             target_deck_id = determine_target_deck(
-                col, current_deck_id, new_data, plan, deck_url, debug_messages
+                col,
+                current_deck_id,
+                new_data,
+                plan,
+                deck_url,
+                sheet_config,
+                debug_messages,
             )
 
             if current_deck_id != target_deck_id:
@@ -1183,13 +1189,14 @@ def fill_note_fields(note, note_data, plan):
 
 
 def determine_target_deck(
-    col, base_deck_id, note_data, plan, deck_url, debug_messages=None
+    col, base_deck_id, note_data, plan, deck_url, sheet_config=None, debug_messages=None
 ):
     """
     Determines the target subdeck for a note.
 
-    The path is "s2a_{remote deck name}" followed by the row's SUBDECK
-    levels, so a sheet without SUBDECK columns keeps every note in the deck root.
+    The path is "s2a_{remote deck name}" followed by the row's deck levels — the
+    reserved SUBDECK columns, or the content columns the settings row marked with
+    ``subdeck=n`` — so a sheet that names neither keeps every note in the deck root.
 
     Args:
         col: Anki collection
@@ -1223,7 +1230,7 @@ def determine_target_deck(
         # Create base deck following pattern: s2a_{remote_deck_name}
         deck_with_remote_name = deck_root_name(remote_deck_name)
         subdeck_name = get_subdeck_name(
-            deck_with_remote_name, deck_path(note_data, plan)
+            deck_with_remote_name, deck_path(note_data, plan, sheet_config)
         )
         subdeck_id = ensure_subdeck_exists(subdeck_name)
 

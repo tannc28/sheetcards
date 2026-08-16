@@ -60,6 +60,7 @@ _FIELD_KEYS = (
     "furigana",
     "cloze",
     "draw",
+    "subdeck",
 )
 _FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw")
 _DECK_KEYS = ("align", "speed", "reverse")

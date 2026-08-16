@@ -167,7 +167,7 @@ def clean_tag_text(text):
     return cleaned.lower()
 
 
-def build_tags(note_data, plan):
+def build_tags(note_data, plan, sheet_config=None):
     """Builds the tag list for one row.
 
     Three kinds of tag, and no placeholders for anything the row left blank:
@@ -180,7 +180,7 @@ def build_tags(note_data, plan):
     """
     tags = [TAG_ROOT]
 
-    path = [clean_tag_text(level) for level in deck_path(note_data, plan)]
+    path = [clean_tag_text(level) for level in deck_path(note_data, plan, sheet_config)]
     path = [level for level in path if level]
     if path:
         tags.append(f"{TAG_ROOT}::" + "::".join(path))
@@ -652,7 +652,7 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
                 continue
 
             # Attach the tags this row will carry
-            note_data["tags"] = build_tags(note_data, plan)
+            note_data["tags"] = build_tags(note_data, plan, sheet_config)
 
         except Exception as e:
             add_debug_msg(f"Error processing row {sheet_row}: {e}")

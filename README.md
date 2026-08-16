@@ -178,7 +178,7 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `08 Audio` | `audio`, listen-then-recall |
 | `09 Video` | every YouTube link form the add-on rewrites, plus a direct file |
 | `10 Speech` | `tts=zh_CN`, deck-wide `speed`, a per-column `speed` override |
-| `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card |
+| `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` on a column that is *also* printed on it |
 | `12 Chinese drawing` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Japanese furigana` | `furigana` over kanji |
 | `14 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
@@ -366,6 +366,37 @@ Written in that column's cell of the settings row.
 | `type` | switch, or `type=nc` | off | Anki draws a box on the question and diffs what you type against this column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`. One column per sheet |
 | `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
 | `draw` | switch | off | The column holds a **Chinese character**, and the card turns it into a writing box: on the question you draw it stroke by stroke and each stroke is marked, on the answer the correct strokes are animated. `size` is the side of the box in pixels — see below |
+| `subdeck` | a level number (`subdeck=1`) | off | This column is that level of the **deck path**, exactly as a `SUBDECK n` header would be — except the column stays an ordinary field and still renders on the card. See below |
+
+#### Filing notes with a column you also show (`subdeck`)
+
+A `SUBDECK n` column can only ever file the note: it is reserved, so it never
+becomes a field and never appears on a card. If you want a value to be *both* —
+the HSK level in the deck name and printed on the card — you used to have to type
+it into the sheet twice, in two columns.
+
+`subdeck=n` says the same thing from the column's own settings cell, and the
+column stays what it was:
+
+```text
+ID       Level                        Word   Meaning
+#config  subdeck=1; size=14           size=48
+w01      HSK 1                        写     to write
+w02      HSK 2                        山     mountain
+```
+
+→ `s2a_{file}::{sheet}::HSK 1`, with `Level` still a field you can style, hide or
+speak like any other. `side=hide` keeps it off the card while it still files the
+note.
+
+- **The number is the level**, exactly as in `SUBDECK 1` / `SUBDECK 2`, so the
+  order comes from the numbers rather than from where the columns sit.
+- **An empty cell drops that level**, same as an empty `SUBDECK` cell.
+- **Two columns cannot be the same level**, and a column holding a URL
+  (`image`/`audio`/`video`) cannot be a deck level at all — both say so.
+- **A sheet that uses both wins with the settings row**, and names the reserved
+  `SUBDECK` columns it is overruling, because a deck quietly not appearing is not
+  something anyone thinks to go looking for.
 
 #### Writing a character by hand (`draw`)
 

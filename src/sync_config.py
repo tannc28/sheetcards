@@ -20,6 +20,7 @@ from .column_model import IDENTIFIER
 from .column_model import plan_columns
 from .sheet_config import FieldConfig
 from .sheet_config import SheetConfig
+from .sheet_config import resolve_roles
 
 try:
     from .compat import mw
@@ -119,6 +120,14 @@ def from_dict(stored):
             for header, data in fields.items()
             if header in headers
         }
+
+    # `cloze_field`, `type_field` and `subdeck_columns` are derived from the
+    # columns rather than stored, so a cache entry that only carried the per-column
+    # settings came back with all three unset — and a note type rebuilt from it
+    # rendered a cloze sheet with no `{{cloze:}}` in its template, which Anki
+    # refuses to save. Derived here by the same function the parser uses, with no
+    # warn callback because the complaints were recorded when the sheet was read.
+    resolve_roles(sheet_config, headers)
 
     return plan, sheet_config
 

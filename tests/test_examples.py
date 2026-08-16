@@ -173,6 +173,8 @@ def test_the_tour_covers_every_directive(sheets):
                 used.add("speed")
             if field.media:
                 used.add(field.media)
+            if field.subdeck:
+                used.add("subdeck")
 
     expected = {
         "deck align",
@@ -193,6 +195,7 @@ def test_the_tour_covers_every_directive(sheets):
         "cloze",
         "type",
         "draw",
+        "subdeck",
         *MEDIA_KINDS,
     }
     assert expected - used == set(), f"no example uses: {sorted(expected - used)}"
@@ -200,10 +203,11 @@ def test_the_tour_covers_every_directive(sheets):
 
 @pytest.mark.unit
 def test_the_reserved_columns_are_all_demonstrated(sheets):
-    roles = {"sync": False, "tags": False, "subdeck3": False}
+    roles = {"sync": False, "tags": False, "subdeck3": False, "subdeck1": False}
     for _, deck in sheets:
         roles["sync"] |= deck.plan.sync_header is not None
         roles["tags"] |= deck.plan.tags_header is not None
+        roles["subdeck1"] |= len(deck.plan.subdeck_headers) >= 1
         roles["subdeck3"] |= len(deck.plan.subdeck_headers) >= 3
     assert all(roles.values()), f"not demonstrated: {roles}"
 

@@ -128,8 +128,13 @@ The character-writing deck, and the sheet that shows what these directives are
 for. The prompt is the meaning and the pinyin; `type` on the `Hanzi` column asks
 you to write the character and diffs it stroke for stroke; the answer then shows
 the character large, speaks it, and hides a **stroke-order animation** behind a
-`hint` so you only look when you did not know. `SUBDECK 1` splits it by HSK
-level and `TAGS` adds the same as tags. 25 characters.
+`hint` so you only look when you did not know. 25 characters.
+
+`Level` is the one to look at twice: `subdeck=1` makes it the first level of the
+deck path — `…::HSK 1`, `…::HSK 2` — while it stays an ordinary column and prints
+on the card under its own label. A reserved `SUBDECK 1` column could do the
+filing but never the printing, so this value would have had to be typed into the
+sheet twice.
 
 ### 12 Chinese drawing
 

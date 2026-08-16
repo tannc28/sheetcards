@@ -881,3 +881,99 @@ class TestDrawnColumn:
         _, config = self._templates("draw; tts=zh_CN")
         assert config.for_field("Word").tts == "zh_CN"
         assert not config.warnings
+
+
+@pytest.mark.unit
+class TestDeckFromAColumn:
+    """``subdeck=n`` — an ordinary column that also files the note."""
+
+    def _levels(self, cells, headers=None):
+        plan = _plan(headers) if headers else _plan()
+        return plan, _config(plan, cells)
+
+    def test_a_column_becomes_a_level_of_the_deck_path(self):
+        from src.column_model import deck_path
+
+        plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=2"})
+        assert config.subdeck_columns == ["Word", "Reading"]
+        row = {"Word": "HSK 1", "Reading": "Verbs", "Meaning": "x"}
+        assert deck_path(row, plan, config) == ["HSK 1", "Verbs"]
+
+    def test_the_level_number_orders_the_path_not_the_column_position(self):
+        from src.column_model import deck_path
+
+        plan, config = self._levels({"Word": "subdeck=2", "Reading": "subdeck=1"})
+        assert config.subdeck_columns == ["Reading", "Word"]
+        row = {"Word": "Verbs", "Reading": "HSK 1"}
+        assert deck_path(row, plan, config) == ["HSK 1", "Verbs"]
+
+    def test_the_column_is_still_a_field_on_the_card(self):
+        # The whole reason this exists: a reserved SUBDECK column can only file
+        # the note, so a value wanted in both places had to be typed twice.
+        plan, config = self._levels({"Word": "subdeck=1"})
+        assert "{{Word}}" in build_templates(plan, config)[0]["qfmt"]
+        assert "Word" in plan.note_type_fields()
+
+    def test_it_can_be_kept_off_the_card_the_ordinary_way(self):
+        plan, config = self._levels({"Word": "subdeck=1; side=hide"})
+        assert config.subdeck_columns == ["Word"]
+        for template in build_templates(plan, config):
+            assert "{{Word}}" not in _both(template)
+
+    def test_an_empty_cell_drops_that_level(self):
+        from src.column_model import deck_path
+
+        plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=2"})
+        assert deck_path({"Word": "HSK 1", "Reading": ""}, plan, config) == ["HSK 1"]
+
+    def test_a_sheet_that_says_nothing_still_uses_the_reserved_columns(self):
+        from src.column_model import deck_path
+        from src.column_model import plan_columns
+
+        plan = plan_columns(["ID", "SUBDECK 1", "Word"])
+        row = {"SUBDECK 1": "Verbs", "Word": "写"}
+        assert deck_path(row, plan, SheetConfig()) == ["Verbs"]
+        assert deck_path(row, plan) == ["Verbs"]
+
+    def test_the_settings_row_wins_over_the_reserved_columns_and_says_so(self):
+        from src.column_model import deck_path
+        from src.column_model import plan_columns
+
+        plan = plan_columns(["ID", "SUBDECK 1", "Level", "Word"])
+        config = parse_config_row(
+            {"ID": "#config", "Level": "subdeck=1"},
+            plan,
+        )
+        assert config.subdeck_columns == ["Level"]
+        assert any("'SUBDECK 1'" in w and "ignored" in w for w in config.warnings)
+        row = {"SUBDECK 1": "Old", "Level": "New", "Word": "写"}
+        assert deck_path(row, plan, config) == ["New"]
+
+    def test_two_columns_cannot_be_the_same_level(self):
+        plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=1"})
+        assert config.subdeck_columns == ["Word"]
+        assert any("already 'Word'" in w for w in config.warnings)
+
+    def test_a_media_column_cannot_be_a_deck_level(self):
+        # The cell holds a URL; get_subdeck_name would strip it to something
+        # unrecognisable rather than fail, which is worse than refusing it.
+        _, config = self._levels({"Word": "image; subdeck=1"})
+        assert config.subdeck_columns == []
+        assert any("cannot be a deck level" in w for w in config.warnings)
+
+    def test_a_level_that_is_not_a_number_is_refused(self):
+        _, config = self._levels({"Word": "subdeck=top"})
+        assert config.subdeck_columns == []
+        assert any("level number" in w for w in config.warnings)
+
+    def test_a_level_below_one_is_refused(self):
+        _, config = self._levels({"Word": "subdeck=0"})
+        assert config.subdeck_columns == []
+        assert any("below 1" in w for w in config.warnings)
+
+    def test_the_tags_mirror_the_deck_path(self):
+        from src.tsv_model import build_tags
+
+        plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=2"})
+        tags = build_tags({"Word": "HSK 1", "Reading": "Verbs"}, plan, config)
+        assert "sheets2anki::hsk_1::verbs" in tags

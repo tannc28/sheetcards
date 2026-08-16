@@ -4,6 +4,48 @@
 
 ---
 
+## ✨ **v6.15.0** - August 2026 *(Feature)*
+
+### 🗂️ `subdeck=n` — a column that files the note *and* stays on the card
+
+The sheet decides everything about a deck except one thing: the deck path had to come
+from columns the add-on named itself, `SUBDECK 1`, `SUBDECK 2`. Those are reserved, so
+they never become fields and never appear on a card — which meant a value wanted in
+both places had to be typed into the sheet twice, once to file the note and once to
+show it.
+
+Now any column can say which level of the path it is, from its own settings cell:
+
+```text
+ID       Level                Word      Meaning
+#config  subdeck=1; size=14   size=48
+w01      HSK 1                写        to write
+w02      HSK 2                山        mountain
+```
+
+→ `s2a_{file}::{sheet}::HSK 1`, and `Level` is still a field: style it, speak it,
+hide it with `side=hide`. Nothing about the old way changed — a sheet with
+`SUBDECK n` columns and no settings row behaves exactly as it did.
+
+- **The number is the level**, so the order comes from the numbers rather than from
+  where the columns sit, which is how `SUBDECK n` has always worked.
+- An empty cell drops that level; two columns cannot claim the same level; a column
+  holding a URL cannot be a deck level at all. Each of those says so.
+- **A sheet using both is overruled by the settings row**, and the warning names the
+  reserved columns being ignored — a deck quietly not appearing is not something
+  anyone thinks to go looking for.
+
+### Fixed along the way: a note type rebuilt from the cache lost its cloze
+
+`cloze_field`, `type_field` and now `subdeck_columns` are *derived* from the per-column
+settings rather than stored, and `sync_config.from_dict` never derived them. A note
+type rebuilt from the cache — which is what happens when templates are refreshed
+outside a sync — therefore came back with no cloze column, producing a cloze template
+with no `{{cloze:}}` in it, which Anki refuses to save. There is now one function that
+works these out, `sheet_config.resolve_roles()`, and both readers call it.
+
+---
+
 ## 🐛 **v6.14.1** - August 2026 *(Fix)*
 
 ### The `draw` question showed the answer

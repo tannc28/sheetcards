@@ -161,10 +161,22 @@ def row_is_marked_for_sync(row, plan):
     return str(row.get(plan.sync_header, "")).strip().lower() in SYNC_TRUE_VALUES
 
 
-def deck_path(row, plan):
-    """The row's deck path as a list of level names, empty levels dropped."""
+def deck_path(row, plan, sheet_config=None):
+    """The row's deck path as a list of level names, empty levels dropped.
+
+    Two ways to say it, and the settings row wins when a sheet uses both. A
+    column named ``SUBDECK n`` is reserved and never becomes a field, which is
+    the older way and still the shortest; a column that says ``subdeck=n`` in the
+    settings row is an ordinary content column that *also* files the note, so the
+    same value can be a level of the deck and something printed on the card
+    without being typed into the sheet twice.
+
+    ``sheet_config`` is optional so every caller that has no settings row in hand
+    keeps working unchanged.
+    """
+    headers = getattr(sheet_config, "subdeck_columns", None) or plan.subdeck_headers
     path = []
-    for header in plan.subdeck_headers:
+    for header in headers:
         value = str(row.get(header, "")).strip()
         if value:
             path.append(value)

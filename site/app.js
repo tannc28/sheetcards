@@ -95,8 +95,8 @@ def analyze(tsv, deck_name):
             "line": i + 2 + offset,
             "kind": kind,
             "id": str(note.get(plan.id_header, "")).strip(),
-            "deck": tm.get_subdeck_name(root, deck_path(note, plan)),
-            "tags": tm.build_tags(note, plan),
+            "deck": tm.get_subdeck_name(root, deck_path(note, plan, cfg)),
+            "tags": tm.build_tags(note, plan, cfg),
             "cloze": tm.row_has_cloze(note, plan),
             # Which columns carry the deletion, so the page can tell whether the
             # template will actually cloze them. See clozeTrouble() below.

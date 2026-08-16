@@ -70,6 +70,12 @@ _FIELD_KEYS = (
         "speed",
         "label",
         "type",
+        # Which level of the deck path this column is. A column that says so is
+        # still an ordinary content column — it becomes a field and renders like
+        # any other — which is the whole point: a reserved `SUBDECK n` column can
+        # only ever file the note, so a value wanted on the card *and* in the deck
+        # name had to be typed into the sheet twice.
+        "subdeck",
     )
     + _FLAGS
     + MEDIA_KINDS
@@ -169,6 +175,7 @@ class FieldConfig:
         self.label = None
         self.media = None  # "image" | "audio" | "video"
         self.type_answer = None  # None | "plain" | "nc" — Anki's {{type:…}} box
+        self.subdeck = None  # int — this column is that level of the deck path
         self.bold = False
         self.italic = False
         self.hint = False
@@ -205,6 +212,10 @@ class SheetConfig:
         # honours one {{type:…}} per card.
         self.cloze_field = None
         self.type_field = None
+        # The content columns that build the deck path, outermost first. Empty
+        # when the sheet says nothing, and then column_model.deck_path falls back
+        # to the reserved SUBDECK columns.
+        self.subdeck_columns = []
 
     def for_field(self, header):
         return self.fields.get(header) or FieldConfig()
@@ -298,6 +309,115 @@ def _apply_field_pair(cfg, key, value, header, warn):
         cfg.speed = speed
     elif key == "label":
         cfg.label = value
+    elif key == "subdeck":
+        # The number is the level, exactly as it is in a `SUBDECK n` header, so
+        # the two ways of saying this order their levels the same way.
+        try:
+            level = int(float(value))
+        except ValueError:
+            warn(f"'{header}': subdeck must be a level number — got '{value}'")
+            return
+        if level < 1:
+            warn(f"'{header}': subdeck level {level} is below 1")
+            return
+        cfg.subdeck = level
+
+
+def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
+    """Works out the sheet-level roles from the per-column settings.
+
+    Three of a :class:`SheetConfig`'s attributes are not typed into any cell —
+    ``cloze_field``, ``type_field`` and ``subdeck_columns`` are *derived* from what
+    the columns individually asked for. This is the one place that derives them,
+    because the settings row is read twice: once while parsing a sheet, and once
+    when :mod:`.sync_config` rebuilds a cached one to redraw a note type outside a
+    sync. A second copy of these rules would mean a cached rebuild quietly
+    producing a different card from the one the sheet describes.
+
+    Args:
+        config (SheetConfig): the settings so far, with ``fields`` filled in
+        content_headers (list): the sheet's content columns, in sheet order
+        subdeck_headers (list): the sheet's reserved ``SUBDECK n`` columns, if any
+        warn (callable): called with each complaint; ``None`` while rebuilding
+            from cache, where the warnings were recorded the first time round
+    """
+    if warn is None:
+
+        def warn(_message):
+            return None
+
+    # A note type has one template set, and Anki honours one {{type:…}} per card, so
+    # each of these names exactly one column. Resolved after the whole row is read so
+    # the warning can name every column that asked, not just the second one.
+    for key, attribute, what in (
+        ("cloze", "cloze_field", "carry the cloze deletions"),
+        ("type_answer", "type_field", "be typed in"),
+    ):
+        claimed = [h for h in content_headers if getattr(config.for_field(h), key)]
+        if not claimed:
+            continue
+        setattr(config, attribute, claimed[0])
+        if len(claimed) > 1:
+            warn(
+                f"only one column can {what} — keeping '{claimed[0]}', ignoring "
+                + ", ".join(f"'{h}'" for h in claimed[1:])
+            )
+            for header in claimed[1:]:
+                setattr(
+                    config.fields[header], key, None if key == "type_answer" else False
+                )
+
+    # Both act on the text of a field, and a media column holds an address.
+    for attribute, key, label in (
+        ("cloze_field", "cloze", "cloze"),
+        ("type_field", "type_answer", "type"),
+    ):
+        header = getattr(config, attribute)
+        if header and config.for_field(header).media:
+            warn(f"'{header}': {label} does nothing on a media column")
+            setattr(config, attribute, None)
+            setattr(config.fields[header], key, None if key == "type_answer" else False)
+
+    # A media column holds an address. Filing notes under a deck named after a URL
+    # is not something anyone meant, and get_subdeck_name would strip it to
+    # something unrecognisable rather than fail, so it is refused here instead.
+    for header in content_headers:
+        cfg = config.for_field(header)
+        if cfg.subdeck and cfg.media:
+            warn(f"'{header}': a {cfg.media} column cannot be a deck level")
+            config.fields[header].subdeck = None
+
+    # The deck path, outermost first — by the level number, not by where the column
+    # sits in the sheet, which is how `SUBDECK n` has always behaved.
+    levels = {}
+    for header in content_headers:
+        level = config.for_field(header).subdeck
+        if not level:
+            continue
+        if level in levels:
+            warn(
+                f"'{header}': level {level} is already '{levels[level]}' — "
+                f"two columns cannot be the same level of the deck"
+            )
+            config.fields[header].subdeck = None
+            continue
+        levels[level] = header
+    config.subdeck_columns = [levels[level] for level in sorted(levels)]
+
+    # Both at once is a sheet saying two different things about where its notes go.
+    # The settings row is the one being read right now, so it wins — and the columns
+    # it overrules are named, because a deck quietly not appearing is exactly the
+    # kind of thing nobody thinks to look for.
+    if config.subdeck_columns and subdeck_headers:
+        warn(
+            "the settings row builds the deck path, so the reserved "
+            + ", ".join(f"'{h}'" for h in subdeck_headers)
+            + " column"
+            + ("s are" if len(subdeck_headers) > 1 else " is")
+            + " ignored"
+        )
+
+    return config
 
 
 def parse_config_row(row, plan):
@@ -436,36 +556,6 @@ def parse_config_row(row, plan):
 
         config.fields[header] = cfg
 
-    # A note type has one template set, and Anki honours one {{type:…}} per card, so
-    # each of these names exactly one column. Resolved after the whole row is read so
-    # the warning can name every column that asked, not just the second one.
-    for key, attribute, what in (
-        ("cloze", "cloze_field", "carry the cloze deletions"),
-        ("type_answer", "type_field", "be typed in"),
-    ):
-        claimed = [h for h in plan.content_headers if getattr(config.for_field(h), key)]
-        if not claimed:
-            continue
-        setattr(config, attribute, claimed[0])
-        if len(claimed) > 1:
-            warn(
-                f"only one column can {what} — keeping '{claimed[0]}', ignoring "
-                + ", ".join(f"'{h}'" for h in claimed[1:])
-            )
-            for header in claimed[1:]:
-                setattr(
-                    config.fields[header], key, None if key == "type_answer" else False
-                )
-
-    # Both act on the text of a field, and a media column holds an address.
-    for attribute, key, label in (
-        ("cloze_field", "cloze", "cloze"),
-        ("type_field", "type_answer", "type"),
-    ):
-        header = getattr(config, attribute)
-        if header and config.for_field(header).media:
-            warn(f"'{header}': {label} does nothing on a media column")
-            setattr(config, attribute, None)
-            setattr(config.fields[header], key, None if key == "type_answer" else False)
+    resolve_roles(config, plan.content_headers, plan.subdeck_headers, warn)
 
     return config

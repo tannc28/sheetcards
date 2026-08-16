@@ -360,7 +360,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
 
         row_id = str(row.get(plan.id_header, "")).strip()
         values = [row_id] + [str(row.get(h, "")) for h in plan.content_headers]
-        tags = build_tags(row, plan)
+        tags = build_tags(row, plan, sheet_config)
         all_tags.update(tags)
 
         note_id = _stable_id("note", sheet_id, row_id)
@@ -380,7 +380,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
             )
         )
 
-        did = deck_id_for(get_subdeck_name(root, deck_path(row, plan)))
+        did = deck_id_for(get_subdeck_name(root, deck_path(row, plan, sheet_config)))
         if is_cloze:
             ordinals = cloze_ordinals(row, plan, sheet_config)
             # A cloze row whose declared column holds no deletion would make no
