@@ -433,6 +433,19 @@ Only Chinese characters have stroke data. A cell holding anything else — a
 letter, a digit, a character the data set does not cover — is printed in the box
 rather than left blank.
 
+#### Styling one column yourself
+
+Every block a card renders carries the column it came from:
+
+```html
+<div class="s2a-back" data-s2a-col="Pinyin">…</div>
+```
+
+So for the rare thing the settings row does not cover, the note type's **Styling**
+can reach a single column — `[data-s2a-col="Pinyin"] { letter-spacing: .04em; }` —
+without touching the templates, which are rebuilt from the sheet on every sync
+and would lose the edit.
+
 #### Media columns
 
 `image`, `audio` and `video` say *what the cell contains*, so a column of links becomes

@@ -67,6 +67,16 @@ def _settings(cfg):
     return {k: v for k, v in vars(cfg).items() if v not in (None, False, [])}
 
 
+def _headers(headers):
+    """The sheet's headers, cleaned, in order, repeats and blanks dropped."""
+    out = []
+    for raw in headers:
+        name = clean(raw)
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
 def analyze(tsv, deck_name):
     log = []
     parsed = tm.parse_tsv_data(tsv, log)
@@ -109,7 +119,11 @@ def analyze(tsv, deck_name):
                 h for h in plan.content_headers
                 if tm.has_cloze_deletion(str(note.get(h, "")))
             ],
-            "values": {h: note.get(h, "") for h in ["ID"] + plan.content_headers},
+            # Every column, not only the ones that become fields. Panel 1 offers
+            # SYNC, TAGS and the SUBDECK columns to be looked at, and a cell it
+            # was never sent reads as an empty cell — which is a lie about the
+            # sheet, told in the one place built to answer questions about it.
+            "values": {h: note.get(h, "") for h in _headers(headers)},
         })
 
     _STATE["deck"] = deck
@@ -595,23 +609,27 @@ function deckTree(rows) {
   return root;
 }
 
-function treeHtml(node, depth = 0) {
+function treeHtml(node, depth, lit) {
   return [...node.children.values()]
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(
       (child) => `<li>
         <button data-deck="${escapeHtml(child.path)}" style="--depth:${depth}"
-                class="${state.deckFilter === child.path ? "on" : ""}">
+                class="${state.deckFilter === child.path ? "on" : ""}${
+                  lit.deck === child.path ? " lit" : ""
+                }">
           <span class="name">${escapeHtml(child.name)}</span>
           <span class="count">${child.count}</span>
         </button>
-        ${child.children.size ? `<ul class="tree">${treeHtml(child, depth + 1)}</ul>` : ""}
+        ${child.children.size ? `<ul class="tree">${treeHtml(child, depth + 1, lit)}</ul>` : ""}
       </li>`,
     )
     .join("");
 }
 
-function deckPanel({ rows }) {
+function deckPanel(a) {
+  const { rows } = a;
+  const lit = chosen(a);
   const tree = deckTree(rows);
   if (!tree.count) return `<p class="empty">${escapeHtml(t("noSyncRows"))}</p>`;
 
@@ -620,7 +638,7 @@ function deckPanel({ rows }) {
         class="${state.deckFilter === null ? "on" : ""}">
       <span class="name">${escapeHtml(t("allDecks"))}</span><span class="count">${tree.count}</span>
     </button></li>
-    ${treeHtml(tree, 0)}
+    ${treeHtml(tree, 0, lit)}
   </ul>`;
 }
 
@@ -649,6 +667,7 @@ function rowLabel(row, front) {
 }
 
 function rowList() {
+  const lit = chosen(state.analysis);
   const visible = visibleRows();
   if (!visible.length) return `<p class="empty">${escapeHtml(t("noRowsHere"))}</p>`;
 
@@ -657,7 +676,7 @@ function rowList() {
     .map(
       ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
         data-row="${i}" title="row ${r.line} — ${escapeHtml(r.kind)}">
-        <span class="n">${r.line}</span>
+        <span class="n${lit.ids ? " lit" : ""}">${r.line}</span>
         <span class="dot ${r.kind}"></span>
         <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
         ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
@@ -749,6 +768,7 @@ function cardView(a) {
     return `<div class="stagebox"><p class="empty">${escapeHtml(t("noRowsAtAll"))}</p></div>`;
   }
 
+  const lit = chosen(a);
   const isCloze = row.cloze;
   const templates = isCloze ? a.templates.cloze : a.templates.basic;
   const template = templates[Math.min(state.template, templates.length - 1)];
@@ -776,6 +796,18 @@ function cardView(a) {
                    border: 1px solid currentColor; border-radius: 999px;
                    background: transparent; color: inherit; opacity: .8; }
       img, video, iframe { max-width: 100%; }
+      ${
+        lit.field
+          ? `/* Panel 1 has a column open; this is the block it made. The card is
+                its own document, so the ring is written into the card's own
+                stylesheet on the way in rather than reached for afterwards —
+                there is no frame to wait for and nothing to clean up when the
+                selection changes, because the frame is rebuilt either way. */
+             [data-s2a-col="${lit.field.replace(/["\\]/g, "\\$&")}"] {
+               outline: 2px solid #1a73e8; outline-offset: 6px; border-radius: 4px;
+             }`
+          : ""
+      }
     </style>
     <body class="card">
       ${state.tab === "back" ? back.html : front.html}
@@ -852,7 +884,9 @@ function cardView(a) {
     ${unknown.length ? `<p class="note">${t("unknownFilters", unknown.map(escapeHtml).join("</code>, <code>"))}</p>` : ""}
     <p class="cardmeta">${escapeHtml(t("deckAndTags"))}
       <code>${escapeHtml(row.deck)}</code> · ${escapeHtml(t("tagsLabel"))}
-      ${row.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</p>
+      ${row.tags
+        .map((tag) => `<span class="chip${lit.tags ? " lit" : ""}">${escapeHtml(tag)}</span>`)
+        .join("")}</p>
     <p class="muted small approx">${t("approxNote")} ${t("runsAsAnki")}</p>
   </div>`;
 }
@@ -909,7 +943,9 @@ function tabBar() {
 
 /** The counts as one readable line. Six equal tiles said nothing about which of
  *  them mattered; only "marked for sync" is ever a problem, so only it is red. */
-function summaryLine({ stats, rows }) {
+function summaryLine(a) {
+  const { stats, rows } = a;
+  const lit = chosen(a);
   const cells = [
     ["statRows", stats.total_table_lines],
     ["statWithId", stats.valid_note_lines],
@@ -921,8 +957,9 @@ function summaryLine({ stats, rows }) {
   return cells
     .map(
       ([key, n]) =>
-        `<span class="${n === 0 && key === "statSync" ? "zero" : ""}">` +
-        `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
+        `<span class="${n === 0 && key === "statSync" ? "zero" : ""}${
+          lit.stat === key ? " lit" : ""
+        }">` + `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
     )
     .join("");
 }
@@ -968,8 +1005,10 @@ function render() {
   $("#colcount").textContent = `${a.plan.headers.length}`;
   $("#collist").innerHTML = columnList(a);
   $("#coldetail").innerHTML = state.column == null ? "" : columnDetail(a);
-  // The flash marks *choosing a column*. Every other repaint — a row picked, a
-  // language switched — would otherwise blink a panel nobody was looking at.
+  // The flash and the scroll both mark *choosing a column*. Every other repaint
+  // — a row picked, a language switched — would otherwise blink a panel nobody
+  // was looking at, and move the page under a reader who asked for nothing.
+  if (state.columnFlash) revealField(chosen(a).field);
   state.columnFlash = false;
 
   // Each header says what its panel holds, because that sentence is all a shut
@@ -1031,6 +1070,103 @@ function columnRole(name, index, a) {
     return { kind: "field", label: t("roleField", side(name, a)) };
   }
   return { kind: "dead", label: t("roleUnused") };
+}
+
+/**
+ * What the chosen column, if any, points at elsewhere on the page.
+ *
+ * Answering "what did this column become" in words and leaving the reader to go
+ * find it is half an answer. Everything below returns something the other two
+ * panels can light up at the same moment, so the word and the thing arrive
+ * together.
+ *
+ * @returns {{name: string|null, field: string|null, deck: string|null,
+ *            tags: boolean, stat: string|null, ids: boolean}}
+ */
+function chosen(a) {
+  const blank = { name: null, field: null, deck: null, tags: false, stat: null, ids: false };
+  if (state.column === null) return blank;
+
+  const name = a.plan.headers[state.column];
+  if (name === undefined) return blank;
+  const role = columnRole(name, state.column, a);
+  const at = { ...blank, name };
+
+  if (role.kind === "dead") return at;
+  if (name === a.plan.id) return { ...at, stat: "statWithId", ids: true };
+  if (name === a.plan.sync) return { ...at, stat: "statSync" };
+  if (name === a.plan.tags) return { ...at, tags: true };
+
+  // A deck level points at the branch *this row* lands in, which is why the row
+  // shows its own value for the column right beside it.
+  const levels = a.config.subdecks.length ? a.config.subdecks : a.plan.subdecks;
+  if (levels.includes(name)) {
+    at.deck = branchFor(name, levels, a);
+    at.stat = "statDecks";
+  }
+  // A column can be both — that is the whole point of `subdeck=n`.
+  if (a.plan.content.includes(name)) at.field = name;
+  return at;
+}
+
+/**
+ * The deck this column files the selected row into, or null.
+ *
+ * Rebuilt from the row's own cells rather than sliced off `row.deck`: an empty
+ * level is dropped from the path, so the third column is not always the third
+ * segment of the name.
+ */
+function branchFor(name, levels, a) {
+  const row = a.rows[state.row];
+  if (!row) return null;
+
+  // Sliced off the deck name the add-on itself produced rather than rebuilt from
+  // the cells: a level is cleaned on its way into a deck name — `::` and a few
+  // other characters cannot survive there — so the cell and the segment are not
+  // always the same text. Only the *count* of levels is taken from the cells.
+  const root = `s2a_${state.deckName}`.split("::").length;
+  let depth = 0;
+  for (const level of levels) {
+    const filled = String(row.values[level] ?? "").trim() !== "";
+    if (level === name) {
+      return filled ? row.deck.split("::").slice(0, root + depth + 1).join("::") : null;
+    }
+    if (filled) depth += 1;
+  }
+  return null;
+}
+
+/**
+ * Brings the ringed block into view, for a card taller than the panel.
+ *
+ * Only ever called from the click that opened a column: scrolling is a strong
+ * thing to do to somebody, and doing it on every repaint — a row picked, a
+ * language switched — would move the page under a reader who asked for nothing.
+ *
+ * The card is a same-origin srcdoc frame, so its elements can be reached and
+ * `scrollIntoView` carries through the frame boundary to the panel outside it.
+ */
+function revealField(name) {
+  const frame = $("#card");
+  if (!frame || !name) return;
+  const go = () => {
+    try {
+      const el = frame.contentDocument?.querySelector(
+        `[data-s2a-col="${name.replace(/["\\]/g, "\\$&")}"]`,
+      );
+      el?.scrollIntoView({
+        block: "center",
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+    } catch {
+      // A frame that cannot be read is not worth breaking the page over. The
+      // ring is already drawn; only the scroll is lost.
+    }
+  };
+  if (frame.contentDocument?.readyState === "complete") go();
+  else frame.addEventListener("load", go, { once: true });
 }
 
 /** Where a content column is rendered on the card. */

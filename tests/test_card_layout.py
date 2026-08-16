@@ -111,8 +111,24 @@ class TestFieldMarkup:
 
     def test_unstyled_field_carries_no_style_attribute(self):
         qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
-        assert 'class="s2a-front"><' not in qfmt  # no label either
-        assert 'class="s2a-front">{{Word}}' in qfmt
+        assert "style=" not in qfmt.split("</style>")[1]
+        assert '<div class="s2a-front" data-s2a-col="Word">{{Word}}</div>' in qfmt
+
+    def test_every_field_says_which_column_it_came_from(self):
+        """Anki's own classes say only which side a block is on.
+
+        Without this nothing in the finished card connects a piece of it back to
+        the sheet — so the preview cannot point at a field, and a note type's CSS
+        cannot target one column.
+        """
+        both = _both(build_templates(_plan(), SheetConfig())[0])
+        for name in FIELDS:
+            assert f'data-s2a-col="{name}"' in both
+
+    def test_the_column_name_is_escaped_in_the_attribute(self):
+        plan = _plan(['A "quoted" & <odd> name'])
+        qfmt = build_templates(plan, SheetConfig())[0]["qfmt"]
+        assert 'data-s2a-col="A &quot;quoted&quot; &amp; &lt;odd&gt; name"' in qfmt
 
     def test_deck_alignment_reaches_the_css(self):
         plan = _plan()

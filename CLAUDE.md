@@ -107,6 +107,10 @@ There is **no fixed column list**. The sheet decides the schema: only a handful 
 
 `https://tannc28.github.io/sheets2anki/` takes a Google Sheets link and shows what the add-on would make of it — per-row fate with the sync's own metrics, the deck tree, tags, the settings-row warnings, and the rendered card. **It contains no copy of the add-on's logic**: `scripts/build_site.py` copies the five pure modules into `build/site/s2a/` at build time and `site/app.js` loads them through Pyodide (CDN, ~5 MB brotli, cached). The module list is declared once, in `app.js` as `const PURE_MODULES = [...]`; the build script and `tests/test_pure_modules.py` both read it, so it cannot be changed in one place only.
 
+**Every field block carries `data-s2a-col="{header}"`** (`card_layout._rows`), which is the only thing connecting a piece of a rendered card back to the sheet. It lets a note type's CSS target one column, and it is what panel 1's column inspector rings inside the card. The ring is written into the card document's own `<style>` when `cardView` builds the `srcdoc` — never reached for afterwards, because the frame is rebuilt on every render anyway.
+
+**`ANALYZER` is a JS template literal. Never put a backtick inside it** — not even in a Python comment quoting an identifier. It closes the string, the rest of `app.js` parses as JavaScript, and the page renders its markup and then does nothing, with the browser blaming whatever word followed. `tests/test_site_syntax.py` parses every site module with `node --check` and names this trap specifically; nothing else in the suite loads this file.
+
 **The page is laid out for a language learner, not for a developer.** One sans-serif family and one six-step type scale for everything the page itself says; monospace only for strings that came out of a spreadsheet (column names, ids, tags, template source).
 
 **Three columns, one job each** — `#p-source` (where the sheet comes from), `#p-deck` (what deck it makes), `#p-card` (what one card looks like), all three inside `<main id="app">`. Side by side on a wide screen, because each is something you look at while changing one of the others.

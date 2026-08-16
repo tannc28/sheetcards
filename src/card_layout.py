@@ -355,9 +355,16 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
         else:
             reference = _reference(field, cfg, as_cloze and cfg.cloze)
 
+        # Which column this block came from, named on the block itself. Anki's
+        # own classes say only which side it is on, so nothing in the finished
+        # card connects a piece of it back to the sheet — which makes it the one
+        # thing a stylist cannot target and the one thing the preview cannot
+        # point at. The value is the header exactly as written, so
+        # `[data-s2a-col="Pinyin"]` works in the note type's CSS too.
         out.append(
             f"{{{{#{field}}}}}"
-            f'<div class="{css_class}"{style_attr}>{label}{reference}</div>'
+            f'<div class="{css_class}" data-s2a-col="{escape(name)}"{style_attr}>'
+            f"{label}{reference}</div>"
             f"{{{{/{field}}}}}"
         )
 

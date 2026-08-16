@@ -4,6 +4,49 @@
 
 ---
 
+## ✨ **v6.16.0** - August 2026 *(Feature)*
+
+### Every block on a card now names the column it came from
+
+```html
+<div class="s2a-back" data-s2a-col="Pinyin">…</div>
+```
+
+Anki's own classes say only which *side* a block is on, so nothing in a finished card
+connected a piece of it back to the sheet. Two things follow from fixing that:
+
+- **A note type's CSS can target one column**: `[data-s2a-col="Pinyin"] { … }`, for
+  the rare thing the settings row does not cover.
+- **The preview can point at a field**, which is what the rest of this release is.
+
+### The preview says what each column turned into, and shows you where
+
+Panel 1 lists the sheet's headers. Tap one and it opens: the role it ended up with,
+every directive the settings row gave it, the value *this row* holds in it, and any
+warning naming it — and at the same moment the thing it made lights up wherever that
+thing is. A field is ringed inside the card and scrolled into view; a `SUBDECK`
+column lights the branch this row lands in; `TAGS` lights the tags; `ID` and `SYNC`
+light the count they are responsible for.
+
+- A header written twice is listed twice, the later one struck through and told it is
+  ignored. Saying which of the two was honoured is the only reason to list both.
+- The role is read off the plan the parser produced. The rules for what counts as
+  `SUBDECK 2` live in `column_model.py`, and a second copy in JavaScript would
+  eventually be a second answer.
+- The flash and the scroll happen only on the click that opens a column — a repaint
+  from picking a row would otherwise blink a panel nobody was looking at.
+
+**Also fixed:** the preview was only ever sent the values of columns that become
+fields, so opening `SYNC`, `TAGS` or a `SUBDECK` column reported an empty cell — a
+lie about the sheet, told in the one place built to answer questions about it.
+
+**And a guard that should have existed already:** nothing in the test suite loaded
+`site/app.js`, so a syntax error in it was invisible — the page rendered its markup
+and did nothing, with no error a user would ever see. `tests/test_site_syntax.py` now
+parses every site module with `node --check`.
+
+---
+
 ## ✨ **v6.15.0** - August 2026 *(Feature)*
 
 ### 🗂️ `subdeck=n` — a column that files the note *and* stays on the card
