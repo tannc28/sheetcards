@@ -39,7 +39,15 @@ export async function startPython(source, onStep = () => {}) {
   py.FS.writeFile("/s2a/__init__.py", "");
   await Promise.all(
     PURE_MODULES.map(async (name) => {
-      const res = await fetch(`./s2a/${name}.py`);
+      // `no-cache` revalidates rather than refetches: the browser still sends its
+      // ETag and still gets a 304 for an unchanged module. What it cannot do is
+      // answer from disk without asking. GitHub Pages serves these with
+      // `max-age=600`, so without this a deploy is invisible for ten minutes —
+      // the page keeps running the previous version of the add-on's own code and
+      // reports a setting the sheet does have as one it has never heard of. Every
+      // other request here is a CDN asset that may safely be stale; these seven
+      // files are the one thing on the page that must be the deployed ones.
+      const res = await fetch(`./s2a/${name}.py`, { cache: "no-cache" });
       if (!res.ok) throw new Error(`could not load ${name}.py (${res.status})`);
       py.FS.writeFile(`/s2a/${name}.py`, await res.text());
     }),
