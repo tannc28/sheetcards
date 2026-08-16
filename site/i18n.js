@@ -65,6 +65,10 @@ const STRINGS = {
     en: (level) => `Deck level ${level} — reserved, so it never reaches the card`,
     vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên thẻ`,
   },
+  roleSubdeckOnly: {
+    en: (level) => `Deck level ${level} — add side=front or side=back to show it too`,
+    vi: (level) => `Tầng deck ${level} — thêm side=front hoặc side=back nếu muốn hiện trên thẻ`,
+  },
   roleSubdeckField: {
     en: (level, where) => `Deck level ${level}, and a field on the ${where}`,
     vi: (level, where) => `Tầng deck ${level}, đồng thời là field ở ${where}`,
@@ -161,11 +165,11 @@ const STRINGS = {
   // --- demo ---------------------------------------------------------------
   demoNote: {
     en:
-      "Showing the example workbook — fifteen sheets, from the smallest one that " +
+      "Showing the example workbook — sixteen sheets, from the smallest one that " +
       "works to every directive at once. Use the sheet picker above to walk " +
       "through them, or paste your own link to read yours instead.",
     vi:
-      "Đang hiện file ví dụ — mười lăm sheet, từ sheet đơn giản nhất tới sheet " +
+      "Đang hiện file ví dụ — mười sáu sheet, từ sheet đơn giản nhất tới sheet " +
       "dùng hết mọi directive. Dùng ô chọn sheet ở trên để xem lần lượt, hoặc " +
       "dán link của bạn để đọc sheet của bạn.",
   },

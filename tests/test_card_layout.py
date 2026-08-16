@@ -923,18 +923,34 @@ class TestDeckFromAColumn:
         row = {"Word": "Verbs", "Reading": "HSK 1"}
         assert deck_path(row, plan, config) == ["HSK 1", "Verbs"]
 
-    def test_the_column_is_still_a_field_on_the_card(self):
-        # The whole reason this exists: a reserved SUBDECK column can only file
-        # the note, so a value wanted in both places had to be typed twice.
-        plan, config = self._levels({"Word": "subdeck=1"})
-        assert "{{Word}}" in build_templates(plan, config)[0]["qfmt"]
-        assert "Word" in plan.note_type_fields()
+    def test_a_deck_level_stays_off_the_card_by_default(self):
+        """A directive named after the deck must not also start printing.
 
-    def test_it_can_be_kept_off_the_card_the_ordinary_way(self):
-        plan, config = self._levels({"Word": "subdeck=1; side=hide"})
+        The reserved SUBDECK columns never appear on a card, and a column that
+        says `subdeck=1` was written to file the note. Rendering it as well —
+        which is what this used to do — put an unasked-for line of text on every
+        card of every sheet that used it.
+        """
+        plan, config = self._levels({"Word": "subdeck=1"})
         assert config.subdeck_columns == ["Word"]
         for template in build_templates(plan, config):
             assert "{{Word}}" not in _both(template)
+        front, back = split_sides(plan, config)
+        assert "Word" not in front and "Word" not in back
+
+    def test_saying_a_side_puts_it_on_the_card_as_well(self):
+        # The thing a reserved SUBDECK column cannot do, and the reason
+        # `subdeck=n` exists: one value, filing the note *and* printed, without
+        # being typed into the sheet twice.
+        plan, config = self._levels({"Reading": "subdeck=1; side=back"})
+        assert config.subdeck_columns == ["Reading"]
+        assert "{{Reading}}" in build_templates(plan, config)[0]["afmt"]
+
+    def test_the_field_exists_on_the_note_either_way(self):
+        # Not rendering it is a decision about the card, not about the note: the
+        # value is still there to be searched, exported and styled later.
+        plan, _ = self._levels({"Word": "subdeck=1"})
+        assert "Word" in plan.note_type_fields()
 
     def test_an_empty_cell_drops_that_level(self):
         from src.column_model import deck_path
@@ -993,3 +1009,56 @@ class TestDeckFromAColumn:
         plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=2"})
         tags = build_tags({"Word": "HSK 1", "Reading": "Verbs"}, plan, config)
         assert "sheets2anki::hsk_1::verbs" in tags
+
+
+@pytest.mark.unit
+class TestHeardNotSeen:
+    """``side=hide`` + ``tts`` — a column spoken without being shown."""
+
+    def _templates(self, cells, deck=""):
+        plan = _plan()
+        config = _config(plan, cells, deck=deck)
+        return plan, config, build_templates(plan, config)
+
+    def test_a_hidden_column_can_still_be_spoken(self):
+        plan, config, templates = self._templates({"Reading": "side=hide; tts=zh_CN"})
+        both = _both(templates[0])
+        assert "{{tts zh_CN:Reading}}" in both
+        # Spoken, and nowhere to be read.
+        assert '<div class="s2a-back" data-s2a-col="Reading"' not in both
+        front, back = split_sides(plan, config)
+        assert "Reading" not in front and "Reading" not in back
+
+    def test_a_hidden_column_with_no_speech_is_simply_gone(self):
+        _, _, templates = self._templates({"Reading": "side=hide"})
+        assert "Reading" not in _both(templates[0])
+
+    def test_it_is_heard_on_the_side_it_would_have_been_drawn_on(self):
+        _, _, templates = self._templates(
+            {"Word": "side=hide; tts=en_US", "Reading": "side=hide; tts=zh_CN"}
+        )
+        # Word is the sheet's first content column, so its side is the question.
+        assert "{{tts en_US:Word}}" in templates[0]["qfmt"]
+        assert (
+            "{{tts en_US:Word}}"
+            not in templates[0]["afmt"].split('<hr id="answer">')[1]
+        )
+        assert "{{tts zh_CN:Reading}}" in templates[0]["afmt"]
+
+    def test_the_reverse_card_swaps_the_voices_too(self):
+        _, _, templates = self._templates(
+            {"Reading": "side=hide; tts=zh_CN"}, deck="reverse"
+        )
+        assert len(templates) == 2
+        # Heard on the answer of card 1, so heard on the question of card 2.
+        assert "{{tts zh_CN:Reading}}" in templates[1]["qfmt"]
+
+    def test_the_speech_is_guarded_so_an_empty_cell_says_nothing(self):
+        _, _, templates = self._templates({"Reading": "side=hide; tts=zh_CN"})
+        assert "{{#Reading}}{{tts zh_CN:Reading}}{{/Reading}}" in _both(templates[0])
+
+    def test_speed_still_applies(self):
+        _, _, templates = self._templates(
+            {"Reading": "side=hide; tts=zh_CN; speed=0.5"}
+        )
+        assert "{{tts zh_CN speed=0.5:Reading}}" in _both(templates[0])

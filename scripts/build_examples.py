@@ -171,10 +171,11 @@ SHEETS = {
         ["v04", "A link that is already an embed link.", "https://www.youtube.com/embed/jNQXAC9IVRw", "The rewrite is idempotent — it is left alone."],
         ["v05", "A direct video file, not a page.", "https://upload.wikimedia.org/wikipedia/commons/d/de/Ink_grinding.webmhd.webm", "Passed through unchanged; the frame plays the file itself."],
     ],
-    # text-to-speech, deck-wide speed and a per-column override
+    # text-to-speech: deck-wide speed, a per-column override, and a column
+    # that is heard without being read
     "10 Speech": [
-        ["ID", "Chinese", "Pinyin", "Vietnamese", "Slowly"],
-        ["#config speed=0.9", "size=40; tts=zh_CN", "size=22; color=accent", "size=20", "side=back; size=14; color=muted; tts=zh_CN; speed=0.5; label=Once more, slowly"],
+        ["ID", "Chinese", "Pinyin", "Vietnamese", "Once more, slowly"],
+        ["#config speed=0.9", "size=40; tts=zh_CN", "size=22; color=accent", "size=20", "side=hide; tts=zh_CN; speed=0.5"],
         ["k01", "早上好", "zǎoshang hǎo", "chào buổi sáng", "早上好"],
         ["k02", "谢谢你的帮助", "xièxie nǐ de bāngzhù", "cảm ơn bạn đã giúp đỡ", "谢谢你的帮助"],
         ["k03", "请再说一遍", "qǐng zài shuō yí biàn", "làm ơn nói lại một lần nữa", "请再说一遍"],

@@ -366,28 +366,32 @@ Written in that column's cell of the settings row.
 | `type` | switch, or `type=nc` | off | Anki draws a box on the question and diffs what you type against this column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`. One column per sheet |
 | `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
 | `draw` | switch | off | The column holds a **Chinese character**, and the card turns it into a writing box: on the question you draw it stroke by stroke and each stroke is marked, on the answer the correct strokes are animated. `size` is the side of the box in pixels — see below |
-| `subdeck` | a level number (`subdeck=1`) | off | This column is that level of the **deck path**, exactly as a `SUBDECK n` header would be — except the column stays an ordinary field and still renders on the card. See below |
+| `subdeck` | a level number (`subdeck=1`) | off | This column is that level of the **deck path**, exactly as a `SUBDECK n` header would be. It is not drawn on the card unless you also say `side=front` or `side=back`. See below |
 
 #### Filing notes with a column you also show (`subdeck`)
 
 A `SUBDECK n` column can only ever file the note: it is reserved, so it never
-becomes a field and never appears on a card. If you want a value to be *both* —
-the HSK level in the deck name and printed on the card — you used to have to type
-it into the sheet twice, in two columns.
-
-`subdeck=n` says the same thing from the column's own settings cell, and the
-column stays what it was:
+becomes a field. `subdeck=n` says the same thing from an ordinary column's own
+settings cell — so the column is still a field on the note, and can also be
+*shown*, which a reserved column cannot.
 
 ```text
-ID       Level                        Word   Meaning
-#config  subdeck=1; size=14           size=48
-w01      HSK 1                        写     to write
-w02      HSK 2                        山     mountain
+ID       Level        Word     Meaning
+#config  subdeck=1    size=48
+w01      HSK 1        写       to write
+w02      HSK 2        山       mountain
 ```
 
-→ `s2a_{file}::{sheet}::HSK 1`, with `Level` still a field you can style, hide or
-speak like any other. `side=hide` keeps it off the card while it still files the
-note.
+→ `s2a_{file}::{sheet}::HSK 1`, and nothing extra on the card.
+
+**Filing a note and printing on it are different jobs, and this does only the
+first.** A directive named after the deck should not quietly start putting a line
+of text on every card. To have both — the HSK level in the deck name *and* on the
+card, without typing it into the sheet twice — say which side it goes on:
+
+```text
+#config  subdeck=1; side=front; size=14; color=muted
+```
 
 - **The number is the level**, exactly as in `SUBDECK 1` / `SUBDECK 2`, so the
   order comes from the numbers rather than from where the columns sit.
@@ -432,6 +436,21 @@ depends on that client allowing remote scripts, which we have not tested.
 Only Chinese characters have stroke data. A cell holding anything else — a
 letter, a digit, a character the data set does not cover — is printed in the box
 rather than left blank.
+
+#### Heard without being read (`side=hide` + `tts`)
+
+`tts` says *speak this column*; `side=hide` says *do not draw it*. A column that
+says both is asking to be heard and not read, which is what a listening card is —
+the sentence said aloud with nothing on screen to read it off:
+
+```text
+ID       Chinese            Pinyin   Meaning   Once more, slowly
+#config  size=40; tts=zh_CN                    side=hide; tts=zh_CN; speed=0.5
+```
+
+It is spoken on the side it would have been drawn on, and the reverse card swaps
+that along with everything else. Before this, hiding a column took its voice with
+it and there was no way to ask for one without the other.
 
 #### Styling one column yourself
 

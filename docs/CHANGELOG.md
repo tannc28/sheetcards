@@ -4,6 +4,39 @@
 
 ---
 
+## 🐛 **v6.17.0** - August 2026 *(Fix + feature)*
+
+### `subdeck=n` no longer puts the column on the card
+
+**This is a behaviour change, and the old behaviour was wrong.** `subdeck=n` shipped
+in v6.15.0 rendering the column as a field as well, on the reasoning that a value
+wanted in the deck name *and* on the card should not have to be typed twice. The
+first person to use it asked why their subdeck column had appeared on the back of
+every card — which is the right question. Filing a note and printing on it are
+different jobs, a directive named after the deck does the first, and the reserved
+`SUBDECK n` columns have never done the second.
+
+```text
+#config  subdeck=1                        → deck level only
+#config  subdeck=1; side=front; size=14   → deck level, and on the card
+```
+
+The capability is still there; it now takes saying so. If you were relying on the
+old behaviour, add `side=front` or `side=back` to that column.
+
+### `side=hide` + `tts` — heard without being read
+
+`tts` says speak this column; `side=hide` says do not draw it. A column that says
+both is asking to be heard and not read, which is what a listening card is: the
+sentence said aloud with nothing on screen to read it off. Hiding a column used to
+take its voice with it, and there was no way to ask for one without the other.
+
+It is spoken on the side it would have been drawn on, and the reverse card swaps
+that along with everything else. `10 Speech` in the example workbook now uses it —
+its slow repeat is heard and no longer printed as a duplicate line of text.
+
+---
+
 ## ✨ **v6.16.0** - August 2026 *(Feature)*
 
 ### Every block on a card now names the column it came from

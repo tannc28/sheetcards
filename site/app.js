@@ -1075,9 +1075,17 @@ function columnRole(name, index, a) {
   }
   const declared = (a.config.subdecks || []).indexOf(name);
   if (declared >= 0) {
+    const drawn = a.sides.front.includes(name) || a.sides.back.includes(name);
     // Both a level of the deck path and an ordinary field — the thing a
-    // reserved SUBDECK column cannot be, and the reason `subdeck=n` exists.
-    return { kind: "deck", label: t("roleSubdeckField", declared + 1, side(name, a)) };
+    // reserved SUBDECK column cannot be, and the reason `subdeck=n` exists. It
+    // takes saying so, though: filing a note and printing on it are different
+    // jobs, and a directive named after the deck only does the first.
+    return {
+      kind: "deck",
+      label: drawn
+        ? t("roleSubdeckField", declared + 1, side(name, a))
+        : t("roleSubdeckOnly", declared + 1),
+    };
   }
   if (p.content.includes(name)) {
     return { kind: "field", label: t("roleField", side(name, a)) };

@@ -375,12 +375,19 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
     return "\n".join(out)
 
 
-def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True):
+def _one_template(
+    front_fields, back_fields, sheet_config, is_cloze, typed=True, heard=("", "")
+):
     """Builds a single {qfmt, afmt} pair from one front/back split.
 
     ``typed`` is False for the reverse card: the typed-answer box belongs to the
     direction the sheet described, and asking for the same answer from both sides
     would be asking the same question twice.
+
+    ``heard`` is the pair of already-rendered TTS tags for the columns that are
+    spoken without being drawn — see :func:`spoken_sides`. It arrives rendered
+    rather than as field names because the two sides swap for the reverse card,
+    and the caller is the one that knows which way round they go.
     """
     type_field = sheet_config.type_field if typed else None
     type_box = (
@@ -403,6 +410,7 @@ def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True)
         + _rows(front_fields, sheet_config, "s2a-front", as_cloze=is_cloze, quiz=True)
         + type_box
         + "\n</div>"
+        + heard[0]
         + (_DRAW_SCRIPT if drawn(front_fields) else "")
     )
 
@@ -426,6 +434,7 @@ def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True)
         + '<div class="s2a-wrap">\n'
         + _rows(back_fields, sheet_config, "s2a-back")
         + "\n</div>"
+        + heard[1]
         # A question that had boxes brings its own copy of this back inside
         # {{FrontSide}}, so this is here for the case where only the answer draws.
         # Two copies would be harmless anyway — the script skips a box it has
@@ -457,19 +466,64 @@ def split_sides(plan, sheet_config):
 
     for index, header in enumerate(plan.content_headers):
         cfg = sheet_config.for_field(header)
-        if cfg.hidden:
+        if not _is_drawn(cfg):
             continue
-        # The clozed column *is* the prompt — its deletions are what the card asks
-        # about — so it goes on the front whatever the column order says.
-        default = "front" if (index == 0 or cfg.cloze) else "back"
-        side = "front" if cfg.cloze else (cfg.side or default)
-        (front if side == "front" else back).append(header)
+        (front if _side_of(index, cfg) == "front" else back).append(header)
 
     # An empty front would produce a blank prompt and Anki would refuse to generate
     # the card, so the first field that is still visible is promoted.
     if not front and back:
         front.append(back.pop(0))
 
+    return front, back
+
+
+def _is_drawn(cfg):
+    """Whether this column is rendered on the card at all.
+
+    ``side=hide`` is the explicit way to say no. A ``subdeck=n`` column is the
+    implicit one: it was written to file the note, and a directive named after
+    the deck should not also start printing on the card without being asked —
+    the reserved ``SUBDECK n`` columns never do. Saying ``side=front`` or
+    ``side=back`` puts it on the card as well, which is the thing a reserved
+    column cannot do and the reason ``subdeck=n`` exists.
+    """
+    if cfg.hidden:
+        return False
+    return not (cfg.subdeck and not cfg.side)
+
+
+def _side_of(index, cfg):
+    """Which side a column belongs on, drawn or not.
+
+    The clozed column *is* the prompt — its deletions are what the card asks
+    about — so it goes on the front whatever the column order says.
+    """
+    if cfg.cloze:
+        return "front"
+    # `hide` is not a side, it is the absence of one — so a column that is not
+    # drawn still *belongs* somewhere, which is what says where its voice goes.
+    if cfg.side in ("front", "back"):
+        return cfg.side
+    return "front" if index == 0 else "back"
+
+
+def spoken_sides(plan, sheet_config):
+    """The columns that are heard but never seen, split by side.
+
+    ``tts`` says speak this column and ``side=hide`` says do not draw it; each
+    keeps its own meaning, so a column that says both is asking to be heard and
+    not read. There is no other way to ask for that — dropping a column from the
+    card used to take its voice with it — and it is what a listening card is:
+    the answer said aloud, with nothing on screen to read it off.
+    """
+    front: list[str] = []
+    back: list[str] = []
+    for index, header in enumerate(plan.content_headers):
+        cfg = sheet_config.for_field(header)
+        if _is_drawn(cfg) or not cfg.tts:
+            continue
+        (front if _side_of(index, cfg) == "front" else back).append(header)
     return front, back
 
 
@@ -487,10 +541,29 @@ def build_templates(plan, sheet_config, is_cloze=False):
     """
     front, back = split_sides(plan, sheet_config)
 
+    # Rendered once here so the reverse card can be handed the same two strings
+    # the other way round, exactly as it is handed the two field lists.
+    def voices(fields):
+        return "\n".join(
+            tag
+            for tag in (
+                _tts_tag(
+                    _escape_field(name),
+                    sheet_config.for_field(name),
+                    sheet_config.speed,
+                )
+                for name in fields
+            )
+            if tag
+        )
+
+    spoken_front, spoken_back = spoken_sides(plan, sheet_config)
+    heard = (voices(spoken_front), voices(spoken_back))
+
     templates = [
         dict(
             name=FRONT_TEMPLATE_NAME,
-            **_one_template(front, back, sheet_config, is_cloze),
+            **_one_template(front, back, sheet_config, is_cloze, heard=heard),
         )
     ]
 
@@ -500,7 +573,14 @@ def build_templates(plan, sheet_config, is_cloze=False):
         templates.append(
             dict(
                 name=REVERSE_TEMPLATE_NAME,
-                **_one_template(back, front, sheet_config, False, typed=False),
+                **_one_template(
+                    back,
+                    front,
+                    sheet_config,
+                    False,
+                    typed=False,
+                    heard=(heard[1], heard[0]),
+                ),
             )
         )
 
