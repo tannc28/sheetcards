@@ -24,11 +24,11 @@ OUT = REPO / "build" / "site"
 
 
 def modules_the_site_loads():
-    """The module list declared in site/app.js — the only place it is written."""
-    app = (SITE / "app.js").read_text(encoding="utf-8")
-    match = re.search(r"const PURE_MODULES = \[(.*?)\]", app, re.S)
+    """The module list declared in site/pyodide.js — the only place it is written."""
+    app = (SITE / "pyodide.js").read_text(encoding="utf-8")
+    match = re.search(r"export const PURE_MODULES = \[(.*?)\]", app, re.S)
     if not match:
-        sys.exit("site/app.js does not declare PURE_MODULES")
+        sys.exit("site/pyodide.js does not declare PURE_MODULES")
     return module_names(match.group(1))
 
 

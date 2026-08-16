@@ -481,6 +481,38 @@ h3.spaced { margin-top: 18px; }
 }
 .coldetail.flash { animation: s2a-colflash .6s ease-out; }
 
+/* ---- the editor page ----------------------------------------------------- */
+
+/* Two panels rather than three, and neither folds: there is nothing here to put
+   away, and a form that hides itself is a form you have to open twice. */
+.editor { grid-template-columns: 1fr; }
+@media (min-width: 56rem) {
+  .editor { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); }
+}
+.editor .panel-toggle { cursor: default; }
+.editor .panel-toggle:hover { background: transparent; }
+.editor .chev { display: none; }
+
+/* The directive chips. These styles were the column list's until that list
+   merged into the row viewer; they come back here because this is now the only
+   place with a row of small taps to make. */
+.collist { display: flex; flex-wrap: wrap; gap: 4px; }
+.col {
+  font-family: var(--mono); font-size: var(--t-xs);
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--sunken); color: var(--ink);
+  border: 1px solid var(--line);
+}
+.col:hover { border-color: var(--accent); color: var(--accent); }
+
+textarea#cell {
+  width: 100%; padding: 9px 11px; resize: vertical;
+  font-family: var(--mono); font-size: var(--t-sm); line-height: 1.5;
+  color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+textarea#cell:focus-visible { outline-offset: 0; border-color: var(--accent); }
+
 /* ---- panel 1: the chosen row, cell by cell ------------------------------- */
 
 .rownav { margin-left: auto; display: flex; gap: 2px; }
@@ -710,11 +742,14 @@ iframe#card {
 /* ---- narrow: three stacked, foldable sections ---------------------------- */
 
 @media (max-width: 55.99rem) {
-  /* The masthead on one line. Wrapped, the tagline threaded itself around the
-     language buttons and cost three lines before panel 1 even started — and the
-     three panel headers below say what the page is far better than it does. */
-  .masthead { padding: 10px var(--pad); gap: 8px; flex-wrap: nowrap; }
-  .brand { flex: 1 1 auto; }
+  /* Held to one line while the tagline was here: wrapped, it threaded itself
+     around the language buttons and cost three lines before panel 1 started. The
+     tagline is gone and the masthead has gained a theme button and a second
+     link, so one line is now four controls fighting over 390px — and the name
+     is a single word, which overflows rather than shrinking. It wraps again:
+     the name on one line, the controls on the next. */
+  .masthead { padding: 10px var(--pad); gap: 8px; }
+  .brand { flex: 1 1 100%; }
   .brand h1 { font-size: var(--t-lg); }
   .langs button { padding: 5px 9px; }
   a.ghost { padding: 6px 10px; }

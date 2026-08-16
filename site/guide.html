@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Sheets2Anki — build a settings row</title>
+<meta name="description" content="Write one column's settings row and watch the card change, using the add-on's own code. Copy the cell when it looks right.">
+<script>
+  try {
+    var t = localStorage.getItem("s2a-theme");
+    if (t === "dark") document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+</script>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="guideTag">editor</span></h1>
+  </div>
+
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Language"></nav>
+  <a class="ghost" href="./" data-i18n="backToPreview">Preview a sheet</a>
+</header>
+
+<!-- One column, not a whole settings row. A column is the unit people actually
+     get stuck on, and one column fits on a phone. -->
+<main id="app" class="app editor">
+
+  <section class="panel">
+    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
+      <span class="step" aria-hidden="true">1</span>
+      <span class="panel-name" data-i18n="edColumn">Column</span>
+    </span></h2>
+
+    <div class="panel-body">
+      <div class="stack">
+        <p class="field">
+          <label for="name" data-i18n="edName">Column name</label>
+          <input id="name" type="text" spellcheck="false" autocomplete="off" value="Word">
+        </p>
+        <p class="field">
+          <label for="value" data-i18n="edValue">What a cell holds</label>
+          <input id="value" type="text" spellcheck="false" autocomplete="off" value="北京">
+        </p>
+      </div>
+
+      <div class="stack">
+        <h3><span data-i18n="edCell">Settings row cell</span></h3>
+        <textarea id="cell" rows="3" spellcheck="false" autocomplete="off"></textarea>
+        <p class="entry-alt">
+          <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy</button>
+          <span id="status" class="status" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+          </span>
+        </p>
+      </div>
+
+      <!-- Tapped, not dragged: a drag is the one gesture that does not survive a
+           phone, and most people are on one. -->
+      <div class="stack">
+        <h3><span data-i18n="edAdd">Add a directive</span></h3>
+        <div id="keys" class="collist"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
+      <span class="step" aria-hidden="true">2</span>
+      <span class="panel-name" data-i18n="edResult">Result</span>
+    </span></h2>
+
+    <div class="panel-body">
+      <div id="warn" class="warnbar" hidden>
+        <ul id="warnlist" class="warnings"></ul>
+      </div>
+      <div id="view"></div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="./guide.js"></script>
+</body>
+</html>

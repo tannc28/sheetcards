@@ -49,8 +49,15 @@ def _dictionary():
 
 
 def _page_source():
+    """Every page and every module, found rather than listed.
+
+    Named one by one, this list forgot the guide the day the guide was added, and
+    the failure was fourteen strings looking like dead weight.
+    """
     return "\n".join(
-        (SITE / name).read_text(encoding="utf-8") for name in ("app.js", "index.html")
+        path.read_text(encoding="utf-8")
+        for path in sorted(SITE.iterdir())
+        if path.suffix in (".js", ".html")
     )
 
 

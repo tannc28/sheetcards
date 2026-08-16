@@ -17,6 +17,31 @@ const STRINGS = {
   brandTag: { en: "preview", vi: "xem trước" },
   skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
+
+  // --- the editor ---------------------------------------------------------
+  guideTag: { en: "editor", vi: "trình soạn" },
+  backToPreview: { en: "Preview a sheet", vi: "Xem trước sheet" },
+  toGuide: { en: "Build a settings row", vi: "Soạn settings row" },
+  edColumn: { en: "Column", vi: "Cột" },
+  edName: { en: "Column name", vi: "Tên cột" },
+  edValue: { en: "What a cell holds", vi: "Nội dung một ô" },
+  edCell: { en: "Settings row cell", vi: "Ô trong settings row" },
+  edAdd: { en: "Add a directive", vi: "Thêm directive" },
+  edResult: { en: "Result", vi: "Kết quả" },
+  edCopy: { en: "Copy", vi: "Copy" },
+  edCopied: { en: "Copied — paste it into the settings row", vi: "Đã copy — dán vào settings row" },
+  edCopyFailed: { en: "The browser refused to copy", vi: "Trình duyệt không cho copy" },
+  edOk: { en: "Every setting was understood", vi: "Mọi setting đều hợp lệ" },
+  edRefused: {
+    en: (n) => `${n} setting${n === 1 ? "" : "s"} refused`,
+    vi: (n) => `${n} setting bị từ chối`,
+  },
+  edSides: {
+    en: (front, back) =>
+      `${front} field on the front, ${back} on the back — the same split the sync makes.`,
+    vi: (front, back) =>
+      `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
+  },
   toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",

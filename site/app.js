@@ -11,8 +11,7 @@
 
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, setLang, t } from "./i18n.js";
-
-const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+import { startPython } from "./pyodide.js";
 
 // A filled-in report is a better landing page than an empty form: a first-time
 // visitor sees what the tool actually answers instead of having to supply a sheet
@@ -31,15 +30,6 @@ const DEMO_SHEET =
 // settings row would answer none of the questions people arrive with — so the
 // page opens on the one that uses everything at once, and the picker walks back.
 const DEMO_TAB = "15 Everything";
-
-// The pure layer, in dependency order. tests/test_pure_modules.py reads this very
-// list and fails if it stops matching the modules it proves importable without Anki.
-const PURE_MODULES = [
-  "errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg",
-  // Reads an uploaded file, and the file a Google Sheets link downloads to when a
-  // deck names a sheet inside it. Shared with the add-on, so both agree.
-  "workbook",
-];
 
 /** Everything the page needs, computed by the add-on's own code. */
 const ANALYZER = String.raw`
@@ -255,26 +245,9 @@ function status(text, kind = "", busy = false) {
 }
 
 async function boot() {
-  status(t("booting"), "", true);
-  const { loadPyodide } = await import(PYODIDE);
-  const py = await loadPyodide({ indexURL: PYODIDE.replace("pyodide.mjs", "") });
-
-  status(t("loadingCode"), "", true);
-  // Rebuild the add-on's package layout so the relative imports between these
-  // files resolve exactly as they do inside Anki.
-  py.FS.mkdir("/s2a");
-  py.FS.writeFile("/s2a/__init__.py", "");
-  await Promise.all(
-    PURE_MODULES.map(async (name) => {
-      const res = await fetch(`./s2a/${name}.py`);
-      if (!res.ok) throw new Error(`could not load ${name}.py (${res.status})`);
-      py.FS.writeFile(`/s2a/${name}.py`, await res.text());
-    }),
+  const py = await startPython(ANALYZER, (step) =>
+    status(t(step === "boot" ? "booting" : "loadingCode"), "", true),
   );
-  py.runPython('import sys; sys.path.insert(0, "/")');
-  // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
-  await py.loadPackage("sqlite3");
-  py.runPython(ANALYZER);
 
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));

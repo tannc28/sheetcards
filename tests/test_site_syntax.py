@@ -23,14 +23,21 @@ SITE = REPO / "site"
 
 NODE = shutil.which("node")
 
-# Everything the page loads as a module. Checked by parsing, not by running:
-# running it would need a DOM, and a file that cannot be parsed cannot run either.
-MODULES = ["app.js", "anki.js", "i18n.js"]
+
+def _modules():
+    """Every module the site ships, found rather than listed.
+
+    Checked by parsing, not by running: running one would need a DOM, and a file
+    that cannot be parsed cannot run either. Found rather than listed because a
+    list is a thing to forget — and an unparsed module is invisible until the
+    page it belongs to silently does nothing.
+    """
+    return sorted(path.name for path in SITE.glob("*.js"))
 
 
 @pytest.mark.unit
 @pytest.mark.skipif(NODE is None, reason="node is not installed")
-@pytest.mark.parametrize("name", MODULES)
+@pytest.mark.parametrize("name", _modules())
 def test_the_module_parses(name, tmp_path):
     # Copied to .mjs because `node --check` parses a bare .js as CommonJS, where
     # the `import` at the top of every one of these is a syntax error in itself.

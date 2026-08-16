@@ -22,7 +22,7 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "src"
 
-# The exact set the preview site loads. Keep this in step with site/app.js —
+# The exact set the preview site loads. Keep this in step with site/pyodide.js —
 # test_site_loads_the_same_modules below fails if they drift apart.
 PURE_MODULES = [
     "errors",
@@ -131,9 +131,9 @@ print(json.dumps({{
 @pytest.mark.unit
 def test_site_loads_the_same_modules():
     """The site's module list is the list above, so neither can be updated alone."""
-    app = (REPO / "site" / "app.js").read_text(encoding="utf-8")
-    marker = "const PURE_MODULES = ["
-    assert marker in app, "site/app.js no longer declares PURE_MODULES"
+    app = (REPO / "site" / "pyodide.js").read_text(encoding="utf-8")
+    marker = "export const PURE_MODULES = ["
+    assert marker in app, "site/pyodide.js no longer declares PURE_MODULES"
 
     listed = app.split(marker, 1)[1].split("]", 1)[0]
     # Comments out first: a `//` note about why a module is listed will contain a
@@ -143,7 +143,7 @@ def test_site_loads_the_same_modules():
     names = [n for n in names if n]
 
     assert names == PURE_MODULES, (
-        "site/app.js loads a different set of modules than this test pins.\n"
+        "site/pyodide.js loads a different set of modules than this test pins.\n"
         f"  site: {names}\n  test: {PURE_MODULES}"
     )
 
