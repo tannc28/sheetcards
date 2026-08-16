@@ -18,7 +18,7 @@ const STRINGS = {
   skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
   tagline: {
     en: "See what your sheet becomes in Anki — decks, rows and cards — before you sync it.",
-    vi: "Xem sheet của bạn thành gì trong Anki — deck, dòng và thẻ — trước khi sync.",
+    vi: "Deck, dòng và thẻ mà sheet của bạn sẽ tạo ra trong Anki — xem trước khi sync.",
   },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
@@ -35,9 +35,9 @@ const STRINGS = {
   },
   orDrop: {
     en: "or drop one anywhere on this page.",
-    vi: "hoặc thả file vào bất kỳ đâu trên trang.",
+    vi: "hoặc thả file vào trang này cũng được.",
   },
-  tabLabel: { en: "Sheet", vi: "Trang" },
+  tabLabel: { en: "Sheet", vi: "Sheet" },
 
   // --- the three panels -----------------------------------------------------
   // Each header doubles as what a shut panel has left to say, so the notes name
@@ -50,7 +50,7 @@ const STRINGS = {
   columns: { en: "Columns", vi: "Cột" },
   roleId: {
     en: "ID — the key every note is matched by",
-    vi: "ID — khoá để nhận lại từng note",
+    vi: "ID — khoá để nhận diện từng note",
   },
   roleSync: {
     en: "SYNC — which rows are written to Anki",
@@ -59,11 +59,11 @@ const STRINGS = {
   roleTags: { en: "TAGS — extra tags for the row", vi: "TAGS — tag thêm cho dòng" },
   roleSubdeck: {
     en: (level) => `Deck level ${level} — reserved, so it never reaches the card`,
-    vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên thẻ`,
+    vi: (level) => `Tầng deck ${level} — cột dành riêng, không hiện trên thẻ`,
   },
   roleSubdeckOnly: {
     en: (level) => `Deck level ${level} — files the note, never drawn on the card`,
-    vi: (level) => `Tầng deck ${level} — xếp deck cho note, không hiện trên thẻ`,
+    vi: (level) => `Tầng deck ${level} — chỉ để xếp deck, không hiện trên thẻ`,
   },
   roleField: {
     en: (where) => `A field on the ${where}`,
@@ -71,7 +71,7 @@ const STRINGS = {
   },
   roleDuplicate: {
     en: "Written twice — this one is ignored",
-    vi: "Bị ghi hai lần — cột này bị bỏ qua",
+    vi: "Trùng tên với cột phía trên — cột này bị bỏ qua",
   },
   roleUnused: { en: "Not used", vi: "Không dùng tới" },
   sideFront: { en: "front", vi: "mặt trước" },
@@ -95,7 +95,7 @@ const STRINGS = {
   dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
-    vi: ".xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt",
+    vi: ".xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi máy bạn",
   },
 
   // --- status -------------------------------------------------------------
@@ -126,7 +126,7 @@ const STRINGS = {
       "That is neither a Google Sheets link nor a link to an .xlsx file. " +
       "A file's address has to end in .xlsx or .xlsm.",
     vi:
-      "Đây không phải link Google Sheets, cũng không phải link tới file .xlsx. " +
+      "Link này không phải Google Sheets, cũng không phải file .xlsx. " +
       "Link tới file phải kết thúc bằng .xlsx hoặc .xlsm.",
   },
   unreadableFile: {
