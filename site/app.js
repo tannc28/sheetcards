@@ -183,9 +183,13 @@ const state = {
   // file and tab for an upload. Either way it has to be the same next time or a
   // re-import duplicates every note instead of updating it.
   sheetId: "",
-  // What the stage shows: the card, or its source the way Anki puts the template
-  // editor beside it.
+  // What the stage shows: the card, its source the way Anki puts the template
+  // editor beside it, or the row on its way to becoming both.
   tab: "both",
+  // What the flow animation last played for. It replays when the row or the tab
+  // changes and not on the repaints in between — a language switch, or a column
+  // picked in panel 1, is not a reason to set the whole stage moving again.
+  flowKey: "",
   // The three panels — where the sheet comes from, what deck it makes, what one
   // card looks like. Each one collapses to its own header, which is what makes
   // the page usable on a phone and what lets a wide window be given entirely to
@@ -225,7 +229,7 @@ function applyWidth() {
   if (wide) for (const name of Object.keys(state.panels)) setPanel(name, true);
 }
 WIDE.addEventListener("change", applyWidth);
-const CARD_TABS = ["front", "both", "back", "template"];
+const CARD_TABS = ["front", "both", "back", "flow", "template"];
 let analyze = null;
 let buildPackage = null;
 let readUpload = null;
@@ -1012,7 +1016,16 @@ function render() {
   $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
   $("#tabs").innerHTML = tabBar();
-  $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
+  $("#view").innerHTML =
+    state.tab === "template"
+      ? templateView(a)
+      : state.tab === "flow"
+        ? flowView(a)
+        : cardView(a);
+  // Same task as the render above, on purpose — see playFlow.
+  const flowKey = `${state.tab}:${state.row}`;
+  if (state.tab === "flow" && flowKey !== state.flowKey) playFlow();
+  state.flowKey = flowKey;
 
   $("#columns").hidden = false;
   $("#colcount").textContent = `${a.plan.headers.length}`;
@@ -1094,6 +1107,221 @@ function columnRole(name, index, a) {
  * @returns {{name: string|null, field: string|null, deck: string|null,
  *            tags: boolean, stat: string|null}}
  */
+
+// ---------------------------------------------------------------------------
+// The stage: one row on its way to a deck and a card
+// ---------------------------------------------------------------------------
+
+/**
+ * A row, and the things the add-on turns it into.
+ *
+ * Every other view answers "what does this produce". This one answers "how", by
+ * running the sync's own order of operations at a speed a person can follow: the
+ * row arrives as cells, the ID becomes the key, SYNC decides whether it goes
+ * anywhere at all, the SUBDECK cells become a deck, TAGS splits, and the content
+ * cells become the note's fields — in the order the *card* puts them, which is
+ * the whole of what the settings row did. The real card follows underneath,
+ * because ending on a drawing of a card rather than on the card is the one thing
+ * this page exists not to do.
+ *
+ * A row that is going nowhere stops where it stops and says why. That case is
+ * why people open this page; an animation that only played the happy path would
+ * be decoration.
+ */
+function flowView(a) {
+  const row = a.rows[state.row];
+  if (!row) {
+    return `<div class="stagebox"><p class="empty">${escapeHtml(t("noRowsAtAll"))}</p></div>`;
+  }
+
+  // A header written twice is one column; the later one has no cell of its own.
+  const first = new Map();
+  a.plan.headers.forEach((h, i) => first.has(h) || first.set(h, i));
+  const at = (h) => (first.has(h) ? first.get(h) : -1);
+  const val = (h) => String(row.values[h] ?? "").trim();
+
+  const cells = a.plan.headers
+    .map((h, i) =>
+      first.get(h) !== i
+        ? ""
+        : `<span class="fcell" data-fi="${i}"><b>${
+            val(h)
+              ? escapeHtml(val(h))
+              : `<span class="none">${escapeHtml(t("cellEmpty"))}</span>`
+          }</b><i>${escapeHtml(h)}</i></span>`,
+    )
+    .join("");
+
+  const dest = (index, text, cls = "") =>
+    `<span class="fdest ${cls}" data-fi="${index}">${escapeHtml(text)}</span>`;
+  const group = (title, inner) =>
+    `<div class="fgroup"><h4>${escapeHtml(title)}</h4><div class="frow">${inner}</div></div>`;
+  const stop = (why) => `<p class="fstop">${escapeHtml(why)}</p>`;
+
+  const out = [];
+
+  // 1. The key. Without it the row is not a note at all, so nothing else runs.
+  if (a.plan.id) {
+    out.push(
+      group(
+        t("flowKey"),
+        dest(
+          at(a.plan.id),
+          val(a.plan.id) || t("cellEmpty"),
+          row.kind === "invalid" ? "bad" : "",
+        ),
+      ),
+    );
+  }
+  if (row.kind === "invalid") return flowStage(cells, out.join("") + stop(t("rowInvalid")), "");
+
+  // 2. The gate.
+  if (a.plan.sync) {
+    out.push(
+      group(
+        t("flowGate"),
+        dest(
+          at(a.plan.sync),
+          val(a.plan.sync) || t("cellEmpty"),
+          row.kind === "skipped" ? "bad" : "ok",
+        ),
+      ),
+    );
+  }
+  if (row.kind === "skipped") return flowStage(cells, out.join("") + stop(t("rowSkipped")), "");
+
+  // 3. The deck. Sliced off the name the add-on produced rather than rebuilt from
+  //    the cells: a level is cleaned on its way into a deck name.
+  const levels = (
+    a.config.subdecks.length ? a.config.subdecks : a.plan.subdecks
+  ).filter((h) => val(h));
+  const root = `s2a_${state.deckName}`.split("::").length;
+  const segments = row.deck.split("::").slice(root);
+  if (segments.length) {
+    out.push(
+      group(
+        t("panelDeck"),
+        segments
+          .map((seg, n) => dest(at(levels[n] ?? ""), seg))
+          .join('<span class="fsep">::</span>'),
+      ),
+    );
+  }
+
+  // 4. The tags, splitting out of the one cell that listed them.
+  if (row.tags.length) {
+    // Only the ones the cell actually listed fly out of it. `sheets2anki` and the
+    // one mirroring the deck path are added by the add-on, so they arrive from
+    // nowhere — which is the truth, and playFlow leaves a source-less
+    // destination where it is.
+    const listed = new Set(
+      String(row.values[a.plan.tags] ?? "")
+        .split(/[,;]/)
+        .map((x) => x.trim())
+        .filter(Boolean),
+    );
+    out.push(
+      group(
+        t("tagsLabel"),
+        row.tags
+          .map((tag) => dest(listed.has(tag) ? at(a.plan.tags) : -1, tag, "tag"))
+          .join(""),
+      ),
+    );
+  }
+
+  // 5. The note's fields, in the order the card puts them rather than the order
+  //    the sheet lists them.
+  const side = (fields, title) =>
+    fields.length
+      ? `<div class="fside"><h5>${escapeHtml(title)}</h5>${fields
+          .map((h) => dest(at(h), val(h) || t("cellEmpty"), val(h) ? "" : "none"))
+          .join("")}</div>`
+      : "";
+  out.push(
+    group(
+      t("flowFields"),
+      side(a.sides.front, t("sideFront")) + side(a.sides.back, t("sideBack")),
+    ),
+  );
+
+  return flowStage(cells, out.join(""), cardView(a));
+}
+
+function flowStage(cells, groups, card) {
+  const line = state.analysis.rows[state.row].line;
+  return `<div class="stagebox flow" id="flow">
+    <p class="flow-head">
+      <span class="mono">${escapeHtml(t("valueInRow", line))}</span>
+      <button id="replay" class="linky" type="button">${escapeHtml(t("flowReplay"))}</button>
+    </p>
+    <div class="flow-cells">${cells}</div>
+    <div class="flow-out">${groups}</div>
+    ${card ? `<div class="flow-card">${card}</div>` : ""}
+  </div>`;
+}
+
+/**
+ * Flies each destination out of the cell it came from.
+ *
+ * FLIP, and only the translate half of it: the destination is already laid out
+ * where it belongs, so all it needs is to start at the offset of its source cell
+ * and come home. Nothing is scaled — text that grows into place reads as a zoom
+ * effect rather than as a value moving.
+ *
+ * `fill: "backwards"` is what holds a destination invisible through its delay,
+ * so this has to run in the same task as the render that built the stage: a
+ * paint in between would flash the finished diagram before it animates.
+ */
+function playFlow() {
+  const stage = document.getElementById("flow");
+  if (!stage) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const dests = [...stage.querySelectorAll(".fdest")];
+  // A wide sheet has a lot of cells, and a fixed stagger would turn the sequence
+  // into a queue. The whole flight stays inside a second either way.
+  const step = Math.min(70, 900 / Math.max(dests.length, 1));
+
+  dests.forEach((el, i) => {
+    const src = stage.querySelector(`.fcell[data-fi="${el.dataset.fi}"]`);
+    if (!src) return;
+    const to = el.getBoundingClientRect();
+    const from = src.getBoundingClientRect();
+    el.animate(
+      [
+        {
+          transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)`,
+          opacity: 0,
+        },
+        { transform: "none", opacity: 1 },
+      ],
+      {
+        duration: 420,
+        delay: i * step,
+        easing: "cubic-bezier(.2, .8, .2, 1)",
+        fill: "backwards",
+      },
+    );
+  });
+
+  const card = stage.querySelector(".flow-card");
+  if (card) {
+    card.animate(
+      [
+        { opacity: 0, transform: "translateY(10px)" },
+        { opacity: 1, transform: "none" },
+      ],
+      {
+        duration: 420,
+        delay: dests.length * step + 260,
+        easing: "ease-out",
+        fill: "backwards",
+      },
+    );
+  }
+}
+
 /** True only while drawing the repaint that a column was just chosen on. */
 function popping() {
   return state.columnFlash ? " pop" : "";
@@ -1334,6 +1562,7 @@ addEventListener("drop", (e) => {
 });
 
 document.addEventListener("click", (e) => {
+  if (e.target.closest("#replay")) return playFlow();
   const col = e.target.closest("[data-col]");
   if (col) {
     const index = Number(col.dataset.col);

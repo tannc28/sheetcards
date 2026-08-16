@@ -65,10 +65,24 @@ def _keys_called():
     called |= set(re.findall(r'data-i18n="([\w]+)"', text))
     for group in re.findall(r'data-i18n-attr="([^"]+)"', text):
         called |= {pair.split(":")[1].strip() for pair in group.split(",")}
-    # tabBar() composes t("tab" + Front|Both|Back|Template), so the "tab" the
-    # regex catches is half a name rather than one.
+    # tabBar() composes t("tab" + Front|Both|Back|…), so the "tab" the regex
+    # catches is half a name rather than one.
     called.discard("tab")
-    return called | {"tabFront", "tabBoth", "tabBack", "tabTemplate"}
+    return called | _tab_keys()
+
+
+def _tab_keys():
+    """The keys tabBar() builds, read off ``CARD_TABS`` rather than listed here.
+
+    Spelled out by hand, this was a list that could only ever go stale: adding a
+    tab left its string looking like dead weight, and the failure named the new
+    key rather than the stale test.
+    """
+    text = (SITE / "app.js").read_text(encoding="utf-8")
+    match = re.search(r"const CARD_TABS = \[(.*?)\]", text, re.S)
+    assert match, "site/app.js declares no CARD_TABS"
+    names = [name.strip().strip("\"'") for name in match.group(1).split(",")]
+    return {f"tab{name[:1].upper()}{name[1:]}" for name in names if name}
 
 
 def _keys_referenced(declared):
