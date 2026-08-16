@@ -505,11 +505,16 @@ h3.spaced { margin-top: 18px; }
 }
 .col:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Two columns of a spreadsheet, drawn as one: the grid lines are the borders of
-   the cells themselves, so there is no table and nothing to scroll sideways. */
+/* The sheet the editor writes into, drawn as one grid: the lines are the borders
+   of the cells themselves, so there is no table and nothing to lay out twice.
+
+   A wide sheet scrolls inside this box and nowhere else — the page must never
+   scroll sideways, which is the rule everything on a phone lives by. */
+.sheetwrap { overflow-x: auto; margin-bottom: 12px; }
 .sheet {
   display: grid;
-  grid-template-columns: 2.4ch minmax(4rem, 7rem) minmax(0, 1fr);
+  grid-template-columns: 2.4ch minmax(5rem, 7rem) repeat(var(--cols, 1), minmax(9rem, 1fr));
+  min-width: min-content;
   border: 1px solid var(--line); border-radius: var(--r-md);
   overflow: hidden; background: var(--line-soft);
   gap: 1px;
@@ -519,29 +524,49 @@ h3.spaced { margin-top: 18px; }
   background: var(--sunken);
   font-family: var(--mono); font-size: var(--t-xs); color: var(--muted);
 }
-.cell { background: var(--panel); min-width: 0; }
-/* Column A is the part a real sheet already forces on you: an ID, and the marker
-   that turns row 2 into settings. It is shown so the shape is complete, and not
-   editable because there is nothing to decide about it. */
+.cell { position: relative; background: var(--panel); min-width: 0; }
+/* The cell the directive chips are pointed at. Without it, tapping a chip and
+   watching a different column change is the obvious way to be confused. */
+.cell.on { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+/* Column A is what a real sheet forces on you anyway: an ID and the marker that
+   turns row 2 into settings. Not editable where there is nothing to decide. */
 .cell.fixed {
   display: flex; align-items: center; padding: 7px 9px;
   font-family: var(--mono); font-size: var(--t-sm); color: var(--muted);
 }
-.cell.marker { color: var(--accent); }
+.cell.marker input { color: var(--accent); }
+.cell.named input { padding-right: 22px; }
 .sheet input, .sheet textarea {
   display: block; width: 100%; padding: 7px 9px; margin: 0;
   font-family: var(--mono); font-size: var(--t-sm); line-height: 1.45;
   color: var(--ink); background: transparent;
-  border: 0; border-radius: 0; resize: vertical;
+  border: 0; border-radius: 0; resize: vertical; overflow: hidden;
 }
 .sheet input:focus-visible, .sheet textarea:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -2px;
 }
-/* A cell in a spreadsheet is one line until it is not. It starts as one and
-   grows to whatever was typed — see grow() in guide.js — rather than sitting
-   there twice as tall as the rows either side of it, waiting. */
-.sheet textarea { overflow: hidden; }
-.sheet + .entry-alt { margin-top: 12px; }
+/* Small and quiet: removing a column is rare next to editing one, and a button
+   the size of the cell would be tapped by accident on a phone. */
+.drop {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px; padding: 0; line-height: 1;
+  font-size: 13px; color: var(--muted);
+  background: transparent; border: 0; border-radius: var(--r-sm);
+}
+.drop:hover { color: var(--bad); background: var(--bad-soft); }
+
+/* The directive chips. */
+.collist { display: flex; flex-wrap: wrap; gap: 4px; }
+.col {
+  font-family: var(--mono); font-size: var(--t-xs);
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--sunken); color: var(--ink);
+  border: 1px solid var(--line);
+}
+.col:hover { border-color: var(--accent); color: var(--accent); }
+/* On means "this cell has it", and tapping again takes it away. A chip that only
+   ever added had a second tap that did nothing, which reads as broken. */
+.col.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
 /* ---- panel 1: the chosen row, cell by cell ------------------------------- */
 

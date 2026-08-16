@@ -33,37 +33,21 @@
   <section class="panel">
     <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
       <span class="step" aria-hidden="true">1</span>
-      <span class="panel-name" data-i18n="edColumn">Column</span>
+      <span class="panel-name" data-i18n="edPanelSheet">Sheet</span>
     </span></h2>
 
     <div class="panel-body">
-      <!-- Shaped like the thing it is: two columns of a spreadsheet, row 1 the
-           headers, row 2 the settings row, row 3 a card's worth of data. Typed
-           into here it needs no translating into "and where does that go in
-           Google Sheets" — it goes in the cell that looks like this one. -->
-      <div class="sheet" role="group" data-i18n-attr="aria-label:edSheet">
-        <span class="ref"></span>
-        <span class="ref">A</span>
-        <span class="ref">B</span>
-
-        <span class="ref">1</span>
-        <span class="cell fixed">ID</span>
-        <span class="cell"><input id="name" type="text" spellcheck="false"
-              autocomplete="off" value="Word" data-i18n-attr="aria-label:edName"></span>
-
-        <span class="ref">2</span>
-        <span class="cell fixed marker">#config</span>
-        <span class="cell"><textarea id="cell" rows="1" spellcheck="false"
-              autocomplete="off" data-i18n-attr="aria-label:edCell"></textarea></span>
-
-        <span class="ref">3</span>
-        <span class="cell fixed">1</span>
-        <span class="cell"><input id="value" type="text" spellcheck="false"
-              autocomplete="off" value="北京" data-i18n-attr="aria-label:edValue"></span>
+      <!-- Shaped like the thing it writes into: a sheet. Row 1 the column
+           names, row 2 the settings row, row 3 one card's worth of data. The
+           grid scrolls inside itself so the page never scrolls sideways. -->
+      <div class="sheetwrap">
+        <div class="sheet" id="sheet" role="group"
+             data-i18n-attr="aria-label:edSheet"></div>
       </div>
 
       <p class="entry-alt">
-        <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy</button>
+        <button id="add" class="linky" type="button" data-i18n="edAddColumn">Add a column</button>
+        <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy row</button>
         <span id="status" class="status" role="status" aria-live="polite">
           <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
         </span>
@@ -72,7 +56,8 @@
       <!-- Tapped, not dragged: a drag is the one gesture that does not survive a
            phone, and most people are on one. -->
       <div class="stack">
-        <h3><span data-i18n="edAdd">Add a directive</span></h3>
+        <h3><span data-i18n="edAdd">Add a directive</span>
+          <span class="count" id="keyfor"></span></h3>
         <div id="keys" class="collist"></div>
       </div>
     </div>
