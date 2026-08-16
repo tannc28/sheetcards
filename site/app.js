@@ -900,7 +900,6 @@ function cardView(a) {
       ${row.tags
         .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
         .join("")}</p>
-    <p class="muted small approx">${t("approxNote")} ${t("runsAsAnki")}</p>
   </div>`;
 }
 

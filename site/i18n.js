@@ -280,25 +280,6 @@ const STRINGS = {
       "qua âm thầm: giá trị add-on không hiểu thì bị từ chối chứ không đoán, và cột " +
       "giữ mặc định cho tới khi sheet được sửa.",
   },
-  runsAsAnki: {
-    en:
-      "The card is drawn the way Anki draws it, with nothing filtered out — a cell " +
-      "containing script runs here because it would run there. That also means " +
-      "previewing a spreadsheet is trusting it, the same way syncing one is.",
-    vi:
-      "Thẻ được vẽ đúng như Anki vẽ, không lọc bỏ gì — ô chứa script sẽ chạy ở đây " +
-      "vì nó cũng chạy trong Anki. Nghĩa là mở preview một sheet là tin sheet đó, " +
-      "y như khi sync nó.",
-  },
-  approxNote: {
-    en:
-      "The template is exactly what the add-on generates. Turning it into this " +
-      "picture is done by this page, not by Anki — treat the layout as a close " +
-      "approximation.",
-    vi:
-      "Template là đúng thứ add-on sinh ra. Biến nó thành hình ảnh này là việc của " +
-      "trang, không phải của Anki — hãy coi bố cục là xấp xỉ.",
-  },
 
   templateFrom: {
     en: (name) =>
