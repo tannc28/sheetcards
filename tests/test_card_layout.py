@@ -162,14 +162,37 @@ class TestFieldMarkup:
         qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
         light = THEMES["sakura"]["light"]
         night = THEMES["sakura"]["night"]
-        assert (
-            f".card {{ background-color: {light['bg']}; color: {light['fg']}; }}"
-            in qfmt
-        )
-        assert (
-            f".card.night_mode {{ background-color: {night['bg']};"
-            f" color: {night['fg']}; }}" in qfmt
-        )
+        card = qfmt.split(".card {")[1].split("}")[0]
+        night_card = qfmt.split(".card.night_mode {")[1].split("}")[0]
+        assert f"background-color: {light['bg']}" in card
+        assert f"color: {light['fg']}" in card
+        assert f"background-color: {night['bg']}" in night_card
+        assert f"color: {night['fg']}" in night_card
+
+    def test_a_seasonal_theme_strews_the_card_with_its_flowers(self):
+        # Named after a season, so the pattern is the point rather than decoration
+        # on top of it — and it travels in the stylesheet, so no card ever fetches
+        # it and nothing lands in collection.media.
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
+        assert 'background-image: url("data:image/svg+xml,' in qfmt
+        assert "http://www.w3.org/2000/svg" in qfmt
+        # The colour survives underneath, so a client that refuses the data URI is
+        # left with the theme rather than with whatever is behind the card.
+        card = qfmt.split(".card {")[1].split("}")[0]
+        assert "background-color:" in card
+
+    def test_the_flowers_are_the_themes_own_colours(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
+        for variant, selector in (
+            ("light", ".card {"),
+            ("night", ".card.night_mode {"),
+        ):
+            colours = THEMES["sakura"][variant]
+            block = qfmt.split(selector)[1].split("}")[0]
+            assert colours["petal"].replace("#", "%23") in block
+            assert colours["heart"].replace("#", "%23") in block
 
     def test_a_theme_swaps_what_the_named_colours_mean(self):
         # `color=accent` follows the sheet's theme rather than staying Google blue,

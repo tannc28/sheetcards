@@ -68,6 +68,97 @@ _DEFAULT_PALETTE = {
 }
 
 
+# Where the blossoms sit in one tile of the pattern, as (x, y, scale, rotation).
+# Handplaced rather than generated: the point of a scatter is that it does not read
+# as a grid, and the eye finds a repeat much faster than a random function avoids
+# one. The tile is 240 square and wraps, so a blossom near an edge is met by its
+# own other half — none of these sit close enough to an edge to be cut.
+_BLOSSOMS = (
+    (34, 44, 1.00, 12),
+    (128, 22, 0.66, -34),
+    (196, 84, 1.14, 41),
+    (74, 128, 0.84, 68),
+    (162, 178, 0.96, -18),
+    (26, 196, 0.60, 27),
+)
+# Single petals, drifting: the flower is only half of what a sakura in wind looks
+# like. Same tuple shape, one ellipse each.
+_PETALS = ((104, 88, 0.9, 55), (218, 148, 0.7, -25), (66, 218, 0.8, 100))
+
+
+def _blossom(x, y, scale, rotation, petal, heart):
+    """One five-petal flower, as SVG.
+
+    Five ellipses around a point is the cheapest shape that still reads as a
+    cherry blossom at the size a background pattern draws it: at 20 px nobody
+    counts the notches in a petal, but everybody counts five.
+    """
+    place = f"translate({x} {y}) rotate({rotation}) scale({scale})"
+    leaves = "".join(
+        f"<ellipse cx='0' cy='-9' rx='5.4' ry='8.6' transform='rotate({turn})'/>"
+        for turn in (0, 72, 144, 216, 288)
+    )
+    return (
+        f"<g transform='{place}'>"
+        f"<g fill='{petal}'>{leaves}</g>"
+        f"<circle r='2.3' fill='{heart}'/>"
+        f"</g>"
+    )
+
+
+def _data_uri(svg):
+    """An SVG encoded so it can live inside a CSS ``url()``.
+
+    Only the characters that would end the value or start a comment are escaped,
+    which keeps the result short enough to sit in a note type: a fully
+    percent-encoded copy of the same tile is roughly twice the size, and this one
+    is stored in every template of every themed sheet. The SVG is written with
+    single-quoted attributes so the CSS can keep the double quotes.
+    """
+    text = " ".join(svg.split())
+    for character, code in (("%", "%25"), ("#", "%23"), ("<", "%3C"), (">", "%3E")):
+        text = text.replace(character, code)
+    return "data:image/svg+xml," + text.replace(" ", "%20")
+
+
+def _blossom_tile(variant):
+    """The theme's wallpaper: one tile of blossoms, or ``None`` for a plain palette."""
+    petal = variant.get("petal")
+    if not petal:
+        return None
+    heart = variant.get("heart", petal)
+    flowers = "".join(_blossom(*spot, petal, heart) for spot in _BLOSSOMS)
+    loose = "".join(
+        f"<ellipse cx='0' cy='0' rx='4.6' ry='7.4' fill='{petal}'"
+        f" transform='translate({x} {y}) rotate({rotation}) scale({scale})'/>"
+        for x, y, scale, rotation in _PETALS
+    )
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'"
+        f" viewBox='0 0 240 240'><g opacity='{variant.get('veil', '0.5')}'>"
+        f"{flowers}{loose}</g></svg>"
+    )
+    return _data_uri(svg)
+
+
+def _painted(variant):
+    """The declarations that make a card look like its theme."""
+    parts = [
+        f"background-color: {variant['bg']}",
+        f"color: {variant['fg']}",
+    ]
+    tile = _blossom_tile(variant)
+    if tile:
+        # The colour stays in `background-color` rather than moving into the
+        # shorthand: the pattern is a layer over the card's own paint, and a client
+        # that refuses the data URI then still gets the theme's background instead
+        # of falling through to whatever is behind the card.
+        parts.append(f'background-image: url("{tile}")')
+        parts.append("background-repeat: repeat")
+        parts.append("background-size: 240px 240px")
+    return "; ".join(parts)
+
+
 def _palette(sheet_config):
     """The colour block at the top of the stylesheet, themed or not.
 
@@ -92,14 +183,8 @@ def _palette(sheet_config):
         f" --s2a-accent: {theme['night']['accent']}; }}\n",
     ]
     if sheet_config.theme in THEMES:
-        lines.append(
-            f".card {{ background-color: {theme['light']['bg']};"
-            f" color: {theme['light']['fg']}; }}\n"
-        )
-        lines.append(
-            f".card.night_mode {{ background-color: {theme['night']['bg']};"
-            f" color: {theme['night']['fg']}; }}\n"
-        )
+        lines.append(f".card {{ {_painted(theme['light'])}; }}\n")
+        lines.append(f".card.night_mode {{ {_painted(theme['night'])}; }}\n")
     return "".join(lines)
 
 

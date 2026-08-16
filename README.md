@@ -516,7 +516,7 @@ Written after the marker, in the `#config` cell itself.
 | `align` | `left`, `center`, `right` | Alignment for the whole card (a column's own `align` still wins) |
 | `speed` | a number — keep it inside 0.5–2.0 | Speaking rate for every spoken column that does not set its own. Unlike the per-column `speed`, the deck-wide one is **not** range-checked, so an absurd value reaches Anki unchallenged |
 | `reverse` | switch | Adds a second card template that asks the back and answers with the front. Skipped for cloze rows, and for a card that has nothing on one of its sides |
-| `theme` | `sakura` | Paints the whole card in a named palette instead of Anki's plain black-on-white, and points `color=muted` / `color=accent` at that palette's own two colours. Each theme carries a light and a dark version, so night mode stays readable. An unrecognised name is refused with a warning and the card keeps Anki's colours |
+| `theme` | `sakura` | Dresses the whole card instead of leaving it black on white: `sakura` is a cherry-blossom palette **and** a drift of blossoms strewn behind the text. A theme also points `color=muted` / `color=accent` at its own two colours, and carries a light and a dark version so night mode stays readable. The flowers are drawn in the stylesheet itself, so they need no network and nothing lands in `collection.media`. An unrecognised name is refused with a warning and the card keeps Anki's colours |
 
 #### Worked example
 

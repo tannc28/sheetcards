@@ -45,6 +45,13 @@ THEME_COLORS = {
 # `fg` is the card's own text colour, so it has to carry real contrast against `bg`
 # rather than merely being in the same family: the palette is the one thing here
 # that a sheet cannot correct per column.
+#
+# `petal`/`heart`/`veil` are the optional fourth part: a theme named after a season
+# owes the card more than that season's pink, so a variant carrying them gets
+# blossoms strewn behind the text (drawn by `card_layout`, from these colours).
+# `veil` is how faint they are — the pattern is wallpaper, and wallpaper that
+# competes with the word being learned has failed at being wallpaper. A theme with
+# no `petal` is simply a palette.
 THEMES = {
     "sakura": {
         "light": {
@@ -52,12 +59,18 @@ THEMES = {
             "fg": "#43262f",
             "muted": "#9c7382",
             "accent": "#d6336c",
+            "petal": "#f7bdd0",
+            "heart": "#ef9ab6",
+            "veil": "0.5",
         },
         "night": {
             "bg": "#2a1d23",
             "fg": "#f2dee5",
             "muted": "#bd97a4",
             "accent": "#ff8fb1",
+            "petal": "#7a4a5c",
+            "heart": "#95586c",
+            "veil": "0.55",
         },
     },
 }

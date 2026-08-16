@@ -4,6 +4,28 @@
 
 ---
 
+## ✨ **v6.20.0** - August 2026 *(Feature)*
+
+### `sakura` now has the flowers in it
+
+v6.19.0 shipped `theme=sakura` as a palette, and a palette is not what the name
+promises. Anyone reading `theme=sakura` expects blossoms, and got pink.
+
+Now the card is strewn with them: five-petal flowers and a few loose petals
+drifting between, in the theme's own colours, faint enough to stay wallpaper
+behind the word being learned.
+
+They cost nothing to show. The pattern is an SVG written into the card's
+stylesheet, so there is no file to fetch, nothing lands in `collection.media`,
+and a card on a plane looks exactly like a card at home. The theme's background
+colour stays underneath the pattern rather than being replaced by it, so a client
+that refuses the drawing is still left with the theme.
+
+A theme that names no petals is still just a palette — the flowers are a property
+of the theme, not of themes in general.
+
+---
+
 ## ✨ **v6.19.0** - August 2026 *(Feature)*
 
 ### `theme=sakura` — a colour for the whole card
