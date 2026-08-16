@@ -16,12 +16,21 @@ const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
 // A filled-in report is a better landing page than an empty form: a first-time
 // visitor sees what the tool actually answers instead of having to supply a sheet
-// to find out. This one carries a settings row — sizes, two `tts=zh_CN` columns, a
-// muted colour, a hint and a SUBDECK level — so the example shows the directives
-// doing something rather than only the defaults.
+// to find out.
+//
+// The workbook lives in this repository (examples/, built by
+// scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
+// the docs describe and the sheet the page loads cannot drift apart — a directive
+// added to the add-on gets an example in the same commit.
 // Overridden by ?url=, and by anything typed into the field.
 const DEMO_SHEET =
-  "https://docs.google.com/spreadsheets/d/1ze2znekyf6dduvQ_N6fYc3SEodWnz_CaY2WWLVkvuiI/edit";
+  "https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx";
+
+// Which of its sheets to open on. The workbook is a tour that starts at the
+// smallest sheet that works, and a landing page showing two columns and no
+// settings row would answer none of the questions people arrive with — so the
+// page opens on the one that uses everything at once, and the picker walks back.
+const DEMO_TAB = "14 Everything";
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
@@ -52,10 +61,6 @@ def package_bytes(sheet_id):
         sheet_id, _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"]
     )
 
-
-def _settings(cfg):
-    """A FieldConfig as a plain dict of only what the sheet actually set."""
-    return {k: v for k, v in vars(cfg).items() if v not in (None, False, [])}
 
 def analyze(tsv, deck_name):
     log = []
@@ -108,17 +113,11 @@ def analyze(tsv, deck_name):
 
     front, back = split_sides(plan, cfg)
     return json.dumps({
-        "plan": {
-            "id": plan.id_header, "sync": plan.sync_header, "tags": plan.tags_header,
-            "subdecks": plan.subdeck_headers, "content": plan.content_headers,
-            "duplicates": plan.duplicates, "fields": plan.note_type_fields(),
-            "headers": [h for h in headers if h.strip()],
-        },
-        "config": {
-            "present": cfg.present, "align": cfg.align, "speed": cfg.speed,
-            "reverse": cfg.reverse, "warnings": cfg.warnings,
-            "fields": {h: _settings(c) for h, c in cfg.fields.items()},
-        },
+        # Only what the page draws. The sheet's column roles and per-column
+        # settings used to be reported here too, for a detail panel that no
+        # longer exists — computing them again for nobody to read would be a
+        # second thing to keep correct.
+        "config": {"warnings": cfg.warnings},
         "sides": {"front": front, "back": back},
         "templates": {
             "basic": build_templates(plan, cfg, is_cloze=False),
@@ -131,29 +130,25 @@ def analyze(tsv, deck_name):
         "rows": listed,
         "stats": deck.get_statistics(),
         "duplicateIds": deck.duplicate_ids,
-        "log": log,
     }, ensure_ascii=False)
 `;
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
   analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
-  sheetId: "",
   // What the .apkg derives its note ids from — a spreadsheet id for a link, the
   // file and tab for an upload. Either way it has to be the same next time or a
   // re-import duplicates every note instead of updating it.
   sheetId: "",
-  // What the right pane shows: the card, or its source the way Anki puts the
-  // template editor beside it. The card is never taken away — the sheet's
-  // configuration opens as a drawer in the *left* pane instead, because it is
-  // reference material you consult while still looking at the card.
+  // What the stage shows: the card, or its source the way Anki puts the template
+  // editor beside it.
   tab: "both",
-  detailOpen: false,
 };
 const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 let buildPackage = null;
 let readUpload = null;
+let sheetNames = null;
 
 // The file last dropped on the page, kept as bytes because changing tab re-reads
 // it: a File object is gone once its input has moved on.
@@ -207,6 +202,7 @@ async function boot() {
   const wb = py.pyimport("s2a.workbook");
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
+  sheetNames = (bytes) => wb.sheet_names(bytes).toJs();
   $("#go").disabled = false;
   $("#pick").disabled = false;
 }
@@ -334,7 +330,8 @@ function analyse(tsv, deckName, sheetId) {
 function failed(message) {
   status(message, "bad");
   $("#app").hidden = true;
-  $("#stats").hidden = true;
+  $("#summary").hidden = true;
+  $("#warnbar").hidden = true;
 }
 
 async function preview() {
@@ -383,11 +380,26 @@ async function preview() {
       history.replaceState(null, "", url);
     }
 
-    showUpload(0);
+    showUpload(isDemo ? demoTab(upload.bytes) : 0);
   } catch (err) {
     failed(err.message);
   } finally {
     $("#go").disabled = false;
+  }
+}
+
+/** Where the example workbook should open, by name rather than by position.
+ *
+ *  Asked before the first read rather than after, so adding a sheet to the tour
+ *  does not make the landing page draw one grid and then immediately redraw
+ *  another. A name that is not in the file falls back to the first sheet.
+ */
+function demoTab(bytes) {
+  try {
+    const index = sheetNames(bytes).indexOf(DEMO_TAB);
+    return index < 0 ? 0 : index;
+  } catch {
+    return 0;
   }
 }
 
@@ -399,7 +411,7 @@ async function preview() {
 function paintTabs() {
   const el = $("#tabpick");
   const tabs = upload?.tabs || [];
-  el.hidden = !tabs.length;
+  $("#tabfield").hidden = !tabs.length;
   el.innerHTML = tabs
     .map(
       (name, i) =>
@@ -532,18 +544,33 @@ function visibleRows() {
     .filter(({ r }) => !f || r.deck === f || r.deck.startsWith(`${f}::`));
 }
 
+const BARE_URL = /^https?:\/\/\S+$/i;
+
+/**
+ * What to call a row in the list.
+ *
+ * The obvious answer — the first front column — is wrong whenever that column is
+ * a picture or a recording, because then it holds nothing but an address and the
+ * list becomes eighty rows of `https://upload.wikimedia.org/…` that name nothing.
+ * So: the first front column that reads as words, and only then an address.
+ */
+function rowLabel(row, front) {
+  const values = front.map((h) => String(row.values[h] ?? "").trim()).filter(Boolean);
+  return values.find((v) => !BARE_URL.test(v)) || values[0] || row.id || "—";
+}
+
 function rowList() {
   const visible = visibleRows();
   if (!visible.length) return `<p class="empty">${escapeHtml(t("noRowsHere"))}</p>`;
 
-  const prompt = state.analysis.sides.front[0];
+  const front = state.analysis.sides.front;
   return visible
     .map(
       ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
         data-row="${i}" title="row ${r.line} — ${escapeHtml(r.kind)}">
         <span class="n">${r.line}</span>
         <span class="dot ${r.kind}"></span>
-        <span class="txt">${escapeHtml(r.values[prompt] || r.id || "—")}</span>
+        <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
         ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
       </button>`,
     )
@@ -608,122 +635,30 @@ function warningItems(analysis) {
 }
 
 // ---------------------------------------------------------------------------
-// Right pane — the card, and behind it the reference material
+// The stage — the card, or the template it came from
 // ---------------------------------------------------------------------------
-
-const roleOf = (header, plan) => {
-  if (header === plan.id) return ["ID", t("roleId")];
-  if (header === plan.sync) return ["SYNC", t("roleSync")];
-  if (header === plan.tags) return ["TAGS", t("roleTags")];
-  if (plan.subdecks.includes(header)) return ["SUBDECK", t("roleSubdeck")];
-  return ["field", t("roleField")];
-};
-
-const SETTING_LABEL = {
-  side: "side", size: "size", color: "colour", align: "align", tts: "speak",
-  voices: "voices", speed: "speed", label: "caption", media: "media",
-  bold: "bold", italic: "italic", hint: "hint", furigana: "furigana",
-};
-
-function detailView(a) {
-  const warnings = warningItems(a);
-
-  const columns = a.plan.headers
-    .map((h) => {
-      const [role, why] = roleOf(h, a.plan);
-      const dup = a.plan.duplicates.includes(h);
-      const where = a.sides.front.includes(h)
-        ? `<span class="pill front">${escapeHtml(t("pillFront"))}</span>`
-        : a.sides.back.includes(h)
-          ? `<span class="pill">${escapeHtml(t("pillBack"))}</span>`
-          : role === "field"
-            ? `<span class="pill hidden">${escapeHtml(t("pillHidden"))}</span>`
-            : "";
-      return `<tr class="${dup ? "dup" : ""}">
-        <td><code>${escapeHtml(h)}</code></td>
-        <td><span class="role role-${role.toLowerCase()}">${role}</span></td>
-        <td>${where}</td>
-        <td class="muted">${dup ? escapeHtml(t("roleDuplicate")) : why}</td>
-      </tr>`;
-    })
-    .join("");
-
-  const deckWide = [
-    a.config.align && `align=${a.config.align}`,
-    a.config.speed && `speed=${a.config.speed}`,
-    a.config.reverse && "reverse",
-  ].filter(Boolean);
-
-  const settings = !a.config.present
-    ? `<p class="empty">${t("noSettingsRow")}</p>`
-    : `<p class="deckwide">${escapeHtml(t("deckWide"))}: ${
-        deckWide.length
-          ? deckWide.map((d) => `<span class="chip">${escapeHtml(d)}</span>`).join("")
-          : `<span class="muted">${escapeHtml(t("nothingSet"))}</span>`
-      }</p>
-      <table class="grid"><tbody>${a.plan.content
-        .map((h) => {
-          const cfg = a.config.fields[h] || {};
-          const chips = Object.entries(cfg)
-            .map(([k, v]) => {
-              const label = SETTING_LABEL[k] || k;
-              const text = v === true ? label : `${label} ${Array.isArray(v) ? v.join(", ") : v}`;
-              return `<span class="chip">${escapeHtml(text)}</span>`;
-            })
-            .join("");
-          return `<tr><td><code>${escapeHtml(h)}</code></td>
-            <td>${chips || `<span class="muted">${escapeHtml(t("defaults"))}</span>`}</td></tr>`;
-        })
-        .join("")}</tbody></table>`;
-
-  return `<div class="detail">
-    ${
-      warnings.length
-        ? `<h2>${escapeHtml(t("warnings"))}</h2><ul class="warnings">${warnings.join("")}</ul>
-           <p class="muted small">${t("warningsFrom")}</p>`
-        : ""
-    }
-
-    <h2>${escapeHtml(t("columns"))}</h2>
-    <p class="muted small">${t("columnsIntro")}</p>
-    <table class="grid">
-      <thead><tr><th>${escapeHtml(t("colColumn"))}</th><th>${escapeHtml(t("colRole"))}</th>
-        <th>${escapeHtml(t("colCard"))}</th><th></th></tr></thead>
-      <tbody>${columns}</tbody></table>
-
-    <h2>${escapeHtml(t("settingsRow"))}</h2>
-    ${settings}
-
-    <h2>${escapeHtml(t("noteTypes"))}</h2>
-    <p class="small"><code>${escapeHtml(a.noteTypes.basic)}</code></p>
-    ${a.rows.some((r) => r.cloze) ? `<p class="small"><code>${escapeHtml(a.noteTypes.cloze)}</code></p>` : ""}
-    <p class="muted small">${t("fieldsInOrder")}</p>
-    <p>${a.plan.fields.map((f) => `<span class="chip">${escapeHtml(f)}</span>`).join("")}</p>
-
-    <h2>${escapeHtml(t("howItWorks"))}</h2>
-    <p class="muted small">${t("howItWorksBody")}</p>
-    <p class="muted small">${t("runsAsAnki")}</p>
-  </div>`;
-}
 
 function templateView(a) {
   const row = a.rows[state.row];
   const templates = row?.cloze ? a.templates.cloze : a.templates.basic;
   const template = templates[Math.min(state.template, templates.length - 1)];
-  return `
+  return `<div class="stagebox">
     <p class="muted small">${t(
       "templateFrom",
       escapeHtml(row?.cloze ? a.noteTypes.cloze : a.noteTypes.basic),
     )}</p>
-    <h2>${escapeHtml(t("frontTemplate"))}</h2>
+    <h2 class="src-head">${escapeHtml(t("frontTemplate"))}</h2>
     <pre class="source">${escapeHtml(template.qfmt)}</pre>
-    <h2 class="spaced">${escapeHtml(t("backTemplate"))}</h2>
-    <pre class="source">${escapeHtml(template.afmt)}</pre>`;
+    <h2 class="src-head">${escapeHtml(t("backTemplate"))}</h2>
+    <pre class="source">${escapeHtml(template.afmt)}</pre>
+  </div>`;
 }
 
 function cardView(a) {
   const row = a.rows[state.row];
-  if (!row) return `<p class="empty">${escapeHtml(t("noRowsAtAll"))}</p>`;
+  if (!row) {
+    return `<div class="stagebox"><p class="empty">${escapeHtml(t("noRowsAtAll"))}</p></div>`;
+  }
 
   const isCloze = row.cloze;
   const templates = isCloze ? a.templates.cloze : a.templates.basic;
@@ -779,7 +714,7 @@ function cardView(a) {
   const unknown = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
   const missing = [...new Set([...front.missingFields, ...back.missingFields])];
 
-  return `
+  return `<div class="stagebox">
     ${
       templates.length > 1 || ordinals.length > 1
         ? `<div class="cardbar">
@@ -826,10 +761,11 @@ function cardView(a) {
     }
     ${missing.length ? `<p class="note">${t("missingFields", missing.map(escapeHtml).join("</code>, <code>"))}</p>` : ""}
     ${unknown.length ? `<p class="note">${t("unknownFilters", unknown.map(escapeHtml).join("</code>, <code>"))}</p>` : ""}
-    <p class="muted small" style="margin-top:10px">${escapeHtml(t("deckAndTags"))}
+    <p class="cardmeta">${escapeHtml(t("deckAndTags"))}
       <code>${escapeHtml(row.deck)}</code> · ${escapeHtml(t("tagsLabel"))}
       ${row.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</p>
-    <p class="muted small">${t("approxNote")}</p>`;
+    <p class="muted small approx">${t("approxNote")} ${t("runsAsAnki")}</p>
+  </div>`;
 }
 
 /** The answer side minus the repeated question, when the template used FrontSide. */
@@ -874,13 +810,17 @@ function tabBar() {
     ).join("")}
     <span class="spacer"></span>
     <span class="nav">
-      <button id="prev" title="${escapeHtml(t("prevRow"))}">←</button>
+      <button id="prev" type="button" aria-label="${escapeHtml(t("prevRow"))}"
+              title="${escapeHtml(t("prevRow"))}">←</button>
       <span class="at">${at + 1} / ${visible.length}</span>
-      <button id="next" title="${escapeHtml(t("nextRow"))}">→</button>
+      <button id="next" type="button" aria-label="${escapeHtml(t("nextRow"))}"
+              title="${escapeHtml(t("nextRow"))}">→</button>
     </span>`;
 }
 
-function statStrip({ stats, rows }) {
+/** The counts as one readable line. Six equal tiles said nothing about which of
+ *  them mattered; only "marked for sync" is ever a problem, so only it is red. */
+function summaryLine({ stats, rows }) {
   const cells = [
     ["statRows", stats.total_table_lines],
     ["statWithId", stats.valid_note_lines],
@@ -892,8 +832,8 @@ function statStrip({ stats, rows }) {
   return cells
     .map(
       ([key, n]) =>
-        `<div class="stat ${n === 0 && key === "statSync" ? "zero" : ""}">
-           <b>${n}</b><span>${escapeHtml(t(key))}</span></div>`,
+        `<span class="${n === 0 && key === "statSync" ? "zero" : ""}">` +
+        `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
     )
     .join("");
 }
@@ -926,22 +866,21 @@ function render() {
   const a = state.analysis;
   paintStatic();
   $("#app").hidden = false;
-  $("#stats").hidden = false;
-  $("#stats").innerHTML = statStrip(a);
+  $("#summary").hidden = false;
+  $("#summary").innerHTML = summaryLine(a);
   $("#tree").innerHTML = deckPanel(a);
   $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
   $("#tabs").innerHTML = tabBar();
   $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
 
-  $("#detail").hidden = !state.detailOpen;
-  $("#detail").innerHTML = state.detailOpen ? detailView(a) : "";
-  $("#details-btn").setAttribute("aria-expanded", String(state.detailOpen));
-  document.querySelector(".side").classList.toggle("open", state.detailOpen);
-
-  const warnings = warningItems(a).length;
-  $("#warncount").hidden = !warnings;
-  $("#warncount").textContent = warnings;
+  // Above the working area rather than behind a drawer: a sheet that warns is
+  // telling you the cards will come out wrong, which is the one thing on this
+  // page nobody should have to go looking for.
+  const warnings = warningItems(a);
+  $("#warnbar").hidden = !warnings.length;
+  $("#warncount").textContent = warnings.length ? `(${warnings.length})` : "";
+  $("#warnlist").innerHTML = warnings.join("");
 }
 
 // ---------------------------------------------------------------------------
@@ -958,12 +897,18 @@ document.addEventListener("click", (e) => {
   else paintStatic();
 });
 
-$("#go").addEventListener("click", preview);
-$("#url").addEventListener("keydown", (e) => e.key === "Enter" && preview());
+// A real form, so Enter submits from either field the way it does everywhere else
+// and the browser supplies the keyboard's "go" key on a phone.
+$("#entry-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  preview();
+});
+
 $("#deck").addEventListener("input", () => (deckNameEdited = true));
-$("#details-btn").addEventListener("click", () => {
-  state.detailOpen = !state.detailOpen;
-  render();
+// Applied on commit rather than only on the next Preview: typing a deck name and
+// watching nothing happen reads as a control that does not work.
+$("#deck").addEventListener("change", () => {
+  if (upload && $("#deck").value.trim()) showUpload(upload.index);
 });
 
 $("#pick").addEventListener("click", () => $("#file").click());

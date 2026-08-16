@@ -5,34 +5,40 @@
  * `sheet_config.warnings` — the add-on's own code, running in the browser — and
  * they are word for word what Anki will tell you at sync time. Translating them
  * here would make the preview say something the add-on never says, which is the
- * one thing this page exists not to do. They stay in English, and the detail
- * panel says why.
+ * one thing this page exists not to do. They stay in English, and the warning
+ * banner says why.
  *
  * English is the default. Vietnamese is offered because the person who maintains
  * this add-on reads Vietnamese; anyone else gets the language they came with.
  */
 
 const STRINGS = {
-  // --- control bar --------------------------------------------------------
+  // --- masthead and entry ---------------------------------------------------
   brandTag: { en: "preview", vi: "xem trước" },
+  skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
+  tagline: {
+    en: "See what your sheet becomes in Anki — decks, rows and cards — before you sync it.",
+    vi: "Xem sheet của bạn thành gì trong Anki — deck, dòng và thẻ — trước khi sync.",
+  },
+  entryTitle: { en: "Choose a sheet", vi: "Chọn sheet" },
   urlPlaceholder: {
-    en: "Google Sheets link, or a link to an .xlsx file",
-    vi: "Link Google Sheets, hoặc link tới file .xlsx",
+    en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
+    vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",
   },
-  urlLabel: {
-    en: "Google Sheets link or .xlsx file link",
-    vi: "Link Google Sheets hoặc link file .xlsx",
-  },
-  deckPlaceholder: { en: "deck name", vi: "tên deck" },
+  urlLabel: { en: "Sheet link", vi: "Link sheet" },
+  deckPlaceholder: { en: "My deck", vi: "Deck của tôi" },
   deckLabel: { en: "Deck name", vi: "Tên deck" },
   go: { en: "Preview", vi: "Xem trước" },
-  or: { en: "or", vi: "hoặc" },
   pick: { en: "Upload a file", vi: "Tải file lên" },
   pickLabel: {
     en: "Preview a file from this computer — .xlsx, .xlsm, .csv or .tsv",
     vi: "Xem trước file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
   },
-  tabLabel: { en: "Sheet in the workbook", vi: "Trang trong file" },
+  orDrop: {
+    en: "or drop one anywhere on this page.",
+    vi: "hoặc thả file vào bất kỳ đâu trên trang.",
+  },
+  tabLabel: { en: "Sheet", vi: "Trang" },
   dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
@@ -98,11 +104,13 @@ const STRINGS = {
   // --- demo ---------------------------------------------------------------
   demoNote: {
     en:
-      "Showing an example sheet — an HSK 4 deck with a settings row, so you can " +
-      "see what the directives do. Paste your own link above to read yours instead.",
+      "Showing the example workbook — fifteen sheets, from the smallest one that " +
+      "works to every directive at once. Use the sheet picker above to walk " +
+      "through them, or paste your own link to read yours instead.",
     vi:
-      "Đang hiện sheet ví dụ — một deck HSK 4 có settings row, để bạn thấy các " +
-      "directive làm gì. Dán link của bạn ở trên để đọc sheet của bạn.",
+      "Đang hiện file ví dụ — mười lăm sheet, từ sheet đơn giản nhất tới sheet " +
+      "dùng hết mọi directive. Dùng ô chọn sheet ở trên để xem lần lượt, hoặc " +
+      "dán link của bạn để đọc sheet của bạn.",
   },
 
   // --- the numbers --------------------------------------------------------
@@ -123,7 +131,6 @@ const STRINGS = {
   rows: { en: "Rows", vi: "Dòng" },
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
   noRowsAtAll: { en: "No rows to show.", vi: "Không có dòng nào để hiện." },
-  sheetDetail: { en: "Sheet detail", vi: "Chi tiết sheet" },
   downloadApkg: { en: "Download .apkg", vi: "Tải .apkg" },
   apkgNote: {
     en:
@@ -224,82 +231,6 @@ const STRINGS = {
       "đúng câu chữ Anki sẽ báo lúc sync, nên tôi giữ tiếng Anh. Không có gì bị bỏ " +
       "qua âm thầm: giá trị add-on không hiểu thì bị từ chối chứ không đoán, và cột " +
       "giữ mặc định cho tới khi sheet được sửa.",
-  },
-  columns: { en: "Columns", vi: "Cột" },
-  columnsIntro: {
-    en:
-      "Only <code>ID</code>, <code>SYNC</code>, <code>SUBDECK n</code> and " +
-      "<code>TAGS</code> are reserved. Every other column becomes a note field " +
-      "named exactly like its header, in any language.",
-    vi:
-      "Chỉ <code>ID</code>, <code>SYNC</code>, <code>SUBDECK n</code> và " +
-      "<code>TAGS</code> là tên dành riêng. Mọi cột khác thành một field trong " +
-      "Anki, tên đúng như header, ngôn ngữ nào cũng được.",
-  },
-  colColumn: { en: "Column", vi: "Cột" },
-  colRole: { en: "Role", vi: "Vai trò" },
-  colCard: { en: "Card", vi: "Thẻ" },
-  roleId: { en: "the row's key — never regenerated", vi: "khoá của dòng — không bao giờ tạo lại" },
-  roleSync: { en: "gates whether the row syncs", vi: "quyết định dòng có sync không" },
-  roleTags: { en: "extra Anki tags", vi: "tag thêm cho Anki" },
-  roleSubdeck: { en: "one level of the deck path", vi: "một cấp trong đường dẫn deck" },
-  roleField: {
-    en: "becomes a note field of this name",
-    vi: "thành một field trong Anki với tên này",
-  },
-  roleDuplicate: {
-    en: "repeated header — only the first is used",
-    vi: "header trùng — chỉ cột đầu được dùng",
-  },
-  pillFront: { en: "front", vi: "trước" },
-  pillBack: { en: "back", vi: "sau" },
-  pillHidden: { en: "hidden", vi: "ẩn" },
-
-  settingsRow: { en: "Settings row", vi: "Settings row" },
-  noSettingsRow: {
-    en:
-      "This sheet has no settings row, so the defaults apply: the first content " +
-      "column is the front, everything else is the back. Add a row under the " +
-      "headers with <code>#config</code> in the ID cell to change that.",
-    vi:
-      "Sheet này không có settings row nên dùng mặc định: cột nội dung đầu tiên " +
-      "là mặt trước, còn lại là mặt sau. Thêm một dòng ngay dưới header với " +
-      "<code>#config</code> ở ô ID để đổi.",
-  },
-  deckWide: { en: "Deck-wide", vi: "Toàn deck" },
-  nothingSet: { en: "nothing set", vi: "không đặt gì" },
-  defaults: { en: "defaults", vi: "mặc định" },
-
-  noteTypes: { en: "Note types", vi: "Note type" },
-  fieldsInOrder: {
-    en:
-      "Fields, in order — <code>ID</code> leads because Anki uses the first field " +
-      "for duplicate detection:",
-    vi:
-      "Các field theo thứ tự — <code>ID</code> đứng đầu vì Anki dùng field đầu " +
-      "tiên để phát hiện trùng:",
-  },
-
-  howItWorks: { en: "How this preview works", vi: "Trang này hoạt động ra sao" },
-  howItWorksBody: {
-    en:
-      "The page loads <code>column_model.py</code>, <code>sheet_config.py</code>, " +
-      "<code>card_layout.py</code>, <code>tsv_model.py</code> and " +
-      "<code>errors.py</code> straight from the add-on and runs them through " +
-      "<a href='https://pyodide.org'>Pyodide</a>, so the columns, settings, " +
-      "warnings, decks and templates above are computed by the code that will run " +
-      "at sync time — not by a second implementation of it. Only the card picture " +
-      "is drawn by this page; inside Anki that last step belongs to Anki's own " +
-      "renderer, so read the template as exact and the layout as an approximation.",
-    vi:
-      "Trang này tải thẳng <code>column_model.py</code>, <code>sheet_config.py</code>, " +
-      "<code>card_layout.py</code>, <code>tsv_model.py</code> và " +
-      "<code>errors.py</code> từ add-on rồi chạy bằng " +
-      "<a href='https://pyodide.org'>Pyodide</a>. Nên cột, settings, cảnh báo, deck " +
-      "và template ở trên là do chính code sẽ chạy lúc sync tính ra — không phải " +
-      "một bản cài lại. Chỉ hình ảnh thẻ là do trang này vẽ; trong Anki bước cuối " +
-      "đó thuộc về renderer của Anki, nên hãy đọc template như chính xác và bố cục " +
-      "như xấp xỉ.",
   },
   runsAsAnki: {
     en:

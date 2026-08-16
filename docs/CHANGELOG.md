@@ -37,6 +37,34 @@ the add-on can produce has something to point at.
 - The stale `sample data/` directory, which still described the fixed-column schema
   removed several versions ago, is gone.
 
+### 🎨 The preview site is laid out for the person using it
+
+The page was dressed as a console — ten font sizes down to 10.5px, monospace on the
+inputs and the headings, nine controls crammed into one 56px bar, and no `<label>`
+anywhere. It read as a debugger, and the people it is for are learning a language.
+
+- **One type scale, six steps, and one sans-serif family** for everything the page
+  says. Monospace is kept for the strings that really did come out of a spreadsheet:
+  column names, ids, tags, template source.
+- **The card is the point, so it gets the room.** It sits centred in a column of its
+  own with the sidebar at a fixed, modest width, instead of the two splitting the
+  window down the middle.
+- **Warnings are a banner above the working area.** They used to be a small count on a
+  collapsed drawer at the bottom of a scrolling sidebar — the most actionable thing on
+  the page, hidden behind the most clicks.
+- **Every control has a visible label**, the link field is a real form (so Enter
+  submits and a phone offers a "go" key), and the deck name applies when you commit it
+  rather than waiting for another Preview.
+- **A row is named by the first front column that reads as words.** When the front was
+  a picture, the list was eighty rows of `https://upload.wikimedia.org/…`.
+- The column-roles and settings-row report is gone. It was reference material, and
+  `ANALYZER` in `app.js` no longer computes what only it read.
+- Checked against the Web Interface Guidelines: skip link, an `<h1>`, `color-scheme`
+  and `theme-color` for both themes (Windows dark mode used to render the sheet picker
+  white), `aria-label` on the icon-only row buttons, `overscroll-behavior`,
+  `touch-action`, safe-area insets on notched phones, and a real narrow layout rather
+  than a wrapped control bar.
+
 ---
 
 ## ✨ **v6.12.0** - August 2026 *(Feature)*

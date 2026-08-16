@@ -2,50 +2,84 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1216" media="(prefers-color-scheme: dark)">
 <title>Sheets2Anki — preview a sheet before you sync it</title>
 <meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the Sheets2Anki add-on would produce — running the add-on's own code in your browser.">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-<header class="bar">
+<a class="skip" href="#app" data-i18n="skip">Skip to the preview</a>
+
+<header class="masthead">
   <div class="brand">
-    <strong>Sheets2Anki</strong>
-    <span data-i18n="brandTag">preview</span>
+    <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
+    <p class="tagline" data-i18n="tagline">See what your sheet becomes in Anki.</p>
   </div>
-
-  <div class="controls">
-    <input id="url" type="url" spellcheck="false" autocomplete="off"
-           data-i18n-attr="placeholder:urlPlaceholder,aria-label:urlLabel">
-    <button id="go" data-i18n="go" disabled>Preview</button>
-
-    <span class="or" data-i18n="or">or</span>
-    <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
-           data-i18n-attr="aria-label:pickLabel">
-    <button id="pick" class="secondary" disabled
-            data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
-    <select id="tabpick" hidden data-i18n-attr="aria-label:tabLabel"></select>
-
-    <input id="deck" type="text" spellcheck="false" autocomplete="off"
-           data-i18n-attr="placeholder:deckPlaceholder,aria-label:deckLabel">
-  </div>
-
-  <p id="status" class="status" role="status" aria-live="polite">
-    <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
-  </p>
 
   <nav id="langs" class="langs" aria-label="Language"></nav>
-  <a class="ghost" href="https://github.com/tannc28/sheets2anki">GitHub</a>
+  <a class="ghost" href="https://github.com/tannc28/sheets2anki" rel="noopener">GitHub</a>
 </header>
+
+<section class="entry" aria-labelledby="entry-title">
+  <h2 id="entry-title" class="sr-only" data-i18n="entryTitle">Choose a sheet</h2>
+
+  <div class="entry-row">
+    <!-- Only the link and its button are the form: Enter in the deck field must
+         re-read the sheet already in hand, not download it again. -->
+    <form id="entry-form" class="entry-main">
+      <p class="field grow">
+        <label for="url" data-i18n="urlLabel">Sheet link</label>
+        <input id="url" name="url" type="url" spellcheck="false" autocomplete="off"
+               enterkeyhint="go" data-i18n-attr="placeholder:urlPlaceholder">
+      </p>
+      <p class="field submit">
+        <button id="go" type="submit" data-i18n="go" disabled>Preview</button>
+      </p>
+    </form>
+
+    <p class="field" id="tabfield" hidden>
+      <label for="tabpick" data-i18n="tabLabel">Sheet</label>
+      <select id="tabpick"></select>
+    </p>
+
+    <p class="field">
+      <label for="deck" data-i18n="deckLabel">Deck name</label>
+      <input id="deck" name="deck" type="text" spellcheck="false" autocomplete="off"
+             enterkeyhint="done" data-i18n-attr="placeholder:deckPlaceholder">
+    </p>
+  </div>
+
+  <p class="entry-alt">
+    <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+           data-i18n-attr="aria-label:pickLabel">
+    <button id="pick" class="linky" type="button" disabled
+            data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
+    <span data-i18n="orDrop">or drop one anywhere on this page.</span>
+    <span class="sep" aria-hidden="true">·</span>
+    <span id="status" class="status" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+    </span>
+  </p>
+</section>
 
 <p id="demo-note" class="demo-note" data-i18n="demoNote" hidden></p>
 
-<div id="stats" class="strip" hidden></div>
+<section id="warnbar" class="warnbar" hidden aria-labelledby="warnbar-title">
+  <h2 id="warnbar-title"><span class="warn-icon" aria-hidden="true">!</span>
+    <span data-i18n="warnings">Warnings</span>
+    <span id="warncount" class="count"></span></h2>
+  <ul id="warnlist" class="warnings"></ul>
+  <p class="muted small" data-i18n="warningsFrom"></p>
+</section>
+
+<p id="summary" class="summary" hidden></p>
 
 <main id="app" class="app" hidden>
 
-  <aside class="pane side">
+  <aside class="side" aria-label="Decks and rows">
     <h2 data-i18n="decks">Decks</h2>
     <div id="tree"></div>
 
@@ -56,17 +90,10 @@
     <div class="side-foot">
       <button id="apkg" class="apkg-btn" type="button" data-i18n="downloadApkg"></button>
       <p class="muted small" data-i18n="apkgNote"></p>
-      <button id="details-btn" class="detail-toggle" type="button" aria-expanded="false"
-              aria-controls="detail">
-        <span class="chev" aria-hidden="true">▸</span>
-        <span class="label" data-i18n="sheetDetail">Sheet detail</span>
-        <span id="warncount" class="badge" hidden></span>
-      </button>
     </div>
-    <div id="detail" class="drawer" hidden></div>
   </aside>
 
-  <section class="pane main">
+  <section class="stage" aria-label="Card preview">
     <nav class="tabs" id="tabs"></nav>
     <div id="view"></div>
   </section>
@@ -75,7 +102,7 @@
 
 <!-- Covers the whole window while a file is over it, so a drop lands here rather
      than inside the card's iframe — which would navigate the frame to the file. -->
-<div id="drop" class="dropzone" hidden aria-hidden="true">
+<div id="drop" class="dropzone" hidden>
   <div>
     <strong data-i18n="dropHere">Drop the file to preview it</strong>
     <span data-i18n="dropTypes"></span>
