@@ -300,6 +300,8 @@ select { cursor: pointer; }
     border-top-color: var(--accent); border-right-color: var(--accent);
   }
   .skip, .chev, button, .rowitem, .tree button, .tabs button { transition: none; }
+  /* The detail still arrives, it just does not announce itself. */
+  .coldetail.flash { animation: none; }
 }
 
 /* ---- what the sheet says about itself ------------------------------------ */
@@ -407,6 +409,54 @@ h3.spaced { margin-top: 18px; }
 }
 .rowitem .txt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rowitem.row-skipped .txt, .rowitem.row-invalid .txt { opacity: .55; }
+
+/* ---- panel 1: what each column turned into ------------------------------- */
+
+.collist { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Monospace because these are strings out of a spreadsheet, not words the page
+   chose — the same rule the row numbers and the template source follow. */
+.col {
+  font-family: var(--mono); font-size: var(--t-xs);
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--sunken); color: var(--ink);
+  border: 1px solid var(--line);
+  max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.col:hover { border-color: var(--accent); }
+.col.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+/* A column that reaches nothing — written twice, or a header the sheet does not
+   use — reads as switched off rather than as one more chip to consider. */
+.col-dead { opacity: .5; text-decoration: line-through; }
+
+.coldetail {
+  margin-top: 8px; padding: 10px 12px;
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.coldetail p { margin: 0 0 6px; }
+.coldetail p:last-child { margin-bottom: 0; }
+.colrole { display: flex; align-items: baseline; gap: 8px; font-size: var(--t-md); }
+.colrole .mark {
+  flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--muted);
+}
+.colrole .mark.key { background: var(--accent); border-radius: 50%; }
+.colrole .mark.gate { background: var(--ok); }
+.colrole .mark.deck { background: var(--accent); }
+.colrole .mark.tag { background: var(--muted); }
+.colrole .mark.field { background: var(--ink); }
+.colrole .mark.dead { background: var(--bad); }
+.colvalue { font-size: var(--t-sm); }
+.colvalue .k { color: var(--muted); margin-right: 6px; }
+.colvalue code { word-break: break-word; }
+.colwarn { font-size: var(--t-sm); color: var(--bad); }
+
+/* The blink is the answer arriving, so it runs when a column is *chosen* and not
+   on the repaints that follow — picking a row must not blink a panel nobody is
+   looking at. app.js only sets this class on the click that opened it. */
+@keyframes s2a-colflash {
+  from { background: var(--accent-soft); border-color: var(--accent); }
+}
+.coldetail.flash { animation: s2a-colflash .6s ease-out; }
 
 /* ---- panel 3: the card --------------------------------------------------- */
 

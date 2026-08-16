@@ -45,6 +45,48 @@ const STRINGS = {
   panelSource: { en: "Source", vi: "Nguồn" },
   panelDeck: { en: "Deck", vi: "Deck" },
   panelCard: { en: "Card", vi: "Thẻ" },
+
+  // --- what each column turned into ---------------------------------------
+  columns: { en: "Columns", vi: "Cột" },
+  columnsIntro: {
+    en: "Tap one to see what it became and what the settings row said about it.",
+    vi: "Bấm vào một cột để xem nó thành gì và settings row đã nói gì về nó.",
+  },
+  roleId: {
+    en: "ID — the key every note is matched by",
+    vi: "ID — khoá để nhận lại từng note",
+  },
+  roleSync: {
+    en: "SYNC — which rows are written to Anki",
+    vi: "SYNC — dòng nào được ghi vào Anki",
+  },
+  roleTags: { en: "TAGS — extra tags for the row", vi: "TAGS — tag thêm cho dòng" },
+  roleSubdeck: {
+    en: (level) => `Deck level ${level} — reserved, so it never reaches the card`,
+    vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên thẻ`,
+  },
+  roleSubdeckField: {
+    en: (level, where) => `Deck level ${level}, and a field on the ${where}`,
+    vi: (level, where) => `Tầng deck ${level}, đồng thời là field ở ${where}`,
+  },
+  roleField: {
+    en: (where) => `A field on the ${where}`,
+    vi: (where) => `Field ở ${where}`,
+  },
+  roleDuplicate: {
+    en: "Written twice — this one is ignored",
+    vi: "Bị ghi hai lần — cột này bị bỏ qua",
+  },
+  roleUnused: { en: "Not used", vi: "Không dùng tới" },
+  sideFront: { en: "front", vi: "mặt trước" },
+  sideBack: { en: "back", vi: "mặt sau" },
+  sideHidden: { en: "note only, hidden on the card", vi: "chỉ trong note, ẩn trên thẻ" },
+  nothingSet: {
+    en: "The settings row says nothing about this column.",
+    vi: "Settings row không nói gì về cột này.",
+  },
+  valueInRow: { en: (line) => `Row ${line}`, vi: (line) => `Dòng ${line}` },
+  cellEmpty: { en: "empty", vi: "trống" },
   deckNote: {
     en: (sync, total, decks) =>
       `${sync} of ${total} rows sync · ${decks} deck${decks === 1 ? "" : "s"}`,

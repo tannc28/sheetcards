@@ -46,7 +46,7 @@ const ANALYZER = String.raw`
 import json
 from s2a import tsv_model as tm
 from s2a.card_layout import build_templates, split_sides
-from s2a.column_model import deck_path
+from s2a.column_model import clean, deck_path
 from s2a.sheet_config import is_config_row
 from s2a.apkg import build_package
 
@@ -60,6 +60,11 @@ def package_bytes(sheet_id):
     return build_package(
         sheet_id, _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"]
     )
+
+
+def _settings(cfg):
+    """A FieldConfig as a plain dict of only what the sheet actually set."""
+    return {k: v for k, v in vars(cfg).items() if v not in (None, False, [])}
 
 
 def analyze(tsv, deck_name):
@@ -113,11 +118,32 @@ def analyze(tsv, deck_name):
 
     front, back = split_sides(plan, cfg)
     return json.dumps({
-        # Only what the page draws. The sheet's column roles and per-column
-        # settings used to be reported here too, for a detail panel that no
-        # longer exists — computing them again for nobody to read would be a
-        # second thing to keep correct.
-        "config": {"warnings": cfg.warnings},
+        # What each column became, and what the settings row said about it. This
+        # was dropped once, along with a reference table nobody read. It is back
+        # because panel 1 now answers a question with it — "what did this column
+        # turn into" is the commonest thing to be wrong about a sheet — and it is
+        # read straight off the plan the parser already built, not recomputed.
+        #
+        # The header list keeps the sheet's own order and its repeats: a header
+        # written twice is honoured once, and the page can only say which of the
+        # two was ignored if it can see both.
+        #
+        # No backticks anywhere in this string. It is a JS template literal, and
+        # one inside a Python comment closes it — the whole page then fails to
+        # parse, with an error pointing at whatever word came next.
+        "plan": {
+            "id": plan.id_header,
+            "sync": plan.sync_header,
+            "tags": plan.tags_header,
+            "subdecks": plan.subdeck_headers,
+            "content": plan.content_headers,
+            "headers": [clean(h) for h in headers if clean(h)],
+        },
+        "config": {
+            "warnings": cfg.warnings,
+            "subdecks": cfg.subdeck_columns,
+            "fields": {h: _settings(c) for h, c in cfg.fields.items()},
+        },
         "sides": {"front": front, "back": back},
         "templates": {
             "basic": build_templates(plan, cfg, is_cloze=False),
@@ -136,6 +162,9 @@ def analyze(tsv, deck_name):
 const $ = (sel) => document.querySelector(sel);
 const state = {
   analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
+  // Which column of the sheet is opened up in panel 1, by its position in the
+  // header row, and whether the next repaint is the one that opened it.
+  column: null, columnFlash: false,
   // What the .apkg derives its note ids from — a spreadsheet id for a link, the
   // file and tab for an upload. Either way it has to be the same next time or a
   // re-import duplicates every note instead of updating it.
@@ -356,6 +385,9 @@ function analyse(tsv, deckName, sheetId) {
   if (state.row < 0) state.row = 0;
   state.template = 0;
   state.deckFilter = null;
+  // A column is chosen by position, and a different sheet has different columns
+  // in those positions.
+  state.column = null;
   render();
 
   const s = state.analysis.stats;
@@ -932,6 +964,14 @@ function render() {
   $("#tabs").innerHTML = tabBar();
   $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
 
+  $("#columns").hidden = false;
+  $("#colcount").textContent = `${a.plan.headers.length}`;
+  $("#collist").innerHTML = columnList(a);
+  $("#coldetail").innerHTML = state.column == null ? "" : columnDetail(a);
+  // The flash marks *choosing a column*. Every other repaint — a row picked, a
+  // language switched — would otherwise blink a panel nobody was looking at.
+  state.columnFlash = false;
+
   // Each header says what its panel holds, because that sentence is all a shut
   // panel has left.
   const synced = a.rows.filter((r) => r.kind === "synced");
@@ -953,6 +993,118 @@ function render() {
   $("#warnbar").hidden = !warnings.length;
   $("#warncount").textContent = warnings.length ? `(${warnings.length})` : "";
   $("#warnlist").innerHTML = warnings.join("");
+}
+
+// ---------------------------------------------------------------------------
+// Panel 1 — what each column turned into
+// ---------------------------------------------------------------------------
+
+/**
+ * The role a header ended up with, as `{kind, label}`.
+ *
+ * Read off the plan the parser produced rather than worked out again from the
+ * header text: the rules for what counts as `SUBDECK 2` live in
+ * `column_model.py`, and a second copy of them here would be a second answer.
+ */
+function columnRole(name, index, a) {
+  const p = a.plan;
+  // A header written twice is honoured once. The first one is the column; every
+  // later one is inert, and saying so is the whole reason both are listed.
+  if (p.headers.indexOf(name) !== index) {
+    return { kind: "dead", label: t("roleDuplicate") };
+  }
+  if (name === p.id) return { kind: "key", label: t("roleId") };
+  if (name === p.sync) return { kind: "gate", label: t("roleSync") };
+  if (name === p.tags) return { kind: "tag", label: t("roleTags") };
+
+  const reserved = p.subdecks.indexOf(name);
+  if (reserved >= 0) {
+    return { kind: "deck", label: t("roleSubdeck", reserved + 1) };
+  }
+  const declared = (a.config.subdecks || []).indexOf(name);
+  if (declared >= 0) {
+    // Both a level of the deck path and an ordinary field — the thing a
+    // reserved SUBDECK column cannot be, and the reason `subdeck=n` exists.
+    return { kind: "deck", label: t("roleSubdeckField", declared + 1, side(name, a)) };
+  }
+  if (p.content.includes(name)) {
+    return { kind: "field", label: t("roleField", side(name, a)) };
+  }
+  return { kind: "dead", label: t("roleUnused") };
+}
+
+/** Where a content column is rendered on the card. */
+function side(name, a) {
+  if (a.sides.front.includes(name)) return t("sideFront");
+  if (a.sides.back.includes(name)) return t("sideBack");
+  return t("sideHidden");
+}
+
+/** The settings row's directives for a column, as `key=value` text. */
+function directives(name, a) {
+  const set = (a.config.fields || {})[name] || {};
+  return Object.entries(set).map(([key, value]) => {
+    if (value === true) return key;
+    if (Array.isArray(value)) return `${key}=${value.join(",")}`;
+    // `media` is stored as the kind it holds, which reads better as the word the
+    // sheet actually wrote than as `media=image`.
+    if (key === "media") return String(value);
+    if (key === "type_answer") return value === "nc" ? "type=nc" : "type";
+    return `${key}=${value}`;
+  });
+}
+
+function columnList(a) {
+  return a.plan.headers
+    .map((name, i) => {
+      const role = columnRole(name, i, a);
+      const on = state.column === i ? " on" : "";
+      return `<button class="col col-${role.kind}${on}" data-col="${i}"
+        aria-pressed="${state.column === i}">${escapeHtml(name)}</button>`;
+    })
+    .join("");
+}
+
+/**
+ * The chosen column, opened up: what it became, what the settings row said, what
+ * this row actually holds in it, and anything the add-on could not understand.
+ */
+function columnDetail(a) {
+  const name = a.plan.headers[state.column];
+  if (name === undefined) return "";
+
+  const role = columnRole(name, state.column, a);
+  const set = directives(name, a);
+  const row = a.rows[state.row];
+  const value = row ? String(row.values[name] ?? "") : "";
+  // The warnings name their column in single quotes, which is also how a person
+  // reading them finds the one they are looking at.
+  const said = (a.config.warnings || []).filter((w) => w.startsWith(`'${name}':`));
+
+  return `<div class="coldetail${state.columnFlash ? " flash" : ""}">
+    <p class="colrole"><span class="mark ${role.kind}"></span>${escapeHtml(role.label)}</p>
+    ${
+      set.length
+        ? `<p class="colset">${set
+            .map((d) => `<span class="chip">${escapeHtml(d)}</span>`)
+            .join("")}</p>`
+        : `<p class="muted small">${escapeHtml(t("nothingSet"))}</p>`
+    }
+    ${
+      row
+        ? `<p class="colvalue"><span class="k">${escapeHtml(
+            t("valueInRow", row.line),
+          )}</span> ${
+            value
+              ? `<code>${escapeHtml(value)}</code>`
+              : `<span class="muted">${escapeHtml(t("cellEmpty"))}</span>`
+          }</p>`
+        : ""
+    }
+    ${said
+      .map((w) => `<p class="colwarn">${escapeHtml(w)}</p>`)
+      .join("")}
+  </div>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -1033,6 +1185,15 @@ addEventListener("drop", (e) => {
 });
 
 document.addEventListener("click", (e) => {
+  const col = e.target.closest("[data-col]");
+  if (col) {
+    const index = Number(col.dataset.col);
+    // Clicking the open one shuts it: the detail is an answer to a question, and
+    // there has to be a way to stop asking without picking something else.
+    state.column = state.column === index ? null : index;
+    state.columnFlash = state.column !== null;
+    return render();
+  }
   const tab = e.target.closest("[data-tab]");
   if (tab) {
     state.tab = tab.dataset.tab;
