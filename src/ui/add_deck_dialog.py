@@ -33,7 +33,9 @@ from ..theme import secondary_button_qss
 from ..tsv_model import deck_root_name
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
-from ..utils import get_spreadsheet_id_from_url
+from ..utils import is_google_sheets_url
+from ..utils import is_spreadsheet_file_url
+from ..utils import source_id
 from ..utils import validate_url
 
 
@@ -145,7 +147,7 @@ class AddDeckDialog(QDialog):
         return make_header(
             self.colors,
             "Add Remote Deck",
-            "Connect a Google Sheets spreadsheet to sync flashcards automatically.",
+            "Connect a Google Sheet, or an .xlsx file at any https address.",
         )
 
     def _create_step1_section(self):
@@ -157,9 +159,11 @@ class AddDeckDialog(QDialog):
 
         # Help text
         help_text = QLabel(
-            "💡 <b>How to get the URL:</b> Open your Google Sheets spreadsheet, "
-            'click <b>Share</b>, set access to <b>"Anyone with the link"</b>, '
-            "then copy the URL from your browser."
+            "💡 <b>How to get the URL:</b> open your spreadsheet, click "
+            '<b>Share</b>, set access to <b>"Anyone with the link"</b>, then '
+            "copy the URL from your browser.<br>"
+            "Or paste a link ending in <b>.xlsx</b> or <b>.xlsm</b> — a file in a "
+            "GitHub repository, or on any https host, is read the same way."
         )
         help_text.setStyleSheet(f"""
             font-size: 11px;
@@ -180,7 +184,9 @@ class AddDeckDialog(QDialog):
 
         # URL input field
         self.url_edit = QLineEdit()
-        self.url_edit.setPlaceholderText("https://docs.google.com/spreadsheets/d/...")
+        self.url_edit.setPlaceholderText(
+            "https://docs.google.com/spreadsheets/d/…  or  https://…/deck.xlsx"
+        )
         self.url_edit.setMinimumHeight(44)
         input_layout.addWidget(self.url_edit)
 
@@ -416,11 +422,14 @@ class AddDeckDialog(QDialog):
         """
         try:
             # A deck connected before sheets could be told apart is stored under
-            # the bare spreadsheet id, so that is still a duplicate of this file.
-            spreadsheet_id = get_spreadsheet_id_from_url(url)
+            # the bare source id, so that is still a duplicate of this file.
+            # `source_id` rather than the spreadsheet id: a file at a plain
+            # address has no spreadsheet id, and asking for one raised — which
+            # read here as "not a duplicate" and offered to connect it twice.
+            file_id = source_id(url)
             remote_decks = get_remote_decks()
-            if spreadsheet_id in remote_decks:
-                deck_info = remote_decks[spreadsheet_id]
+            if file_id in remote_decks:
+                deck_info = remote_decks[file_id]
                 is_disconnected = is_deck_disconnected(url)
                 return True, deck_info, is_disconnected
             return False, None, False
@@ -471,8 +480,15 @@ class AddDeckDialog(QDialog):
             self.validation_timer.stop()
             return
 
-        if "docs.google.com/spreadsheets" not in url:
-            self._show_status("Please enter a valid Google Sheets URL", "error")
+        # A deck's source is a Google Sheet *or* a spreadsheet file at a plain
+        # address. This gate used to test for the Google host alone, which made
+        # the file source unreachable from the one dialog that connects a deck —
+        # the whole feature existed and could not be typed in.
+        if not is_google_sheets_url(url) and not is_spreadsheet_file_url(url):
+            self._show_status(
+                "Paste a Google Sheets link, or a link ending in .xlsx or .xlsm",
+                "error",
+            )
             self.validation_timer.stop()
             return
 
@@ -741,7 +757,7 @@ class AddDeckDialog(QDialog):
                 self,
                 "Validation Required",
                 "Please validate the URL before proceeding.",
-                detailed_text="The URL needs to be checked to ensure it points to a valid Google Sheet.",
+                detailed_text="The URL needs to be checked to ensure it points to a spreadsheet this add-on can read.",
             )
             return
 

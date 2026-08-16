@@ -4,6 +4,29 @@
 
 ---
 
+## 🐛 **v6.13.1** - August 2026 *(Fix)*
+
+### The `.xlsx` source could not actually be typed in
+
+`Add New Remote Deck` (`Ctrl+Shift+A`) still tested the pasted URL for the Google
+host and answered *"Please enter a valid Google Sheets URL"*. Everything behind it —
+the download, the reader, the deck naming, the sync — had handled a spreadsheet file
+at a plain address since v6.12.0, but the one dialog that connects a deck refused to
+pass it on, so the feature existed and could not be reached. Pasting the example
+workbook's own link, which the README hands you, was rejected.
+
+- The dialog now accepts a Google Sheets link **or** a link ending in `.xlsx` /
+  `.xlsm`, and its help text, placeholder and refusal message all say so.
+- **A file is now checked against the decks already connected.** The duplicate check
+  asked for a spreadsheet id, which a file does not have; the resulting error read as
+  "not a duplicate", so a file already connected could be connected a second time and
+  sync the same rows twice.
+
+`tests/test_add_deck_dialog_urls.py` covers the gate itself rather than the URL
+helpers underneath it — the helpers were never wrong.
+
+---
+
 ## ✨ **v6.13.0** - August 2026 *(Feature)*
 
 ### 📚 The example sheet lives in this repository now
