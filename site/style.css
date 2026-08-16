@@ -300,8 +300,9 @@ select { cursor: pointer; }
     border-top-color: var(--accent); border-right-color: var(--accent);
   }
   .skip, .chev, button, .rowitem, .tree button, .tabs button { transition: none; }
-  /* The detail still arrives, it just does not announce itself. */
-  .coldetail.flash { animation: none; }
+  /* The detail and the target still arrive, they just do not announce
+     themselves — the ring is doing the pointing either way. */
+  .coldetail.flash, .pop { animation: none; }
 }
 
 /* ---- what the sheet says about itself ------------------------------------ */
@@ -459,7 +460,21 @@ h3.spaced { margin-top: 18px; }
   outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm);
 }
 .tree button.lit { background: var(--accent-soft); }
-.summary span.lit, .summary span.lit b, .rowitem .n.lit { color: var(--accent); }
+.summary span.lit, .summary span.lit b { color: var(--accent); }
+
+/* The ring says *which* thing; the hop is what makes the eye land on it. Two
+   panels away, a thing that merely changes colour is a thing you still have to
+   go looking for. It runs once, on the click that chose the column — see `pop`
+   in app.js, which is set from the same flag as the detail's flash. */
+@keyframes s2a-pop {
+  0%   { transform: translateY(0)     scale(1); }
+  35%  { transform: translateY(-8px)  scale(1.06); }
+  70%  { transform: translateY(2px)   scale(.99); }
+  100% { transform: translateY(0)     scale(1); }
+}
+.pop { animation: s2a-pop .5s cubic-bezier(.2, .8, .2, 1); }
+/* transform does nothing to an inline box, and this one is a span. */
+.summary span.pop { display: inline-block; }
 
 /* The blink is the answer arriving, so it runs when a column is *chosen* and not
    on the repaints that follow — picking a row must not blink a panel nobody is

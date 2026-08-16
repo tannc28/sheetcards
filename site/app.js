@@ -616,7 +616,7 @@ function treeHtml(node, depth, lit) {
       (child) => `<li>
         <button data-deck="${escapeHtml(child.path)}" style="--depth:${depth}"
                 class="${state.deckFilter === child.path ? "on" : ""}${
-                  lit.deck === child.path ? " lit" : ""
+                  lit.deck === child.path ? " lit" + popping() : ""
                 }">
           <span class="name">${escapeHtml(child.name)}</span>
           <span class="count">${child.count}</span>
@@ -667,7 +667,6 @@ function rowLabel(row, front) {
 }
 
 function rowList() {
-  const lit = chosen(state.analysis);
   const visible = visibleRows();
   if (!visible.length) return `<p class="empty">${escapeHtml(t("noRowsHere"))}</p>`;
 
@@ -676,7 +675,7 @@ function rowList() {
     .map(
       ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
         data-row="${i}" title="row ${r.line} — ${escapeHtml(r.kind)}">
-        <span class="n${lit.ids ? " lit" : ""}">${r.line}</span>
+        <span class="n">${r.line}</span>
         <span class="dot ${r.kind}"></span>
         <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
         ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
@@ -805,6 +804,20 @@ function cardView(a) {
                 selection changes, because the frame is rebuilt either way. */
              [data-s2a-col="${lit.field.replace(/["\\]/g, "\\$&")}"] {
                outline: 2px solid #1a73e8; outline-offset: 6px; border-radius: 4px;
+               ${
+                 state.columnFlash
+                   ? "animation: s2a-pop .5s cubic-bezier(.2, .8, .2, 1);"
+                   : ""
+               }
+             }
+             @keyframes s2a-pop {
+               0%   { transform: translateY(0)    scale(1); }
+               35%  { transform: translateY(-8px) scale(1.06); }
+               70%  { transform: translateY(2px)  scale(.99); }
+               100% { transform: translateY(0)    scale(1); }
+             }
+             @media (prefers-reduced-motion: reduce) {
+               [data-s2a-col] { animation: none; }
              }`
           : ""
       }
@@ -885,7 +898,7 @@ function cardView(a) {
     <p class="cardmeta">${escapeHtml(t("deckAndTags"))}
       <code>${escapeHtml(row.deck)}</code> · ${escapeHtml(t("tagsLabel"))}
       ${row.tags
-        .map((tag) => `<span class="chip${lit.tags ? " lit" : ""}">${escapeHtml(tag)}</span>`)
+        .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
         .join("")}</p>
     <p class="muted small approx">${t("approxNote")} ${t("runsAsAnki")}</p>
   </div>`;
@@ -958,7 +971,7 @@ function summaryLine(a) {
     .map(
       ([key, n]) =>
         `<span class="${n === 0 && key === "statSync" ? "zero" : ""}${
-          lit.stat === key ? " lit" : ""
+          lit.stat === key ? " lit" + popping() : ""
         }">` + `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
     )
     .join("");
@@ -1081,10 +1094,15 @@ function columnRole(name, index, a) {
  * together.
  *
  * @returns {{name: string|null, field: string|null, deck: string|null,
- *            tags: boolean, stat: string|null, ids: boolean}}
+ *            tags: boolean, stat: string|null}}
  */
+/** True only while drawing the repaint that a column was just chosen on. */
+function popping() {
+  return state.columnFlash ? " pop" : "";
+}
+
 function chosen(a) {
-  const blank = { name: null, field: null, deck: null, tags: false, stat: null, ids: false };
+  const blank = { name: null, field: null, deck: null, tags: false, stat: null };
   if (state.column === null) return blank;
 
   const name = a.plan.headers[state.column];
@@ -1093,7 +1111,7 @@ function chosen(a) {
   const at = { ...blank, name };
 
   if (role.kind === "dead") return at;
-  if (name === a.plan.id) return { ...at, stat: "statWithId", ids: true };
+  if (name === a.plan.id) return { ...at, stat: "statWithId" };
   if (name === a.plan.sync) return { ...at, stat: "statSync" };
   if (name === a.plan.tags) return { ...at, tags: true };
 
@@ -1154,12 +1172,9 @@ function revealField(name) {
       const el = frame.contentDocument?.querySelector(
         `[data-s2a-col="${name.replace(/["\\]/g, "\\$&")}"]`,
       );
-      el?.scrollIntoView({
-        block: "center",
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-      });
+      // "nearest" so a block already on screen does not move: the hop is the
+      // motion, and sliding the card as well would be two things at once.
+      el?.scrollIntoView({ block: "nearest", behavior: "auto" });
     } catch {
       // A frame that cannot be read is not worth breaking the page over. The
       // ring is already drawn; only the scroll is lost.
