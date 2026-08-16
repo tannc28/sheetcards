@@ -46,9 +46,15 @@ anywhere. It read as a debugger, and the people it is for are learning a languag
 - **One type scale, six steps, and one sans-serif family** for everything the page
   says. Monospace is kept for the strings that really did come out of a spreadsheet:
   column names, ids, tags, template source.
-- **The card is the point, so it gets the room.** It sits centred in a column of its
-  own with the sidebar at a fixed, modest width, instead of the two splitting the
-  window down the middle.
+- **The row list is the point, so it gets the room.** An Anki card is a narrow thing
+  however much room it is given, so the card sits in a capped column and the width goes
+  to the list you actually work in. Inside the sidebar the deck tree and the list both
+  give way when the window is short, instead of a five-level hierarchy leaving the list
+  two rows.
+- **The top collapses once a sheet is loaded.** The tagline and the link field become a
+  one-line `Source: name · sheet` with a *Change* button; the sheet picker and the deck
+  name stay, because walking a workbook means changing them. Together they were a
+  quarter of a 900px window spent on a question already answered.
 - **Warnings are a banner above the working area.** They used to be a small count on a
   collapsed drawer at the bottom of a scrolling sidebar — the most actionable thing on
   the page, hidden behind the most clicks.
@@ -58,7 +64,9 @@ anywhere. It read as a debugger, and the people it is for are learning a languag
 - **A row is named by the first front column that reads as words.** When the front was
   a picture, the list was eighty rows of `https://upload.wikimedia.org/…`.
 - The column-roles and settings-row report is gone. It was reference material, and
-  `ANALYZER` in `app.js` no longer computes what only it read.
+  `ANALYZER` in `app.js` no longer computes what only it read. The four-sentence
+  paragraph under *Download .apkg* is gone the same way — `README.md` carries the
+  caveats, and a control most people press once should not come with an essay.
 - Checked against the Web Interface Guidelines: skip link, an `<h1>`, `color-scheme`
   and `theme-color` for both themes (Windows dark mode used to render the sheet picker
   white), `aria-label` on the icon-only row buttons, `overscroll-behavior`,

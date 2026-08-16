@@ -39,6 +39,8 @@ const STRINGS = {
     vi: "hoặc thả file vào bất kỳ đâu trên trang.",
   },
   tabLabel: { en: "Sheet", vi: "Trang" },
+  sourceLabel: { en: "Source", vi: "Nguồn" },
+  change: { en: "Change", vi: "Đổi" },
   dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
@@ -132,16 +134,16 @@ const STRINGS = {
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
   noRowsAtAll: { en: "No rows to show.", vi: "Không có dòng nào để hiện." },
   downloadApkg: { en: "Download .apkg", vi: "Tải .apkg" },
-  apkgNote: {
+  // The caveats used to be a four-sentence paragraph under the button, which is a
+  // lot of reading to sit permanently under a control most people press once.
+  // README.md carries the long version.
+  apkgTitle: {
     en:
-      "Import it straight into AnkiDroid or AnkiMobile — no desktop needed. " +
-      "Importing again updates these notes rather than duplicating them, but it " +
-      "cannot delete: a row you remove from the sheet stays in Anki. That is what " +
-      "the add-on is still for.",
+      "Import straight into AnkiDroid or AnkiMobile. Importing again updates these " +
+      "notes rather than duplicating them, but it cannot delete.",
     vi:
-      "Import thẳng vào AnkiDroid hoặc AnkiMobile — không cần máy tính. Import lại " +
-      "sẽ cập nhật chứ không nhân đôi, nhưng không xoá được: dòng bạn xoá khỏi sheet " +
-      "vẫn còn trong Anki. Đó là chỗ add-on vẫn cần thiết.",
+      "Import thẳng vào AnkiDroid hoặc AnkiMobile. Import lại sẽ cập nhật chứ không " +
+      "nhân đôi, nhưng không xoá được.",
   },
   packing: { en: "Building the package…", vi: "Đang dựng gói…" },
   packed: {

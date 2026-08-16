@@ -49,7 +49,11 @@
   --r-lg: 14px;
 
   --shadow: 0 1px 2px rgb(16 22 32 / .05), 0 6px 20px -8px rgb(16 22 32 / .12);
-  --side-w: clamp(15rem, 24vw, 20rem);
+  /* The row list is the working surface — you scan it, you click it, and the card
+     is what one click shows you. An Anki card is a narrow thing however much room
+     it is given, so the width goes to the list rather than to the gutters either
+     side of a 40rem card. */
+  --side-w: clamp(19rem, 30vw, 30rem);
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
@@ -210,16 +214,33 @@ select { cursor: pointer; }
 .field.submit { align-self: flex-end; }
 /* Widths only. A `.field` is a *column* flex box, so a flex-basis on the control
    inside it would set its height, not its width. */
-#deck { width: 12rem; }
+#deck { width: clamp(11rem, 15vw, 17rem); }
 #tabpick { width: 13rem; }
 #tabfield[hidden] { display: none; }
 
 .entry-alt {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin: 9px 0 0;
+  flex: 1 1 16rem; min-width: 0;
+  display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap;
+  margin: 0;
   font-size: var(--t-sm); color: var(--muted);
 }
-.entry-alt .sep { color: var(--line); }
+.pickline { display: inline-flex; align-items: baseline; gap: 6px; }
+
+/* The collapsed stand-in for the link field. Not a control, so a span rather
+   than a label — nothing here is focusable except Change. Shown by the `loaded`
+   class alone, so there is one source of truth for which of the two is up. */
+#sourcefield { display: none; max-width: 22rem; min-width: 0; }
+.fieldlabel {
+  font-size: var(--t-xs); font-weight: 600; letter-spacing: .02em; color: var(--muted);
+}
+.sourceval {
+  display: flex; align-items: baseline; gap: 8px; min-width: 0;
+  padding: 8px 0; font-size: var(--t-md);
+}
+#source {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#change { flex: none; }
 button.linky {
   padding: 0; border: 0; background: none;
   font-size: var(--t-sm); font-weight: 600; color: var(--accent);
@@ -232,6 +253,18 @@ button.linky:disabled { color: var(--muted); text-decoration: none; }
   display: inline-flex; align-items: center; gap: 7px; min-width: 0;
   font-size: var(--t-sm); color: var(--muted);
 }
+
+/* ---- once a sheet is loaded ---------------------------------------------- */
+
+/* Before a sheet is in hand the page has one thing to say and one thing to ask,
+   so it says them properly. Afterwards the masthead and the link field are 26%
+   of the window spent on questions already answered — hand it to the row list. */
+.loaded .masthead { padding-top: 9px; padding-bottom: 9px; }
+.loaded .brand h1 { font-size: var(--t-lg); }
+.loaded .tagline { display: none; }
+.loaded .entry { padding-top: 10px; padding-bottom: 10px; }
+.loaded #entry-form, .loaded .pickline { display: none; }
+.loaded #sourcefield { display: flex; }
 .status.ok { color: var(--ok); }
 .status.bad { color: var(--bad); font-weight: 500; }
 
@@ -294,9 +327,9 @@ button.linky:disabled { color: var(--muted); text-decoration: none; }
    only matter next to their labels, and only one of them is ever a problem. */
 .summary {
   flex: none; margin: 0;
-  display: flex; flex-wrap: wrap; gap: 4px 14px;
-  padding: 9px var(--pad);
-  font-size: var(--t-sm); color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 2px 14px;
+  padding: 6px var(--pad);
+  font-size: var(--t-xs); color: var(--muted);
   background: var(--panel); border-bottom: 1px solid var(--line);
 }
 .summary[hidden] { display: none; }
@@ -325,6 +358,15 @@ button.linky:disabled { color: var(--muted); text-decoration: none; }
 }
 .side > div { flex: none; }
 
+/* The tree and the row list share the pane and both give way when it is short —
+   otherwise a five-level hierarchy like `14 Everything` takes its full height on
+   a 720px screen and leaves the list two rows. The tree is what you glance at;
+   the list is what you work in, so the list keeps the larger floor. */
+#tree {
+  flex: 0 1 auto; min-height: 4rem; max-height: 40vh;
+  overflow: auto; overscroll-behavior: contain;
+}
+
 .side h2, .stage h2 {
   margin: 0 0 8px;
   display: flex; align-items: baseline; gap: 8px;
@@ -334,18 +376,21 @@ button.linky:disabled { color: var(--muted); text-decoration: none; }
 h2.spaced { margin-top: 22px; }
 
 #rowlist {
-  flex: 1 1 auto; min-height: 5rem;
+  flex: 1 1 auto; min-height: 8rem;
   overflow: auto; overscroll-behavior: contain;
   margin: 0 -4px;
 }
 
 .side-foot {
-  flex: none; margin: 8px -12px 0; padding: 12px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  flex: none; margin: 8px -12px 0; padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--line); background: var(--panel);
 }
 .apkg-btn { width: 100%; padding: 10px; font-size: var(--t-md); }
-.side-foot > p { margin: 8px 0 0; }
+
+/* Two lines at --t-xs rather than three at --t-sm: it is a key to the dots, and
+   a key should not cost more room than the list it explains. */
+#rows-legend { margin: 0 0 6px; font-size: var(--t-xs); line-height: 1.45; }
 
 /* ---- deck tree ----------------------------------------------------------- */
 
@@ -390,7 +435,11 @@ h2.spaced { margin-top: 22px; }
 
 /* ---- the stage ----------------------------------------------------------- */
 
-.stage { display: flex; flex-direction: column; min-width: 0; }
+/* min-height:0 is load-bearing, not tidiness: a grid item defaults to
+   min-height:auto, so without it the stage grows to the height of whatever card
+   it holds, pushes the row list past the bottom of the window, and — because the
+   body does not scroll — puts both out of reach with no scrollbar anywhere. */
+.stage { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 .tabs {
   flex: none; display: flex; align-items: center; gap: 2px;
@@ -423,9 +472,9 @@ h2.spaced { margin-top: 22px; }
   padding: var(--pad);
   padding-bottom: max(var(--pad), env(safe-area-inset-bottom));
 }
-/* The card is what people came to see, so it sits centred in a column wide
-   enough to read and no wider — a card stretched to 900px is not the card. */
-.stagebox { max-width: 44rem; margin: 0 auto; }
+/* Wide enough to read and no wider — a card stretched to 900px is not the card,
+   and the space it would have taken is worth more to the row list. */
+.stagebox { max-width: 40rem; margin: 0 auto; }
 
 .cardbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .cardbar select { font-size: var(--t-sm); padding: 5px 9px; }
@@ -523,6 +572,12 @@ iframe#card {
   .field { flex: 1 1 10rem; }
   #deck, #tabpick { width: 100%; }
   .field.submit, .field.submit button { width: 100%; flex-basis: 100%; }
+
+  /* Four tabs and the row stepper do not fit one 390px line, and the stepper is
+     not something to hide behind a sideways scroll — so it wraps under them. */
+  .tabs { flex-wrap: wrap; padding-bottom: 6px; }
+  .tabs .spacer { display: none; }
+  .tabs .nav { margin-left: auto; }
 
   .app { grid-template-columns: 1fr; }
   .side {

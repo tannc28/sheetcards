@@ -332,6 +332,28 @@ function failed(message) {
   $("#app").hidden = true;
   $("#summary").hidden = true;
   $("#warnbar").hidden = true;
+  // Back to the full entry: something has to be corrected, and the field that
+  // needs correcting is the one the collapsed state hides.
+  expandEntry();
+}
+
+/**
+ * Collapses the masthead and the link field once a sheet is in hand.
+ *
+ * Before one is, the page has a question to ask and asks it properly. After, the
+ * two together are a quarter of the window spent on a question already answered,
+ * while the row list — the surface you actually work on — is the thing running
+ * out of room. The sheet picker and the deck name stay put: walking a workbook
+ * means changing them.
+ */
+function collapseEntry(name, tab) {
+  $("#source").textContent = tab ? `${name} · ${tab}` : name;
+  $("#source").title = $("#source").textContent;
+  document.body.classList.add("loaded");
+}
+
+function expandEntry() {
+  document.body.classList.remove("loaded");
 }
 
 async function preview() {
@@ -448,6 +470,7 @@ function showUpload(index) {
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       `${upload.idBase}#${out.tab}`,
     );
+    collapseEntry(base, out.tabs.length ? out.tab : "");
   } catch (err) {
     failed(err.message);
   } finally {
@@ -902,6 +925,12 @@ document.addEventListener("click", (e) => {
 $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
   preview();
+});
+
+$("#change").addEventListener("click", () => {
+  expandEntry();
+  $("#url").focus();
+  $("#url").select();
 });
 
 $("#deck").addEventListener("input", () => (deckNameEdited = true));
