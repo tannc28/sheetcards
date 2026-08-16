@@ -158,7 +158,14 @@ class TestFieldMarkup:
         afmt = build_templates(plan, config)[0]["afmt"]
         assert "A &amp; &lt;b&gt;B&lt;/b&gt;" in afmt
 
-    def test_templates_are_pure_markup(self):
+    def test_templates_are_pure_markup_unless_a_column_asked_for_a_box(self):
+        """`draw` is the one directive that puts code in a card.
+
+        Everything else is markup and Anki's own filters, and it stays that way:
+        a sheet that did not ask for a writing box gets a template with nothing to
+        execute, so nothing it renders can depend on the network or on scripts
+        being allowed.
+        """
         plan = _plan()
         config = _config(plan, {"Word": "size=48"}, deck="reverse")
         for template in build_templates(plan, config):
@@ -763,3 +770,104 @@ class TestFramedPlayerOnMobile:
     def test_the_caption_is_escaped(self):
         afmt = self._templates("video; label=A & <b>B</b>")["afmt"]
         assert "A &amp; &lt;b&gt;B&lt;/b&gt;" in afmt
+
+
+@pytest.mark.unit
+class TestDrawnColumn:
+    """``draw`` — a column the learner writes stroke by stroke instead of reads."""
+
+    def _templates(self, cell="draw", header="Word", **kw):
+        plan = _plan()
+        config = _config(plan, {header: cell}, **kw)
+        return build_templates(plan, config)[0], config
+
+    def test_the_box_replaces_the_text(self):
+        template, _ = self._templates()
+        assert 's2a-draw" data-s2a-char="{{text:Word}}"' in template["qfmt"]
+        # Printing the field as well would be showing the answer beside the box.
+        assert '<div class="s2a-front"' in template["qfmt"]
+        assert ">{{Word}}<" not in template["qfmt"]
+
+    def test_the_character_is_handed_over_stripped_of_markup(self):
+        # {{text:}} rather than {{}}: the box reads its character out of an
+        # attribute, and a field carrying <b> would put a tag in there.
+        assert "{{text:Word}}" in self._templates()[0]["qfmt"]
+
+    def test_a_prompt_asks_and_an_answer_shows(self):
+        # "Reading" rather than "Word": moving the only front column to the back
+        # empties the prompt, and split_sides promotes it straight back again.
+        front = self._templates()[0]["qfmt"]
+        back = self._templates("draw", header="Reading")[0]["afmt"]
+        assert 'data-s2a-quiz="1"' in front
+        assert 'data-s2a-quiz="0"' in back
+
+    def test_the_library_is_loaded_once_per_side_that_needs_it(self):
+        template, _ = self._templates()
+        assert template["qfmt"].count("hanzi-writer") >= 1
+        # A side with no box has no reason to fetch it.
+        assert "hanzi-writer" not in build_templates(_plan(), SheetConfig())[0]["qfmt"]
+
+    def test_the_script_can_run_twice_without_drawing_twice(self):
+        # Anki re-executes a card's scripts every time it draws the card.
+        assert "if (box.dataset.s2aDone) return;" in self._templates()[0]["qfmt"]
+
+    def test_size_is_the_box_not_a_font(self):
+        qfmt = self._templates("draw; size=280")[0]["qfmt"]
+        assert 'data-s2a-size="280"' in qfmt
+        assert "min-width: 280px" in qfmt
+        assert "font-size: 280px" not in qfmt
+
+    def test_a_box_sized_like_a_picture_is_allowed(self):
+        _, config = self._templates("draw; size=400")
+        assert config.for_field("Word").size == 400
+        assert not config.warnings
+
+    def test_colour_still_reaches_the_strokes(self):
+        # The strokes are drawn in whatever colour the box inherits, so `color`
+        # is the one text directive that is not inert here.
+        qfmt = self._templates("draw; color=accent")[0]["qfmt"]
+        assert "color: var(--s2a-accent)" in qfmt
+
+    def test_the_empty_box_says_which_character_it_wanted(self):
+        # No network, or a client that refuses remote scripts.
+        assert ".s2a-draw:empty::before { content: attr(data-s2a-char);" in _both(
+            self._templates()[0]
+        )
+
+    def test_hint_hides_the_box_behind_a_disclosure(self):
+        qfmt = self._templates("draw; hint")[0]["qfmt"]
+        assert '<details class="s2a-reveal"><summary>Write it</summary>' in qfmt
+
+    def test_a_media_column_cannot_be_drawn(self):
+        _, config = self._templates("image; draw")
+        assert not config.for_field("Word").draw
+        assert any("draw removed" in w for w in config.warnings)
+
+    def test_a_cloze_column_cannot_be_drawn(self):
+        _, config = self._templates("cloze; draw")
+        assert not config.for_field("Word").draw
+        assert any("cannot also be drawn" in w for w in config.warnings)
+
+    def test_what_does_nothing_on_a_box_says_so(self):
+        _, config = self._templates("draw; bold; italic; furigana")
+        joined = " ".join(config.warnings)
+        assert "bold, italic" in joined
+        assert "furigana does nothing on a drawn column" in joined
+
+    def test_the_reverse_card_asks_on_whichever_side_it_lands(self):
+        plan = _plan()
+        config = _config(plan, {"Word": "draw"}, deck="reverse")
+        templates = build_templates(plan, config)
+        assert templates[0]["name"] == FRONT_TEMPLATE_NAME
+        assert templates[1]["name"] == REVERSE_TEMPLATE_NAME
+        # Word is the prompt on card 1 and the answer on card 2, so the same
+        # column takes strokes in one direction and shows them in the other.
+        assert 'data-s2a-quiz="1"' in templates[0]["qfmt"]
+        assert 'data-s2a-quiz="0"' in templates[1]["afmt"]
+
+    def test_speech_still_works_on_a_box(self):
+        # tts has something to say — the character — unlike on a media column,
+        # where it would read a URL aloud.
+        _, config = self._templates("draw; tts=zh_CN")
+        assert config.for_field("Word").tts == "zh_CN"
+        assert not config.warnings

@@ -161,7 +161,7 @@ into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
 https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
 ```
 
-Fifteen sheets, each one its own deck, ordered from *the smallest sheet that
+Sixteen sheets, each one its own deck, ordered from *the smallest sheet that
 works* to *every directive at once*. Where a column carries the meaning of a
 word it is glossed in Vietnamese; everything else is English. Nothing about the
 add-on is language-specific — a deck of anatomy or case law works the same way:
@@ -179,10 +179,11 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `09 Video` | every YouTube link form the add-on rewrites, plus a direct file |
 | `10 Speech` | `tts=zh_CN`, deck-wide `speed`, a per-column `speed` override |
 | `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card |
-| `12 Japanese furigana` | `furigana` over kanji |
-| `13 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
-| `14 Everything` | three `SUBDECK` levels, media, `voices`, `type`, `reverse`, and a hidden column, all at once |
-| `15 Edge cases` | **wrong on purpose** — every warning the settings row can produce, plus a row with no `ID`, a repeated `ID` and an unembeddable link |
+| `12 Chinese drawing` | `draw` — you write the character stroke by stroke and each stroke is marked |
+| `13 Japanese furigana` | `furigana` over kanji |
+| `14 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
+| `15 Everything` | three `SUBDECK` levels, media, `voices`, `type`, `reverse`, and a hidden column, all at once |
+| `16 Edge cases` | **wrong on purpose** — every warning the settings row can produce, plus a row with no `ID`, a repeated `ID` and an unembeddable link |
 
 The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails
@@ -364,6 +365,42 @@ Written in that column's cell of the settings row.
 | `cloze` | switch | off | The column holds the sentences with `{{c1::…}}` deletions. **Declaring it makes the whole sheet a cloze sheet**, and the column becomes the prompt wherever it sits |
 | `type` | switch, or `type=nc` | off | Anki draws a box on the question and diffs what you type against this column. `type=nc` ignores diacritics, so `shuxi` matches `shúxī`. One column per sheet |
 | `video` | switch | off | The column holds a **bare video link** — YouTube, Drive, Vimeo or a direct `.mp4`: the card shows that site's own player. `size` caps its width |
+| `draw` | switch | off | The column holds a **Chinese character**, and the card turns it into a writing box: on the question you draw it stroke by stroke and each stroke is marked, on the answer the correct strokes are animated. `size` is the side of the box in pixels — see below |
+
+#### Writing a character by hand (`draw`)
+
+`type` asks you to spell an answer on the keyboard. `draw` asks you to *write* it,
+which is the thing a keyboard cannot test — and the reason a lot of people study
+Chinese with paper beside the computer.
+
+- **Which of the two things the box does is decided by the side the column lands
+  on.** On the **question** it starts empty and takes your strokes, marks each
+  one, and shows a hint after two misses. On the **answer** it animates the
+  correct strokes in a loop. There is no second directive for this: the column
+  already says where it is.
+- **A cell can hold more than one character** — `你好` gives two boxes side by
+  side, in order.
+- `size` is the **side of the square**, not a font size, so the usable range is
+  the same as for a picture (1–2000 px). 200–300 is comfortable.
+- `color` still applies: the strokes are drawn in whatever colour the box
+  inherits, so `color=accent` follows your light/dark theme. `bold`, `italic` and
+  `furigana` have no text to act on and say so; `tts` still works, because there
+  is a character to read aloud.
+- `hint` puts the box behind a disclosure, the same way it does for media — Anki's
+  own `hint:` filter would reveal the character's *text*, which is exactly what
+  the box exists not to show.
+
+**What it costs.** The stroke data and the code that marks your strokes come from
+[HanziWriter](https://hanziwriter.org) over the network, loaded into the card
+rather than shipped with the add-on — the add-on is not what runs it, your Anki
+is. So a `draw` column needs the network, exactly like a media column, and a
+client that refuses remote scripts shows a dashed box with the character in it
+instead. It is verified on Anki for desktop; on AnkiDroid and AnkiMobile it
+depends on that client allowing remote scripts, which we have not tested.
+
+Only Chinese characters have stroke data. A cell holding anything else — a
+letter, a digit, a character the data set does not cover — is printed in the box
+rather than left blank.
 
 #### Media columns
 

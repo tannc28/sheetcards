@@ -2,7 +2,7 @@
 
 `sheets2anki-examples.xlsx` is a working Sheets2Anki source, and it is what the
 [preview site](https://tannc28.github.io/sheets2anki/) and the add-on's
-**Import Test Deck** point at. Fifteen sheets, ordered so that reading them from
+**Import Test Deck** point at. Sixteen sheets, ordered so that reading them from
 the first to the last takes you from *the smallest sheet that works* to *every
 directive at once*.
 
@@ -21,7 +21,7 @@ thing that happens to a Google Sheets file with several tabs.
 this workbook is demonstrated to Vietnamese learners. Everything else is English:
 the headers, the settings rows, the labels printed on the cards, the explanatory
 notes, and the three sheets that are documentation rather than vocabulary (`02`,
-`09`, `15`). Nothing about the add-on is language-specific — what a sheet teaches
+`09`, `16`). Nothing about the add-on is language-specific — what a sheet teaches
 is only ever the content of a cell, and a deck of pharmacology or case law works
 exactly the same way.
 
@@ -131,27 +131,44 @@ the character large, speaks it, and hides a **stroke-order animation** behind a
 `hint` so you only look when you did not know. `SUBDECK 1` splits it by HSK
 level and `TAGS` adds the same as tags. 25 characters.
 
-### 12 Japanese furigana
+### 12 Chinese drawing
+
+The same idea as the sheet before it, with the keyboard taken away: `draw` on the
+`Draw` column turns it into a box you **write the character into, stroke by
+stroke**, and each stroke is marked as you make it. Two misses and it shows you
+where the next one starts.
+
+`draw` on the *question* takes strokes; on the *answer* it animates the correct
+ones. That is the whole of the directive — nothing says which of the two jobs a
+column has, because the side it lands on already said it. `Draw` and `Character`
+hold the same character on purpose: the box consumes the column it draws, so the
+answer needs its own copy to print and to speak.
+
+The stroke data comes from [HanziWriter](https://hanziwriter.org) over the
+network, so these cards need to be online — and a client that refuses remote
+scripts shows a dashed box with the character in it rather than nothing.
+
+### 13 Japanese furigana
 
 `furigana` renders `漢字[かんじ]` as ruby text above the kanji. Anki's own filter
 does the work; the settings row only decides which column goes through it.
 
-### 13 Any language headers
+### 14 Any language headers
 
 The headers are `汉字`, `拼音`, `释义`, `例句`. Only `ID`, `SYNC`, `SUBDECK n`
 and `TAGS` are reserved — every other header becomes a note field named exactly
 as written, in whatever script your subject calls for.
 
-### 14 Everything
+### 15 Everything
 
-All fifteen reserved and content roles at once: three `SUBDECK` levels, `TAGS`,
+Every reserved and content role at once: three `SUBDECK` levels, `TAGS`,
 `SYNC`, a picture, a recording, a video, `tts` with a `voices=` preference,
 `type=nc`, a hidden column, deck-wide `align`, `speed` and `reverse`. It is also
 the sheet the preview site opens on. Several rows leave `Picture` or `Clip`
 empty on purpose: an empty cell renders nothing at all rather than an empty box,
 because every field is wrapped in Anki's `{{#Field}}` guard.
 
-### 15 Edge cases
+### 16 Edge cases
 
 **This sheet is wrong on purpose.** Every mistake in it produces a named warning
 rather than silence, and the preview site lists them all — an unknown key, a

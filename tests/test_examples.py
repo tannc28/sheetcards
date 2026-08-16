@@ -35,7 +35,7 @@ PUBLISHED_URL = (
 )
 
 # The one sheet that is wrong on purpose.
-BROKEN = "15 Edge cases"
+BROKEN = "16 Edge cases"
 
 
 def builder():
@@ -92,7 +92,7 @@ def test_the_workbook_is_the_only_file_people_need(workbook_bytes):
         "sheets2anki-examples.xlsx",
     ]
     assert sheet_names(workbook_bytes) == list(builder().SHEETS)
-    assert len(sheet_names(workbook_bytes)) >= 15
+    assert len(sheet_names(workbook_bytes)) >= 16
 
 
 @pytest.mark.unit
@@ -164,7 +164,7 @@ def test_the_tour_covers_every_directive(sheets):
             for key in ("side", "size", "color", "align", "tts", "label"):
                 if getattr(field, key):
                     used.add(key)
-            for flag in ("bold", "italic", "hint", "furigana"):
+            for flag in ("bold", "italic", "hint", "furigana", "draw"):
                 if getattr(field, flag):
                     used.add(flag)
             if field.voices:
@@ -192,6 +192,7 @@ def test_the_tour_covers_every_directive(sheets):
         "furigana",
         "cloze",
         "type",
+        "draw",
         *MEDIA_KINDS,
     }
     assert expected - used == set(), f"no example uses: {sorted(expected - used)}"

@@ -30,7 +30,7 @@ const DEMO_SHEET =
 // smallest sheet that works, and a landing page showing two columns and no
 // settings row would answer none of the questions people arrive with — so the
 // page opens on the one that uses everything at once, and the picker walks back.
-const DEMO_TAB = "14 Everything";
+const DEMO_TAB = "15 Everything";
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.

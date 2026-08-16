@@ -4,6 +4,48 @@
 
 ---
 
+## ✨ **v6.14.0** - August 2026 *(Feature)*
+
+### ✍️ `draw` — write the character, do not type it
+
+`type` asks you to spell an answer on a keyboard. **`draw` asks you to write it**, one
+stroke at a time, and marks each stroke as you make it. It is the thing a keyboard
+cannot test, and the reason people study Chinese with paper beside the computer.
+
+```text
+ID       Meaning   Pinyin   Draw
+#config            side=front   side=front; draw; size=260
+```
+
+- **Which of its two jobs the box does is decided by the side the column lands on.**
+  On the question it starts empty and takes your strokes, showing a hint after two
+  misses; on the answer it animates the correct strokes. There is no second directive
+  to keep in step with the first — the column already says where it is.
+- **A cell can hold more than one character**: `你好` gives two boxes in order.
+- `size` is the side of the square rather than a font size, so it takes the same
+  1–2000 px range a picture does. `color` still applies — the strokes are drawn in
+  whatever colour the box inherits, so `color=accent` follows the light/dark theme.
+  `bold`, `italic` and `furigana` have no text to act on and say so; `tts` still
+  works, because there is a character to read aloud. `draw` is refused on a media
+  column (it holds an address) and on the cloze column (its text *is* the question).
+
+**What it costs.** The stroke data and the marking come from
+[HanziWriter](https://hanziwriter.org) over the network, loaded into the card rather
+than shipped with the add-on — the add-on is not what runs it, your Anki is. So a
+`draw` column needs the network exactly as a media column does, and a client that
+refuses remote scripts shows a dashed box with the character in it instead of
+nothing. Verified on Anki for desktop; not tested on AnkiDroid or AnkiMobile.
+
+### The example workbook gained a sheet, and its numbering moved
+
+`12 Chinese drawing` joins the tour where it belongs — after `11 Chinese writing`,
+which does the same drill on a keyboard — so `12 Japanese furigana` through
+`15 Edge cases` each moved up one. **A deck remembers its sheet by name**, so anyone
+who connected the workbook before this has to connect it again to pick the renamed
+sheets up. Sixteen sheets now.
+
+---
+
 ## 🐛 **v6.13.1** - August 2026 *(Fix)*
 
 ### The `.xlsx` source could not actually be typed in

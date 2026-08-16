@@ -11,7 +11,7 @@ So the sheets live here, in ``SHEETS`` below, and the workbook is generated from
 them and committed beside this script. Keeping the grids as Python rather than as
 a folder of TSVs means the whole tour is one readable, reviewable file: a settings
 row changed in a review shows up as a changed *line*, not as a changed ZIP and not
-as a diff spread over fifteen files.
+as a diff spread over sixteen files.
 
 The writer is the standard library rather than openpyxl, for the same reason
 ``src/workbook.py`` reads with the standard library: the add-on ships with no
@@ -56,7 +56,7 @@ WORKBOOK = EXAMPLES / "sheets2anki-examples.xlsx"
 # meaning of a word is glossed in Vietnamese**, because that is who this workbook
 # is demonstrated to. It stops there — headers, the settings row, `label=` text,
 # the explanatory notes and the sheets that are documentation rather than
-# vocabulary (02, 09, 15) are all English, and a gloss is data rather than prose.
+# vocabulary (02, 09, 16) are all English, and a gloss is data rather than prose.
 
 # A grid reads as a grid. One cell per line does not.
 # fmt: off
@@ -212,8 +212,25 @@ SHEETS = {
         ["w24", "HSK 3", "hanzi, hsk3", "gỗ; cây", "mù", "木", "https://upload.wikimedia.org/wikipedia/commons/f/fb/%E6%9C%A8-order.gif", "这张桌子是木头做的。"],
         ["w25", "HSK 3", "hanzi, hsk3", "ruộng", "tián", "田", "https://upload.wikimedia.org/wikipedia/commons/b/bb/%E7%94%B0-order.gif", "田里有很多水。"],
     ],
+    # write the character yourself, stroke by stroke, and be marked on it
+    "12 Chinese drawing": [
+        ["ID", "SUBDECK 1", "TAGS", "Meaning", "Pinyin", "Draw", "Character", "Example"],
+        ["#config", "", "", "size=24; color=muted; label=Draw the character for", "side=front; size=40; color=accent", "side=front; draw; size=260", "side=back; size=72; tts=zh_CN", "side=back; size=18; tts=zh_CN; speed=0.8"],
+        ["d01", "HSK 1", "hanzi, hsk1, draw", "tôi", "wǒ", "我", "我", "我是学生。"],
+        ["d02", "HSK 1", "hanzi, hsk1, draw", "bạn", "nǐ", "你", "你", "你好吗？"],
+        ["d03", "HSK 1", "hanzi, hsk1, draw", "tốt; khỏe", "hǎo", "好", "好", "今天天气很好。"],
+        ["d04", "HSK 1", "hanzi, hsk1, draw", "người", "rén", "人", "人", "那个人很高。"],
+        ["d05", "HSK 1", "hanzi, hsk1, draw", "to; lớn", "dà", "大", "大", "这个房子很大。"],
+        ["d06", "HSK 1", "hanzi, hsk1, draw", "nhỏ", "xiǎo", "小", "小", "小狗在门口。"],
+        ["d07", "HSK 1", "hanzi, hsk1, draw", "nước", "shuǐ", "水", "水", "我想喝水。"],
+        ["d08", "HSK 1", "hanzi, hsk1, draw", "học", "xué", "学", "学", "我在学中文。"],
+        ["d09", "HSK 1", "hanzi, hsk1, draw", "trời; ngày", "tiān", "天", "天", "明天见。"],
+        ["d10", "HSK 2", "hanzi, hsk2, draw", "núi", "shān", "山", "山", "山上有雪。"],
+        ["d11", "HSK 2", "hanzi, hsk2, draw", "lửa", "huǒ", "火", "火", "火车快到了。"],
+        ["d12", "HSK 2", "hanzi, hsk2, draw", "miệng; cửa", "kǒu", "口", "口", "门口有人在等。"],
+    ],
     # readings rendered as ruby over the kanji
-    "12 Japanese furigana": [
+    "13 Japanese furigana": [
         ["ID", "Japanese", "Meaning", "Note"],
         ["#config", "size=40; furigana", "size=20", "size=14; color=muted; hint"],
         ["f01", "日本語[にほんご]", "tiếng Nhật", "Write the reading in brackets after the kanji."],
@@ -224,7 +241,7 @@ SHEETS = {
         ["f06", "先生[せんせい]の 話[はなし]", "câu chuyện của thầy giáo"],
     ],
     # the sheet decides the schema, in any script
-    "13 Any language headers": [
+    "14 Any language headers": [
         ["ID", "汉字", "拼音", "释义", "例句"],
         ["#config", "size=44; tts=zh_CN", "size=22; color=accent", "size=20", "size=16; color=muted"],
         ["h01", "词典", "cídiǎn", "từ điển", "我买了一本新词典。"],
@@ -235,7 +252,7 @@ SHEETS = {
         ["h06", "声调", "shēngdiào", "thanh điệu", "普通话有四个声调。"],
     ],
     # every role and every directive on one card
-    "14 Everything": [
+    "15 Everything": [
         ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Picture", "Word", "Pinyin", "Meaning", "Example", "Recording", "Clip", "Source"],
         ["#config align=left; speed=0.9; reverse", "", "", "", "", "", "image; size=260; label=Look", "side=front; size=44; bold; tts=zh_CN; voices=Ting-Ting,Microsoft Huihui", "side=back; size=22; color=accent; align=center; type=nc", "side=back; size=20", "side=back; size=16; color=muted; italic; tts=zh_CN; speed=0.7", "side=back; audio; label=Native recording", "side=back; video; size=480; hint; label=Watch", "side=hide"],
         ["e01", "yes", "Places", "China", "Cities", "cities, hsk1", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Great_Wall_of_China_July_2006.JPG/500px-Great_Wall_of_China_July_2006.JPG", "北京", "Běijīng", "Bắc Kinh, thủ đô", "北京有很多名胜古迹。", "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "internal note, never shown"],
@@ -247,7 +264,7 @@ SHEETS = {
         ["e07", "no", "Places", "China", "Cities", "cities", "", "天津", "Tiānjīn", "Thiên Tân — dòng này đang tắt nên không bao giờ vào Anki", "天津在北京的东边。", "https://upload.wikimedia.org/wikipedia/commons/9/9b/Zh-Tianjin.ogg"],
     ],
     # wrong on purpose, so every warning has something to point at
-    "15 Edge cases": [
+    "16 Edge cases": [
         ["ID", "SYNC", "Word", "Meaning", "Picture", "Clip", "Sentence", "Extra", "Meaning"],
         ["#config align=middle; spid=3; reverse", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align", "size=20"],
         ["x01", "yes", "{{c1::重复}}的表头", "duplicated header — only the first 'Meaning' is a field", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "https://www.youtube.com/@nationalgeographic", "A channel link is not a video: it is passed through with a warning.", "", "this cell is ignored"],

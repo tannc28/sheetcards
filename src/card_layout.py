@@ -30,6 +30,18 @@ from .sheet_config import THEME_COLORS
 # YouTube — which is why the mobile link below stays as a way through.
 EMBED_PROXY = "https://tannc28.github.io/sheets2anki/player.html?src="
 
+# Writing a character is a different skill from recognising one, and no amount of
+# HTML can test it: the card has to take strokes and mark them. HanziWriter is the
+# library that does that, and it is loaded from a CDN into the card rather than
+# vendored, because it is not the add-on that runs it — the card does, inside
+# Anki's webview, on whatever machine is reviewing.
+#
+# The consequences are the same as for any media column and are documented as
+# such: the card needs the network, and a client that refuses remote scripts shows
+# the placeholder instead. Pinned to a major version so a breaking release upstream
+# cannot reach cards that are already in people's collections.
+HANZI_WRITER = "https://cdn.jsdelivr.net/npm/hanzi-writer@3/dist/hanzi-writer.min.js"
+
 FRONT_TEMPLATE_NAME = "Card 1"
 REVERSE_TEMPLATE_NAME = "Card 2 (reverse)"
 
@@ -81,14 +93,30 @@ def _css(sheet_config):
         # shown there and a link that opens the video properly takes its place.
         ".mobile .s2a-embed-link { display: inline-block; margin-top: 6px;"
         " font-size: 13px; opacity: .7; }\n"
+        # The writing box is sized inline, from `size=`. `:empty` is the state
+        # before the library has drawn anything into it — no network, a client
+        # that refuses remote scripts, or simply the moment before it loads — and
+        # in that state the box says which character it was going to ask for
+        # rather than sitting there as a blank square.
+        ".s2a-draw { display: inline-flex; align-items: center;"
+        " justify-content: center; vertical-align: top; margin: 4px;"
+        " border: 1px dashed var(--s2a-muted); border-radius: 8px; }\n"
+        ".s2a-draw:empty::before { content: attr(data-s2a-char);"
+        " font-size: 40px; opacity: .35; }\n"
         "</style>\n"
     )
 
 
-def _inline_style(cfg):
-    """The per-field directives that are plain CSS, as one style attribute value."""
+def _inline_style(cfg, with_size=True):
+    """The per-field directives that are plain CSS, as one style attribute value.
+
+    ``with_size`` is off for a drawn column, where ``size`` is the side of the box
+    rather than a font size — but the rest still applies, and ``color`` in
+    particular has to, because the strokes are drawn in whatever colour the box
+    inherits.
+    """
     parts = []
-    if cfg.size:
+    if cfg.size and with_size:
         parts.append(f"font-size: {int(cfg.size)}px")
     if cfg.color:
         parts.append(f"color: {_color(cfg.color)}")
@@ -165,6 +193,73 @@ def _media_html(field, cfg):
     )
 
 
+def _draw_html(field, cfg, quiz):
+    """The writing box for one column.
+
+    The character is handed over in a data attribute rather than printed: the box
+    has to stay empty for `:empty::before` to be the fallback, and on the question
+    side printing it would be showing the answer.
+    """
+    size = int(cfg.size) if cfg.size else 200
+    return (
+        f'<div class="s2a-draw" data-s2a-char="{{{{text:{field}}}}}" '
+        f'data-s2a-size="{size}" data-s2a-quiz="{1 if quiz else 0}" '
+        f'style="min-width: {size}px; height: {size}px"></div>'
+    )
+
+
+# Runs once per side that has a writing box on it. Anki re-executes the script
+# tags in a card's HTML every time it draws a card, so everything here has to be
+# safe to run again: the library is fetched once into the document head, which
+# survives the card change, and a box already drawn into is left alone.
+_DRAW_SCRIPT = (
+    "<script>\n"
+    "(function () {\n"
+    "  function draw() {\n"
+    '    document.querySelectorAll(".s2a-draw").forEach(function (box) {\n'
+    "      if (box.dataset.s2aDone) return;\n"
+    '      box.dataset.s2aDone = "1";\n'
+    "      var style = getComputedStyle(box);\n"
+    "      var ink = style.color;\n"
+    # The theme's own muted colour, so the outline to trace stays visible in both
+    # light and night mode instead of being a fixed grey that vanishes in one.
+    '      var faint = style.getPropertyValue("--s2a-muted").trim() || "#888";\n'
+    "      var size = parseInt(box.dataset.s2aSize, 10) || 200;\n"
+    '      var quiz = box.dataset.s2aQuiz === "1";\n'
+    # Array.from rather than split(""), which cuts a character above the basic
+    # plane in half and asks the library to draw two halves of nothing.
+    '      Array.from((box.dataset.s2aChar || "").trim()).forEach(function (ch) {\n'
+    "        if (!ch.trim()) return;\n"
+    '        var cell = document.createElement("div");\n'
+    "        box.appendChild(cell);\n"
+    "        var writer = HanziWriter.create(cell, ch, {\n"
+    "          width: size, height: size, padding: 6,\n"
+    "          showCharacter: !quiz, showOutline: true,\n"
+    "          strokeColor: ink, drawingColor: ink, outlineColor: faint,\n"
+    "          delayBetweenStrokes: 150,\n"
+    # A character the data set does not have — a letter, a digit, a rare variant —
+    # is printed instead of leaving an empty square with no explanation.
+    "          onLoadCharDataError: function () { cell.textContent = ch; }\n"
+    "        });\n"
+    "        if (quiz) { writer.quiz({ showHintAfterMisses: 2 }); }\n"
+    "        else { writer.loopCharacterAnimation(); }\n"
+    "      });\n"
+    "    });\n"
+    "  }\n"
+    "  if (window.HanziWriter) { draw(); return; }\n"
+    '  var tag = document.getElementById("s2a-hanzi-writer");\n'
+    "  if (!tag) {\n"
+    '    tag = document.createElement("script");\n'
+    '    tag.id = "s2a-hanzi-writer";\n'
+    '    tag.src = "' + HANZI_WRITER + '";\n'
+    "    document.head.appendChild(tag);\n"
+    "  }\n"
+    '  tag.addEventListener("load", draw);\n'
+    "})();\n"
+    "</script>"
+)
+
+
 def _speed_text(speed):
     """``1.0`` renders as ``1`` and ``1.25`` as ``1.25`` — no trailing zeros."""
     return f"{float(speed):g}"
@@ -210,8 +305,14 @@ def _type_box(field, cfg, cloze_field):
     return f"<div>{{{{type:{prefix}{field}}}}}</div>"
 
 
-def _rows(fields, sheet_config, css_class, as_cloze=False):
-    """Renders one side's fields, each wrapped so an empty field leaves no trace."""
+def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
+    """Renders one side's fields, each wrapped so an empty field leaves no trace.
+
+    ``quiz`` is what tells a drawn column which of its two jobs it has: on the
+    question it takes strokes from the learner, on the answer it shows them. The
+    caller knows which side it is building, and the column does not need to be
+    told twice in the settings row.
+    """
     out = []
     for name in fields:
         field = _escape_field(name)
@@ -219,7 +320,7 @@ def _rows(fields, sheet_config, css_class, as_cloze=False):
             continue
 
         cfg = sheet_config.for_field(name)
-        style = "" if cfg.media else _inline_style(cfg)
+        style = "" if cfg.media else _inline_style(cfg, with_size=not cfg.draw)
         style_attr = f' style="{style}"' if style else ""
         # The caption is user text from the sheet, so it is escaped; the field name is
         # not, because Anki matches ``{{Field}}`` on the name exactly as written.
@@ -236,6 +337,17 @@ def _rows(fields, sheet_config, css_class, as_cloze=False):
                     f"{reference}</details>"
                 )
                 label = ""  # the summary already names it
+        elif cfg.draw:
+            reference = _draw_html(field, cfg, quiz)
+            if cfg.hint:
+                # Same reason as for media: {{hint:}} reveals the field's *text*,
+                # which here is the character the box exists not to show.
+                caption = escape(cfg.label) if cfg.label else "Write it"
+                reference = (
+                    f'<details class="s2a-reveal"><summary>{caption}</summary>'
+                    f"{reference}</details>"
+                )
+                label = ""
         else:
             reference = _reference(field, cfg, as_cloze and cfg.cloze)
 
@@ -270,12 +382,17 @@ def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True)
         else ""
     )
 
+    def drawn(fields):
+        """Whether this side has a writing box, and so needs the library."""
+        return any(sheet_config.for_field(name).draw for name in fields)
+
     qfmt = (
         _css(sheet_config)
         + '<div class="s2a-wrap">\n'
-        + _rows(front_fields, sheet_config, "s2a-front", as_cloze=is_cloze)
+        + _rows(front_fields, sheet_config, "s2a-front", as_cloze=is_cloze, quiz=True)
         + type_box
         + "\n</div>"
+        + (_DRAW_SCRIPT if drawn(front_fields) else "")
     )
 
     if is_cloze:
@@ -298,6 +415,11 @@ def _one_template(front_fields, back_fields, sheet_config, is_cloze, typed=True)
         + '<div class="s2a-wrap">\n'
         + _rows(back_fields, sheet_config, "s2a-back")
         + "\n</div>"
+        # A question that had boxes brings its own copy of this back inside
+        # {{FrontSide}}, so this is here for the case where only the answer draws.
+        # Two copies would be harmless anyway — the script skips a box it has
+        # already filled.
+        + (_DRAW_SCRIPT if drawn(back_fields) else "")
     )
 
     return {"qfmt": qfmt, "afmt": afmt}

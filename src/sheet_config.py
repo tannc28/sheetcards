@@ -39,7 +39,14 @@ ALIGNMENTS = ("left", "center", "right")
 # `cloze` marks the one column whose text carries {{c1::…}} deletions. It is a
 # property of the sheet, not of a row: the note type and its template are shared by
 # every row, so the column has to be declared once rather than guessed per row.
-_FLAGS = ("bold", "italic", "hint", "furigana", "cloze")
+#
+# `draw` turns the column into a stroke-by-stroke writing box instead of printing
+# its text: on the question you draw the character yourself and it marks each
+# stroke, on the answer it animates the correct strokes. Which of the two you get
+# is decided by the side the column lands on, because that is the only thing that
+# distinguishes "ask me" from "show me" — a second directive would be a second way
+# of saying where the column already is.
+_FLAGS = ("bold", "italic", "hint", "furigana", "cloze", "draw")
 
 # Turn a bare URL in the cell into a media element instead of printing it as
 # text. One field is one kind of media, so these are recorded as a single
@@ -167,6 +174,7 @@ class FieldConfig:
         self.hint = False
         self.furigana = False
         self.cloze = False
+        self.draw = False
 
     @property
     def hidden(self):
@@ -346,13 +354,15 @@ def parse_config_row(row, plan):
                 continue
             _apply_field_pair(cfg, key, value, header, warn)
 
-        # `size` is a font size on a text column and a width on a media one, so the
-        # sane range depends on a key that may be written after it in the same cell.
-        # Checking here rather than while parsing makes `size=320; image` work.
+        # `size` is a font size on a text column, a width on a media one and the
+        # side of the square on a writing box, so the sane range depends on a key
+        # that may be written after it in the same cell. Checking here rather than
+        # while parsing makes `size=320; image` work.
         if cfg.size is not None:
-            low, high = (1, 2000) if cfg.media else (6, 200)
+            box = cfg.media or cfg.draw
+            low, high = (1, 2000) if box else (6, 200)
             if not low <= cfg.size <= high:
-                what = "width" if cfg.media else "font size"
+                what = "width" if cfg.media else "box" if cfg.draw else "font size"
                 warn(f"'{header}': {what} {cfg.size}px is outside {low}–{high}px")
                 cfg.size = None
 
@@ -391,6 +401,38 @@ def parse_config_row(row, plan):
             if cfg.media == "audio" and cfg.size is not None:
                 warn(f"'{header}': size does nothing on an audio column")
                 cfg.size = None
+
+        # A writing box draws the character the cell names; it never prints the
+        # cell. Anything that acts on printed text therefore has nothing to act on
+        # — except `color`, which the strokes inherit from the card, and `tts`,
+        # which still has a character to say.
+        if cfg.draw:
+            if cfg.media:
+                warn(
+                    f"'{header}': a {cfg.media} column holds an address, not a "
+                    f"character — draw removed"
+                )
+                cfg.draw = False
+            elif cfg.cloze:
+                # The clozed column is the prompt and its deletion is the question.
+                # Drawing it would replace the very text the card asks about.
+                warn(f"'{header}': a cloze column cannot also be drawn — draw removed")
+                cfg.draw = False
+            else:
+                if cfg.furigana:
+                    warn(f"'{header}': furigana does nothing on a drawn column")
+                    cfg.furigana = False
+                inert = [
+                    name
+                    for name, on in (("bold", cfg.bold), ("italic", cfg.italic))
+                    if on
+                ]
+                if inert:
+                    warn(
+                        f"'{header}': {', '.join(inert)} "
+                        f"{'do' if len(inert) > 1 else 'does'} nothing on a "
+                        f"drawn column"
+                    )
 
         config.fields[header] = cfg
 
