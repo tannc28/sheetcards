@@ -4,6 +4,41 @@
 
 ---
 
+## ✨ **v6.19.0** - August 2026 *(Feature)*
+
+### `theme=sakura` — a colour for the whole card
+
+The settings row could already colour one column at a time. It could not say what
+the card as a whole should look like, so every card came out black on white however
+carefully its columns were styled.
+
+A new deck-wide key names a palette:
+
+```text
+#config theme=sakura
+```
+
+`sakura` is soft cherry-blossom pink with a deep plum text, and it is the first of
+these — more palettes are a table entry, not a feature.
+
+A theme is not just a background. It also redefines what `color=muted` and
+`color=accent` mean, so a column written `color=accent` follows the sheet's palette
+instead of staying the same blue on every card. Styling a column and choosing a
+theme therefore cannot drift apart.
+
+Each palette carries **two** versions, one light and one dark, because Anki decides
+at review time which one a card is drawn in. A single set of colours would have left
+one of the two unreadable — the same reason `muted` and `accent` existed at all.
+
+What it does not colour: on the desktop the top bar and the answer buttons are
+Anki's, not the card's, and they keep Anki's own colours. On AnkiDroid and
+AnkiMobile the card fills the review screen, so the tone carries further.
+
+An unknown name is refused by name in the warnings and the card keeps Anki's
+colours, rather than being painted in something nobody asked for.
+
+---
+
 ## 🐛 **v6.18.0** - August 2026 *(Fix)*
 
 ### A deck level is a deck level

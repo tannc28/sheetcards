@@ -16,6 +16,7 @@ from html import escape
 
 from .sheet_config import ALIGNMENTS
 from .sheet_config import THEME_COLORS
+from .sheet_config import THEMES
 
 # A card frames this page, and this page frames the video.
 #
@@ -61,20 +62,52 @@ def _color(value):
     return THEME_COLORS.get(str(value).lower(), value)
 
 
-def _css(sheet_config):
-    """The card's stylesheet.
+_DEFAULT_PALETTE = {
+    "light": {"muted": "#6b7280", "accent": "#1a73e8"},
+    "night": {"muted": "#a1a1aa", "accent": "#8ab4f8"},
+}
+
+
+def _palette(sheet_config):
+    """The colour block at the top of the stylesheet, themed or not.
 
     ``--s2a-muted``/``--s2a-accent`` are declared twice on purpose: once as the light
     default and once under ``.night_mode``, the class Anki puts on the card's body in
     dark mode. A single fixed value would make one of the two themes unreadable, which
     is the whole reason the named colours exist instead of hard-coded ones.
+
+    A named ``theme`` swaps both pairs and additionally paints the card itself. That
+    part is written as ``.card``/``.card.night_mode`` rather than ``body`` for two
+    reasons: ``.card`` is the class Anki puts on the card's body on every client, and
+    the two-class selector outranks the ``.night_mode`` rule Anki's own stylesheet
+    brings — a single-class selector would lose in dark mode and the sheet's theme
+    would simply not appear. Without a theme nothing paints the card at all, so an
+    untouched sheet keeps whatever colours Anki and the note type already had.
     """
+    theme = THEMES.get(sheet_config.theme) or _DEFAULT_PALETTE
+    lines = [
+        f":root {{ --s2a-muted: {theme['light']['muted']};"
+        f" --s2a-accent: {theme['light']['accent']}; }}\n",
+        f".night_mode {{ --s2a-muted: {theme['night']['muted']};"
+        f" --s2a-accent: {theme['night']['accent']}; }}\n",
+    ]
+    if sheet_config.theme in THEMES:
+        lines.append(
+            f".card {{ background-color: {theme['light']['bg']};"
+            f" color: {theme['light']['fg']}; }}\n"
+        )
+        lines.append(
+            f".card.night_mode {{ background-color: {theme['night']['bg']};"
+            f" color: {theme['night']['fg']}; }}\n"
+        )
+    return "".join(lines)
+
+
+def _css(sheet_config):
+    """The card's stylesheet."""
     align = sheet_config.align if sheet_config.align in ALIGNMENTS else "center"
     return (
-        "<style>\n"
-        ":root { --s2a-muted: #6b7280; --s2a-accent: #1a73e8; }\n"
-        ".night_mode { --s2a-muted: #a1a1aa; --s2a-accent: #8ab4f8; }\n"
-        f".s2a-wrap {{ text-align: {align}; }}\n"
+        "<style>\n" + _palette(sheet_config) + f".s2a-wrap {{ text-align: {align}; }}\n"
         f".s2a-front {{ font-size: {FRONT_SIZE_PX}px; line-height: 1.3; }}\n"
         f".s2a-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
         " margin-top: 14px; }\n"

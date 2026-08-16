@@ -799,7 +799,12 @@ function cardView(a) {
           : ""
       }
     </style>
-    <body class="card">
+    <!-- The two classes Anki itself puts on a card's body: "card" is what a note
+         type's CSS targets, and "night_mode" is how a card knows it is being drawn
+         dark. A sheet's theme declares a colour pair for each, so without the second
+         class the preview would show the light half of the theme on a dark page.
+         (No backticks in this file — see the ANALYZER note in CLAUDE.md.) -->
+    <body class="card${dark() ? " night_mode" : ""}">
       ${state.tab === "back" ? back.html : front.html}
       ${state.tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
       <script>

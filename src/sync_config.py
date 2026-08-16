@@ -84,6 +84,7 @@ def to_dict(plan, sheet_config):
         "align": sheet_config.align,
         "speed": sheet_config.speed,
         "reverse": bool(sheet_config.reverse),
+        "theme": sheet_config.theme,
         "warnings": list(sheet_config.warnings),
         "fields": {
             header: field_to_dict(field_config)
@@ -112,6 +113,9 @@ def from_dict(stored):
     sheet_config.align = stored.get("align")
     sheet_config.speed = stored.get("speed")
     sheet_config.reverse = bool(stored.get("reverse"))
+    # A theme the cache no longer knows renders as no theme rather than as a broken
+    # colour: `_palette` falls back on the default palette for an unknown name.
+    sheet_config.theme = stored.get("theme")
     sheet_config.warnings = list(stored.get("warnings") or [])
     fields = stored.get("fields")
     if isinstance(fields, dict):

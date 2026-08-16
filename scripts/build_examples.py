@@ -255,7 +255,7 @@ SHEETS = {
     # every role and every directive on one card
     "15 Everything": [
         ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Picture", "Word", "Pinyin", "Meaning", "Example", "Recording", "Clip", "Source"],
-        ["#config align=left; speed=0.9; reverse", "", "", "", "", "", "image; size=260; label=Look", "side=front; size=44; bold; tts=zh_CN; voices=Ting-Ting,Microsoft Huihui", "side=back; size=22; color=accent; align=center; type=nc", "side=back; size=20", "side=back; size=16; color=muted; italic; tts=zh_CN; speed=0.7", "side=back; audio; label=Native recording", "side=back; video; size=480; hint; label=Watch", "side=hide"],
+        ["#config align=left; speed=0.9; reverse; theme=sakura", "", "", "", "", "", "image; size=260; label=Look", "side=front; size=44; bold; tts=zh_CN; voices=Ting-Ting,Microsoft Huihui", "side=back; size=22; color=accent; align=center; type=nc", "side=back; size=20", "side=back; size=16; color=muted; italic; tts=zh_CN; speed=0.7", "side=back; audio; label=Native recording", "side=back; video; size=480; hint; label=Watch", "side=hide"],
         ["e01", "yes", "Places", "China", "Cities", "cities, hsk1", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Great_Wall_of_China_July_2006.JPG/500px-Great_Wall_of_China_July_2006.JPG", "北京", "Běijīng", "Bắc Kinh, thủ đô", "北京有很多名胜古迹。", "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "internal note, never shown"],
         ["e02", "yes", "Places", "China", "Cities", "cities", "", "上海", "Shànghǎi", "Thượng Hải, thành phố lớn nhất", "上海在长江的入海口。", "https://upload.wikimedia.org/wikipedia/commons/7/73/Zh-Shanghai.ogg", "", "internal note, never shown"],
         ["e03", "yes", "Places", "China", "Cities", "cities", "", "广州", "Guǎngzhōu", "Quảng Châu", "广州的早茶很有名。", "https://upload.wikimedia.org/wikipedia/commons/8/82/Zh-Guangzhou.ogg"],
@@ -267,7 +267,7 @@ SHEETS = {
     # wrong on purpose, so every warning has something to point at
     "16 Edge cases": [
         ["ID", "SYNC", "Word", "Meaning", "Picture", "Clip", "Sentence", "Extra", "Meaning"],
-        ["#config align=middle; spid=3; reverse", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
+        ["#config align=middle; spid=3; reverse; theme=neon", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
         ["x01", "yes", "{{c1::重复}}的表头", "duplicated header — only the first 'Meaning' is a field", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "https://www.youtube.com/@nationalgeographic", "A channel link is not a video: it is passed through with a warning.", "", "this cell is ignored"],
         ["x02", "yes", "{{c1::网盘}}链接", "a Google Drive link is rewritten to its /preview player", "", "https://drive.google.com/file/d/1PLACEHOLDER_FILE_ID_HERE/view", "The id here is a placeholder, so the frame will not play anything."],
         ["", "yes", "{{c1::无编号}}的一行", "a row with no ID is counted and skipped", "", "", "Nothing is written to Anki for it."],

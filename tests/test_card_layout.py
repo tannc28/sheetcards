@@ -8,6 +8,7 @@ from src.card_layout import REVERSE_TEMPLATE_NAME
 from src.card_layout import build_templates
 from src.card_layout import split_sides
 from src.column_model import plan_columns
+from src.sheet_config import THEMES
 from src.sheet_config import SheetConfig
 from src.sheet_config import parse_config_row
 
@@ -151,6 +152,41 @@ class TestFieldMarkup:
             assert qfmt.count(name) >= 2
         night = qfmt.split(".night_mode {")[1].split("}")[0]
         assert "--s2a-muted:" in night and "--s2a-accent:" in night
+
+    def test_no_theme_leaves_the_card_the_colours_anki_gave_it(self):
+        qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
+        assert ".card {" not in qfmt
+
+    def test_a_theme_paints_the_card_in_both_modes(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
+        light = THEMES["sakura"]["light"]
+        night = THEMES["sakura"]["night"]
+        assert (
+            f".card {{ background-color: {light['bg']}; color: {light['fg']}; }}"
+            in qfmt
+        )
+        assert (
+            f".card.night_mode {{ background-color: {night['bg']};"
+            f" color: {night['fg']}; }}" in qfmt
+        )
+
+    def test_a_theme_swaps_what_the_named_colours_mean(self):
+        # `color=accent` follows the sheet's theme rather than staying Google blue,
+        # which is the only way a themed card reads as one palette.
+        plan = _plan()
+        config = _config(plan, {"Reading": "color=accent"}, deck="theme=sakura")
+        qfmt = build_templates(plan, config)[0]["qfmt"]
+        assert f"--s2a-accent: {THEMES['sakura']['light']['accent']}" in qfmt
+        assert f"--s2a-accent: {THEMES['sakura']['night']['accent']}" in qfmt
+        assert "#1a73e8" not in qfmt
+
+    def test_an_unknown_theme_is_named_and_the_card_is_left_alone(self):
+        plan = _plan()
+        config = _config(plan, deck="theme=neon")
+        assert config.theme is None
+        assert any("neon" in w for w in config.warnings)
+        assert ".card {" not in build_templates(plan, config)[0]["qfmt"]
 
     def test_literal_colour_is_emitted_as_written(self):
         plan = _plan()

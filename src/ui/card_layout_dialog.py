@@ -26,8 +26,10 @@ from ..compat import QWidget
 from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_remote_decks
+from ..sheet_config import THEMES
 from ..theme import base_dialog_qss
 from ..theme import get_colors
+from ..theme import is_dark_mode
 from ..theme import make_header
 from ..theme import secondary_button_qss
 
@@ -63,7 +65,7 @@ _FIELD_KEYS = (
     "subdeck",
 )
 _FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw")
-_DECK_KEYS = ("align", "speed", "reverse")
+_DECK_KEYS = ("align", "speed", "reverse", "theme")
 
 
 def _empty_snapshot():
@@ -595,6 +597,9 @@ class CardLayoutDialog(QDialog):
             parts.append(f"speech speed {speed}")
         if deck.get("reverse"):
             parts.append("a reverse card is generated")
+        theme = deck.get("theme")
+        if theme:
+            parts.append(f"the '{theme}' theme")
 
         detail = "; ".join(parts) if parts else "no deck-wide settings"
         return self._note(f"Config row found — {detail}.")
@@ -846,21 +851,34 @@ class CardLayoutDialog(QDialog):
         body = "".join(front) + "<hr>" + "".join(back)
         return self._preview_block("Card", "Front and back", body)
 
+    def _theme_palette(self):
+        """The sheet's ``theme``, in the variant matching Anki's current mode.
+
+        A card theme is CSS custom properties plus a background, and a QTextBrowser
+        resolves neither — so the preview has to be painted with the palette's own
+        values. Showing the dialog's background while the real card is pink would
+        say the setting did nothing.
+        """
+        palette = THEMES.get(self.snapshot["deck"].get("theme"))
+        return palette["night" if is_dark_mode() else "light"] if palette else None
+
     def _preview_color(self, color):
         """A colour this preview can actually paint with.
 
         The sheet's theme colours (``muted``, ``accent``) become CSS variables on
         the real card, which a QTextBrowser cannot resolve — so they are shown in
-        the equivalent dialog colour instead of silently rendering as no colour.
+        the sheet's own palette when it named a theme, and in the equivalent dialog
+        colour otherwise, instead of silently rendering as no colour.
         """
+        palette = self._theme_palette()
         value = str(color or "").strip()
         if not value:
-            return self.colors["text"]
+            return (palette or {}).get("fg") or self.colors["text"]
         lowered = value.lower()
         if lowered == "muted" or lowered.startswith("var("):
-            return self.colors["text_secondary"]
+            return (palette or {}).get("muted") or self.colors["text_secondary"]
         if lowered == "accent":
-            return self.colors["accent_primary"]
+            return (palette or {}).get("accent") or self.colors["accent_primary"]
         return value
 
     def _preview_field(self, header, settings, is_front):
@@ -871,7 +889,7 @@ class CardLayoutDialog(QDialog):
 
         label = settings.get("label") or header
         head = (
-            f'<div style="font-size:9pt;color:{self.colors["text_secondary"]};">'
+            f'<div style="font-size:9pt;color:{self._preview_color("muted")};">'
             f"{escape(str(label))}</div>"
         )
         return (
@@ -881,11 +899,13 @@ class CardLayoutDialog(QDialog):
         )
 
     def _preview_block(self, template_name, side, body):
+        palette = self._theme_palette()
+        background = (palette or {}).get("bg") or self.colors["background"]
         return (
             f'<p style="color:{self.colors["text_secondary"]};font-size:10pt;'
             f'margin-bottom:2px;">{escape(template_name)} · {escape(side)}</p>'
             f'<div style="border:1px solid {self.colors["border"]};'
-            f'background-color:{self.colors["background"]};padding:10px;">{body}</div>'
+            f'background-color:{background};padding:10px;">{body}</div>'
             "<p>&nbsp;</p>"
         )
 

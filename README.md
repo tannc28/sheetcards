@@ -182,7 +182,7 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `12 Chinese drawing` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Japanese furigana` | `furigana` over kanji |
 | `14 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
-| `15 Everything` | three `SUBDECK` levels, media, `voices`, `type`, `reverse`, and a hidden column, all at once |
+| `15 Everything` | three `SUBDECK` levels, media, `voices`, `type`, `reverse`, `theme=sakura`, and a hidden column, all at once |
 | `16 Edge cases` | **wrong on purpose** — every warning the settings row can produce, plus a row with no `ID`, a repeated `ID` and an unembeddable link |
 
 The workbook is generated from `SHEETS` in
@@ -516,6 +516,7 @@ Written after the marker, in the `#config` cell itself.
 | `align` | `left`, `center`, `right` | Alignment for the whole card (a column's own `align` still wins) |
 | `speed` | a number — keep it inside 0.5–2.0 | Speaking rate for every spoken column that does not set its own. Unlike the per-column `speed`, the deck-wide one is **not** range-checked, so an absurd value reaches Anki unchallenged |
 | `reverse` | switch | Adds a second card template that asks the back and answers with the front. Skipped for cloze rows, and for a card that has nothing on one of its sides |
+| `theme` | `sakura` | Paints the whole card in a named palette instead of Anki's plain black-on-white, and points `color=muted` / `color=accent` at that palette's own two colours. Each theme carries a light and a dark version, so night mode stays readable. An unrecognised name is refused with a warning and the card keeps Anki's colours |
 
 #### Worked example
 
@@ -571,6 +572,11 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
   language its own column if you want each spoken properly.
 - **`hint` hides text, not sound.** A column that is both `hint` and `tts` is still read
   aloud when the side appears, even while its text is collapsed.
+- **A `theme` colours the card, not the window around it.** On the desktop the top bar
+  and the answer buttons belong to Anki, not to the card, so they keep Anki's own
+  colours; on AnkiDroid and AnkiMobile the card fills the review screen and the tone
+  carries further. Switching Anki between light and dark swaps the theme with it — each
+  palette ships both halves, so neither one is left unreadable.
 - **`furigana` does nothing visible without the `text[reading]` shape.** A plain `tuī chí`
   cell simply prints as-is.
 - **Media columns are *links*, and links need the network.** The URL is fetched every time

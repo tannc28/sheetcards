@@ -33,6 +33,35 @@ THEME_COLORS = {
     "accent": "var(--s2a-accent)",
 }
 
+# A whole-card palette, named once in the marker cell: `#config theme=sakura`.
+#
+# Each theme is given twice because Anki, not the sheet, decides at review time
+# whether the card is drawn light or dark — it puts a `night_mode` class on the
+# card's body. One set of colours would therefore leave one of the two modes
+# unreadable, which is the same reason THEME_COLORS above exists at all. The two
+# named colours are part of the palette rather than fixed alongside it, so a column
+# written `color=accent` follows whatever theme the sheet chose.
+#
+# `fg` is the card's own text colour, so it has to carry real contrast against `bg`
+# rather than merely being in the same family: the palette is the one thing here
+# that a sheet cannot correct per column.
+THEMES = {
+    "sakura": {
+        "light": {
+            "bg": "#fff5f8",
+            "fg": "#43262f",
+            "muted": "#9c7382",
+            "accent": "#d6336c",
+        },
+        "night": {
+            "bg": "#2a1d23",
+            "fg": "#f2dee5",
+            "muted": "#bd97a4",
+            "accent": "#ff8fb1",
+        },
+    },
+}
+
 SIDES = ("front", "back", "hide")
 ALIGNMENTS = ("left", "center", "right")
 
@@ -80,7 +109,7 @@ _FIELD_KEYS = (
     + _FLAGS
     + MEDIA_KINDS
 )
-_DECK_KEYS = ("align", "speed", "reverse")
+_DECK_KEYS = ("align", "speed", "reverse", "theme")
 
 _HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 # Full form only: a language plus a region, e.g. zh_CN, en_US, pt_BR, zh-TW.
@@ -236,6 +265,7 @@ class SheetConfig:
         self.align = None
         self.speed = None
         self.reverse = False
+        self.theme = None  # a key of THEMES; None leaves the card Anki's own colours
         self.warnings = []
         # The column carrying cloze deletions, and the one Anki asks the learner to
         # type. Both are single because a note type has one template set and Anki
@@ -505,6 +535,14 @@ def parse_config_row(row, plan):
                 config.align = value.lower()
             else:
                 warn(f"'{MARKER}': align must be left, center or right")
+        elif key == "theme":
+            if value.lower() in THEMES:
+                config.theme = value.lower()
+            else:
+                warn(
+                    f"'{MARKER}': unknown theme '{value}' — "
+                    f"the themes are {', '.join(sorted(THEMES))}"
+                )
         elif key == "speed":
             try:
                 speed = float(value)
