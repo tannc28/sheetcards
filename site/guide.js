@@ -139,6 +139,7 @@ function addKey(key) {
       : seed;
   }
   box.focus();
+  grow();
   draw();
 }
 
@@ -228,9 +229,17 @@ document.addEventListener("click", (e) => {
   }
 });
 
+/** Keeps the settings cell exactly as tall as what is in it. */
+function grow() {
+  const box = $("#cell");
+  box.style.height = "auto";
+  box.style.height = `${box.scrollHeight}px`;
+}
+
 for (const id of ["#name", "#value", "#cell"]) {
   $(id).addEventListener("input", draw);
 }
+$("#cell").addEventListener("input", grow);
 
 addEventListener("message", (e) => {
   const frame = $("#card");
@@ -249,6 +258,7 @@ startPython(EDITOR, (step) =>
     preview = (name, cell) => JSON.parse(fn(name, cell));
     paintStatic();
     $("#cell").value = "size=44; bold";
+    grow();
     draw();
   })
   .catch((err) => status(t("bootFailed", err.message), "bad"));

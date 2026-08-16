@@ -37,27 +37,37 @@
     </span></h2>
 
     <div class="panel-body">
-      <div class="stack">
-        <p class="field">
-          <label for="name" data-i18n="edName">Column name</label>
-          <input id="name" type="text" spellcheck="false" autocomplete="off" value="Word">
-        </p>
-        <p class="field">
-          <label for="value" data-i18n="edValue">What a cell holds</label>
-          <input id="value" type="text" spellcheck="false" autocomplete="off" value="北京">
-        </p>
+      <!-- Shaped like the thing it is: two columns of a spreadsheet, row 1 the
+           headers, row 2 the settings row, row 3 a card's worth of data. Typed
+           into here it needs no translating into "and where does that go in
+           Google Sheets" — it goes in the cell that looks like this one. -->
+      <div class="sheet" role="group" data-i18n-attr="aria-label:edSheet">
+        <span class="ref"></span>
+        <span class="ref">A</span>
+        <span class="ref">B</span>
+
+        <span class="ref">1</span>
+        <span class="cell fixed">ID</span>
+        <span class="cell"><input id="name" type="text" spellcheck="false"
+              autocomplete="off" value="Word" data-i18n-attr="aria-label:edName"></span>
+
+        <span class="ref">2</span>
+        <span class="cell fixed marker">#config</span>
+        <span class="cell"><textarea id="cell" rows="1" spellcheck="false"
+              autocomplete="off" data-i18n-attr="aria-label:edCell"></textarea></span>
+
+        <span class="ref">3</span>
+        <span class="cell fixed">1</span>
+        <span class="cell"><input id="value" type="text" spellcheck="false"
+              autocomplete="off" value="北京" data-i18n-attr="aria-label:edValue"></span>
       </div>
 
-      <div class="stack">
-        <h3><span data-i18n="edCell">Settings row cell</span></h3>
-        <textarea id="cell" rows="3" spellcheck="false" autocomplete="off"></textarea>
-        <p class="entry-alt">
-          <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy</button>
-          <span id="status" class="status" role="status" aria-live="polite">
-            <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
-          </span>
-        </p>
-      </div>
+      <p class="entry-alt">
+        <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy</button>
+        <span id="status" class="status" role="status" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+        </span>
+      </p>
 
       <!-- Tapped, not dragged: a drag is the one gesture that does not survive a
            phone, and most people are on one. -->

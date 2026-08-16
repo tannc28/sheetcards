@@ -26,6 +26,7 @@ const STRINGS = {
   edName: { en: "Column name", vi: "Tên cột" },
   edValue: { en: "What a cell holds", vi: "Nội dung một ô" },
   edCell: { en: "Settings row cell", vi: "Ô trong settings row" },
+  edSheet: { en: "Two columns of a sheet", vi: "Hai cột của một sheet" },
   edAdd: { en: "Add a directive", vi: "Thêm directive" },
   edResult: { en: "Result", vi: "Kết quả" },
   edCopy: { en: "Copy", vi: "Copy" },

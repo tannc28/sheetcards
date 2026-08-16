@@ -505,13 +505,43 @@ h3.spaced { margin-top: 18px; }
 }
 .col:hover { border-color: var(--accent); color: var(--accent); }
 
-textarea#cell {
-  width: 100%; padding: 9px 11px; resize: vertical;
-  font-family: var(--mono); font-size: var(--t-sm); line-height: 1.5;
-  color: var(--ink); background: var(--panel);
+/* Two columns of a spreadsheet, drawn as one: the grid lines are the borders of
+   the cells themselves, so there is no table and nothing to scroll sideways. */
+.sheet {
+  display: grid;
+  grid-template-columns: 2.4ch minmax(4rem, 7rem) minmax(0, 1fr);
   border: 1px solid var(--line); border-radius: var(--r-md);
+  overflow: hidden; background: var(--line-soft);
+  gap: 1px;
 }
-textarea#cell:focus-visible { outline-offset: 0; border-color: var(--accent); }
+.ref {
+  display: grid; place-items: center; padding: 3px 4px;
+  background: var(--sunken);
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--muted);
+}
+.cell { background: var(--panel); min-width: 0; }
+/* Column A is the part a real sheet already forces on you: an ID, and the marker
+   that turns row 2 into settings. It is shown so the shape is complete, and not
+   editable because there is nothing to decide about it. */
+.cell.fixed {
+  display: flex; align-items: center; padding: 7px 9px;
+  font-family: var(--mono); font-size: var(--t-sm); color: var(--muted);
+}
+.cell.marker { color: var(--accent); }
+.sheet input, .sheet textarea {
+  display: block; width: 100%; padding: 7px 9px; margin: 0;
+  font-family: var(--mono); font-size: var(--t-sm); line-height: 1.45;
+  color: var(--ink); background: transparent;
+  border: 0; border-radius: 0; resize: vertical;
+}
+.sheet input:focus-visible, .sheet textarea:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
+/* A cell in a spreadsheet is one line until it is not. It starts as one and
+   grows to whatever was typed — see grow() in guide.js — rather than sitting
+   there twice as tall as the rows either side of it, waiting. */
+.sheet textarea { overflow: hidden; }
+.sheet + .entry-alt { margin-top: 12px; }
 
 /* ---- panel 1: the chosen row, cell by cell ------------------------------- */
 
