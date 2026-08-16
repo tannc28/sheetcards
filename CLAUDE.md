@@ -112,6 +112,17 @@ There is **no fixed column list**. The sheet decides the schema: only a handful 
 ### `IS_DEVELOPMENT_MODE` (build-time flip)
 Defined `True` in `templates_and_definitions.py`. The AnkiWeb/standalone build scripts **rewrite it to `False`** in the packaged copy. It gates the "Import Test Deck" menu item and `TEST_SHEETS_URLS`. Leave it `True` in the repo.
 
+### The example workbook (`examples/`)
+
+The single source of examples for everything: `README.md`, `docs/ANKIWEB_DESCRIPTION.md`, `TEST_SHEETS_URLS` (the dev-only *Import Test Deck*) and the preview site's landing page all point at **one** address —
+`https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx`.
+It used to be a Google Sheet nobody here could edit, which is how it came to describe a schema the add-on had outgrown.
+
+- **The grids live in `SHEETS` at the top of `scripts/build_examples.py`; the `.xlsx` is generated and committed.** Declaration order is tab order and the key is the sheet name. The script writes the workbook with a stdlib ZIP/XML writer (inline strings, no shared-string table) and reads the result back through `src/workbook.py` before writing it; `--check` fails instead of writing. Entries carry a fixed timestamp so an unchanged `SHEETS` rebuilds byte-identically. `examples/` holds exactly two files — the workbook and its README — and a test pins that.
+- **Fifteen sheets, ordered basic → advanced**, ending in `15 Edge cases`, which is wrong on purpose so every `SheetConfig.warnings` message has something to point at. `site/app.js` opens the demo on `DEMO_TAB` (`14 Everything`) rather than the first sheet.
+- **`tests/test_examples.py` is the guard.** It fails if the `.xlsx` does not match the TSVs, if any sheet but `15 Edge cases` warns, if a sheet renders an empty front, if the three copies of the published URL disagree — and, most importantly, **if a settings-row key has no example anywhere in the workbook**. Adding a directive to `sheet_config.py` means adding it to a sheet in the same commit.
+- The workbook is *not* shipped in the `.ankiaddon`: the packaging scripts copy an explicit allowlist (`__init__.py`, `manifest.json`, `config.json`, `README.md`, `LICENSE`, `src/`).
+
 ## Building & packaging
 
 `scripts/create_ankiweb_package.py` and `create_standalone_package.py` produce `build/*.ankiaddon` ZIPs. AnkiWeb requires: files at the **ZIP root** (no parent folder), a valid `manifest.json`, and **no `__pycache__`/`.pyc`** — the scripts enforce and verify all three. The AnkiWeb variant strips the manifest to mandatory fields; the standalone keeps the full manifest. `validate_packages.py` checks an existing `.ankiaddon`.

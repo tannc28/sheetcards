@@ -13,16 +13,19 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
 *   **Media from a link:** Mark a column `image`, `audio` or `video` and a cell holding a bare URL becomes the picture or the player (`size=320` caps the width). These are links, so the card fetches them each time it is shown — great for a tidy sheet, but nothing shows offline, and mobile clients are stricter about remote content. For media that works on a plane, use Anki's own `collection.media`.
-*   **Rich Media:** A field's HTML is rendered as written, so pasting an `<iframe>` embed (YouTube, Vimeo) straight into a cell works — a YouTube page link will *not* play in a `video` column, which expects a media file.
+*   **Video from an ordinary link:** Paste the YouTube address out of your browser — `watch?v=`, `youtu.be/`, `/shorts/` — or a Google Drive file link, and a `video` column turns it into a player. The address is rewritten into that site's own embed address while it syncs, so nothing has to be typed in a special form. A direct `.mp4` works too. Framed players are blocked on AnkiDroid and AnkiMobile, which get a link instead.
 *   **Cloze Support:** Automatically detects `{{c1::cloze}}` cards.
 
 ## ⚡ Quick Start
 
-1.  **Get the Template:** [Click here to copy the Official Google Sheet Template](https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing).
-2.  **Connect:** 
+1.  **See it working first:** paste this link into `Tools` -> `Sheets2Anki` -> `Add Remote Deck` and sync it. It is the example workbook — fifteen sheets, one deck each, from the smallest sheet that works to every setting at once, including a Chinese character-writing deck.
+    `https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx`
+    (Or open <https://tannc28.github.io/sheets2anki/> and read it in the browser, with no install at all.)
+2.  **Build your own:** a new Google Sheet with an `ID` column and one column per thing you want on the card. Copy the sheet from the example that is nearest to what you are making.
+3.  **Connect:**
     *   In Sheets: `Share` -> `Anyone with the link can view` -> Copy Link.
     *   In Anki: `Tools` -> `Sheets2Anki` -> `Add Remote Deck` -> Paste Link.
-3.  **Sync:** Press `Ctrl+Shift+S` to bring your cards into Anki.
+4.  **Sync:** Press `Ctrl+Shift+S` to bring your cards into Anki.
 
 ## 📋 How it Works
 

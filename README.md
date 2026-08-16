@@ -17,6 +17,7 @@ of truth, Anki is the copy.
 
 - [Requirements](#requirements)
 - [Preview a sheet in your browser](#preview-a-sheet-in-your-browser)
+- [The example workbook](#the-example-workbook)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [Spreadsheet reference](#spreadsheet-reference)
@@ -150,6 +151,45 @@ To run it locally: `python scripts/build_site.py --serve`.
 
 ---
 
+## The example workbook
+
+Every feature below has a working example, and they all live in one file in this
+repository: [`examples/`](examples/). Paste this link into the preview site, or
+into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
+
+```text
+https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
+```
+
+Fifteen sheets, each one its own deck, ordered from *the smallest sheet that
+works* to *every directive at once*:
+
+| Sheet | What it shows |
+| :--- | :--- |
+| `01 Basic` | `ID`, `Front`, `Back` — a word each in English, Chinese, Japanese, Korean, German and Spanish, answered in Vietnamese. No settings row, no `SYNC` |
+| `02 Sync and subdecks` | `SYNC` gating, `SUBDECK 1`/`2`, `TAGS` |
+| `03 Card layout` | `side`, `size`, all three colour forms, `bold`, `italic`, `label`, `hint`, `side=hide`, deck-wide `align` |
+| `04 Reverse` | one row, two cards |
+| `05 Type the answer` | `type=nc`, so accents do not count against you |
+| `06 Cloze` | a declared `cloze` column, including a row with two deletions |
+| `07 Images` | `image` on the prompt, with `size` |
+| `08 Audio` | `audio`, listen-then-recall |
+| `09 Video` | every YouTube link form the add-on rewrites, plus a direct file |
+| `10 Speech` | `tts=zh_CN`, deck-wide `speed`, a per-column `speed` override |
+| `11 Chinese writing` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card |
+| `12 Japanese furigana` | `furigana` over kanji |
+| `13 Any language headers` | headers written as `汉字`, `拼音`, `释义`, `例句` |
+| `14 Everything` | three `SUBDECK` levels, media, `voices`, `type`, `reverse`, and a hidden column, all at once |
+| `15 Edge cases` | **wrong on purpose** — every warning the settings row can produce, plus a row with no `ID`, a repeated `ID` and an unembeddable link |
+
+The workbook is generated from `SHEETS` in
+[`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails
+when a directive has no example — so one added to the add-on gets an example in
+the same commit. [`examples/README.md`](examples/README.md) walks through each
+sheet in detail.
+
+---
+
 ## Install
 
 1. Download the released `sheets2anki-standalone.ankiaddon` file.
@@ -206,6 +246,10 @@ colours, hints, furigana, text-to-speech, or to turn a column of URLs into pictu
 or video — add a [settings row](#the-settings-row) to the sheet and sync again.
 **Configure Card Layout** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
 but the sheet is where you edit it.
+
+The fastest way to see what a settings row can do is to connect
+[the example workbook](#the-example-workbook) and look at the sheet nearest to
+what you are building.
 
 ---
 
@@ -1060,7 +1104,10 @@ Image Processor setup notes live in
 
 > **Maintainer note.** An extra menu entry, *Import Test Deck* (`Ctrl+Shift+T`), appears
 > only while `IS_DEVELOPMENT_MODE` is `True` in `src/templates_and_definitions.py`. The
-> build scripts flip it to `False`, so it never ships to users.
+> build scripts flip it to `False`, so it never ships to users. It connects
+> [the example workbook](#the-example-workbook), which is also what the preview
+> site loads — so a change to a directive can be checked against a real deck
+> without anyone having to keep a private spreadsheet in step with the code.
 
 ## License
 

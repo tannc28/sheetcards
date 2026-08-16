@@ -4,6 +4,41 @@
 
 ---
 
+## ✨ **v6.13.0** - August 2026 *(Feature)*
+
+### 📚 The example sheet lives in this repository now
+
+The docs, the preview site and *Import Test Deck* used to point at a Google Sheet
+nobody working on the add-on could edit. It described a schema the add-on had
+outgrown, and there was no way to notice: nothing in the repository knew what was in
+it. The examples are now a file here — [`examples/`](../examples/) — and everything
+points at the same one:
+
+```text
+https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
+```
+
+**Fifteen sheets, one deck each, ordered from the smallest sheet that works to every
+directive at once**: the reserved columns, the whole settings row, cloze, typed
+answers, images, audio, every video link form, text-to-speech, furigana, headers in
+Chinese, a Chinese character-writing deck that asks you to type the character and then
+shows the stroke order, and a last sheet that is **wrong on purpose** so every warning
+the add-on can produce has something to point at.
+
+- **The grids live in `SHEETS` at the top of `scripts/build_examples.py`** and the
+  workbook is generated from them, so a changed setting shows up in review as a changed
+  line rather than as a changed ZIP. `python scripts/build_examples.py --check` and
+  `tests/test_examples.py` both fail if the file and its source drift apart.
+- **`tests/test_examples.py` also fails when a settings-row key has no example**, which
+  is what makes this a contract rather than a snapshot: a directive added to
+  `sheet_config` without one is caught in the commit that adds it.
+- **The preview site opens on the workbook's `14 Everything` sheet**, and its sheet
+  picker walks back through the rest.
+- The stale `sample data/` directory, which still described the fixed-column schema
+  removed several versions ago, is gone.
+
+---
+
 ## ✨ **v6.12.0** - August 2026 *(Feature)*
 
 ### 🔗 A deck can be an `.xlsx` at a plain address
