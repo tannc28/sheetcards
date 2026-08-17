@@ -122,7 +122,7 @@ const OPTIONS = {
   color: ["muted", "accent", "crimson", "teal", "darkorange", "#c2410c"],
   // The languages this add-on is actually used for. Anki matches the code
   // against an installed voice exactly, so these are the full forms.
-  tts: ["zh_CN", "zh_TW", "en_US", "vi_VN", "ja_JP", "ko_KR"],
+  tts: ["en_US", "vi_VN", "zh_CN", "zh_TW", "ja_JP", "ko_KR"],
   speed: ["0.5", "0.75", "1", "1.25", "1.5", "2"],
   subdeck: ["1", "2", "3"],
   type: ["", "nc"],
@@ -177,7 +177,7 @@ const HELP = {
   italic: { text: "helpItalic" },
   hint: { text: "helpHint" },
   furigana: { text: "helpFurigana", sample: "日本語[にほんご]" },
-  cloze: { text: "helpCloze", sample: "我{{c1::是}}中国人。" },
+  cloze: { text: "helpCloze", sample: "The capital of France is {{c1::Paris}}." },
   draw: { text: "helpDraw", sample: "我" },
   image: {
     text: "helpImage",
@@ -187,7 +187,7 @@ const HELP = {
   },
   audio: {
     text: "helpAudio",
-    sample: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg",
+    sample: "https://upload.wikimedia.org/wikipedia/commons/b/bd/En-us-water.ogg",
   },
   video: { text: "helpVideo", sample: "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
   reverse: { text: "helpReverse" },
@@ -197,8 +197,8 @@ const HELP = {
 const state = {
   marker: "#config",
   columns: [
-    { name: "Word", cell: "size=44; bold", value: "北京" },
-    { name: "Meaning", cell: "size=20; color=muted", value: "Bắc Kinh" },
+    { name: "Word", cell: "size=44; bold", value: "hello" },
+    { name: "Meaning", cell: "size=20; color=muted", value: "xin chào" },
   ],
   // Which cell the directive chips act on. A chip has to act on something, and
   // asking which column first would be a dialog in the way of a tap. -1 is the

@@ -510,6 +510,20 @@ h3.spaced { margin-top: 18px; }
 
    A wide sheet scrolls inside this box and nowhere else — the page must never
    scroll sideways, which is the rule everything on a phone lives by. */
+/* On the table, in the corner a spreadsheet keeps its own controls: what these
+   do is done to the whole grid, so they belong to the grid rather than to the
+   page under it. */
+/* All three act on the whole grid, so they sit together in its corner rather
+   than trailing off the right-hand edge of a strip that scrolls — where, on a
+   phone with two columns, "add a column" was already out of sight. */
+.sheettools { display: flex; justify-content: flex-end; gap: 4px; margin: 0 0 6px; }
+.tool {
+  width: 30px; height: 26px; padding: 0; line-height: 1; font-size: 14px;
+  background: var(--panel); color: var(--muted);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.tool:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
 .sheetwrap { overflow-x: auto; margin-bottom: 12px; }
 .sheet {
   display: grid;
@@ -535,6 +549,7 @@ h3.spaced { margin-top: 18px; }
   font-family: var(--mono); font-size: var(--t-sm); color: var(--muted);
 }
 .cell.marker input { color: var(--accent); }
+
 .cell.named input { padding-right: 22px; }
 .sheet input, .sheet textarea {
   display: block; width: 100%; padding: 7px 9px; margin: 0;
