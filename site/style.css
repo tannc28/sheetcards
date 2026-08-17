@@ -571,6 +571,29 @@ h3.spaced { margin-top: 18px; }
    a directive can be open while the cell does not have it yet. */
 .col.open { border-color: var(--accent); border-style: dashed; }
 
+/* The sentence comes before the choices: reading what a directive is, and then
+   picking a value for it, is the order somebody who does not know it works in. */
+.opthelp {
+  margin: 8px 0 0; padding: 9px 11px;
+  font-size: var(--t-sm); line-height: 1.5;
+  background: var(--sunken); border: 1px solid var(--line);
+  border-radius: var(--r-md) var(--r-md) 0 0; border-bottom: 0;
+}
+.opthelp + .optbar, .optsample + .optbar { border-radius: 0 0 var(--r-md) var(--r-md); }
+.opthelp + .optsample { border-radius: 0; }
+/* For the directives that do nothing until the cell is written a certain way,
+   the example is the explanation — so it is one tap, not something to retype. */
+.optsample {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin: 0; padding: 8px 11px;
+  background: var(--sunken); border: 1px solid var(--line); border-bottom: 0;
+}
+.optsample code {
+  font-size: var(--t-xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.opthelp + .optbar, .optsample + .optbar { margin-top: 0; }
+
 .optbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
   margin: 8px 0 0; padding: 9px 10px;

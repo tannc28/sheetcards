@@ -39,6 +39,89 @@ const STRINGS = {
   },
   edAdd: { en: "Add a directive", vi: "Thêm directive" },
   edOther: { en: "other", vi: "khác" },
+  edSample: { en: "try this value", vi: "thử giá trị này" },
+
+  // --- what each directive is ---------------------------------------------
+  // One sentence each, and for the ones that only work with the cell written a
+  // certain way, the sentence says which way — that is the whole difficulty.
+  helpSide: {
+    en: "Which side of the card this column goes on. Without it the first column is the front and the rest are the back.",
+    vi: "Cột này nằm ở mặt nào của thẻ. Không ghi thì cột đầu tiên là mặt trước, các cột còn lại ở mặt sau.",
+  },
+  helpSize: {
+    en: "Text size in pixels, 6–200. On a picture or a writing box it is the width instead, and the range is 1–2000.",
+    vi: "Cỡ chữ tính bằng pixel, 6–200. Trên cột ảnh hoặc ô viết chữ thì nó là chiều rộng, khoảng 1–2000.",
+  },
+  helpColor: {
+    en: "Text colour. muted and accent follow the card's light/dark theme; anything else is a CSS colour name or a #hex.",
+    vi: "Màu chữ. muted và accent đổi theo nền sáng/tối của thẻ; ngoài ra là tên màu CSS hoặc mã #hex.",
+  },
+  helpAlign: {
+    en: "Text alignment. Written in the #config cell it sets the default for every column.",
+    vi: "Căn lề chữ. Viết trong ô #config thì nó là mặc định cho mọi cột.",
+  },
+  helpTts: {
+    en: "Anki reads this column aloud. The code must be the full form: zh on its own matches no installed voice and plays silence.",
+    vi: "Anki đọc to cột này. Mã phải đủ dạng: chỉ ghi zh thì không khớp giọng nào và phát ra im lặng.",
+  },
+  helpVoices: {
+    en: "Preferred voice names, comma separated. A preference only — Anki falls back to any voice of that language.",
+    vi: "Tên giọng ưu tiên, cách nhau bằng dấu phẩy. Chỉ là ưu tiên — Anki vẫn dùng giọng khác cùng ngôn ngữ nếu không có.",
+  },
+  helpSpeed: {
+    en: "Speaking rate, 0.5–2.0. Written in the #config cell it sets the default for every column.",
+    vi: "Tốc độ đọc, 0.5–2.0. Viết trong ô #config thì nó là mặc định cho mọi cột.",
+  },
+  helpLabel: {
+    en: "A small caption printed above the field.",
+    vi: "Một dòng nhãn nhỏ in phía trên field.",
+  },
+  helpType: {
+    en: "Anki draws a box on the question and compares what you type against this column. type=nc ignores accents. One column per sheet.",
+    vi: "Anki hiện ô nhập ở mặt hỏi rồi so cái bạn gõ với cột này. type=nc bỏ qua dấu. Mỗi sheet một cột.",
+  },
+  helpSubdeck: {
+    en: "This column becomes a level of the deck path. It is never drawn on the card — filing a note and printing on it are different jobs.",
+    vi: "Cột này thành một tầng của deck. Nó không bao giờ hiện trên thẻ — xếp deck và in lên thẻ là hai việc khác nhau.",
+  },
+  helpBold: { en: "Bold text.", vi: "Chữ đậm." },
+  helpItalic: { en: "Italic text.", vi: "Chữ nghiêng." },
+  helpHint: {
+    en: "Hides the value behind a link you click to reveal. On a picture or a player it hides the element instead.",
+    vi: "Giấu giá trị sau một link, bấm mới hiện. Trên cột ảnh hoặc player thì nó giấu chính phần tử đó.",
+  },
+  helpFurigana: {
+    en: "Prints the reading above the text, for Japanese. It only works when the cell is written kanji[reading] — the brackets are the whole trick.",
+    vi: "In cách đọc phía trên chữ, dùng cho tiếng Nhật. Chỉ chạy khi ô được viết dạng kanji[cách đọc] — cặp ngoặc vuông chính là mấu chốt.",
+  },
+  helpCloze: {
+    en: "This column holds the {{c1::…}} deletions. Declaring it makes the whole sheet cloze and this column becomes the prompt — a cell with no deletion in it renders as nothing at all.",
+    vi: "Cột này chứa chỗ trống {{c1::…}}. Khai báo nó là cả sheet thành cloze và cột này thành câu hỏi — ô nào không có chỗ trống thì hiện ra trống trơn.",
+  },
+  helpDraw: {
+    en: "Turns the column into a writing box for a Chinese character: on the question you write it stroke by stroke, on the answer it animates the strokes. Needs the network.",
+    vi: "Biến cột thành ô viết chữ Hán: mặt hỏi bạn viết từng nét, mặt trả lời nó chạy lại thứ tự nét. Cần mạng.",
+  },
+  helpImage: {
+    en: "The cell holds a bare image URL and the card shows the picture instead of the address. size caps its width.",
+    vi: "Ô chứa link ảnh trần, thẻ hiện ảnh thay vì hiện địa chỉ. size giới hạn chiều rộng.",
+  },
+  helpAudio: {
+    en: "The cell holds a bare audio URL and the card shows a player. The file is fetched each time, so the card needs the network.",
+    vi: "Ô chứa link audio trần, thẻ hiện trình phát. File tải lại mỗi lần nên thẻ cần mạng.",
+  },
+  helpVideo: {
+    en: "The cell holds a video link — YouTube, Drive, or a direct file. The address is rewritten into that site's own player while it syncs.",
+    vi: "Ô chứa link video — YouTube, Drive, hoặc file trực tiếp. Địa chỉ được đổi sang trình phát của chính trang đó lúc sync.",
+  },
+  helpReverse: {
+    en: "Adds a second card that asks the back and answers with the front. One row, two cards, scheduled separately.",
+    vi: "Thêm thẻ thứ hai hỏi mặt sau và trả lời bằng mặt trước. Một dòng, hai thẻ, học riêng nhau.",
+  },
+  helpTheme: {
+    en: "A colour palette for the whole card, in both light and dark mode.",
+    vi: "Bảng màu cho cả thẻ, dùng được ở cả nền sáng và nền tối.",
+  },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
   edResult: { en: "Result", vi: "Kết quả" },
   edCopy: { en: "Copy rows 1–2", vi: "Copy dòng 1–2" },

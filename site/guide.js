@@ -144,6 +144,56 @@ function valued(key) {
   return Boolean(keys.closed?.[key] || OPTIONS[key]);
 }
 
+/** Whether the options panel has anything at all to show for this key. */
+function hasPanel(key) {
+  return valued(key) || Boolean(HELP[key]);
+}
+
+/**
+ * What each directive is, and where the ones that need it get an example.
+ *
+ * The i18n key is written out rather than built from the name: the guard that
+ * catches an unused string looks for the key quoted somewhere, and a key
+ * assembled at runtime is a key it cannot see.
+ *
+ * `sample` is for the directives that do nothing on their own — `furigana` needs
+ * `漢字[かんじ]` in the cell, `cloze` needs a `{{c1::…}}` in it, a media column
+ * needs a URL. Those are the ones people give up on, because switching them on
+ * and watching the card break teaches the wrong lesson. One tap fills row 3 with
+ * something that works and the card explains itself.
+ */
+const HELP = {
+  side: { text: "helpSide" },
+  size: { text: "helpSize" },
+  color: { text: "helpColor" },
+  align: { text: "helpAlign" },
+  tts: { text: "helpTts" },
+  voices: { text: "helpVoices" },
+  speed: { text: "helpSpeed" },
+  label: { text: "helpLabel" },
+  type: { text: "helpType" },
+  subdeck: { text: "helpSubdeck" },
+  bold: { text: "helpBold" },
+  italic: { text: "helpItalic" },
+  hint: { text: "helpHint" },
+  furigana: { text: "helpFurigana", sample: "日本語[にほんご]" },
+  cloze: { text: "helpCloze", sample: "我{{c1::是}}中国人。" },
+  draw: { text: "helpDraw", sample: "我" },
+  image: {
+    text: "helpImage",
+    sample:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/" +
+      "Cat_November_2010-1a.jpg/320px-Cat_November_2010-1a.jpg",
+  },
+  audio: {
+    text: "helpAudio",
+    sample: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg",
+  },
+  video: { text: "helpVideo", sample: "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
+  reverse: { text: "helpReverse" },
+  theme: { text: "helpTheme" },
+};
+
 const state = {
   marker: "#config",
   columns: [
@@ -394,8 +444,8 @@ function paintKeys() {
 function paintOptions() {
   const key = state.open;
   const box = $("#opts");
-  box.hidden = !key;
-  if (!key) return;
+  box.hidden = !key || !hasPanel(key);
+  if (box.hidden) return;
 
   const current = valueOf(key);
   const listed = keys.closed?.[key] ?? OPTIONS[key] ?? [];
@@ -404,7 +454,18 @@ function paintOptions() {
       ? ` style="border-color:${escapeHtml(v)};color:${escapeHtml(v)}"`
       : "";
 
-  box.innerHTML = `<p class="optbar"><b class="mono">${escapeHtml(key)}</b>
+  const help = HELP[key];
+  const sample = help?.sample;
+
+  box.innerHTML = `${
+    help ? `<p class="opthelp">${escapeHtml(t(help.text))}</p>` : ""
+  }${
+    sample
+      ? `<p class="optsample"><button class="col" id="optsample" type="button"
+           >${escapeHtml(t("edSample"))}</button>
+           <code>${escapeHtml(sample)}</code></p>`
+      : ""
+  }<p class="optbar"><b class="mono">${escapeHtml(key)}</b>
       ${listed
         .map(
           (v) =>
@@ -413,7 +474,7 @@ function paintOptions() {
         )
         .join("")}
       ${
-        keys.closed?.[key]
+        keys.closed?.[key] || !valued(key)
           ? ""
           : `<input id="optfree" value="${escapeHtml(current ?? "")}"
                spellcheck="false" autocomplete="off"
@@ -623,11 +684,12 @@ document.addEventListener("click", (e) => {
   const key = e.target.closest("[data-key]");
   if (key) {
     const name = key.dataset.key;
-    // A flag has nothing to choose, so the tap is the whole interaction. One
-    // that takes a value opens its options instead — and closes them again,
-    // because the chip that opened a thing is where a reader looks to shut it.
-    if (valued(name)) state.open = state.open === name ? null : name;
-    else setCell(toggle(cellText(), name));
+    // A flag has nothing to choose, so the tap still does the whole job — but it
+    // also opens the panel, because `cloze` and `furigana` switched on with no
+    // word about them is where people give up. One that takes a value only
+    // opens: inserting blind is what the options are there to replace.
+    if (!valued(name)) setCell(toggle(cellText(), name));
+    state.open = state.open === name && valued(name) ? null : name;
     paintSheet();
     return draw();
   }
@@ -635,6 +697,13 @@ document.addEventListener("click", (e) => {
   const opt = e.target.closest("[data-opt]");
   if (opt) {
     setCell(toggle(cellText(), state.open, opt.dataset.opt));
+    paintSheet();
+    return draw();
+  }
+
+  if (e.target.closest("#optsample")) {
+    const at = deckActive() ? 0 : state.active;
+    state.columns[at].value = HELP[state.open].sample;
     paintSheet();
     return draw();
   }
