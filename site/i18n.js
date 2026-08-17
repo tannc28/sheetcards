@@ -140,6 +140,23 @@ const STRINGS = {
     vi: (front, back) =>
       `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
   },
+  edPasteHint: {
+    en: "Paste rows from Sheets or Excel",
+    vi: "Dán các dòng từ Sheets hoặc Excel vào đây",
+  },
+  edPasted: {
+    en: (n) => `Read ${n} column${n === 1 ? "" : "s"} from the clipboard`,
+    vi: (n) => `Đã đọc ${n} cột từ clipboard`,
+  },
+  // This page shows one row of data, so a whole sheet pasted in has to say that the
+  // rest of it was not lost, only not shown.
+  edPastedSome: {
+    en: (n, extra) =>
+      `Read ${n} column${n === 1 ? "" : "s"} — showing one row of data, ` +
+      `${extra} more not shown`,
+    vi: (n, extra) =>
+      `Đã đọc ${n} cột — chỉ hiện một dòng data, ${extra} dòng còn lại không hiện`,
+  },
   edFiledIn: { en: "Filed in", vi: "Nằm ở" },
   edTags: { en: "Tags", vi: "Tags" },
   // The real root is `s2a_{file}::{sheet}` — the file and the sheet this row came

@@ -516,7 +516,18 @@ h3.spaced { margin-top: 18px; }
 /* All three act on the whole grid, so they sit together in its corner rather
    than trailing off the right-hand edge of a strip that scrolls — where, on a
    phone with two columns, "add a column" was already out of sight. */
-.sheettools { display: flex; justify-content: flex-end; gap: 4px; margin: 0 0 6px; }
+.sheettools {
+  display: flex; align-items: center; justify-content: flex-end; gap: 4px 8px;
+  flex-wrap: wrap; margin: 0 0 6px;
+}
+/* Nobody tries pasting a block into a page unless the page says it can take one,
+   so the first thing on the toolbar is that sentence. It gives up its line first
+   when the room runs out, because the buttons still work unlabelled. */
+.sheettools .hint {
+  flex: 1 1 auto; min-width: 0; margin-right: auto;
+  font-size: var(--t-xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .tool {
   width: 30px; height: 26px; padding: 0; line-height: 1; font-size: 14px;
   background: var(--panel); color: var(--muted);

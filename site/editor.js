@@ -691,6 +691,143 @@ function asCsv() {
     .join("\r\n")}`;
 }
 
+/**
+ * A block copied out of Sheets or Excel, split back into rows of cells.
+ *
+ * The clipboard hands over TSV: tabs between cells, newlines between rows, and a
+ * cell containing either of those wrapped in quotes with its own quotes doubled.
+ * Walked character by character rather than split on tabs, because a settings cell
+ * is exactly the kind of cell that arrives quoted — and a sentence in row 3 with a
+ * line break in it would otherwise become two rows.
+ */
+function parseBlock(text) {
+  const rows = [[""]];
+  let quoted = false;
+  const push = (ch) => {
+    const row = rows[rows.length - 1];
+    row[row.length - 1] += ch;
+  };
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch !== '"') push(ch);
+      else if (text[i + 1] === '"') (push('"'), i++);
+      else quoted = false;
+      continue;
+    }
+    const row = rows[rows.length - 1];
+    if (ch === '"' && row[row.length - 1] === "") quoted = true;
+    else if (ch === "\t") row.push("");
+    else if (ch === "\n") rows.push([""]);
+    else if (ch !== "\r") push(ch);
+  }
+
+  // A selection dragged to the end of a sheet ends in a newline.
+  const last = rows[rows.length - 1];
+  if (rows.length > 1 && last.length === 1 && last[0] === "") rows.pop();
+  return rows;
+}
+
+/** True for the ``#config`` cell, by the same rule ``sheet_config`` uses. */
+const isMarkerCell = (cell) => /^\s*#config(\W|$)/i.test(cell ?? "");
+
+/**
+ * True when every filled cell in the row is made of directives.
+ *
+ * The marker cell is what normally identifies the settings row, so this is only
+ * asked when column A was left out of the selection — copying B1:D2 out of a sheet
+ * gives you a settings row with nothing to recognise it by. The directive names
+ * come from `sheet_config.py` via `keys`, so it is the add-on's own list doing the
+ * recognising rather than a second list kept here.
+ */
+function looksLikeSettings(row) {
+  const filled = (row ?? []).filter((cell) => cell.trim());
+  if (!filled.length || !keys.field?.length) return false;
+  return filled.every((cell) =>
+    parts(cell).every((part) => keys.field.includes(nameOf(part))),
+  );
+}
+
+/**
+ * Reads a pasted block into the sheet.
+ *
+ * A selection out of a spreadsheet is some of row 1, row 2 and row 3, in that
+ * order, with any of them missing — so the rows are identified rather than
+ * counted: the settings row by its marker (or by being nothing but directives),
+ * and column A by the reserved `ID` header. What is left is columns.
+ *
+ * With a header row the block replaces the sheet, because the columns it names are
+ * the sheet. Without one it fills the columns already here from the left, which is
+ * what pasting one row back over another means.
+ *
+ * Returns null when there was nothing to read, and otherwise how many rows of the
+ * block went unused — this page shows one row of data, and a whole sheet pasted in
+ * has to say that the other forty rows were not lost, only not shown.
+ */
+function applyBlock(block) {
+  const rows = block.filter((row) => row.some((cell) => cell.trim()));
+  if (!rows.length) return null;
+
+  const marked = rows.findIndex((row) => isMarkerCell(row[0]));
+  let names = null;
+  let cells = null;
+  let values = null;
+
+  if (marked === 0) {
+    [cells, values] = [rows[0], rows[1] ?? null];
+  } else if (marked > 0) {
+    [names, cells, values] = [rows[0], rows[marked], rows[marked + 1] ?? null];
+  } else if (looksLikeSettings(rows[0])) {
+    [cells, values] = [rows[0], rows[1] ?? null];
+  } else if (looksLikeSettings(rows[1])) {
+    [names, cells, values] = [rows[0], rows[1], rows[2] ?? null];
+  } else {
+    [names, values] = [rows[0], rows[1] ?? null];
+  }
+
+  // Column A holds the ID and the marker, and it is either in the selection or it
+  // is not. Taking it for a content column would put a column called "ID" on every
+  // card, which is the one column Anki already keeps for itself.
+  if (cells ? isMarkerCell(cells[0]) : /^\s*id\s*$/i.test(names?.[0] ?? "")) {
+    if (cells) state.marker = cells[0].trim();
+    for (const row of [names, cells, values]) row?.shift();
+  }
+
+  const at = (row, i) => row?.[i] ?? "";
+  if (names) {
+    const width = Math.max(names.length, cells?.length ?? 0, values?.length ?? 0);
+    const columns = [];
+    for (let i = 0; i < width; i++) {
+      const name = at(names, i).trim();
+      // A column with nothing in it anywhere is the empty part of a dragged
+      // selection, not a column somebody meant to make.
+      if (!name && !at(cells, i).trim() && !at(values, i).trim()) continue;
+      columns.push({
+        name: name || `Column ${columns.length + 1}`,
+        cell: at(cells, i).trim(),
+        value: at(values, i),
+      });
+    }
+    if (!columns.length) return null;
+    state.columns = columns;
+  } else {
+    const width = Math.max(cells?.length ?? 0, values?.length ?? 0);
+    if (!width) return null;
+    for (let i = 0; i < width; i++) {
+      state.columns[i] ??= { name: `Column ${i + 1}`, cell: "", value: "" };
+      if (cells) state.columns[i].cell = at(cells, i).trim();
+      if (values) state.columns[i].value = at(values, i);
+    }
+  }
+
+  if (state.active >= state.columns.length) state.active = 0;
+
+  const skipped = marked > 1 ? marked - 1 : 0;
+  const kept = [names, cells, values].filter(Boolean).length + skipped;
+  return { dropped: Math.max(0, rows.length - kept) };
+}
+
 function download(text, name) {
   const url = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
   const link = Object.assign(document.createElement("a"), { href: url, download: name });
@@ -792,6 +929,36 @@ document.addEventListener("click", (e) => {
       .then(() => status(t("edCopied"), "ok"))
       .catch(() => status(t("edCopyFailed"), "bad"));
   }
+});
+
+/**
+ * A block pasted anywhere on the page is the sheet, not one cell's worth of text.
+ *
+ * This is the way back in: the settings row is written here, copied into Sheets,
+ * and then a week later it needs another column — at which point the sheet is the
+ * one with the current version of it and this page has to be able to take it back.
+ * Without this the only way to edit an existing row here was to retype it.
+ *
+ * One cell's worth of text — no tab, no line break — is left alone, because it
+ * belongs to whichever input has the cursor.
+ */
+document.addEventListener("paste", (e) => {
+  const text = e.clipboardData?.getData("text/plain") ?? "";
+  if (!/[\t\n]/.test(text)) return;
+  const read = applyBlock(parseBlock(text));
+  if (!read) return;
+  e.preventDefault();
+  paintSheet();
+  draw();
+  // After draw(), which sets the status from what the settings row turned out to
+  // say. This is the reply to the paste itself, and it is the more useful of the
+  // two the moment a whole sheet has just arrived.
+  status(
+    read.dropped
+      ? t("edPastedSome", state.columns.length, read.dropped)
+      : t("edPasted", state.columns.length),
+    "ok",
+  );
 });
 
 // The sheet is rebuilt whenever its shape changes, so its inputs are reached by
