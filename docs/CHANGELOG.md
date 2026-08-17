@@ -4,6 +4,36 @@
 
 ---
 
+## 🐛 **v6.22.1** - August 2026 *(Fix)*
+
+### A furigana column was read aloud with its brackets in it
+
+`furigana` and `tts` on the same column produced `{{tts ja_JP:Word}}`, and Anki
+hands the voice the field's *text* — which for a furigana cell is
+`日本語[にほんご]`. So the voice said the word, then the bracket, then the word
+again as kana. On a sentence it was worse: every annotated word was read twice.
+
+The tag is now `{{tts ja_JP:kana:Word}}`, which is what Anki's own manual uses for
+Japanese. Checked against a real collection:
+
+| template | what the voice is given |
+| :--- | :--- |
+| `{{tts ja_JP:Word}}` | `私[わたし]は 日本語[にほんご]` |
+| `{{tts ja_JP:kana:Word}}` | `わたしはにほんご` |
+
+`kana:` rather than `kanji:` on purpose. The sheet wrote the reading down so that
+nothing would have to guess it, and an engine guesses wrong on exactly the names
+and rare readings someone bothered to annotate.
+
+A cell with no brackets in it goes through the filter unchanged, so a column where
+only some rows are annotated still speaks correctly — and nothing changes for a
+column that never asked for furigana.
+
+The Japanese sheet in the example workbook now has a voice, so the fix has
+something to be heard on.
+
+---
+
 ## ✨ **v6.22.0** - August 2026 *(Feature)*
 
 ### The unsorted pile is automatic, and the directive is gone

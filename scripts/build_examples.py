@@ -242,7 +242,7 @@ SHEETS = {
     # readings rendered as ruby over the kanji
     "13 Furigana (phiên âm kanji)": [
         ["ID", "Japanese", "Meaning", "Note"],
-        ["#config", "size=40; furigana", "size=20", "size=14; color=muted; hint"],
+        ["#config", "size=40; furigana; tts=ja_JP", "size=20", "size=14; color=muted; hint"],
         ["f01", "日本語[にほんご]", "tiếng Nhật", "Write the reading in brackets after the kanji."],
         ["f02", "図書館[としょかん]", "thư viện"],
         ["f03", " 私[わたし]は 学生[がくせい]です。", "Tôi là học sinh.", "A leading space separates one reading from the previous word."],

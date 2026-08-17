@@ -394,6 +394,23 @@ def _tts_tag(field, cfg, deck_speed):
     first and the rest are order-independent options. The tag is wrapped in the same
     ``{{#Field}}`` guard as the field itself so an empty row does not make Anki read
     out silence.
+
+    A furigana column is spoken through ``kana:``, which is not a nicety. Anki hands
+    the voice the field's *text*, and the text of a furigana cell is
+    ``日本語[にほんご]`` — so the plain tag has the voice say the word, then the
+    bracket, then the word again as kana. Verified against a real collection:
+
+    ==========================  ==============================
+    ``{{tts ja_JP:Word}}``      ``私[わたし]は 日本語[にほんご]``
+    ``{{tts ja_JP:kana:Word}}`` ``わたしはにほんご``
+    ==========================  ==============================
+
+    ``kana:`` rather than ``kanji:`` because the sheet went to the trouble of
+    writing the reading down: making the engine guess it again is the very thing
+    furigana is there to prevent, and it guesses wrong on exactly the names and rare
+    readings someone bothered to annotate. A cell with no brackets in it passes
+    through either filter unchanged, so a column where only some rows are annotated
+    still speaks correctly.
     """
     if not cfg.tts:
         return ""
@@ -407,7 +424,8 @@ def _tts_tag(field, cfg, deck_speed):
     if speed is not None:
         options.append(f"speed={_speed_text(speed)}")
 
-    tag = "{{" + " ".join(options) + f":{field}}}}}"
+    spoken = f"kana:{field}" if cfg.furigana else field
+    tag = "{{" + " ".join(options) + f":{spoken}}}}}"
     return f"{{{{#{field}}}}}{tag}{{{{/{field}}}}}"
 
 

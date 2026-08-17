@@ -388,6 +388,21 @@ layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` rende
   or `{{furigana:Field}}`; `_tts_tag()` emits the TTS tag, with a field-level `speed`
   outranking the deck-wide one. Both the field's `<div>` and its TTS tag are wrapped in
   `{{#Field}}…{{/Field}}`, so an empty cell renders nothing *and* speaks nothing.
+- **A `furigana` column is spoken through `kana:`** — `{{tts ja_JP:kana:Field}}`, not
+  `{{tts ja_JP:Field}}`. Anki hands the voice the field's *text*, and the text of a
+  furigana cell is `日本語[にほんご]`, so the plain tag has the voice say the word,
+  then the bracket, then the word again. Checked against a real collection:
+
+  | template | what the voice is given |
+  | :--- | :--- |
+  | `{{tts ja_JP:Word}}` | `私[わたし]は 日本語[にほんご]` |
+  | `{{tts ja_JP:kana:Word}}` | `わたしはにほんご` |
+  | `{{tts ja_JP:kanji:Word}}` | `私は日本語` |
+
+  `kana:` rather than `kanji:` because the sheet wrote the reading down on purpose:
+  making the engine guess it again is what furigana exists to prevent, and it guesses
+  wrong on exactly the names and rare readings someone bothered to annotate. A cell
+  with no brackets passes through unchanged, so a half-annotated column still works.
 - **Media fields take a different branch.** When `cfg.media` is set, `_rows()` skips
   `_inline_style()` and `_reference()` entirely and calls `_media_html()`, which formats
   `_MEDIA_ELEMENTS[cfg.media]` around `{{Field}}` — `<img src="{{F}}"…>`,

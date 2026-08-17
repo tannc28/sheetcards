@@ -280,6 +280,40 @@ class TestTextToSpeech:
         qfmt = build_templates(plan, config)[0]["qfmt"]
         assert "{{#Word}}{{tts zh_CN:Word}}{{/Word}}" in qfmt
 
+    def test_a_furigana_column_is_spoken_through_kana(self):
+        """Otherwise the voice reads the brackets, and the word twice.
+
+        Anki hands the voice the field's *text*, and the text of a furigana cell is
+        `日本語[にほんご]`. Checked against a real collection: the plain tag speaks
+        `日本語[にほんご]`, `kana:` speaks `にほんご`. A cell with no brackets goes
+        through the filter unchanged, so a half-annotated column still works.
+        """
+        plan = _plan()
+        config = _config(plan, {"Word": "furigana; tts=ja_JP"})
+        qfmt = build_templates(plan, config)[0]["qfmt"]
+        assert "{{tts ja_JP:kana:Word}}" in qfmt
+        assert "{{tts ja_JP:Word}}" not in qfmt
+        # The guard is still on the field, not on the filtered form of it.
+        assert "{{#Word}}{{tts ja_JP:kana:Word}}{{/Word}}" in qfmt
+
+    def test_kana_is_only_for_the_column_that_asked_for_furigana(self):
+        plan = _plan()
+        config = _config(plan, {"Word": "tts=zh_CN", "Reading": "furigana; tts=ja_JP"})
+        qfmt = (
+            build_templates(plan, config)[0]["qfmt"]
+            + build_templates(plan, config)[0]["afmt"]
+        )
+        assert "{{tts zh_CN:Word}}" in qfmt
+        assert "{{tts ja_JP:kana:Reading}}" in qfmt
+
+    def test_a_furigana_column_spoken_but_not_shown_is_filtered_too(self):
+        # `side=hide` + `tts` is heard without being read — and what is heard has
+        # to be the reading, not the brackets around it.
+        plan = _plan()
+        config = _config(plan, {"Word": "side=hide; furigana; tts=ja_JP"})
+        template = build_templates(plan, config)[0]
+        assert "{{tts ja_JP:kana:Word}}" in _both(template)
+
     def test_voices_are_listed_comma_separated(self):
         plan = _plan()
         config = _config(plan, {"Word": "tts=zh_CN; voices=Ting-Ting,Sin-ji"})
