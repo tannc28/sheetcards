@@ -284,6 +284,70 @@ SHEETS = {
         ["n14", "JLPT", "N4", "Nouns", "jlpt, n4", "季節[きせつ]", "mùa", "日本[にほん]には 四[よっ]つの 季節[きせつ]が あります。"],
         ["n15", "JLPT", "N4", "Nouns", "jlpt, n4", "桜[さくら]", "hoa anh đào", "春[はる]に 桜[さくら]が 咲[さ]きます。"],
     ],
+    # a picture and a recording on the same card: see the thing, then hear the
+    # word for it. The two media kinds are one column each, because a column holds
+    # one kind — and `Group` files the note without ever reaching the card.
+    "16 Picture words (từ vựng ảnh)": [
+        ["ID", "Group", "Picture", "Word", "Sound", "Meaning", "Example"],
+        ["#config", "subdeck=1", "side=front; image; size=300", "side=back; size=44; bold", "side=back; audio; label=Native recording", "side=back; size=20", "side=back; size=16; color=muted; italic; hint"],
+        ["i01", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg", "cat", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-cat.ogg", "con mèo", "The cat is asleep on the chair."],
+        ["i02", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Giant_Panda_2004-03-2.jpg/500px-Giant_Panda_2004-03-2.jpg", "panda", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-panda.ogg", "gấu trúc", "Pandas eat bamboo almost all day."],
+        ["i03", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Tiger_in_Ranthambhore.jpg/500px-Tiger_in_Ranthambhore.jpg", "tiger", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-tiger.ogg", "con hổ", "A tiger hunts alone."],
+        ["i04", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Horse-and-pony.jpg/500px-Horse-and-pony.jpg", "horse", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-horse.ogg", "con ngựa", "She rides a horse every weekend."],
+        ["i05", "Food and drink", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/500px-Red_Apple.jpg", "apple", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-apple.ogg", "quả táo", "An apple a day is an old English saying."],
+        ["i06", "Food and drink", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "tea", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-tea.ogg", "trà", "Green tea is drunk without milk."],
+        ["i07", "Nature", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Full_Moon_Luc_Viatour.jpg/500px-Full_Moon_Luc_Viatour.jpg", "moon", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-moon.ogg", "mặt trăng", "The moon is full tonight."],
+        ["i08", "Nature", "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Fire.JPG/500px-Fire.JPG", "fire", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-fire.ogg", "lửa", "They built a fire on the beach."],
+        ["i09", "Nature", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg/500px-Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg", "mountain", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-mountain.ogg", "ngọn núi", "The mountain is covered in snow."],
+    ],
+    # draw the character *and* type its reading: the writing box marks the strokes,
+    # Anki's own box marks what was typed. Two ways of being asked one thing.
+    "17 Draw & type (viết và gõ)": [
+        ["ID", "Level", "Meaning", "Draw", "Pinyin", "Character", "Example"],
+        ["#config", "subdeck=1", "side=front; size=26; color=muted; label=Draw it, then type the pinyin", "side=front; draw; size=240", "side=back; size=26; color=accent; type=nc", "side=back; size=64; tts=zh_CN", "side=back; size=16; color=muted; italic"],
+        ["q01", "HSK 1", "sách", "书", "shū", "书", "我在看书。"],
+        ["q02", "HSK 1", "cơm; bữa ăn", "饭", "fàn", "饭", "该吃饭了。"],
+        ["q03", "HSK 1", "nhà", "家", "jiā", "家", "我在家工作。"],
+        ["q04", "HSK 1", "nói", "说", "shuō", "说", "请说慢一点。"],
+        ["q05", "HSK 1", "nghe", "听", "tīng", "听", "我在听音乐。"],
+        ["q06", "HSK 2", "đường phố", "路", "lù", "路", "这条路很长。"],
+        ["q07", "HSK 2", "trà", "茶", "chá", "茶", "我想喝茶。"],
+        ["q08", "HSK 2", "mưa", "雨", "yǔ", "雨", "今天下雨了。"],
+    ],
+    # a grammar point with the word that carries it deleted, and the deletion typed
+    # rather than recalled: `type` on the cloze column becomes {{type:cloze:…}}.
+    "18 Grammar cloze (ngữ pháp)": [
+        ["ID", "Point", "Sentence", "Meaning", "Note"],
+        ["#config", "side=front; size=15; color=muted; label=Grammar point", "cloze; type; size=28", "side=back; size=20", "side=back; size=15; color=muted; hint"],
+        ["g01", "Comparison", "他{{c1::比}}我高。", "Anh ấy cao hơn tôi.", "比 compares two things: A 比 B + adjective."],
+        ["g02", "Completed action", "我{{c1::了}}买三本书。", "Tôi đã mua ba quyển sách.", "了 after the verb marks the action as completed."],
+        ["g03", "Experience", "我去{{c1::过}}北京。", "Tôi từng đến Bắc Kinh.", "过 says it happened at least once, ever."],
+        ["g04", "Ability", "她{{c1::会}}开车。", "Cô ấy biết lái xe.", "会 is a learned skill; 能 is being able to right now."],
+        ["g05", "Progressive", "他{{c1::在}}打电话。", "Anh ấy đang gọi điện.", "在 before the verb makes it in progress."],
+        ["g06", "Passive", "杯子{{c1::被}}弟弟打破了。", "Cái cốc bị em trai làm vỡ.", "被 introduces the doer, like the English passive."],
+        ["g07", "Duration", "我学了{{c1::两年}}中文。", "Tôi học tiếng Trung hai năm rồi.", "Duration comes after the verb, not before it."],
+    ],
+    # heard, not seen: the sentence is spoken on the question and drawn nowhere, so
+    # the only way to answer is to listen. `side=hide` with `tts` and `type`.
+    "19 Dictation (nghe rồi gõ)": [
+        ["ID", "Sentence", "Task", "Pinyin", "Meaning"],
+        ["#config", "side=hide; tts=zh_CN; speed=0.85; type", "side=front; size=18; color=muted", "side=back; size=20; color=accent", "side=back; size=20"],
+        ["y01", "我叫王小明。", "Listen, then type the sentence in Chinese.", "Wǒ jiào Wáng Xiǎomíng.", "Tôi tên là Vương Tiểu Minh."],
+        ["y02", "今天天气很好。", "Listen, then type the sentence in Chinese.", "Jīntiān tiānqì hěn hǎo.", "Hôm nay thời tiết rất đẹp."],
+        ["y03", "我想喝一杯咖啡。", "Listen, then type the sentence in Chinese.", "Wǒ xiǎng hē yì bēi kāfēi.", "Tôi muốn uống một tách cà phê."],
+        ["y04", "这本书是我的。", "Listen, then type the sentence in Chinese.", "Zhè běn shū shì wǒ de.", "Quyển sách này là của tôi."],
+        ["y05", "他每天坐地铁上班。", "Listen, then type the sentence in Chinese.", "Tā měitiān zuò dìtiě shàngbān.", "Anh ấy đi làm bằng tàu điện ngầm mỗi ngày."],
+        ["y06", "请问洗手间在哪儿？", "Listen, then type the sentence in Chinese.", "Qǐngwèn xǐshǒujiān zài nǎr?", "Cho hỏi nhà vệ sinh ở đâu?"],
+    ],
+    # the clip is the question: watch it, then answer. A video on the front rather
+    # than tucked behind a link on the back, filed by lesson.
+    "20 Video lesson (bài video)": [
+        ["ID", "Lesson", "Clip", "Question", "Answer"],
+        ["#config", "subdeck=1", "side=front; video; size=520", "side=front; size=22", "side=back; size=20"],
+        ["c01", "Lesson 1", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "Where are the speakers standing?", "In front of the elephant enclosure at the zoo."],
+        ["c02", "Lesson 1", "https://youtu.be/aircAruvnKk", "What is the subject of this lecture?", "How a neural network is put together."],
+        ["c03", "Lesson 2", "https://upload.wikimedia.org/wikipedia/commons/d/de/Ink_grinding.webmhd.webm", "What is being ground on the stone?", "An ink stick, ground with water to make ink."],
+    ],
 }
 # fmt: on
 

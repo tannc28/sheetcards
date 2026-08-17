@@ -2,7 +2,7 @@
 
 `sheets2anki-examples.xlsx` is a working Sheets2Anki source, and it is what the
 [preview site](https://tannc28.github.io/sheets2anki/) and the add-on's
-**Import Test Deck** point at. Fifteen sheets, ordered so that reading them from
+**Import Test Deck** point at. Twenty sheets, ordered so that reading them from
 the first to the last takes you from *the smallest sheet that works* to *a deck
 you would keep studying*.
 
@@ -205,3 +205,61 @@ Every picture, recording and stroke-order animation is a
 address. Nothing is copied into this repository and nothing lands in your
 `collection.media`, so these cards need the network to draw — which is true of
 any media column, not just these.
+
+### 16 Picture words (từ vựng ảnh)
+
+A picture on the front, and on the back the word, a recording of someone saying
+it, and what it means. `image` and `audio` are two columns because a column holds
+one kind of media — and both are addresses, not files: nothing is copied into your
+collection, so these cards need the network to draw and to play.
+
+`Group` carries `subdeck=1`. It is an ordinary column with an ordinary name, it
+files the note under `…::Animals`, and it is never printed on the card — where a
+note lives is a bigger thing than how one card looks.
+
+The example sentence hides behind `hint`, so the card is a picture and a word
+until you ask for more.
+
+### 17 Draw & type (viết và gõ)
+
+The same character asked for twice, two ways: `draw` gives you a box to write it
+in stroke by stroke and marks each stroke as you go, and `type=nc` gives you
+Anki's own box for the pinyin. Recognising a character and being able to produce
+it are different skills, and this sheet refuses to let the first stand in for the
+second.
+
+`type=nc` ignores tone marks, which is what someone typing `shu` for `shū` means.
+The character is spoken on the answer, so you hear it right after writing it.
+
+### 18 Grammar cloze (ngữ pháp)
+
+A sentence with the word that carries the grammar point deleted — 比, 了, 过, 会,
+在, 被 — and `type` on the same column, which makes it `{{type:cloze:…}}`: you type
+the missing word rather than turning the card over and nodding at it.
+
+`Point` names the pattern on the front, so the card asks a question you can answer
+rather than a riddle. The note behind `hint` says why the word is where it is.
+
+### 19 Dictation (nghe rồi gõ)
+
+The sentence column is `side=hide; tts=zh_CN; type`. Hidden, so it is drawn
+nowhere; spoken, so it is on the question anyway; typed, so the only way through
+the card is to listen and write down what you heard. Anki's comparison on the
+answer shows the sentence character by character against what you typed.
+
+`speed=0.85` slows the voice a little — dictation at conversational speed is a
+different exercise, and a harder one than this deck is for.
+
+This is the shape of card the settings row exists for: nothing about it is a
+default, and none of it needs a note type built by hand.
+
+### 20 Video lesson (bài video)
+
+The clip is the question. `video` on the *front*, with the question under it, and
+the answer on the back — a comprehension deck rather than a vocabulary one, filed
+one deck per lesson.
+
+Every address is rewritten to that site's own player before the note is saved, so
+a `watch?v=`, a `youtu.be/` and a direct `.webm` all arrive as something that
+plays. Framed players do not work on AnkiDroid or AnkiMobile; on a phone these
+cards show the question and nothing else.

@@ -161,7 +161,7 @@ into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
 https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
 ```
 
-Fifteen sheets, each one its own deck, ordered from *the smallest sheet that
+Twenty sheets, each one its own deck, ordered from *the smallest sheet that
 works* to *a deck you would keep studying*. Where a column carries the meaning of a
 word it is glossed in Vietnamese; everything else is English. Nothing about the
 add-on is language-specific — a deck of anatomy or case law works the same way:
@@ -183,6 +183,11 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
 | `14 Any headers (mọi ngôn ngữ)` | headers written as `汉字`, `拼音`, `释义`, `例句` |
 | `15 Theme + subdeck (màu, tầng)` | a JLPT list filed three `SUBDECK` levels deep, in `theme=sakura` — five directives, each one this deck would have wanted anyway |
+| `16 Picture words (từ vựng ảnh)` | a picture on the front and a native recording on the back — `image` and `audio` on one card, filed by `Group` |
+| `17 Draw & type (viết và gõ)` | write the character stroke by stroke *and* type its pinyin: `draw` and `type=nc` asking the same thing two ways |
+| `18 Grammar cloze (ngữ pháp)` | the word carrying the grammar point deleted, and typed rather than recalled — `cloze` plus `type` |
+| `19 Dictation (nghe rồi gõ)` | the sentence is spoken and drawn nowhere: `side=hide` + `tts` + `type`, so the only way through is to listen |
+| `20 Video lesson (bài video)` | the clip *is* the question — `video` on the front, filed by lesson |
 
 The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails
