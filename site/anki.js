@@ -12,6 +12,11 @@
  * might type into a field. Anything unrecognised is left visible rather than
  * dropped, so an unsupported tag looks like an unsupported tag instead of
  * looking like an empty field.
+ *
+ * `{{type:…}}` is the one construct Anki resolves outside the renderer, in the
+ * reviewer, because it depends on what the learner typed. It is built here as an
+ * input plus an empty result box, and site/typeans.js fills the box in inside the
+ * card's own document.
  */
 
 /** Fields hold HTML in Anki, so only the *text* helpers escape anything. */
@@ -254,6 +259,11 @@ export function renderSide(template, values, opts = {}) {
     if (!(field in values)) {
       ctx.missingFields.add(field);
       return whole; // Anki shows the unknown field name too
+    }
+
+    // {{type:…}} is a replacement of its own, not a filter chain — see typeBox.
+    if (filters.length && filters[0].trim() === "type") {
+      return typeBox(field, values[field], filters.slice(1).map((f) => f.trim()), ctx);
     }
 
     // Filters apply innermost-first: {{text:furigana:F}} reads furigana, then text.

@@ -139,7 +139,7 @@ export function compareAnswer(expected, typed, nc) {
       wantedLine += span("typeMissed", b);
     }
   }
-  return `${typedLine}<br><span class=typearrow>&darr;</span><br>${wantedLine}`;
+  return `${typedLine}<br><span id=typearrow>&darr;</span><br>${wantedLine}`;
 }
 
 /**

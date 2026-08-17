@@ -53,7 +53,7 @@ before anything is installed and before your collection is touched:
 | Every row's fate: syncs, not ticked, or no ID — with the same counts the sync reports | Answers "why 0 notes?" without installing anything |
 | Whatever the settings row got wrong, spelled out | Otherwise these only appear in the debug log |
 | The deck tree and the tags each row lands in | Catches a `SUBDECK` typo before it creates a stray deck |
-| The card itself — front, back, reverse, cloze, media, and a TTS button that speaks through your computer's voices | The TTS button is a real test of whether a language code has a voice on this machine |
+| The card itself — front, back, reverse, cloze, media, a TTS button that speaks through your computer's voices, and a typed-answer box you can actually type into | The TTS button is a real test of whether a language code has a voice on this machine, and the typed-answer box marks what you type exactly as Anki does |
 
 The page is not a second implementation. It downloads the add-on's own
 `column_model.py`, `sheet_config.py`, `card_layout.py`, `tsv_model.py` and

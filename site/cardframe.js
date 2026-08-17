@@ -13,6 +13,7 @@
  */
 
 import { escapeHtml } from "./anki.js";
+import { typeansRuntime } from "./typeans.js";
 
 /**
  * The card's own document.
@@ -40,6 +41,19 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
                    border: 1px solid currentColor; border-radius: 999px;
                    background: transparent; color: inherit; opacity: .8; }
       img, video, iframe { max-width: 100%; }
+      /* The typed-answer box, in Anki's own colours — these three classes come
+         from aqt's reviewer.css, not from a note type, so a card that renders
+         right here would be uncoloured in Anki without them. */
+      input#typeans { font: inherit; width: 100%; box-sizing: border-box;
+                      line-height: 1.75; text-align: center; padding: 2px 6px;
+                      border: 1px solid currentColor; border-radius: 4px;
+                      background: transparent; color: inherit; }
+      .s2a-type { margin: 10px auto; max-width: 22em; }
+      code.typeans { white-space: pre-wrap; font-variant-ligatures: none;
+                     font-family: inherit; line-height: 1.75; }
+      .typeGood { background: #afa; color: #000; }
+      .typeBad { background: #faa; color: #000; }
+      .typeMissed { background: #ccc; color: #000; }
       ${
         ring
           ? `/* A column is open on the page outside; this is the block it made. The
@@ -67,7 +81,7 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
          type's CSS targets, and "night_mode" is how a card knows it is being drawn
          dark. A sheet's theme declares a colour pair for each, so without the second
          class the preview would show the light half of the theme on a dark page. -->
-    <body class="card${dark ? " night_mode" : ""}">
+    <body class="card${dark ? " night_mode" : ""}"${tab === "front" ? "" : " data-answered"}>
       ${tab === "back" ? back.html : front.html}
       ${tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
       <script>
@@ -91,7 +105,8 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
         const post = () => parent.postMessage(
           { h: document.documentElement.scrollHeight }, "*");
         addEventListener("load", post); new ResizeObserver(post).observe(document.body);
-      <\/script>`;
+      <\/script>
+      ${typeansRuntime()}`;
 }
 
 /**
