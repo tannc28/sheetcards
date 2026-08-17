@@ -159,7 +159,6 @@ const STRINGS = {
     vi: (n, extra) =>
       `Đã đọc ${n} cột — chỉ hiện một dòng data, ${extra} dòng còn lại không hiện`,
   },
-  edFiledIn: { en: "Filed in", vi: "Nằm ở" },
   edTags: { en: "Tags", vi: "Tags" },
   // The real root is `s2a_{file}::{sheet}` — the file and the sheet this row came
   // from, which an editor with no sheet behind it does not have. Named for what it

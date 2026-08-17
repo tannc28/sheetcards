@@ -820,16 +820,25 @@ function drawCard() {
 function drawDeck(out) {
   const levels = out.deck || [];
   const tags = out.tags || [];
-  const crumbs = [
-    `<span class="muted">${escapeHtml(t("edDeckRoot"))}</span>`,
-    ...levels.map((name) => `<span class="mono">${escapeHtml(name)}</span>`),
-  ].join('<i aria-hidden="true">›</i>');
+
+  // Drawn as the tree the preview page draws, because it is the same thing being
+  // shown and a second shape for it would be a second thing to learn. One row
+  // makes one branch: every level holds the one note under it.
+  let tree = "";
+  for (let i = levels.length - 1; i >= 0; i--) {
+    tree =
+      `<ul class="tree"><li><span class="node" style="--depth:${i + 1}">` +
+      `<span class="name">${escapeHtml(levels[i])}</span>` +
+      `<span class="count">1</span></span>${tree}</li></ul>`;
+  }
 
   $("#deck").innerHTML =
-    `<span class="filed"><b>${escapeHtml(t("edFiledIn"))}</b>${crumbs}</span>` +
-    `<span class="filed"><b>${escapeHtml(t("edTags"))}</b>${tags
+    `<ul class="tree"><li><span class="node root" style="--depth:0">` +
+    `<span class="name">${escapeHtml(t("edDeckRoot"))}</span>` +
+    `<span class="count">1</span></span>${tree}</li></ul>` +
+    `<p class="tagline"><b>${escapeHtml(t("edTags"))}</b>${tags
       .map((tag) => `<code>${escapeHtml(tag)}</code>`)
-      .join("")}</span>`;
+      .join("")}</p>`;
 }
 
 /** The answer side minus the repeated question, when the template used FrontSide. */

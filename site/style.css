@@ -735,25 +735,36 @@ h3.spaced { margin-top: 18px; }
 
 /* ---- the editor: where row 3 is filed ------------------------------------ */
 
-/* Above the card tabs, not one of them: the deck is not a view of the card, it
-   is the other half of what the settings row decided. Two lines on a phone, one
-   on anything wider, because neither is worth a box of its own. */
-.deckline {
-  display: flex; flex-wrap: wrap; gap: 4px 18px;
-  margin: 0; padding: 10px var(--pad);
-  background: var(--sunken); border-bottom: 1px solid var(--line);
-  font-size: var(--t-sm);
+/* The result is two things, and they are the two the preview page shows in two
+   panels: the deck, then the card. Headed rather than run together, because a
+   settings row that files a note somewhere and a settings row that draws it are
+   two different answers and only one of them is visible on a card. */
+.ed-part > h3 { margin: 0; padding: 12px var(--pad) 8px; }
+.ed-card { border-top: 1px solid var(--line); }
+#deck { padding: 0 var(--pad) 12px; }
+/* The same tree the preview page draws, minus the clicking: one row makes one
+   branch, and there is nothing here to filter down to. */
+.tree .node {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 4px 8px 4px calc(8px + var(--depth) * 14px);
+  font-size: var(--t-md); font-weight: 500; color: var(--ink);
 }
-.deckline:empty { display: none; }
-.deckline .filed { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.deckline b { font-weight: 600; color: var(--muted); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .04em; }
-.deckline i { color: var(--muted); font-style: normal; }
-.deckline .mono { overflow-wrap: anywhere; }
+.tree .node.root { color: var(--muted); }
+.tree .node .count { color: var(--muted); font-family: var(--mono); font-size: var(--t-xs); }
+
+.tagline {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;
+  margin: 6px 0 0; padding-left: 8px; font-size: var(--t-sm);
+}
+.tagline b {
+  font-weight: 600; color: var(--muted); font-size: var(--t-xs);
+  text-transform: uppercase; letter-spacing: .04em;
+}
 /* Two tags side by side with only a gap between them read as one long string,
    which is exactly what a tag must not look like. */
-.deckline code {
-  color: var(--muted); padding: 1px 6px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm);
+.tagline code {
+  color: var(--muted); padding: 1px 6px; overflow-wrap: anywhere;
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-sm);
 }
 
 /* ---- panel 3: the card --------------------------------------------------- */
