@@ -487,8 +487,20 @@ h3.spaced { margin-top: 18px; }
    away, and a form that hides itself is a form you have to open twice. */
 .editor { grid-template-columns: 1fr; }
 @media (min-width: 56rem) {
-  .editor { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); }
+  /* `.app.editor`, not `.editor`: the generic `.app` rule further down this file
+     is written for the preview page's three columns and, at equal specificity and
+     later in the source, was winning — which left this page one column wide, the
+     cells stretched across the whole window and the card pushed off the bottom of
+     it. The sheet takes the room here, because the sheet is what is being worked
+     on; the card is a picture of the result and an Anki card is narrow anyway. */
+  .app.editor { grid-template-columns: minmax(0, 1fr) minmax(22rem, 34rem); }
 }
+/* Panel 1 is a form, and a form needs a margin. The preview page pads its panels
+   from the inside, section by section, because each of those scrolls on its own —
+   this one is a single column of controls that were sitting flush against the
+   window, with the first letter of every line touching the edge. Panel 2 keeps
+   padding its own parts, since the card and the tabs want different amounts. */
+.editor .ed-form { padding: var(--pad); overflow: auto; overscroll-behavior: contain; }
 .editor .panel-toggle { cursor: default; }
 .editor .panel-toggle:hover { background: transparent; }
 .editor .chev { display: none; }
@@ -551,8 +563,10 @@ h3.spaced { margin-top: 18px; }
 }
 .cell { position: relative; background: var(--panel); min-width: 0; }
 /* The cell the directive chips are pointed at. Without it, tapping a chip and
-   watching a different column change is the obvious way to be confused. */
-.cell.on { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+   watching a different column change is the obvious way to be confused. A bar
+   rather than a fill and a ring: those two now mean "selected", and two marks
+   that look the same are one mark that means nothing. */
+.cell.on { box-shadow: inset 0 -3px 0 0 var(--accent); }
 /* Column A is what a real sheet forces on you anyway: an ID and the marker that
    turns row 2 into settings. Not editable where there is nothing to decide. */
 .cell.fixed {
@@ -597,11 +611,39 @@ h3.spaced { margin-top: 18px; }
    selection and this one would both answer to Ctrl+C, and only one of them holds
    the cells. */
 .sheet.ranged { user-select: none; -webkit-user-select: none; }
-.sheet .cell.sel { background: var(--accent-soft); }
-/* Where the drag started, and where the arrow keys count from. Drawn inside, so a
-   1px grid gap is not asked to hold a 2px ring. */
+
+/* A range is a tinted block with a line drawn round the outside of it, and the
+   cell you started from left clear inside — which is what every spreadsheet does,
+   and the reason it reads as one selection rather than as several coloured cells.
+   The tint has to be stronger than `--accent-soft`: that is what a *hovered* or
+   *pointed-at* cell already uses here, and a selection you cannot tell from a
+   hover is not a selection anybody trusts. */
+.sheet .cell.sel { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+/* Where the drag started, and where the arrow keys count from: clear inside the
+   tint. Its ring is written after the edges below, which would otherwise land on
+   the same property and take one side of it away. */
+.sheet .cell.anchor { background: var(--panel); }
+/* The outside of the block. Insets rather than borders: the grid's 1px gap is the
+   only room there is, and a real border would move every cell by a pixel. */
+.sheet .cell.edge-t { box-shadow: inset 0 2px 0 0 var(--accent); }
+.sheet .cell.edge-b { box-shadow: inset 0 -2px 0 0 var(--accent); }
+.sheet .cell.edge-l { box-shadow: inset 2px 0 0 0 var(--accent); }
+.sheet .cell.edge-r { box-shadow: inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-b { box-shadow: inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-l { box-shadow: inset 0 2px 0 0 var(--accent), inset 2px 0 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-r { box-shadow: inset 0 2px 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-b.edge-l { box-shadow: inset 0 -2px 0 0 var(--accent), inset 2px 0 0 0 var(--accent); }
+.sheet .cell.edge-b.edge-r { box-shadow: inset 0 -2px 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-l.edge-r { box-shadow: inset 2px 0 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-b.edge-l { box-shadow: inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent), inset 2px 0 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-b.edge-r { box-shadow: inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-t.edge-l.edge-r { box-shadow: inset 0 2px 0 0 var(--accent), inset 2px 0 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+.sheet .cell.edge-b.edge-l.edge-r { box-shadow: inset 0 -2px 0 0 var(--accent), inset 2px 0 0 0 var(--accent), inset -2px 0 0 0 var(--accent); }
+/* All four sides — one cell selected on its own — and the anchor wherever it sits
+   in a bigger block. Last, so it beats whichever single-edge rule also matched. */
+.sheet .cell.edge-t.edge-b.edge-l.edge-r,
 .sheet .cell.anchor { box-shadow: inset 0 0 0 2px var(--accent); }
-.sheet .ref.sel { color: var(--accent); background: var(--accent-soft); }
+.sheet .ref.sel { color: var(--accent); background: var(--accent-soft); font-weight: 650; }
 
 /* The directive chips. */
 .collist { display: flex; flex-wrap: wrap; gap: 4px; }

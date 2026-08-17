@@ -538,6 +538,13 @@ function paintSelection() {
       box && r >= box.r1 && r <= box.r2 && c >= box.c1 && c <= box.c2;
     el.classList.toggle("sel", Boolean(inside));
     el.classList.toggle("anchor", Boolean(state.sel?.r === r && state.sel?.c === c));
+    // The border a spreadsheet draws is around the *range*, not around each cell
+    // in it, and CSS cannot see a neighbour — so each cell is told which of its
+    // sides is on the outside of the block.
+    el.classList.toggle("edge-t", Boolean(inside && r === box.r1));
+    el.classList.toggle("edge-b", Boolean(inside && r === box.r2));
+    el.classList.toggle("edge-l", Boolean(inside && c === box.c1));
+    el.classList.toggle("edge-r", Boolean(inside && c === box.c2));
   }
   for (const el of sheet.querySelectorAll(".ref")) {
     const r = el.dataset.r === undefined ? null : Number(el.dataset.r);

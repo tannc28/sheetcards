@@ -36,7 +36,7 @@
       <span class="panel-name" data-i18n="edPanelSheet">Sheet</span>
     </span></h2>
 
-    <div class="panel-body">
+    <div class="panel-body ed-form">
       <!-- Shaped like the thing it writes into: a sheet. Row 1 the column
            names, row 2 the settings row, row 3 one card's worth of data. The
            grid scrolls inside itself so the page never scrolls sideways. -->
@@ -89,8 +89,8 @@
         <ul id="warnlist" class="warnings"></ul>
       </div>
       <!-- The other half of what a settings row decides: where the note is filed.
-           `subdeck=n` and `unsorted` never reach the card, so with only the card
-           on screen they looked like they did nothing at all. -->
+           A subdeck column never reaches the card, so with only the card on
+           screen it looked like it did nothing at all. -->
       <p id="deck" class="deckline"></p>
       <nav class="tabs" id="tabs"></nav>
       <div id="view"></div>
