@@ -25,10 +25,37 @@ from s2a.sheet_config import SheetConfig, is_config_row, parse_config_row
 
 
 def keys():
-    """The directive names, read off sheet_config so the two cannot drift."""
-    from s2a.sheet_config import _DECK_KEYS, _FIELD_KEYS
+    """The directive names and the value sets, read off sheet_config.
 
-    return json.dumps({"field": list(_FIELD_KEYS), "deck": list(_DECK_KEYS)})
+    A closed set — the sides, the alignments, the themes, the media kinds — is
+    the add-on's to decide, so it is sent rather than copied into JavaScript
+    where it would be a second answer. The open ones (a colour, a language, a
+    size) are suggestions and live on the page: there is no complete list of
+    them to be wrong about.
+    """
+    from s2a.sheet_config import (
+        ALIGNMENTS,
+        MEDIA_KINDS,
+        SIDES,
+        THEME_COLORS,
+        THEMES,
+        _DECK_KEYS,
+        _FIELD_KEYS,
+    )
+
+    return json.dumps(
+        {
+            "field": list(_FIELD_KEYS),
+            "deck": list(_DECK_KEYS),
+            "closed": {
+                "side": list(SIDES),
+                "align": list(ALIGNMENTS),
+                "theme": list(THEMES),
+            },
+            "themeColors": list(THEME_COLORS),
+            "media": list(MEDIA_KINDS),
+        }
+    )
 
 
 def preview(payload):
@@ -73,22 +100,44 @@ def preview(payload):
 
 const $ = (sel) => document.querySelector(sel);
 
-// What each directive is worth starting from. Not documentation — a seed, so one
-// tap produces something that already works and can then be edited. The names
-// come from Python; only these starting values live here.
-const SEEDS = {
-  side: "side=front",
-  size: "size=32",
-  color: "color=accent",
-  align: "align=left",
-  tts: "tts=zh_CN",
-  voices: "voices=Ting-Ting",
-  speed: "speed=0.9",
-  label: "label=Meaning",
-  type: "type",
-  subdeck: "subdeck=1",
-  theme: "theme=sakura",
+/**
+ * The values worth offering for each directive that takes one.
+ *
+ * Suggestions, not the valid set — the valid set is `sheet_config.py`'s and the
+ * closed ones arrive from there. These are the answers people actually want:
+ * five languages rather than every BCP 47 tag, a handful of sizes rather than
+ * 6 through 200. Anything not listed is typed into the box beside them, which
+ * is why every one of these also accepts free text.
+ *
+ * A key that is not here is a flag: nothing to choose, so tapping it is the
+ * whole interaction.
+ */
+const OPTIONS = {
+  size: ["16", "20", "24", "32", "44", "64"],
+  color: ["muted", "accent", "crimson", "teal", "darkorange", "#c2410c"],
+  // The languages this add-on is actually used for. Anki matches the code
+  // against an installed voice exactly, so these are the full forms.
+  tts: ["zh_CN", "zh_TW", "en_US", "vi_VN", "ja_JP", "ko_KR"],
+  speed: ["0.5", "0.75", "1", "1.25", "1.5", "2"],
+  subdeck: ["1", "2", "3"],
+  type: ["", "nc"],
+  voices: [],
+  label: [],
 };
+
+/** What a directive is worth starting from when it is switched on blind. */
+function seed(key) {
+  const closed = keys.closed?.[key];
+  if (closed?.length) return `${key}=${closed[0]}`;
+  const listed = OPTIONS[key];
+  if (!listed) return key;
+  return listed.length ? `${key}=${listed[0]}` : `${key}=`;
+}
+
+/** Whether tapping this chip has something to choose. */
+function valued(key) {
+  return Boolean(keys.closed?.[key] || OPTIONS[key]);
+}
 
 const state = {
   marker: "#config",
@@ -101,6 +150,9 @@ const state = {
   // marker cell, where the deck-wide settings live.
   active: 0,
   template: 0,
+  // The directive whose options are showing, if any. One at a time: two open
+  // panels on a phone is the list you were choosing from pushed off the screen.
+  open: null,
 };
 
 let run = null;
@@ -155,10 +207,36 @@ const nameOf = (part) => part.split("=")[0].trim().toLowerCase();
  * second tap looked broken, because nothing happened. Tapping now means "this
  * column has this directive", both ways round.
  */
-function toggle(cell, key) {
+function toggle(cell, key, value) {
   const had = parts(cell).some((part) => nameOf(part) === key);
   const kept = parts(cell).filter((part) => nameOf(part) !== key);
-  return (had ? kept : [...kept, SEEDS[key] ?? key]).join("; ");
+  if (value !== undefined) {
+    return [...kept, value === "" ? key : `${key}=${value}`].join("; ");
+  }
+  return (had ? kept : [...kept, seed(key)]).join("; ");
+}
+
+/** The value a directive currently carries in the active cell, or null. */
+function valueOf(key) {
+  const cell = deckActive()
+    ? state.marker.replace(/^\s*#config/i, "")
+    : (state.columns[state.active]?.cell ?? "");
+  const part = parts(cell).find((p) => nameOf(p) === key);
+  if (part === undefined) return null;
+  const at = part.indexOf("=");
+  return at < 0 ? "" : part.slice(at + 1).trim();
+}
+
+/** Writes the active cell back, wherever it lives. */
+function setCell(text) {
+  if (deckActive()) state.marker = `#config ${text}`.trim();
+  else state.columns[state.active].cell = text;
+}
+
+function cellText() {
+  return deckActive()
+    ? state.marker.replace(/^\s*#config/i, "")
+    : (state.columns[state.active]?.cell ?? "");
 }
 
 /** True while the marker cell — the deck-wide one — is being edited. */
@@ -285,22 +363,71 @@ function grow(box) {
 function paintKeys() {
   const on = activeKeys();
   const list = deckActive() ? keys.deck : keys.field;
+  if (state.open && !list.includes(state.open)) state.open = null;
+
   $("#keys").innerHTML = list
     .map(
       (key) =>
-        `<button class="col${on.has(key) ? " on" : ""}" data-key="${escapeHtml(key)}"` +
+        `<button class="col${on.has(key) ? " on" : ""}` +
+        `${state.open === key ? " open" : ""}" data-key="${escapeHtml(key)}"` +
         ` aria-pressed="${on.has(key)}">${escapeHtml(key)}</button>`,
     )
     .join("");
   $("#keyfor").textContent = deckActive()
     ? t("edForDeck")
     : t("edForColumn", state.columns[state.active]?.name || "");
+  paintOptions();
+}
+
+/**
+ * The values on offer for the open directive.
+ *
+ * Inline under the chips rather than floating over them: a popover on a phone
+ * covers the row you were choosing from, and there is nowhere for it to go.
+ */
+function paintOptions() {
+  const key = state.open;
+  const box = $("#opts");
+  box.hidden = !key;
+  if (!key) return;
+
+  const current = valueOf(key);
+  const listed = keys.closed?.[key] ?? OPTIONS[key] ?? [];
+  const swatch = (v) =>
+    key === "color" && !keys.themeColors?.includes(v)
+      ? ` style="border-color:${escapeHtml(v)};color:${escapeHtml(v)}"`
+      : "";
+
+  box.innerHTML = `<p class="optbar"><b class="mono">${escapeHtml(key)}</b>
+      ${listed
+        .map(
+          (v) =>
+            `<button class="col${current === v ? " on" : ""}" data-opt="${escapeHtml(v)}"` +
+            `${swatch(v)}>${escapeHtml(v || t("edOther"))}</button>`,
+        )
+        .join("")}
+      ${
+        keys.closed?.[key]
+          ? ""
+          : `<input id="optfree" value="${escapeHtml(current ?? "")}"
+               spellcheck="false" autocomplete="off"
+               placeholder="${escapeHtml(t("edOther"))}"
+               aria-label="${escapeHtml(t("edOther"))}">`
+      }
+      <button class="drop" id="optdrop" type="button"
+        title="${escapeHtml(t("edRemoveKey"))}"
+        aria-label="${escapeHtml(t("edRemoveKey"))}">×</button></p>`;
 }
 
 /** The card these columns make, from the templates the add-on would write. */
 function draw() {
-  if (!run) return;
   paintKeys();
+  drawCard();
+}
+
+/** Everything downstream of the cells: the warnings, the card, the split. */
+function drawCard() {
+  if (!run) return;
 
   let out;
   try {
@@ -340,13 +467,31 @@ function draw() {
       img, video, iframe { max-width: 100%; }
       a.hint { color: #2f6fd0; font-size: 15px; }
       .cloze { color: #2f6fd0; font-weight: 700; }
-      button.tts { font: inherit; font-size: 14px; padding: 2px 10px;
+      button.tts { font: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer;
                    border: 1px solid currentColor; border-radius: 999px;
                    background: transparent; color: inherit; opacity: .8; }
     </style>
     <body class="card${dark() ? " night_mode" : ""}">${front.html}
     <hr id="answer">${backOnly(back.html, front.html)}
     <script>
+      // The tts button speaks, here as on the preview page. Picking a language
+      // and then finding the button inert would be the editor teaching that the
+      // directive does nothing — and this is a real test of whether the machine
+      // has a voice for the code that was chosen.
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-tts]");
+        if (!b) return;
+        const spec = JSON.parse(b.dataset.tts);
+        const say = new SpeechSynthesisUtterance(spec.text);
+        say.lang = spec.lang.replace("_", "-");
+        say.rate = Number(spec.speed) || 1;
+        const want = new Set(spec.voices);
+        const have = speechSynthesis.getVoices();
+        say.voice = have.find((v) => want.has(v.name))
+                 || have.find((v) => v.lang.replace("-", "_") === spec.lang) || null;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(say);
+      });
       const post = () => parent.postMessage(
         { h: document.documentElement.scrollHeight }, "*");
       addEventListener("load", post); new ResizeObserver(post).observe(document.body);
@@ -381,9 +526,50 @@ function backOnly(backHtml, frontHtml) {
   return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
 }
 
-/** Row 2, tab-separated — which is what a spreadsheet accepts as a pasted row. */
-function rowText() {
-  return [state.marker, ...state.columns.map((c) => c.cell)].join("\t");
+/**
+ * The two rows that are worth taking away: the headers and the settings row.
+ *
+ * Row 3 is sample data — a card to look at while editing, not something anyone
+ * wants pasted into their sheet.
+ */
+function rows() {
+  return [
+    ["ID", ...state.columns.map((c) => c.name)],
+    [state.marker, ...state.columns.map((c) => c.cell)],
+  ];
+}
+
+/** Tab-separated, which is what Sheets and Excel split a pasted block on. */
+function asTsv() {
+  return rows()
+    .map((row) => row.join("\t"))
+    .join("\n");
+}
+
+/**
+ * The same two rows as a file both spreadsheets open by double-clicking.
+ *
+ * Quoted per RFC 4180 rather than joined with commas: a settings cell is full of
+ * them already (`voices=Ting-Ting,Huihui`), and a bare join would spread one
+ * cell across three.
+ */
+function asCsv() {
+  const quote = (value) =>
+    /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  // Excel reads a .csv as the machine's own encoding unless the file says
+  // otherwise, and a byte order mark is the only thing it takes as saying so.
+  return `\uFEFF${rows()
+    .map((row) => row.map(quote).join(","))
+    .join("\r\n")}`;
+}
+
+function download(text, name) {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+  const link = Object.assign(document.createElement("a"), { href: url, download: name });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------------------------
@@ -403,13 +589,29 @@ document.addEventListener("click", (e) => {
 
   const key = e.target.closest("[data-key]");
   if (key) {
-    if (deckActive()) {
-      const rest = toggle(state.marker.replace(/^\s*#config/i, ""), key.dataset.key);
-      state.marker = `#config ${rest}`.trim();
-    } else {
-      const column = state.columns[state.active];
-      column.cell = toggle(column.cell, key.dataset.key);
-    }
+    const name = key.dataset.key;
+    // A flag has nothing to choose, so the tap is the whole interaction. One
+    // that takes a value opens its options instead — and closes them again,
+    // because the chip that opened a thing is where a reader looks to shut it.
+    if (valued(name)) state.open = state.open === name ? null : name;
+    else setCell(toggle(cellText(), name));
+    paintSheet();
+    return draw();
+  }
+
+  const opt = e.target.closest("[data-opt]");
+  if (opt) {
+    setCell(toggle(cellText(), state.open, opt.dataset.opt));
+    paintSheet();
+    return draw();
+  }
+
+  if (e.target.closest("#optdrop")) {
+    setCell(
+      parts(cellText())
+        .filter((part) => nameOf(part) !== state.open)
+        .join("; "),
+    );
     paintSheet();
     return draw();
   }
@@ -437,9 +639,14 @@ document.addEventListener("click", (e) => {
     return draw();
   }
 
+  if (e.target.closest("#export")) {
+    download(asCsv(), "settings-row.csv");
+    return status(t("edExported"), "ok");
+  }
+
   if (e.target.closest("#copy")) {
     navigator.clipboard
-      ?.writeText(rowText())
+      ?.writeText(asTsv())
       .then(() => status(t("edCopied"), "ok"))
       .catch(() => status(t("edCopyFailed"), "bad"));
   }
@@ -447,6 +654,14 @@ document.addEventListener("click", (e) => {
 
 // The sheet is rebuilt whenever its shape changes, so its inputs are reached by
 // delegation rather than wired up again each time.
+$("#opts").addEventListener("input", (e) => {
+  if (e.target.id !== "optfree") return;
+  setCell(toggle(cellText(), state.open, e.target.value.trim()));
+  paintSheet();
+  // Redrawn without repainting the options, so the box keeps the cursor in it.
+  drawCard();
+});
+
 $("#sheet").addEventListener("input", (e) => {
   const el = e.target.closest("[data-edit]");
   if (!el) return;

@@ -567,6 +567,24 @@ h3.spaced { margin-top: 18px; }
 /* On means "this cell has it", and tapping again takes it away. A chip that only
    ever added had a second tap that did nothing, which reads as broken. */
 .col.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+/* Open, not on: the chip whose values are showing below. Two different states —
+   a directive can be open while the cell does not have it yet. */
+.col.open { border-color: var(--accent); border-style: dashed; }
+
+.optbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 8px 0 0; padding: 9px 10px;
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.optbar b { font-size: var(--t-xs); color: var(--muted); margin-right: 2px; }
+.optbar .col { background: var(--panel); }
+.optbar input {
+  flex: 1 1 7rem; min-width: 0; padding: 4px 9px;
+  font-family: var(--mono); font-size: var(--t-xs);
+  color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+.optbar .drop { position: static; margin-left: auto; }
 
 /* ---- panel 1: the chosen row, cell by cell ------------------------------- */
 

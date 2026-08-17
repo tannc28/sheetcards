@@ -47,7 +47,8 @@
 
       <p class="entry-alt">
         <button id="add" class="linky" type="button" data-i18n="edAddColumn">Add a column</button>
-        <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy row</button>
+        <button id="copy" class="btn" type="button" data-i18n="edCopy">Copy rows 1–2</button>
+        <button id="export" class="linky" type="button" data-i18n="edExport">Export .csv</button>
         <span id="status" class="status" role="status" aria-live="polite">
           <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
         </span>
@@ -59,6 +60,9 @@
         <h3><span data-i18n="edAdd">Add a directive</span>
           <span class="count" id="keyfor"></span></h3>
         <div id="keys" class="collist"></div>
+        <!-- The values on offer for whichever directive is open. Inline, because
+             a popover on a phone covers the row you were choosing from. -->
+        <div id="opts" hidden></div>
       </div>
     </div>
   </section>
