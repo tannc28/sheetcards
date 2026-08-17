@@ -212,6 +212,10 @@ const state = {
   // asking which column first would be a dialog in the way of a tap. -1 is the
   // marker cell, where the deck-wide settings live.
   active: 0,
+  // The selected range — {r, c} is the anchor and {r2, c2} the far corner — and
+  // which single cell has the keyboard, if any. Both are null most of the time.
+  sel: null,
+  editing: null,
   template: 0,
   tab: "both",
   // The directive whose options are showing, if any. One at a time: two open
@@ -359,16 +363,24 @@ function letter(index) {
  */
 function paintSheet() {
   const cols = state.columns;
-  const cell = (inner, cls = "") => `<span class="cell ${cls}">${inner}</span>`;
+  // Every cell says where it is, which is what lets a range be selected, copied
+  // and walked with the arrow keys. Column A is -1: it is the sheet's own column,
+  // not one of the ones being edited, and numbering it 0 would put the ID column
+  // and the first real column in the same place.
+  const cell = (inner, r, c, cls = "") =>
+    `<span class="cell ${cls}" data-r="${r}" data-c="${c}">${inner}</span>`;
   const label = (key) => escapeHtml(t(key));
 
   const head =
-    '<span class="ref"></span><span class="ref">A</span>' +
-    cols.map((_, i) => `<span class="ref">${letter(i + 1)}</span>`).join("");
+    `<span class="ref corner" data-all="1" title="${label("edSelectAll")}"></span>` +
+    '<span class="ref" data-c="-1">A</span>' +
+    cols
+      .map((_, i) => `<span class="ref" data-c="${i}">${letter(i + 1)}</span>`)
+      .join("");
 
   const names =
-    '<span class="ref">1</span>' +
-    cell("ID", "fixed") +
+    '<span class="ref" data-r="0">1</span>' +
+    cell("ID", 0, -1, "fixed") +
     cols
       .map((c, i) =>
         cell(
@@ -377,16 +389,20 @@ function paintSheet() {
            <button class="drop" data-drop="${i}" type="button"
              title="${label("edRemoveColumn")}" aria-label="${label("edRemoveColumn")}"
              >×</button>`,
+          0,
+          i,
           "named",
         ),
       )
       .join("");
 
   const settings =
-    '<span class="ref">2</span>' +
+    '<span class="ref" data-r="1">2</span>' +
     cell(
       `<input data-edit="marker" value="${escapeHtml(state.marker)}"
          spellcheck="false" autocomplete="off" aria-label="${label("edDeckCell")}">`,
+      1,
+      -1,
       `marker${deckActive() ? " on" : ""}`,
     ) +
     cols
@@ -395,19 +411,23 @@ function paintSheet() {
           `<textarea data-edit="cell" data-col="${i}" rows="1" spellcheck="false"
              autocomplete="off" aria-label="${label("edCell")}"
              >${escapeHtml(c.cell)}</textarea>`,
+          1,
+          i,
           state.active === i ? "on" : "",
         ),
       )
       .join("");
 
   const values =
-    '<span class="ref">3</span>' +
-    cell("1", "fixed") +
+    '<span class="ref" data-r="2">3</span>' +
+    cell("1", 2, -1, "fixed") +
     cols
       .map((c, i) =>
         cell(
           `<input data-edit="value" data-col="${i}" value="${escapeHtml(c.value)}"
              spellcheck="false" autocomplete="off" aria-label="${label("edValue")}">`,
+          2,
+          i,
         ),
       )
       .join("");
@@ -416,6 +436,162 @@ function paintSheet() {
   sheet.style.setProperty("--cols", String(cols.length));
   sheet.innerHTML = head + names + settings + values;
   for (const box of sheet.querySelectorAll("textarea")) grow(box);
+  // The grid is rebuilt from scratch whenever its shape changes, so the selection
+  // has to be drawn back on afterwards rather than living in the markup above.
+  paintSelection();
+}
+
+// ---------------------------------------------------------------------------
+// A range of cells, the way a spreadsheet has one
+// ---------------------------------------------------------------------------
+//
+// The editor is shaped like a sheet, so it has to behave like one where it costs
+// nothing: drag across cells to select them, Ctrl+C to take them, Ctrl+V to put
+// them back. Nothing here is a grid library — three rows is not enough sheet to
+// hand the whole editing model over to one, and a canvas-drawn grid would lose
+// the inputs, the labels and every bit of the keyboard support that comes free
+// with them. What it is instead: the inputs stop swallowing the pointer unless
+// the cell is being edited (`.cell.editing input`), so an ordinary drag lands on
+// the cells and can be read as a range.
+//
+// Rows are 0, 1, 2 — the names, the settings row, the one row of data — and
+// column -1 is column A. A cell is only ever those two numbers.
+const LAST_ROW = 2;
+
+/** What is in one cell, wherever it lives. */
+function cellAt(r, c) {
+  if (c === -1) return r === 0 ? "ID" : r === 1 ? state.marker : "1";
+  const col = state.columns[c];
+  if (!col) return "";
+  return r === 0 ? col.name : r === 1 ? col.cell : col.value;
+}
+
+/** Writes one cell, ignoring the two that are not the sheet's to write. */
+function writeCell(r, c, text) {
+  if (c === -1) {
+    if (r === 1) state.marker = text;
+    return;
+  }
+  const col = state.columns[c];
+  if (!col) return;
+  if (r === 0) col.name = text;
+  else if (r === 1) col.cell = text;
+  else col.value = text;
+}
+
+/** The selection as ordered bounds, or null. Dragging upwards is still a range. */
+function bounds() {
+  const s = state.sel;
+  if (!s) return null;
+  return {
+    r1: Math.min(s.r, s.r2),
+    r2: Math.max(s.r, s.r2),
+    c1: Math.min(s.c, s.c2),
+    c2: Math.max(s.c, s.c2),
+  };
+}
+
+/**
+ * Moves or extends the selection.
+ *
+ * The anchor is where the drag (or the click) started, because that is what a
+ * shift-click extends from. Selecting also blurs whatever was being edited: the
+ * keyboard belongs to the grid while a range is up, and a caret still sitting in
+ * a cell would take the arrow keys instead.
+ */
+function select(r, c, extend = false) {
+  const at = {
+    r: Math.max(0, Math.min(LAST_ROW, r)),
+    c: Math.max(-1, Math.min(state.columns.length - 1, c)),
+  };
+  if (extend && state.sel) state.sel = { ...state.sel, r2: at.r, c2: at.c };
+  else state.sel = { r: at.r, c: at.c, r2: at.r, c2: at.c };
+
+  stopEditing();
+  paintSelection();
+
+  // The directive chips act on whichever cell the selection is anchored in, the
+  // same as they follow the cursor while typing — one answer to "which column am
+  // I changing", however the column was picked.
+  const active = state.sel.c;
+  if (active !== state.active) {
+    state.active = active;
+    paintKeys();
+  }
+}
+
+function clearSelection() {
+  if (!state.sel) return;
+  state.sel = null;
+  paintSelection();
+}
+
+/** Draws the range. Called after every repaint, since the markup carries none. */
+function paintSelection() {
+  const box = bounds();
+  const sheet = $("#sheet");
+  sheet.classList.toggle("ranged", Boolean(box));
+  for (const el of sheet.querySelectorAll(".cell")) {
+    const r = Number(el.dataset.r);
+    const c = Number(el.dataset.c);
+    const inside =
+      box && r >= box.r1 && r <= box.r2 && c >= box.c1 && c <= box.c2;
+    el.classList.toggle("sel", Boolean(inside));
+    el.classList.toggle("anchor", Boolean(state.sel?.r === r && state.sel?.c === c));
+  }
+  for (const el of sheet.querySelectorAll(".ref")) {
+    const r = el.dataset.r === undefined ? null : Number(el.dataset.r);
+    const c = el.dataset.c === undefined ? null : Number(el.dataset.c);
+    const lit =
+      box &&
+      ((r !== null && r >= box.r1 && r <= box.r2) ||
+        (c !== null && c >= box.c1 && c <= box.c2));
+    el.classList.toggle("sel", Boolean(lit));
+  }
+}
+
+/** Hands one cell to the keyboard, with its text selected so typing replaces it. */
+function startEditing(r, c) {
+  const cell = $(`#sheet .cell[data-r="${r}"][data-c="${c}"]`);
+  const box = cell?.querySelector("[data-edit]");
+  if (!box) return false;
+  state.editing = { r, c };
+  for (const el of document.querySelectorAll("#sheet .cell.editing")) {
+    el.classList.remove("editing");
+  }
+  cell.classList.add("editing");
+  box.focus();
+  box.select();
+  return true;
+}
+
+function stopEditing() {
+  if (!state.editing) return;
+  state.editing = null;
+  for (const el of document.querySelectorAll("#sheet .cell.editing")) {
+    el.classList.remove("editing");
+  }
+  if (document.activeElement?.closest?.("#sheet")) document.activeElement.blur();
+}
+
+/**
+ * The selected cells as a spreadsheet would put them on the clipboard.
+ *
+ * Quoted the same way `parseBlock` un-quotes them, so a settings cell holding a
+ * line break survives the round trip out of here and back in.
+ */
+function selectionTsv() {
+  const box = bounds();
+  if (!box) return "";
+  const quote = (value) =>
+    /[\t\n"]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  const rows = [];
+  for (let r = box.r1; r <= box.r2; r++) {
+    const row = [];
+    for (let c = box.c1; c <= box.c2; c++) row.push(quote(cellAt(r, c)));
+    rows.push(row.join("\t"));
+  }
+  return rows.join("\n");
 }
 
 /** Keeps a settings cell exactly as tall as what is in it. */
@@ -795,6 +971,7 @@ function applyBlock(block) {
   }
 
   const at = (row, i) => row?.[i] ?? "";
+  let read = 0;
   if (names) {
     const width = Math.max(names.length, cells?.length ?? 0, values?.length ?? 0);
     const columns = [];
@@ -811,9 +988,11 @@ function applyBlock(block) {
     }
     if (!columns.length) return null;
     state.columns = columns;
+    read = columns.length;
   } else {
     const width = Math.max(cells?.length ?? 0, values?.length ?? 0);
     if (!width) return null;
+    read = width;
     for (let i = 0; i < width; i++) {
       state.columns[i] ??= { name: `Column ${i + 1}`, cell: "", value: "" };
       if (cells) state.columns[i].cell = at(cells, i).trim();
@@ -825,7 +1004,47 @@ function applyBlock(block) {
 
   const skipped = marked > 1 ? marked - 1 : 0;
   const kept = [names, cells, values].filter(Boolean).length + skipped;
-  return { dropped: Math.max(0, rows.length - kept) };
+  return { columns: read, dropped: Math.max(0, rows.length - kept) };
+}
+
+/**
+ * Writes a block into the grid starting at the selected cell.
+ *
+ * This is what pasting means once a cell has been picked: put it *here*. The
+ * shape-guessing in `applyBlock` is for the other case — a block arriving with no
+ * target, which is someone bringing a sheet in rather than filling cells.
+ *
+ * A block wider than the sheet grows it, because that is what the paste asked for.
+ * Taller than three rows it cannot grow: there is one row of data here.
+ */
+function pasteAt(block) {
+  const anchor = state.sel;
+  if (!anchor) return null;
+  let dropped = 0;
+  let widest = 0;
+
+  block.forEach((cells, dr) => {
+    const r = anchor.r + dr;
+    if (r > LAST_ROW) {
+      dropped++;
+      return;
+    }
+    cells.forEach((text, dc) => {
+      const c = anchor.c + dc;
+      if (c < -1) return;
+      while (c >= state.columns.length) {
+        state.columns.push({
+          name: `Column ${state.columns.length + 1}`,
+          cell: "",
+          value: "",
+        });
+      }
+      writeCell(r, c, r === 2 ? text : text.trim());
+      widest = Math.max(widest, dc + 1);
+    });
+  });
+
+  return { columns: widest, dropped };
 }
 
 function download(text, name) {
@@ -924,9 +1143,12 @@ document.addEventListener("click", (e) => {
   }
 
   if (e.target.closest("#copy")) {
+    // Whatever is selected, or the two rows worth taking away when nothing is.
+    // On a phone there is no Ctrl+C, so this button is the only way a range that
+    // was picked by tapping a column letter can leave the page.
     navigator.clipboard
-      ?.writeText(asTsv())
-      .then(() => status(t("edCopied"), "ok"))
+      ?.writeText(state.sel ? selectionTsv() : asTsv())
+      .then(() => status(t(state.sel ? "edCopiedCells" : "edCopied"), "ok"))
       .catch(() => status(t("edCopyFailed"), "bad"));
   }
 });
@@ -944,8 +1166,16 @@ document.addEventListener("click", (e) => {
  */
 document.addEventListener("paste", (e) => {
   const text = e.clipboardData?.getData("text/plain") ?? "";
-  if (!/[\t\n]/.test(text)) return;
-  const read = applyBlock(parseBlock(text));
+  const block = parseBlock(text);
+  // A cell has been picked, so the paste goes there — one cell's worth included,
+  // which is the whole point of having picked it. Editing a cell is the exception:
+  // then the caret has the clipboard, the same as in any other text box.
+  const read =
+    state.sel && !state.editing
+      ? pasteAt(block)
+      : /[\t\n]/.test(text)
+        ? applyBlock(block)
+        : null;
   if (!read) return;
   e.preventDefault();
   paintSheet();
@@ -955,8 +1185,8 @@ document.addEventListener("paste", (e) => {
   // two the moment a whole sheet has just arrived.
   status(
     read.dropped
-      ? t("edPastedSome", state.columns.length, read.dropped)
-      : t("edPasted", state.columns.length),
+      ? t("edPastedSome", read.columns, read.dropped)
+      : t("edPasted", read.columns),
     "ok",
   );
 });
@@ -978,6 +1208,185 @@ $("#sheet").addEventListener("input", (e) => {
   else state.columns[Number(el.dataset.col)][el.dataset.edit] = el.value;
   if (el.tagName === "TEXTAREA") grow(el);
   draw();
+});
+
+// ---------------------------------------------------------------------------
+// Selecting: pointer, keyboard, clipboard
+// ---------------------------------------------------------------------------
+
+let dragging = false;
+
+/**
+ * A press on the grid: on the refs it takes a whole column or row, on a cell it
+ * starts a range.
+ *
+ * Touch is left alone deliberately. There is no drag-select on a phone — the
+ * gesture is already how the grid scrolls sideways — so a tap goes straight to
+ * typing, which is what it did before any of this existed. Selecting a column by
+ * its letter still works there, and the copy button takes whatever is selected,
+ * so the phone keeps the whole feature without the gesture.
+ */
+$("#sheet").addEventListener("pointerdown", (e) => {
+  const ref = e.target.closest(".ref");
+  if (ref) {
+    e.preventDefault();
+    if (ref.dataset.all !== undefined) {
+      select(0, -1);
+      select(LAST_ROW, state.columns.length - 1, true);
+    } else if (ref.dataset.c !== undefined) {
+      select(0, Number(ref.dataset.c));
+      select(LAST_ROW, Number(ref.dataset.c), true);
+    } else if (ref.dataset.r !== undefined) {
+      select(Number(ref.dataset.r), -1);
+      select(Number(ref.dataset.r), state.columns.length - 1, true);
+    }
+    return;
+  }
+
+  const cell = e.target.closest(".cell");
+  if (!cell || e.target.closest(".drop")) return;
+  const [r, c] = [Number(cell.dataset.r), Number(cell.dataset.c)];
+
+  if (e.pointerType === "touch") {
+    // The inputs do not take the pointer any more, so a tap has to be handed the
+    // cell on purpose. Done inside the gesture, which is what makes the phone's
+    // keyboard come up.
+    clearSelection();
+    startEditing(r, c);
+    return;
+  }
+  // Already editing this cell: the press is someone placing the caret in the text
+  // they are writing, not the start of a new selection.
+  if (state.editing?.r === r && state.editing?.c === c) return;
+
+  e.preventDefault();
+  select(r, c, e.shiftKey);
+  dragging = true;
+});
+
+$("#sheet").addEventListener("pointermove", (e) => {
+  if (!dragging) return;
+  const cell = e.target.closest(".cell");
+  if (cell) select(Number(cell.dataset.r), Number(cell.dataset.c), true);
+});
+
+addEventListener("pointerup", () => {
+  dragging = false;
+});
+
+// A second click is how a spreadsheet asks for the caret. So is Enter, below.
+$("#sheet").addEventListener("dblclick", (e) => {
+  const cell = e.target.closest(".cell");
+  if (cell) startEditing(Number(cell.dataset.r), Number(cell.dataset.c));
+});
+
+/**
+ * The keyboard while a range is up: move it, extend it, empty it, or start typing.
+ *
+ * Nothing here fires while a cell is being edited except Escape and Enter, which
+ * hand the keyboard back — the caret has to keep the arrow keys, or a word cannot
+ * be corrected in the middle.
+ */
+document.addEventListener("keydown", (e) => {
+  if (state.editing) {
+    if (e.key === "Escape") {
+      const { r, c } = state.editing;
+      stopEditing();
+      select(r, c);
+    } else if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+      const { r, c } = state.editing;
+      stopEditing();
+      select(Math.min(LAST_ROW, r + 1), c);
+    }
+    return;
+  }
+
+  if (!state.sel) return;
+  // Some other input has the keyboard — the free-text box beside the options, say.
+  if (document.activeElement?.matches?.("input, textarea, select")) return;
+
+  const { r, c } = state.sel;
+  const step = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[
+    e.key
+  ];
+  if (step) {
+    e.preventDefault();
+    if (e.shiftKey) {
+      select(state.sel.r2 + step[0], state.sel.c2 + step[1], true);
+      state.sel = { r, c, r2: state.sel.r2, c2: state.sel.c2 };
+    } else {
+      select(r + step[0], c + step[1]);
+    }
+    return;
+  }
+
+  if (e.key === "Tab") {
+    e.preventDefault();
+    return select(r, c + (e.shiftKey ? -1 : 1));
+  }
+  if (e.key === "Enter" || e.key === "F2") {
+    e.preventDefault();
+    return void startEditing(r, c);
+  }
+  if (e.key === "Escape") return clearSelection();
+
+  if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    select(0, -1);
+    return select(LAST_ROW, state.columns.length - 1, true);
+  }
+
+  if (e.key === "Delete" || e.key === "Backspace") {
+    e.preventDefault();
+    const box = bounds();
+    for (let row = box.r1; row <= box.r2; row++) {
+      for (let col = box.c1; col <= box.c2; col++) writeCell(row, col, "");
+    }
+    paintSheet();
+    return draw();
+  }
+
+  // Anything printable starts typing over the cell, which is the one spreadsheet
+  // habit that has no substitute: reaching for Enter first is a step nobody takes.
+  // The character is written in rather than left to the browser, because the input
+  // is only focused halfway through this very event and where the keystroke lands
+  // after that is not something to depend on.
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (!startEditing(r, c)) return;
+    e.preventDefault();
+    const box = document.activeElement;
+    box.value = e.key;
+    writeCell(r, c, e.key);
+    if (box.tagName === "TEXTAREA") grow(box);
+    draw();
+  }
+});
+
+/**
+ * Ctrl+C, Ctrl+X and Ctrl+V over a range.
+ *
+ * The browser's own copy has nothing to copy — the cells are not text selected in
+ * the document — so the range is written onto the clipboard by hand, as the TSV
+ * that Sheets and Excel split back into cells.
+ */
+document.addEventListener("copy", (e) => {
+  if (!state.sel || state.editing) return;
+  e.preventDefault();
+  e.clipboardData.setData("text/plain", selectionTsv());
+  status(t("edCopiedCells"), "ok");
+});
+
+document.addEventListener("cut", (e) => {
+  if (!state.sel || state.editing) return;
+  e.preventDefault();
+  e.clipboardData.setData("text/plain", selectionTsv());
+  const box = bounds();
+  for (let r = box.r1; r <= box.r2; r++) {
+    for (let c = box.c1; c <= box.c2; c++) writeCell(r, c, "");
+  }
+  paintSheet();
+  draw();
+  status(t("edCopiedCells"), "ok");
 });
 
 // Which cell the chips act on follows the cursor, so there is never a step

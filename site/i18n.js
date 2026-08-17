@@ -128,6 +128,7 @@ const STRINGS = {
   edExport: { en: "Download as .csv", vi: "Tải về dạng .csv" },
   edExported: { en: "Downloaded — open it in Sheets or Excel", vi: "Đã tải về — mở bằng Sheets hoặc Excel" },
   edCopied: { en: "Copied — paste it at the top of your sheet", vi: "Đã copy — dán vào đầu sheet của bạn" },
+  edCopiedCells: { en: "Copied — paste it into your sheet", vi: "Đã copy — dán vào sheet của bạn" },
   edCopyFailed: { en: "The browser refused to copy", vi: "Trình duyệt không cho copy" },
   edOk: { en: "Every setting was understood", vi: "Mọi setting đều hợp lệ" },
   edRefused: {
@@ -141,9 +142,10 @@ const STRINGS = {
       `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
   },
   edPasteHint: {
-    en: "Paste rows from Sheets or Excel",
-    vi: "Dán các dòng từ Sheets hoặc Excel vào đây",
+    en: "Drag to select cells, then copy — or paste rows from a spreadsheet",
+    vi: "Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào",
   },
+  edSelectAll: { en: "Select every cell", vi: "Chọn tất cả các ô" },
   edPasted: {
     en: (n) => `Read ${n} column${n === 1 ? "" : "s"} from the clipboard`,
     vi: (n) => `Đã đọc ${n} cột từ clipboard`,

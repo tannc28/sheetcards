@@ -581,6 +581,28 @@ h3.spaced { margin-top: 18px; }
 }
 .drop:hover { color: var(--bad); background: var(--bad-soft); }
 
+/* ---- selecting a range of cells ------------------------------------------ */
+
+/* The inputs stop taking the pointer, which is what makes a drag across cells a
+   drag across cells and not three separate text selections. The cell being edited
+   gets it back, and the × keeps it always — it is a button, not a cell. */
+.sheet .cell input,
+.sheet .cell textarea { pointer-events: none; }
+.sheet .cell.editing input,
+.sheet .cell.editing textarea { pointer-events: auto; }
+.sheet .drop { pointer-events: auto; }
+.sheet .cell, .sheet .ref { cursor: cell; }
+.sheet .ref.corner, .sheet .ref[data-r], .sheet .ref[data-c] { cursor: pointer; }
+/* Nothing in the grid is text-selectable while a range is up: the browser's own
+   selection and this one would both answer to Ctrl+C, and only one of them holds
+   the cells. */
+.sheet.ranged { user-select: none; -webkit-user-select: none; }
+.sheet .cell.sel { background: var(--accent-soft); }
+/* Where the drag started, and where the arrow keys count from. Drawn inside, so a
+   1px grid gap is not asked to hold a 2px ring. */
+.sheet .cell.anchor { box-shadow: inset 0 0 0 2px var(--accent); }
+.sheet .ref.sel { color: var(--accent); background: var(--accent-soft); }
+
 /* The directive chips. */
 .collist { display: flex; flex-wrap: wrap; gap: 4px; }
 .col {
