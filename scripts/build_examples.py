@@ -261,11 +261,11 @@ SHEETS = {
         ["h05", "部首", "bùshǒu", "bộ thủ", "这个字的部首是“水”。"],
         ["h06", "声调", "shēngdiào", "thanh điệu", "普通话有四个声调。"],
     ],
-    # the tour ends on a deck rather than on a demonstration: a JLPT N5 list
-    # filed three levels deep, in the colours of the season it is named after.
-    # Nothing here is present to exhibit a directive — every one of the five it
-    # uses is one this deck would have used anyway.
-    "15 Finished deck (hoàn chỉnh)": [
+    # a whole-card palette, and a deck filed three levels deep: a JLPT N5 list in
+    # the colours of the season the theme is named after. Nothing here is the end
+    # of anything — it is the sheet that demonstrates `theme=` and a three-level
+    # `SUBDECK`, the way 13 demonstrates furigana.
+    "15 Theme + subdeck (màu, tầng)": [
         ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Japanese", "Meaning", "Example"],
         ["#config theme=sakura", "", "", "", "", "size=40; furigana; tts=ja_JP", "side=back; size=22", "side=back; size=16; color=muted; italic; furigana"],
         ["n01", "JLPT", "N5", "Verbs", "jlpt, n5", "食[た]べる", "ăn", "朝[あさ]ごはんを 食[た]べます。"],

@@ -182,7 +182,7 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `12 Chinese drawing (viết tay)` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
 | `14 Any headers (mọi ngôn ngữ)` | headers written as `汉字`, `拼音`, `释义`, `例句` |
-| `15 Finished deck (hoàn chỉnh)` | a JLPT list filed three `SUBDECK` levels deep, in `theme=sakura` — five directives, each one this deck would have wanted anyway |
+| `15 Theme + subdeck (màu, tầng)` | a JLPT list filed three `SUBDECK` levels deep, in `theme=sakura` — five directives, each one this deck would have wanted anyway |
 
 The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails

@@ -174,7 +174,7 @@ The headers are `汉字`, `拼音`, `释义`, `例句`. Only `ID`, `SYNC`, `SUBD
 and `TAGS` are reserved — every other header becomes a note field named exactly
 as written, in whatever script your subject calls for.
 
-### 15 Finished deck (hoàn chỉnh)
+### 15 Theme + subdeck (màu, tầng)
 
 The tour ends on a deck rather than on a demonstration: fifteen JLPT words, filed
 `JLPT::N5::Verbs` and so on, with the reading over the kanji and the word spoken
