@@ -14,16 +14,50 @@ One function, one way of writing the result — the standard one. The dictionary
 stores tone numbers internally because they are ASCII and half the bytes, but a
 cell only ever shows the tone marks.
 
+## Two ways to use it, and one of them is much faster
+
+**`PinyinAuto.gs` — type a word, the reading appears.** An edit trigger watches
+the Chinese column and writes plain text into the pinyin column beside it. No
+formula in any cell, nothing to run, nothing to remember. Set the column headings
+once at the top of that file.
+
+**`=PINYIN(A2)` — a formula, for looking something up on the spot.**
+
+Prefer the first for a deck you are building. A custom function is recalculated
+inside an execution Sheets starts and discards on its own schedule, and that
+startup — present even for a function that returns a constant — is what makes a
+column of five hundred formulas feel slow, every time the file opens. The lookup
+underneath takes microseconds. An edit trigger pays that startup once, for the
+row you just touched, in the background while you keep typing; and a column of
+text opens instantly for ever after, which is also exactly what Sheets2Anki wants
+to export.
+
 ## Setup, once per spreadsheet
 
 1. In the sheet: **Extensions → Apps Script**.
 2. Paste `Pinyin.gs` into the file that is already open, replacing what is there.
 3. **+ → Script** for a second file, name it `PinyinData`, paste `PinyinData.gs`
    into it. It is 1.2 MB, so the editor takes a moment.
-4. **Save**. Back in the sheet, type `=PINYIN(A2)`.
+4. **+ → Script** for a third, name it `PinyinAuto`, paste `PinyinAuto.gs` in.
+   At the top of it, set the headings of your own columns:
 
-No deployment, no authorization prompt — a function that only reads its argument
-needs no permission to anything.
+   ```js
+   var PINYIN_PAIRS = [
+     { from: "Word", into: "Pinyin" }
+   ];
+   ```
+
+   A heading matches when it *contains* that text, ignoring case, so `Word` finds
+   a column headed `Word (Mặt trước)`. Columns are found by heading rather than by
+   letter, so inserting a column somewhere does not quietly break this.
+5. **Save**. Back in the sheet, type a Chinese word in that column.
+
+No deployment and no authorization prompt. `onEdit` is a simple trigger: Sheets
+runs it by itself, and it is allowed to write to the file it belongs to without
+being granted anything.
+
+It fires on edits a person makes, which is the point — not on edits a script
+makes, so it cannot set itself off, and not when the file merely opens.
 
 ## Why the whole word is looked up
 
@@ -71,11 +105,14 @@ does no lookups.
 
 ## Before syncing to Anki
 
-A custom function recalculates when the file opens. This one is local and fast,
-so that is normally invisible — but a cell that is still `Loading...` or holds an
-error is what the add-on would import. When a pinyin column is settled, select it
-and **Copy → Paste special → Values only**. The sheet then holds plain text, and
-what Anki gets is exactly what you can see.
+The edit trigger writes text, so a sheet filled that way needs nothing doing to
+it: what the add-on exports is what you can see.
+
+A column of `=PINYIN()` formulas is different. Custom functions recalculate when
+the file opens, and a cell still saying `Loading...`, or holding an error, is what
+the add-on would import — the export carries values, and those are the values.
+Before syncing such a column, select it and **Copy → Paste special → Values
+only**.
 
 ## Rebuilding the dictionary
 
