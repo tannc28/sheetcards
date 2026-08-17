@@ -159,6 +159,68 @@ def _painted(variant):
     return "; ".join(parts)
 
 
+# The corner mark of a signed theme: a heart, then the name from `THEMES[...]["sign"]`.
+#
+# The heart is drawn rather than typed. U+2665 is a character, so it is whatever the
+# machine's fonts make of it — a colour emoji on much of Android, a missing glyph
+# elsewhere — and neither of those is the small soft heart this is. A path is the
+# same shape on every client, needs no font, and takes the palette's own `heart`
+# colour, which until now was only the middle of a blossom.
+_HEART = (
+    "M12 20.4 C 4.2 14.4, 2.2 9.4, 6 6.9 C 9 4.9, 11.2 6.7, 12 8.3"
+    " C 12.8 6.7, 15 4.9, 18 6.9 C 21.8 9.4, 19.8 14.4, 12 20.4 Z"
+)
+# A script face where the machine has one; everywhere else this falls through to the
+# card's own font, which is what `cursive` resolves to on Linux and Android.
+_SIGN_FACE = (
+    '"Segoe Script", "Bradley Hand", "Snell Roundhand", "Apple Chancery", cursive'
+)
+# Against a 40px prompt, small enough that the eye stops counting it as content on
+# the way to the answer, and still legible on a phone. The heart is sized with the
+# text rather than fixed, or it would end up larger than the name it precedes.
+_SIGN_SIZE_PX = 12
+_HEART_SIZE_PX = 10
+
+
+def _heart(colour):
+    """The mark's heart, as a data URI, in one of the palette's colours."""
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'"
+        f" viewBox='0 0 24 24'><path d='{_HEART}' fill='{colour}'/></svg>"
+    )
+    return _data_uri(svg)
+
+
+def _sign_ink(variant):
+    """The two declarations that differ between day and night: the colour, twice."""
+    colour = variant.get("heart") or variant["muted"]
+    return f'color: {colour}; background-image: url("{_heart(colour)}")'
+
+
+def _signature(variant, name):
+    """The corner mark, as the declarations of one ``::after`` rule.
+
+    ``fixed`` rather than ``absolute``: a long card scrolls under the mark instead of
+    carrying it off the top of the screen. ``pointer-events`` are off so it cannot
+    swallow a tap meant for the card.
+    """
+    text = name.replace("\\", "\\\\").replace('"', '\\"')
+    return "; ".join(
+        [
+            f'content: "{text}"',
+            "position: fixed",
+            "top: 8px",
+            "right: 12px",
+            f"padding-left: {_HEART_SIZE_PX + 4}px",
+            f"background: no-repeat left 52% / {_HEART_SIZE_PX}px {_HEART_SIZE_PX}px",
+            f"font-family: {_SIGN_FACE}",
+            f"font-size: {_SIGN_SIZE_PX}px",
+            "pointer-events: none",
+            _sign_ink(variant),
+        ]
+    )
+
+
 def _palette(sheet_config):
     """The colour block at the top of the stylesheet, themed or not.
 
@@ -185,6 +247,12 @@ def _palette(sheet_config):
     if sheet_config.theme in THEMES:
         lines.append(f".card {{ {_painted(theme['light'])}; }}\n")
         lines.append(f".card.night_mode {{ {_painted(theme['night'])}; }}\n")
+        sign = theme.get("sign")
+        if sign:
+            lines.append(f".card::after {{ {_signature(theme['light'], sign)}; }}\n")
+            lines.append(
+                f".card.night_mode::after {{ {_sign_ink(theme['night'])}; }}\n"
+            )
     return "".join(lines)
 
 

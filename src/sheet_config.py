@@ -52,8 +52,15 @@ THEME_COLORS = {
 # `veil` is how faint they are — the pattern is wallpaper, and wallpaper that
 # competes with the word being learned has failed at being wallpaper. A theme with
 # no `petal` is simply a palette.
-THEMES = {
+#
+# `sign` is who the theme was made for, drawn small in the corner of every card it
+# paints (again by `card_layout`). It sits beside the two variants rather than
+# inside them because a name does not change with the light. A theme without one is
+# simply not signed. The annotation is what keeps `sign` from narrowing the whole
+# table to its values' common type, which would leave the two variants unindexable.
+THEMES: dict[str, dict] = {
     "sakura": {
+        "sign": "Mèo",
         "light": {
             "bg": "#fff5f8",
             "fg": "#43262f",
