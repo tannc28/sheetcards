@@ -100,6 +100,11 @@ def preview(payload):
 
 const $ = (sel) => document.querySelector(sel);
 
+// The same four the preview page shows, in the same order and with the same
+// names: a card seen here and a card seen there are the same card, and a second
+// vocabulary for looking at it would be a second thing to learn.
+const CARD_TABS = ["front", "both", "back", "template"];
+
 /**
  * The values worth offering for each directive that takes one.
  *
@@ -150,6 +155,7 @@ const state = {
   // marker cell, where the deck-wide settings live.
   active: 0,
   template: 0,
+  tab: "both",
   // The directive whose options are showing, if any. One at a time: two open
   // panels on a phone is the list you were choosing from pushed off the screen.
   open: null,
@@ -451,9 +457,42 @@ function drawCard() {
   );
 
   const index = Math.min(state.template, out.templates.length - 1);
+  const template = out.templates[index];
   const values = { ID: "1" };
   out.names.forEach((name, i) => (values[name] = state.columns[i].value));
-  const { front, back } = renderCard(out.templates[index], values, { ordinal: 1 });
+  const { front, back } = renderCard(template, values, { ordinal: 1 });
+
+  $("#tabs").innerHTML = CARD_TABS.map(
+    (name) =>
+      `<button data-tab="${name}" class="${state.tab === name ? "on" : ""}">` +
+      `${escapeHtml(t("tab" + name[0].toUpperCase() + name.slice(1)))}</button>`,
+  ).join("");
+
+  const picker =
+    out.templates.length > 1
+      ? `<div class="cardbar"><select id="tpl" aria-label="${escapeHtml(
+          t("edTemplate"),
+        )}">${out.templates
+          .map(
+            (tpl, i) =>
+              `<option value="${i}" ${i === index ? "selected" : ""}>` +
+              `${escapeHtml(tpl.name)}</option>`,
+          )
+          .join("")}</select></div>`
+      : "";
+
+  // The template is the exact text the add-on writes into Anki; the picture of
+  // it is this page's approximation. Showing the source beside the card is the
+  // only way to tell which of the two you are looking at.
+  if (state.tab === "template") {
+    $("#view").innerHTML = `<div class="stagebox">${picker}
+      <h2 class="src-head">${escapeHtml(t("frontTemplate"))}</h2>
+      <pre class="source">${escapeHtml(template.qfmt)}</pre>
+      <h2 class="src-head">${escapeHtml(t("backTemplate"))}</h2>
+      <pre class="source">${escapeHtml(template.afmt)}</pre>
+    </div>`;
+    return;
+  }
 
   const doc = `<!doctype html><meta charset="utf-8">
     <style>
@@ -471,8 +510,9 @@ function drawCard() {
                    border: 1px solid currentColor; border-radius: 999px;
                    background: transparent; color: inherit; opacity: .8; }
     </style>
-    <body class="card${dark() ? " night_mode" : ""}">${front.html}
-    <hr id="answer">${backOnly(back.html, front.html)}
+    <body class="card${dark() ? " night_mode" : ""}">
+    ${state.tab === "back" ? back.html : front.html}
+    ${state.tab === "both" ? `<hr id="answer">${backOnly(back.html, front.html)}` : ""}
     <script>
       // The tts button speaks, here as on the preview page. Picking a language
       // and then finding the button inert would be the editor teaching that the
@@ -497,20 +537,7 @@ function drawCard() {
       addEventListener("load", post); new ResizeObserver(post).observe(document.body);
     <\/script>`;
 
-  $("#view").innerHTML = `<div class="stagebox">
-    ${
-      out.templates.length > 1
-        ? `<div class="cardbar"><select id="tpl" aria-label="${escapeHtml(
-            t("edTemplate"),
-          )}">${out.templates
-            .map(
-              (tpl, i) =>
-                `<option value="${i}" ${i === index ? "selected" : ""}>` +
-                `${escapeHtml(tpl.name)}</option>`,
-            )
-            .join("")}</select></div>`
-        : ""
-    }
+  $("#view").innerHTML = `<div class="stagebox">${picker}
     <iframe id="card" title="Card preview"
             sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
             allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
@@ -578,6 +605,12 @@ function download(text, name) {
 
 document.addEventListener("click", (e) => {
   if (e.target.closest("#theme")) return setTheme(!dark());
+
+  const tab = e.target.closest("[data-tab]");
+  if (tab) {
+    state.tab = tab.dataset.tab;
+    return drawCard();
+  }
 
   const picker = e.target.closest("[data-lang]");
   if (picker) {

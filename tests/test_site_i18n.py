@@ -79,17 +79,25 @@ def _keys_called():
 
 
 def _tab_keys():
-    """The keys tabBar() builds, read off ``CARD_TABS`` rather than listed here.
+    """The keys a tab bar builds, read off every ``CARD_TABS`` in the site.
 
     Spelled out by hand this was a list that could only go stale: adding a tab
     left its string looking like dead weight, and the failure named the new key
-    rather than the test that had not kept up.
+    rather than the test that had not kept up. Every module is searched because
+    two pages show tabs now, and a page whose list nothing reads is a page whose
+    strings look unused.
     """
-    text = (SITE / "app.js").read_text(encoding="utf-8")
-    match = re.search(r"const CARD_TABS = \[(.*?)\]", text, re.S)
-    assert match, "site/app.js declares no CARD_TABS"
-    names = [name.strip().strip("\"'") for name in match.group(1).split(",")]
-    return {f"tab{name[:1].upper()}{name[1:]}" for name in names if name}
+    found = set()
+    for path in sorted(SITE.glob("*.js")):
+        for listed in re.findall(
+            r"const CARD_TABS = \[(.*?)\]", path.read_text(encoding="utf-8"), re.S
+        ):
+            for name in listed.split(","):
+                name = name.strip().strip("\"'")
+                if name:
+                    found.add(f"tab{name[:1].upper()}{name[1:]}")
+    assert found, "no site module declares CARD_TABS"
+    return found
 
 
 def _keys_referenced(declared):
