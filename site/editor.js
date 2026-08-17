@@ -86,8 +86,8 @@ def preview(payload):
     config = parse_config_row(row, plan) if is_config_row(row, plan) else SheetConfig()
     front, back = split_sides(plan, config)
     # Where row 3 is filed, and under what. A card is not the only thing a
-    # settings row decides: a subdeck level and the unsorted deck reach the deck
-    # and never the card, so with only the card on screen they looked inert.
+    # settings row decides: a subdeck column reaches the deck and never the card,
+    # so with only the card on screen it looked inert.
     # (No backticks in this string: it is a JS template literal.)
     return json.dumps(
         {
@@ -133,7 +133,6 @@ const OPTIONS = {
   tts: ["en_US", "vi_VN", "zh_CN", "zh_TW", "ja_JP", "ko_KR"],
   speed: ["0.5", "0.75", "1", "1.25", "1.5", "2"],
   subdeck: ["1", "2", "3"],
-  unsorted: ["Unsorted", "Other", "Inbox"],
   type: ["", "nc"],
   voices: [],
   label: [],
@@ -201,7 +200,6 @@ const HELP = {
   video: { text: "helpVideo", sample: "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
   reverse: { text: "helpReverse" },
   theme: { text: "helpTheme" },
-  unsorted: { text: "helpUnsorted" },
 };
 
 const state = {
@@ -624,10 +622,12 @@ function drawCard() {
 /**
  * Where row 3 lands, and under what tags.
  *
- * The card is only half of what a settings row decides: `subdeck=n` files the
- * note and `unsorted` names the deck for a row that files itself nowhere, and
- * neither of them ever touches the card. Beside the card rather than as a fifth
- * tab, because it is not a view of the card — it is the other half of the answer.
+ * The card is only half of what a settings row decides: `subdeck=n` files the note
+ * and never touches the card, so a column carrying it looked inert here. It also
+ * shows the row landing in `Unsorted` when it names no level, which is a thing that
+ * happens to a sheet rather than a thing a sheet asked for. Beside the card rather
+ * than as a fifth tab, because it is not a view of the card — it is the other half
+ * of the answer.
  *
  * The root is named for what it is rather than guessed at: the real one comes
  * from the file and the sheet, and this editor has neither. Only the levels below

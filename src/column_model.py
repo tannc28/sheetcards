@@ -34,6 +34,18 @@ _SUBDECK_RE = re.compile(r"^subdeck\s*(\d+)$")
 # lower-cased and stripped.
 SYNC_TRUE_VALUES = frozenset({"true", "1", "yes", "sim", "x", "✓"})
 
+# Where a row goes when the sheet sorts its rows into sub-decks and this row names
+# none of them. There is no directive for it and nothing to switch on: a sheet that
+# sorts is already saying that a row belongs somewhere, and one that names no level
+# has an answer either way — this is the answer. In English because the word is the
+# one every spreadsheet and mail client already uses for the same pile.
+#
+# It applies only to a sheet that *has* a hierarchy — a reserved ``SUBDECK n`` column
+# or a ``subdeck=n`` one. A sheet that sorts nothing has nothing to be unsorted from,
+# so a two-column vocabulary sheet keeps every note in the deck itself rather than
+# gaining a folder around all of it.
+UNSORTED_DECK = "Unsorted"
+
 
 def normalize(header):
     """Folds a header to its comparison form: trimmed, lower-cased, BOM-free."""
@@ -171,25 +183,27 @@ def deck_path(row, plan, sheet_config=None):
     same value can be a level of the deck and something printed on the card
     without being typed into the sheet twice.
 
-    A row that fills in no level at all has an empty path and is filed in the
-    sheet's own deck — unless the settings row named a deck for exactly that case
-    (``#config unsorted=…``), which then becomes the row's single level. Nothing is
-    ever unfiled: Anki has no such state, and the empty path is a deck too.
+    A row that names no level at all lands in :data:`UNSORTED_DECK` — the sheet
+    sorts its rows, and this one was not sorted, so it belongs in a pile of its own
+    rather than loose among the folders it is not one of.
+
+    A sheet with no hierarchy at all is left alone: there is nothing to be unsorted
+    from, and wrapping every note of a two-column sheet in a folder called
+    ``Unsorted`` would be a level of deck nobody asked for.
 
     ``sheet_config`` is optional so every caller that has no settings row in hand
     keeps working unchanged.
     """
     headers = getattr(sheet_config, "subdeck_columns", None) or plan.subdeck_headers
+    if not headers:
+        return []
+
     path = []
     for header in headers:
         value = str(row.get(header, "")).strip()
         if value:
             path.append(value)
-    if not path:
-        unsorted = getattr(sheet_config, "unsorted", None)
-        if unsorted:
-            return [unsorted]
-    return path
+    return path or [UNSORTED_DECK]
 
 
 def tags_of(row, plan):

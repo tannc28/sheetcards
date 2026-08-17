@@ -77,13 +77,12 @@ SHEETS = {
     # the reserved columns — SYNC gating, the deck path, tags
     "02 Sync and subdecks": [
         ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "TAGS", "Question", "Answer"],
-        ["#config unsorted=Unsorted", "", "", "", "", "", ""],
         ["s01", "yes", "Geography", "Capitals", "europe, capitals", "Capital of Portugal?", "Lisbon"],
         ["s02", "x", "Geography", "Capitals", "asia; capitals", "Capital of Vietnam?", "Hanoi"],
         ["s03", "1", "Geography", "Rivers", "rivers", "Longest river in Asia?", "The Yangtze"],
         ["s04", "TRUE", "Geography", "Rivers", "rivers, europe", "Which river flows through Paris?", "The Seine"],
         ["s05", "✓", "History", "", "history", "Who was the first Ming emperor?", "The Hongwu Emperor"],
-        ["s06", "yes", "", "", "", "Where does a row with both SUBDECK cells empty go?", "Into 'Unsorted', because the settings row named it. Without that key it stays in the sheet's own deck, beside the sub-decks."],
+        ["s06", "yes", "", "", "", "Where does a row with both SUBDECK cells empty go?", "Into 'Unsorted'. A sheet that sorts its rows has somewhere for the ones it did not sort."],
         ["s07", "no", "Geography", "Capitals", "capitals", "This row is switched off.", "It is never written to Anki."],
         ["s08", "", "History", "", "history", "An empty SYNC cell is off too.", "Same as 'no'."],
     ],
@@ -268,7 +267,7 @@ SHEETS = {
     # wrong on purpose, so every warning has something to point at
     "16 Edge cases": [
         ["ID", "SYNC", "Word", "Meaning", "Picture", "Clip", "Sentence", "Extra", "Meaning"],
-        ["#config align=middle; spid=3; reverse; theme=neon; unsorted=", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
+        ["#config align=middle; spid=3; reverse; theme=neon", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
         ["x01", "yes", "{{c1::重复}}的表头", "duplicated header — only the first 'Meaning' is a field", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "https://www.youtube.com/@nationalgeographic", "A channel link is not a video: it is passed through with a warning.", "", "this cell is ignored"],
         ["x02", "yes", "{{c1::网盘}}链接", "a Google Drive link is rewritten to its /preview player", "", "https://drive.google.com/file/d/1PLACEHOLDER_FILE_ID_HERE/view", "The id here is a placeholder, so the frame will not play anything."],
         ["", "yes", "{{c1::无编号}}的一行", "a row with no ID is counted and skipped", "", "", "Nothing is written to Anki for it."],

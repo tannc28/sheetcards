@@ -4,9 +4,45 @@
 
 ---
 
+## ✨ **v6.22.0** - August 2026 *(Feature)*
+
+### The unsorted pile is automatic, and the directive is gone
+
+v6.21.0 added `#config unsorted=<name>`. It is removed again, one version later,
+and what it did now happens by itself:
+
+**A row that fills in no subdeck lands in `Unsorted`.** No key, nothing to switch
+on. A sheet that sorts its rows into sub-decks is already saying that a row belongs
+somewhere, so the row that names nothing has an answer either way — and a directive
+for it could only ever have been a way to ask for those rows to stay loose among the
+folders, which is not something anyone wants twice.
+
+The name is fixed and in English, because that is the word every spreadsheet and
+mail client already uses for the same pile.
+
+Two things it deliberately does not do:
+
+- **A sheet with no sub-decks at all is untouched.** There is nothing to be unsorted
+  from, so a two-column vocabulary sheet keeps every note in the deck itself instead
+  of finding all of it moved into a folder.
+- **A row that fills in *some* level is not unsorted** — a blank outer level with a
+  deeper one filled in still names a deck of its own.
+
+The tag mirrors the deck as always, so the pile is searchable as
+`sheets2anki::unsorted`. Nothing is drawn on the card: where a note is filed and how
+a card looks stay separate jobs.
+
+If you are upgrading from a sheet that had rows sitting in its own deck beside the
+sub-decks, those rows move into `Unsorted` on the next sync. Anki keeps a card's
+scheduling when it changes deck, so nothing is relearned.
+
+---
+
 ## ✨ **v6.21.0** - August 2026 *(Feature)*
 
 ### A sheet can name the deck for the rows that name none
+
+> Superseded by v6.22.0: the pile is automatic now and this key no longer exists.
 
 A row that leaves every `SUBDECK` cell empty was never unfiled — Anki has no such
 state. It landed in the sheet's own deck, which is a real deck sitting beside the

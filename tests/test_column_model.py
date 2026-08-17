@@ -159,41 +159,41 @@ class TestDeckPath:
 
 @pytest.mark.unit
 class TestUnsortedDeck:
-    """``#config unsorted=…`` names the deck for a row that names no level."""
+    """A sheet that sorts its rows has somewhere for the ones it did not sort."""
 
     class _Config:
-        def __init__(self, unsorted=None, subdeck_columns=()):
-            self.unsorted = unsorted
+        """Only the attribute `deck_path` reads, so no settings row is needed."""
+
+        def __init__(self, subdeck_columns=()):
             self.subdeck_columns = list(subdeck_columns)
 
-    def test_an_empty_path_becomes_the_named_deck(self):
+    def test_a_row_with_every_level_empty_is_unsorted(self):
         plan = cm.plan_columns(HEADERS)
         row = _row(**{"SUBDECK 1": "", "SUBDECK 2": ""})
-        config = self._Config(unsorted="Chưa phân loại")
-        assert cm.deck_path(row, plan, config) == ["Chưa phân loại"]
+        assert cm.deck_path(row, plan) == [cm.UNSORTED_DECK]
 
     def test_a_row_that_names_a_level_is_untouched(self):
         plan = cm.plan_columns(HEADERS)
-        config = self._Config(unsorted="Unsorted")
-        assert cm.deck_path(_row(), plan, config) == ["Unit 3", "Verbs"]
+        assert cm.deck_path(_row(), plan) == ["Unit 3", "Verbs"]
 
-    def test_a_partly_filled_path_is_not_the_unsorted_pile(self):
+    def test_a_partly_filled_path_is_not_unsorted(self):
         # Only a row that says nothing at all is unsorted. A blank outer level with
         # a deeper one filled in is still a row that was filed.
         plan = cm.plan_columns(HEADERS)
-        config = self._Config(unsorted="Unsorted")
-        row = _row(**{"SUBDECK 1": ""})
-        assert cm.deck_path(row, plan, config) == ["Verbs"]
+        assert cm.deck_path(_row(**{"SUBDECK 1": ""}), plan) == ["Verbs"]
 
-    def test_it_applies_to_a_settings_row_deck_column_too(self):
+    def test_a_settings_row_deck_column_sorts_the_same_way(self):
         plan = cm.plan_columns(["ID", "Level", "Front"])
-        config = self._Config(unsorted="Unsorted", subdeck_columns=["Level"])
+        config = self._Config(subdeck_columns=["Level"])
         row = {"ID": "1", "Level": "  ", "Front": "a"}
-        assert cm.deck_path(row, plan, config) == ["Unsorted"]
+        assert cm.deck_path(row, plan, config) == [cm.UNSORTED_DECK]
 
-    def test_without_the_key_an_empty_path_stays_empty(self):
-        plan = cm.plan_columns(HEADERS)
-        row = _row(**{"SUBDECK 1": "", "SUBDECK 2": ""})
+    def test_a_sheet_that_sorts_nothing_gains_no_folder(self):
+        # There is nothing to be unsorted from, and a two-column vocabulary sheet
+        # must not find every one of its notes moved into a folder.
+        plan = cm.plan_columns(["ID", "Front", "Back"])
+        row = {"ID": "1", "Front": "a", "Back": "b"}
+        assert cm.deck_path(row, plan) == []
         assert cm.deck_path(row, plan, self._Config()) == []
 
 

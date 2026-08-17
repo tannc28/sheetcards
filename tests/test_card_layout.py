@@ -1096,47 +1096,40 @@ class TestDeckFromAColumn:
 
 @pytest.mark.unit
 class TestUnsortedDeck:
-    """``#config unsorted=…`` — the deck for a row that names no level."""
+    """The pile a row lands in when it names no level. There is no directive.
 
-    def test_a_name_is_taken_as_written(self):
-        config = _config(_plan(), deck="unsorted=Chưa phân loại")
-        assert config.unsorted == "Chưa phân loại"
-        assert config.warnings == []
-
-    def test_the_bare_flag_names_it_after_itself(self):
-        # A sheet that does not mind what the pile is called should not have to
-        # think of a name for it.
-        assert _config(_plan(), deck="unsorted").unsorted == "Unsorted"
-
-    def test_quotes_around_a_name_are_not_part_of_the_name(self):
-        # A name with a space in it invites them, and a deck called `"Chưa phân
-        # loại` sorts nowhere near the one the user meant to make.
-        config = _config(_plan(), deck='unsorted="Chưa phân loại"')
-        assert config.unsorted == "Chưa phân loại"
-
-    def test_an_empty_name_is_refused_and_named(self):
-        config = _config(_plan(), deck="unsorted=")
-        assert config.unsorted is None
-        assert any("unsorted" in w for w in config.warnings)
+    A sheet that sorts its rows is already saying a row belongs somewhere, so the
+    one that names nothing has an answer either way — and a key to switch that on
+    would only be a key to leave those rows loose among the folders.
+    """
 
     def test_it_reaches_the_deck_and_the_tags(self):
+        from src.column_model import UNSORTED_DECK
+        from src.column_model import deck_path
         from src.column_model import plan_columns
         from src.tsv_model import build_tags
         from src.tsv_model import get_subdeck_name
 
         plan = plan_columns(["ID", "SUBDECK 1", "Word"])
-        config = parse_config_row({"ID": "#config unsorted=Unsorted"}, plan)
+        config = parse_config_row({"ID": "#config"}, plan)
         row = {"SUBDECK 1": "", "Word": "写"}
-        from src.column_model import deck_path
-
         assert get_subdeck_name("Deck", deck_path(row, plan, config)) == (
-            "Deck::Unsorted"
+            f"Deck::{UNSORTED_DECK}"
         )
         assert "sheets2anki::unsorted" in build_tags(row, plan, config)
 
-    def test_it_says_nothing_about_the_card(self):
+    def test_a_deck_column_from_the_settings_row_sorts_the_same_way(self):
+        from src.column_model import UNSORTED_DECK
+        from src.column_model import deck_path
+
         plan = _plan()
-        config = _config(plan, deck="unsorted=Unsorted")
+        config = _config(plan, {"Word": "subdeck=1"})
+        assert deck_path({"Word": "", "Reading": "x"}, plan, config) == [UNSORTED_DECK]
+
+    def test_it_says_nothing_about_the_card(self):
+        # It is where the note is filed, and a card never mentions that.
+        plan = _plan()
+        config = _config(plan, {"Word": "subdeck=1"})
         for template in build_templates(plan, config):
             assert "Unsorted" not in _both(template)
 

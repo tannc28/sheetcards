@@ -60,7 +60,7 @@ class TestTheEditor:
     """`editor.js` — the settings row, the card it makes and where it files a note."""
 
     PAYLOAD = {
-        "marker": "#config unsorted=Chưa phân loại",
+        "marker": "#config",
         "columns": [
             {"name": "Level", "cell": "subdeck=1", "value": ""},
             {"name": "Word", "cell": "size=44; bold", "value": "hello"},
@@ -88,13 +88,13 @@ class TestTheEditor:
         assert out["templates"][0]["qfmt"]
 
     def test_it_says_where_the_row_is_filed(self):
-        # The card is only half of what a settings row decides: a deck level and
-        # the unsorted deck never touch the card, so the page has to show them.
+        # The card is only half of what a settings row decides: a deck level never
+        # touches the card, so the page has to show where the row went.
         out = self._preview()
-        assert out["deck"] == ["Chưa phân loại"]
-        assert "sheets2anki::chưa_phân_loại" in out["tags"]
+        assert out["deck"] == ["Unsorted"]
+        assert "sheets2anki::unsorted" in out["tags"]
 
-    def test_a_filled_level_beats_the_unsorted_deck(self):
+    def test_a_filled_level_is_not_the_unsorted_pile(self):
         payload = json.loads(json.dumps(self.PAYLOAD))
         payload["columns"][0]["value"] = "HSK 1"
         assert self._preview(payload)["deck"] == ["HSK 1"]
@@ -113,7 +113,7 @@ class TestTheAnalyzer:
     TSV = "\n".join(
         [
             "ID\tSYNC\tSUBDECK 1\tWord\tMeaning",
-            "#config unsorted=Unsorted\t\t\tsize=44\tcolor=muted",
+            "#config\t\t\tsize=44\tcolor=muted",
             "r1\tyes\tGreetings\thello\txin chào",
             "r2\tyes\t\tthanks\tcảm ơn",
         ]

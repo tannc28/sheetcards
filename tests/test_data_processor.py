@@ -168,8 +168,15 @@ class TestTagsGeneration:
         assert "sheets2anki::bài_3::động_từ" in tags
         assert "ôn_tập" in tags and "汉字" in tags
 
-    def test_no_placeholder_tags_for_blank_levels(self):
-        # The old model emitted [missing_subtopic]-style tags; nothing should now.
+    def test_a_blank_level_is_the_unsorted_pile_and_not_a_placeholder(self):
+        # The old model emitted [missing_subtopic]-style tags. The tag mirrors the
+        # deck, and a row that names no level is filed under `Unsorted`, so that is
+        # the tag — the pile stays searchable, and nothing invents a sentinel.
         plan = plan_columns(["ID", "SUBDECK 1", "Front"])
         tags = d.build_tags({"ID": "Q1", "SUBDECK 1": "", "Front": "q"}, plan)
+        assert tags == ["sheets2anki", "sheets2anki::unsorted"]
+
+    def test_a_sheet_that_sorts_nothing_gets_only_the_owner_tag(self):
+        plan = plan_columns(["ID", "Front", "Back"])
+        tags = d.build_tags({"ID": "Q1", "Front": "q", "Back": "a"}, plan)
         assert tags == ["sheets2anki"]
