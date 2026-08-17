@@ -58,14 +58,14 @@ class TestDeckTree:
 
     def test_every_level_counts_what_is_under_it(self):
         html = self._tree()["html"]
-        assert ">Deck</span><span class=\"count\">3<" in html
-        assert ">Geography</span><span class=\"count\">2<" in html
-        assert ">Unsorted</span><span class=\"count\">1<" in html
+        assert '>Deck</span><span class="count">3<' in html
+        assert '>Geography</span><span class="count">2<' in html
+        assert '>Unsorted</span><span class="count">1<' in html
 
     def test_levels_are_nested_and_indented(self):
         html = self._tree()["html"]
-        assert '--depth:0' in html and '--depth:1' in html and '--depth:2' in html
-        assert html.count("<ul class=\"tree\">") == 2  # Deck, then Geography
+        assert "--depth:0" in html and "--depth:1" in html and "--depth:2" in html
+        assert html.count('<ul class="tree">') == 2  # Deck, then Geography
 
     def test_names_are_sorted_at_each_level(self):
         html = self._tree()["html"]
@@ -101,8 +101,8 @@ class TestCardFrame:
         return _run(
             "import { cardDoc, cardFrame } from './cardframe.js';\n"
             "const front = { html: '<div data-s2a-col=\"Word\">你好</div>' };\n"
-            "const back = { html: '<div data-s2a-col=\"Word\">你好</div>"
-            "<div data-s2a-col=\"Meaning\">xin chào</div>' };\n"
+            'const back = { html: \'<div data-s2a-col="Word">你好</div>'
+            '<div data-s2a-col="Meaning">xin chào</div>\' };\n'
             f"const doc = cardDoc({{ front, back, ...{opts} }});\n"
             "console.log(JSON.stringify({ doc, frame: cardFrame(doc) }));"
         )
@@ -121,7 +121,9 @@ class TestCardFrame:
     def test_dark_carries_ankis_own_night_mode_class(self):
         # A sheet's theme declares a colour pair, and the second half of it is
         # chosen by this class rather than by the page.
-        assert 'class="card night_mode"' in self._doc('{ tab: "both", dark: true }')["doc"]
+        assert (
+            'class="card night_mode"' in self._doc('{ tab: "both", dark: true }')["doc"]
+        )
         assert 'class="card"' in self._doc('{ tab: "both", dark: false }')["doc"]
 
     def test_a_ring_targets_the_column_that_asked_for_it(self):
@@ -138,7 +140,10 @@ class TestCardFrame:
         assert '[data-s2a-col="Wo\\"rd"]' in doc
 
     def test_no_ring_means_no_rule_for_one(self):
-        assert "data-s2a-col=\"" not in self._doc('{ tab: "both", dark: false }')["doc"].split("<body")[0]
+        assert (
+            'data-s2a-col="'
+            not in self._doc('{ tab: "both", dark: false }')["doc"].split("<body")[0]
+        )
 
     def test_the_frame_keeps_the_flags_a_framed_player_needs(self):
         frame = self._doc('{ tab: "both", dark: false }')["frame"]

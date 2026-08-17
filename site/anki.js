@@ -107,6 +107,48 @@ function ttsButton(spec, value) {
   );
 }
 
+/** What `{{type:cloze:F}}` asks you to type: the deletions of this card's c-number. */
+function clozeForTyping(value, ordinal) {
+  const answers = [];
+  for (const m of String(value ?? "").matchAll(CLOZE_RE)) {
+    if (Number(m[1]) === ordinal) answers.push(m[2]);
+  }
+  return answers.join(", ");
+}
+
+/**
+ * Anki's typed-answer box.
+ *
+ * `{{type:F}}` is not a filter and never was: Anki's renderer leaves the tag
+ * alone and the reviewer swaps it for an input on the question and for a
+ * character-by-character comparison on the answer. Treating it as an unknown
+ * filter — which is what this page did until the box existed — fell back to
+ * printing the field, so a typed-answer card previewed with its answer already
+ * on the question.
+ *
+ * The comparison is drawn inside the card document, by site/typeans.js, because
+ * it depends on something no template knows: what the learner typed.
+ */
+function typeBox(field, raw, mods, ctx) {
+  const expected = mods.includes("cloze")
+    ? clozeForTyping(raw, ctx.ordinal)
+    : stripHtml(raw).trim();
+  // Anki removes the tag outright when the field is empty rather than drawing a
+  // box with nothing to check against.
+  if (!expected) return "";
+
+  const spec = escapeHtml(
+    JSON.stringify({ expect: expected, nc: mods.includes("nc") }),
+  );
+  return (
+    `<div class="s2a-type" data-typeans="${spec}">` +
+    `<center><input type="text" id="typeans" autocomplete="off" ` +
+    `autocapitalize="off" autocorrect="off" spellcheck="false" ` +
+    `aria-label="${escapeHtml(field)}"></center>` +
+    `<div class="s2a-typeans" hidden></div></div>`
+  );
+}
+
 function applyFilter(name, value, fieldName, ctx) {
   if (name.startsWith("tts ") || name === "tts") return ttsButton(name, value);
   switch (name) {

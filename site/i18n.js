@@ -305,13 +305,13 @@ const STRINGS = {
   // --- demo ---------------------------------------------------------------
   demoNote: {
     en:
-      "Showing the example workbook — sixteen sheets, from the smallest one that " +
-      "works to every directive at once. Use the sheet picker above to walk " +
-      "through them, or paste your own link to read yours instead.",
+      "Showing the example workbook — fifteen sheets, from the smallest one that " +
+      "works to a deck you would keep studying. Use the sheet picker above to " +
+      "walk through them, or paste your own link to read yours instead.",
     vi:
-      "Đang hiện file ví dụ — mười sáu sheet, từ sheet đơn giản nhất tới sheet " +
-      "dùng hết mọi directive. Dùng ô chọn sheet ở trên để xem lần lượt, hoặc " +
-      "dán link của bạn để đọc sheet của bạn.",
+      "Đang hiện file ví dụ — mười lăm sheet, từ sheet đơn giản nhất tới một bộ " +
+      "thẻ hoàn chỉnh. Dùng ô chọn sheet ở trên để xem lần lượt, hoặc dán link " +
+      "của bạn để đọc sheet của bạn.",
   },
 
   // --- the numbers --------------------------------------------------------

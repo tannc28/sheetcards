@@ -34,9 +34,6 @@ PUBLISHED_URL = (
     "sheets2anki-examples.xlsx"
 )
 
-# The one sheet that is wrong on purpose.
-BROKEN = "16 Edge cases"
-
 
 def builder():
     """``scripts/build_examples.py``, loaded by path — scripts/ is not a package."""
@@ -92,7 +89,7 @@ def test_the_workbook_is_the_only_file_people_need(workbook_bytes):
         "sheets2anki-examples.xlsx",
     ]
     assert sheet_names(workbook_bytes) == list(builder().SHEETS)
-    assert len(sheet_names(workbook_bytes)) >= 16
+    assert len(sheet_names(workbook_bytes)) >= 15
 
 
 @pytest.mark.unit
@@ -110,14 +107,18 @@ def test_every_sheet_produces_notes(sheets):
 
 
 @pytest.mark.unit
-def test_only_the_edge_case_sheet_warns(sheets):
-    """A tour sheet with a warning in it is teaching the wrong thing."""
+def test_no_sheet_warns(sheets):
+    """A sheet with a warning in it is teaching the wrong thing.
+
+    There used to be one sheet exempt from this, wrong on purpose so that every
+    ``SheetConfig.warnings`` message had something to point at. It was the last
+    tab in the workbook, which made the tour end on a card that does not work,
+    and the warnings themselves are covered by ``tests/test_sheet_config.py``
+    without needing a deck to be broken for them.
+    """
     for name, deck in sheets:
         warnings = deck.sheet_config.warnings if deck.sheet_config else []
-        if name == BROKEN:
-            assert warnings, f"{name} exists to produce warnings and produced none"
-        else:
-            assert not warnings, f"{name} warns: {warnings}"
+        assert not warnings, f"{name} warns: {warnings}"
 
 
 @pytest.mark.unit

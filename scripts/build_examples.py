@@ -11,7 +11,7 @@ So the sheets live here, in ``SHEETS`` below, and the workbook is generated from
 them and committed beside this script. Keeping the grids as Python rather than as
 a folder of TSVs means the whole tour is one readable, reviewable file: a settings
 row changed in a review shows up as a changed *line*, not as a changed ZIP and not
-as a diff spread over sixteen files.
+as a diff spread over one file per sheet.
 
 The writer is the standard library rather than openpyxl, for the same reason
 ``src/workbook.py`` reads with the standard library: the add-on ships with no
@@ -44,19 +44,28 @@ WORKBOOK = EXAMPLES / "sheets2anki-examples.xlsx"
 # The tour
 # ---------------------------------------------------------------------------
 #
-# One entry per sheet, in tab order, from the smallest sheet that works to every
-# directive at once. Row 1 is the header row; a row whose ID cell starts with
-# ``#config`` is the settings row and is read as directives rather than as a note.
+# One entry per sheet, in tab order, from the smallest sheet that works to a deck
+# somebody would keep studying. Row 1 is the header row; a row whose ID cell
+# starts with ``#config`` is the settings row and is read as directives rather
+# than as a note.
+#
+# **Every sheet is a deck first and an example second.** There is no sheet that
+# turns every directive on at once, and none that is wrong on purpose: both used
+# to be here, and both taught the opposite of what the add-on is for. A settings
+# row is a small number of decisions about one deck, so a sheet carrying fourteen
+# columns of them showed nobody how to write one, and a sheet of deliberate
+# mistakes made the tour end on a card that does not work.
 #
 # tests/test_examples.py fails if a settings-row key has no example anywhere in
 # here, so a directive added to src/sheet_config.py gets a demonstration in the
-# same commit rather than eventually.
+# same commit rather than eventually. The place for it is the sheet whose deck
+# would have wanted it — not a new column bolted onto the widest sheet.
 #
 # One thing here is not in English, deliberately: **the column that carries the
 # meaning of a word is glossed in Vietnamese**, because that is who this workbook
 # is demonstrated to. It stops there — headers, the settings row, `label=` text,
 # the explanatory notes and the sheets that are documentation rather than
-# vocabulary (02, 09, 16) are all English, and a gloss is data rather than prose.
+# vocabulary (02, 09) are all English, and a gloss is data rather than prose.
 
 # A grid reads as a grid. One cell per line does not.
 # fmt: off
@@ -65,7 +74,7 @@ SHEETS = {
     # language, answered in Vietnamese — the sheet is three columns wide and
     # the language it teaches is only ever the content of a cell, never a
     # setting. Nothing here knows what Korean is.
-    "01 Basic": [
+    "01 Basic (cơ bản)": [
         ["ID", "Front", "Back"],
         ["b01", "bread", "bánh mì"],
         ["b02", "水", "nước"],
@@ -75,7 +84,7 @@ SHEETS = {
         ["b06", "la casa", "ngôi nhà"],
     ],
     # the reserved columns — SYNC gating, the deck path, tags
-    "02 Sync and subdecks": [
+    "02 Sync & subdecks (deck con)": [
         ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "TAGS", "Question", "Answer"],
         ["s01", "yes", "Geography", "Capitals", "europe, capitals", "Capital of Portugal?", "Lisbon"],
         ["s02", "x", "Geography", "Capitals", "asia; capitals", "Capital of Vietnam?", "Hanoi"],
@@ -87,7 +96,7 @@ SHEETS = {
         ["s08", "", "History", "", "history", "An empty SYNC cell is off too.", "Same as 'no'."],
     ],
     # the settings row: sides, sizes, colours, weight, labels, hint
-    "03 Card layout": [
+    "03 Card layout (bố cục thẻ)": [
         ["ID", "Word", "Pinyin", "Meaning", "Example", "Note", "Source"],
         ["#config align=left", "size=48px; bold", "side=front; size=22; color=accent", "size=26; color=#c2410c", "size=16; color=muted; italic; label=Example", "size=14; color=teal; align=right; hint", "side=hide"],
         ["L01", "图书馆", "túshūguǎn", "thư viện", "图书馆在学校旁边。", "Literally “book-store-hall”.", "HSK 3 word list"],
@@ -98,7 +107,7 @@ SHEETS = {
         ["L06", "环境", "huánjìng", "môi trường", "这里的环境很安静。", "Covers surroundings, not only nature.", "HSK 3 word list"],
     ],
     # one row, both directions
-    "04 Reverse": [
+    "04 Reverse (thẻ ngược)": [
         ["ID", "Vietnamese", "Chinese", "Pinyin"],
         ["#config reverse", "size=30", "side=back; size=44", "side=back; size=20; color=muted"],
         ["r01", "đọc", "读", "dú"],
@@ -109,7 +118,7 @@ SHEETS = {
         ["r06", "quên", "忘记", "wàngjì"],
     ],
     # Anki's typed-answer box, diacritic-insensitive
-    "05 Type the answer": [
+    "05 Type the answer (gõ đáp án)": [
         ["ID", "Vietnamese", "Spanish", "Note"],
         ["#config", "size=30", "side=back; size=32; type=nc", "size=14; color=muted"],
         ["t01", "cái cây", "el árbol", "type=nc ignores the accent, so “el arbol” counts."],
@@ -122,7 +131,7 @@ SHEETS = {
         ["t08", "con sông", "el río"],
     ],
     # a declared cloze column, including a row with two deletions
-    "06 Cloze": [
+    "06 Cloze (điền chỗ trống)": [
         ["ID", "Sentence", "Pinyin", "Translation", "Note"],
         ["#config", "cloze; size=30", "size=18; color=accent", "size=18", "size=14; color=muted; hint"],
         ["z01", "我{{c1::是}}中国人。", "Wǒ shì Zhōngguórén.", "Tôi là người Trung Quốc.", "是 links two nouns; it is not used before an adjective."],
@@ -133,7 +142,7 @@ SHEETS = {
         ["z06", "请{{c1::把}}门关上。", "Qǐng bǎ mén guānshàng.", "Làm ơn đóng cửa lại.", "把 moves the object in front of the verb."],
     ],
     # a column holding a picture URL
-    "07 Images": [
+    "07 Images (hình ảnh)": [
         ["ID", "Picture", "Word", "Pinyin", "Meaning"],
         ["#config", "image; size=320", "side=back; size=44", "side=back; size=22; color=accent", "side=back; size=18; color=muted"],
         ["p01", "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg", "猫", "māo", "con mèo"],
@@ -149,7 +158,7 @@ SHEETS = {
         ["p11", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg/500px-Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg", "山", "shān", "núi"],
     ],
     # a column holding a recording
-    "08 Audio": [
+    "08 Audio (âm thanh)": [
         ["ID", "Recording", "Answer", "Pinyin", "Meaning"],
         ["#config", "audio; label=Listen", "side=back; size=44", "side=back; size=22; color=accent", "side=back; size=18; color=muted"],
         ["a01", "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg", "北京", "Běijīng", "Bắc Kinh — thủ đô"],
@@ -162,7 +171,7 @@ SHEETS = {
         ["a08", "https://upload.wikimedia.org/wikipedia/commons/9/9e/Zh-Changan.ogg", "长安", "Cháng'ān", "Trường An — kinh đô thời Đường"],
     ],
     # every link form the add-on rewrites into a player
-    "09 Video": [
+    "09 Video (video nhúng)": [
         ["ID", "Question", "Clip", "Answer"],
         ["#config", "size=26", "side=back; video; label=Watch the clip; hint", "size=18"],
         ["v01", "A full YouTube watch link.", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "Rewritten to https://www.youtube.com/embed/… before the note is saved."],
@@ -171,11 +180,11 @@ SHEETS = {
         ["v04", "A link that is already an embed link.", "https://www.youtube.com/embed/jNQXAC9IVRw", "The rewrite is idempotent — it is left alone."],
         ["v05", "A direct video file, not a page.", "https://upload.wikimedia.org/wikipedia/commons/d/de/Ink_grinding.webmhd.webm", "Passed through unchanged; the frame plays the file itself."],
     ],
-    # text-to-speech: deck-wide speed, a per-column override, and a column
-    # that is heard without being read
-    "10 Speech": [
+    # text-to-speech: a voice preference, deck-wide speed, a per-column
+    # override, and a column that is heard without being read
+    "10 Speech (đọc thành tiếng)": [
         ["ID", "Chinese", "Pinyin", "Vietnamese", "Once more, slowly"],
-        ["#config speed=0.9", "size=40; tts=zh_CN", "size=22; color=accent", "size=20", "side=hide; tts=zh_CN; speed=0.5"],
+        ["#config speed=0.9", "size=40; tts=zh_CN; voices=Ting-Ting,Microsoft Huihui", "size=22; color=accent", "size=20", "side=hide; tts=zh_CN; speed=0.5"],
         ["k01", "早上好", "zǎoshang hǎo", "chào buổi sáng", "早上好"],
         ["k02", "谢谢你的帮助", "xièxie nǐ de bāngzhù", "cảm ơn bạn đã giúp đỡ", "谢谢你的帮助"],
         ["k03", "请再说一遍", "qǐng zài shuō yí biàn", "làm ơn nói lại một lần nữa", "请再说一遍"],
@@ -184,7 +193,7 @@ SHEETS = {
         ["k06", "洗手间在哪儿", "xǐshǒujiān zài nǎr", "nhà vệ sinh ở đâu", "洗手间在哪儿"],
     ],
     # write the character; a column that files the note without reaching the card
-    "11 Chinese writing": [
+    "11 Chinese writing (gõ chữ)": [
         ["ID", "TAGS", "Level", "Meaning", "Pinyin", "Hanzi", "Strokes", "Example"],
         ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["w01", "hanzi, hsk1", "HSK 1", "tôi", "wǒ", "我", "https://upload.wikimedia.org/wikipedia/commons/b/b3/%E6%88%91-order.gif", "我是学生。"],
@@ -214,7 +223,7 @@ SHEETS = {
         ["w25", "hanzi, hsk3", "HSK 3", "ruộng", "tián", "田", "https://upload.wikimedia.org/wikipedia/commons/b/bb/%E7%94%B0-order.gif", "田里有很多水。"],
     ],
     # write the character yourself, stroke by stroke, and be marked on it
-    "12 Chinese drawing": [
+    "12 Chinese drawing (viết tay)": [
         ["ID", "SUBDECK 1", "TAGS", "Meaning", "Pinyin", "Draw", "Character", "Example"],
         ["#config", "", "", "size=24; color=muted; label=Draw the character for", "side=front; size=40; color=accent", "side=front; draw; size=260", "side=back; size=72; tts=zh_CN", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["d01", "HSK 1", "hanzi, hsk1, draw", "tôi", "wǒ", "我", "我", "我是学生。"],
@@ -231,7 +240,7 @@ SHEETS = {
         ["d12", "HSK 2", "hanzi, hsk2, draw", "miệng; cửa", "kǒu", "口", "口", "门口有人在等。"],
     ],
     # readings rendered as ruby over the kanji
-    "13 Japanese furigana": [
+    "13 Furigana (phiên âm kanji)": [
         ["ID", "Japanese", "Meaning", "Note"],
         ["#config", "size=40; furigana", "size=20", "size=14; color=muted; hint"],
         ["f01", "日本語[にほんご]", "tiếng Nhật", "Write the reading in brackets after the kanji."],
@@ -242,7 +251,7 @@ SHEETS = {
         ["f06", "先生[せんせい]の 話[はなし]", "câu chuyện của thầy giáo"],
     ],
     # the sheet decides the schema, in any script
-    "14 Any language headers": [
+    "14 Any headers (mọi ngôn ngữ)": [
         ["ID", "汉字", "拼音", "释义", "例句"],
         ["#config", "size=44; tts=zh_CN", "size=22; color=accent", "size=20", "size=16; color=muted"],
         ["h01", "词典", "cídiǎn", "từ điển", "我买了一本新词典。"],
@@ -252,27 +261,28 @@ SHEETS = {
         ["h05", "部首", "bùshǒu", "bộ thủ", "这个字的部首是“水”。"],
         ["h06", "声调", "shēngdiào", "thanh điệu", "普通话有四个声调。"],
     ],
-    # every role and every directive on one card
-    "15 Everything": [
-        ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Picture", "Word", "Pinyin", "Meaning", "Example", "Recording", "Clip", "Source"],
-        ["#config align=left; speed=0.9; reverse; theme=sakura", "", "", "", "", "", "image; size=260; label=Look", "side=front; size=44; bold; tts=zh_CN; voices=Ting-Ting,Microsoft Huihui", "side=back; size=22; color=accent; align=center; type=nc", "side=back; size=20", "side=back; size=16; color=muted; italic; tts=zh_CN; speed=0.7", "side=back; audio; label=Native recording", "side=back; video; size=480; hint; label=Watch", "side=hide"],
-        ["e01", "yes", "Places", "China", "Cities", "cities, hsk1", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Great_Wall_of_China_July_2006.JPG/500px-Great_Wall_of_China_July_2006.JPG", "北京", "Běijīng", "Bắc Kinh, thủ đô", "北京有很多名胜古迹。", "https://upload.wikimedia.org/wikipedia/commons/8/8a/Zh-Beijing.ogg", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "internal note, never shown"],
-        ["e02", "yes", "Places", "China", "Cities", "cities", "", "上海", "Shànghǎi", "Thượng Hải, thành phố lớn nhất", "上海在长江的入海口。", "https://upload.wikimedia.org/wikipedia/commons/7/73/Zh-Shanghai.ogg", "", "internal note, never shown"],
-        ["e03", "yes", "Places", "China", "Cities", "cities", "", "广州", "Guǎngzhōu", "Quảng Châu", "广州的早茶很有名。", "https://upload.wikimedia.org/wikipedia/commons/8/82/Zh-Guangzhou.ogg"],
-        ["e04", "yes", "Places", "China", "Cities", "cities", "", "杭州", "Hángzhōu", "Hàng Châu", "杭州有西湖。", "https://upload.wikimedia.org/wikipedia/commons/3/36/Zh-Hangzhou.ogg"],
-        ["e05", "yes", "Places", "China", "Provinces", "provinces", "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg/500px-Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg", "安徽", "Ānhuī", "tỉnh An Huy", "安徽有黄山。", "https://upload.wikimedia.org/wikipedia/commons/5/57/Zh-Anhui.ogg"],
-        ["e06", "yes", "Places", "China", "History", "history", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Terracotta_Army_Pit_1_-_2.jpg/500px-Terracotta_Army_Pit_1_-_2.jpg", "长安", "Cháng'ān", "Trường An, kinh đô thời Đường", "长安是今天的西安。", "https://upload.wikimedia.org/wikipedia/commons/9/9e/Zh-Changan.ogg", "https://youtu.be/aircAruvnKk"],
-        ["e07", "no", "Places", "China", "Cities", "cities", "", "天津", "Tiānjīn", "Thiên Tân — dòng này đang tắt nên không bao giờ vào Anki", "天津在北京的东边。", "https://upload.wikimedia.org/wikipedia/commons/9/9b/Zh-Tianjin.ogg"],
-    ],
-    # wrong on purpose, so every warning has something to point at
-    "16 Edge cases": [
-        ["ID", "SYNC", "Word", "Meaning", "Picture", "Clip", "Sentence", "Extra", "Meaning"],
-        ["#config align=middle; spid=3; reverse; theme=neon", "", "size=400; colour=red; tts=zh; cloze", "side=upside; cloze", "image; audio; tts=en_US; bold; size=5000; furigana", "video; size=9000", "speed=3; label", "size=abc; align; subdeck=1; bold", "size=20"],
-        ["x01", "yes", "{{c1::重复}}的表头", "duplicated header — only the first 'Meaning' is a field", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Green_tea_3_appearances.jpg/500px-Green_tea_3_appearances.jpg", "https://www.youtube.com/@nationalgeographic", "A channel link is not a video: it is passed through with a warning.", "", "this cell is ignored"],
-        ["x02", "yes", "{{c1::网盘}}链接", "a Google Drive link is rewritten to its /preview player", "", "https://drive.google.com/file/d/1PLACEHOLDER_FILE_ID_HERE/view", "The id here is a placeholder, so the frame will not play anything."],
-        ["", "yes", "{{c1::无编号}}的一行", "a row with no ID is counted and skipped", "", "", "Nothing is written to Anki for it."],
-        ["x01", "yes", "{{c1::重复}}的编号", "the same ID twice — the sync reports it", "", "", "Two rows cannot key one note."],
-        ["x05", "no", "{{c1::关闭}}的一行", "switched off", "", "", "Not marked for sync, so it is skipped."],
+    # the tour ends on a deck rather than on a demonstration: a JLPT N5 list
+    # filed three levels deep, in the colours of the season it is named after.
+    # Nothing here is present to exhibit a directive — every one of the five it
+    # uses is one this deck would have used anyway.
+    "15 Finished deck (hoàn chỉnh)": [
+        ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Japanese", "Meaning", "Example"],
+        ["#config theme=sakura", "", "", "", "", "size=40; furigana; tts=ja_JP", "side=back; size=22", "side=back; size=16; color=muted; italic; furigana"],
+        ["n01", "JLPT", "N5", "Verbs", "jlpt, n5", "食[た]べる", "ăn", "朝[あさ]ごはんを 食[た]べます。"],
+        ["n02", "JLPT", "N5", "Verbs", "jlpt, n5", "飲[の]む", "uống", "毎朝[まいあさ] コーヒーを 飲[の]みます。"],
+        ["n03", "JLPT", "N5", "Verbs", "jlpt, n5", "行[い]く", "đi", "来週[らいしゅう] 京都[きょうと]へ 行[い]きます。"],
+        ["n04", "JLPT", "N5", "Verbs", "jlpt, n5", "話[はな]す", "nói chuyện", "日本語[にほんご]で 話[はな]しましょう。"],
+        ["n05", "JLPT", "N5", "Nouns", "jlpt, n5", "学校[がっこう]", "trường học", "学校[がっこう]は 駅[えき]の 近[ちか]くです。"],
+        ["n06", "JLPT", "N5", "Nouns", "jlpt, n5", "友[とも]だち", "bạn bè", "友[とも]だちと 映画[えいが]を 見[み]ました。"],
+        ["n07", "JLPT", "N5", "Nouns", "jlpt, n5", "電車[でんしゃ]", "tàu điện", "電車[でんしゃ]で 会社[かいしゃ]へ 行[い]きます。"],
+        ["n08", "JLPT", "N5", "Nouns", "jlpt, n5", "時間[じかん]", "thời gian", "今日[きょう]は 時間[じかん]が ありません。"],
+        ["n09", "JLPT", "N5", "Adjectives", "jlpt, n5", "新[あたら]しい", "mới", "新[あたら]しい 本[ほん]を 買[か]いました。"],
+        ["n10", "JLPT", "N5", "Adjectives", "jlpt, n5", "高[たか]い", "cao; đắt", "この 店[みせ]は 少[すこ]し 高[たか]いです。"],
+        ["n11", "JLPT", "N5", "Adjectives", "jlpt, n5", "静[しず]か", "yên tĩnh", "この 部屋[へや]は とても 静[しず]かです。"],
+        ["n12", "JLPT", "N4", "Verbs", "jlpt, n4", "調[しら]べる", "tra cứu; tìm hiểu", "辞書[じしょ]で 言葉[ことば]を 調[しら]べます。"],
+        ["n13", "JLPT", "N4", "Verbs", "jlpt, n4", "続[つづ]ける", "tiếp tục", "毎日[まいにち] 練習[れんしゅう]を 続[つづ]けます。"],
+        ["n14", "JLPT", "N4", "Nouns", "jlpt, n4", "季節[きせつ]", "mùa", "日本[にほん]には 四[よっ]つの 季節[きせつ]が あります。"],
+        ["n15", "JLPT", "N4", "Nouns", "jlpt, n4", "桜[さくら]", "hoa anh đào", "春[はる]に 桜[さくら]が 咲[さ]きます。"],
     ],
 }
 # fmt: on

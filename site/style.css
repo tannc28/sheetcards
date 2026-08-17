@@ -56,8 +56,12 @@
   /* Three columns: the source, the deck it makes, the card it makes. The first
      two are forms and lists and want a fixed, readable width; the third takes
      what is left, and an Anki card is a narrow thing however much room it is
-     given, so it is capped rather than stretched. */
-  --src-w: clamp(13rem, 18vw, 19rem);
+     given, so it is capped rather than stretched.
+
+     Which means the card column runs out of card before it runs out of room, and
+     the slack is better spent on column 1 — a column name, a cell value and a
+     directive chip are all things that wrap badly. */
+  --src-w: clamp(15rem, 23vw, 24rem);
   --deck-w: clamp(15rem, 21vw, 23rem);
   --card-w: 46rem;
   --pad: clamp(1rem, 3vw, 1.75rem);

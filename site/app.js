@@ -30,8 +30,8 @@ const DEMO_SHEET =
 // Which of its sheets to open on. The workbook is a tour that starts at the
 // smallest sheet that works, and a landing page showing two columns and no
 // settings row would answer none of the questions people arrive with — so the
-// page opens on the one that uses everything at once, and the picker walks back.
-const DEMO_TAB = "15 Everything";
+// page opens on the last sheet, a finished deck, and the picker walks back.
+const DEMO_TAB = "15 Finished deck (hoàn chỉnh)";
 
 /** Everything the page needs, computed by the add-on's own code. */
 const ANALYZER = String.raw`
