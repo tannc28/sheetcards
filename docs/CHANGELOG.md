@@ -4,6 +4,37 @@
 
 ---
 
+## ✨ **v6.21.0** - August 2026 *(Feature)*
+
+### A sheet can name the deck for the rows that name none
+
+A row that leaves every `SUBDECK` cell empty was never unfiled — Anki has no such
+state. It landed in the sheet's own deck, which is a real deck sitting beside the
+sub-decks. But that does mix the rows that were filed with the rows that were not,
+and there was no way to say where the second kind should go.
+
+Now the settings row can name it:
+
+```
+#config unsorted=Chưa phân loại
+```
+
+The bare flag — `#config unsorted` — calls the deck `Unsorted`. A value is taken
+exactly as written, with surrounding quotes stripped so a name with a space in it
+can be quoted. Nothing is invented: without the key, a sheet behaves exactly as it
+did before, because a name the add-on chose for you would arrive in English in a
+deck list that is not.
+
+It is a deck-level setting and stays out of the card entirely. The tag mirrors the
+deck as always, so the pile is searchable as `sheets2anki::unsorted` too. A row that
+fills in *some* level is not unsorted — a blank outer level with a deeper one filled
+in still names a deck of its own.
+
+`02 Sync and subdecks` in the example workbook now shows it, and the editor lists it
+with the other deck-wide directives.
+
+---
+
 ## ✨ **v6.20.0** - August 2026 *(Feature)*
 
 ### `sakura` now has the flowers in it

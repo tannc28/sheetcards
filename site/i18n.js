@@ -122,6 +122,10 @@ const STRINGS = {
     en: "A colour palette for the whole card, in both light and dark mode.",
     vi: "Bảng màu cho cả thẻ, dùng được ở cả nền sáng và nền tối.",
   },
+  helpUnsorted: {
+    en: "The deck for rows that fill in no subdeck. Without it they stay in the sheet's own deck, beside the sub-decks. Write your own name for it, or leave it as Unsorted.",
+    vi: "Deck dành cho những dòng không điền subdeck. Không đặt thì chúng nằm ngay trong deck của sheet, cạnh các subdeck. Bạn tự đặt tên, hoặc để nguyên Unsorted.",
+  },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
   edResult: { en: "Result", vi: "Kết quả" },
   edCopy: { en: "Copy rows 1 and 2", vi: "Copy dòng 1 và 2" },

@@ -125,6 +125,7 @@ const OPTIONS = {
   tts: ["en_US", "vi_VN", "zh_CN", "zh_TW", "ja_JP", "ko_KR"],
   speed: ["0.5", "0.75", "1", "1.25", "1.5", "2"],
   subdeck: ["1", "2", "3"],
+  unsorted: ["Unsorted", "Other", "Inbox"],
   type: ["", "nc"],
   voices: [],
   label: [],
@@ -192,6 +193,7 @@ const HELP = {
   video: { text: "helpVideo", sample: "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
   reverse: { text: "helpReverse" },
   theme: { text: "helpTheme" },
+  unsorted: { text: "helpUnsorted" },
 };
 
 const state = {

@@ -1095,6 +1095,53 @@ class TestDeckFromAColumn:
 
 
 @pytest.mark.unit
+class TestUnsortedDeck:
+    """``#config unsorted=…`` — the deck for a row that names no level."""
+
+    def test_a_name_is_taken_as_written(self):
+        config = _config(_plan(), deck="unsorted=Chưa phân loại")
+        assert config.unsorted == "Chưa phân loại"
+        assert config.warnings == []
+
+    def test_the_bare_flag_names_it_after_itself(self):
+        # A sheet that does not mind what the pile is called should not have to
+        # think of a name for it.
+        assert _config(_plan(), deck="unsorted").unsorted == "Unsorted"
+
+    def test_quotes_around_a_name_are_not_part_of_the_name(self):
+        # A name with a space in it invites them, and a deck called `"Chưa phân
+        # loại` sorts nowhere near the one the user meant to make.
+        config = _config(_plan(), deck='unsorted="Chưa phân loại"')
+        assert config.unsorted == "Chưa phân loại"
+
+    def test_an_empty_name_is_refused_and_named(self):
+        config = _config(_plan(), deck="unsorted=")
+        assert config.unsorted is None
+        assert any("unsorted" in w for w in config.warnings)
+
+    def test_it_reaches_the_deck_and_the_tags(self):
+        from src.column_model import plan_columns
+        from src.tsv_model import build_tags
+        from src.tsv_model import get_subdeck_name
+
+        plan = plan_columns(["ID", "SUBDECK 1", "Word"])
+        config = parse_config_row({"ID": "#config unsorted=Unsorted"}, plan)
+        row = {"SUBDECK 1": "", "Word": "写"}
+        from src.column_model import deck_path
+
+        assert get_subdeck_name("Deck", deck_path(row, plan, config)) == (
+            "Deck::Unsorted"
+        )
+        assert "sheets2anki::unsorted" in build_tags(row, plan, config)
+
+    def test_it_says_nothing_about_the_card(self):
+        plan = _plan()
+        config = _config(plan, deck="unsorted=Unsorted")
+        for template in build_templates(plan, config):
+            assert "Unsorted" not in _both(template)
+
+
+@pytest.mark.unit
 class TestHeardNotSeen:
     """``side=hide`` + ``tts`` — a column spoken without being shown."""
 

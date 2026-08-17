@@ -171,6 +171,11 @@ def deck_path(row, plan, sheet_config=None):
     same value can be a level of the deck and something printed on the card
     without being typed into the sheet twice.
 
+    A row that fills in no level at all has an empty path and is filed in the
+    sheet's own deck — unless the settings row named a deck for exactly that case
+    (``#config unsorted=…``), which then becomes the row's single level. Nothing is
+    ever unfiled: Anki has no such state, and the empty path is a deck too.
+
     ``sheet_config`` is optional so every caller that has no settings row in hand
     keeps working unchanged.
     """
@@ -180,6 +185,10 @@ def deck_path(row, plan, sheet_config=None):
         value = str(row.get(header, "")).strip()
         if value:
             path.append(value)
+    if not path:
+        unsorted = getattr(sheet_config, "unsorted", None)
+        if unsorted:
+            return [unsorted]
     return path
 
 

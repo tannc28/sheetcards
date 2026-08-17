@@ -158,6 +158,46 @@ class TestDeckPath:
 
 
 @pytest.mark.unit
+class TestUnsortedDeck:
+    """``#config unsorted=…`` names the deck for a row that names no level."""
+
+    class _Config:
+        def __init__(self, unsorted=None, subdeck_columns=()):
+            self.unsorted = unsorted
+            self.subdeck_columns = list(subdeck_columns)
+
+    def test_an_empty_path_becomes_the_named_deck(self):
+        plan = cm.plan_columns(HEADERS)
+        row = _row(**{"SUBDECK 1": "", "SUBDECK 2": ""})
+        config = self._Config(unsorted="Chưa phân loại")
+        assert cm.deck_path(row, plan, config) == ["Chưa phân loại"]
+
+    def test_a_row_that_names_a_level_is_untouched(self):
+        plan = cm.plan_columns(HEADERS)
+        config = self._Config(unsorted="Unsorted")
+        assert cm.deck_path(_row(), plan, config) == ["Unit 3", "Verbs"]
+
+    def test_a_partly_filled_path_is_not_the_unsorted_pile(self):
+        # Only a row that says nothing at all is unsorted. A blank outer level with
+        # a deeper one filled in is still a row that was filed.
+        plan = cm.plan_columns(HEADERS)
+        config = self._Config(unsorted="Unsorted")
+        row = _row(**{"SUBDECK 1": ""})
+        assert cm.deck_path(row, plan, config) == ["Verbs"]
+
+    def test_it_applies_to_a_settings_row_deck_column_too(self):
+        plan = cm.plan_columns(["ID", "Level", "Front"])
+        config = self._Config(unsorted="Unsorted", subdeck_columns=["Level"])
+        row = {"ID": "1", "Level": "  ", "Front": "a"}
+        assert cm.deck_path(row, plan, config) == ["Unsorted"]
+
+    def test_without_the_key_an_empty_path_stays_empty(self):
+        plan = cm.plan_columns(HEADERS)
+        row = _row(**{"SUBDECK 1": "", "SUBDECK 2": ""})
+        assert cm.deck_path(row, plan, self._Config()) == []
+
+
+@pytest.mark.unit
 class TestTags:
     def test_comma_and_semicolon_separated(self):
         plan = cm.plan_columns(HEADERS)

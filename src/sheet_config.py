@@ -122,7 +122,12 @@ _FIELD_KEYS = (
     + _FLAGS
     + MEDIA_KINDS
 )
-_DECK_KEYS = ("align", "speed", "reverse", "theme")
+# `unsorted` names the deck a row lands in when it fills in no level of the path at
+# all. Without it such a row stays in the sheet's own deck, next to the sub-decks —
+# which is a real deck and not a hole, but it does mix the rows that were filed with
+# the rows that were not. It is named rather than invented, because a name the
+# add-on chose would arrive in English in a deck list that is not.
+_DECK_KEYS = ("align", "speed", "reverse", "theme", "unsorted")
 
 _HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 # Full form only: a language plus a region, e.g. zh_CN, en_US, pt_BR, zh-TW.
@@ -279,6 +284,9 @@ class SheetConfig:
         self.speed = None
         self.reverse = False
         self.theme = None  # a key of THEMES; None leaves the card Anki's own colours
+        # The deck for a row that names no level of the path. None leaves such a row
+        # in the sheet's own deck, which is what every sheet did before this existed.
+        self.unsorted = None
         self.warnings = []
         # The column carrying cloze deletions, and the one Anki asks the learner to
         # type. Both are single because a note type has one template set and Anki
@@ -541,6 +549,17 @@ def parse_config_row(row, plan):
             warn(f"'{MARKER}': unknown deck setting '{key}'")
         elif key == "reverse":
             config.reverse = value is None or value.strip().lower() not in _FALSEY
+        elif key == "unsorted":
+            # A bare `unsorted` names the deck after the word itself: a sheet that
+            # does not mind what the pile is called should not have to think of a
+            # name for it. The quotes are stripped because a name with a space in it
+            # invites them, and `unsorted="Chưa phân loại"` should not file the notes
+            # under a deck whose name starts with a quotation mark.
+            name = ("Unsorted" if value is None else value).strip().strip("\"'").strip()
+            if name:
+                config.unsorted = name
+            else:
+                warn(f"'{MARKER}': unsorted needs a deck name")
         elif value is None:
             warn(f"'{MARKER}': '{key}' needs a value")
         elif key == "align":

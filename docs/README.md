@@ -260,7 +260,9 @@ in `column_model.py`.
   Cloze note type.
 - **Deck hierarchy:** `Sheets2Anki::{deck}` followed by the row's `SUBDECK` levels
   (`utils.get_subdeck_name()`, `data_processor.determine_target_deck()`). A sheet with no
-  `SUBDECK` columns keeps every note in the deck root.
+  `SUBDECK` columns keeps every note in the deck root. A row that fills in no level is
+  filed in the sheet's own deck — which is a real deck, sitting beside the sub-decks —
+  unless the settings row named a deck for exactly that case (`#config unsorted=…`).
 - **Tags** (`data_processor.build_tags()`): `sheets2anki` on every note the add-on owns,
   `sheets2anki::<subdeck path>` mirroring the deck path, plus whatever the `TAGS` column
   lists. Each component is folded to a safe lower-case tag by `clean_tag_text()`.
@@ -283,7 +285,7 @@ feature has no `#config` cell, so nothing changes for it.
 | :--- | :--- |
 | `present` | True when a settings row was found |
 | `fields` | `{header: FieldConfig}` — only for columns whose cell was non-empty |
-| `align`, `speed`, `reverse` | the deck-wide settings from the `#config` cell |
+| `align`, `speed`, `reverse`, `theme`, `unsorted` | the deck-wide settings from the `#config` cell |
 | `warnings` | every directive the parser did not understand, each naming its column |
 
 Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
@@ -321,7 +323,18 @@ Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
 
 **Deck-wide keys** (`_DECK_KEYS`), parsed out of the remainder of the `#config` cell:
 `align` (validated), `speed` (parsed as a float but **not** range-checked, unlike the
-per-column one), and the `reverse` flag.
+per-column one), `theme` (a key of `THEMES`), the `reverse` flag, and `unsorted`.
+
+**`unsorted=<name>`** names the deck for a row that fills in no level of the path at all
+— neither a `SUBDECK n` column nor a `subdeck=n` one. Without it such a row is filed in
+the sheet's own deck, beside the sub-decks, which mixes the rows that were filed with the
+rows that were not. The bare flag (`#config unsorted`) names the deck `Unsorted`; a value
+is taken as written, with surrounding quotes stripped, so a name with a space in it can be
+written `unsorted="Chưa phân loại"`. It is never invented: a name the add-on chose would
+arrive in English in a deck list that is not. `column_model.deck_path()` returns it as the
+row's single level, so the deck **and** the mirrored tag both follow. A row that fills in
+*some* level is not unsorted — a blank outer level with a deeper one filled still names a
+deck.
 
 Two design points worth keeping:
 
