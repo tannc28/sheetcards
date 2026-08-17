@@ -39,3 +39,7 @@ scripts/image_processor_config.json
 
 # Image Processor - Local backups (never commit!)
 image_backups/
+
+# The CC-CEDICT download tools/pinyin/build_data.py reads (14 MB, fetched on demand)
+tools/pinyin/cedict.txt
+tools/pinyin/cedict.txt.gz
