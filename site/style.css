@@ -667,6 +667,32 @@ h3.spaced { margin-top: 18px; }
 .sheet .cell.anchor { box-shadow: inset 0 0 0 2px var(--accent); }
 .sheet .ref.sel { color: var(--accent); background: var(--accent-soft); font-weight: 650; }
 
+/* The handle on the corner of a range: drag it and the range repeats across what
+   it is dragged over. Big enough to catch with a finger — `touch-action: none` so
+   dragging it fills instead of scrolling the grid sideways. */
+.sheet .cell .fill {
+  position: absolute; right: -4px; bottom: -4px; z-index: 2;
+  width: 9px; height: 9px; border-radius: 2px;
+  background: var(--accent); border: 1px solid var(--panel);
+  cursor: crosshair; pointer-events: auto; touch-action: none;
+}
+
+/* The right-click menu. Fixed to the pointer rather than placed in the grid: the
+   sheet scrolls inside its own box, and a menu that scrolls with it would be
+   clipped by the first column it passed. */
+.menu {
+  position: fixed; z-index: 50; min-width: 12rem;
+  padding: 4px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--panel); box-shadow: var(--shadow);
+}
+.menu button {
+  display: block; width: 100%; padding: 7px 10px;
+  font-size: var(--t-md); text-align: left; color: var(--ink);
+  background: transparent; border: 0; border-radius: var(--r-sm);
+}
+.menu button:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
+.menu button:disabled { color: var(--muted); }
+
 /* The directive chips. */
 .collist { display: flex; flex-wrap: wrap; gap: 4px; }
 .col {

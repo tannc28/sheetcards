@@ -617,7 +617,23 @@ function paintSelection() {
         (c !== null && c >= box.c1 && c <= box.c2));
     el.classList.toggle("sel", Boolean(lit));
   }
+
+  // The little square on the bottom-right corner of a range. One element moved
+  // from cell to cell rather than one per cell: it is the same handle wherever
+  // the selection goes, and a handle left behind in an old corner is the kind of
+  // thing that gets dragged by accident.
+  if (box) {
+    const corner = sheet.querySelector(`.cell[data-r="${box.r2}"][data-c="${box.c2}"]`);
+    corner?.append(FILL_HANDLE);
+  } else {
+    FILL_HANDLE.remove();
+  }
 }
+
+const FILL_HANDLE = Object.assign(document.createElement("span"), {
+  className: "fill",
+  title: "",
+});
 
 /** Hands one cell to the keyboard, with its text selected so typing replaces it. */
 function startEditing(r, c) {
@@ -1084,6 +1100,10 @@ function download(text, name) {
 // ---------------------------------------------------------------------------
 
 document.addEventListener("click", (e) => {
+  const item = e.target.closest("[data-menu]");
+  if (item) return runMenu(item.dataset.menu);
+  closeMenu();
+
   if (e.target.closest("#theme")) return setTheme(!dark());
 
   const tab = e.target.closest("[data-tab]");
@@ -1250,6 +1270,31 @@ $("#sheet").addEventListener("input", (e) => {
 // ---------------------------------------------------------------------------
 
 let dragging = false;
+// The range the fill started from, while its handle is being dragged.
+let filling = null;
+
+/**
+ * Copies a range across the cells it was dragged over.
+ *
+ * The rule is the spreadsheet's: the source block repeats to cover the target, so
+ * dragging one cell across four fills all four with it, and dragging a pair
+ * alternates them. Written as one modulo rather than as a case for each direction,
+ * which is also why dragging back over the source leaves it exactly as it was.
+ */
+function fillFrom(src, box) {
+  const height = src.r2 - src.r1 + 1;
+  const width = src.c2 - src.c1 + 1;
+  for (let r = box.r1; r <= box.r2; r++) {
+    for (let c = box.c1; c <= box.c2; c++) {
+      if (r >= src.r1 && r <= src.r2 && c >= src.c1 && c <= src.c2) continue;
+      const from = {
+        r: src.r1 + ((r - src.r1) % height + height) % height,
+        c: src.c1 + ((c - src.c1) % width + width) % width,
+      };
+      writeCell(r, c, cellAt(from.r, from.c));
+    }
+  }
+}
 
 /**
  * A press on the grid: on the refs it takes a whole column or row, on a cell it
@@ -1262,6 +1307,13 @@ let dragging = false;
  * so the phone keeps the whole feature without the gesture.
  */
 $("#sheet").addEventListener("pointerdown", (e) => {
+  if (e.target === FILL_HANDLE) {
+    // Not a new selection: the handle belongs to the one already there.
+    e.preventDefault();
+    filling = bounds();
+    return;
+  }
+
   const ref = e.target.closest(".ref");
   if (ref) {
     e.preventDefault();
@@ -1300,13 +1352,53 @@ $("#sheet").addEventListener("pointerdown", (e) => {
 });
 
 $("#sheet").addEventListener("pointermove", (e) => {
-  if (!dragging) return;
   const cell = e.target.closest(".cell");
-  if (cell) select(Number(cell.dataset.r), Number(cell.dataset.c), true);
+  if (!cell) return;
+  const [r, c] = [Number(cell.dataset.r), Number(cell.dataset.c)];
+
+  // While filling, the range grows to show what is about to be written into —
+  // the same tinted block, because that is exactly what it will hold.
+  if (filling) {
+    state.sel = {
+      r: Math.min(filling.r1, r),
+      c: Math.min(filling.c1, c),
+      r2: Math.max(filling.r2, r),
+      c2: Math.max(filling.c2, c),
+    };
+    paintSelection();
+    return;
+  }
+  if (dragging) select(r, c, true);
 });
 
 addEventListener("pointerup", () => {
   dragging = false;
+  if (!filling) return;
+  const box = bounds();
+  const src = filling;
+  filling = null;
+  // Nothing was dragged over, so there is nothing to fill and nothing to undo.
+  if (box.r1 === src.r1 && box.r2 === src.r2 && box.c1 === src.c1 && box.c2 === src.c2) {
+    return;
+  }
+  mark();
+  fillFrom(src, box);
+  paintSheet();
+  draw();
+});
+
+$("#sheet").addEventListener("contextmenu", (e) => {
+  const cell = e.target.closest(".cell");
+  if (!cell) return;
+  e.preventDefault();
+  const [r, c] = [Number(cell.dataset.r), Number(cell.dataset.c)];
+  // Right-clicking outside the selection moves it there first, the way it does in
+  // a spreadsheet: the menu acts on what is highlighted, so what is highlighted
+  // has to be what was just pointed at.
+  const box = bounds();
+  const inside = box && r >= box.r1 && r <= box.r2 && c >= box.c1 && c <= box.c2;
+  if (!inside) select(r, c);
+  openMenu(e.clientX, e.clientY);
 });
 
 // A second click is how a spreadsheet asks for the caret. So is Enter, below.
@@ -1314,6 +1406,81 @@ $("#sheet").addEventListener("dblclick", (e) => {
   const cell = e.target.closest(".cell");
   if (cell) startEditing(Number(cell.dataset.r), Number(cell.dataset.c));
 });
+
+/**
+ * The menu a spreadsheet opens on right-click.
+ *
+ * Everything in it can already be done another way — the "+" adds a column, the
+ * "×" removes one, Delete empties a range — but not *here*, at the cell being
+ * looked at, which is where a hand already is. Adding a column between two others
+ * had no other way at all: the "+" only ever appends.
+ */
+const MENU = ["left", "right", "drop", "clear"];
+const MENU_LABEL = {
+  left: "edInsertLeft",
+  right: "edInsertRight",
+  drop: "edRemoveColumn",
+  clear: "edClearCells",
+};
+
+function blankColumn() {
+  return { name: "", cell: "", value: "" };
+}
+
+function closeMenu() {
+  document.getElementById("cellmenu")?.remove();
+}
+
+/** Opens the menu at the pointer, kept inside the window. */
+function openMenu(x, y) {
+  closeMenu();
+  const el = document.createElement("div");
+  el.id = "cellmenu";
+  el.className = "menu";
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.innerHTML = MENU.map(
+    (id) =>
+      `<button data-menu="${id}"${
+        id === "drop" && state.columns.length < 2 ? " disabled" : ""
+      }>${escapeHtml(t(MENU_LABEL[id]))}</button>`,
+  ).join("");
+  document.body.append(el);
+
+  const box = el.getBoundingClientRect();
+  if (box.right > innerWidth) {
+    el.style.left = `${Math.max(4, innerWidth - box.width - 4)}px`;
+  }
+  if (box.bottom > innerHeight) el.style.top = `${Math.max(4, y - box.height)}px`;
+}
+
+/** Carries out one item of the menu, on the cell it was opened over. */
+function runMenu(id) {
+  const at = state.sel;
+  if (!at) return;
+  mark();
+
+  if (id === "clear") {
+    const box = bounds();
+    for (let r = box.r1; r <= box.r2; r++) {
+      for (let c = box.c1; c <= box.c2; c++) writeCell(r, c, "");
+    }
+  } else if (id === "drop") {
+    if (state.columns.length < 2 || at.c < 0) return;
+    state.columns.splice(at.c, 1);
+    state.active = Math.min(Math.max(state.active, 0), state.columns.length - 1);
+    state.sel = null;
+  } else {
+    // Column A is the sheet's own; a column asked for beside it goes first.
+    const where = at.c < 0 ? 0 : id === "left" ? at.c : at.c + 1;
+    state.columns.splice(where, 0, blankColumn());
+    select(at.r, where);
+  }
+
+  closeMenu();
+  paintSheet();
+  draw();
+}
 
 /**
  * The keyboard while a range is up: move it, extend it, empty it, or start typing.
@@ -1381,7 +1548,10 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     return void startEditing(r, c);
   }
-  if (e.key === "Escape") return clearSelection();
+  if (e.key === "Escape") {
+    closeMenu();
+    return clearSelection();
+  }
 
   if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();

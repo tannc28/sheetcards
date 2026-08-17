@@ -145,6 +145,9 @@ const STRINGS = {
     vi: "Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào",
   },
   edSelectAll: { en: "Select every cell", vi: "Chọn tất cả các ô" },
+  edInsertLeft: { en: "Insert column left", vi: "Chèn cột bên trái" },
+  edInsertRight: { en: "Insert column right", vi: "Chèn cột bên phải" },
+  edClearCells: { en: "Clear cells", vi: "Xoá nội dung ô" },
   edUndone: { en: "Undone — Ctrl+Y puts it back", vi: "Đã hoàn tác — Ctrl+Y để làm lại" },
   edRedone: { en: "Redone", vi: "Đã làm lại" },
   edPasted: {
