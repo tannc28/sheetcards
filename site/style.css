@@ -658,6 +658,29 @@ h3.spaced { margin-top: 18px; }
 .cellrow .v { min-width: 0; overflow-wrap: anywhere; }
 .cellrow .v.none { color: var(--muted); font-style: italic; }
 
+/* ---- the editor: where row 3 is filed ------------------------------------ */
+
+/* Above the card tabs, not one of them: the deck is not a view of the card, it
+   is the other half of what the settings row decided. Two lines on a phone, one
+   on anything wider, because neither is worth a box of its own. */
+.deckline {
+  display: flex; flex-wrap: wrap; gap: 4px 18px;
+  margin: 0; padding: 10px var(--pad);
+  background: var(--sunken); border-bottom: 1px solid var(--line);
+  font-size: var(--t-sm);
+}
+.deckline:empty { display: none; }
+.deckline .filed { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.deckline b { font-weight: 600; color: var(--muted); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .04em; }
+.deckline i { color: var(--muted); font-style: normal; }
+.deckline .mono { overflow-wrap: anywhere; }
+/* Two tags side by side with only a gap between them read as one long string,
+   which is exactly what a tag must not look like. */
+.deckline code {
+  color: var(--muted); padding: 1px 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+
 /* ---- panel 3: the card --------------------------------------------------- */
 
 .tabs {

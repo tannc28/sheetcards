@@ -144,6 +144,12 @@ const STRINGS = {
     vi: (front, back) =>
       `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
   },
+  edFiledIn: { en: "Filed in", vi: "Nằm ở" },
+  edTags: { en: "Tags", vi: "Tags" },
+  // The real root is `s2a_{file}::{sheet}` — the file and the sheet this row came
+  // from, which an editor with no sheet behind it does not have. Named for what it
+  // is instead of invented, so nothing on screen claims to be a deck name.
+  edDeckRoot: { en: "your sheet's deck", vi: "deck của sheet bạn" },
   toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
   urlPlaceholder: {
     en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",

@@ -20,8 +20,9 @@ import { startPython } from "./pyodide.js";
 const EDITOR = String.raw`
 import json
 from s2a.card_layout import build_templates, split_sides
-from s2a.column_model import plan_columns
+from s2a.column_model import deck_path, plan_columns
 from s2a.sheet_config import SheetConfig, is_config_row, parse_config_row
+from s2a.tsv_model import build_tags
 
 
 def keys():
@@ -67,7 +68,7 @@ def preview(payload):
     and row 2 has stopped being a settings row at all.
     """
     data = json.loads(payload)
-    names, cells = [], {}
+    names, cells, values = [], {}, {}
     for index, column in enumerate(data["columns"]):
         name = column["name"].strip() or "Column " + str(index + 1)
         # A repeated header is honoured once, which would silently drop a column
@@ -76,6 +77,7 @@ def preview(payload):
             name += " "
         names.append(name)
         cells[name] = column["cell"]
+        values[name] = column["value"]
 
     plan = plan_columns(["ID"] + names)
     row = dict(cells)
@@ -83,6 +85,10 @@ def preview(payload):
 
     config = parse_config_row(row, plan) if is_config_row(row, plan) else SheetConfig()
     front, back = split_sides(plan, config)
+    # Where row 3 is filed, and under what. A card is not the only thing a
+    # settings row decides: a subdeck level and the unsorted deck reach the deck
+    # and never the card, so with only the card on screen they looked inert.
+    # (No backticks in this string: it is a JS template literal.)
     return json.dumps(
         {
             "names": names,
@@ -90,6 +96,8 @@ def preview(payload):
             "warnings": config.warnings,
             "front": front,
             "back": back,
+            "deck": deck_path(values, plan, config),
+            "tags": build_tags(values, plan, config),
             "templates": build_templates(
                 plan, config, is_cloze=bool(config.cloze_field)
             ),
@@ -519,6 +527,8 @@ function drawCard() {
     !out.isConfig || warnings.length ? "bad" : "ok",
   );
 
+  drawDeck(out);
+
   const index = Math.min(state.template, out.templates.length - 1);
   const template = out.templates[index];
   const values = { ID: "1" };
@@ -609,6 +619,34 @@ function drawCard() {
       t("edSides", out.front.length, out.back.length),
     )}</p>
   </div>`;
+}
+
+/**
+ * Where row 3 lands, and under what tags.
+ *
+ * The card is only half of what a settings row decides: `subdeck=n` files the
+ * note and `unsorted` names the deck for a row that files itself nowhere, and
+ * neither of them ever touches the card. Beside the card rather than as a fifth
+ * tab, because it is not a view of the card — it is the other half of the answer.
+ *
+ * The root is named for what it is rather than guessed at: the real one comes
+ * from the file and the sheet, and this editor has neither. Only the levels below
+ * it are this settings row's doing, so only they are shown as the sheet's own
+ * words.
+ */
+function drawDeck(out) {
+  const levels = out.deck || [];
+  const tags = out.tags || [];
+  const crumbs = [
+    `<span class="muted">${escapeHtml(t("edDeckRoot"))}</span>`,
+    ...levels.map((name) => `<span class="mono">${escapeHtml(name)}</span>`),
+  ].join('<i aria-hidden="true">›</i>');
+
+  $("#deck").innerHTML =
+    `<span class="filed"><b>${escapeHtml(t("edFiledIn"))}</b>${crumbs}</span>` +
+    `<span class="filed"><b>${escapeHtml(t("edTags"))}</b>${tags
+      .map((tag) => `<code>${escapeHtml(tag)}</code>`)
+      .join("")}</span>`;
 }
 
 /** The answer side minus the repeated question, when the template used FrontSide. */
