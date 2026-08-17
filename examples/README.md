@@ -72,7 +72,7 @@ the deck root. `TAGS` is split on either commas or semicolons.
 ### 03 Card layout (bố cục thẻ)
 
 The first sheet with a **settings row** — row 2, marked by `#config` in the `ID`
-cell. It moves `Pinyin` to the front, sets sizes (including `48px`, since the
+cell. It moves `Phonetic` to the front, sets sizes (including `48px`, since the
 `px` suffix is tolerated), and shows all three ways to write a colour:
 `color=accent` follows the light/dark theme, `color=#c2410c` is a hex value and
 `color=teal` is a CSS name. `Note` is behind a `hint`, and `Source` is
@@ -87,14 +87,16 @@ back and answering with the front. One row, two cards, scheduled independently.
 
 ### 05 Type the answer (gõ đáp án)
 
-`type=nc` on the Spanish column makes Anki draw an input box on the question and
-diff what you typed against the field. `nc` drops diacritics from the
-comparison, so *el arbol* is accepted for **el árbol** — but `ñ` is a letter
-rather than an accent and still has to be typed.
+`type=nc` on the Vietnamese column makes Anki draw an input box on the question
+and diff what you typed against the field. `nc` drops the marks from the
+comparison, so *cai cay* is accepted for **cái cây** — which is the difference
+between practising vocabulary and practising a Vietnamese keyboard. `đ` is a
+letter rather than a mark, so it still has to be typed.
 
 ### 06 Cloze (điền chỗ trống)
 
-One column declares `cloze` and every deletion in it becomes its own card. `z02`
+One column declares `cloze` and every deletion in it becomes its own card. The
+deleted word is the grammar: *has been*, *by*, *will*, *more*, *used to*. `z02`
 carries `c1` and `c2`, so that row makes two. The declaration is per *sheet*, not
 per row, because the note type has one template set — and Anki renders a clozed
 field holding no deletion as nothing at all, which is why only the declared
@@ -104,13 +106,17 @@ column is wrapped.
 
 `image` says the cell holds a bare URL, and `size=320` caps its width. The
 picture is the first content column, so it is the prompt: see the thing, recall
-the word.
+the word. This one is a Chinese deck — sheet 16 is the same idea in English, with
+a recording as well, and the two share no photograph between them.
 
 ### 08 Audio (âm thanh)
 
-`audio` renders `<audio controls>` — listen, then reveal the characters, the
-pinyin and the meaning. The recordings are Wikimedia Commons `.ogg` files, which
-play on Anki for desktop; a sheet meant for iOS is better off with `.mp3`.
+`audio` renders `<audio controls>` — listen, then reveal the word, how it is
+written in the phonetic alphabet, and what it means. The recordings are real
+people on Wikimedia Commons rather than a synthesiser, linked through
+`Special:FilePath/En-us-book.ogg` so the address cannot go stale. They are `.ogg`
+files, which play on Anki for desktop; a sheet meant for iOS is better off with
+`.mp3`.
 
 ### 09 Video (video nhúng)
 
@@ -123,15 +129,16 @@ behind Anki's `{{hint:}}`, which would only reveal the URL.
 
 ### 10 Speech (đọc thành tiếng)
 
-`tts=zh_CN` makes Anki speak the field with an installed voice. The language code
+`tts=en_US` makes Anki speak the field with an installed voice. The language code
 must be the full form: Anki compares it against a voice's language *exactly*, so
-a bare `zh` matches nothing and plays silence. `#config speed=0.9` sets the
-deck-wide rate and the `Slowly` column overrides it with `speed=0.5`.
+a bare `en` matches nothing and plays silence. `#config speed=0.9` sets the
+deck-wide rate and the last column overrides it with `speed=0.5`.
 
-`voices=Ting-Ting,Microsoft Huihui` names the voices this column would rather be
-read by, best first. It is a *preference*, not a requirement — a machine with
-neither installed still speaks the field in any `zh_CN` voice it has, which is
-why naming a voice you happen to like does not break the deck for anyone else.
+`voices=Samantha,Microsoft Zira` names the voices this column would rather be
+read by, best first — the first is macOS, the second Windows. It is a
+*preference*, not a requirement: a machine with neither installed still speaks
+the field in any `en_US` voice it has, which is why naming a voice you happen to
+like does not break the deck for anyone else.
 
 ### 11 Chinese writing (gõ chữ)
 
@@ -242,13 +249,15 @@ rather than a riddle. The note behind `hint` says why the word is where it is.
 
 ### 19 Dictation (nghe rồi gõ)
 
-The sentence column is `side=hide; tts=zh_CN; type`. Hidden, so it is drawn
+The sentence column is `side=hide; tts=en_US; type`. Hidden, so it is drawn
 nowhere; spoken, so it is on the question anyway; typed, so the only way through
 the card is to listen and write down what you heard. Anki's comparison on the
 answer shows the sentence character by character against what you typed.
 
 `speed=0.85` slows the voice a little — dictation at conversational speed is a
-different exercise, and a harder one than this deck is for.
+different exercise, and a harder one than this deck is for. Anki's comparison is
+kind about capitals and punctuation and merciless about spelling, which is the
+right way round for this.
 
 This is the shape of card the settings row exists for: nothing about it is a
 default, and none of it needs a note type built by hand.

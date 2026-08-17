@@ -161,6 +161,10 @@ into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
 https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
 ```
 
+Most of it is English for Vietnamese speakers, because that is what most people
+are studying; Chinese, Japanese and Korean appear where the feature is theirs —
+handwriting, furigana, non-Latin headers.
+
 Twenty sheets, each one its own deck, ordered from *the smallest sheet that
 works* to *a deck you would keep studying*. Where a column carries the meaning of a
 word it is glossed in Vietnamese; everything else is English. Nothing about the
@@ -172,12 +176,12 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `02 Sync & subdecks (deck con)` | `SYNC` gating, `SUBDECK 1`/`2`, `TAGS` |
 | `03 Card layout (bố cục thẻ)` | `side`, `size`, all three colour forms, `bold`, `italic`, `label`, `hint`, `side=hide`, deck-wide `align` |
 | `04 Reverse (thẻ ngược)` | one row, two cards |
-| `05 Type the answer (gõ đáp án)` | `type=nc`, so accents do not count against you |
+| `05 Type the answer (gõ đáp án)` | `type=nc`, so the Vietnamese marks do not have to be typed |
 | `06 Cloze (điền chỗ trống)` | a declared `cloze` column, including a row with two deletions |
-| `07 Images (hình ảnh)` | `image` on the prompt, with `size` |
-| `08 Audio (âm thanh)` | `audio`, listen-then-recall |
+| `07 Images (hình ảnh)` | `image` on the prompt, with `size` — the picture asks and the Chinese word answers |
+| `08 Audio (âm thanh)` | `audio`, listen-then-recall: an English word spoken by a person, not a synthesiser |
 | `09 Video (video nhúng)` | every YouTube link form the add-on rewrites, plus a direct file |
-| `10 Speech (đọc thành tiếng)` | `tts=zh_CN`, a `voices=` preference, deck-wide `speed`, a per-column `speed` override |
+| `10 Speech (đọc thành tiếng)` | `tts=en_US`, a `voices=` preference, deck-wide `speed`, and a hidden column that repeats the phrase at half speed |
 | `11 Chinese writing (gõ chữ)` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` filing it by HSK level |
 | `12 Chinese drawing (viết tay)` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
