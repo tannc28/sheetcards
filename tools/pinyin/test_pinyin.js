@@ -9,7 +9,7 @@ const context = vm.createContext({ console });
 for (const file of ["PinyinData.gs", "Pinyin.gs"]) {
   vm.runInContext(fs.readFileSync(path.join(here, file), "utf8"), context, { filename: file });
 }
-const { PINYIN, PINYIN_NUM } = context;
+const { PINYIN } = context;
 
 const cases = [
   ["行动", "xíngdòng"],
@@ -36,13 +36,12 @@ for (const [input, expected] of cases) {
               (ok ? "" : `  (expected ${JSON.stringify(expected)})`));
 }
 
-console.log("\nstyles:");
-for (const [style, expected] of [["number", "xing2dong4"], ["plain", "xingdong"]]) {
-  const got = PINYIN("行动", style);
-  console.log(`  ${style}: ${got}${got === expected ? "" : ` (expected ${expected})`}`);
-  if (got !== expected) failed += 1;
+// There is one way of writing it, so a second argument must change nothing.
+const extra = PINYIN("行动", "number");
+if (extra !== "xíngdòng") {
+  failed += 1;
+  console.log(`FAIL a second argument changed the output: ${JSON.stringify(extra)}`);
 }
-console.log(`  PINYIN_NUM: ${PINYIN_NUM("银行")}`);
 
 console.log("\nrange:", JSON.stringify(PINYIN([["行动"], ["银行"]])));
 

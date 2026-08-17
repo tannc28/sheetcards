@@ -1,11 +1,13 @@
 /**
  * Sheets2Anki — pinyin in a cell.
  *
- *   =PINYIN(A2)            行动           -> xíngdòng
- *   =PINYIN(E2)            我们需要立即行动 -> wǒmen xūyào lìjí xíngdòng
- *   =PINYIN(A2, "number")  行动           -> xing2dong4
- *   =PINYIN(A2, "plain")   行动           -> xingdong
- *   =PINYIN(A2:A200)       a whole column at once
+ *   =PINYIN(A2)        行动             -> xíngdòng
+ *   =PINYIN(E2)        我们需要立即行动   -> wǒmen xūyào lìjí xíngdòng
+ *   =PINYIN(A2:A200)   a whole column at once
+ *
+ * One way of writing it, the standard one. The dictionary stores tone numbers
+ * because they are ASCII and half the bytes, but that is where they stay: what
+ * comes out of a cell is always the tone marks.
  *
  * Everything happens inside this file. There is no API key, no network call and
  * no quota to run out of: the dictionary is in PinyinData.gs and the work is a
@@ -31,34 +33,19 @@ var PINYIN_TABLES = null;
  * Pinyin for Chinese text.
  *
  * @param {string|Array} text The text, or a range of cells.
- * @param {string} [style] "tone" (default) for mǎ, "number" for ma3, "plain" for ma.
  * @return {string|Array} The reading. Anything that is not Chinese comes back untouched.
  * @customfunction
  */
-function PINYIN(text, style) {
+function PINYIN(text) {
   if (Array.isArray(text)) {
     return text.map(function (row) {
       return Array.isArray(row)
-        ? row.map(function (cell) { return PINYIN(cell, style); })
-        : PINYIN(row, style);
+        ? row.map(function (cell) { return PINYIN(cell); })
+        : PINYIN(row);
     });
   }
   if (text === null || text === undefined || text === "") return "";
-
-  var mode = String(style || "tone").toLowerCase();
-  var syllables = pinyinSegment_(String(text));
-  return pinyinJoin_(syllables, mode);
-}
-
-/**
- * Pinyin written with tone numbers, e.g. xing2dong4.
- *
- * @param {string|Array} text The text, or a range of cells.
- * @return {string|Array} The reading.
- * @customfunction
- */
-function PINYIN_NUM(text) {
-  return PINYIN(text, "number");
+  return pinyinJoin_(pinyinSegment_(String(text)));
 }
 
 /**
@@ -162,7 +149,7 @@ function isHan_(character) {
 }
 
 /** Words separated by a space, syllables inside a word run together. */
-function pinyinJoin_(items, mode) {
+function pinyinJoin_(items) {
   var parts = [];
   for (var i = 0; i < items.length; i += 1) {
     var item = items[i];
@@ -170,7 +157,7 @@ function pinyinJoin_(items, mode) {
       parts.push({ text: item.literal, spaced: false });
       continue;
     }
-    parts.push({ text: pinyinWord_(item.reading, mode), spaced: true });
+    parts.push({ text: pinyinWord_(item.reading), spaced: true });
   }
 
   var text = "";
@@ -182,20 +169,20 @@ function pinyinJoin_(items, mode) {
 }
 
 /** One word: its syllables, joined the way pinyin is written. */
-function pinyinWord_(syllables, mode) {
+function pinyinWord_(syllables) {
   var text = "";
   for (var i = 0; i < syllables.length; i += 1) {
     var syllable = syllables[i];
     if (syllable === "r5" && i > 0) {
       // Erhua is a suffix, not a syllable: 花儿 is huār, never huā er.
-      text += mode === "number" ? "r" : "r";
+      text += "r";
       continue;
     }
     // Without the apostrophe 西安 and a syllable "xian" are written identically.
     // The test is on the syllable as the dictionary spells it, not on the finished
     // one: by then the vowel may be ā, and "ā" does not start with "a".
     if (i > 0 && /^[aeo]/.test(syllable)) text += "'";
-    text += mode === "number" ? syllable : pinyinTone_(syllable, mode);
+    text += pinyinTone_(syllable);
   }
   return text;
 }
@@ -210,18 +197,16 @@ var PINYIN_VOWELS = {
 };
 
 /**
- * "xing2" -> "xíng", or "xing" when the mode is plain.
+ * "xing2" -> "xíng".
  *
  * Where the mark goes is the standard rule: an `a` or an `e` takes it; in `ou` the
  * `o` does; otherwise it lands on the last vowel.
  */
-function pinyinTone_(syllable, mode) {
+function pinyinTone_(syllable) {
   var match = /^([a-z]+)([1-5])$/.exec(syllable);
   if (!match) return syllable;
   var letters = match[1];
   var tone = parseInt(match[2], 10);
-  if (mode === "plain") return letters.replace(/v/g, "ü");
-
   var target = -1;
   if (letters.indexOf("a") >= 0) {
     target = letters.indexOf("a");

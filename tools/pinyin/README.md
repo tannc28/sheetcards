@@ -5,13 +5,14 @@ marks. No API key, no network call, no quota: the dictionary travels with the
 script.
 
 ```
-=PINYIN(A2)              行动             →  xíngdòng
-=PINYIN(E2)              我们需要立即行动   →  wǒmen xūyào lìjí xíngdòng
-=PINYIN(A2, "number")    行动             →  xing2dong4
-=PINYIN(A2, "plain")     行动             →  xingdong
-=PINYIN(A2:A200)         a whole column at once
-=PINYIN_NUM(A2)          same as "number"
+=PINYIN(A2)         行动             →  xíngdòng
+=PINYIN(E2)         我们需要立即行动   →  wǒmen xūyào lìjí xíngdòng
+=PINYIN(A2:A200)    a whole column at once
 ```
+
+One function, one way of writing the result — the standard one. The dictionary
+stores tone numbers internally because they are ASCII and half the bytes, but a
+cell only ever shows the tone marks.
 
 ## Setup, once per spreadsheet
 
