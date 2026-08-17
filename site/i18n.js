@@ -145,6 +145,8 @@ const STRINGS = {
     vi: "Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào",
   },
   edSelectAll: { en: "Select every cell", vi: "Chọn tất cả các ô" },
+  edUndone: { en: "Undone — Ctrl+Y puts it back", vi: "Đã hoàn tác — Ctrl+Y để làm lại" },
+  edRedone: { en: "Redone", vi: "Đã làm lại" },
   edPasted: {
     en: (n) => `Read ${n} column${n === 1 ? "" : "s"} from the clipboard`,
     vi: (n) => `Đã đọc ${n} cột từ clipboard`,

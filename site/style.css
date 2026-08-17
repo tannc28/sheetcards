@@ -517,7 +517,12 @@ h3.spaced { margin-top: 18px; }
    this one is a single column of controls that were sitting flush against the
    window, with the first letter of every line touching the edge. Panel 2 keeps
    padding its own parts, since the card and the tabs want different amounts. */
-.editor .ed-form { padding: var(--pad); overflow: auto; overscroll-behavior: contain; }
+/* Tight at the top: the panel header already says "Sheet", and `--pad` under it
+   put most of a line of blank between that word and the sheet it names. */
+.editor .ed-form {
+  padding: 8px var(--pad) var(--pad);
+  overflow: auto; overscroll-behavior: contain;
+}
 .editor .panel-toggle { cursor: default; }
 .editor .panel-toggle:hover { background: transparent; }
 .editor .chev { display: none; }

@@ -228,6 +228,66 @@ const state = {
 let run = null;
 let keys = { field: [], deck: [] };
 
+// ---------------------------------------------------------------------------
+// Undo
+// ---------------------------------------------------------------------------
+//
+// The one spreadsheet habit that has no substitute and no workaround: a cell typed
+// over is gone, and every other way of getting it back means remembering what was
+// in it. Cheap to keep here — the whole sheet is three rows of strings, so a step
+// is a copy of the sheet rather than a description of a change.
+//
+// A step is one *action*, not one keystroke: a cell being typed in is remembered
+// as it was when the typing started, so Ctrl+Z takes back the word rather than the
+// letter. `mark()` is called before anything that changes the sheet.
+const history = { past: [], future: [] };
+const LIMIT = 100;
+
+// What is being typed into right now, if anything. A run of keystrokes in one cell
+// is one step; moving to another cell, or doing anything that is not typing, ends
+// the run. Without it Ctrl+Z would take back a letter at a time, which is what a
+// text box does and not what a sheet does.
+let session = null;
+
+const sheetState = () => JSON.stringify({ marker: state.marker, columns: state.columns });
+
+/** Remembers `before` as a step. Call it with the sheet as it was. */
+function commit(before) {
+  history.past.push(before);
+  if (history.past.length > LIMIT) history.past.shift();
+  history.future.length = 0;
+  session = null;
+}
+
+/** One step for whatever is about to happen. */
+function mark() {
+  commit(sheetState());
+}
+
+/** One step for the *run* of keystrokes about to happen in `tag`. */
+function markRun(tag) {
+  if (session === tag) return;
+  const before = sheetState();
+  commit(before);
+  session = tag;
+}
+
+/** Puts a remembered sheet back. Shared by undo and redo, which are each other. */
+function restore(from, to) {
+  if (!from.length) return false;
+  session = null;
+  to.push(sheetState());
+  const { marker, columns } = JSON.parse(from.pop());
+  state.marker = marker;
+  state.columns = columns;
+  state.editing = null;
+  if (state.active >= columns.length) state.active = 0;
+  if (state.sel) state.sel = null;
+  paintSheet();
+  draw();
+  return true;
+}
+
 function status(text, kind = "", busy = false) {
   $("#status-text").textContent = text;
   $("#status").className = `status ${kind} ${busy ? "busy" : ""}`;
@@ -577,6 +637,8 @@ function startEditing(r, c) {
 function stopEditing() {
   if (!state.editing) return;
   state.editing = null;
+  // Leaving a cell ends the run, so coming back to it starts a new undo step.
+  session = null;
   for (const el of document.querySelectorAll("#sheet .cell.editing")) {
     el.classList.remove("editing");
   }
@@ -1040,6 +1102,7 @@ document.addEventListener("click", (e) => {
 
   const key = e.target.closest("[data-key]");
   if (key) {
+    mark();
     const name = key.dataset.key;
     // A flag has nothing to choose, so the tap still does the whole job — but it
     // also opens the panel, because `cloze` and `furigana` switched on with no
@@ -1053,12 +1116,14 @@ document.addEventListener("click", (e) => {
 
   const opt = e.target.closest("[data-opt]");
   if (opt) {
+    mark();
     setCell(toggle(cellText(), state.open, opt.dataset.opt));
     paintSheet();
     return draw();
   }
 
   if (e.target.closest("#optsample")) {
+    mark();
     const at = deckActive() ? 0 : state.active;
     state.columns[at].value = HELP[state.open].sample;
     paintSheet();
@@ -1066,6 +1131,7 @@ document.addEventListener("click", (e) => {
   }
 
   if (e.target.closest("#optdrop")) {
+    mark();
     setCell(
       parts(cellText())
         .filter((part) => nameOf(part) !== state.open)
@@ -1079,6 +1145,7 @@ document.addEventListener("click", (e) => {
   if (drop) {
     // One column has to survive: a sheet with none has nothing to put on a card.
     if (state.columns.length > 1) {
+      mark();
       state.columns.splice(Number(drop.dataset.drop), 1);
       state.active = Math.min(Math.max(state.active, 0), state.columns.length - 1);
       paintSheet();
@@ -1088,6 +1155,7 @@ document.addEventListener("click", (e) => {
   }
 
   if (e.target.closest("#add")) {
+    mark();
     state.columns.push({
       name: `Column ${state.columns.length + 1}`,
       cell: "",
@@ -1128,6 +1196,9 @@ document.addEventListener("click", (e) => {
 document.addEventListener("paste", (e) => {
   const text = e.clipboardData?.getData("text/plain") ?? "";
   const block = parseBlock(text);
+  // Taken before the block is applied and only remembered if it was, so a paste
+  // that turned out to be nothing does not cost a press of Ctrl+Z.
+  const before = sheetState();
   // A cell has been picked, so the paste goes there — one cell's worth included,
   // which is the whole point of having picked it. Editing a cell is the exception:
   // then the caret has the clipboard, the same as in any other text box.
@@ -1139,6 +1210,7 @@ document.addEventListener("paste", (e) => {
         : null;
   if (!read) return;
   e.preventDefault();
+  commit(before);
   paintSheet();
   draw();
   // After draw(), which sets the status from what the settings row turned out to
@@ -1156,6 +1228,7 @@ document.addEventListener("paste", (e) => {
 // delegation rather than wired up again each time.
 $("#opts").addEventListener("input", (e) => {
   if (e.target.id !== "optfree") return;
+  markRun(`opt:${state.open}`);
   setCell(toggle(cellText(), state.open, e.target.value.trim()));
   paintSheet();
   // Redrawn without repainting the options, so the box keeps the cursor in it.
@@ -1165,6 +1238,7 @@ $("#opts").addEventListener("input", (e) => {
 $("#sheet").addEventListener("input", (e) => {
   const el = e.target.closest("[data-edit]");
   if (!el) return;
+  markRun(`cell:${el.dataset.edit}:${el.dataset.col ?? "marker"}`);
   if (el.dataset.edit === "marker") state.marker = el.value;
   else state.columns[Number(el.dataset.col)][el.dataset.edit] = el.value;
   if (el.tagName === "TEXTAREA") grow(el);
@@ -1249,6 +1323,8 @@ $("#sheet").addEventListener("dblclick", (e) => {
  * be corrected in the middle.
  */
 document.addEventListener("keydown", (e) => {
+  const cmd = e.ctrlKey || e.metaKey;
+
   if (state.editing) {
     if (e.key === "Escape") {
       const { r, c } = state.editing;
@@ -1262,9 +1338,25 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (!state.sel) return;
   // Some other input has the keyboard — the free-text box beside the options, say.
+  // Its own undo is the browser's, and taking Ctrl+Z off it would be worse than
+  // not having one here at all.
   if (document.activeElement?.matches?.("input, textarea, select")) return;
+
+  // Undo works with nothing selected: the action being taken back is often the
+  // one that cleared the selection.
+  if (cmd && (e.key === "z" || e.key === "Z") && !e.shiftKey) {
+    e.preventDefault();
+    if (restore(history.past, history.future)) status(t("edUndone"), "ok");
+    return;
+  }
+  if (cmd && ((e.key === "z" || e.key === "Z") || e.key === "y" || e.key === "Y")) {
+    e.preventDefault();
+    if (restore(history.future, history.past)) status(t("edRedone"), "ok");
+    return;
+  }
+
+  if (!state.sel) return;
 
   const { r, c } = state.sel;
   const step = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[
@@ -1299,6 +1391,7 @@ document.addEventListener("keydown", (e) => {
 
   if (e.key === "Delete" || e.key === "Backspace") {
     e.preventDefault();
+    mark();
     const box = bounds();
     for (let row = box.r1; row <= box.r2; row++) {
       for (let col = box.c1; col <= box.c2; col++) writeCell(row, col, "");
@@ -1316,6 +1409,11 @@ document.addEventListener("keydown", (e) => {
     if (!startEditing(r, c)) return;
     e.preventDefault();
     const box = document.activeElement;
+    // The same tag the input handler below uses, so this first character and the
+    // rest of the word are one step. Marked with its own tag rather than with
+    // `mark()`, which would end the run and make the second letter a step of its
+    // own — undo would then take back "s" and leave "ize=20" behind.
+    markRun(`cell:${box.dataset.edit}:${box.dataset.col ?? "marker"}`);
     box.value = e.key;
     writeCell(r, c, e.key);
     if (box.tagName === "TEXTAREA") grow(box);
@@ -1341,6 +1439,7 @@ document.addEventListener("cut", (e) => {
   if (!state.sel || state.editing) return;
   e.preventDefault();
   e.clipboardData.setData("text/plain", selectionTsv());
+  mark();
   const box = bounds();
   for (let r = box.r1; r <= box.r2; r++) {
     for (let c = box.c1; c <= box.c2; c++) writeCell(r, c, "");
