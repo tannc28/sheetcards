@@ -12,6 +12,8 @@
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
+import { cardDoc, cardFrame } from "./cardframe.js";
+import { deckTree, treeHtml } from "./decktree.js";
 
 // A filled-in report is a better landing page than an empty form: a first-time
 // visitor sees what the tool actually answers instead of having to supply a sheet
@@ -560,46 +562,6 @@ async function previewFile(file) {
 // Left pane — navigation only
 // ---------------------------------------------------------------------------
 
-/** The deck hierarchy, with each level counting everything beneath it. */
-function deckTree(rows) {
-  const root = { name: null, path: "", count: 0, children: new Map() };
-  for (const r of rows) {
-    if (r.kind !== "synced") continue;
-    root.count++;
-    let node = root;
-    const parts = [];
-    for (const part of r.deck.split("::")) {
-      parts.push(part);
-      if (!node.children.has(part)) {
-        node.children.set(part, {
-          name: part, path: parts.join("::"), count: 0, children: new Map(),
-        });
-      }
-      node = node.children.get(part);
-      node.count++;
-    }
-  }
-  return root;
-}
-
-function treeHtml(node, depth, lit) {
-  return [...node.children.values()]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map(
-      (child) => `<li>
-        <button data-deck="${escapeHtml(child.path)}" style="--depth:${depth}"
-                class="${state.deckFilter === child.path ? "on" : ""}${
-                  lit.deck === child.path ? " lit" + popping() : ""
-                }">
-          <span class="name">${escapeHtml(child.name)}</span>
-          <span class="count">${child.count}</span>
-        </button>
-        ${child.children.size ? `<ul class="tree">${treeHtml(child, depth + 1, lit)}</ul>` : ""}
-      </li>`,
-    )
-    .join("");
-}
-
 function deckPanel(a) {
   const { rows } = a;
   const lit = chosen(a);
@@ -611,7 +573,12 @@ function deckPanel(a) {
         class="${state.deckFilter === null ? "on" : ""}">
       <span class="name">${escapeHtml(t("allDecks"))}</span><span class="count">${tree.count}</span>
     </button></li>
-    ${treeHtml(tree, 0, lit)}
+    ${treeHtml(tree, {
+      selected: state.deckFilter,
+      lit: lit.deck,
+      pop: popping(),
+      pick: true,
+    })}
   </ul>`;
 }
 
@@ -752,80 +719,14 @@ function cardView(a) {
 
   const { front, back } = renderCard(template, row.values, { ordinal });
 
-  const doc = `<!doctype html><meta charset="utf-8">
-    <!-- Same reason as the referrerpolicy on the frame itself: an embed with no
-         referrer is refused by YouTube with "Error 153". -->
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <style>
-      html { color-scheme: light dark; }
-      body { margin: 0; padding: 18px; font-family: arial, sans-serif; font-size: 20px;
-             text-align: center; color: #111; background: #fff; }
-      ${
-        dark()
-          ? "body { color: #e6e9ee; background: #1b1f25; }"
-          : ""
-      }
-      hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }
-      .cloze { color: #2f6fd0; font-weight: 700; }
-      a.hint { color: #2f6fd0; font-size: 15px; }
-      button.tts { font: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer;
-                   border: 1px solid currentColor; border-radius: 999px;
-                   background: transparent; color: inherit; opacity: .8; }
-      img, video, iframe { max-width: 100%; }
-      ${
-        lit.field
-          ? `/* Panel 1 has a column open; this is the block it made. The card is
-                its own document, so the ring is written into the card's own
-                stylesheet on the way in rather than reached for afterwards —
-                there is no frame to wait for and nothing to clean up when the
-                selection changes, because the frame is rebuilt either way. */
-             [data-s2a-col="${lit.field.replace(/["\\]/g, "\\$&")}"] {
-               outline: 2px solid #1a73e8; outline-offset: 6px; border-radius: 4px;
-               ${
-                 state.columnFlash
-                   ? "animation: s2a-pop .5s cubic-bezier(.2, .8, .2, 1);"
-                   : ""
-               }
-             }
-             @keyframes s2a-pop {
-               0%   { transform: translateY(0)    scale(1); }
-               35%  { transform: translateY(-8px) scale(1.06); }
-               70%  { transform: translateY(2px)  scale(.99); }
-               100% { transform: translateY(0)    scale(1); }
-             }
-             @media (prefers-reduced-motion: reduce) {
-               [data-s2a-col] { animation: none; }
-             }`
-          : ""
-      }
-    </style>
-    <!-- The two classes Anki itself puts on a card's body: "card" is what a note
-         type's CSS targets, and "night_mode" is how a card knows it is being drawn
-         dark. A sheet's theme declares a colour pair for each, so without the second
-         class the preview would show the light half of the theme on a dark page.
-         (No backticks in this file — see the ANALYZER note in CLAUDE.md.) -->
-    <body class="card${dark() ? " night_mode" : ""}">
-      ${state.tab === "back" ? back.html : front.html}
-      ${state.tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
-      <script>
-        document.addEventListener("click", (e) => {
-          const b = e.target.closest("[data-tts]");
-          if (!b) return;
-          const t = JSON.parse(b.dataset.tts);
-          const u = new SpeechSynthesisUtterance(t.text);
-          u.lang = t.lang.replace("_", "-");
-          u.rate = Number(t.speed) || 1;
-          const want = new Set(t.voices);
-          const v = speechSynthesis.getVoices();
-          u.voice = v.find((x) => want.has(x.name))
-                 || v.find((x) => x.lang.replace("-", "_") === t.lang) || null;
-          speechSynthesis.cancel();
-          speechSynthesis.speak(u);
-        });
-        const post = () => parent.postMessage(
-          { h: document.documentElement.scrollHeight }, "*");
-        addEventListener("load", post); new ResizeObserver(post).observe(document.body);
-      <\/script>`;
+  const doc = cardDoc({
+    front,
+    back,
+    tab: state.tab,
+    dark: dark(),
+    ring: lit.field,
+    flash: state.columnFlash,
+  });
 
   const unknown = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
   const missing = [...new Set([...front.missingFields, ...back.missingFields])];
@@ -851,15 +752,7 @@ function cardView(a) {
           </div>`
         : ""
     }
-    <!-- allow-same-origin is required, not incidental: a nested player inherits
-         these flags, and in an opaque origin YouTube and Drive render a dead black
-         box. Cells go in exactly as written, script and all, because Anki's webview
-         runs them too and a preview that quietly filtered them would be reporting on
-         a card nobody is going to see. -->
-    <iframe id="card" title="Card preview"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
-            allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
-            srcdoc="${escapeHtml(doc)}"></iframe>
+    ${cardFrame(doc)}
     ${
       row.kind !== "synced"
         ? `<p class="note ${row.kind}">${escapeHtml(
@@ -883,11 +776,6 @@ function cardView(a) {
         .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
         .join("")}</p>
   </div>`;
-}
-
-/** The answer side minus the repeated question, when the template used FrontSide. */
-function backOnly(backHtml, frontHtml) {
-  return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
 }
 
 /** Hands the built package to the browser as a download. */

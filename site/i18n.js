@@ -123,7 +123,6 @@ const STRINGS = {
     vi: "Bảng màu cho cả thẻ, dùng được ở cả nền sáng và nền tối.",
   },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
-  edResult: { en: "Result", vi: "Kết quả" },
   edCopy: { en: "Copy rows 1 and 2", vi: "Copy dòng 1 và 2" },
   edExport: { en: "Download as .csv", vi: "Tải về dạng .csv" },
   edExported: { en: "Downloaded — open it in Sheets or Excel", vi: "Đã tải về — mở bằng Sheets hoặc Excel" },

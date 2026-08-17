@@ -487,13 +487,30 @@ h3.spaced { margin-top: 18px; }
    away, and a form that hides itself is a form you have to open twice. */
 .editor { grid-template-columns: 1fr; }
 @media (min-width: 56rem) {
-  /* `.app.editor`, not `.editor`: the generic `.app` rule further down this file
+  /* The sheet across the top and the two results under it. A sheet grows sideways
+     — every column added is another column across — so it gets the whole width,
+     while a deck tree and a card are both narrow things. Reading order stays 1, 2,
+     3 as the numbers say.
+
+     `.app.editor`, not `.editor`: the generic `.app` rule further down this file
      is written for the preview page's three columns and, at equal specificity and
      later in the source, was winning — which left this page one column wide, the
-     cells stretched across the whole window and the card pushed off the bottom of
-     it. The sheet takes the room here, because the sheet is what is being worked
-     on; the card is a picture of the result and an Anki card is narrow anyway. */
-  .app.editor { grid-template-columns: minmax(0, 1fr) minmax(22rem, 34rem); }
+     cells stretched across the whole window and the card pushed off the bottom. */
+  .app.editor {
+    grid-template-columns: minmax(0, var(--deck-w)) minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+  /* As tall as the sheet needs and no taller: the panel scrolls inside itself, so
+     a sheet with twenty columns of directives cannot push the card off the page. */
+  .app.editor > .panel:first-child {
+    grid-column: 1 / -1; max-height: 58vh;
+    border-bottom: 1px solid var(--line);
+  }
+  /* The generic rule draws the line between columns on the left of every panel
+     after the first; here the first one is a row of its own and the line belongs
+     between the two under it. */
+  .app.editor > .panel + .panel { border-left: 0; }
+  .app.editor > .panel:last-child { border-left: 1px solid var(--line); }
 }
 /* Panel 1 is a form, and a form needs a margin. The preview page pads its panels
    from the inside, section by section, because each of those scrolls on its own —
@@ -739,9 +756,7 @@ h3.spaced { margin-top: 18px; }
    panels: the deck, then the card. Headed rather than run together, because a
    settings row that files a note somewhere and a settings row that draws it are
    two different answers and only one of them is visible on a card. */
-.ed-part > h3 { margin: 0; padding: 12px var(--pad) 8px; }
-.ed-card { border-top: 1px solid var(--line); }
-#deck { padding: 0 var(--pad) 12px; }
+.ed-deck { padding: var(--pad); overflow: auto; overscroll-behavior: contain; }
 /* The same tree the preview page draws, minus the clicking: one row makes one
    branch, and there is nothing here to filter down to. */
 .tree .node {

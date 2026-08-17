@@ -15,6 +15,8 @@
 import { renderCard, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
+import { cardDoc, cardFrame } from "./cardframe.js";
+import { deckTree, treeHtml } from "./decktree.js";
 
 /** Everything the editor needs, computed by the add-on's own code. */
 const EDITOR = String.raw`
@@ -748,54 +750,10 @@ function drawCard() {
     return;
   }
 
-  const doc = `<!doctype html><meta charset="utf-8">
-    <style>
-      html { color-scheme: ${dark() ? "dark" : "light"}; }
-      body { margin: 0; padding: 18px; font-family: arial, sans-serif;
-             font-size: 20px; text-align: center;
-             color: ${dark() ? "#e6e9ee" : "#111"};
-             background: ${dark() ? "#1b1f25" : "#fff"}; }
-      hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor;
-                  opacity: .25; }
-      img, video, iframe { max-width: 100%; }
-      a.hint { color: #2f6fd0; font-size: 15px; }
-      .cloze { color: #2f6fd0; font-weight: 700; }
-      button.tts { font: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer;
-                   border: 1px solid currentColor; border-radius: 999px;
-                   background: transparent; color: inherit; opacity: .8; }
-    </style>
-    <body class="card${dark() ? " night_mode" : ""}">
-    ${state.tab === "back" ? back.html : front.html}
-    ${state.tab === "both" ? `<hr id="answer">${backOnly(back.html, front.html)}` : ""}
-    <script>
-      // The tts button speaks, here as on the preview page. Picking a language
-      // and then finding the button inert would be the editor teaching that the
-      // directive does nothing — and this is a real test of whether the machine
-      // has a voice for the code that was chosen.
-      document.addEventListener("click", (e) => {
-        const b = e.target.closest("[data-tts]");
-        if (!b) return;
-        const spec = JSON.parse(b.dataset.tts);
-        const say = new SpeechSynthesisUtterance(spec.text);
-        say.lang = spec.lang.replace("_", "-");
-        say.rate = Number(spec.speed) || 1;
-        const want = new Set(spec.voices);
-        const have = speechSynthesis.getVoices();
-        say.voice = have.find((v) => want.has(v.name))
-                 || have.find((v) => v.lang.replace("-", "_") === spec.lang) || null;
-        speechSynthesis.cancel();
-        speechSynthesis.speak(say);
-      });
-      const post = () => parent.postMessage(
-        { h: document.documentElement.scrollHeight }, "*");
-      addEventListener("load", post); new ResizeObserver(post).observe(document.body);
-    <\/script>`;
+  const doc = cardDoc({ front, back, tab: state.tab, dark: dark() });
 
   $("#view").innerHTML = `<div class="stagebox">${picker}
-    <iframe id="card" title="Card preview"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
-            allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
-            srcdoc="${escapeHtml(doc)}"></iframe>
+    ${cardFrame(doc)}
     <p class="muted small">${escapeHtml(
       t("edSides", out.front.length, out.back.length),
     )}</p>
@@ -821,29 +779,16 @@ function drawDeck(out) {
   const levels = out.deck || [];
   const tags = out.tags || [];
 
-  // Drawn as the tree the preview page draws, because it is the same thing being
-  // shown and a second shape for it would be a second thing to learn. One row
-  // makes one branch: every level holds the one note under it.
-  let tree = "";
-  for (let i = levels.length - 1; i >= 0; i--) {
-    tree =
-      `<ul class="tree"><li><span class="node" style="--depth:${i + 1}">` +
-      `<span class="name">${escapeHtml(levels[i])}</span>` +
-      `<span class="count">1</span></span>${tree}</li></ul>`;
-  }
+  // The preview page's own tree, from this page's one row of data: the same
+  // component, so a deck looks like a deck on both pages. `pick` is off — there is
+  // nothing here to filter down to.
+  const rows = [{ kind: "synced", deck: [t("edDeckRoot"), ...levels].join("::") }];
 
   $("#deck").innerHTML =
-    `<ul class="tree"><li><span class="node root" style="--depth:0">` +
-    `<span class="name">${escapeHtml(t("edDeckRoot"))}</span>` +
-    `<span class="count">1</span></span>${tree}</li></ul>` +
+    `<ul class="tree">${treeHtml(deckTree(rows))}</ul>` +
     `<p class="tagline"><b>${escapeHtml(t("edTags"))}</b>${tags
       .map((tag) => `<code>${escapeHtml(tag)}</code>`)
       .join("")}</p>`;
-}
-
-/** The answer side minus the repeated question, when the template used FrontSide. */
-function backOnly(backHtml, frontHtml) {
-  return backHtml.startsWith(frontHtml) ? backHtml.slice(frontHtml.length) : backHtml;
 }
 
 /**

@@ -37,6 +37,12 @@
     </span></h2>
 
     <div class="panel-body ed-form">
+      <!-- Above the sheet, not beside the card: a warning is about what was just
+           typed into row 2, and it is the sheet that has to change to clear it. -->
+      <div id="warn" class="warnbar" hidden>
+        <ul id="warnlist" class="warnings"></ul>
+      </div>
+
       <!-- Shaped like the thing it writes into: a sheet. Row 1 the column
            names, row 2 the settings row, row 3 one card's worth of data. The
            grid scrolls inside itself so the page never scrolls sideways. -->
@@ -78,30 +84,30 @@
     </div>
   </section>
 
+  <!-- The two things a settings row decides, in the two panels the preview page
+       gives them and in the same order: where the note is filed, then what the
+       card looks like. A subdeck column only ever reaches the first of the two,
+       so with the card alone on screen it looked like it did nothing at all. -->
   <section class="panel">
     <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
       <span class="step" aria-hidden="true">2</span>
-      <span class="panel-name" data-i18n="edResult">Result</span>
+      <span class="panel-name" data-i18n="panelDeck">Deck</span>
+    </span></h2>
+
+    <div class="panel-body ed-deck">
+      <div id="deck"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
+      <span class="step" aria-hidden="true">3</span>
+      <span class="panel-name" data-i18n="panelCard">Card</span>
     </span></h2>
 
     <div class="panel-body">
-      <div id="warn" class="warnbar" hidden>
-        <ul id="warnlist" class="warnings"></ul>
-      </div>
-      <!-- The two things a settings row decides, named the way the preview page
-           names them: where the note is filed, and what the card looks like. A
-           subdeck column only ever reaches the first of the two, so with the card
-           alone on screen it looked like it did nothing at all. -->
-      <section class="ed-part">
-        <h3><span data-i18n="panelDeck">Deck</span></h3>
-        <div id="deck"></div>
-      </section>
-
-      <section class="ed-part ed-card">
-        <h3><span data-i18n="panelCard">Card</span></h3>
-        <nav class="tabs" id="tabs"></nav>
-        <div id="view"></div>
-      </section>
+      <nav class="tabs" id="tabs"></nav>
+      <div id="view"></div>
     </div>
   </section>
 
