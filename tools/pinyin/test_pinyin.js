@@ -45,6 +45,43 @@ if (extra !== "xíngdòng") {
 
 console.log("\nrange:", JSON.stringify(PINYIN([["行动"], ["银行"]])));
 
+// The lookup is a binary search into the raw text rather than a map built up
+// front, which is what keeps the first call cheap — and what makes an off-by-one
+// a hang rather than a wrong answer. So every entry in both tables is asked for,
+// and the answers are checked against the same file read the obvious way.
+console.log("\nchecking every entry against a plain parse of the same data:");
+const reference = new Map();
+for (const line of context.PINYIN_CHARS.split("\n")) {
+  if (line.length > 1) reference.set(line.charAt(0), line);
+}
+for (const line of context.PINYIN_WORDS.split("\n")) {
+  if (!line) continue;
+  const bar = line.indexOf("|");
+  reference.set(bar < 0 ? line : line.slice(0, bar), line);
+}
+
+let mismatched = 0;
+const started2 = Date.now();
+for (const [key, line] of reference) {
+  const source = key.length === 1 ? context.PINYIN_CHARS : context.PINYIN_WORDS;
+  const found = context.pinyinFind_(source, key, key.length);
+  if (found !== line) {
+    mismatched += 1;
+    if (mismatched < 6) console.log(`  FAIL ${key}: found ${JSON.stringify(found)}`);
+  }
+}
+console.log(`  ${reference.size} entries, ${mismatched} wrong, ${Date.now() - started2} ms`);
+if (mismatched) failed += 1;
+
+// Keys that are not in the dictionary must come back empty rather than wander.
+let phantom = 0;
+for (const key of ["鿕", "一鿿", "𠀀", "zz", "。", "", "行动行动行动"]) {
+  const source = key.length === 1 ? context.PINYIN_CHARS : context.PINYIN_WORDS;
+  if (key && context.pinyinFind_(source, key, key.length) !== null) phantom += 1;
+}
+console.log(`  ${phantom} phantom hits (want 0)`);
+if (phantom) failed += 1;
+
 const started = Date.now();
 for (let i = 0; i < 500; i += 1) PINYIN("我们需要立即行动");
 console.log(`\n500 sentences in ${Date.now() - started} ms (tables already built)`);

@@ -24,10 +24,11 @@
 // ahead than this, and looking further would only cost time.
 var PINYIN_MAX_WORD = 6;
 
-// Built once and kept for as long as Sheets keeps this execution alive. A
-// recalculation fills a whole column through the same instance, so the dictionary
-// is parsed once for the column rather than once per cell.
-var PINYIN_TABLES = null;
+// Readings already looked up, kept for as long as Sheets keeps this execution
+// alive. A column is mostly the same few hundred words, and a second look at one
+// costs nothing. It grows to what the column actually used — not to the size of
+// the dictionary.
+var PINYIN_MEMO = Object.create(null);
 
 /**
  * Pinyin for Chinese text.
@@ -45,7 +46,15 @@ function PINYIN(text) {
     });
   }
   if (text === null || text === undefined || text === "") return "";
-  return pinyinJoin_(pinyinSegment_(String(text)));
+
+  // A blank cell and a cell with nothing Chinese in it are both answered before
+  // the dictionary is touched. A column is mostly empty while it is being filled
+  // in, and =PINYIN(A2:A500) over four hundred blanks should cost nothing at all.
+  var subject = String(text);
+  if (!subject.trim()) return "";
+  if (!pinyinHasHan_(subject)) return subject;
+
+  return pinyinJoin_(pinyinSegment_(subject));
 }
 
 /**
@@ -54,27 +63,25 @@ function PINYIN(text) {
  * @return {Array} items of {reading: [syllables]} for Chinese, {literal: text} for the rest.
  */
 function pinyinSegment_(text) {
-  var tables = pinyinTables_();
   var out = [];
   var index = 0;
 
   while (index < text.length) {
     var start = index;
-    if (!pinyinKnows_(text.charAt(index), tables)) {
+    if (!pinyinKnows_(text.charAt(index))) {
       // Punctuation, spaces, Latin, digits — carried through as they were written.
-      while (index < text.length && !pinyinKnows_(text.charAt(index), tables)) index += 1;
+      while (index < text.length && !pinyinKnows_(text.charAt(index))) index += 1;
       out.push({ literal: text.slice(start, index) });
       continue;
     }
-    while (index < text.length && pinyinKnows_(text.charAt(index), tables)) index += 1;
+    while (index < text.length && pinyinKnows_(text.charAt(index))) index += 1;
 
-    var words = pinyinSplit_(text.slice(start, index), tables);
+    var words = pinyinSplit_(text.slice(start, index));
     for (var i = 0; i < words.length; i += 1) {
       var word = words[i];
-      if (tables.words[word]) {
-        out.push({ reading: tables.words[word] });
-      } else if (tables.chars[word]) {
-        out.push({ reading: [tables.chars[word]] });
+      var reading = pinyinReading_(word);
+      if (reading) {
+        out.push({ reading: reading });
       } else {
         // A Han character the dictionary has never heard of. Printing it beats
         // dropping it: the cell then shows exactly which character to look up.
@@ -85,9 +92,23 @@ function pinyinSegment_(text) {
   return out;
 }
 
-/** Whether this character is something the dictionary can read. */
-function pinyinKnows_(character, tables) {
-  return Boolean(tables.chars[character]) || isHan_(character);
+/** Whether the text holds anything the dictionary could read at all. */
+function pinyinHasHan_(text) {
+  for (var i = 0; i < text.length; i += 1) {
+    if (isHan_(text.charAt(i))) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether this character is something the dictionary can read.
+ *
+ * The character table holds Han characters and nothing else, so this is a range
+ * check rather than a lookup — punctuation and Latin letters are answered without
+ * the dictionary being consulted about them at all.
+ */
+function pinyinKnows_(character) {
+  return isHan_(character);
 }
 
 /**
@@ -101,9 +122,9 @@ function pinyinKnows_(character, tables) {
  * an even tie goes to the backward cut, which is the more accurate of the two on
  * Chinese in general.
  */
-function pinyinSplit_(run, tables) {
-  var forward = pinyinMatch_(run, tables, false);
-  var backward = pinyinMatch_(run, tables, true);
+function pinyinSplit_(run) {
+  var forward = pinyinMatch_(run, false);
+  var backward = pinyinMatch_(run, true);
   if (forward.length !== backward.length) {
     return forward.length < backward.length ? forward : backward;
   }
@@ -118,7 +139,7 @@ function pinyinLoners_(words) {
 }
 
 /** Longest match through the run, from the left or from the right. */
-function pinyinMatch_(run, tables, reversed) {
+function pinyinMatch_(run, reversed) {
   var words = [];
   var index = reversed ? run.length : 0;
 
@@ -129,7 +150,7 @@ function pinyinMatch_(run, tables, reversed) {
       var candidate = reversed
         ? run.substr(index - length, length)
         : run.substr(index, length);
-      if (tables.words[candidate]) { taken = candidate; break; }
+      if (pinyinReading_(candidate)) { taken = candidate; break; }
     }
     if (!taken) taken = reversed ? run.charAt(index - 1) : run.charAt(index);
     words.push(taken);
@@ -226,33 +247,87 @@ function pinyinTone_(syllable) {
   return (letters.slice(0, target) + marked + letters.slice(target + 1)).replace(/v/g, "ü");
 }
 
-/** Parses the two tables in PinyinData.gs, once. */
-function pinyinTables_() {
-  if (PINYIN_TABLES) return PINYIN_TABLES;
+/**
+ * The reading for one word or character, or null if the dictionary has neither.
+ *
+ * Nothing is parsed up front. The two tables in PinyinData.gs are sorted, so a
+ * lookup is a binary search straight into the text — about twenty string
+ * comparisons — and the file is read where it lies instead of being turned into
+ * a hundred thousand object properties first.
+ *
+ * That matters here more than it usually would. Sheets runs a custom function in
+ * an execution it starts and discards as it pleases, so any work done "once" is
+ * really done once per execution, and a column of cells can pay for it several
+ * times over. Work not done at all cannot be repeated.
+ */
+function pinyinReading_(key) {
+  var cached = PINYIN_MEMO[key];
+  if (cached !== undefined) return cached;
 
-  var chars = Object.create(null);
-  var charLines = PINYIN_CHARS.split("\n");
-  for (var i = 0; i < charLines.length; i += 1) {
-    var line = charLines[i];
-    if (line.length > 1) chars[line.charAt(0)] = line.slice(1);
-  }
-
-  var words = Object.create(null);
-  var wordLines = PINYIN_WORDS.split("\n");
-  for (var j = 0; j < wordLines.length; j += 1) {
-    var entry = wordLines[j];
-    if (!entry) continue;
-    var bar = entry.indexOf("|");
-    if (bar < 0) {
-      // Read as its characters in order — the case the data file leaves unsaid.
-      var derived = [];
-      for (var k = 0; k < entry.length; k += 1) derived.push(chars[entry.charAt(k)]);
-      words[entry] = derived;
-    } else {
-      words[entry.slice(0, bar)] = entry.slice(bar + 1).match(/[a-z]+[1-5]/g) || [];
+  var reading = null;
+  if (key.length === 1) {
+    var charLine = pinyinFind_(PINYIN_CHARS, key, 1);
+    if (charLine) reading = [charLine.slice(1)];
+  } else {
+    var wordLine = pinyinFind_(PINYIN_WORDS, key, key.length);
+    if (wordLine) {
+      if (wordLine.length === key.length) {
+        // No reading spelled out: the word is its characters, read in order.
+        reading = [];
+        for (var i = 0; i < key.length; i += 1) {
+          var each = pinyinReading_(key.charAt(i));
+          if (!each) { reading = null; break; }
+          reading.push(each[0]);
+        }
+      } else {
+        reading = wordLine.slice(key.length + 1).match(/[a-z]+[1-5]/g);
+      }
     }
   }
 
-  PINYIN_TABLES = { chars: chars, words: words };
-  return PINYIN_TABLES;
+  PINYIN_MEMO[key] = reading;
+  return reading;
+}
+
+/**
+ * The line whose first `keyLength` characters are `key`, or null.
+ *
+ * Both tables are sorted by that key and hold one entry per line, so the search
+ * can jump into the middle of the text and walk out to the line boundaries. The
+ * comparison is on the key alone: a line may carry a reading after it, and
+ * comparing whole lines would sort "行动|xing2dong4" away from "行动".
+ */
+function pinyinFind_(source, key, keyLength) {
+  var low = 0;
+  var high = source.length;
+
+  while (low < high) {
+    var middle = (low + high) >>> 1;
+    // The start of the line the halfway point falls in. Searching back from
+    // `middle - 1` rather than from `middle` is what keeps `start <= middle`: on a
+    // halfway point that lands exactly on a line break, searching from `middle`
+    // returns that break and `start` jumps past it — `high = start` then leaves
+    // the window exactly as it was, and the search never ends. Both bounds are
+    // always line starts, so clamping to `low` keeps the window whole.
+    var start = middle === 0 ? 0 : source.lastIndexOf("\n", middle - 1) + 1;
+    if (start < low) start = low;
+    var end = source.indexOf("\n", start);
+    if (end < 0) end = source.length;
+
+    if (source.substr(start, keyLength) < key) {
+      low = end + 1;            // end >= start >= low, so this always advances
+    } else if (start === low) {
+      break;                    // the window is this one line; halving it again
+                                // would leave the bounds exactly where they are,
+                                // which is how this loop used to hang on a key
+                                // whose halfway point landed on a line break
+    } else {
+      high = start;             // start <= middle < high, so this always shrinks
+    }
+  }
+
+  var lineEnd = source.indexOf("\n", low);
+  if (lineEnd < 0) lineEnd = source.length;
+  var line = source.slice(low, lineEnd);
+  return line.substr(0, keyLength) === key ? line : null;
 }

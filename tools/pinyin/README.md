@@ -40,6 +40,23 @@ Also handled: `西安` → *xī'ān*, not *xīān* — without the apostrophe it
 read as one syllable *xian*. `花儿` → *huār*, because erhua is a suffix rather
 than a syllable. `绿` → *lǜ*.
 
+## Why it starts instantly
+
+Nothing is parsed when the function is first called. Both tables in
+`PinyinData.gs` are sorted, so a lookup is a binary search straight into the text
+— about twenty string comparisons — rather than a hundred thousand object
+properties built up front and then thrown away.
+
+That distinction matters more here than it normally would: Sheets runs a custom
+function inside an execution it starts and discards as it pleases, so work done
+"once" is really done once *per execution*, and one column can pay for it several
+times. Building the tables cost about 175 ms every time; the search costs 1.4 µs
+per word and nothing at startup.
+
+A blank cell, and a cell with nothing Chinese in it, are answered before the
+dictionary is touched at all — `=PINYIN(A2:A500)` over four hundred empty rows
+does no lookups.
+
 ## What it will not do
 
 - **Chinese only.** Japanese kanji (図書館, 駅) are not in this dictionary and come
