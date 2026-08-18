@@ -900,6 +900,182 @@ class TestFramedPlayerOnMobile:
 
 
 @pytest.mark.unit
+class TestFormulaColumn:
+    """`math` — Anki ships MathJax, so this is delimiters and nothing else."""
+
+    def test_bare_math_is_inline(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "math"}))[0]["qfmt"]
+        assert r"\({{Word}}\)" in qfmt
+
+    def test_block_math_is_the_display_form(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "math=block"}))[0]["qfmt"]
+        assert r"\[{{Word}}\]" in qfmt
+
+    def test_no_library_is_loaded_for_it(self):
+        # The one thing on a card that needs no script: Anki's own MathJax draws it.
+        plan = _plan()
+        both = _both(build_templates(plan, _config(plan, {"Word": "math"}))[0])
+        assert "mathjax" not in both.lower()
+
+    def test_a_bad_mode_is_refused_by_name(self):
+        config = _config(_plan(), {"Word": "math=huge"})
+        assert config.for_field("Word").math is None
+        assert any("math" in w for w in config.warnings)
+
+    def test_the_cloze_column_keeps_its_filter(self):
+        # A clozed field has to reach the card through {{cloze:}}; math would
+        # replace that, and Anki draws a clozed field with no deletion as nothing.
+        config = _config(_plan(), {"Word": "cloze; math"})
+        assert config.for_field("Word").math is None
+        assert any("cloze" in w and "math" in w for w in config.warnings)
+
+
+@pytest.mark.unit
+class TestCodeColumn:
+    """`code` — kept as typed, coloured by a library the card loads."""
+
+    def test_the_cell_is_a_pre_block_of_plain_text(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "code=python"}))[0]["qfmt"]
+        assert '<pre class="s2a-code"><code class="language-python">' in qfmt
+        # {{text:}} rather than {{Word}}: a cell pasted out of an editor arrives
+        # with markup in it, and a card rendering <b> inside a code sample is
+        # showing something no compiler will ever see.
+        assert "{{text:Word}}" in qfmt
+
+    def test_bare_code_names_no_language(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "code"}))[0]["qfmt"]
+        assert '<pre class="s2a-code"><code>' in qfmt
+
+    def test_the_library_is_loaded_only_by_the_side_that_needs_it(self):
+        plan = _plan()
+        template = build_templates(plan, _config(plan, {"Reading": "code=sql"}))[0]
+        assert "s2a-hljs" in template["afmt"]
+        assert "s2a-hljs" not in template["qfmt"]
+
+    def test_it_cannot_share_a_column_with_a_formula(self):
+        config = _config(_plan(), {"Word": "math; code=python"})
+        assert config.for_field("Word").code is None
+        assert any("formula or as code" in w for w in config.warnings)
+
+
+@pytest.mark.unit
+class TestFontAndDirection:
+    """`font`, `rtl`, `vertical` — the three things CSS can say and a sheet could not."""
+
+    def test_a_known_font_becomes_its_stack_and_is_fetched(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "font=sc"}))[0]["qfmt"]
+        assert "font-family: Noto Sans SC, sans-serif" in qfmt
+        assert "fonts.googleapis.com" in qfmt
+        # @import is only legal at the top of a stylesheet.
+        assert qfmt.index("@import") < qfmt.index("{ text-align")
+
+    def test_a_family_name_is_passed_through_as_written(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "font=Comic Sans MS"}))[0][
+            "qfmt"
+        ]
+        assert "font-family: 'Comic Sans MS'" in qfmt
+        # Nothing is fetched for it: whether it is installed is not ours to know.
+        assert "fonts.googleapis.com" not in qfmt
+
+    def test_right_to_left_also_starts_from_the_right(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "rtl"}))[0]["qfmt"]
+        assert "direction: rtl" in qfmt and "text-align: right" in qfmt
+
+    def test_an_explicit_alignment_still_wins(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "rtl; align=center"}))[0][
+            "qfmt"
+        ]
+        assert "text-align: center" in qfmt and "text-align: right" not in qfmt
+
+    def test_vertical_writing_keeps_latin_upright(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "vertical"}))[0]["qfmt"]
+        assert "writing-mode: vertical-rl" in qfmt
+        assert "text-orientation: mixed" in qfmt
+
+    def test_a_column_has_one_direction(self):
+        config = _config(_plan(), {"Word": "rtl; vertical"})
+        assert config.for_field("Word").rtl and not config.for_field("Word").vertical
+        assert any("two directions" in w for w in config.warnings)
+
+    def test_none_of_them_touch_a_media_column(self):
+        config = _config(_plan(), {"Word": "image; font=sc; rtl; vertical"})
+        cfg = config.for_field("Word")
+        assert cfg.font is None and not cfg.rtl and not cfg.vertical
+        said = " ".join(config.warnings)
+        for key in ("font", "rtl", "vertical"):
+            assert key in said
+
+
+@pytest.mark.unit
+class TestSortColumn:
+    """`sort` — a note property, like `subdeck`, and not a card one."""
+
+    def test_it_names_the_column_and_changes_nothing_on_the_card(self):
+        plan = _plan()
+        plain = build_templates(plan, _config(plan))[0]
+        config = _config(plan, {"Meaning": "sort"})
+        assert config.sort_field == "Meaning"
+        assert build_templates(plan, config)[0] == plain
+
+    def test_only_one_column_can_be_it(self):
+        config = _config(_plan(), {"Word": "sort", "Meaning": "sort"})
+        assert config.sort_field == "Word"
+        assert any("sorts by" in w for w in config.warnings)
+
+    def test_a_media_column_is_refused(self):
+        # Sorting a deck by a column of URLs lists it by whatever the addresses
+        # happen to start with.
+        config = _config(_plan(), {"Word": "image; sort"})
+        assert config.sort_field is None
+        assert any("sort" in w for w in config.warnings)
+
+    def test_it_reaches_the_note_type_as_an_index(self):
+        """Anki stores the sort field as a position in the field list.
+
+        The browser's first column and a deck's sort order both read it, and
+        without this it is field 0 — which here is `ID`, so a deck lists as w01,
+        w02, w03.
+        """
+        from src.templates_and_definitions import apply_sort_field
+
+        plan = _plan()
+        fields = plan.note_type_fields()
+        model = {"sortf": 0}
+        config = _config(plan, {"Meaning": "sort"})
+        assert apply_sort_field(None, model, fields, config) is True
+        assert fields[model["sortf"]] == "Meaning"
+        # Idempotent: a re-sync of an unchanged sheet must not mark the note type
+        # as changed, which would rewrite it on every single sync.
+        assert apply_sort_field(None, model, fields, config) is False
+
+    def test_a_sheet_that_says_nothing_leaves_the_note_type_alone(self):
+        from src.templates_and_definitions import apply_sort_field
+
+        plan = _plan()
+        model = {"sortf": 0}
+        assert apply_sort_field(
+            None, model, plan.note_type_fields(), _config(plan)
+        ) is (False)
+        assert model["sortf"] == 0
+
+    def test_a_deck_level_may_still_be_the_sort_column(self):
+        # `subdeck` refuses every *card* key, and this is not one of them: where a
+        # note is filed and how it is listed are both properties of the note.
+        config = _config(_plan(), {"Word": "subdeck=1; sort"})
+        assert config.sort_field == "Word"
+        assert config.subdeck_columns == ["Word"]
+
+
+@pytest.mark.unit
 class TestDrawnColumn:
     """``draw`` — a column the learner writes stroke by stroke instead of reads."""
 

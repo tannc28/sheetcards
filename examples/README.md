@@ -272,3 +272,44 @@ Every address is rewritten to that site's own player before the note is saved, s
 a `watch?v=`, a `youtu.be/` and a direct `.webm` all arrive as something that
 plays. Framed players do not work on AnkiDroid or AnkiMobile; on a phone these
 cards show the question and nothing else.
+
+### 21 Formulas & code (công thức)
+
+The two kinds of cell that are not prose. `math=block` on the formula column wraps
+it in `\[…\]`, which is all it takes: **Anki ships MathJax**, so nothing is
+loaded and nothing is configured — you write TeX in the cell without the
+delimiters and the card draws it.
+
+`code=python` on the listing column keeps the cell exactly as typed, in a
+monospace block that scrolls sideways rather than widening the card, and colours
+it by language. That colouring *is* a library, fetched into the card the same way
+the writing box fetches its own, with the same consequence: no network, no
+colours — but the code is still there, still readable, still correctly indented.
+
+`sort` on the question column is what makes this deck findable in the browser.
+Without it Anki lists notes by the first field, which is `ID`, and a deck of
+`m01, m02, m03` tells you nothing about what is in it.
+
+### 22 Arabic (phải sang trái)
+
+`rtl` is a direction, not a style: it sets `direction: rtl` on the column, and the
+column starts from the right unless `align` says otherwise. Arabic, Hebrew and
+Persian all need it, and nothing else in a settings row can produce it — a
+right-aligned column is not the same thing as a right-to-left one, because the
+difference shows the moment a sentence mixes scripts or carries punctuation.
+
+`font=serif` here is a preference rather than a necessity. Where a typeface really
+does decide whether a deck is right, see 11 and 23.
+
+### 23 Vertical text (viết dọc)
+
+`vertical` sets `writing-mode: vertical-rl` — top to bottom, right to left, which
+is how Japanese is set in a book and how these three haiku by Bashō were meant to
+be read. Latin words inside the line stay upright rather than lying on their side,
+and the column is capped in height so a long line scrolls instead of growing the
+card past the bottom of the screen.
+
+`font=jp` is the important half. `直`, `骨`, `画` and a few hundred others are a
+single Unicode code point drawn with different shapes in Chinese and Japanese, so
+a machine holding only one CJK font draws whichever it has — and nothing on the
+card can say which language the text is in. The sheet has to.

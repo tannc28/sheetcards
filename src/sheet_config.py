@@ -82,6 +82,24 @@ THEMES: dict[str, dict] = {
     },
 }
 
+# Fonts a sheet can name, and the stack each becomes. The first four are loaded
+# from Google Fonts by `card_layout` when a column asks for one; the rest are
+# whatever the machine already has.
+#
+# This exists because of Han unification: 直, 骨, 画 and a few hundred others are
+# one code point with a different *shape* in Chinese, Japanese and Korean, and a
+# machine with only a Japanese CJK font draws a Chinese deck in Japanese shapes.
+# Nothing on the card can say which language the text is in — the sheet has to.
+FONTS = {
+    "sc": ("Noto Sans SC", "Noto Sans SC, sans-serif"),
+    "tc": ("Noto Sans TC", "Noto Sans TC, sans-serif"),
+    "jp": ("Noto Sans JP", "Noto Sans JP, sans-serif"),
+    "kr": ("Noto Sans KR", "Noto Sans KR, sans-serif"),
+    "serif": (None, "Georgia, 'Times New Roman', serif"),
+    "sans": (None, "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"),
+    "mono": (None, "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"),
+}
+
 SIDES = ("front", "back", "hide")
 ALIGNMENTS = ("left", "center", "right")
 
@@ -95,7 +113,24 @@ ALIGNMENTS = ("left", "center", "right")
 # is decided by the side the column lands on, because that is the only thing that
 # distinguishes "ask me" from "show me" — a second directive would be a second way
 # of saying where the column already is.
-_FLAGS = ("bold", "italic", "hint", "furigana", "cloze", "draw")
+# `sort` is not about the card at all: it names the column Anki should show in the
+# browser's first column and sort a deck by. Without it that column is `ID`, so a
+# sheet's notes are listed as w01, w02, w03 — a list of nothing.
+#
+# `rtl` and `vertical` are the two writing directions HTML has and a sheet cannot
+# otherwise ask for: Arabic and Hebrew run right to left, and classical Japanese
+# and Chinese run top to bottom.
+_FLAGS = (
+    "bold",
+    "italic",
+    "hint",
+    "furigana",
+    "cloze",
+    "draw",
+    "sort",
+    "rtl",
+    "vertical",
+)
 
 # Turn a bare URL in the cell into a media element instead of printing it as
 # text. One field is one kind of media, so these are recorded as a single
@@ -125,6 +160,13 @@ _FIELD_KEYS = (
         # The column stays a field on the note and is never drawn on the card:
         # where a note is filed is a bigger thing than how one card looks.
         "subdeck",
+        # A formula, drawn by the MathJax Anki already ships. Bare `math` is
+        # inline; `math=block` is the centred display form.
+        "math",
+        # Source code, kept as typed and coloured by language.
+        "code",
+        # Which typeface the column is drawn in — see FONTS.
+        "font",
     )
     + _FLAGS
     + MEDIA_KINDS
@@ -255,12 +297,18 @@ class FieldConfig:
         self.media = None  # "image" | "audio" | "video"
         self.type_answer = None  # None | "plain" | "nc" — Anki's {{type:…}} box
         self.subdeck = None  # int — this column is that level of the deck path
+        self.math = None  # None | "inline" | "block" — drawn by MathJax
+        self.code = None  # None | "" | a language name — drawn as source code
+        self.font = None  # a key of FONTS, or a family name to use as written
         self.bold = False
         self.italic = False
         self.hint = False
         self.furigana = False
         self.cloze = False
         self.draw = False
+        self.sort = False
+        self.rtl = False
+        self.vertical = False
 
     @property
     def hidden(self):
@@ -292,6 +340,9 @@ class SheetConfig:
         # honours one {{type:…}} per card.
         self.cloze_field = None
         self.type_field = None
+        # The column the browser lists notes under and sorts a deck by. Without one
+        # that is field 0, which is `ID` — a list of w01, w02, w03.
+        self.sort_field = None
         # The content columns that build the deck path, outermost first. Empty
         # when the sheet says nothing, and then column_model.deck_path falls back
         # to the reserved SUBDECK columns.
@@ -324,6 +375,23 @@ def _apply_field_pair(cfg, key, value, header, warn):
         setattr(cfg, key, value is None or value.strip().lower() not in _FALSEY)
         return
 
+    if key == "math":
+        # Bare is inline, which is what a formula in a sentence wants; `block` is
+        # the centred display form for a formula that is the whole answer.
+        mode = (value or "inline").strip().lower()
+        if mode in ("inline", "block"):
+            cfg.math = mode
+        else:
+            warn(f"'{header}': math is written bare or as math=block — got '{value}'")
+        return
+
+    if key == "code":
+        # The language is a hint for the colouring and nothing else: an unknown one
+        # simply colours nothing, so it is taken as written rather than checked
+        # against a list this file would have to keep in step with a library.
+        cfg.code = (value or "").strip().lower()
+        return
+
     if key == "type":
         # Anki compares what the learner types against this field. Bare `type` is an
         # exact comparison; `type=nc` ignores diacritics, which is what someone
@@ -344,6 +412,17 @@ def _apply_field_pair(cfg, key, value, header, warn):
             cfg.side = value.lower()
         else:
             warn(f"'{header}': side must be one of {', '.join(SIDES)} — got '{value}'")
+    elif key == "font":
+        name = value.strip().strip("\"'").strip()
+        if not name:
+            warn(
+                f"'{header}': font needs a name — {', '.join(sorted(FONTS))}, or a family"
+            )
+        else:
+            # A key from FONTS is a stack this add-on knows how to load; anything
+            # else is passed to CSS as written, because the fonts installed on the
+            # machine reviewing are not something this file can know.
+            cfg.font = name.lower() if name.lower() in FONTS else name
     elif key == "align":
         if value.lower() in ALIGNMENTS:
             cfg.align = value.lower()
@@ -465,6 +544,9 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     for key, attribute, what in (
         ("cloze", "cloze_field", "carry the cloze deletions"),
         ("type_answer", "type_field", "be typed in"),
+        # A note type has one sort field, which is also the column the browser
+        # lists notes under.
+        ("sort", "sort_field", "be the one the browser sorts by"),
     ):
         claimed = [h for h in content_headers if getattr(config.for_field(h), key)]
         if not claimed:
@@ -479,6 +561,13 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
                 setattr(
                     config.fields[header], key, None if key == "type_answer" else False
                 )
+
+    # Sorting a deck by a column of URLs lists it by whatever the addresses happen
+    # to start with, which is never what was meant.
+    if config.sort_field and config.for_field(config.sort_field).media:
+        warn(f"'{config.sort_field}': a media column is no use to sort by")
+        config.fields[config.sort_field].sort = False
+        config.sort_field = None
 
     # Both act on the text of a field, and a media column holds an address.
     for attribute, key, label in (
@@ -621,6 +710,9 @@ def parse_config_row(row, plan):
                     ("bold", cfg.bold),
                     ("italic", cfg.italic),
                     ("align", cfg.align),
+                    ("font", cfg.font),
+                    ("rtl", cfg.rtl),
+                    ("vertical", cfg.vertical),
                 )
                 if on
             ]
@@ -630,6 +722,18 @@ def parse_config_row(row, plan):
                     f"{'do' if len(inert) > 1 else 'does'} nothing on a "
                     f"{cfg.media} column"
                 )
+            for name in ("font", "rtl", "vertical"):
+                setattr(cfg, name, None if name == "font" else False)
+            for name in ("math", "code"):
+                if getattr(cfg, name) is not None:
+                    # These two do not decorate the text, they *are* how the cell
+                    # is drawn — and a media cell is an address, not text.
+                    warn(
+                        f"'{header}': a {cfg.media} column holds an address, "
+                        f"so {name} has nothing to draw — removed"
+                    )
+                    setattr(cfg, name, None)
+
             if cfg.media == "audio" and cfg.size is not None:
                 warn(f"'{header}': size does nothing on an audio column")
                 cfg.size = None
@@ -665,6 +769,33 @@ def parse_config_row(row, plan):
                         f"{'do' if len(inert) > 1 else 'does'} nothing on a "
                         f"drawn column"
                     )
+
+        # Three ways of drawing one cell, and a cell is drawn once. Order matters
+        # only in that the *earlier* one is kept, which is the same rule the media
+        # kinds follow: the sheet's first answer stands.
+        if cfg.math and cfg.code is not None:
+            warn(f"'{header}': a column is drawn as a formula or as code, not both")
+            cfg.code = None
+        if cfg.draw and (cfg.math or cfg.code is not None):
+            what = "math" if cfg.math else "code"
+            warn(f"'{header}': a writing box draws a character, so {what} is removed")
+            cfg.math, cfg.code = None, None
+        if cfg.cloze and (cfg.math or cfg.code is not None):
+            what = "math" if cfg.math else "code"
+            warn(
+                f"'{header}': the cloze column has to reach the card through "
+                f"{{{{cloze:}}}}, which {what} would replace — {what} removed"
+            )
+            cfg.math, cfg.code = None, None
+        if cfg.furigana and (cfg.math or cfg.code is not None):
+            what = "math" if cfg.math else "code"
+            warn(f"'{header}': furigana does nothing on a {what} column")
+            cfg.furigana = False
+
+        # One direction of writing at a time.
+        if cfg.rtl and cfg.vertical:
+            warn(f"'{header}': rtl and vertical are two directions — keeping rtl")
+            cfg.vertical = False
 
         config.fields[header] = cfg
 

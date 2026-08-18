@@ -137,8 +137,35 @@ def apply_templates(col, model, templates):
     return changed
 
 
+def apply_sort_field(col, model, fields, sheet_config):
+    """Points the note type's sort field at the column the sheet named.
+
+    Anki stores it as an index into the field list and uses it for two things: the
+    first column of the browser, and what a deck sorts by there. Field 0 is the
+    default, and field 0 here is ``ID`` — so without this a sheet's notes are listed
+    as w01, w02, w03, which is a list of nothing.
+
+    Returns True when the model changed, so the caller knows whether to save.
+    """
+    header = getattr(sheet_config, "sort_field", None)
+    if not header or header not in fields:
+        return False
+    index = fields.index(header)
+    if model.get("sortf") == index:
+        return False
+    model["sortf"] = index
+    return True
+
+
 def create_model(
-    col, model_name, fields, templates, is_cloze=False, url=None, debug_messages=None
+    col,
+    model_name,
+    fields,
+    templates,
+    is_cloze=False,
+    url=None,
+    debug_messages=None,
+    sheet_config=None,
 ):
     """
     Creates a new Anki note model.
@@ -169,6 +196,9 @@ def create_model(
         template["qfmt"] = spec["qfmt"]
         template["afmt"] = spec["afmt"]
         col.models.add_template(model, template)
+
+    if sheet_config is not None:
+        apply_sort_field(col, model, list(fields), sheet_config)
 
     col.models.save(model)
 
@@ -274,6 +304,7 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
                 is_cloze=is_cloze,
                 url=url,
                 debug_messages=debug_messages,
+                sheet_config=sheet_config,
             )
             continue
 
@@ -283,6 +314,12 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
         if apply_templates(col, model, templates):
             changed = True
             add_debug_msg(f"Templates regenerated for '{model_name}'")
+
+        # After add_missing_fields, so a column added to the sheet in the same sync
+        # that named it the sort column is already in the list to be found.
+        if apply_sort_field(col, model, fields, sheet_config):
+            changed = True
+            add_debug_msg(f"Sort field set to '{sheet_config.sort_field}'")
 
         if changed:
             col.models.save(model)

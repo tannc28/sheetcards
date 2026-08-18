@@ -15,6 +15,7 @@ note's content.
 from html import escape
 
 from .sheet_config import ALIGNMENTS
+from .sheet_config import FONTS
 from .sheet_config import THEME_COLORS
 from .sheet_config import THEMES
 
@@ -42,6 +43,25 @@ EMBED_PROXY = "https://tannc28.github.io/sheets2anki/player.html?src="
 # the placeholder instead. Pinned to a major version so a breaking release upstream
 # cannot reach cards that are already in people's collections.
 HANZI_WRITER = "https://cdn.jsdelivr.net/npm/hanzi-writer@3/dist/hanzi-writer.min.js"
+
+# Colouring source code is the same bargain as the writing box: a library, loaded
+# into the card from a CDN, pinned to a major version so an upstream release cannot
+# reach cards already in people's collections. The bundled build is used rather than
+# the modular one because it arrives knowing the common languages, and a sheet is
+# not the place to declare which grammars to register.
+#
+# No stylesheet comes with it. The colours are ours (see `_css`), so a code block
+# follows the sheet's own theme and stays readable in Anki's night mode — a
+# ready-made highlight theme paints its own light background and would sit on a
+# dark card as a white rectangle.
+HIGHLIGHT_JS = (
+    "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/highlight.min.js"
+)
+
+# Google's stylesheet endpoint for the webfonts named in `sheet_config.FONTS`.
+# `display=swap` so the card draws in a fallback face immediately and re-draws when
+# the font arrives, rather than showing nothing while a review is waiting.
+FONT_CSS = "https://fonts.googleapis.com/css2?family={family}&display=swap"
 
 FRONT_TEMPLATE_NAME = "Card 1"
 REVERSE_TEMPLATE_NAME = "Card 2 (reverse)"
@@ -256,11 +276,33 @@ def _palette(sheet_config):
     return "".join(lines)
 
 
+def _font_imports(sheet_config):
+    """The webfonts this sheet's columns asked for, as CSS imports.
+
+    Only the names in `FONTS` that carry a family are fetched — a literal family
+    name is whatever the machine has, and asking Google for it would be asking for
+    a font that may not exist. `@import` has to be the first thing in a stylesheet,
+    which is why this is prepended rather than appended.
+    """
+    wanted = []
+    for cfg in sheet_config.fields.values():
+        known = FONTS.get(str(cfg.font or "").lower())
+        if known and known[0] and known[0] not in wanted:
+            wanted.append(known[0])
+    return "".join(
+        f'@import url("{FONT_CSS.format(family=name.replace(" ", "+"))}");\n'
+        for name in wanted
+    )
+
+
 def _css(sheet_config):
     """The card's stylesheet."""
     align = sheet_config.align if sheet_config.align in ALIGNMENTS else "center"
     return (
-        "<style>\n" + _palette(sheet_config) + f".s2a-wrap {{ text-align: {align}; }}\n"
+        "<style>\n"
+        + _font_imports(sheet_config)
+        + _palette(sheet_config)
+        + f".s2a-wrap {{ text-align: {align}; }}\n"
         f".s2a-front {{ font-size: {FRONT_SIZE_PX}px; line-height: 1.3; }}\n"
         f".s2a-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
         " margin-top: 14px; }\n"
@@ -289,6 +331,35 @@ def _css(sheet_config):
         " border: 1px dashed var(--s2a-muted); border-radius: 8px; }\n"
         ".s2a-draw:empty::before { content: attr(data-s2a-char);"
         " font-size: 40px; opacity: .35; }\n"
+        # Code is the one thing on a card that is not prose: left-aligned however
+        # the deck is aligned, wrapped rather than cut, and scrolling inside its own
+        # box so a long line cannot widen the card. The colours are written here
+        # rather than imported with a ready-made highlight.js theme, which would
+        # paint its own light background and sit on a night-mode card as a white
+        # rectangle — these sit on whatever the card is already.
+        ".s2a-code { text-align: left; direction: ltr; margin: 10px auto;"
+        " padding: 10px 12px; max-width: 40em; overflow-x: auto;"
+        " border-radius: 8px; background: rgba(127, 127, 127, .12);"
+        " font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;"
+        " font-size: 15px; line-height: 1.5; white-space: pre-wrap;"
+        " overflow-wrap: anywhere; }\n"
+        ".s2a-code code { font: inherit; background: none; padding: 0; }\n"
+        ".hljs-comment, .hljs-quote { opacity: .65; font-style: italic; }\n"
+        ".hljs-keyword, .hljs-selector-tag, .hljs-literal { color: #a626a4; }\n"
+        ".hljs-string, .hljs-attr, .hljs-regexp { color: #50a14f; }\n"
+        ".hljs-number, .hljs-symbol, .hljs-bullet { color: #986801; }\n"
+        ".hljs-title, .hljs-name, .hljs-section { color: #4078f2; }\n"
+        ".hljs-built_in, .hljs-type, .hljs-class { color: #c18401; }\n"
+        ".night_mode .hljs-keyword, .night_mode .hljs-selector-tag,"
+        " .night_mode .hljs-literal { color: #c678dd; }\n"
+        ".night_mode .hljs-string, .night_mode .hljs-attr,"
+        " .night_mode .hljs-regexp { color: #98c379; }\n"
+        ".night_mode .hljs-number, .night_mode .hljs-symbol,"
+        " .night_mode .hljs-bullet { color: #d19a66; }\n"
+        ".night_mode .hljs-title, .night_mode .hljs-name,"
+        " .night_mode .hljs-section { color: #61afef; }\n"
+        ".night_mode .hljs-built_in, .night_mode .hljs-type,"
+        " .night_mode .hljs-class { color: #e5c07b; }\n"
         "</style>\n"
     )
 
@@ -312,7 +383,42 @@ def _inline_style(cfg, with_size=True):
         parts.append("font-style: italic")
     if cfg.align:
         parts.append(f"text-align: {cfg.align}")
+    if cfg.font:
+        parts.append(f"font-family: {_font_stack(cfg.font)}")
+    if cfg.rtl:
+        # A right-to-left column that is still centred stays centred; one that was
+        # not given an alignment starts from the right, which is where a reader of
+        # Arabic or Hebrew starts.
+        parts.append("direction: rtl")
+        if not cfg.align:
+            parts.append("text-align: right")
+    if cfg.vertical:
+        # Classical Japanese and Chinese run top to bottom, right to left. The
+        # height is capped so a long line scrolls the card rather than growing it
+        # past the bottom of the screen, and `mixed` keeps Latin words upright
+        # inside a vertical line instead of rotating them onto their side.
+        parts.append("writing-mode: vertical-rl")
+        parts.append("text-orientation: mixed")
+        parts.append("max-height: 60vh")
+        parts.append("margin: 0 auto")
     return "; ".join(parts)
+
+
+def _font_stack(name):
+    """The CSS family list for a `font=` value.
+
+    A name this add-on knows becomes the stack it stands for; anything else is
+    passed through as the sheet wrote it, because whether a family is installed on
+    the machine reviewing is not something the sheet or this file can know. A
+    literal name is quoted only if it has a space in it and was not quoted already.
+    """
+    known = FONTS.get(str(name).lower())
+    if known:
+        return known[1]
+    literal = str(name).strip()
+    if " " in literal and not literal.startswith(("'", '"')):
+        return f"'{literal}'"
+    return literal
 
 
 # A media column holds nothing but a URL, so the cell is wrapped in the element that
@@ -358,7 +464,26 @@ def _reference(field, cfg, as_cloze):
         return f"{{{{hint:{field}}}}}"
     if cfg.furigana:
         return f"{{{{furigana:{field}}}}}"
+    if cfg.math:
+        # Anki ships MathJax and renders these delimiters itself, so a formula
+        # column needs no library and no script — only the delimiters around it.
+        # `\(…\)` is inline, `\[…\]` is the centred display form.
+        opener, closer = ("\\[", "\\]") if cfg.math == "block" else ("\\(", "\\)")
+        return f"{opener}{{{{{field}}}}}{closer}"
     return f"{{{{{field}}}}}"
+
+
+def _code_html(field, cfg):
+    """A source-code block, kept exactly as it was typed.
+
+    ``{{text:Field}}`` rather than ``{{Field}}``: a cell pasted out of an editor
+    arrives with markup in it, and a card that renders `<b>` inside a code sample is
+    showing something the compiler will never see. The language is a class rather
+    than anything this add-on interprets — the library reads it, and an unknown one
+    simply colours nothing.
+    """
+    language = f' class="language-{escape(cfg.code)}"' if cfg.code else ""
+    return f'<pre class="s2a-code"><code{language}>{{{{text:{field}}}}}</code></pre>'
 
 
 def _media_html(field, cfg):
@@ -445,6 +570,33 @@ _DRAW_SCRIPT = (
     "    document.head.appendChild(tag);\n"
     "  }\n"
     '  tag.addEventListener("load", draw);\n'
+    "})();\n"
+    "</script>"
+)
+
+
+# Same shape as the writing box's script and for the same reasons: idempotent,
+# because Anki re-runs a card's scripts every time it draws the card, and loaded
+# once into the head rather than fetched per block.
+_CODE_SCRIPT = (
+    "<script>\n"
+    "(function () {\n"
+    "  function paint() {\n"
+    '    document.querySelectorAll("pre.s2a-code code").forEach(function (el) {\n'
+    "      if (el.dataset.s2aDone) return;\n"
+    '      el.dataset.s2aDone = "1";\n'
+    "      window.hljs && hljs.highlightElement(el);\n"
+    "    });\n"
+    "  }\n"
+    "  if (window.hljs) { paint(); return; }\n"
+    '  var tag = document.getElementById("s2a-hljs");\n'
+    "  if (!tag) {\n"
+    '    tag = document.createElement("script");\n'
+    '    tag.id = "s2a-hljs";\n'
+    '    tag.src = "' + HIGHLIGHT_JS + '";\n'
+    "    document.head.appendChild(tag);\n"
+    "  }\n"
+    '  tag.addEventListener("load", paint);\n'
     "})();\n"
     "</script>"
 )
@@ -545,6 +697,8 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
                     f"{reference}</details>"
                 )
                 label = ""  # the summary already names it
+        elif cfg.code is not None:
+            reference = _code_html(field, cfg)
         elif cfg.draw:
             reference = _draw_html(field, cfg, quiz)
             if cfg.hint:
@@ -608,6 +762,10 @@ def _one_template(
         """Whether this side has a writing box, and so needs the library."""
         return any(sheet_config.for_field(name).draw for name in fields)
 
+    def coded(fields):
+        """Whether this side has a code block, and so needs the other library."""
+        return any(sheet_config.for_field(name).code is not None for name in fields)
+
     qfmt = (
         _css(sheet_config)
         + '<div class="s2a-wrap">\n'
@@ -616,6 +774,7 @@ def _one_template(
         + "\n</div>"
         + heard[0]
         + (_DRAW_SCRIPT if drawn(front_fields) else "")
+        + (_CODE_SCRIPT if coded(front_fields) else "")
     )
 
     if is_cloze:
@@ -644,6 +803,7 @@ def _one_template(
         # Two copies would be harmless anyway — the script skips a box it has
         # already filled.
         + (_DRAW_SCRIPT if drawn(back_fields) else "")
+        + (_CODE_SCRIPT if coded(back_fields) else "")
     )
 
     return {"qfmt": qfmt, "afmt": afmt}

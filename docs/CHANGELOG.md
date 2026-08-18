@@ -4,6 +4,52 @@
 
 ---
 
+## ✨ **v6.23.0** - August 2026 *(Feature)*
+
+### Five directives: sort, math, code, font, and the two writing directions
+
+**`sort`** names the column Anki lists notes under in the browser and sorts a deck
+by. This one is really a fix: the default is the note type's first field, which
+here is `ID`, so every deck this add-on made listed as `w01, w02, w03` — a list of
+nothing. Now `sort` on the word column lists the words. One column per sheet, and
+it is drawn on the card exactly as it was before; a `subdeck` column may also be
+the sort column, because filing a note and listing it are both about the note.
+
+**`math`** makes the cell a formula. Anki already ships MathJax, so this loads no
+library at all — it is the delimiters and nothing else. Bare `math` is inline,
+`math=block` is the centred display form. Write TeX in the cell without the
+delimiters.
+
+**`code`** makes the cell source code: kept exactly as typed, in a monospace block
+that scrolls rather than widening the card, coloured by language with
+`code=python`. The colouring library is loaded into the card the same way the
+writing box loads HanziWriter. No highlight theme comes with it — the colours are
+ours, in both light and night mode, because a ready-made theme paints its own
+light background and would sit on a dark card as a white rectangle.
+
+**`font`** picks the typeface. `sc`, `tc`, `jp`, `kr` load a Noto CJK face; any
+other name is a family the machine already has. This exists because of Han
+unification: `直`, `骨` and a few hundred others are one code point with a
+different *shape* in Chinese and Japanese, so a machine with a single CJK font
+draws a Chinese deck in Japanese shapes and nothing on the card can say otherwise.
+
+**`rtl`** and **`vertical`** are the two writing directions HTML has and a sheet
+could not previously ask for: right to left for Arabic, Hebrew and Persian — which
+also right-aligns the column unless `align` says otherwise — and top-to-bottom,
+right-to-left for the way Japanese is set in a book, with Latin words inside the
+line kept upright. A column has one direction; asking for both keeps `rtl` and
+says so.
+
+Three new sheets in the example workbook show them: `21 Formulas & code`,
+`22 Arabic` and `23 Vertical text` — and the Chinese writing sheet now asks for
+`font=sc`, which is exactly the deck the font problem was ruining.
+
+The preview page draws all five. It runs a card's scripts already, so `code`
+colours itself there; MathJax is not in a browser, so the page brings it in when
+the card it is drawing has a formula on it.
+
+---
+
 ## 🐛 **v6.22.1** - August 2026 *(Fix)*
 
 ### A furigana column was read aloud with its brackets in it

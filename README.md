@@ -192,6 +192,9 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `18 Grammar cloze (ngữ pháp)` | the word carrying the grammar point deleted, and typed rather than recalled — `cloze` plus `type` |
 | `19 Dictation (nghe rồi gõ)` | the sentence is spoken and drawn nowhere: `side=hide` + `tts` + `type`, so the only way through is to listen |
 | `20 Video lesson (bài video)` | the clip *is* the question — `video` on the front, filed by lesson |
+| `21 Formulas & code (công thức)` | `math` for formulas and `code=python` for listings — the two kinds of cell that are not prose, plus `sort` |
+| `22 Arabic (phải sang trái)` | `rtl`, the direction Arabic, Hebrew and Persian are written in |
+| `23 Vertical text (viết dọc)` | `vertical` — top to bottom, right to left, the way Japanese is set in a book |
 
 The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails

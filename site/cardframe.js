@@ -25,6 +25,19 @@ import { typeansRuntime } from "./typeans.js";
  * with a hop.
  */
 export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) {
+  const body =
+    (tab === "back" ? back.html : front.html) +
+    (tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : "");
+
+  // Anki ships MathJax and renders `\(…\)` itself; a browser does not. Without
+  // this, the one page whose job is to show what Anki will draw would show the
+  // delimiters instead of the formula. Same major version Anki uses, and only
+  // fetched when there is something on the card to typeset.
+  const math = /\\\(|\\\[/.test(body)
+    ? '<script id="MathJax-script" async ' +
+      'src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.min.js"><\/script>'
+    : "";
+
   return `<!doctype html><meta charset="utf-8">
     <!-- An embed loaded with no referrer at all is refused by YouTube with
          "Error 153", and a srcdoc document sends none unless it says so. -->
@@ -82,8 +95,8 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
          dark. A sheet's theme declares a colour pair for each, so without the second
          class the preview would show the light half of the theme on a dark page. -->
     <body class="card${dark ? " night_mode" : ""}"${tab === "front" ? "" : " data-answered"}>
-      ${tab === "back" ? back.html : front.html}
-      ${tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : ""}
+      ${body}
+      ${math}
       <script>
         // The tts button speaks, on both pages. Choosing a language and then
         // finding the button inert would teach that the directive does nothing —

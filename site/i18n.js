@@ -84,6 +84,30 @@ const STRINGS = {
     en: "This column becomes a level of the deck path. It is never drawn on the card — filing a note and printing on it are different jobs.",
     vi: "Cột này thành một tầng của deck. Nó không bao giờ hiện trên thẻ — xếp deck và in lên thẻ là hai việc khác nhau.",
   },
+  helpSort: {
+    en: "Anki lists notes by this column in the browser and sorts a deck by it. Without it that is the ID column, which is a list of nothing. One column per sheet, and it is drawn on the card exactly as before.",
+    vi: "Anki sẽ hiện cột này ở Browse và sắp xếp deck theo nó. Không đặt thì nó lấy cột ID, tức là một danh sách vô nghĩa. Mỗi sheet một cột, và cột đó vẫn hiện trên thẻ như bình thường.",
+  },
+  helpMath: {
+    en: "The cell is a formula, drawn by the MathJax that Anki already ships — write TeX without the delimiters. Bare math is inline; math=block is the centred display form.",
+    vi: "Ô là một công thức, do MathJax có sẵn trong Anki vẽ — bạn viết TeX, không cần dấu bao. Ghi math là công thức nằm trong dòng; math=block là công thức căn giữa một dòng riêng.",
+  },
+  helpCode: {
+    en: "The cell is source code: kept exactly as typed, in a monospace block, coloured by language. code=python names the language; bare code just keeps the formatting.",
+    vi: "Ô là code: giữ nguyên như bạn gõ, khối chữ đều nét, tô màu theo ngôn ngữ. code=python là chỉ định ngôn ngữ; ghi trần code thì chỉ giữ định dạng.",
+  },
+  helpFont: {
+    en: "The typeface for this column. sc/tc/jp/kr load a Noto CJK font — worth it because 直 and 骨 are drawn differently in Chinese and Japanese and a machine with one CJK font picks for you. Any installed family name also works.",
+    vi: "Font cho cột này. sc/tc/jp/kr nạp font Noto CJK — đáng dùng vì 直 hay 骨 có tự dạng khác nhau giữa tiếng Trung và tiếng Nhật, máy chỉ có một font CJK thì nó chọn thay bạn. Gõ tên font đã cài trong máy cũng được.",
+  },
+  helpRtl: {
+    en: "Right to left, for Arabic, Hebrew and Persian. The column also starts from the right unless align says otherwise.",
+    vi: "Viết từ phải sang trái, cho tiếng Ả Rập, Do Thái, Ba Tư. Cột cũng canh phải luôn, trừ khi bạn ghi align khác.",
+  },
+  helpVertical: {
+    en: "Top to bottom, right to left — classical Japanese and Chinese. Latin words inside the line stay upright.",
+    vi: "Viết từ trên xuống, phải sang trái — kiểu văn bản Nhật/Trung cổ. Chữ Latin trong dòng vẫn đứng thẳng.",
+  },
   helpBold: { en: "Bold text.", vi: "Chữ đậm." },
   helpItalic: { en: "Italic text.", vi: "Chữ nghiêng." },
   helpHint: {
@@ -174,8 +198,6 @@ const STRINGS = {
     vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",
   },
   urlLabel: { en: "Sheet link", vi: "Link sheet" },
-  deckPlaceholder: { en: "My deck", vi: "Deck của tôi" },
-  deckLabel: { en: "Deck name", vi: "Tên deck" },
   go: { en: "Preview", vi: "Xem trước" },
   pick: { en: "Upload a file", vi: "Tải file lên" },
   pickLabel: {
@@ -228,6 +250,13 @@ const STRINGS = {
   nothingSet: {
     en: "The settings row says nothing about this column.",
     vi: "Settings row không nói gì về cột này.",
+  },
+  // The sheet drawn as itself. Row numbers and column letters are the
+  // spreadsheet's own, so a row named here is the row you would scroll to there.
+  gridHead: { en: "The sheet", vi: "Sheet gốc" },
+  gridCut: {
+    en: (shown, total) => `Showing the first ${shown} of ${total} rows`,
+    vi: (shown, total) => `Đang hiện ${shown} dòng đầu trong ${total} dòng`,
   },
   valueInRow: { en: (line) => `Row ${line}`, vi: (line) => `Dòng ${line}` },
   cellEmpty: { en: "empty", vi: "trống" },

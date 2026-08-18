@@ -63,8 +63,14 @@ _FIELD_KEYS = (
     "cloze",
     "draw",
     "subdeck",
+    "math",
+    "code",
+    "font",
+    "sort",
+    "rtl",
+    "vertical",
 )
-_FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw")
+_FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw", "sort", "rtl", "vertical")
 _DECK_KEYS = ("align", "speed", "reverse", "theme")
 
 

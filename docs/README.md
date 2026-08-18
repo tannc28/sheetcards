@@ -305,7 +305,10 @@ Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
 | `tts` | a full language code | `_LANG_RE` = `^[a-zA-Z]{2,3}[-_][a-zA-Z0-9]{2,4}$`, normalised to `zh_CN` shape |
 | `voices` | comma-separated names | at least one non-empty name |
 | `speed` | float | **0.5–2.0** |
-| `bold`, `italic`, `hint`, `furigana` | flags | set to True by their mere presence |
+| `font` | a key of `FONTS` (`sc`/`tc`/`jp`/`kr`/`serif`/`sans`/`mono`) or any family name | a known key becomes its stack and its webfont is imported; anything else is passed to CSS as written |
+| `math` | bare, or `math=block` | `\(…\)` inline, `\[…\]` display — drawn by the MathJax Anki ships, so no library is loaded |
+| `code` | bare, or `code=python` | `<pre class="s2a-code"><code class="language-…">{{text:F}}</code></pre>`, coloured by `HIGHLIGHT_JS` |
+| `bold`, `italic`, `hint`, `furigana`, `rtl`, `vertical`, `sort` | flags | set to True by their mere presence |
 | `image`, `audio`, `video` (`MEDIA_KINDS`) | flags | all three land on the single `media` attribute (`"image"`/`"audio"`/`"video"`), not on three independent switches — one column holds one kind. A second, different kind is ignored with a warning |
 
 **Media columns** turn a cell that holds nothing but a URL into the element that plays it
@@ -320,6 +323,25 @@ Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
 - **`tts` and `furigana` are stripped from a media column**, both with a warning: they
   would act on the address itself (speech would read the URL out loud). `hint` survives
   the parse.
+
+**Three of the per-column keys are not about how the card looks.**
+
+- **`sort`** names the column Anki lists notes under in the browser and sorts a deck
+  by. It is stored on the note type as an index into the field list
+  (`templates_and_definitions.apply_sort_field`), and the default is field 0 — which
+  is `ID`, so without it a deck lists as `w01`, `w02`, `w03`. One column per sheet,
+  resolved in `resolve_roles` beside `cloze_field` and `type_field`; refused on a
+  media column, and — unlike every *card* key — allowed on a `subdeck` column, since
+  filing a note and listing it are both properties of the note.
+- **`rtl`** and **`vertical`** are the two writing directions HTML has: `direction:
+  rtl` for Arabic, Hebrew and Persian (which also right-aligns unless `align` says
+  otherwise), and `writing-mode: vertical-rl` for classical Japanese and Chinese. A
+  column has one direction, so asking for both keeps `rtl` and warns.
+- **`font`** exists because of Han unification: `直`, `骨` and a few hundred others
+  are one code point drawn differently in Chinese and Japanese, and a machine with a
+  single CJK font picks for you. `sc`/`tc`/`jp`/`kr` import a Noto face from
+  `FONT_CSS`; the imports are emitted by `_font_imports()` at the **top** of the
+  stylesheet, because `@import` is only legal there.
 
 **Deck-wide keys** (`_DECK_KEYS`), parsed out of the remainder of the `#config` cell:
 `align` (validated), `speed` (parsed as a float but **not** range-checked, unlike the

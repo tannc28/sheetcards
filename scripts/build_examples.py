@@ -189,7 +189,7 @@ SHEETS = {
     # write the character; a column that files the note without reaching the card
     "11 Chinese writing (gõ chữ)": [
         ["ID", "TAGS", "Level", "Meaning", "Pinyin", "Hanzi", "Strokes", "Example"],
-        ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
+        ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN; font=sc; sort", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["w01", "hanzi, hsk1", "HSK 1", "tôi", "wǒ", "我", "https://upload.wikimedia.org/wikipedia/commons/b/b3/%E6%88%91-order.gif", "我是学生。"],
         ["w02", "hanzi, hsk1", "HSK 1", "bạn", "nǐ", "你", "https://upload.wikimedia.org/wikipedia/commons/e/ee/%E4%BD%A0-order.gif", "你好吗？"],
         ["w03", "hanzi, hsk1", "HSK 1", "tốt; khỏe", "hǎo", "好", "https://upload.wikimedia.org/wikipedia/commons/6/6e/%E5%A5%BD-order.gif", "今天天气很好。"],
@@ -338,6 +338,40 @@ SHEETS = {
         ["c01", "Lesson 1", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "Where are the speakers standing?", "In front of the elephant enclosure at the zoo."],
         ["c02", "Lesson 1", "https://youtu.be/aircAruvnKk", "What is the subject of this lecture?", "How a neural network is put together."],
         ["c03", "Lesson 2", "https://upload.wikimedia.org/wikipedia/commons/d/de/Ink_grinding.webmhd.webm", "What is being ground on the stone?", "An ink stick, ground with water to make ink."],
+    ],
+    # a formula and a listing, the two kinds of cell that are not prose: MathJax
+    # is already inside Anki, and the colouring is a library the card loads.
+    "21 Formulas & code (công thức)": [
+        ["ID", "Topic", "Question", "Formula", "Snippet", "Note"],
+        ["#config", "side=front; size=15; color=muted; label=Topic", "side=front; size=24; sort", "side=back; size=26; math=block", "side=back; code=python", "side=back; size=15; color=muted; hint"],
+        ["m01", "Geometry", "The area of a circle of radius r", "A = \\pi r^2", "", "The constant is the ratio of any circle's circumference to its diameter."],
+        ["m02", "Algebra", "The quadratic formula", "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", "", "The part under the root is the discriminant; its sign counts the roots."],
+        ["m03", "Physics", "Einstein's mass–energy equivalence", "E = mc^2", "", "c is the speed of light, so a very small mass is a very large energy."],
+        ["m04", "Statistics", "The mean of n observations", "\\bar{x} = \\frac{1}{n}\\sum_{i=1}^{n} x_i", "", "Sum them, divide by how many there were."],
+        ["m05", "Python", "Reverse a string", "", "def backwards(text):\n    return text[::-1]", "A slice with a step of -1 walks the string from the end."],
+        ["m06", "Python", "Count how often each item appears", "", "from collections import Counter\n\ncounts = Counter(words)\nprint(counts.most_common(3))", "Counter is a dict that starts every key at zero."],
+        ["m07", "SQL", "Rows in one table with no match in another", "", "SELECT c.name\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL", "A left join keeps every left row; the null is what says there was no match."],
+    ],
+    # right to left, which is a direction no amount of styling can fake
+    "22 Arabic (phải sang trái)": [
+        ["ID", "Arabic", "Transliteration", "Meaning", "Note"],
+        ["#config", "rtl; size=44; font=serif; sort", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=14; color=muted; hint"],
+        ["b01", "مرحبا", "marḥaban", "xin chào", "The everyday greeting, usable at any hour."],
+        ["b02", "كتاب", "kitāb", "quyển sách", "Same root as maktaba, a library or bookshop."],
+        ["b03", "ماء", "māʼ", "nước", "The last letter is a hamza, written on a seat here."],
+        ["b04", "بيت", "bayt", "ngôi nhà", "Also a line of verse — a house of poetry."],
+        ["b05", "مدرسة", "madrasa", "trường học", "Literally a place of study."],
+        ["b06", "شكرا", "shukran", "cảm ơn", "Answered with ʿafwan, you are welcome."],
+    ],
+    # top to bottom, right to left: how Japanese is set in a book
+    "23 Vertical text (viết dọc)": [
+        ["ID", "Japanese", "Reading", "Meaning"],
+        ["#config", "vertical; font=jp; size=30; sort", "side=back; size=18; color=accent", "side=back; size=20"],
+        ["t01", "古池や蛙飛びこむ水の音", "ふるいけやかわずとびこむみずのおと", "Ao xưa, ếch nhảy vào, tiếng nước khẽ vang."],
+        ["t02", "夏草や兵どもが夢の跡", "なつくさやつわものどもがゆめのあと", "Cỏ mùa hè — dấu vết giấc mộng của những người lính."],
+        ["t03", "秋深き隣は何をする人ぞ", "あきふかきとなりはなにをするひとぞ", "Thu đã sâu — người bên cạnh làm nghề gì nhỉ?"],
+        ["t04", "山は静かです", "やまはしずかです", "Núi thì yên tĩnh."],
+        ["t05", "本を読みます", "ほんをよみます", "Tôi đọc sách."],
     ],
 }
 # fmt: on
