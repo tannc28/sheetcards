@@ -3,7 +3,7 @@
     "name": "Sheets2Anki",
     "version": "6.23.0",
     "author": "tannc28",
-    "description": "Synchronize Anki decks with Google Sheets in TSV format. Ideal for exam preparation.",
+    "description": "Turn a Google Sheet into an Anki deck. The sheet declares the fields, the subdecks and how each card looks — no note-type editing.",
     "homepage": "https://github.com/tannc28/sheets2anki",
     "min_point_version": 250000,
     "max_point_version": 260000,
