@@ -166,7 +166,7 @@ Most of it is English for Vietnamese speakers, because that is what most people
 are studying; Chinese, Japanese and Korean appear where the feature is theirs —
 handwriting, furigana, non-Latin headers.
 
-Twenty sheets, each one its own deck, ordered from *the smallest sheet that
+Thirty-one sheets, each one its own deck, ordered from *the smallest sheet that
 works* to *a deck you would keep studying*. Where a column carries the meaning of a
 word it is glossed in Vietnamese; everything else is English. Nothing about the
 add-on is language-specific — a deck of anatomy or case law works the same way:
@@ -196,6 +196,14 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `21 Formulas & code (công thức)` | `math` for formulas and `code=python` for listings — the two kinds of cell that are not prose, plus `sort` |
 | `22 Arabic (phải sang trái)` | `rtl`, the direction Arabic, Hebrew and Persian are written in |
 | `23 Vertical text (viết dọc)` | `vertical` — top to bottom, right to left, the way Japanese is set in a book |
+| `24 Korean (tiếng Hàn)` | `font=kr` and a Korean voice — a script with a font of its own |
+| `25 Traditional (chữ phồn thể)` | the same word in `font=tc` and `font=sc` side by side, spoken in `zh_TW` |
+| `26 Shell commands (dòng lệnh)` | `code=bash` — the answer is a command, filed by what it is for |
+| `27 Web dev (HTML & JS)` | two code columns on one card, `code=html` and `code=javascript` |
+| `28 Chemistry (hoá học)` | `math=block` equations under a plain-language answer |
+| `29 Phrasal verbs (cụm động từ)` | `cloze` on the particle that is hardest to look up, and the sentence spoken |
+| `30 German (tiếng Đức)` | der/die/das asked on the front, `tts=de_DE` on the noun and the example |
+| `31 Spanish (tiếng Tây Ban Nha)` | `type=nc` again, where the accents are Spanish and `ñ` still has to be typed |
 
 The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](scripts/build_examples.py), and the test suite fails

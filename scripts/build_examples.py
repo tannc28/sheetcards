@@ -373,6 +373,103 @@ SHEETS = {
         ["t04", "山は静かです", "やまはしずかです", "Núi thì yên tĩnh."],
         ["t05", "本を読みます", "ほんをよみます", "Tôi đọc sách."],
     ],
+    # a script of its own, and a voice of its own
+    "24 Korean (tiếng Hàn)": [
+        ["ID", "Korean", "Romanisation", "Meaning", "Example"],
+        ["#config", "font=kr; size=44; tts=ko_KR; sort", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=16; color=muted; italic"],
+        ["h01", "학교", "hakgyo", "trường học", "저는 학교에 갑니다."],
+        ["h02", "친구", "chingu", "bạn bè", "친구를 만났어요."],
+        ["h03", "음식", "eumsik", "món ăn", "한국 음식을 좋아해요."],
+        ["h04", "감사합니다", "gamsahamnida", "cảm ơn", "도와주셔서 감사합니다."],
+        ["h05", "물", "mul", "nước", "물 한 잔 주세요."],
+        ["h06", "시간", "sigan", "thời gian", "시간이 없어요."],
+        ["h07", "책", "chaek", "quyển sách", "이 책은 재미있어요."],
+        ["h08", "지하철", "jihacheol", "tàu điện ngầm", "지하철로 회사에 가요."],
+    ],
+    # the same word in two scripts, which is what a Taiwan-bound learner needs
+    "25 Traditional (chữ phồn thể)": [
+        ["ID", "Traditional", "Simplified", "Pinyin", "Meaning"],
+        ["#config", "font=tc; size=48; tts=zh_TW; sort", "side=back; size=36; font=sc; color=muted; label=Simplified", "side=back; size=22; color=accent", "side=back; size=20"],
+        ["f01", "學習", "学习", "xuéxí", "học tập"],
+        ["f02", "電腦", "电脑", "diànnǎo", "máy tính"],
+        ["f03", "圖書館", "图书馆", "túshūguǎn", "thư viện"],
+        ["f04", "臺灣", "台湾", "Táiwān", "Đài Loan"],
+        ["f05", "醫生", "医生", "yīshēng", "bác sĩ"],
+        ["f06", "餐廳", "餐厅", "cāntīng", "nhà hàng"],
+        ["f07", "開車", "开车", "kāichē", "lái xe"],
+        ["f08", "銀行", "银行", "yínháng", "ngân hàng"],
+    ],
+    # a deck for the terminal: the answer is a command, and a command is code
+    "26 Shell commands (dòng lệnh)": [
+        ["ID", "Group", "Task", "Command", "Note"],
+        ["#config", "subdeck=1", "side=front; size=24; sort", "side=back; code=bash", "side=back; size=15; color=muted; hint"],
+        ["s01", "Files", "List every file, including the hidden ones", "ls -la", "The dot files are configuration; ls hides them by default."],
+        ["s02", "Files", "Find every .log file under this directory", "find . -name '*.log'", "The quotes stop the shell expanding the pattern before find sees it."],
+        ["s03", "Text", "Count the lines that contain a word", "grep -c 'error' app.log", "-c counts matching lines, not matches: two on one line is one."],
+        ["s04", "Text", "Show the last twenty lines and keep following the file", "tail -n 20 -f app.log", "-f holds the file open, which is how you watch a log live."],
+        ["s05", "Processes", "See what is listening on port 8000", "lsof -i :8000", "The command for the moment something says the address is in use."],
+        ["s06", "Git", "Undo the last commit but keep the changes", "git reset --soft HEAD~1", "--soft keeps the work staged; --hard would throw it away."],
+        ["s07", "Git", "See what changed in one file over time", "git log -p -- src/app.py", "-p prints the patch of every commit that touched the path."],
+        ["s08", "Archives", "Unpack a .tar.gz into a directory", "tar -xzf release.tar.gz -C build/", "x extracts, z is gzip, f names the file, -C says where to put it."],
+    ],
+    # two languages on one card, both kept exactly as they were typed
+    "27 Web dev (HTML & JS)": [
+        ["ID", "Question", "Markup", "Script", "Note"],
+        ["#config", "side=front; size=22; sort", "side=back; code=html", "side=back; code=javascript", "side=back; size=15; color=muted; hint"],
+        ["w01", "How is a form field tied to its label?", "<label for=\"email\">Email</label>\n<input id=\"email\" type=\"email\">", "", "The for attribute matches the input's id, which is what makes the label clickable."],
+        ["w02", "What does defer do on a script tag?", "<script src=\"app.js\" defer></script>", "", "The file downloads in parallel and runs after the document is parsed, in order."],
+        ["w03", "How do you copy text to the clipboard?", "", "await navigator.clipboard.writeText('hello');", "Only inside a user gesture, and only on https or localhost."],
+        ["w04", "How is a list built without innerHTML?", "", "const ul = document.createElement('ul');\nfor (const item of items) {\n  const li = document.createElement('li');\n  li.textContent = item;\n  ul.append(li);\n}", "textContent cannot execute anything; innerHTML with user text can."],
+        ["w05", "How do you wait for an element to appear?", "", "new MutationObserver((_, obs) => {\n  const found = document.querySelector('.ready');\n  if (found) { obs.disconnect(); use(found); }\n}).observe(document.body, { childList: true, subtree: true });", "An observer costs nothing while nothing changes; a setInterval costs something forever."],
+    ],
+    # an equation is the answer, and it is set on a line of its own
+    "28 Chemistry (hoá học)": [
+        ["ID", "Topic", "Question", "Answer", "Equation", "Note"],
+        ["#config", "subdeck=1", "side=front; size=22; sort", "side=back; size=20", "side=back; size=24; math=block", "side=back; size=15; color=muted; hint"],
+        ["c01", "Reactions", "What does hydrogen burning in oxygen make?", "Nước.", "2H_2 + O_2 \\rightarrow 2H_2O", "Balanced: the same atoms come out as went in."],
+        ["c02", "Reactions", "What does an acid and a base make?", "Muối và nước.", "HCl + NaOH \\rightarrow NaCl + H_2O", "Neutralisation — the pH moves toward 7."],
+        ["c03", "Quantities", "How many particles are in one mole?", "Khoảng 6,022 × 10²³ hạt.", "N_A = 6.022 \\times 10^{23}\\ \\mathrm{mol^{-1}}", "Avogadro's number is a count, not a mass."],
+        ["c04", "Quantities", "How do you find the amount of a substance?", "Lấy khối lượng chia cho khối lượng mol.", "n = \\frac{m}{M}", "n in moles, m in grams, M in grams per mole."],
+        ["c05", "Gases", "What is the ideal gas law?", "Áp suất nhân thể tích bằng số mol nhân R nhân nhiệt độ.", "pV = nRT", "T is in kelvin, always — the law means nothing in celsius."],
+        ["c06", "Solutions", "How is molar concentration defined?", "Số mol chất tan chia cho thể tích dung dịch.", "c = \\frac{n}{V}", "V is the volume of the solution, not of the solvent."],
+    ],
+    # the shape of English that is hardest to look up: a verb plus its particle
+    "29 Phrasal verbs (cụm động từ)": [
+        ["ID", "Sentence", "Meaning", "Note"],
+        ["#config", "cloze; size=26; tts=en_US; sort", "side=back; size=20", "side=back; size=15; color=muted; hint"],
+        ["v01", "I need to {{c1::look after}} my little brother tonight.", "trông nom, chăm sóc", "Take care of. The particle cannot move: never look my brother after."],
+        ["v02", "She {{c1::gave up}} smoking two years ago.", "từ bỏ", "Give up + -ing, never give up to smoke."],
+        ["v03", "We had to {{c1::put off}} the meeting until Friday.", "hoãn lại", "Postpone. This one does split: put the meeting off."],
+        ["v04", "He {{c1::ran into}} an old friend at the station.", "tình cờ gặp", "Met by chance — nobody planned it."],
+        ["v05", "Please {{c1::fill in}} this form before you leave.", "điền vào", "British fill in, American fill out, the same form."],
+        ["v06", "The car {{c1::broke down}} on the motorway.", "hỏng, chết máy", "Of a machine. Of a person it means to weep."],
+        ["v07", "I will {{c1::look it up}} in the dictionary.", "tra cứu", "With a pronoun the particle comes after it: never look up it."],
+    ],
+    # three genders, and a voice that says them
+    "30 German (tiếng Đức)": [
+        ["ID", "Article", "Noun", "Plural", "Meaning", "Example"],
+        ["#config", "side=front; size=26; color=accent; label=Which article?", "side=front; size=40; tts=de_DE; sort", "side=back; size=20; color=muted; label=Plural", "side=back; size=20", "side=back; size=16; italic; tts=de_DE; speed=0.85"],
+        ["g01", "der", "Tisch", "die Tische", "cái bàn", "Der Tisch steht am Fenster."],
+        ["g02", "die", "Tür", "die Türen", "cái cửa", "Bitte mach die Tür zu."],
+        ["g03", "das", "Fenster", "die Fenster", "cửa sổ", "Das Fenster ist offen."],
+        ["g04", "der", "Schlüssel", "die Schlüssel", "chìa khoá", "Ich habe meinen Schlüssel vergessen."],
+        ["g05", "die", "Zeitung", "die Zeitungen", "tờ báo", "Er liest jeden Morgen die Zeitung."],
+        ["g06", "das", "Mädchen", "die Mädchen", "cô bé", "Jedes Wort auf -chen ist das."],
+        ["g07", "der", "Bahnhof", "die Bahnhöfe", "nhà ga", "Wir treffen uns am Bahnhof."],
+    ],
+    # accents that need not be typed, and one letter that must be
+    "31 Spanish (tiếng Tây Ban Nha)": [
+        ["ID", "English", "Spanish", "Note"],
+        ["#config", "size=28; sort", "side=back; size=32; type=nc; tts=es_ES", "side=back; size=15; color=muted"],
+        ["e01", "the tree", "el árbol", "type=nc ignores the accent, so “el arbol” is accepted."],
+        ["e02", "the city", "la ciudad"],
+        ["e03", "the heart", "el corazón"],
+        ["e04", "quickly", "rápidamente"],
+        ["e05", "the mountain", "la montaña", "ñ is a letter of its own, not an accent — it has to be typed."],
+        ["e06", "the bird", "el pájaro"],
+        ["e07", "tomorrow", "mañana", "Also means morning: mañana por la mañana."],
+        ["e08", "the river", "el río"],
+    ],
 }
 # fmt: on
 

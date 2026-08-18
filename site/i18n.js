@@ -334,11 +334,11 @@ const STRINGS = {
   // --- demo ---------------------------------------------------------------
   demoNote: {
     en:
-      "Showing the example workbook — twenty sheets, each a deck that also " +
+      "Showing the example workbook — thirty-one sheets, each a deck that also " +
       "demonstrates one thing, from the smallest one that works upwards. The " +
       "picker beside Source walks through them, or paste your own link instead.",
     vi:
-      "Đang hiện file ví dụ — hai mươi sheet, mỗi sheet là một bộ thẻ dùng được " +
+      "Đang hiện file ví dụ — ba mươi mốt sheet, mỗi sheet là một bộ thẻ dùng được " +
       "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Ô chọn sheet " +
       "cạnh chữ Source để xem lần lượt, hoặc dán link của bạn.",
   },

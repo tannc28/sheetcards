@@ -2,7 +2,7 @@
 
 `sheets2anki-examples.xlsx` is a working Sheets2Anki source, and it is what the
 [preview site](https://tannc28.github.io/sheets2anki/) and the add-on's
-**Import Test Deck** point at. Twenty sheets, ordered so that reading them from
+**Import Test Deck** point at. Thirty-one sheets, ordered so that reading them from
 the first to the last takes you from *the smallest sheet that works* to *a deck
 you would keep studying*.
 
@@ -313,3 +313,53 @@ card past the bottom of the screen.
 single Unicode code point drawn with different shapes in Chinese and Japanese, so
 a machine holding only one CJK font draws whichever it has — and nothing on the
 card can say which language the text is in. The sheet has to.
+
+### 24 Korean (tiếng Hàn)
+
+`font=kr` loads a Noto face that has Hangul in it, which a machine outside Korea
+often does not. `tts=ko_KR` reads the word, and `sort` puts the Korean in the
+browser's first column instead of h01, h02, h03.
+
+### 25 Traditional (chữ phồn thể)
+
+The same word twice: `font=tc` on the traditional form, `font=sc` on the
+simplified one under it. Two columns, two fonts, one row — which is the whole
+argument for `font` being a per-column setting rather than a deck-wide one. The
+voice is `zh_TW`, because the reading is the Taiwan one.
+
+### 26 Shell commands (dòng lệnh)
+
+`code=bash` keeps a command exactly as it must be typed: the quotes, the flags and
+the spacing survive, which prose formatting would quietly destroy. `subdeck=1` on
+`Group` files them by what they are for — Files, Text, Git — so a session can be
+one of those rather than all of them.
+
+### 27 Web dev (HTML & JS)
+
+Two code columns on one card, `code=html` and `code=javascript`, each coloured for
+its own language. A row fills in whichever is the answer and leaves the other
+empty, and an empty column draws nothing at all.
+
+### 28 Chemistry (hoá học)
+
+The answer is said in words and then set as an equation: `math=block` puts it on a
+line of its own, centred, the way an equation is written. Anki draws it with the
+MathJax it already ships, so this sheet loads nothing.
+
+### 29 Phrasal verbs (cụm động từ)
+
+The hardest English to look up, because the meaning is in the particle and the
+particle is a separate word. `cloze` deletes exactly that, `tts=en_US` reads the
+whole sentence back, and the note behind `hint` says whether the particle can move.
+
+### 30 German (tiếng Đức)
+
+The article is the question — der, die or das — because that is the part nobody
+guesses right. The noun is spoken by `tts=de_DE`, the example a little slower with
+`speed=0.85`, and the plural is on the back with a `label` naming it.
+
+### 31 Spanish (tiếng Tây Ban Nha)
+
+`type=nc` again, and here it earns the `nc`: *el arbol* is accepted for **el
+árbol**, because the accent is a mark. `ñ` is not a mark but a letter of its own,
+so **la montaña** still has to be typed with it.
