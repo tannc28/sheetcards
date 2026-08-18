@@ -183,35 +183,30 @@ as written, in whatever script your subject calls for.
 
 ### 15 Theme + subdeck (màu, tầng)
 
-The tour ends on a deck rather than on a demonstration: fifteen JLPT words, filed
-`JLPT::N5::Verbs` and so on, with the reading over the kanji and the word spoken
-aloud. It is also the sheet the preview site opens on.
+Fifteen English words, filed `English::B1::Verbs` and so on, spoken aloud and
+painted in a theme. It is the widest sheet in the workbook, which is the only
+reason the preview site opens on it — a landing page showing two columns and no
+settings row would answer none of the questions people arrive with.
 
-Its settings row is four columns wide and says five things — `theme=sakura`,
-`furigana`, `tts=ja_JP`, two `side=back`s and the sizes. That is what a settings
+Its settings row is four columns wide and says nine things. That is what a settings
 row usually looks like. There used to be a sheet here that turned on every
-directive at once, fourteen columns of them, and it taught nobody how to write
-one: a card is a small number of decisions, and a sheet that makes all of them at
+directive at once, fourteen columns of them, and it taught nobody how to write one:
+a card is a small number of decisions, and a sheet that makes all of them at
 maximum shows you the ceiling instead of the room.
 
-`theme=sakura` is the only deck-wide look the add-on ships. It repaints the card
-— background, text, accent, and blossoms strewn faintly behind the word — in both
+`theme=sakura` is the only deck-wide look the add-on ships. It repaints the card —
+background, text, accent, and blossoms strewn faintly behind the word — in both
 Anki's day and night modes, and it is deliberately faint: wallpaper that competes
 with the word being learned has failed at being wallpaper.
 
-Three `SUBDECK` levels build `…::JLPT::N5::Verbs`, which is worth doing on day
+Three `SUBDECK` levels build `…::English::B1::Verbs`, which is worth doing on day
 one: a level is a deck you can study on its own, and the path is mirrored into a
-`sheets2anki::JLPT::N5::Verbs` tag for you, so the same cards are one click away
+`sheets2anki::english::b1::verbs` tag for you, so the same cards are one click away
 in the browser sidebar. The `TAGS` column is for the words you would search by
-rather than file by — here `jlpt` and `n5`, which cut across the three levels.
+rather than file by — here `cefr` and `b1`, which cut across the three levels.
 
-## Where the media comes from
-
-Every picture, recording and stroke-order animation is a
-[Wikimedia Commons](https://commons.wikimedia.org) file, linked at its own
-address. Nothing is copied into this repository and nothing lands in your
-`collection.media`, so these cards need the network to draw — which is true of
-any media column, not just these.
+`sort` on the word column is what makes the deck readable in Anki's browser:
+without it the first column is `ID`, and a deck lists as n01, n02, n03.
 
 ### 16 Picture words (từ vựng ảnh)
 

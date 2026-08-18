@@ -255,28 +255,29 @@ SHEETS = {
         ["h05", "部首", "bùshǒu", "bộ thủ", "这个字的部首是“水”。"],
         ["h06", "声调", "shēngdiào", "thanh điệu", "普通话有四个声调。"],
     ],
-    # a whole-card palette, and a deck filed three levels deep: a JLPT N5 list in
-    # the colours of the season the theme is named after. Nothing here is the end
-    # of anything — it is the sheet that demonstrates `theme=` and a three-level
-    # `SUBDECK`, the way 13 demonstrates furigana.
+    # a whole-card palette, and a deck filed three levels deep: English vocabulary
+    # by CEFR level and word class, in the colours of the season the theme is named
+    # after. Nothing here is the end of anything — it is the sheet that demonstrates
+    # `theme=` and a three-level `SUBDECK`, and the widest one, which is why the
+    # preview site opens on it.
     "15 Theme + subdeck (màu, tầng)": [
-        ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Japanese", "Meaning", "Example"],
-        ["#config theme=sakura", "", "", "", "", "size=40; furigana; tts=ja_JP", "side=back; size=22", "side=back; size=16; color=muted; italic; furigana"],
-        ["n01", "JLPT", "N5", "Verbs", "jlpt, n5", "食[た]べる", "ăn", "朝[あさ]ごはんを 食[た]べます。"],
-        ["n02", "JLPT", "N5", "Verbs", "jlpt, n5", "飲[の]む", "uống", "毎朝[まいあさ] コーヒーを 飲[の]みます。"],
-        ["n03", "JLPT", "N5", "Verbs", "jlpt, n5", "行[い]く", "đi", "来週[らいしゅう] 京都[きょうと]へ 行[い]きます。"],
-        ["n04", "JLPT", "N5", "Verbs", "jlpt, n5", "話[はな]す", "nói chuyện", "日本語[にほんご]で 話[はな]しましょう。"],
-        ["n05", "JLPT", "N5", "Nouns", "jlpt, n5", "学校[がっこう]", "trường học", "学校[がっこう]は 駅[えき]の 近[ちか]くです。"],
-        ["n06", "JLPT", "N5", "Nouns", "jlpt, n5", "友[とも]だち", "bạn bè", "友[とも]だちと 映画[えいが]を 見[み]ました。"],
-        ["n07", "JLPT", "N5", "Nouns", "jlpt, n5", "電車[でんしゃ]", "tàu điện", "電車[でんしゃ]で 会社[かいしゃ]へ 行[い]きます。"],
-        ["n08", "JLPT", "N5", "Nouns", "jlpt, n5", "時間[じかん]", "thời gian", "今日[きょう]は 時間[じかん]が ありません。"],
-        ["n09", "JLPT", "N5", "Adjectives", "jlpt, n5", "新[あたら]しい", "mới", "新[あたら]しい 本[ほん]を 買[か]いました。"],
-        ["n10", "JLPT", "N5", "Adjectives", "jlpt, n5", "高[たか]い", "cao; đắt", "この 店[みせ]は 少[すこ]し 高[たか]いです。"],
-        ["n11", "JLPT", "N5", "Adjectives", "jlpt, n5", "静[しず]か", "yên tĩnh", "この 部屋[へや]は とても 静[しず]かです。"],
-        ["n12", "JLPT", "N4", "Verbs", "jlpt, n4", "調[しら]べる", "tra cứu; tìm hiểu", "辞書[じしょ]で 言葉[ことば]を 調[しら]べます。"],
-        ["n13", "JLPT", "N4", "Verbs", "jlpt, n4", "続[つづ]ける", "tiếp tục", "毎日[まいにち] 練習[れんしゅう]を 続[つづ]けます。"],
-        ["n14", "JLPT", "N4", "Nouns", "jlpt, n4", "季節[きせつ]", "mùa", "日本[にほん]には 四[よっ]つの 季節[きせつ]が あります。"],
-        ["n15", "JLPT", "N4", "Nouns", "jlpt, n4", "桜[さくら]", "hoa anh đào", "春[はる]に 桜[さくら]が 咲[さ]きます。"],
+        ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Word", "Phonetic", "Meaning", "Example"],
+        ["#config theme=sakura", "", "", "", "", "size=44; bold; tts=en_US; sort", "side=back; size=20; color=accent", "side=back; size=22", "side=back; size=16; color=muted; italic; tts=en_US; speed=0.85"],
+        ["n01", "English", "B1", "Verbs", "cefr, b1", "to afford", "/əˈfɔːd/", "đủ tiền để mua", "We cannot afford a bigger flat this year."],
+        ["n02", "English", "B1", "Verbs", "cefr, b1", "to complain", "/kəmˈpleɪn/", "phàn nàn", "She complained about the noise upstairs."],
+        ["n03", "English", "B1", "Verbs", "cefr, b1", "to improve", "/ɪmˈpruːv/", "cải thiện", "His English improved after a year in Leeds."],
+        ["n04", "English", "B1", "Verbs", "cefr, b1", "to suggest", "/səˈdʒest/", "gợi ý, đề nghị", "I suggest leaving before the traffic starts."],
+        ["n05", "English", "B1", "Nouns", "cefr, b1", "advice", "/ədˈvaɪs/", "lời khuyên", "She gave me some good advice."],
+        ["n06", "English", "B1", "Nouns", "cefr, b1", "journey", "/ˈdʒɜːni/", "chuyến đi", "The journey takes about four hours."],
+        ["n07", "English", "B1", "Nouns", "cefr, b1", "neighbour", "/ˈneɪbə/", "hàng xóm", "Our neighbour looks after the cat."],
+        ["n08", "English", "B1", "Adjectives", "cefr, b1", "crowded", "/ˈkraʊdɪd/", "đông đúc", "The market is crowded on Sunday mornings."],
+        ["n09", "English", "B1", "Adjectives", "cefr, b1", "reliable", "/rɪˈlaɪəbl/", "đáng tin cậy", "He is the most reliable person on the team."],
+        ["n10", "English", "B2", "Verbs", "cefr, b2", "to acknowledge", "/əkˈnɒlɪdʒ/", "thừa nhận", "She acknowledged that the plan had failed."],
+        ["n11", "English", "B2", "Verbs", "cefr, b2", "to postpone", "/pəˈspəʊn/", "hoãn lại", "They postponed the concert until March."],
+        ["n12", "English", "B2", "Nouns", "cefr, b2", "assumption", "/əˈsʌmpʃn/", "giả định", "The whole plan rests on one assumption."],
+        ["n13", "English", "B2", "Nouns", "cefr, b2", "consequence", "/ˈkɒnsɪkwəns/", "hậu quả", "Nobody thought about the consequences."],
+        ["n14", "English", "B2", "Adjectives", "cefr, b2", "thorough", "/ˈθʌrə/", "kỹ lưỡng", "The report was thorough and easy to read."],
+        ["n15", "English", "B2", "Adjectives", "cefr, b2", "reluctant", "/rɪˈlʌktənt/", "miễn cưỡng", "He was reluctant to answer the question."],
     ],
     # a picture and a recording on the same card: see the thing, then hear the
     # word for it. The two media kinds are one column each, because a column holds

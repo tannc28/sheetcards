@@ -187,7 +187,7 @@ add-on is language-specific — a deck of anatomy or case law works the same way
 | `12 Chinese drawing (viết tay)` | `draw` — you write the character stroke by stroke and each stroke is marked |
 | `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
 | `14 Any headers (mọi ngôn ngữ)` | headers written as `汉字`, `拼音`, `释义`, `例句` |
-| `15 Theme + subdeck (màu, tầng)` | a JLPT list filed three `SUBDECK` levels deep, in `theme=sakura` — five directives, each one this deck would have wanted anyway |
+| `15 Theme + subdeck (màu, tầng)` | English vocabulary filed three `SUBDECK` levels deep — `English::B1::Verbs` — in `theme=sakura`, spoken, and sorted by the word |
 | `16 Picture words (từ vựng ảnh)` | a picture on the front and a native recording on the back — `image` and `audio` on one card, filed by `Group` |
 | `17 Draw & type (viết và gõ)` | write the character stroke by stroke *and* type its pinyin: `draw` and `type=nc` asking the same thing two ways |
 | `18 Grammar cloze (ngữ pháp)` | the word carrying the grammar point deleted, and typed rather than recalled — `cloze` plus `type` |
