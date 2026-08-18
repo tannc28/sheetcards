@@ -146,7 +146,7 @@ def temp_config_file(tmp_path):
 
 @pytest.fixture
 def sample_edit_url():
-    return "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
+    return "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdefghijklmno/edit?usp=sharing"
 
 
 # =============================================================================

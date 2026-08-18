@@ -13,8 +13,8 @@ class TestSpreadsheetIdExtraction:
         """Test spreadsheet ID extraction from edit URL."""
         from src.utils import extract_spreadsheet_id_from_url
 
-        url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
-        expected_id = "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP"
+        url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdef/edit?usp=sharing"
+        expected_id = "1ExampleSheetId_0123456789abcdef"
 
         result = extract_spreadsheet_id_from_url(url)
         assert result == expected_id
@@ -79,10 +79,10 @@ class TestSpreadsheetIdFromUrl:
         """Test with a real long ID."""
         from src.utils import get_spreadsheet_id_from_url
 
-        url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
+        url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdef/edit?usp=sharing"
 
         result = get_spreadsheet_id_from_url(url)
-        assert result == "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP"
+        assert result == "1ExampleSheetId_0123456789abcdef"
 
     def test_get_id_invalid_url(self):
         """Test that fails for invalid URL."""
@@ -127,8 +127,8 @@ class TestEditUrlToTsv:
         """Test with a real long ID."""
         from src.utils import convert_edit_url_to_tsv
 
-        url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing"
-        expected = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/export?format=tsv"
+        url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdef/edit?usp=sharing"
+        expected = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdef/export?format=tsv"
 
         result = convert_edit_url_to_tsv(url)
         assert result == expected

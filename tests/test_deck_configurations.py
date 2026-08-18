@@ -81,7 +81,7 @@ def test_configuration_functions():
         from config_manager import set_deck_configurations_package_name
 
         # Test with an existing deck URL (using a sample)
-        test_url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
+        test_url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdefghijklmno/edit?usp=sharing"
 
         print(f"🔍 Testing with URL: {test_url}")
 

@@ -104,8 +104,8 @@ def extract_spreadsheet_id_from_url(url):
         str: Spreadsheet ID or None if not found
 
     Examples:
-        >>> extract_spreadsheet_id_from_url("https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP/edit?usp=sharing")
-        "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaP"
+        >>> extract_spreadsheet_id_from_url("https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdef/edit?usp=sharing")
+        "1ExampleSheetId_0123456789abcdef"
     """
     if not url:
         return None

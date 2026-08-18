@@ -537,8 +537,8 @@ class TestGoogleSheetsUrlConversion:
         """Test conversion of edit URL to TSV."""
         from src.utils import convert_edit_url_to_tsv
 
-        edit_url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
-        expected_tsv = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/export?format=tsv"
+        edit_url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdefghijklmno/edit?usp=sharing"
+        expected_tsv = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdefghijklmno/export?format=tsv"
 
         result = convert_edit_url_to_tsv(edit_url)
         assert result == expected_tsv
@@ -624,8 +624,8 @@ class TestExtractPublicationKeyFromUrl:
         """Test spreadsheet ID extraction from edit URL."""
         from src.utils import extract_publication_key_from_url
 
-        url = "https://docs.google.com/spreadsheets/d/1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs/edit?usp=sharing"
-        expected_id = "1N-Va4ZzLUJBsD6wBaOkoeFTE6EnbZdaPBB88FYl2hrs"
+        url = "https://docs.google.com/spreadsheets/d/1ExampleSheetId_0123456789abcdefghijklmno/edit?usp=sharing"
+        expected_id = "1ExampleSheetId_0123456789abcdefghijklmno"
 
         result = extract_publication_key_from_url(url)
         assert result == expected_id
