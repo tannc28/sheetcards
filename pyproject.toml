@@ -9,10 +9,10 @@ description = "Anki add-on that syncs flashcard decks from Google Sheets, with m
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Igor Florentino", email = "igorlopesc@gmail.com" },
+    { name = "tannc28", email = "nguyencongtan1002.work@gmail.com" },
 ]
 maintainers = [
-    { name = "Igor Florentino", email = "igorlopesc@gmail.com" },
+    { name = "tannc28", email = "nguyencongtan1002.work@gmail.com" },
 ]
 keywords = [
     "anki",
@@ -71,11 +71,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/igorrflorentino/sheets2anki"
-Documentation = "https://github.com/igorrflorentino/sheets2anki/blob/main/README.md"
-Repository = "https://github.com/igorrflorentino/sheets2anki.git"
-"Bug Tracker" = "https://github.com/igorrflorentino/sheets2anki/issues"
-Changelog = "https://github.com/igorrflorentino/sheets2anki/blob/main/docs/CHANGELOG.md"
+Homepage = "https://github.com/tannc28/sheets2anki"
+Documentation = "https://github.com/tannc28/sheets2anki/blob/main/README.md"
+Repository = "https://github.com/tannc28/sheets2anki.git"
+"Bug Tracker" = "https://github.com/tannc28/sheets2anki/issues"
+Changelog = "https://github.com/tannc28/sheets2anki/blob/main/docs/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

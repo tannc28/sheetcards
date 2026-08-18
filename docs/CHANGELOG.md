@@ -1714,13 +1714,13 @@ Users upgrading from v2.x should:
 ## 🤝 **Contributions**
 
 ### 👥 **Core Team**
-- **Igor Florentino** - Lead Developer and Maintainer
-- **Email**: igorlopesc@gmail.com
-- **GitHub**: [@igorrflorentino](https://github.com/igorrflorentino)
+- **tannc28** - Lead Developer and Maintainer
+- **Email**: nguyencongtan1002.work@gmail.com
+- **GitHub**: [@tannc28](https://github.com/tannc28)
 
 ### 🐛 **Report Bugs**
-- **Issues**: [GitHub Issues](https://github.com/igorrflorentino/sheets2anki/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/igorrflorentino/sheets2anki/discussions)
+- **Issues**: [GitHub Issues](https://github.com/tannc28/sheets2anki/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tannc28/sheets2anki/discussions)
 
 ### 🌟 **Acknowledgments**
 - Anki community for the robust platform
@@ -1737,8 +1737,8 @@ This project is licensed under the **MIT License** - see the [`LICENSE`](../LICE
 
 ## 🔗 **Useful Links**
 
-- **🏠 Repository**: [github.com/igorrflorentino/sheets2anki](https://github.com/igorrflorentino/sheets2anki)
-- **🐛 Issues**: [GitHub Issues](https://github.com/igorrflorentino/sheets2anki/issues)
+- **🏠 Repository**: [github.com/tannc28/sheets2anki](https://github.com/tannc28/sheets2anki)
+- **🐛 Issues**: [GitHub Issues](https://github.com/tannc28/sheets2anki/issues)
 - **📖 Documentation**: [`README.md`](../README.md) · [`docs/README.md`](README.md) · [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 
 ---

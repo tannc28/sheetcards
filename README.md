@@ -1220,7 +1220,7 @@ the *saved* directory, not what is merely typed in the box.
 Enable **Debug Mode** (`Ctrl+Shift+L`), reproduce the problem, then read or attach
 `debug_sheets2anki.log` (the dialog's *Open Log Folder* button takes you there). Please
 report issues at
-[github.com/igorrflorentino/sheets2anki/issues](https://github.com/igorrflorentino/sheets2anki/issues).
+[github.com/tannc28/sheets2anki/issues](https://github.com/tannc28/sheets2anki/issues).
 
 ---
 

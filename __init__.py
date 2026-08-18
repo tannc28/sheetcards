@@ -15,8 +15,8 @@ Add-on structure:
 - __init__.py: Main module (this file)
 - src/: Synchronization and processing logic
 
-Author: Igor Florentino
-Email: igorlopesc@gmail.com
+Author: tannc28
+Email: nguyencongtan1002.work@gmail.com
 """
 
 # =============================================================================
@@ -64,7 +64,7 @@ Hello! It seems an error occurred during execution.
 
 The error was: {}.
 
-If you'd like me to fix it, please report here: https://github.com/igorrflorentino/sheets2anki
+If you'd like me to fix it, please report here: https://github.com/tannc28/sheets2anki
 
 Please provide as much information as possible, especially the file that caused the error.
 """

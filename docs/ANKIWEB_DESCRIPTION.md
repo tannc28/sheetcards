@@ -42,23 +42,12 @@ To change that, put one optional **settings row** right under the headers: write
 The add-on handles the rest, creating beautiful, organized notes in your collection.
 
 ---
-*Support the project on GitHub: [igorrflorentino/sheets2anki](https://rb.gy/z4z9cb)*
+*Support the project on GitHub: [tannc28/sheets2anki](https://github.com/tannc28/sheets2anki)*
 
-📸 ScreenShots
+👀 Try it in the browser, with nothing installed
 
-<img src="https://igorflorentino.notion.site/image/attachment%3A34b4181a-7e5f-4845-aa46-f46d70882caf%3Aimage.png?table=block&id=2efc60fb-3356-8000-b471-d9f9922f82a2&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1360&userId=&cache=v2" width="80%">
-
-<img src="https://igorflorentino.notion.site/image/attachment%3A6474fa0d-2741-426e-853b-c786b9be9b00%3Aimage.png?table=block&id=2eec60fb-3356-802b-8fea-ddb0c56fb29c&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1420&userId=&cache=v2
-" width="80%">
-
-<img src="https://igorflorentino.notion.site/image/attachment%3A1d0ade0b-ab0a-4b11-9e39-0db0562ba48f%3Aimage.png?table=block&id=2eec60fb-3356-80bd-834c-ecaf59d35027&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1420&userId=&cache=v2" width="80%">
-
-<img src="https://igorflorentino.notion.site/image/attachment%3A2c051dc4-c787-4e4f-9358-af54395abac0%3Aimage.png?table=block&id=2eec60fb-3356-803f-8512-e358eea04386&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1420&userId=&cache=v2" width="80%">
-
-<img src="https://igorflorentino.notion.site/image/attachment%3A6426f9ea-6ccb-4800-84f1-6cc3c85eb889%3Aimage.png?table=block&id=2efc60fb-3356-807c-a800-caa0c38b2bf0&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1360&userId=&cache=v2" width="80%">
-
-<img src="https://igorflorentino.notion.site/image/attachment%3Ab0be78ac-bfdc-402d-bc62-173d03010a1b%3Aimage.png?table=block&id=2efc60fb-3356-80f9-8d96-ee2f0e42dd33&spaceId=fae2128c-75dd-48a0-a7ba-d31345199f23&width=1360&userId=&cache=v2" width="80%">
+[--> Live preview <--](https://tannc28.github.io/sheets2anki/)
 
 👇 Full documentation and Instruction Manual
 
-[--> GitHub Page <--](https://rb.gy/z4z9cb)
+[--> GitHub Page <--](https://github.com/tannc28/sheets2anki)
