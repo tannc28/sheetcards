@@ -53,17 +53,18 @@
 
   --shadow: 0 1px 2px rgb(16 22 32 / .05), 0 6px 20px -8px rgb(16 22 32 / .12);
 
-  /* Three columns: the source, the deck it makes, the card it makes. The first
-     two are forms and lists and want a fixed, readable width; the third takes
-     what is left, and an Anki card is a narrow thing however much room it is
-     given, so it is capped rather than stretched.
+  /* Three columns: the source, the deck it makes, the card it makes. Two of them
+     have a size of their own — a deck tree is a list of short names, and a
+     flashcard is a small thing that stays small however much room it is given,
+     because it is read at a glance on a phone. So both are capped, and the
+     source column takes what is left.
 
-     Which means the card column runs out of card before it runs out of room, and
-     the slack is better spent on column 1 — a column name, a cell value and a
-     directive chip are all things that wrap badly. */
-  --src-w: clamp(15rem, 23vw, 24rem);
-  --deck-w: clamp(15rem, 21vw, 23rem);
-  --card-w: 46rem;
+     It was the other way round until the source column had a spreadsheet in it.
+     A card given 46rem was 46rem of mostly nothing, while the sheet it came from
+     was reading through a 24rem slot — the widest thing on the page had the least
+     to show, and the thing that is genuinely wide had the least room. */
+  --deck-w: clamp(14rem, 19vw, 21rem);
+  --card-w: clamp(20rem, 25vw, 27rem);
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
@@ -239,6 +240,10 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
 #src-body { padding: 4px var(--pad) 16px; }
 .stack { display: flex; flex-direction: column; gap: 12px; margin: 0 0 12px; }
 .stack:last-child { margin-bottom: 0; }
+/* The form asks two short questions and the panel is now as wide as a
+   spreadsheet, so it is capped: a Preview button stretched across 800px reads as
+   a banner rather than as a button, and the width is there for the grid. */
+#entry-form, .stack.entry { max-width: 34rem; }
 .field { display: flex; flex-direction: column; gap: 4px; margin: 0; min-width: 0; }
 .field label {
   font-size: var(--t-xs); font-weight: 600; letter-spacing: .02em; color: var(--muted);
@@ -764,6 +769,66 @@ h3.spaced { margin-top: 18px; }
 /* A grid of name and value rather than a table of columns: it is the one shape
    that reads the same on a phone and on a desktop, and the page never has to
    scroll sideways to show it. */
+/* ---- panel 1: the sheet, as a sheet --------------------------------------- */
+
+/* A box that scrolls both ways, and the only place on this page where a sideways
+   scroll is allowed: it is bounded, so the page behind it never moves. The height
+   is capped against the viewport as well as in rem, because on a phone a grid
+   that took half the screen would push the row list and the card out of reach. */
+.gridwrap {
+  overflow: auto; overscroll-behavior: contain;
+  max-height: min(20rem, 42vh);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--panel);
+}
+.gridwrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sheetgrid {
+  border-collapse: separate; border-spacing: 0;
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--ink);
+}
+/* Cut rather than wrapped: a row has to stay one row high or the grid stops
+   looking like the thing it is standing in for. The whole cell is in the title,
+   so nothing that is cut is unreachable. */
+.sheetgrid th, .sheetgrid td {
+  padding: 3px 8px; text-align: left; font-weight: 400; white-space: nowrap;
+  min-width: 3rem; max-width: 15rem; overflow: hidden; text-overflow: ellipsis;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+/* Both headers stay put while the other axis moves — a grid whose column letters
+   scroll away is a grid you have to count on your fingers. */
+.sheetgrid thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--sunken); color: var(--muted); text-align: center;
+}
+.sheetgrid .rowh {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--sunken); color: var(--muted); text-align: right;
+}
+.sheetgrid .corner { left: 0; z-index: 3; }
+.sheetgrid .colh[data-col] { cursor: pointer; }
+.sheetgrid .colh.on { background: var(--accent-soft); color: var(--accent); }
+
+/* Row 1 is the header row and row 2 may be the settings row: the two rows that
+   are about the sheet rather than in it. */
+.sheetgrid tr.hdr td { font-weight: 600; cursor: pointer; }
+.sheetgrid tr.hdr td, .sheetgrid tr.hdr .rowh { background: var(--accent-soft); }
+.sheetgrid tr.cfg td { font-style: italic; color: var(--muted); background: var(--sunken); }
+
+/* What the parser made of each row, in the margin — the same three states the
+   row list beside it uses, said with the row number instead of a dot. */
+.sheetgrid tr.k-synced .rowh { color: var(--ok); }
+.sheetgrid tr.k-invalid .rowh { color: var(--bad); }
+.sheetgrid tr.k-skipped td { opacity: .55; }
+
+.sheetgrid tr[data-row] { cursor: pointer; }
+.sheetgrid tr[data-row]:hover td { background: var(--sunken); }
+.sheetgrid tr.on td, .sheetgrid tr.on .rowh {
+  background: var(--accent-soft); color: var(--ink);
+}
+.sheetgrid tr.on .rowh { box-shadow: inset 2px 0 0 var(--accent); }
+
 .cellrow {
   display: grid; grid-template-columns: minmax(4.5rem, 7rem) 1fr; gap: 10px;
   width: 100%; padding: 5px 8px; text-align: left;
@@ -953,7 +1018,7 @@ iframe#card {
     grid-template-rows: minmax(0, 1fr);
   }
   body.ready .app {
-    grid-template-columns: var(--src-w) var(--deck-w) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) var(--deck-w) var(--card-w);
   }
 
   .app > .panel {

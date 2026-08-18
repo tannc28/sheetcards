@@ -70,16 +70,10 @@
         </p>
       </form>
 
-      <div class="stack">
+      <div class="stack entry">
         <p class="field" id="tabfield" hidden>
           <label for="tabpick" data-i18n="tabLabel">Sheet</label>
           <select id="tabpick"></select>
-        </p>
-
-        <p class="field">
-          <label for="deck" data-i18n="deckLabel">Deck name</label>
-          <input id="deck" name="deck" type="text" spellcheck="false" autocomplete="off"
-                 enterkeyhint="done" data-i18n-attr="placeholder:deckPlaceholder">
         </p>
 
         <p class="entry-alt">
@@ -94,6 +88,18 @@
             <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
           </span>
         </p>
+      </div>
+
+      <!-- The sheet itself, read-only, scrolling both ways inside its own box.
+           Below the link because it answers a later question: the form asks
+           which sheet, this says whether the one that arrived is the one you
+           meant. It is a grid because a spreadsheet is a grid — the block under
+           it is still where a single row is read. -->
+      <div class="stack" id="gridbox" hidden>
+        <h3><span data-i18n="gridHead">The sheet</span><span class="count" id="gridcount"></span></h3>
+        <div class="gridwrap" id="grid" tabindex="0" role="region"
+             data-i18n-attr="aria-label:gridHead"></div>
+        <p class="muted small" id="gridcut" hidden></p>
       </div>
 
       <!-- The chosen row, cell by cell — which is also the sheet's column list,

@@ -60,6 +60,42 @@ def _settings(cfg):
     return {k: v for k, v in vars(cfg).items() if v not in (None, False, [])}
 
 
+# How many rows of the sheet the grid in panel 1 carries. A spreadsheet runs to
+# tens of thousands of rows and each one would become a table row in the page;
+# this is a preview of the sheet, not a copy of it. What is cut is said out loud
+# above the grid rather than silently missing.
+_GRID_ROWS = 400
+
+
+def _grid(headers, rows, offset):
+    """The sheet as it is written, for panel 1 to draw as a grid.
+
+    Read off the parser rather than by splitting the TSV in the browser: a cell
+    may hold a newline, and only the parser knows where a row really ends. Every
+    row is here, including the ones no note comes from and the settings row,
+    because the point of a grid is to be the spreadsheet.
+    """
+    names = [clean(h) for h in headers]
+    body = rows[:_GRID_ROWS]
+    width = max([len(names)] + [len(r) for r in body])
+    named = [name for name in names if name]
+    padded = (names + [""] * width)[:width]
+
+    def line(cells):
+        return [str(cell) for cell in (list(cells) + [""] * width)[:width]]
+
+    return {
+        "cells": [line(headers)] + [line(row) for row in body],
+        # Which column of the plan each position is, so a click on the grid and a
+        # click on the list below it open the same column. They are not the same
+        # index: a blank header is a column of the sheet and not a column of the
+        # plan.
+        "cols": [named.index(n) if n in named else None for n in padded],
+        "total": len(rows),
+        "config": 2 if offset else None,
+    }
+
+
 def _headers(headers):
     """The sheet's headers, cleaned, in order, repeats and blanks dropped."""
     out = []
@@ -161,6 +197,7 @@ def analyze(tsv, deck_name):
             "cloze": tm.get_note_type_name("", deck_name, is_cloze=True),
         },
         "rows": listed,
+        "grid": _grid(headers, parsed["rows"], offset),
         "stats": deck.get_statistics(),
         "duplicateIds": deck.duplicate_ids,
     }, ensure_ascii=False)
@@ -228,9 +265,6 @@ let sheetNames = null;
 // it: a File object is gone once its input has moved on.
 let upload = null;
 
-// Whether the deck name on screen was typed rather than derived. Without this a
-// name filled in from one sheet would quietly become the name of the next one.
-let deckNameEdited = false;
 
 // ---------------------------------------------------------------------------
 // Boot
@@ -354,10 +388,17 @@ function deckNameFromHeaders(res) {
   return name.replace(/\.(xlsx|tsv|csv)$/i, "").trim();
 }
 
-/** The name to put on the deck, unless the field on screen was typed into. */
+/**
+ * The name to put on the deck.
+ *
+ * There used to be a field for this, seeded from the file and yours to correct.
+ * It was the only control on the page that changed the *answer* rather than the
+ * question, and it changed it into a guess: the add-on names a deck after the
+ * spreadsheet and the sheet, so a name typed here made the preview describe a
+ * deck the sync would never produce. The file already said what it is called.
+ */
 function chooseDeckName(fallback) {
-  const typed = $("#deck").value.trim();
-  return (deckNameEdited && typed) || fallback || "Deck";
+  return fallback || "Deck";
 }
 
 /** Everything from "we have the text" to "the page is drawn". */
@@ -367,7 +408,6 @@ function analyse(tsv, deckName, sheetId) {
   // no link to recover it from, and the id is what makes a second import of the
   // same sheet update its notes instead of duplicating them.
   state.sheetId = sheetId;
-  $("#deck").value = deckName;
 
   status(t("analysing"), "", true);
   state.analysis = analyze(tsv, deckName);
@@ -393,6 +433,10 @@ function failed(message) {
   $("#p-deck").hidden = true;
   $("#p-card").hidden = true;
   $("#warnbar").hidden = true;
+  // Panel 1 stays open, but not still showing the sheet before this one: a grid
+  // under a failure reads as the thing that failed.
+  $("#gridbox").hidden = true;
+  $("#cells").hidden = true;
   // Back open: something has to be corrected, and the field that needs
   // correcting is the one a folded panel hides.
   setPanel("source", true);
@@ -918,6 +962,8 @@ function render() {
   $("#tabs").innerHTML = tabBar();
   $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
 
+  paintGrid(a);
+
   const shown = a.rows[state.row];
   $("#cells").hidden = !shown;
   if (shown) {
@@ -1008,16 +1054,119 @@ function columnRole(name, index, a) {
  *            tags: boolean, stat: string|null}}
  */
 /**
+ * Draws the grid, leaving it where the reader left it.
+ *
+ * Every repaint rebuilds the table, and a table rebuilt inside a scrolled box
+ * starts at the top — so picking row 90 would send the grid back to row 1, which
+ * is the reader's place being taken away for choosing something. The offsets are
+ * put back on the same frame, before the browser paints.
+ */
+function paintGrid(a) {
+  const box = $("#grid");
+  const { scrollTop, scrollLeft } = box;
+  const shown = Math.max(0, (a.grid?.cells.length ?? 0) - 1);
+
+  $("#gridbox").hidden = !shown;
+  $("#gridcount").textContent = `${shown}`;
+  box.innerHTML = sheetGrid(a);
+  box.scrollTop = scrollTop;
+  box.scrollLeft = scrollLeft;
+
+  // A grid that stops partway through is saying something about the sheet, so it
+  // says it rather than simply ending.
+  const cut = a.grid && a.grid.total > shown;
+  $("#gridcut").hidden = !cut;
+  if (cut) $("#gridcut").textContent = t("gridCut", shown, a.grid.total);
+}
+
+/** A spreadsheet's name for a column at this position: A, B, … Z, AA, AB. */
+function columnLetter(index) {
+  let n = index;
+  let out = "";
+  do {
+    out = String.fromCharCode(65 + (n % 26)) + out;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return out;
+}
+
+/**
+ * The sheet as a grid — the same rows and columns the spreadsheet shows.
+ *
+ * This page long refused to draw one, on the grounds that a grid is the wrong
+ * shape for a phone and that what people come to check is a row. The first half
+ * is true and is why the grid lives in a box of its own that scrolls rather than
+ * pushing the page sideways; the second was answering a question nobody asked.
+ * Before you can ask what a row became you have to recognise the sheet, and only
+ * the sheet's own shape does that: the settings row sitting in row 2, the empty
+ * column somebody left in the middle, the thirty rows below the ones you meant.
+ *
+ * Everything is here — blank rows, the settings row, columns with no header —
+ * because a preview that quietly tidied would be a different sheet. What it adds
+ * is what the parser knows: which rows sync, which one is the settings row, and
+ * which column the click opens.
+ */
+function sheetGrid(a) {
+  const g = a.grid;
+  if (!g || !g.cells.length) return "";
+
+  // Row numbers are the sheet's own, so a row here and a row in the panels beside
+  // it are named the same thing.
+  const found = new Map(a.rows.map((row, i) => [row.line, i]));
+  const selected = a.rows[state.row]?.line;
+
+  const letters = g.cells[0]
+    .map((_, j) => {
+      const col = g.cols[j];
+      const on = col !== null && col === state.column ? " on" : "";
+      return `<th class="colh${on}"${col === null ? "" : ` data-col="${col}"`}
+        >${columnLetter(j)}</th>`;
+    })
+    .join("");
+
+  const body = g.cells
+    .map((cells, r) => {
+      const line = r + 1;
+      const at = found.get(line);
+      const kind = at === undefined ? "" : a.rows[at].kind;
+      const cls = [
+        r === 0 ? "hdr" : "",
+        line === g.config ? "cfg" : "",
+        kind && `k-${kind}`,
+        line === selected ? "on" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const cellsHtml = cells
+        .map((value, j) => {
+          // Only row 1 opens a column: everywhere else a click picks the row,
+          // which is the thing under the pointer.
+          const pick = r === 0 && g.cols[j] !== null ? ` data-col="${g.cols[j]}"` : "";
+          // A cell is cut to keep the row one row high, so the whole of it is on
+          // the cell itself — nothing in the sheet becomes unreachable here.
+          const full = value ? ` title="${escapeHtml(value)}"` : "";
+          return `<td${pick}${full}>${escapeHtml(value)}</td>`;
+        })
+        .join("");
+      const row = at === undefined ? "" : ` data-row="${at}"`;
+      return `<tr class="${cls}"${row}>
+        <th class="rowh" scope="row">${line}</th>${cellsHtml}</tr>`;
+    })
+    .join("");
+
+  return `<table class="sheetgrid">
+    <thead><tr><th class="corner"></th>${letters}</tr></thead>
+    <tbody>${body}</tbody></table>`;
+}
+
+/**
  * The chosen row, one line per column of the sheet.
  *
- * The obvious reading of "preview the sheet" is a grid, and a grid is the wrong
- * shape for the people who use this: 14 columns on a phone is a sideways scroll
- * inside a downwards one. It is also the wrong *question* — what people come to
- * check is a row, and a row is a list.
- *
- * So this is one component at every width rather than a table that becomes
- * something else below a breakpoint, and each line doubles as the way to open
- * that column in the block above it.
+ * The grid above answers "is this the sheet I meant"; this answers "what is in
+ * this row", which on a phone is the question a grid answers badly — fourteen
+ * columns is a sideways scroll inside a downwards one. So it stays a list at
+ * every width rather than a table that turns into something else below a
+ * breakpoint, and each line doubles as the way to open that column.
  */
 function rowCells(a) {
   const row = a.rows[state.row];
@@ -1215,13 +1364,6 @@ document.addEventListener("click", (e) => {
     $("#url").focus();
     $("#url").select();
   }
-});
-
-$("#deck").addEventListener("input", () => (deckNameEdited = true));
-// Applied on commit rather than only on the next Preview: typing a deck name and
-// watching nothing happen reads as a control that does not work.
-$("#deck").addEventListener("change", () => {
-  if (upload && $("#deck").value.trim()) showUpload(upload.index);
 });
 
 $("#pick").addEventListener("click", () => $("#file").click());

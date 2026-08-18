@@ -49,6 +49,7 @@ before anything is installed and before your collection is touched:
 
 | It shows | Why that helps |
 |---|---|
+| The sheet itself, as a grid — its own row numbers and column letters, the settings row where it sits, and which rows will sync | Tells you straight away that the file that arrived is the one you meant |
 | Which column became `ID`, `SYNC`, `SUBDECK n`, `TAGS`, and which became fields | The commonest cause of "it synced nothing" is a column the add-on did not recognise |
 | Every row's fate: syncs, not ticked, or no ID — with the same counts the sync reports | Answers "why 0 notes?" without installing anything |
 | Whatever the settings row got wrong, spelled out | Otherwise these only appear in the debug log |

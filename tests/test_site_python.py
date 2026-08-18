@@ -119,9 +119,43 @@ class TestTheAnalyzer:
         ]
     )
 
+    def _analysis(self, tsv=None):
+        return json.loads(_loaded("app.js")["analyze"](tsv or self.TSV, "Demo"))
+
     def test_it_analyses_a_sheet(self):
-        out = json.loads(_loaded("app.js")["analyze"](self.TSV, "Demo"))
+        out = self._analysis()
         decks = {row["deck"] for row in out["rows"] if row["kind"] == "synced"}
         # The root is the add-on's own (`s2a_{name}`), because the page shows the
         # tree Anki would show rather than a tidied version of it.
         assert decks == {"s2a_Demo::Greetings", "s2a_Demo::Unsorted"}
+
+    def test_the_grid_is_the_sheet_and_not_a_tidied_one(self):
+        """Panel 1 draws a grid, and a grid that edits its sheet is a lie.
+
+        The settings row and the rows no note comes from are exactly what people
+        scroll a sheet to check, so the grid carries every row the file has —
+        unlike ``rows``, which is what the sync would make of them.
+        """
+        grid = self._analysis()["grid"]
+        assert grid["cells"][0] == ["ID", "SYNC", "SUBDECK 1", "Word", "Meaning"]
+        assert grid["cells"][1][0] == "#config"
+        # Header row plus every data row, and the sheet's own numbering: the
+        # settings row is row 2 there, so it is row 2 here.
+        assert len(grid["cells"]) == 4
+        assert grid["config"] == 2
+        assert grid["total"] == 3
+
+    def test_a_grid_column_opens_the_column_the_list_opens(self):
+        """The two indexes are not the same one, and a blank header proves it."""
+        tsv = "\n".join(["ID\t\tWord", "r1\tignored\thello"])
+        out = self._analysis(tsv)
+        # Position 1 has no header, so it is a column of the sheet and not of the
+        # plan; position 2 is the plan's second column.
+        assert out["grid"]["cols"] == [0, None, 1]
+        assert out["plan"]["headers"] == ["ID", "Word"]
+
+    def test_a_ragged_row_is_squared_off(self):
+        """A row longer than the header row still has to be a row of the table."""
+        tsv = "\n".join(["ID\tWord", "r1\thello\tstray"])
+        grid = self._analysis(tsv)["grid"]
+        assert [len(row) for row in grid["cells"]] == [3, 3]
