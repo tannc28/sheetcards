@@ -384,9 +384,11 @@ const STRINGS = {
   },
 
   // --- tabs ---------------------------------------------------------------
-  tabFront: { en: "front", vi: "mặt trước" },
+  // Four tabs on one strip: "mặt" is said by the strip itself, and the two words
+  // it saves are the difference between one row of controls and two.
+  tabFront: { en: "front", vi: "trước" },
   tabBoth: { en: "both", vi: "cả hai" },
-  tabBack: { en: "back", vi: "mặt sau" },
+  tabBack: { en: "back", vi: "sau" },
   tabTemplate: { en: "template", vi: "template" },
   prevRow: { en: "Previous row", vi: "Dòng trước" },
   nextRow: { en: "Next row", vi: "Dòng sau" },

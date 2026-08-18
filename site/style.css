@@ -62,9 +62,13 @@
      It was the other way round until the source column had a spreadsheet in it.
      A card given 46rem was 46rem of mostly nothing, while the sheet it came from
      was reading through a 24rem slot — the widest thing on the page had the least
-     to show, and the thing that is genuinely wide had the least room. */
-  --deck-w: clamp(14rem, 19vw, 21rem);
-  --card-w: clamp(20rem, 25vw, 27rem);
+     to show, and the thing that is genuinely wide had the least room.
+
+     The floor under the card is not the card's: it is the tab bar's. Six controls
+     with Vietnamese labels on them need about 30rem, and a panel narrower than
+     its own toolbar reads as broken however well the card inside it fits. */
+  --deck-w: clamp(15rem, 20vw, 23rem);
+  --card-w: clamp(23rem, 37vw, 34rem);
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
@@ -895,19 +899,25 @@ h3.spaced { margin-top: 18px; }
 
 /* ---- panel 3: the card --------------------------------------------------- */
 
+/* Tighter than the panel's own padding, and the buttons tighter than they were:
+   this is a toolbar with six controls in it, and in Vietnamese every label is a
+   word longer. The room it saves is the difference between one line and two. */
 .tabs {
   display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
-  padding: 0 var(--pad); background: var(--sunken);
+  justify-content: space-between;
+  padding: 0 clamp(.6rem, 2vw, .9rem); background: var(--sunken);
   border-bottom: 1px solid var(--line);
 }
+/* The four sides are one control: they wrap as a block or not at all, so the
+   worst this bar can do is put the row stepper on a second line. */
+.tabs .tabset { display: flex; align-items: center; gap: 2px; }
 .tabs button {
-  padding: 9px 12px; font-size: var(--t-md); font-weight: 500;
+  padding: 9px 9px; font-size: var(--t-md); font-weight: 500;
   background: transparent; color: var(--muted);
   border: 0; border-bottom: 2px solid transparent; border-radius: 0;
 }
 .tabs button:hover { color: var(--ink); background: transparent; }
 .tabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
-.tabs .spacer { flex: 1; }
 .tabs .nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .tabs .nav button {
   padding: 3px 10px; font-size: var(--t-md); line-height: 1.3;
@@ -917,7 +927,7 @@ h3.spaced { margin-top: 18px; }
 .tabs .nav button:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 .tabs .nav .at {
   font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums;
-  min-width: 7ch; text-align: center;
+  min-width: 6ch; text-align: center;
 }
 
 #view {

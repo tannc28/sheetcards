@@ -854,13 +854,15 @@ function downloadPackage() {
 function tabBar() {
   const visible = visibleRows();
   const at = visible.findIndex(({ i }) => i === state.row);
+  // The four sides are one control and stay one line, so a column too narrow for
+  // the whole bar drops the row stepper underneath rather than breaking "front |
+  // both | back | template" across three lines and reading as a bug.
   return `
-    ${CARD_TABS.map(
+    <span class="tabset">${CARD_TABS.map(
       (name) =>
         `<button data-tab="${name}" class="${state.tab === name ? "on" : ""}">` +
         `${escapeHtml(t("tab" + name[0].toUpperCase() + name.slice(1)))}</button>`,
-    ).join("")}
-    <span class="spacer"></span>
+    ).join("")}</span>
     <span class="nav">
       <button data-step="-1" type="button" aria-label="${escapeHtml(t("prevRow"))}"
               title="${escapeHtml(t("prevRow"))}">←</button>
