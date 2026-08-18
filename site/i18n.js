@@ -335,12 +335,12 @@ const STRINGS = {
   demoNote: {
     en:
       "Showing the example workbook — twenty sheets, each a deck that also " +
-      "demonstrates one thing, from the smallest one that works upwards. Use the " +
-      "sheet picker above to walk through them, or paste your own link instead.",
+      "demonstrates one thing, from the smallest one that works upwards. The " +
+      "picker beside Source walks through them, or paste your own link instead.",
     vi:
       "Đang hiện file ví dụ — hai mươi sheet, mỗi sheet là một bộ thẻ dùng được " +
-      "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Dùng ô chọn " +
-      "sheet ở trên để xem lần lượt, hoặc dán link của bạn.",
+      "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Ô chọn sheet " +
+      "cạnh chữ Source để xem lần lượt, hoặc dán link của bạn.",
   },
 
   // --- the numbers --------------------------------------------------------

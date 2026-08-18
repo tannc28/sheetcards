@@ -202,6 +202,17 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
 }
 .panel-toggle:hover { background: var(--sunken); }
 
+/* The sheet picker rides in panel 1's header, which is the part that survives the
+   fold. It shrinks before the title does and never grows past a third of the row:
+   a workbook tab can be a whole sentence, and a picker that pushed "1 SOURCE" off
+   the screen would have solved one disappearance with another. */
+.panel-head .tabpick { flex: 0 1 auto; min-width: 0; margin: 0 var(--pad) 0 8px; }
+.panel-head .tabpick[hidden] { display: none; }
+.panel-head .tabpick select {
+  max-width: 13rem; padding: 3px 6px;
+  font-size: var(--t-xs); font-family: var(--mono);
+}
+
 /* The number is the whole point of the header: it says there are three of these
    and which one you are looking at. */
 .step {

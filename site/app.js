@@ -449,10 +449,12 @@ function failed(message) {
  * header carries the answer — and stacked, once the answer is there, the
  * question is a screenful in front of the two panels you came to read.
  */
-function noteSource(name, tab) {
-  const text = tab ? `${name} · ${tab}` : name;
-  $("#source").textContent = text;
-  $("#source").title = text;
+function noteSource(name) {
+  // Only the file: which of its sheets is loaded is said by the picker beside
+  // this, which is a control rather than a sentence and is the thing you came to
+  // the header for.
+  $("#source").textContent = name;
+  $("#source").title = name;
   if (narrow()) setPanel("source", false);
 }
 
@@ -570,7 +572,7 @@ function showUpload(index) {
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       `${upload.idBase}#${out.tab}`,
     );
-    noteSource(base, out.tabs.length ? out.tab : "");
+    noteSource(base);
   } catch (err) {
     failed(err.message);
   } finally {

@@ -56,6 +56,14 @@
         <span class="panel-name" data-i18n="panelSource">Source</span>
         <span class="panel-note" id="source"></span>
       </button>
+      <!-- Outside the toggle, not inside the panel: a workbook's sheets are what
+           you move between while reading panels 2 and 3, and panel 1 folds itself
+           the moment a sheet loads. Left in the body, the picker was gone exactly
+           when it was wanted. It is a sibling of the toggle rather than a child
+           because a <select> cannot live inside a <button>. -->
+      <p class="field tabpick" id="tabfield" hidden>
+        <select id="tabpick" data-i18n-attr="aria-label:tabLabel"></select>
+      </p>
     </h2>
 
     <div class="panel-body" id="src-body">
@@ -71,11 +79,6 @@
       </form>
 
       <div class="stack entry">
-        <p class="field" id="tabfield" hidden>
-          <label for="tabpick" data-i18n="tabLabel">Sheet</label>
-          <select id="tabpick"></select>
-        </p>
-
         <p class="entry-alt">
           <span class="pickline">
             <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
