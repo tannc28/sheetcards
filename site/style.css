@@ -66,9 +66,13 @@
 
      The floor under the card is not the card's: it is the tab bar's. Six controls
      with Vietnamese labels on them need about 30rem, and a panel narrower than
-     its own toolbar reads as broken however well the card inside it fits. */
-  --deck-w: clamp(15rem, 20vw, 23rem);
-  --card-w: clamp(23rem, 37vw, 34rem);
+     its own toolbar reads as broken however well the card inside it fits.
+
+     --card-w is the card, not its column: column 3 takes what the other two
+     leave and centres the card in it, so a very wide window spends its extra on
+     margins around a card rather than on a card the size of a newspaper. */
+  --deck-w: clamp(15rem, 22vw, 26rem);
+  --card-w: 34rem;
   --pad: clamp(1rem, 3vw, 1.75rem);
 }
 
@@ -255,10 +259,6 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
 #src-body { padding: 4px var(--pad) 16px; }
 .stack { display: flex; flex-direction: column; gap: 12px; margin: 0 0 12px; }
 .stack:last-child { margin-bottom: 0; }
-/* The form asks two short questions and the panel is now as wide as a
-   spreadsheet, so it is capped: a Preview button stretched across 800px reads as
-   a banner rather than as a button, and the width is there for the grid. */
-#entry-form, .stack.entry { max-width: 34rem; }
 .field { display: flex; flex-direction: column; gap: 4px; margin: 0; min-width: 0; }
 .field label {
   font-size: var(--t-xs); font-weight: 600; letter-spacing: .02em; color: var(--muted);
@@ -1038,9 +1038,22 @@ iframe#card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
+  /* 40% is the sheet's share and the cap on it: the grid is the widest thing on
+     the page, but a source column that keeps growing with the window is one that
+     ends in a field two-thirds empty beside a spreadsheet that fits. */
   body.ready .app {
-    grid-template-columns: minmax(0, 1fr) var(--deck-w) var(--card-w);
+    grid-template-columns: minmax(0, 40%) var(--deck-w) minmax(0, 1fr);
   }
+
+  /* Side by side, the link and the button are one line: stacked they leave a
+     column-wide strip of nothing beside them, and the link is the one field on
+     this page that is genuinely long. Stacked screens keep the column form,
+     where a full-width button is the right shape for a thumb. */
+  #entry-form {
+    flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 10px;
+  }
+  #entry-form .field { flex: 1 1 16rem; }
+  #entry-form .field.submit { flex: 0 0 auto; }
 
   .app > .panel {
     display: flex; flex-direction: column; min-height: 0;
