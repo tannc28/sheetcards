@@ -314,9 +314,9 @@ def _css(sheet_config):
         " text-align: left; }\n"
         ".s2a-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
         " opacity: .6; margin: 12px 0 6px; text-align: left; }\n"
-        # The snippet takes a whole row of its own: a voice name plus two or
-        # three column buttons does not fit a phone's width side by side, and a
-        # wrapped <code> next to a shrinking button is the worse of the two.
+        # The snippet takes a whole row of its own: a voice name plus a button per
+        # spoken column does not fit a phone's width side by side, and a wrapped
+        # <code> next to a shrinking button is the worse of the two.
         ".s2a-tts-row { display: flex; flex-wrap: wrap; align-items: center;"
         " gap: 6px 8px; padding: 6px 0 6px 10px; text-align: left;"
         " border-left: 2px solid var(--s2a-muted); }\n"
@@ -683,7 +683,10 @@ _TTS_VOICES_SCRIPT = """<script>
     head.textContent = "tts=" + lang;
     list.appendChild(head);
 
-    var cols = srcs.filter(function (s) { return s.lang === lang; }).slice(0, 3);
+    // Every spoken column of this language gets a button — a sheet that speaks
+    // eight columns is a sheet whose eighth column is worth hearing too, and the
+    // row wraps rather than truncates.
+    var cols = srcs.filter(function (s) { return s.lang === lang; });
 
     here.forEach(function (v) {
       var row = document.createElement("div");
