@@ -641,10 +641,16 @@ _TTS_VOICES_SCRIPT = """<script>
     if (text) srcs.push({ col: el.dataset.col, lang: el.dataset.lang, text: text });
   });
 
+  // NOTHING IN THIS SCRIPT MAY CONTAIN A DOUBLED BRACE, not even a comment:
+  // Anki scans the whole template for replacements, script tags included, so an
+  // example written out here becomes a reference to a field that does not exist
+  // and the note type is refused. The regex below escapes each brace for exactly
+  // that reason. Prose says "brace brace tts", never the thing itself.
+  //
   // Anki joins the voices with <br>, so the whole list arrives as a single line
-  // of text: the tags have to be scanned for rather than split on. Each tag is
-  // a whole ready-made tag, field and all — AnkiMobile prints
-  // `{{tts en-US voices=Apple_Ava_(Premium):Front}}` — and only the name before
+  // of text: the tags have to be scanned for rather than split on. Each entry is
+  // a whole ready-made tag, field and all — AnkiMobile writes the language as
+  // en-US and ends the tag with :Front — and only the name between voices= and
   // the colon belongs in a spreadsheet cell. The device lists its Enhanced
   // voices a second time in a group of their own, hence the dedupe.
   var all = [];

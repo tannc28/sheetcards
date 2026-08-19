@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Tests for the card templates generated from a sheet's columns + settings row."""
 
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 
 from src.card_layout import FRONT_TEMPLATE_NAME
@@ -1417,3 +1423,128 @@ class TestHeardNotSeen:
             {"Reading": "side=hide; tts=zh_CN; speed=0.5"}
         )
         assert "{{tts zh_CN speed=0.5:Reading}}" in _both(templates[0])
+
+
+# ---------------------------------------------------------------------------
+# What Anki itself makes of the templates
+# ---------------------------------------------------------------------------
+
+_HAS_ANKI = importlib.util.find_spec("anki") is not None
+needs_anki = pytest.mark.skipif(
+    not _HAS_ANKI,
+    reason="the real anki library is not installed (pip install -e '.[dev]')",
+)
+
+_SAVE_HARNESS = """
+import json, os, sys, tempfile
+sys.path.insert(0, {repo!r})
+from src.column_model import plan_columns
+from src.sheet_config import parse_config_row
+from src.card_layout import build_templates
+from anki.collection import Collection
+
+headers, config, is_cloze = {headers!r}, {config!r}, {cloze!r}
+plan = plan_columns(headers)
+cfg = parse_config_row(dict(zip(headers, config)), plan)
+col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
+model = col.models.new("Sheets2Anki - t - " + ("Cloze" if is_cloze else "Basic"))
+if is_cloze:
+    model["type"] = 1
+    model["css"] = ""
+for name in plan.note_type_fields():
+    col.models.add_field(model, col.models.new_field(name))
+if cfg.cloze_field:
+    model["sortf"] = plan.note_type_fields().index(cfg.cloze_field)
+for t in build_templates(plan, cfg, is_cloze=is_cloze):
+    tmpl = col.models.new_template(t["name"])
+    tmpl["qfmt"], tmpl["afmt"] = t["qfmt"], t["afmt"]
+    col.models.add_template(model, tmpl)
+try:
+    col.models.add(model)
+except Exception as exc:
+    print(json.dumps({{"ok": False, "error": str(exc)}}))
+    raise SystemExit(0)
+print(json.dumps({{"ok": True, "error": ""}}))
+"""
+
+
+def _anki_accepts(headers, config, is_cloze=False):
+    """Whether a real Anki will save the note type these templates describe.
+
+    The suite's `anki` is a mock that will store any string at all, so a template
+    holding a reference to a field that does not exist saves happily here and is
+    refused on the machine of whoever synced. Only Anki can answer this.
+    """
+    code = _SAVE_HARNESS.format(
+        repo=str(Path(__file__).resolve().parent.parent),
+        headers=headers,
+        config=config,
+        cloze=is_cloze,
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).resolve().parent.parent),
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+class TestNothingInAScriptLooksLikeAField:
+    """The trap that a mock cannot see.
+
+    Anki scans the **whole** template for `{{...}}` — inside `<script>`, inside a
+    JavaScript comment, anywhere. A tag written out as an example in a comment is
+    therefore a reference to a field, and a note type naming a field it does not
+    have is refused outright: the deck stops syncing with "Field 'Front' not
+    found" and nothing on the card says which template did it. This shipped once,
+    in a comment explaining the shape of the voice list.
+    """
+
+    def test_no_emitted_script_writes_a_doubled_brace(self):
+        from src import card_layout
+
+        for name in dir(card_layout):
+            if not name.endswith("_SCRIPT"):
+                continue
+            script = getattr(card_layout, name)
+            assert "{{" not in script, f"{name} would be read as a field reference"
+            assert "}}" not in script, f"{name} would be read as a field reference"
+
+    @needs_anki
+    def test_a_spoken_sheet_saves(self):
+        # The sheet this was found on: two columns speaking, a voice pinned.
+        headers = ["ID", "SYNC", "SUBDECK 1", "Word", "IPA", "Meaning", "Example"]
+        config = [
+            "#config align=center",
+            "",
+            "",
+            "side=front; size=40; bold; tts=en_US; voices=Apple_Ava_(Premium)",
+            "side=front; size=18; color=muted",
+            "size=22",
+            "label=Examples; size=17; italic; tts=en_US",
+        ]
+        assert _anki_accepts(headers, config)["error"] == ""
+
+    @needs_anki
+    def test_every_script_bearing_column_saves_together(self):
+        # draw, code and the voice list each append a <script>, and each is a
+        # place an example tag could be written down by mistake.
+        headers = ["ID", "Hanzi", "Snippet", "Formula", "Reading", "Picture", "Clip"]
+        config = [
+            "#config",
+            "side=front; draw; size=200; tts=zh_CN",
+            "code=python; side=back",
+            "math=block",
+            "furigana; tts=ja_JP",
+            "image; size=400",
+            "video",
+        ]
+        assert _anki_accepts(headers, config)["error"] == ""
+
+    @needs_anki
+    def test_a_cloze_sheet_saves(self):
+        headers = ["ID", "Sentence", "Note"]
+        config = ["#config", "cloze; type", "size=16; hint"]
+        assert _anki_accepts(headers, config, is_cloze=True)["error"] == ""
