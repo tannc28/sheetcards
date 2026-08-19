@@ -1436,12 +1436,18 @@ needs_anki = pytest.mark.skipif(
 )
 
 _SAVE_HARNESS = """
-import json, os, sys, tempfile
-sys.path.insert(0, {repo!r})
-from src.column_model import plan_columns
-from src.sheet_config import parse_config_row
-from src.card_layout import build_templates
+import json, os, sys, tempfile, types
 from anki.collection import Collection
+
+# `src/__init__.py` imports compat, which imports aqt, which needs a Qt with a
+# working libEGL — which a headless CI runner has no reason to have. The pure
+# modules need none of it, so they are reached through a package fabricated over
+# the same directory, exactly as tests/test_apkg.py does.
+pkg = types.ModuleType("s2a"); pkg.__path__ = [os.path.join({repo!r}, "src")]
+sys.modules["s2a"] = pkg
+from s2a.column_model import plan_columns
+from s2a.sheet_config import parse_config_row
+from s2a.card_layout import build_templates
 
 headers, config, is_cloze = {headers!r}, {config!r}, {cloze!r}
 plan = plan_columns(headers)
@@ -1502,6 +1508,27 @@ class TestNothingInAScriptLooksLikeAField:
     in a comment explaining the shape of the voice list.
     """
 
+    def test_no_script_carries_its_reasoning_onto_the_card(self):
+        """A template is not a place to explain anything.
+
+        It is generated, it is overwritten on every sync, and the only person who
+        ever opens one is someone already lost. Every note type on every synced
+        device would carry the explanation around. So the reasons live in this
+        repo as Python comments, outside the string, where they cost a reader
+        nothing — which is how the writing box's script and the highlighter's
+        have always been written.
+        """
+        from src import card_layout
+
+        for name in dir(card_layout):
+            if not name.endswith("_SCRIPT"):
+                continue
+            for line in getattr(card_layout, name).split("\n"):
+                # `//` on its own is the middle of a CDN address.
+                bare = line.strip()
+                assert not bare.startswith("//"), f"{name} explains itself"
+                assert not bare.startswith("/*"), f"{name} explains itself"
+
     def test_no_emitted_script_writes_a_doubled_brace(self):
         from src import card_layout
 
@@ -1512,6 +1539,7 @@ class TestNothingInAScriptLooksLikeAField:
             assert "{{" not in script, f"{name} would be read as a field reference"
             assert "}}" not in script, f"{name} would be read as a field reference"
 
+    @pytest.mark.slow
     @needs_anki
     def test_a_spoken_sheet_saves(self):
         # The sheet this was found on: two columns speaking, a voice pinned.
@@ -1527,6 +1555,7 @@ class TestNothingInAScriptLooksLikeAField:
         ]
         assert _anki_accepts(headers, config)["error"] == ""
 
+    @pytest.mark.slow
     @needs_anki
     def test_every_script_bearing_column_saves_together(self):
         # draw, code and the voice list each append a <script>, and each is a
@@ -1543,6 +1572,7 @@ class TestNothingInAScriptLooksLikeAField:
         ]
         assert _anki_accepts(headers, config)["error"] == ""
 
+    @pytest.mark.slow
     @needs_anki
     def test_a_cloze_sheet_saves(self):
         headers = ["ID", "Sentence", "Note"]

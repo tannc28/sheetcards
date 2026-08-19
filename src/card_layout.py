@@ -617,170 +617,132 @@ _CODE_SCRIPT = (
 )
 
 
-_TTS_VOICES_SCRIPT = """<script>
-(function () {
-  var box = document.querySelector(".s2a-tts-debug");
-  if (!box || box.dataset.s2aReady) return;
-  box.dataset.s2aReady = "1";
-
-  var wanted = (box.dataset.s2aLangs || "").split(",").filter(Boolean);
-  var raw = box.querySelector(".s2a-tts-raw");
-  var list = box.querySelector(".s2a-tts-list");
-
-  // The desktop's webview has no Web Speech API, so there is nothing to press
-  // there and the buttons are left out rather than shipped inert.
-  var canSpeak = !!window.speechSynthesis;
-  var note = box.querySelector(".s2a-tts-note");
-  if (!canSpeak && note) {
-    note.textContent = "To use a voice, add its line to the column's #config cell.";
-  }
-
-  var srcs = [];
-  box.querySelectorAll(".s2a-tts-src").forEach(function (el) {
-    var text = (el.textContent || "").trim();
-    if (text) srcs.push({ col: el.dataset.col, lang: el.dataset.lang, text: text });
-  });
-
-  // NOTHING IN THIS SCRIPT MAY CONTAIN A DOUBLED BRACE, not even a comment:
-  // Anki scans the whole template for replacements, script tags included, so an
-  // example written out here becomes a reference to a field that does not exist
-  // and the note type is refused. The regex below escapes each brace for exactly
-  // that reason. Prose says "brace brace tts", never the thing itself.
-  //
-  // Anki joins the voices with <br>, so the whole list arrives as a single line
-  // of text: the tags have to be scanned for rather than split on. Each entry is
-  // a whole ready-made tag, field and all — AnkiMobile writes the language as
-  // en-US and ends the tag with :Front — and only the name between voices= and
-  // the colon belongs in a spreadsheet cell. The device lists its Enhanced
-  // voices a second time in a group of their own, hence the dedupe.
-  var all = [];
-  var seen = {};
-  var re = /\\{\\{tts\\s+(\\S+)\\s+voices=([^}]+)\\}\\}/g;
-  var m;
-  while ((m = re.exec(raw.textContent || ""))) {
-    var name = m[2].split(":")[0].trim();
-    var key = m[1] + "\\u0000" + name;
-    if (name && !seen[key]) {
-      seen[key] = 1;
-      all.push({ lang: m[1], name: name });
-    }
-  }
-  raw.remove();
-
-  // A device spells the code its own way — iOS reports en-US, Android eng_USA —
-  // and an exact compare then finds nothing on a phone that plainly has the
-  // voice. The sheet's spelling is kept for display; only the compare relaxes.
-  function norm(lang) {
-    return String(lang || "").toLowerCase().replace(/-/g, "_");
-  }
-  function stem(lang) {
-    return norm(lang).split("_")[0];
-  }
-
-  var rows = all.filter(function (v) {
-    return wanted.some(function (w) { return norm(w) === norm(v.lang); });
-  });
-
-  if (!rows.length) {
-    // The note offers a button that is no longer there.
-    if (note) note.remove();
-
-    if (!all.length) {
-      list.textContent =
-        "No voice installed. Settings > Accessibility > Read & Speak > Voices.";
-      return;
-    }
-
-    // Which codes the device reported is the answer here, so it is printed
-    // rather than described: the fix is to copy one of them into tts=. The ones
-    // sharing the language are shown alone when there are any, since a list of
-    // fifty codes buries the two that matter.
-    var codes = [];
-    all.forEach(function (v) {
-      if (codes.indexOf(v.lang) === -1) codes.push(v.lang);
-    });
-    codes.sort();
-    var near = codes.filter(function (c) {
-      return wanted.some(function (w) { return stem(w) === stem(c); });
-    });
-
-    list.textContent =
-      "This device has " + all.length + " voices, none of them " +
-      wanted.join("/") + ". It spells its codes this way — put one in tts=:";
-    var found = document.createElement("div");
-    found.className = "s2a-tts-lang";
-    found.textContent = (near.length ? near : codes).join("   ");
-    list.appendChild(found);
-    return;
-  }
-
-  function better(v) {
-    return /\\((?:premium|enhanced)\\)/i.test(v.name) ? 0 : 1;
-  }
-
-  function speak(voice, text) {
-    if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = voice.lang.replace(/_/g, "-");
-    // Anki names a voice the way a sheet has to spell it: engine first, spaces
-    // written as underscores. The Web Speech API knows the same voice as
-    // `Ava (Premium)`, so the name is spelled back before it is looked for, and
-    // a device exposing only the plain voice still answers to the base name.
-    var want = voice.name.replace(/^[A-Za-z]+_/, "").replace(/_/g, " ");
-    var base = want.replace(/\\s*\\(.*\\)$/, "");
-    var have = speechSynthesis.getVoices();
-    var hit =
-      have.filter(function (o) { return o.name === want; })[0] ||
-      have.filter(function (o) { return o.name.indexOf(base) !== -1; })[0];
-    // The picked voice carries its own code; the device's spelling of it is the
-    // one that works here, not the sheet's.
-    if (hit) { u.voice = hit; u.lang = hit.lang; }
-    speechSynthesis.speak(u);
-  }
-
-  wanted.forEach(function (lang) {
-    var here = rows.filter(function (v) { return norm(v.lang) === norm(lang); });
-    if (!here.length) return;
-
-    // Downloading an Enhanced or Premium voice is the whole answer to a card
-    // that reads in a robot's voice, so the ones that are get offered first.
-    // The rest keep the order the device gave them.
-    here.sort(function (a, b) { return better(a) - better(b); });
-
-    var head = document.createElement("div");
-    head.className = "s2a-tts-lang";
-    head.textContent = "tts=" + lang;
-    list.appendChild(head);
-
-    // Every spoken column of this language gets a button — a sheet that speaks
-    // eight columns is a sheet whose eighth column is worth hearing too, and the
-    // row wraps rather than truncates.
-    var cols = srcs.filter(function (s) { return s.lang === lang; });
-
-    here.forEach(function (v) {
-      var row = document.createElement("div");
-      row.className = "s2a-tts-row";
-
-      var snippet = document.createElement("code");
-      snippet.textContent = "voices=" + v.name;
-      row.appendChild(snippet);
-
-      if (canSpeak) cols.forEach(function (s) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "s2a-tts-play";
-        b.textContent = "\\u25B6 " + s.col;
-        b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);
-        b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };
-        row.appendChild(b);
-      });
-
-      list.appendChild(row);
-    });
-  });
-})();
-</script>"""
+_TTS_VOICES_SCRIPT = (
+    "<script>\n"
+    "(function () {\n"
+    '  var box = document.querySelector(".s2a-tts-debug");\n'
+    "  if (!box || box.dataset.s2aReady) return;\n"
+    '  box.dataset.s2aReady = "1";\n'
+    '  var wanted = (box.dataset.s2aLangs || "").split(",").filter(Boolean);\n'
+    '  var raw = box.querySelector(".s2a-tts-raw");\n'
+    '  var list = box.querySelector(".s2a-tts-list");\n'
+    '  var note = box.querySelector(".s2a-tts-note");\n'
+    # QtWebEngine has no Web Speech API, so there is nothing to press on the
+    # desktop: the buttons are left out rather than shipped inert, and the line
+    # above them stops inviting a tap.
+    "  var canSpeak = !!window.speechSynthesis;\n"
+    "  if (!canSpeak && note) {\n"
+    '    note.textContent = "To use a voice, add its line to the column\'s #config cell.";\n'
+    "  }\n"
+    "  var srcs = [];\n"
+    '  box.querySelectorAll(".s2a-tts-src").forEach(function (el) {\n'
+    '    var text = (el.textContent || "").trim();\n'
+    "    if (text) srcs.push({ col: el.dataset.col, lang: el.dataset.lang, text: text });\n"
+    "  });\n"
+    "  var all = [], seen = {};\n"
+    # NOTHING BELOW MAY WRITE A DOUBLED BRACE, comments included — this string
+    # becomes part of a card template, and Anki reads a doubled brace anywhere
+    # in one as a field reference. An example written out in a comment cost a
+    # deck its sync once, with "Field 'Front' not found" and nothing to say
+    # which template said it. Hence the escaping in the pattern below.
+    #
+    # Anki joins the entries with <br>, so the whole list arrives as one line of
+    # text and has to be scanned rather than split. Each entry is a ready-made
+    # tag rather than a name: an iPhone writes the language as en-US where the
+    # sheet was made to write en_US, and ends the tag with a colon and the field
+    # it would speak — only what lies between voices= and that colon belongs in
+    # a spreadsheet cell. Enhanced voices are listed twice, once in a group of
+    # their own, hence the dedupe.
+    "  var re = /\\{\\{tts\\s+(\\S+)\\s+voices=([^}]+)\\}\\}/g;\n"
+    "  var m;\n"
+    '  while ((m = re.exec(raw.textContent || ""))) {\n'
+    '    var name = m[2].split(":")[0].trim();\n'
+    '    if (name && !seen[m[1] + "/" + name]) {\n'
+    '      seen[m[1] + "/" + name] = 1;\n'
+    "      all.push({ lang: m[1], name: name });\n"
+    "    }\n"
+    "  }\n"
+    "  raw.remove();\n"
+    '  function norm(lang) { return String(lang || "").toLowerCase().replace(/-/g, "_"); }\n'
+    '  function stem(lang) { return norm(lang).split("_")[0]; }\n'
+    "  function better(v) { return /\\((?:premium|enhanced)\\)/i.test(v.name) ? 0 : 1; }\n"
+    "  var rows = all.filter(function (v) {\n"
+    "    return wanted.some(function (w) { return norm(w) === norm(v.lang); });\n"
+    "  });\n"
+    "  if (!rows.length) {\n"
+    # The invitation offers a button that is not going to be there.
+    "    if (note) note.remove();\n"
+    "    if (!all.length) {\n"
+    '      list.textContent = "No voice installed. Settings > Accessibility > Read & Speak > Voices.";\n'
+    "      return;\n"
+    "    }\n"
+    # Which codes the device reported is the answer to an empty list, so they are
+    # printed rather than described: nothing else on the card can know how this
+    # device spells them. The ones sharing the language are shown alone when
+    # there are any, since fifty codes bury the two that matter.
+    "    var codes = [];\n"
+    "    all.forEach(function (v) { if (codes.indexOf(v.lang) === -1) codes.push(v.lang); });\n"
+    "    codes.sort();\n"
+    "    var near = codes.filter(function (c) {\n"
+    "      return wanted.some(function (w) { return stem(w) === stem(c); });\n"
+    "    });\n"
+    '    list.textContent = "This device has " + all.length + " voices, none of them " +\n'
+    '      wanted.join("/") + ". It spells its codes this way — put one in tts=:";\n'
+    '    var found = document.createElement("div");\n'
+    '    found.className = "s2a-tts-lang";\n'
+    '    found.textContent = (near.length ? near : codes).join("   ");\n'
+    "    list.appendChild(found);\n"
+    "    return;\n"
+    "  }\n"
+    "  function speak(voice, text) {\n"
+    "    speechSynthesis.cancel();\n"
+    "    var u = new SpeechSynthesisUtterance(text);\n"
+    '    u.lang = voice.lang.replace(/_/g, "-");\n'
+    # Anki names a voice the way a sheet has to spell it, engine first and spaces
+    # written as underscores. The Web Speech API knows the same voice as
+    # Ava (Premium), so the name is spelled back before it is looked for, and a
+    # device exposing only the plain voice still answers to the base name.
+    '    var want = voice.name.replace(/^[A-Za-z]+_/, "").replace(/_/g, " ");\n'
+    '    var base = want.replace(/\\s*\\(.*\\)$/, "");\n'
+    "    var have = speechSynthesis.getVoices();\n"
+    "    var hit = have.filter(function (o) { return o.name === want; })[0] ||\n"
+    "      have.filter(function (o) { return o.name.indexOf(base) !== -1; })[0];\n"
+    "    if (hit) { u.voice = hit; u.lang = hit.lang; }\n"
+    "    speechSynthesis.speak(u);\n"
+    "  }\n"
+    "  wanted.forEach(function (lang) {\n"
+    "    var here = rows.filter(function (v) { return norm(v.lang) === norm(lang); });\n"
+    "    if (!here.length) return;\n"
+    # A robotic default is why this block gets opened, and an Enhanced or Premium
+    # voice is the answer, so those are offered first. The rest keep the order the
+    # device gave them.
+    "    here.sort(function (a, b) { return better(a) - better(b); });\n"
+    '    var head = document.createElement("div");\n'
+    '    head.className = "s2a-tts-lang";\n'
+    '    head.textContent = "tts=" + lang;\n'
+    "    list.appendChild(head);\n"
+    "    var cols = srcs.filter(function (s) { return s.lang === lang; });\n"
+    "    here.forEach(function (v) {\n"
+    '      var row = document.createElement("div");\n'
+    '      row.className = "s2a-tts-row";\n'
+    '      var snippet = document.createElement("code");\n'
+    '      snippet.textContent = "voices=" + v.name;\n'
+    "      row.appendChild(snippet);\n"
+    "      if (canSpeak) cols.forEach(function (s) {\n"
+    '        var b = document.createElement("button");\n'
+    '        b.type = "button";\n'
+    '        b.className = "s2a-tts-play";\n'
+    '        b.textContent = "▶ " + s.col;\n'
+    '        b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);\n'
+    "        b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };\n"
+    "        row.appendChild(b);\n"
+    "      });\n"
+    "      list.appendChild(row);\n"
+    "    });\n"
+    "  });\n"
+    "})();\n"
+    "</script>"
+)
 
 
 def _tts_debug_block(plan, sheet_config):
