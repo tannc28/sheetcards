@@ -642,12 +642,22 @@ _TTS_VOICES_SCRIPT = """<script>
   });
 
   // Anki joins the voices with <br>, so the whole list arrives as a single line
-  // of text: the tags have to be scanned for rather than split on.
+  // of text: the tags have to be scanned for rather than split on. Each tag is
+  // a whole ready-made tag, field and all — AnkiMobile prints
+  // `{{tts en-US voices=Apple_Ava_(Premium):Front}}` — and only the name before
+  // the colon belongs in a spreadsheet cell. The device lists its Enhanced
+  // voices a second time in a group of their own, hence the dedupe.
   var all = [];
+  var seen = {};
   var re = /\\{\\{tts\\s+(\\S+)\\s+voices=([^}]+)\\}\\}/g;
   var m;
   while ((m = re.exec(raw.textContent || ""))) {
-    all.push({ lang: m[1], name: m[2].trim() });
+    var name = m[2].split(":")[0].trim();
+    var key = m[1] + "\\u0000" + name;
+    if (name && !seen[key]) {
+      seen[key] = 1;
+      all.push({ lang: m[1], name: name });
+    }
   }
   raw.remove();
 
@@ -698,15 +708,25 @@ _TTS_VOICES_SCRIPT = """<script>
     return;
   }
 
+  function better(v) {
+    return /\\((?:premium|enhanced)\\)/i.test(v.name) ? 0 : 1;
+  }
+
   function speak(voice, text) {
     if (!window.speechSynthesis) return;
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = voice.lang.replace("_", "-");
-    var bare = voice.name.replace(/^[A-Za-z]+_/, "");
-    var hit = speechSynthesis.getVoices().filter(function (o) {
-      return o.name.indexOf(bare) !== -1;
-    })[0];
+    u.lang = voice.lang.replace(/_/g, "-");
+    // Anki names a voice the way a sheet has to spell it: engine first, spaces
+    // written as underscores. The Web Speech API knows the same voice as
+    // `Ava (Premium)`, so the name is spelled back before it is looked for, and
+    // a device exposing only the plain voice still answers to the base name.
+    var want = voice.name.replace(/^[A-Za-z]+_/, "").replace(/_/g, " ");
+    var base = want.replace(/\\s*\\(.*\\)$/, "");
+    var have = speechSynthesis.getVoices();
+    var hit =
+      have.filter(function (o) { return o.name === want; })[0] ||
+      have.filter(function (o) { return o.name.indexOf(base) !== -1; })[0];
     // The picked voice carries its own code; the device's spelling of it is the
     // one that works here, not the sheet's.
     if (hit) { u.voice = hit; u.lang = hit.lang; }
@@ -716,6 +736,11 @@ _TTS_VOICES_SCRIPT = """<script>
   wanted.forEach(function (lang) {
     var here = rows.filter(function (v) { return norm(v.lang) === norm(lang); });
     if (!here.length) return;
+
+    // Downloading an Enhanced or Premium voice is the whole answer to a card
+    // that reads in a robot's voice, so the ones that are get offered first.
+    // The rest keep the order the device gave them.
+    here.sort(function (a, b) { return better(a) - better(b); });
 
     var head = document.createElement("div");
     head.className = "s2a-tts-lang";
