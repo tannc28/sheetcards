@@ -310,6 +310,21 @@ def _css(sheet_config):
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
         ".s2a-reveal > summary { cursor: pointer; font-size: 13px;"
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
+        ".s2a-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
+        " text-align: left; }\n"
+        ".s2a-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
+        " opacity: .6; margin: 12px 0 6px; text-align: left; }\n"
+        # The snippet takes a whole row of its own: a voice name plus two or
+        # three column buttons does not fit a phone's width side by side, and a
+        # wrapped <code> next to a shrinking button is the worse of the two.
+        ".s2a-tts-row { display: flex; flex-wrap: wrap; align-items: center;"
+        " gap: 6px 8px; padding: 6px 0 6px 10px; text-align: left;"
+        " border-left: 2px solid var(--s2a-muted); }\n"
+        ".s2a-tts-row code { flex: 1 1 100%; font-size: 11px;"
+        " overflow-wrap: anywhere; }\n"
+        ".s2a-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
+        " border-radius: 6px; border: 1px solid var(--s2a-muted);"
+        " background: none; color: inherit; }\n"
         ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
         ".s2a-embed-link { display: none; }\n"
@@ -602,6 +617,145 @@ _CODE_SCRIPT = (
 )
 
 
+_TTS_VOICES_SCRIPT = """<script>
+(function () {
+  var box = document.querySelector(".s2a-tts-debug");
+  if (!box || box.dataset.s2aReady) return;
+  box.dataset.s2aReady = "1";
+
+  var wanted = (box.dataset.s2aLangs || "").split(",").filter(Boolean);
+  var raw = box.querySelector(".s2a-tts-raw");
+  var list = box.querySelector(".s2a-tts-list");
+
+  // The desktop's webview has no Web Speech API, so there is nothing to press
+  // there and the buttons are left out rather than shipped inert.
+  var canSpeak = !!window.speechSynthesis;
+  var note = box.querySelector(".s2a-tts-note");
+  if (!canSpeak && note) {
+    note.textContent = "To use a voice, add its line to the column's #config cell.";
+  }
+
+  var srcs = [];
+  box.querySelectorAll(".s2a-tts-src").forEach(function (el) {
+    var text = (el.textContent || "").trim();
+    if (text) srcs.push({ col: el.dataset.col, lang: el.dataset.lang, text: text });
+  });
+
+  // Anki joins the voices with <br>, so the whole list arrives as a single line
+  // of text: the tags have to be scanned for rather than split on.
+  var all = [];
+  var re = /\\{\\{tts\\s+(\\S+)\\s+voices=([^}]+)\\}\\}/g;
+  var m;
+  while ((m = re.exec(raw.textContent || ""))) {
+    all.push({ lang: m[1], name: m[2].trim() });
+  }
+  raw.remove();
+
+  var rows = all.filter(function (v) { return wanted.indexOf(v.lang) !== -1; });
+
+  if (!rows.length) {
+    list.textContent = all.length
+      ? "No " + wanted.join("/") + " voice on this device, but " + all.length +
+        " voices for other languages. Check the tts= language code."
+      : "No voice installed. Settings > Accessibility > Read & Speak > Voices.";
+    return;
+  }
+
+  function speak(voice, text) {
+    if (!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = voice.lang.replace("_", "-");
+    var bare = voice.name.replace(/^[A-Za-z]+_/, "");
+    var hit = speechSynthesis.getVoices().filter(function (o) {
+      return o.name.indexOf(bare) !== -1;
+    })[0];
+    if (hit) u.voice = hit;
+    speechSynthesis.speak(u);
+  }
+
+  wanted.forEach(function (lang) {
+    var here = rows.filter(function (v) { return v.lang === lang; });
+    if (!here.length) return;
+
+    var head = document.createElement("div");
+    head.className = "s2a-tts-lang";
+    head.textContent = "tts=" + lang;
+    list.appendChild(head);
+
+    var cols = srcs.filter(function (s) { return s.lang === lang; }).slice(0, 3);
+
+    here.forEach(function (v) {
+      var row = document.createElement("div");
+      row.className = "s2a-tts-row";
+
+      var snippet = document.createElement("code");
+      snippet.textContent = "voices=" + v.name;
+      row.appendChild(snippet);
+
+      if (canSpeak) cols.forEach(function (s) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "s2a-tts-play";
+        b.textContent = "\\u25B6 " + s.col;
+        b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);
+        b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };
+        row.appendChild(b);
+      });
+
+      list.appendChild(row);
+    });
+  });
+})();
+</script>"""
+
+
+def _tts_debug_block(plan, sheet_config):
+    """The device's own voice list, on the back of any card that speaks.
+
+    There is no opt-in setting. Someone who wrote ``tts=`` and got a robot voice
+    (or silence) is exactly the person who needs this, and also the person least
+    likely to know a debug flag exists. It is collapsed, so always showing it
+    costs one 13px line.
+
+    It has to live on a card rather than in a dialog: only the device can answer
+    which voices it has, and ``all_tts_voices()`` in the layout dialog reports
+    the *desktop's* voices, which are not the phone's. Anki renders
+    ``{{tts-voices:}}`` as one ready-made tag per installed voice; the script
+    rewrites those into the sheet's own ``voices=`` syntax, because the reader is
+    about to edit a spreadsheet cell, not a template.
+    """
+    spoken = [
+        (name, sheet_config.for_field(name).tts)
+        for name in plan.content_headers
+        if sheet_config.for_field(name).tts
+    ]
+    if not spoken:
+        return ""
+
+    langs = sorted({lang for _, lang in spoken})
+    # One hidden copy of each spoken column, so a play button can read the very
+    # word being learned rather than a canned sample. {{text:...}} strips the
+    # HTML the field may carry; an empty cell yields an empty span, which the
+    # script skips.
+    sources = "".join(
+        f'<span class="s2a-tts-src" data-col="{name}" data-lang="{lang}" '
+        f"hidden>{{{{text:{name}}}}}</span>"
+        for name, lang in spoken
+    )
+
+    return (
+        f'<details class="s2a-reveal s2a-tts-debug" data-s2a-langs="{",".join(langs)}">'
+        "<summary>TTS voices</summary>"
+        '<div class="s2a-tts-note">Tap \u25b6 to hear a voice. To use it, add its '
+        "line to the column's #config cell.</div>"
+        f"{sources}"
+        '<div class="s2a-tts-raw">{{tts-voices:}}</div>'
+        '<div class="s2a-tts-list"></div>'
+        "</details>"
+    ) + _TTS_VOICES_SCRIPT
+
+
 def _speed_text(speed):
     """``1.0`` renders as ``1`` and ``1.25`` as ``1.25`` — no trailing zeros."""
     return f"{float(speed):g}"
@@ -734,7 +888,13 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
 
 
 def _one_template(
-    front_fields, back_fields, sheet_config, is_cloze, typed=True, heard=("", "")
+    front_fields,
+    back_fields,
+    sheet_config,
+    is_cloze,
+    typed=True,
+    heard=("", ""),
+    tts_debug="",
 ):
     """Builds a single {qfmt, afmt} pair from one front/back split.
 
@@ -746,6 +906,10 @@ def _one_template(
     spoken without being drawn — see :func:`spoken_sides`. It arrives rendered
     rather than as field names because the two sides swap for the reverse card,
     and the caller is the one that knows which way round they go.
+
+    ``tts_debug`` is the collapsed voice list from :func:`_tts_debug_block`, and
+    goes last on the answer: it annotates the card rather than belonging to it,
+    so nothing the sheet asked for should have to scroll past it.
     """
     type_field = sheet_config.type_field if typed else None
     type_box = (
@@ -804,6 +968,7 @@ def _one_template(
         # already filled.
         + (_DRAW_SCRIPT if drawn(back_fields) else "")
         + (_CODE_SCRIPT if coded(back_fields) else "")
+        + tts_debug
     )
 
     return {"qfmt": qfmt, "afmt": afmt}
@@ -925,10 +1090,15 @@ def build_templates(plan, sheet_config, is_cloze=False):
     spoken_front, spoken_back = spoken_sides(plan, sheet_config)
     heard = (voices(spoken_front), voices(spoken_back))
 
+    # Identical on both directions: it reports the device, not the card.
+    tts_debug = _tts_debug_block(plan, sheet_config)
+
     templates = [
         dict(
             name=FRONT_TEMPLATE_NAME,
-            **_one_template(front, back, sheet_config, is_cloze, heard=heard),
+            **_one_template(
+                front, back, sheet_config, is_cloze, heard=heard, tts_debug=tts_debug
+            ),
         )
     ]
 
@@ -945,6 +1115,7 @@ def build_templates(plan, sheet_config, is_cloze=False):
                     False,
                     typed=False,
                     heard=(heard[1], heard[0]),
+                    tts_debug=tts_debug,
                 ),
             )
         )

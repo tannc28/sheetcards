@@ -1253,9 +1253,13 @@ class TestDeckFromAColumn:
 
     def test_a_deck_level_is_never_spoken_either(self):
         # `side=hide` + `tts` is heard without being read, but that is about the
-        # card too — and a deck level is not on the card at all.
+        # card too — and a deck level is not on the card at all. The stylesheet
+        # names the voice-list classes on every card, so this looks for the tag
+        # and for the voice list, not for the word.
         plan, config = self._levels({"Reading": "subdeck=1; tts=zh_CN"})
-        assert "tts" not in _both(build_templates(plan, config)[0])
+        rendered = _both(build_templates(plan, config)[0])
+        assert "{{tts" not in rendered
+        assert "s2a-tts-debug" not in rendered
 
     def test_the_field_exists_on_the_note_either_way(self):
         # Not rendering it is a decision about the card, not about the note: the
