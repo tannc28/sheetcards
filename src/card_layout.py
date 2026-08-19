@@ -651,13 +651,50 @@ _TTS_VOICES_SCRIPT = """<script>
   }
   raw.remove();
 
-  var rows = all.filter(function (v) { return wanted.indexOf(v.lang) !== -1; });
+  // A device spells the code its own way — iOS reports en-US, Android eng_USA —
+  // and an exact compare then finds nothing on a phone that plainly has the
+  // voice. The sheet's spelling is kept for display; only the compare relaxes.
+  function norm(lang) {
+    return String(lang || "").toLowerCase().replace(/-/g, "_");
+  }
+  function stem(lang) {
+    return norm(lang).split("_")[0];
+  }
+
+  var rows = all.filter(function (v) {
+    return wanted.some(function (w) { return norm(w) === norm(v.lang); });
+  });
 
   if (!rows.length) {
-    list.textContent = all.length
-      ? "No " + wanted.join("/") + " voice on this device, but " + all.length +
-        " voices for other languages. Check the tts= language code."
-      : "No voice installed. Settings > Accessibility > Read & Speak > Voices.";
+    // The note offers a button that is no longer there.
+    if (note) note.remove();
+
+    if (!all.length) {
+      list.textContent =
+        "No voice installed. Settings > Accessibility > Read & Speak > Voices.";
+      return;
+    }
+
+    // Which codes the device reported is the answer here, so it is printed
+    // rather than described: the fix is to copy one of them into tts=. The ones
+    // sharing the language are shown alone when there are any, since a list of
+    // fifty codes buries the two that matter.
+    var codes = [];
+    all.forEach(function (v) {
+      if (codes.indexOf(v.lang) === -1) codes.push(v.lang);
+    });
+    codes.sort();
+    var near = codes.filter(function (c) {
+      return wanted.some(function (w) { return stem(w) === stem(c); });
+    });
+
+    list.textContent =
+      "This device has " + all.length + " voices, none of them " +
+      wanted.join("/") + ". It spells its codes this way — put one in tts=:";
+    var found = document.createElement("div");
+    found.className = "s2a-tts-lang";
+    found.textContent = (near.length ? near : codes).join("   ");
+    list.appendChild(found);
     return;
   }
 
@@ -670,12 +707,14 @@ _TTS_VOICES_SCRIPT = """<script>
     var hit = speechSynthesis.getVoices().filter(function (o) {
       return o.name.indexOf(bare) !== -1;
     })[0];
-    if (hit) u.voice = hit;
+    // The picked voice carries its own code; the device's spelling of it is the
+    // one that works here, not the sheet's.
+    if (hit) { u.voice = hit; u.lang = hit.lang; }
     speechSynthesis.speak(u);
   }
 
   wanted.forEach(function (lang) {
-    var here = rows.filter(function (v) { return v.lang === lang; });
+    var here = rows.filter(function (v) { return norm(v.lang) === norm(lang); });
     if (!here.length) return;
 
     var head = document.createElement("div");
