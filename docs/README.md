@@ -165,14 +165,13 @@ split-out module:
 - **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
 ### UI (`src/ui/`)
-Seven Qt dialogs — add deck, sync, disconnect, debug, deck-options config, AnkiWeb
-config and **card-layout config** — plus `url_helpers.py` (shared clean-URL /
-copy-to-clipboard helpers), one dialog per menu entry.
+Five Qt dialogs — add deck, sync, disconnect, settings and **card layout** — plus
+`url_helpers.py` (shared clean-URL / copy-to-clipboard helpers), one per menu entry.
 Modules in `src/ui/` import siblings one level up (`from ..compat import …`).
 
 **`card_layout_dialog.py`** is a **read-only viewer** of a deck's card layout: the sides
 the settings row produced, each column's parsed directives, the warnings the parse
-collected, the TTS voices installed on this machine, and a preview. It never writes a
+collected, and a preview. It never writes a
 setting — the spreadsheet is the only place they are edited (see
 [Card layout](#card-layout) for why) — and it never writes HTML; that is
 `card_layout.build_templates()`' job. Its live preview only *approximates* Anki's
@@ -384,7 +383,7 @@ Three consequences to keep in mind when touching this code or its docs:
   language, so naming voices stays portable across machines.
 - **A missing system voice is silent, not an error.** No Chinese voice installed means
   `tts=zh_CN` plays nothing, with nothing to diagnose from — which is why the dialog lists
-  the voices installed on the machine.
+  a preview of the card.
 - **One cell, one language.** Anki reads the entire field with one voice, so a cell
   holding a sentence and its translation is read end to end by that column's voice.
 
@@ -582,10 +581,9 @@ from .debug import add_debug_message
 add_debug_message("Consistency check started", "NAME_CONSISTENCY")
 ```
 
-A **Debug Mode** dialog (`Ctrl+Shift+L`) lets you toggle debug mode (and whether logs
-accumulate across sessions), view the log inline, clear it, and open its folder — all
-from inside Anki. `DebugManager` (in `src/debug.py`) owns the log file's lifecycle;
-nothing is written to the file while debug mode is off.
+The **Settings** window (`Ctrl+Shift+O`) toggles debug logging, decides whether logs
+accumulate across sessions, and opens the log's folder. `DebugManager` (in
+`src/debug.py`) owns the log file's lifecycle; nothing is written while logging is off.
 
 ## Conventions
 

@@ -330,56 +330,15 @@ class NameConsistencyManager:
         local_deck_id: int, expected_options_name: str, debug_callback
     ) -> dict[str, Any]:
         """
-        8. If deck options name is different and mode is "individual", update it.
+        8. Deck options names are never per-deck, so there is nothing to rename.
+
+        Every connected deck studies under one options group. This step used to
+        rename a group per deck when the mode was "individual"; the mode is gone,
+        and so is the renaming. Kept as a step so the pass's numbering, its result
+        dict and its callers do not have to shift for a no-op.
         """
-        try:
-            # Check if mode is "individual"
-            from .config_manager import get_deck_options_mode
-
-            if get_deck_options_mode() != "individual":
-                debug_callback("🔄 Options mode is not 'individual', skipping update")
-                return {"updated": False, "reason": "mode_not_individual"}
-
-            if not mw or not mw.col:
-                return {"updated": False, "error": "Anki not available"}
-
-            deck = mw.col.decks.get(DeckId(local_deck_id))
-            if not deck:
-                return {"updated": False, "error": f"Deck ID {local_deck_id} not found"}
-
-            # Get current options configuration
-            deck_config_id = deck.get("conf")
-            if not deck_config_id or deck_config_id == 1:  # 1 = default config
-                debug_callback("🔄 Deck uses default configuration, skipping update")
-                return {"updated": False, "reason": "using_default_config"}
-
-            deck_config = mw.col.decks.get_config(deck_config_id)
-            if not deck_config:
-                return {"updated": False, "error": "Deck configuration not found"}
-
-            current_options_name = deck_config.get("name", "")
-            debug_callback(
-                f"Current options: '{current_options_name}' vs expected: '{expected_options_name}'"
-            )
-
-            if current_options_name != expected_options_name:
-                debug_callback(
-                    f"📝 Updating deck options: '{current_options_name}' → '{expected_options_name}'"
-                )
-                deck_config["name"] = expected_options_name
-                mw.col.decks.save(deck_config)
-                debug_callback("✅ Deck options updated")
-                return {
-                    "updated": True,
-                    "old_name": current_options_name,
-                    "new_name": expected_options_name,
-                }
-            else:
-                debug_callback("✅ Deck options are already correct")
-                return {"updated": False}
-
-        except Exception as e:
-            return {"updated": False, "error": f"Error updating options: {e}"}
+        debug_callback("🔄 One options group for all decks — nothing to rename")
+        return {"updated": False, "reason": "one_group_for_all"}
 
     @staticmethod
     def _update_config_with_new_names(
@@ -403,7 +362,6 @@ class NameConsistencyManager:
         """
         try:
             from .config_manager import get_deck_id
-            from .config_manager import get_deck_options_mode
             from .config_manager import get_meta
             from .config_manager import save_meta
 
@@ -424,17 +382,7 @@ class NameConsistencyManager:
                         f"📋 remote_deck_name updated to: '{remote_deck_name}'"
                     )
 
-                # Update local_deck_configurations_package_name based on mode
-                current_mode = get_deck_options_mode()
-                if current_mode == "individual" and remote_deck_name is not None:
-                    expected_package_name = f"Sheets2Anki - {remote_deck_name}"
-                    meta["decks"][spreadsheet_id][
-                        "local_deck_configurations_package_name"
-                    ] = expected_package_name
-                    debug_callback(
-                        f"📋 deck_options_name updated to: '{expected_package_name}'"
-                    )
-                elif deck_options_name is not None:
+                if deck_options_name is not None:
                     meta["decks"][spreadsheet_id][
                         "local_deck_configurations_package_name"
                     ] = deck_options_name
@@ -472,7 +420,6 @@ class NameConsistencyManager:
         """
         try:
             from .config_manager import get_deck_id
-            from .config_manager import get_deck_options_mode
 
             spreadsheet_id = get_deck_id(deck_url)
 
@@ -487,14 +434,7 @@ class NameConsistencyManager:
                 if remote_deck_name is not None:
                     remote_decks[spreadsheet_id]["remote_deck_name"] = remote_deck_name
 
-                # Update local_deck_configurations_package_name based on mode
-                current_mode = get_deck_options_mode()
-                if current_mode == "individual" and remote_deck_name is not None:
-                    expected_package_name = f"Sheets2Anki - {remote_deck_name}"
-                    remote_decks[spreadsheet_id][
-                        "local_deck_configurations_package_name"
-                    ] = expected_package_name
-                elif deck_options_name is not None:
+                if deck_options_name is not None:
                     remote_decks[spreadsheet_id][
                         "local_deck_configurations_package_name"
                     ] = deck_options_name

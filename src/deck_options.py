@@ -60,76 +60,37 @@ def _is_default_config(config, config_type="default"):
 
 
 def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
-    """
-    Gets or creates the options group based on the configured mode and deck-specific configuration.
+    """The options group every connected deck studies under.
+
+    One group for all of them, ``Sheets2Anki - Default Options``, unless a group
+    has been stored against a particular deck.
+
+    There used to be three modes — shared, individual, manual — chosen in a window
+    of their own with a global shortcut of its own. They were a setting about a
+    setting: a preset is Anki's to configure and two clicks away in its own deck
+    options, and offering one preset per deck was offering to fill someone's
+    preset list with copies of the same numbers, one per spreadsheet.
 
     Args:
-        deck_name (str, optional): Remote deck name for individual mode
-        deck_url (str, optional): Deck URL to get specific configuration
+        deck_name: unused, kept because callers pass it positionally
+        deck_url: the deck's link, if a group was stored for it
 
     Returns:
-        int: Options group ID or None if in manual mode
+        int: the options group id, or None if Anki is not available
     """
     from .config_manager import get_deck_configurations_package_name
-    from .config_manager import get_deck_options_mode
 
     if not mw or not mw.col:
         add_debug_message("❌ Anki not available", "DECK_OPTIONS")
         return None
 
-    # Resolve the configured mode up front so it is always bound — the
-    # stored-package-name branch below would otherwise skip assigning it.
-    mode = get_deck_options_mode()
-
-    # First, check if there's a specific configuration stored for this deck
+    options_group_name = "Sheets2Anki - Default Options"
     if deck_url:
         stored_package_name = get_deck_configurations_package_name(deck_url)
         if stored_package_name:
             options_group_name = stored_package_name
             add_debug_message(
                 f"Using deck-specific configuration: '{options_group_name}'",
-                "DECK_OPTIONS",
-            )
-        else:
-            # Fallback to global mode if no specific configuration
-            mode = get_deck_options_mode()
-            if mode == "manual":
-                add_debug_message(
-                    "Manual mode active - not applying automatic options",
-                    "DECK_OPTIONS",
-                )
-                return None
-            elif mode == "individual" and deck_name:
-                options_group_name = f"Sheets2Anki - {deck_name}"
-                add_debug_message(
-                    f"Individual mode: creating/getting group '{options_group_name}'",
-                    "DECK_OPTIONS",
-                )
-            else:  # mode == "shared" or fallback
-                options_group_name = "Sheets2Anki - Default Options"
-                add_debug_message(
-                    f"Shared mode: creating/getting group '{options_group_name}'",
-                    "DECK_OPTIONS",
-                )
-    else:
-        # Check configured mode (fallback when no URL)
-        mode = get_deck_options_mode()
-
-        if mode == "manual":
-            add_debug_message(
-                "Manual mode active - not applying automatic options", "DECK_OPTIONS"
-            )
-            return None
-        elif mode == "individual" and deck_name:
-            options_group_name = f"Sheets2Anki - {deck_name}"
-            add_debug_message(
-                f"Individual mode: creating/getting group '{options_group_name}'",
-                "DECK_OPTIONS",
-            )
-        else:  # mode == "shared" or fallback
-            options_group_name = "Sheets2Anki - Default Options"
-            add_debug_message(
-                f"Shared mode: creating/getting group '{options_group_name}'",
                 "DECK_OPTIONS",
             )
 
@@ -242,28 +203,17 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
 
 def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
     """
-    Applies the options group based on the configured mode to a specific deck.
+    Applies the shared options group to a specific deck.
 
     Args:
         deck_id (int): Anki deck ID
-        deck_name (str, optional): Remote deck name for individual mode
+        deck_name (str, optional): unused, kept for call compatibility
 
     Returns:
         bool: True if successfully applied, False otherwise
     """
-    from .config_manager import get_deck_options_mode
-
     if not mw or not mw.col or not deck_id:
         add_debug_message("❌ Anki or invalid deck_id", "DECK_OPTIONS")
-        return False
-
-    # Check if manual mode is active
-    mode = get_deck_options_mode()
-    if mode == "manual":
-        add_debug_message(
-            f"Manual mode active - not applying options to deck {deck_id}",
-            "DECK_OPTIONS",
-        )
         return False
 
     try:
@@ -272,7 +222,7 @@ def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
             "DECK_OPTIONS",
         )
 
-        # Get or create options group based on mode
+        # Get or create the options group
         options_group_id = get_or_create_sheets2anki_options_group(deck_name)
 
         if not options_group_id:
@@ -314,31 +264,16 @@ def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
 
 def apply_sheets2anki_options_to_all_remote_decks():
     """
-    Applies the options group based on the configured mode to all remote decks.
+    Applies the shared options group to every connected deck.
 
     Returns:
         dict: Operation statistics
     """
-    from .config_manager import get_deck_options_mode
     from .config_manager import get_remote_decks
 
     if not mw or not mw.col:
         add_debug_message("❌ Anki not available", "DECK_OPTIONS")
         return {"success": False, "error": "Anki not available"}
-
-    # Check if manual mode is active
-    mode = get_deck_options_mode()
-    if mode == "manual":
-        add_debug_message(
-            "Manual mode active - not applying options automatically", "DECK_OPTIONS"
-        )
-        return {
-            "success": True,
-            "total_decks": 0,
-            "updated_decks": 0,
-            "failed_decks": 0,
-            "errors": ["Manual mode active - settings not applied automatically"],
-        }
 
     stats = {
         "success": True,
@@ -359,13 +294,8 @@ def apply_sheets2anki_options_to_all_remote_decks():
             add_debug_message("No remote decks found", "DECK_OPTIONS")
             return stats
 
-        mode_desc = {
-            "shared": "shared options (Default)",
-            "individual": "individual options per deck",
-        }
-
         add_debug_message(
-            f"Applying {mode_desc.get(mode, 'options')} to {len(remote_decks)} remote decks...",
+            f"Applying shared options to {len(remote_decks)} remote decks...",
             "DECK_OPTIONS",
         )
 
@@ -394,20 +324,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
                     add_debug_message(f"❌ {error_msg}", "DECK_OPTIONS")
                     continue
 
-                # For individual mode, use remote deck name
-                deck_name_for_options = (
-                    remote_deck_name if mode == "individual" else None
-                )
-
-                add_debug_message(
-                    f"Name for options: {deck_name_for_options} (mode: {mode})",
-                    "DECK_OPTIONS",
-                )
-
-                # Apply options to the main deck
-                if apply_sheets2anki_options_to_deck(
-                    local_deck_id, deck_name_for_options
-                ):
+                if apply_sheets2anki_options_to_deck(local_deck_id, None):
                     stats["updated_decks"] += 1
                     add_debug_message(
                         f"✅ Deck {local_deck_name} successfully configured",
@@ -417,7 +334,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
                     # Also apply to subdecks (if they exist)
                     apply_options_to_subdecks(
                         local_deck_name,
-                        remote_deck_name if mode == "individual" else None,
+                        None,
                     )
                 else:
                     stats["failed_decks"] += 1
@@ -453,24 +370,14 @@ def apply_sheets2anki_options_to_all_remote_decks():
 
 def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
     """
-    Applies mode-based options to all subdecks of a parent deck.
+    Applies the shared options group to all subdecks of a parent deck.
 
     Args:
         parent_deck_name (str): Parent deck name
-        remote_deck_name (str, optional): Remote deck name for individual mode
+        remote_deck_name (str, optional): unused, kept for call compatibility
     """
-    from .config_manager import get_deck_options_mode
-
     if not mw or not mw.col or not parent_deck_name:
         add_debug_message("❌ Invalid parameters for subdecks", "DECK_OPTIONS")
-        return
-
-    # Check if manual mode is active
-    mode = get_deck_options_mode()
-    if mode == "manual":
-        add_debug_message(
-            "Manual mode active - not applying options to subdecks", "DECK_OPTIONS"
-        )
         return
 
     try:
@@ -488,9 +395,7 @@ def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
             # Check if it's a subdeck (contains :: after parent name)
             if deck_name.startswith(parent_deck_name + "::"):
                 add_debug_message(f"Subdeck found: {deck_name}", "DECK_OPTIONS")
-                deck_name_for_options = (
-                    remote_deck_name if mode == "individual" else None
-                )
+                deck_name_for_options = None
 
                 if apply_sheets2anki_options_to_deck(deck["id"], deck_name_for_options):
                     add_debug_message(
@@ -604,7 +509,7 @@ def apply_automatic_deck_options_system():
     This function should be called at the end of synchronization and when the user
     clicks the "Apply" button in the deck settings.
 
-    Performs the following actions (when automatic mode is active):
+    Performs the following actions:
     1. Applies options to root deck "Sheets2Anki"
     2. Applies options to all remote decks and subdecks
     3. Removes orphaned options groups (cleanup)
@@ -616,40 +521,13 @@ def apply_automatic_deck_options_system():
         "🚀 STARTING automatic deck options system...", "DECK_OPTIONS_SYSTEM"
     )
 
-    from .config_manager import get_deck_options_mode
-
     if not mw or not mw.col:
         add_debug_message("❌ Anki not available", "DECK_OPTIONS_SYSTEM")
         return {"success": False, "error": "Anki not available"}
 
     try:
-        mode = get_deck_options_mode()
-        add_debug_message(f"📋 Current mode: '{mode}'", "DECK_OPTIONS_SYSTEM")
-    except Exception as e:
-        add_debug_message(f"❌ Error getting mode: {e}", "DECK_OPTIONS_SYSTEM")
-        return {"success": False, "error": f"Error getting mode: {e}"}
-
-    if mode == "manual":
-        add_debug_message(
-            "⏹️ Manual mode active - automatic system disabled", "DECK_OPTIONS_SYSTEM"
-        )
-        return {
-            "success": True,
-            "mode": "manual",
-            "root_deck_updated": False,
-            "remote_decks_updated": 0,
-            "cleaned_groups": 0,
-            "message": "Manual mode active - automatic system disabled",
-        }
-
-    add_debug_message(
-        f"⚙️ Applying automatic system in mode: {mode}", "DECK_OPTIONS_SYSTEM"
-    )
-
-    try:
         stats = {
             "success": True,
-            "mode": mode,
             "root_deck_updated": False,
             "remote_decks_updated": 0,
             "cleaned_groups": 0,
@@ -762,7 +640,6 @@ def apply_automatic_deck_options_system():
         traceback.print_exc()
         return {
             "success": False,
-            "mode": mode if "mode" in locals() else "unknown",
             "root_deck_updated": False,
             "remote_decks_updated": 0,
             "cleaned_groups": 0,

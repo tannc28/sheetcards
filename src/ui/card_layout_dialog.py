@@ -6,8 +6,13 @@ editable — a dialog that also wrote the layout would give one setting two owne
 and the sheet would silently win on the next sync.
 
 So this window only ever *explains*: what the last sync understood, what it could
-not understand, which speech voices this machine actually has for the languages the
-sheet asks for, and roughly what the resulting card looks like.
+not understand, and roughly what the resulting card looks like.
+
+It used to carry a fourth panel listing the speech voices installed here. That
+answer belongs on a card rather than in a window — `aqt.tts.all_tts_voices()`
+reports the *desktop's* voices, and a wrong-sounding voice is usually met on a
+phone — so every card with a spoken column now carries the list itself
+(`card_layout._tts_debug_block`).
 """
 
 import re
@@ -197,35 +202,6 @@ def _read_sheet_snapshot(sheet_id):
 
 
 # =============================================================================
-# Installed speech voices
-# =============================================================================
-
-
-def _installed_voices():
-    """``(voices, error)`` where voices is ``[(name, lang)]`` or None on failure.
-
-    ``aqt.tts`` is imported here rather than at module level: it is not part of the
-    add-on's Qt gateway, it is absent outside Anki, and a machine with a broken
-    speech stack must still be able to open this window.
-    """
-    try:
-        from aqt.tts import all_tts_voices
-
-        found = all_tts_voices()
-    except Exception as error:
-        return None, str(error) or error.__class__.__name__
-
-    voices = []
-    for voice in found or []:
-        name = str(getattr(voice, "name", "") or "").strip()
-        lang = str(getattr(voice, "lang", "") or "").strip()
-        if name or lang:
-            voices.append((name, lang))
-    voices.sort(key=lambda entry: (entry[1].lower(), entry[0].lower()))
-    return voices, None
-
-
-# =============================================================================
 # Preview rendering
 # -----------------------------------------------------------------------------
 # Anki's template syntax is only approximated: sections are always taken (every
@@ -308,7 +284,6 @@ class CardLayoutDialog(QDialog):
         self.decks = self._load_decks()
         self.sheet_id = None
         self.snapshot = _empty_snapshot()
-        self.voices, self.voices_error = _installed_voices()
 
         self._setup_ui()
         self._connect_signals()
@@ -386,8 +361,7 @@ class CardLayoutDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setSpacing(SPACE_SECTION)
-        right_column.addWidget(self._build_preview_group(), 3)
-        right_column.addWidget(self._build_voices_group(), 2)
+        right_column.addWidget(self._build_preview_group(), 1)
         body_layout.addLayout(right_column, 2)
 
         root.addWidget(self.body, 1)
@@ -448,17 +422,6 @@ class CardLayoutDialog(QDialog):
         self.warnings_group.setLayout(layout)
         return self.warnings_group
 
-    def _build_voices_group(self):
-        group = QGroupBox("Voices on this machine")
-        layout = QVBoxLayout()
-        layout.setSpacing(8)
-
-        self.voices_view = self._make_browser()
-        layout.addWidget(self.voices_view, 1)
-
-        group.setLayout(layout)
-        return group
-
     def _build_preview_group(self):
         group = QGroupBox("Preview")
         layout = QVBoxLayout()
@@ -497,7 +460,6 @@ class CardLayoutDialog(QDialog):
 
         self._refresh_fields()
         self._refresh_warnings()
-        self._refresh_voices()
         self._refresh_preview()
 
     # ------------------------------------------------------------------
@@ -666,94 +628,6 @@ class CardLayoutDialog(QDialog):
 
     # ------------------------------------------------------------------
     # Section: voices
-    # ------------------------------------------------------------------
-
-    def _refresh_voices(self):
-        if self.voices is None:
-            self.voices_view.setHtml(
-                self._note(
-                    "The installed speech voices could not be listed on this "
-                    f"machine ({self.voices_error}). Any 'tts' setting below may "
-                    "or may not work here.",
-                    self.colors["accent_warning"],
-                )
-            )
-            return
-
-        self.voices_view.setHtml(self._language_check_html() + self._voice_list_html())
-
-    def _language_check_html(self):
-        """Compares the languages the sheet asks for against the installed voices.
-
-        Anki matches a ``{{tts}}`` tag to a voice by comparing the language strings
-        exactly, and plays nothing at all when none matches — so an unmatched
-        language has to be called out here or the card is just silent.
-        """
-        languages = self._requested_languages()
-        if not languages:
-            if not self.snapshot["synced"]:
-                return ""
-            return self._note("This sheet does not ask for any spoken field.")
-
-        installed = {lang for _name, lang in self.voices}
-        lines = []
-        for language in languages:
-            matches = [name for name, lang in self.voices if lang == language]
-            if matches:
-                lines.append(
-                    f'<li style="color:{self.colors["accent_success"]};">'
-                    f"{escape(language)} — {len(matches)} voice"
-                    f"{'s' if len(matches) != 1 else ''} installed"
-                    f' <span style="color:{self.colors["text_secondary"]};">'
-                    f"({escape(', '.join(matches[:3]))}"
-                    f"{'…' if len(matches) > 3 else ''})</span></li>"
-                )
-            else:
-                near = sorted(
-                    lang
-                    for lang in installed
-                    if lang.split("_")[0].lower() == language.split("_")[0].lower()
-                )
-                hint = (
-                    f" Your system does have {escape(', '.join(near))}, "
-                    "which Anki treats as a different language."
-                    if near
-                    else ""
-                )
-                lines.append(
-                    f'<li style="color:{self.colors["accent_danger"]};">'
-                    f"{escape(language)} — no voice installed for this language, "
-                    f"so these fields will stay silent.{hint}</li>"
-                )
-
-        return (
-            self._note("Languages this sheet asks for:")
-            + f'<ul style="color:{self.colors["text"]};">{"".join(lines)}</ul>'
-        )
-
-    def _voice_list_html(self):
-        if not self.voices:
-            return self._note(
-                "No speech voices are installed on this machine, so no field can "
-                "be read aloud here.",
-                self.colors["accent_warning"],
-            )
-
-        grouped = {}
-        for name, lang in self.voices:
-            grouped.setdefault(lang or "(unknown language)", []).append(name)
-
-        items = "".join(
-            f"<li><b>{escape(lang)}</b> — {escape(', '.join(names))}</li>"
-            for lang, names in sorted(grouped.items())
-        )
-        return (
-            self._note(f"Installed on this machine ({len(self.voices)}):")
-            + f'<ul style="color:{self.colors["text"]};">{items}</ul>'
-        )
-
-    # ------------------------------------------------------------------
-    # Section: preview
     # ------------------------------------------------------------------
 
     def _refresh_preview(self):

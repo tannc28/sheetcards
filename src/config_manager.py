@@ -78,7 +78,6 @@ DEFAULT_CONFIG = {
         "auto_sync_on_startup": False,
         "max_sync_retries": 3,
         "sync_timeout_seconds": 60,
-        "deck_options_mode": "individual",  # "shared", "individual", "manual"
         "ankiweb_sync_mode": "sync",  # "none", "sync"
         "accumulate_logs": True,  # whether to keep logs between sessions
         # Image processor settings
@@ -345,14 +344,10 @@ def create_deck_info(
         url, remote_deck_name or ""
     )
 
-    # Determine options group name based on current mode
-    deck_options_mode = get_deck_options_mode()
-    if deck_options_mode == "individual":
-        options_group_name = f"Sheets2Anki - {resolved_remote_name}"
-    elif deck_options_mode == "shared":
-        options_group_name = "Sheets2Anki - Default Options"
-    else:  # manual
-        options_group_name = None
+    # One options group for every connected deck. There used to be a choice of
+    # three here, which was a setting about a setting: a study preset is Anki's to
+    # configure, two clicks away in its own deck options.
+    options_group_name = "Sheets2Anki - Default Options"
 
     # Ensure created_at always exists
     current_timestamp = int(time.time())
@@ -625,18 +620,9 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
         )
         deck_info["remote_deck_name"] = resolved_remote_name
 
-        # Also update local_deck_configurations_package_name for consistency
-        deck_options_mode = get_deck_options_mode()
-        if deck_options_mode == "individual":
-            new_package_name = f"Sheets2Anki - {resolved_remote_name}"
-            deck_info["local_deck_configurations_package_name"] = new_package_name
-            add_debug_msg(f"[Sheets2Anki] Package name updated to '{new_package_name}'")
-        elif deck_options_mode == "shared":
-            deck_info["local_deck_configurations_package_name"] = (
-                "Sheets2Anki - Default Options"
-            )
-        else:  # manual
-            deck_info["local_deck_configurations_package_name"] = None
+        deck_info["local_deck_configurations_package_name"] = (
+            "Sheets2Anki - Default Options"
+        )
 
         updated = True
         if not silent:
@@ -1095,70 +1081,6 @@ def update_note_type_names_in_meta(url, new_remote_deck_name):
 # =============================================================================
 
 
-def get_deck_options_mode():
-    """
-    Gets the current deck options configuration mode.
-
-    Returns:
-        str: "shared", "individual", or "manual"
-    """
-    meta = get_meta()
-    config = meta.get("config", {})
-    return config.get("deck_options_mode", "individual")
-
-
-def set_deck_options_mode(mode):
-    """
-    Sets the deck options configuration mode.
-
-    Args:
-        mode (str): "shared", "individual", or "manual"
-    """
-    if mode not in ["shared", "individual", "manual"]:
-        raise ValueError(
-            f"Invalid mode: {mode}. Use 'shared', 'individual' or 'manual'"
-        )
-
-    meta = get_meta()
-    if "config" not in meta:
-        meta["config"] = {}
-
-    meta["config"]["deck_options_mode"] = mode
-    save_meta(meta)
-    add_debug_msg(f"[DECK_OPTIONS_MODE] Mode changed to: {mode}")
-
-    # Update existing deck settings to reflect the new mode
-    update_deck_configurations_for_mode(mode)
-
-
-def update_deck_configurations_for_mode(mode):
-    """
-    Updates existing deck settings when the options mode is changed.
-
-    Args:
-        mode (str): The new mode ("shared", "individual", or "manual")
-    """
-    meta = get_meta()
-    remote_decks = meta.get("decks", {})
-
-    for deck_hash, deck_info in remote_decks.items():
-        remote_deck_name = deck_info.get("remote_deck_name", "UnknownDeck")
-
-        if mode == "individual":
-            options_group_name = f"Sheets2Anki - {remote_deck_name}"
-        elif mode == "shared":
-            options_group_name = "Sheets2Anki - Default Options"
-        else:  # manual
-            options_group_name = None
-
-        deck_info["local_deck_configurations_package_name"] = options_group_name
-
-    save_meta(meta)
-    add_debug_msg(
-        f"[DECK_CONFIG_UPDATE] Updated {len(remote_decks)} decks' configurations to '{mode}' mode"
-    )
-
-
 def get_deck_configurations_package_name(url):
     """
     Gets the configured options group name for a specific deck.
@@ -1202,10 +1124,9 @@ def set_deck_configurations_package_name(url, package_name):
 
 def ensure_deck_configurations_consistency():
     """
-    Ensures that all decks have local_deck_configurations_package_name setting
-    based on the current mode and that it's consistent with remote_deck_name.
+    Ensures that all decks have local_deck_configurations_package_name setting,
+    and that it names the one options group every connected deck studies under.
     """
-    current_mode = get_deck_options_mode()
     meta = get_meta()
     remote_decks = meta.get("decks", {})
 
@@ -1216,13 +1137,7 @@ def ensure_deck_configurations_consistency():
         remote_deck_name = deck_info.get("remote_deck_name", "UnknownDeck")
         current_package_name = deck_info.get("local_deck_configurations_package_name")
 
-        # Calculate what the correct name should be
-        if current_mode == "individual":
-            expected_package_name = f"Sheets2Anki - {remote_deck_name}"
-        elif current_mode == "shared":
-            expected_package_name = "Sheets2Anki - Default Options"
-        else:  # manual
-            expected_package_name = None
+        expected_package_name = "Sheets2Anki - Default Options"
 
         # If configuration doesn't exist, add it
         if "local_deck_configurations_package_name" not in deck_info:

@@ -758,7 +758,7 @@ selection is remembered next time (even if you then press Cancel). Pressing
    sync read out of the sheet;
 2. per deck: download → parse → create/update/delete notes → name-consistency pass;
 3. removal of subdecks that ended up empty;
-4. application of the deck-options mode;
+4. application of the deck options preset;
 5. after you close the summary, the AnkiWeb sync, if enabled.
 
 The summary window has three views — **📊 Summary**, **📑 Full Details**,
@@ -821,7 +821,6 @@ styled, what it did not understand, and which text-to-speech voices this machine
 | **Front** / **Back** | The fields the sheet put on each side, in order — and which columns `side=hide` kept off the card entirely |
 | **Settings** | Each column's parsed directives — size, colour, alignment, hint, furigana, speech |
 | **Warnings** | Everything the settings row asked for that the add-on could not understand, named per column |
-| **Voices** | The text-to-speech voices installed on *this* computer, so you can tell a wrong `tts=` code from a missing voice |
 | **Preview** | An approximation of the generated templates, with `[FieldName]` placeholders |
 
 **How it works.** Every sync parses the settings row, renders it into the actual Anki
@@ -850,79 +849,42 @@ content.
 - Hand-editing a Sheets2Anki note type in Anki's own card editor does not stick: the next
   sync rebuilds those templates from the sheet.
 
-### Configure AnkiWeb Sync
+### Settings
 
-**What it does** — kicks off a normal AnkiWeb sync right after a deck sync, so the new
-cards reach your phone without a second click.
-**Where** — Tools → Sheets2Anki → *Configure AnkiWeb Sync* (`Ctrl+Shift+W`).
+**What it does** — the two things about the add-on that are not about a sheet.
+**Where** — Tools → Sheets2Anki → *Settings* (`Ctrl+Shift+O`).
 
-Two modes: **Disabled**, or **Sync with AnkiWeb**.
+**Upload to AnkiWeb.** Ticked, a normal AnkiWeb sync runs right after a deck sync, so
+the new cards reach your phone without a second click. There is no separate sync
+implementation — the add-on calls Anki's own (`mw.sync.sync()`, the same code path as
+Tools → Sync), once you close the Sheets2Anki summary window, and progress appears in
+Anki's normal status bar. You must already be logged into AnkiWeb (**Tools → Sync**
+once); if not, the add-on says so and does nothing. Conflicts — full upload / full
+download prompts — are Anki's own dialogs. On by default.
 
-**How it works.** There is no separate sync implementation — the add-on simply calls
-Anki's own sync (`mw.sync.sync()`, the same code path as Tools → Sync), fired once you
-close the Sheets2Anki summary window. Progress appears in Anki's normal status bar.
-
-A **Test Connection** button fetches `ankiweb.net` and reports both network reachability
-and whether your profile actually has AnkiWeb credentials.
-
-**Caveats**
-
-- You must already be logged into AnkiWeb in Anki (**Tools → Sync** once). If not, the
-  add-on warns you and does nothing.
-- Conflicts (full upload / full download prompts) are handled by Anki's own dialogs, not
-  by the add-on.
-- Enabled by default in the shipped configuration.
-
-### Configure Deck Options
-
-**What it does** — decides which Anki deck-options preset your remote decks use.
-**Where** — Tools → Sheets2Anki → *Configure Deck Options* (`Ctrl+Shift+O`).
-
-| Mode | Behaviour |
-| :--- | :--- |
-| **Shared Options** | Every remote deck (and subdeck) uses one preset named `Sheets2Anki - Default Options` |
-| **Individual Options** | Each remote deck gets its own preset named `Sheets2Anki - <deck name>` |
-| **Manual Configuration** | The add-on never touches deck options; you manage them in Anki |
-
-**How it works.** These are real Anki deck-options presets, visible in Anki's own preset
-dropdown. The add-on creates the preset if it is missing and assigns it to the deck and
-every subdeck. The root `Sheets2Anki` deck additionally gets a preset called
-`Sheets2Anki - Root Options`. This runs at the end of every sync and immediately when you
-press **✓ Apply**.
-
-A newly created preset is seeded with 20 new / 200 review cards per day (30 / 150 for the
-root preset). **An existing preset is never overwritten** — once you tune
-`Sheets2Anki - Default Options` by hand, your settings survive every sync.
+**Write a debug log.** Ticked, every internal step is timestamped, categorized (`SYNC`,
+`REMOTE_DECK`, `NOTE_PROCESSOR`, `NAME_CONSISTENCY`, …) and appended to
+`debug_sheets2anki.log` in the add-on folder; the window shows the path and opens its
+folder. A second box decides whether each sync starts a fresh log or adds to the
+existing one.
 
 **Caveats**
 
-- After each sync, presets whose name starts with `Sheets2Anki` and that no deck uses are
-  deleted. Don't park an unused preset under that name.
-- Switching to **Manual** does not restore whatever preset the decks had before; they
-  simply keep what they were last given.
-- The shipped default is **Individual**.
-
-### Debug Mode
-
-**What it does** — writes a detailed log of everything the add-on does.
-**Where** — Tools → Sheets2Anki → *Debug Mode* (`Ctrl+Shift+L`).
-
-**How it works.** With *Enable Debug Mode* ticked (it applies immediately, no Save
-button), every internal step is timestamped, categorized (`SYNC`, `REMOTE_DECK`,
-`NOTE_PROCESSOR`, `IMAGE_PROCESSOR`, `NAME_CONSISTENCY`, …), printed to Anki's console and
-appended to `debug_sheets2anki.log` inside the add-on folder. The dialog shows the file
-inline with **Refresh**, **Scroll to End**, **Clear Log** and **Open Log Folder** buttons.
-
-A second checkbox, *Accumulate logs over time*, decides whether each sync starts a fresh
-log or appends to the existing one.
-
-**Caveats**
-
-- With debug off, the log file is not written at all — turn it on *before* reproducing a
-  problem.
-- With accumulation on the file grows without limit; clear it occasionally.
-- The log records spreadsheet content (field values, note IDs). Review it before
+- With logging off the file is not written at all — turn it on *before* reproducing a
+  problem, not after.
+- With accumulation on the file grows without limit.
+- The log records spreadsheet content (field values, note IDs). Read it before
   attaching it to a public issue.
+
+> **Deck options are not a setting here.** Every connected deck studies under one Anki
+> preset, `Sheets2Anki - Default Options`, created if missing and assigned to the deck
+> and its subdecks; the root `Sheets2Anki` deck gets `Sheets2Anki - Root Options`. A new
+> preset is seeded with 20 new / 200 review cards a day (30 / 150 for the root) and **an
+> existing preset is never overwritten**, so once you tune it by hand your numbers
+> survive every sync. Presets named `Sheets2Anki…` that no deck uses are deleted after a
+> sync. There used to be a choice of three modes for this; a study preset is Anki's to
+> configure, two clicks away in its own deck options, so the choice was a setting about
+> a setting.
 
 ---
 
@@ -980,7 +942,7 @@ Consequences worth internalizing:
 The remote deck name is re-read from the spreadsheet's title on every sync. When it
 changes, the add-on renames, in one cascade: the Anki deck
 (`s2a_<new name>`), the note types (`Sheets2Anki - <new name> - Basic` / `-
-Cloze`), and — in *Individual* deck-options mode — the options preset.
+Cloze`).
 
 > ⚠️ **Renaming a Sheets2Anki deck or note type inside Anki does not stick.** The next
 > sync finds the deck by its stored ID, sees a name it does not expect, and renames it
@@ -988,7 +950,7 @@ Cloze`), and — in *Individual* deck-options mode — the options preset.
 
 ### After every sync
 
-Subdecks that ended up with no cards are removed, and the deck-options mode is
+Subdecks that ended up with no cards are removed, and the deck options preset is
 (re)applied to every remote deck and subdeck.
 
 ---
@@ -1002,10 +964,8 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 | `Ctrl+Shift+A` | Add New Remote Deck |
 | `Ctrl+Shift+S` | Synchronize Remote Decks |
 | `Ctrl+Shift+D` | Disconnect a Remote Deck |
-| `Ctrl+Shift+O` | Configure Deck Options |
-| `Ctrl+Shift+W` | Configure AnkiWeb Sync |
+| `Ctrl+Shift+O` | Settings |
 | `Ctrl+Shift+C` | Configure Card Layout |
-| `Ctrl+Shift+L` | Debug Mode |
 
 ---
 
@@ -1015,11 +975,10 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 | :--- | :--- | :--- |
 | The parsed settings row (sides, sizes, colours, speech, reverse card) | Anki's collection config, key `sheets2anki::sheet_settings` — a cache of what the last sync read; the sheet stays the source of truth | **Yes** |
 | Note types and card templates | Anki's collection | **Yes** |
-| Connected decks, deck-options mode, AnkiWeb mode, debug flags | `meta.json` in the add-on folder | No — machine-local |
+| Connected decks, AnkiWeb setting, debug flags | `meta.json` in the add-on folder | No — machine-local |
 
 `config.json` in the add-on folder holds only the shipped defaults used to seed
-`meta.json` on first run. Out of the box: deck options *Individual*, AnkiWeb sync *on*,
-debug *off*.
+`meta.json` on first run. Out of the box: AnkiWeb sync *on*, debug logging *off*.
 
 ---
 
@@ -1060,7 +1019,7 @@ that row 1 is the header row, and that the `ID` column is filled, then sync agai
 The settings row is only read during a sync — press `Ctrl+Shift+S`. Then open
 `Ctrl+Shift+C` and read the **Warnings** panel: a mistyped key (`siz=48`) or an
 out-of-range value is reported there instead of being applied. The same warnings are
-written to the debug log (`Ctrl+Shift+L`) while debug mode is on.
+written to the debug log while logging is on (`Ctrl+Shift+O`).
 
 **My first note was swallowed / a row full of `key=value` text became a card.**
 The settings row is recognised only when its `ID` cell *starts with* `#config`. Write
@@ -1104,8 +1063,9 @@ row. The card then needs a network connection to show it.
 Log in to AnkiWeb once through Anki's own Sync button; the add-on reuses that session.
 
 **Anything else.**
-Enable **Debug Mode** (`Ctrl+Shift+L`), reproduce the problem, then read or attach
-`debug_sheets2anki.log` (the dialog's *Open Log Folder* button takes you there). Please
+Turn on **Write a debug log** in *Settings* (`Ctrl+Shift+O`), reproduce the problem,
+then read or attach `debug_sheets2anki.log` (the *Open folder* button takes you there).
+Please
 report issues at
 [github.com/tannc28/sheets2anki/issues](https://github.com/tannc28/sheets2anki/issues).
 

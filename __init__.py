@@ -136,47 +136,17 @@ def removeRemote():
             showInfo(str(trace))
 
 
-def configure_deck_options_mode():
-    """
-    Opens the deck options mode configuration dialog.
+def open_settings():
+    """Opens the add-on's settings window.
 
-    This function allows the user to choose between three modes:
-    1. Shared - All decks use "Sheets2Anki - Default"
-    2. Individual - Each deck has its own group "Sheets2Anki - [Name]"
-    3. Manual - No automatic options application
+    One window for what used to be three: the AnkiWeb hand-off and the debug log.
+    The deck-options mode that was the third is gone — every connected deck
+    studies under one options group, which is Anki's to configure anyway.
     """
     try:
-        from .src.ui.deck_options_config_dialog import show_deck_options_config_dialog
+        from .src.ui.settings_dialog import show_settings_dialog
 
-        show_deck_options_config_dialog(mw)
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
-
-
-def configure_ankiweb_sync():
-    """
-    Opens the AnkiWeb automatic synchronization configuration dialog.
-
-    This function allows the user to choose between two modes:
-    1. Disabled - No automatic synchronization
-    2. Sync - Execute sync after deck synchronization
-    """
-    try:
-        from .src.ui.ankiweb_sync_config_dialog import show_ankiweb_sync_config
-
-        show_ankiweb_sync_config()
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
-
-
-def open_debug_mode():
-    """Opens the debug mode configuration dialog."""
-    try:
-        from .src.ui.debug_dialog import show_debug_mode_dialog
-
-        show_debug_mode_dialog()
+        show_settings_dialog(mw)
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
         showInfo(error_msg)
@@ -199,7 +169,6 @@ def configure_card_layout():
     except Exception as e:
         error_msg = errorTemplate.format(str(e))
         showInfo(error_msg)
-
 
 
 # =============================================================================
@@ -237,18 +206,6 @@ if mw is not None:
     # Separator
     remoteDecksSubMenu.addSeparator()
 
-    # Action: Configure deck options mode
-    deckOptionsConfigAction = QAction("Configure Deck Options", mw)
-    deckOptionsConfigAction.setShortcut(QKeySequence("Ctrl+Shift+O"))
-    qconnect(deckOptionsConfigAction.triggered, configure_deck_options_mode)
-    remoteDecksSubMenu.addAction(deckOptionsConfigAction)
-
-    # Action: Configure AnkiWeb synchronization
-    ankiWebSyncConfigAction = QAction("Configure AnkiWeb Sync", mw)
-    ankiWebSyncConfigAction.setShortcut(QKeySequence("Ctrl+Shift+W"))
-    qconnect(ankiWebSyncConfigAction.triggered, configure_ankiweb_sync)
-    remoteDecksSubMenu.addAction(ankiWebSyncConfigAction)
-
     # Action: View card layout (declared in the sheet, so read-only)
     cardLayoutAction = QAction("View Card Layout", mw)
     cardLayoutAction.setShortcut(QKeySequence("Ctrl+Shift+C"))
@@ -258,10 +215,10 @@ if mw is not None:
     # Separator
     remoteDecksSubMenu.addSeparator()
 
-    debugModeAction = QAction("Debug Mode", mw)
-    debugModeAction.setShortcut(QKeySequence("Ctrl+Shift+L"))
-    qconnect(debugModeAction.triggered, open_debug_mode)
-    remoteDecksSubMenu.addAction(debugModeAction)
+    settingsAction = QAction("Settings", mw)
+    settingsAction.setShortcut(QKeySequence("Ctrl+Shift+O"))
+    qconnect(settingsAction.triggered, open_settings)
+    remoteDecksSubMenu.addAction(settingsAction)
 
     # Action: Import test deck (development/debug only)
     try:

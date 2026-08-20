@@ -12,10 +12,8 @@ import pytest
 
 DIALOGS = [
     ("add_deck_dialog", "AddDeckDialog"),
-    ("ankiweb_sync_config_dialog", "AnkiWebSyncConfigDialog"),
-    ("debug_dialog", "DebugModeDialog"),
-    ("deck_options_config_dialog", "DeckOptionsConfigDialog"),
     ("disconnect_dialog", "DisconnectDialog"),
+    ("settings_dialog", "SettingsDialog"),
     ("sync_dialog", "SyncDialog"),
 ]
 

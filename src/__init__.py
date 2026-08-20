@@ -28,7 +28,7 @@ from .deck_manager import import_test_deck
 from .deck_manager import removeRemoteDeck
 from .deck_manager import syncDecksWithSelection
 from .sync import syncDecks
-from .ui.debug_dialog import show_debug_mode_dialog
+from .ui.settings_dialog import show_settings_dialog
 from .ui.sync_dialog import show_sync_dialog
 
 # These functions are the main entry points of the addon
@@ -39,5 +39,5 @@ __all__ = [
     "import_test_deck",
     "addNewDeck",
     "removeRemoteDeck",
-    "show_debug_mode_dialog",
+    "show_settings_dialog",
 ]
