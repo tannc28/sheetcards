@@ -1,4 +1,4 @@
-"""Shared URL helpers for Sheets2Anki dialogs.
+"""Shared URL helpers for SheetCards dialogs.
 
 Centralizes the clean-URL-for-browser and copy-to-clipboard logic that was
 previously duplicated verbatim in sync_dialog.py and disconnect_dialog.py.

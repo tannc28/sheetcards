@@ -4,7 +4,7 @@
  * Two pages need this — the preview and the guide's editor — and the point of
  * both is that they run the code the add-on runs rather than a copy of it. So
  * the module list lives here, once: scripts/build_site.py copies exactly these
- * files into build/site/s2a/, and tests/test_pure_modules.py proves exactly
+ * files into build/site/sc/, and tests/test_pure_modules.py proves exactly
  * these still import with no Anki and no Qt anywhere near them.
  */
 
@@ -22,7 +22,7 @@ export const PURE_MODULES = [
 /**
  * Loads Pyodide and rebuilds the add-on's package layout inside it.
  *
- * The files go under /s2a so the relative imports between them resolve exactly
+ * The files go under /sc so the relative imports between them resolve exactly
  * as they do inside Anki — `from .column_model import …` has to mean the same
  * thing in both places or the preview is previewing something else.
  *
@@ -35,8 +35,8 @@ export async function startPython(source, onStep = () => {}) {
   const py = await loadPyodide({ indexURL: PYODIDE.replace("pyodide.mjs", "") });
 
   onStep("code");
-  py.FS.mkdir("/s2a");
-  py.FS.writeFile("/s2a/__init__.py", "");
+  py.FS.mkdir("/sc");
+  py.FS.writeFile("/sc/__init__.py", "");
   await Promise.all(
     PURE_MODULES.map(async (name) => {
       // `no-cache` revalidates rather than refetches: the browser still sends its
@@ -47,9 +47,9 @@ export async function startPython(source, onStep = () => {}) {
       // reports a setting the sheet does have as one it has never heard of. Every
       // other request here is a CDN asset that may safely be stale; these seven
       // files are the one thing on the page that must be the deployed ones.
-      const res = await fetch(`./s2a/${name}.py`, { cache: "no-cache" });
+      const res = await fetch(`./sc/${name}.py`, { cache: "no-cache" });
       if (!res.ok) throw new Error(`could not load ${name}.py (${res.status})`);
-      py.FS.writeFile(`/s2a/${name}.py`, await res.text());
+      py.FS.writeFile(`/sc/${name}.py`, await res.text());
     }),
   );
   py.runPython('import sys; sys.path.insert(0, "/")');

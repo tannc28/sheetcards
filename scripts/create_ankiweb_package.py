@@ -2,7 +2,7 @@
 """
 AnkiWeb Preparation Script
 
-This script prepares the Sheets2Anki add-on for publication on AnkiWeb,
+This script prepares the SheetCards add-on for publication on AnkiWeb,
 creating a clean and optimized package.
 """
 
@@ -23,7 +23,7 @@ def create_ankiweb_package():
     script_dir = Path(__file__).parent
     source_dir = script_dir.parent  # Project root directory
     build_dir = source_dir / "build"
-    package_dir = build_dir / "sheets2anki"
+    package_dir = build_dir / "sheetcards"
 
     # Clean previous build of this package
     if package_dir.exists():
@@ -163,7 +163,7 @@ def create_ankiweb_package():
 
     # Create .ankiaddon file for AnkiWeb
     # IMPORTANT: Follow AnkiWeb specifications - no root folder in ZIP
-    ankiaddon_path = build_dir / "sheets2anki.ankiaddon"
+    ankiaddon_path = build_dir / "sheetcards.ankiaddon"
 
     with zipfile.ZipFile(ankiaddon_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(package_dir):

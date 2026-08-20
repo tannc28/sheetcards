@@ -119,7 +119,7 @@ class TestFieldMarkup:
     def test_unstyled_field_carries_no_style_attribute(self):
         qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
         assert "style=" not in qfmt.split("</style>")[1]
-        assert '<div class="s2a-front" data-s2a-col="Word">{{Word}}</div>' in qfmt
+        assert '<div class="sc-front" data-sc-col="Word">{{Word}}</div>' in qfmt
 
     def test_every_field_says_which_column_it_came_from(self):
         """Anki's own classes say only which side a block is on.
@@ -130,12 +130,12 @@ class TestFieldMarkup:
         """
         both = _both(build_templates(_plan(), SheetConfig())[0])
         for name in FIELDS:
-            assert f'data-s2a-col="{name}"' in both
+            assert f'data-sc-col="{name}"' in both
 
     def test_the_column_name_is_escaped_in_the_attribute(self):
         plan = _plan(['A "quoted" & <odd> name'])
         qfmt = build_templates(plan, SheetConfig())[0]["qfmt"]
-        assert 'data-s2a-col="A &quot;quoted&quot; &amp; &lt;odd&gt; name"' in qfmt
+        assert 'data-sc-col="A &quot;quoted&quot; &amp; &lt;odd&gt; name"' in qfmt
 
     def test_deck_alignment_reaches_the_css(self):
         plan = _plan()
@@ -146,18 +146,18 @@ class TestFieldMarkup:
         plan = _plan()
         config = _config(plan, {"Reading": "color=muted", "Meaning": "color=accent"})
         afmt = build_templates(plan, config)[0]["afmt"]
-        assert "color: var(--s2a-muted)" in afmt
-        assert "color: var(--s2a-accent)" in afmt
+        assert "color: var(--sc-muted)" in afmt
+        assert "color: var(--sc-accent)" in afmt
 
     def test_theme_colours_are_defined_for_both_themes(self):
         # A single value would leave one theme unreadable, which is the whole point
         # of the named colours: the night_mode override has to be there too.
         qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
-        for name in ("--s2a-muted", "--s2a-accent"):
+        for name in ("--sc-muted", "--sc-accent"):
             assert f":root {{ {name}" in qfmt or f"; {name}" in qfmt
             assert qfmt.count(name) >= 2
         night = qfmt.split(".night_mode {")[1].split("}")[0]
-        assert "--s2a-muted:" in night and "--s2a-accent:" in night
+        assert "--sc-muted:" in night and "--sc-accent:" in night
 
     def test_no_theme_leaves_the_card_the_colours_anki_gave_it(self):
         qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
@@ -206,8 +206,8 @@ class TestFieldMarkup:
         plan = _plan()
         config = _config(plan, {"Reading": "color=accent"}, deck="theme=sakura")
         qfmt = build_templates(plan, config)[0]["qfmt"]
-        assert f"--s2a-accent: {THEMES['sakura']['light']['accent']}" in qfmt
-        assert f"--s2a-accent: {THEMES['sakura']['night']['accent']}" in qfmt
+        assert f"--sc-accent: {THEMES['sakura']['light']['accent']}" in qfmt
+        assert f"--sc-accent: {THEMES['sakura']['night']['accent']}" in qfmt
         assert "#1a73e8" not in qfmt
 
     def test_a_signed_theme_marks_the_corner_of_its_cards(self):
@@ -246,10 +246,10 @@ class TestFieldMarkup:
         plan = _plan()
         config = _config(plan, {"Reading": "label=Pronunciation"})
         afmt = build_templates(plan, config)[0]["afmt"]
-        assert '<div class="s2a-label">Pronunciation</div>{{Reading}}' in afmt
+        assert '<div class="sc-label">Pronunciation</div>{{Reading}}' in afmt
 
     def test_no_label_means_no_caption_markup(self):
-        assert "s2a-label" not in build_templates(_plan(), SheetConfig())[0]["afmt"]
+        assert "sc-label" not in build_templates(_plan(), SheetConfig())[0]["afmt"]
 
     def test_label_text_is_escaped(self):
         plan = _plan()
@@ -505,7 +505,7 @@ class TestNonAsciiFields:
         plan = _plan(UNICODE_FIELDS)
         config = _config(plan, {"Nghĩa": "size=22; color=muted", "Ví dụ": "side=hide"})
         afmt = build_templates(plan, config)[0]["afmt"]
-        assert "font-size: 22px" in afmt and "color: var(--s2a-muted)" in afmt
+        assert "font-size: 22px" in afmt and "color: var(--sc-muted)" in afmt
         assert "Ví dụ" not in afmt
 
 
@@ -633,7 +633,7 @@ class TestEmbeddedPlayers:
         # {{FrontSide}} — hence checking both sides rather than the answer alone.
         plan, sheet_config = self._cfg()
         template = build_templates(plan, sheet_config)[0]
-        assert "s2a-embed" in template["afmt"]
+        assert "sc-embed" in template["afmt"]
         assert "aspect-ratio: 16 / 9" in _both(template)
 
     def test_size_caps_the_width(self):
@@ -884,17 +884,17 @@ class TestFramedPlayerOnMobile:
     def test_the_note_keeps_the_plain_address(self):
         """Only the template knows about that page, so dropping it is a re-sync."""
         afmt = self._templates()["afmt"]
-        assert 's2a-embed-link" href="{{Clip}}"' in afmt
+        assert 'sc-embed-link" href="{{Clip}}"' in afmt
 
     def test_the_link_is_the_way_through_on_mobile(self):
         # Kept small rather than hidden: if that page is ever unreachable, this
         # is the only thing left that opens the video.
         both = _both(self._templates())
-        assert ".mobile .s2a-embed-link { display: inline-block;" in both
+        assert ".mobile .sc-embed-link { display: inline-block;" in both
 
     def test_the_link_is_hidden_everywhere_else(self):
         # On a desktop the frame plays, so a second way in is only clutter.
-        assert ".s2a-embed-link { display: none; }" in _both(self._templates())
+        assert ".sc-embed-link { display: none; }" in _both(self._templates())
 
     def test_the_label_names_the_link_when_the_sheet_gave_one(self):
         afmt = self._templates("video; label=Bài giảng")["afmt"]
@@ -945,7 +945,7 @@ class TestCodeColumn:
     def test_the_cell_is_a_pre_block_of_plain_text(self):
         plan = _plan()
         qfmt = build_templates(plan, _config(plan, {"Word": "code=python"}))[0]["qfmt"]
-        assert '<pre class="s2a-code"><code class="language-python">' in qfmt
+        assert '<pre class="sc-code"><code class="language-python">' in qfmt
         # {{text:}} rather than {{Word}}: a cell pasted out of an editor arrives
         # with markup in it, and a card rendering <b> inside a code sample is
         # showing something no compiler will ever see.
@@ -954,13 +954,13 @@ class TestCodeColumn:
     def test_bare_code_names_no_language(self):
         plan = _plan()
         qfmt = build_templates(plan, _config(plan, {"Word": "code"}))[0]["qfmt"]
-        assert '<pre class="s2a-code"><code>' in qfmt
+        assert '<pre class="sc-code"><code>' in qfmt
 
     def test_the_library_is_loaded_only_by_the_side_that_needs_it(self):
         plan = _plan()
         template = build_templates(plan, _config(plan, {"Reading": "code=sql"}))[0]
-        assert "s2a-hljs" in template["afmt"]
-        assert "s2a-hljs" not in template["qfmt"]
+        assert "sc-hljs" in template["afmt"]
+        assert "sc-hljs" not in template["qfmt"]
 
     def test_it_cannot_share_a_column_with_a_formula(self):
         config = _config(_plan(), {"Word": "math; code=python"})
@@ -1092,9 +1092,9 @@ class TestDrawnColumn:
 
     def test_the_box_replaces_the_text(self):
         template, _ = self._templates()
-        assert 's2a-draw" data-s2a-char="{{text:Word}}"' in template["qfmt"]
+        assert 'sc-draw" data-sc-char="{{text:Word}}"' in template["qfmt"]
         # Printing the field as well would be showing the answer beside the box.
-        assert '<div class="s2a-front"' in template["qfmt"]
+        assert '<div class="sc-front"' in template["qfmt"]
         assert ">{{Word}}<" not in template["qfmt"]
 
     def test_the_character_is_handed_over_stripped_of_markup(self):
@@ -1107,8 +1107,8 @@ class TestDrawnColumn:
         # empties the prompt, and split_sides promotes it straight back again.
         front = self._templates()[0]["qfmt"]
         back = self._templates("draw", header="Reading")[0]["afmt"]
-        assert 'data-s2a-quiz="1"' in front
-        assert 'data-s2a-quiz="0"' in back
+        assert 'data-sc-quiz="1"' in front
+        assert 'data-sc-quiz="0"' in back
 
     def test_the_question_is_a_blank_square(self):
         """The outline is the whole character in a pale colour.
@@ -1128,11 +1128,11 @@ class TestDrawnColumn:
 
     def test_the_script_can_run_twice_without_drawing_twice(self):
         # Anki re-executes a card's scripts every time it draws the card.
-        assert "if (box.dataset.s2aDone) return;" in self._templates()[0]["qfmt"]
+        assert "if (box.dataset.scDone) return;" in self._templates()[0]["qfmt"]
 
     def test_size_is_the_box_not_a_font(self):
         qfmt = self._templates("draw; size=280")[0]["qfmt"]
-        assert 'data-s2a-size="280"' in qfmt
+        assert 'data-sc-size="280"' in qfmt
         assert "min-width: 280px" in qfmt
         assert "font-size: 280px" not in qfmt
 
@@ -1145,17 +1145,17 @@ class TestDrawnColumn:
         # The strokes are drawn in whatever colour the box inherits, so `color`
         # is the one text directive that is not inert here.
         qfmt = self._templates("draw; color=accent")[0]["qfmt"]
-        assert "color: var(--s2a-accent)" in qfmt
+        assert "color: var(--sc-accent)" in qfmt
 
     def test_the_empty_box_says_which_character_it_wanted(self):
         # No network, or a client that refuses remote scripts.
-        assert ".s2a-draw:empty::before { content: attr(data-s2a-char);" in _both(
+        assert ".sc-draw:empty::before { content: attr(data-sc-char);" in _both(
             self._templates()[0]
         )
 
     def test_hint_hides_the_box_behind_a_disclosure(self):
         qfmt = self._templates("draw; hint")[0]["qfmt"]
-        assert '<details class="s2a-reveal"><summary>Write it</summary>' in qfmt
+        assert '<details class="sc-reveal"><summary>Write it</summary>' in qfmt
 
     def test_a_media_column_cannot_be_drawn(self):
         _, config = self._templates("image; draw")
@@ -1181,8 +1181,8 @@ class TestDrawnColumn:
         assert templates[1]["name"] == REVERSE_TEMPLATE_NAME
         # Word is the prompt on card 1 and the answer on card 2, so the same
         # column takes strokes in one direction and shows them in the other.
-        assert 'data-s2a-quiz="1"' in templates[0]["qfmt"]
-        assert 'data-s2a-quiz="0"' in templates[1]["afmt"]
+        assert 'data-sc-quiz="1"' in templates[0]["qfmt"]
+        assert 'data-sc-quiz="0"' in templates[1]["afmt"]
 
     def test_speech_still_works_on_a_box(self):
         # tts has something to say — the character — unlike on a media column,
@@ -1265,7 +1265,7 @@ class TestDeckFromAColumn:
         plan, config = self._levels({"Reading": "subdeck=1; tts=zh_CN"})
         rendered = _both(build_templates(plan, config)[0])
         assert "{{tts" not in rendered
-        assert "s2a-tts-debug" not in rendered
+        assert "sc-tts-debug" not in rendered
 
     def test_the_field_exists_on_the_note_either_way(self):
         # Not rendering it is a decision about the card, not about the note: the
@@ -1329,7 +1329,7 @@ class TestDeckFromAColumn:
 
         plan, config = self._levels({"Word": "subdeck=1", "Reading": "subdeck=2"})
         tags = build_tags({"Word": "HSK 1", "Reading": "Verbs"}, plan, config)
-        assert "sheets2anki::hsk_1::verbs" in tags
+        assert "sheetcards::hsk_1::verbs" in tags
 
 
 @pytest.mark.unit
@@ -1354,7 +1354,7 @@ class TestUnsortedDeck:
         assert get_subdeck_name("Deck", deck_path(row, plan, config)) == (
             f"Deck::{UNSORTED_DECK}"
         )
-        assert "sheets2anki::unsorted" in build_tags(row, plan, config)
+        assert "sheetcards::unsorted" in build_tags(row, plan, config)
 
     def test_a_deck_column_from_the_settings_row_sorts_the_same_way(self):
         from src.column_model import UNSORTED_DECK
@@ -1386,7 +1386,7 @@ class TestHeardNotSeen:
         both = _both(templates[0])
         assert "{{tts zh_CN:Reading}}" in both
         # Spoken, and nowhere to be read.
-        assert '<div class="s2a-back" data-s2a-col="Reading"' not in both
+        assert '<div class="sc-back" data-sc-col="Reading"' not in both
         front, back = split_sides(plan, config)
         assert "Reading" not in front and "Reading" not in back
 
@@ -1443,17 +1443,17 @@ from anki.collection import Collection
 # working libEGL — which a headless CI runner has no reason to have. The pure
 # modules need none of it, so they are reached through a package fabricated over
 # the same directory, exactly as tests/test_apkg.py does.
-pkg = types.ModuleType("s2a"); pkg.__path__ = [os.path.join({repo!r}, "src")]
-sys.modules["s2a"] = pkg
-from s2a.column_model import plan_columns
-from s2a.sheet_config import parse_config_row
-from s2a.card_layout import build_templates
+pkg = types.ModuleType("sc"); pkg.__path__ = [os.path.join({repo!r}, "src")]
+sys.modules["sc"] = pkg
+from sc.column_model import plan_columns
+from sc.sheet_config import parse_config_row
+from sc.card_layout import build_templates
 
 headers, config, is_cloze = {headers!r}, {config!r}, {cloze!r}
 plan = plan_columns(headers)
 cfg = parse_config_row(dict(zip(headers, config)), plan)
 col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
-model = col.models.new("Sheets2Anki - t - " + ("Cloze" if is_cloze else "Basic"))
+model = col.models.new("SheetCards - t - " + ("Cloze" if is_cloze else "Basic"))
 if is_cloze:
     model["type"] = 1
     model["css"] = ""

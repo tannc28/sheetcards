@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover - direct (non-package) import in tests
 
 # One collection-config key holding {sheet_id: settings}. A single key keeps the
 # collection's config table tidy and makes the whole set easy to read at once.
-SETTINGS_KEY = "sheets2anki::sheet_settings"
+SETTINGS_KEY = "sheetcards::sheet_settings"
 
 
 def _collection():

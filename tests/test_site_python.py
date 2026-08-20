@@ -7,7 +7,7 @@ Nothing else in the suite executes it, so until this file existed a rename in th
 pure layer — a function gone, an argument added — reached the deployed page as a
 blank panel and an error in a console nobody has open on a phone.
 
-The modules are the real ones, imported under the `s2a` name the site uses, which
+The modules are the real ones, imported under the `sc` name the site uses, which
 is also what `scripts/build_site.py` copies them into.
 """
 
@@ -22,11 +22,11 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 
-# Everything the block does is `import s2a.…`, so mapping that name at the package
+# Everything the block does is `import sc.…`, so mapping that name at the package
 # level is the whole of the emulation: the modules themselves are untouched.
-_PACKAGE = types.ModuleType("s2a")
+_PACKAGE = types.ModuleType("sc")
 _PACKAGE.__path__ = [str(ROOT / "src")]
-sys.modules.setdefault("s2a", _PACKAGE)
+sys.modules.setdefault("sc", _PACKAGE)
 
 _BLOCK = re.compile(r"String\.raw`(.*?)`;", re.S)
 
@@ -92,7 +92,7 @@ class TestTheEditor:
         # touches the card, so the page has to show where the row went.
         out = self._preview()
         assert out["deck"] == ["Unsorted"]
-        assert "sheets2anki::unsorted" in out["tags"]
+        assert "sheetcards::unsorted" in out["tags"]
 
     def test_a_filled_level_is_not_the_unsorted_pile(self):
         payload = json.loads(json.dumps(self.PAYLOAD))
@@ -125,9 +125,9 @@ class TestTheAnalyzer:
     def test_it_analyses_a_sheet(self):
         out = self._analysis()
         decks = {row["deck"] for row in out["rows"] if row["kind"] == "synced"}
-        # The root is the add-on's own (`s2a_{name}`), because the page shows the
+        # The root is the add-on's own (`sc_{name}`), because the page shows the
         # tree Anki would show rather than a tidied version of it.
-        assert decks == {"s2a_Demo::Greetings", "s2a_Demo::Unsorted"}
+        assert decks == {"sc_Demo::Greetings", "sc_Demo::Unsorted"}
 
     def test_the_grid_is_the_sheet_and_not_a_tidied_one(self):
         """Panel 1 draws a grid, and a grid that edits its sheet is a lie.

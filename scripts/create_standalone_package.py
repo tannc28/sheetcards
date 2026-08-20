@@ -32,7 +32,7 @@ def create_standalone_package():
     script_dir = Path(__file__).parent
     source_dir = script_dir.parent  # Project root directory
     build_dir = source_dir / "build"
-    package_dir = build_dir / "sheets2anki-standalone"
+    package_dir = build_dir / "sheetcards-standalone"
 
     # Clean previous build
     if package_dir.exists():
@@ -154,7 +154,7 @@ def create_standalone_package():
     print("\n6. Creating standalone .ankiaddon file...")
 
     # Create .ankiaddon file
-    ankiaddon_path = build_dir / "sheets2anki-standalone.ankiaddon"
+    ankiaddon_path = build_dir / "sheetcards-standalone.ankiaddon"
 
     with zipfile.ZipFile(ankiaddon_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(package_dir):

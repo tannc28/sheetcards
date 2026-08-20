@@ -1,6 +1,6 @@
-# Sheets2Anki
+# SheetCards
 
-**Sheets2Anki turns a Google Sheets spreadsheet into an Anki deck and keeps it in sync.**
+**SheetCards turns a Google Sheets spreadsheet into an Anki deck and keeps it in sync.**
 You write and organize your cards in a spreadsheet; the add-on downloads it, creates or
 updates one Anki note per row, files the notes into subdecks, tags them, and builds the
 card templates for you. Nothing is uploaded back to the sheet — the sheet is the source
@@ -42,7 +42,7 @@ sheet — Anki reads it anonymously over a public link.
 
 ## Preview a sheet in your browser
 
-**<https://tannc28.github.io/sheets2anki/>**
+**<https://tannc28.github.io/sheetcards/>**
 
 Paste a Google Sheets link and the page shows what the add-on would make of it —
 before anything is installed and before your collection is touched:
@@ -71,8 +71,8 @@ Viewer**), so if the preview can read your sheet, so can Anki.
 ### One file, one deck per sheet
 
 A Google Sheets file holds several **sheets** — the tabs along the bottom — and
-Sheets2Anki connects **every one of them as its own deck**. Paste the file's link
-once and each sheet becomes a deck of its own — `s2a_{file}::{sheet}` — with its own columns,
+SheetCards connects **every one of them as its own deck**. Paste the file's link
+once and each sheet becomes a deck of its own — `sc_{file}::{sheet}` — with its own columns,
 its own settings row and its own note type. One spreadsheet can hold your whole
 collection.
 
@@ -159,7 +159,7 @@ repository: [`examples/`](examples/). Paste this link into the preview site, or
 into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
 
 ```text
-https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
+https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
 Most of it is English for Vietnamese speakers, because that is what most people
@@ -215,11 +215,11 @@ sheet in detail.
 
 ## Install
 
-1. Download the released `sheets2anki-standalone.ankiaddon` file.
+1. Download the released `sheetcards-standalone.ankiaddon` file.
 2. In Anki: **Tools → Add-ons → Install from file…**, select the downloaded file.
 3. **Restart Anki.**
 
-A new **Sheets2Anki** submenu appears under **Tools**. That submenu is the whole
+A new **SheetCards** submenu appears under **Tools**. That submenu is the whole
 interface — the add-on adds no toolbar buttons and no browser actions.
 
 ---
@@ -248,16 +248,16 @@ Copy the URL from the browser address bar (the normal `.../edit?...` link).
 
 ### 3. Connect it
 
-**Tools → Sheets2Anki → Add New Remote Deck** (`Ctrl+Shift+A`). Paste the URL. The
+**Tools → SheetCards → Add New Remote Deck** (`Ctrl+Shift+A`). Paste the URL. The
 dialog validates it as you type (with a ~1.2 s pause after you stop), downloads the
 sheet, and shows how many rows it found and what the deck will be called.
 
 You do **not** name the deck — the name is read from the spreadsheet's title, and the
-deck is always created as `s2a_<file name>::<sheet name>`.
+deck is always created as `sc_<file name>::<sheet name>`.
 
 ### 4. Sync
 
-**Tools → Sheets2Anki → Synchronize Remote Decks** (`Ctrl+Shift+S`), tick your deck,
+**Tools → SheetCards → Synchronize Remote Decks** (`Ctrl+Shift+S`), tick your deck,
 press **Synchronize Selected**. A summary window reports what was created, updated and
 deleted. Your cards are ready to study.
 
@@ -333,8 +333,8 @@ This produces:
 - **Note fields** — `ID`, `Word`, `Reading`, `Meaning`, `Example` (in that order; `ID`
   is always the first field).
 - **Card** — front `Word`, back `Reading` + `Meaning` + `Example`.
-- **Deck** — `s2a_<file>::<sheet>::Japanese::Kanji`.
-- **Tags** — `sheets2anki`, `sheets2anki::japanese::kanji`, `jlpt-n5`, `nature`.
+- **Deck** — `sc_<file>::<sheet>::Japanese::Kanji`.
+- **Tags** — `sheetcards`, `sheetcards::japanese::kanji`, `jlpt-n5`, `nature`.
 
 ### The settings row
 
@@ -401,7 +401,7 @@ w01      HSK 1        写       to write
 w02      HSK 2        山       mountain
 ```
 
-→ `s2a_{file}::{sheet}::HSK 1`, and nothing on the card.
+→ `sc_{file}::{sheet}::HSK 1`, and nothing on the card.
 
 **Where a note is filed is a bigger thing than how one card looks**, so a column
 working at deck level is not part of the card at all — not drawn, not styled, not
@@ -478,11 +478,11 @@ it and there was no way to ask for one without the other.
 Every block a card renders carries the column it came from:
 
 ```html
-<div class="s2a-back" data-s2a-col="Pinyin">…</div>
+<div class="sc-back" data-sc-col="Pinyin">…</div>
 ```
 
 So for the rare thing the settings row does not cover, the note type's **Styling**
-can reach a single column — `[data-s2a-col="Pinyin"] { letter-spacing: .04em; }` —
+can reach a single column — `[data-sc-col="Pinyin"] { letter-spacing: .04em; }` —
 without touching the templates, which are rebuilt from the sheet on every sync
 and would lose the edit.
 
@@ -495,7 +495,7 @@ the thing the links point at:
 | :--- | :--- |
 | `image; size=320` | `<img src="{{Picture}}" style="max-width: 320px">` |
 | `audio` | `<audio src="{{Sound}}" controls></audio>` |
-| `video; size=480` | `<iframe src="{{Clip}}" class="s2a-embed" allowfullscreen …>` |
+| `video; size=480` | `<iframe src="{{Clip}}" class="sc-embed" allowfullscreen …>` |
 
 The cell in a *data* row holds nothing but the URL — the add-on builds the tag around it.
 A column carries **one** kind of media: `image; video` keeps `image` and warns.
@@ -651,9 +651,9 @@ Everything not mentioned keeps its default, which is why `Meaning` only needs `s
 
 Every note gets three kinds of tag:
 
-1. `sheets2anki` — on every note the add-on owns, so you can find or bulk-remove them
+1. `sheetcards` — on every note the add-on owns, so you can find or bulk-remove them
    without touching your own notes.
-2. `sheets2anki::<subdeck path>` — mirrors the deck hierarchy, so the tree is browsable
+2. `sheetcards::<subdeck path>` — mirrors the deck hierarchy, so the tree is browsable
    from the Browse sidebar.
 3. Whatever the `TAGS` column lists.
 
@@ -709,12 +709,12 @@ themselves (`{{type:cloze:…}}`).
 
 ## Features
 
-Everything lives under **Tools → Sheets2Anki**.
+Everything lives under **Tools → SheetCards**.
 
 ### Add New Remote Deck
 
 **What it does** — connects one Google Sheets spreadsheet as a new remote deck.
-**Where** — Tools → Sheets2Anki → *Add New Remote Deck* (`Ctrl+Shift+A`).
+**Where** — Tools → SheetCards → *Add New Remote Deck* (`Ctrl+Shift+A`).
 
 **How it works.** You paste the ordinary `docs.google.com/spreadsheets/d/<ID>/edit…`
 link. The add-on rewrites it to `…/export?format=tsv` and downloads that with a plain
@@ -725,7 +725,7 @@ recognised as the same deck.
 
 The deck name is derived automatically, in this order: the spreadsheet's HTML `<title>`,
 then the download's `Content-Disposition` filename, then a generated fallback built from
-the spreadsheet ID. The deck is created as `s2a_<that name>`. If the name
+the spreadsheet ID. The deck is created as `sc_<that name>`. If the name
 collides with an existing remote deck, a ` #conflict1`, ` #conflict2`, … suffix is added
 and the dialog tells you.
 
@@ -747,7 +747,7 @@ and the dialog tells you.
 ### Synchronize Remote Decks
 
 **What it does** — downloads each selected sheet and reconciles it with Anki.
-**Where** — Tools → Sheets2Anki → *Synchronize Remote Decks* (`Ctrl+Shift+S`).
+**Where** — Tools → SheetCards → *Synchronize Remote Decks* (`Ctrl+Shift+S`).
 
 **How it works.** The dialog lists every connected deck with a checkbox and a card
 count. Your ticks are saved to the add-on's settings the moment you click them, so the
@@ -782,16 +782,16 @@ The summary window has three views — **📊 Summary**, **📑 Full Details**,
 ### Disconnect a Remote Deck
 
 **What it does** — stops syncing a deck, and optionally deletes it.
-**Where** — Tools → Sheets2Anki → *Disconnect a Remote Deck* (`Ctrl+Shift+D`).
+**Where** — Tools → SheetCards → *Disconnect a Remote Deck* (`Ctrl+Shift+D`).
 
 **How it works.** Tick the decks to disconnect, then decide with a single checkbox:
 
 > 🗑️ **Delete local data (decks, cards, notes and note types)** — **checked by default.**
 
 Left checked, disconnecting deletes the local deck and all its subdecks, every card and
-note in them, and the deck's `Sheets2Anki - … - Basic` / `- Cloze` note types (only if no
+note in them, and the deck's `SheetCards - … - Basic` / `- Cloze` note types (only if no
 other deck uses them). Unchecked, everything stays in Anki exactly as it is and only the
-link to the spreadsheet is dropped. Either way, orphaned Sheets2Anki deck-options presets
+link to the spreadsheet is dropped. Either way, orphaned SheetCards deck-options presets
 are cleaned up afterwards.
 
 **Caveats**
@@ -807,7 +807,7 @@ are cleaned up afterwards.
 **What it does** — shows, per deck, what the add-on read out of the sheet's
 [settings row](#the-settings-row): which fields it put on which side, how they are
 styled, what it did not understand, and which text-to-speech voices this machine has.
-**Where** — Tools → Sheets2Anki → *Configure Card Layout* (`Ctrl+Shift+C`).
+**Where** — Tools → SheetCards → *Configure Card Layout* (`Ctrl+Shift+C`).
 
 > **This window is read-only.** The spreadsheet is the only place a card's appearance is
 > edited. That is deliberate: with two places able to change one setting, the loser is
@@ -829,7 +829,7 @@ is wrapped in Anki's `{{#Field}}…{{/Field}}` conditional, so a row that leaves
 blank shows nothing there instead of an empty gap.
 
 The parsed result of the last sync is cached in **Anki's own collection config** (key
-`sheets2anki::sheet_settings`), not in the add-on's local files. Anki's config table is
+`sheetcards::sheet_settings`), not in the add-on's local files. Anki's config table is
 part of what AnkiWeb synchronizes, so a second machine renders identical cards before it
 has ever downloaded the sheet itself — and this window can show a deck's settings without
 going back to Google.
@@ -846,25 +846,25 @@ content.
   exactly one template.
 - A deck that has never been synced has nothing cached yet, so it is skipped by the
   template rebuild and shows nothing here until its first sync.
-- Hand-editing a Sheets2Anki note type in Anki's own card editor does not stick: the next
+- Hand-editing a SheetCards note type in Anki's own card editor does not stick: the next
   sync rebuilds those templates from the sheet.
 
 ### Settings
 
 **What it does** — the two things about the add-on that are not about a sheet.
-**Where** — Tools → Sheets2Anki → *Settings* (`Ctrl+Shift+O`).
+**Where** — Tools → SheetCards → *Settings* (`Ctrl+Shift+O`).
 
 **Upload to AnkiWeb.** Ticked, a normal AnkiWeb sync runs right after a deck sync, so
 the new cards reach your phone without a second click. There is no separate sync
 implementation — the add-on calls Anki's own (`mw.sync.sync()`, the same code path as
-Tools → Sync), once you close the Sheets2Anki summary window, and progress appears in
+Tools → Sync), once you close the SheetCards summary window, and progress appears in
 Anki's normal status bar. You must already be logged into AnkiWeb (**Tools → Sync**
 once); if not, the add-on says so and does nothing. Conflicts — full upload / full
 download prompts — are Anki's own dialogs. On by default.
 
 **Write a debug log.** Ticked, every internal step is timestamped, categorized (`SYNC`,
 `REMOTE_DECK`, `NOTE_PROCESSOR`, `NAME_CONSISTENCY`, …) and appended to
-`debug_sheets2anki.log` in the add-on folder; the window shows the path and opens its
+`debug_sheetcards.log` in the add-on folder; the window shows the path and opens its
 folder. A second box decides whether each sync starts a fresh log or adds to the
 existing one.
 
@@ -877,11 +877,11 @@ existing one.
   attaching it to a public issue.
 
 > **Deck options are not a setting here.** Every connected deck studies under one Anki
-> preset, `Sheets2Anki - Default Options`, created if missing and assigned to the deck
-> and its subdecks; the root `Sheets2Anki` deck gets `Sheets2Anki - Root Options`. A new
+> preset, `SheetCards - Default Options`, created if missing and assigned to the deck
+> and its subdecks; the root `SheetCards` deck gets `SheetCards - Root Options`. A new
 > preset is seeded with 20 new / 200 review cards a day (30 / 150 for the root) and **an
 > existing preset is never overwritten**, so once you tune it by hand your numbers
-> survive every sync. Presets named `Sheets2Anki…` that no deck uses are deleted after a
+> survive every sync. Presets named `SheetCards…` that no deck uses are deleted after a
 > sync. There used to be a choice of three modes for this; a study preset is Anki's to
 > configure, two clicks away in its own deck options, so the choice was a setting about
 > a setting.
@@ -893,7 +893,7 @@ existing one.
 ### Notes are keyed by `ID`
 
 Each row's `ID` is written into the note's first field, also called `ID`. On every sync
-the add-on searches `deck:"s2a_<name>" OR deck:"s2a_<name>::*"`, reads
+the add-on searches `deck:"sc_<name>" OR deck:"sc_<name>::*"`, reads
 that field on each note it finds, and matches rows to notes by it.
 
 Consequences worth internalizing:
@@ -905,7 +905,7 @@ Consequences worth internalizing:
   detected: duplicates are listed as an error in the sync summary
   (*"Duplicate IDs in the spreadsheet (n): …"*).
 - **A row with a blank `ID` is never synced** — it is counted as *Rows skipped (Missing ID)*.
-- Moving a Sheets2Anki note out of its `s2a_<deck>` tree in Anki makes it
+- Moving a SheetCards note out of its `sc_<deck>` tree in Anki makes it
   invisible to the matcher, and the next sync will recreate the row as a new note.
 
 ### What each change to the sheet does
@@ -941,10 +941,10 @@ Consequences worth internalizing:
 
 The remote deck name is re-read from the spreadsheet's title on every sync. When it
 changes, the add-on renames, in one cascade: the Anki deck
-(`s2a_<new name>`), the note types (`Sheets2Anki - <new name> - Basic` / `-
+(`sc_<new name>`), the note types (`SheetCards - <new name> - Basic` / `-
 Cloze`).
 
-> ⚠️ **Renaming a Sheets2Anki deck or note type inside Anki does not stick.** The next
+> ⚠️ **Renaming a SheetCards deck or note type inside Anki does not stick.** The next
 > sync finds the deck by its stored ID, sees a name it does not expect, and renames it
 > back. To rename a deck, rename the spreadsheet.
 
@@ -957,7 +957,7 @@ Subdecks that ended up with no cards are removed, and the deck options preset is
 
 ## Keyboard shortcuts
 
-All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
+All of these live under **Tools → SheetCards**. On macOS, ⌘ replaces Ctrl.
 
 | Shortcut | Menu entry |
 | :--- | :--- |
@@ -973,7 +973,7 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 
 | Setting | Stored in | Travels via AnkiWeb? |
 | :--- | :--- | :--- |
-| The parsed settings row (sides, sizes, colours, speech, reverse card) | Anki's collection config, key `sheets2anki::sheet_settings` — a cache of what the last sync read; the sheet stays the source of truth | **Yes** |
+| The parsed settings row (sides, sizes, colours, speech, reverse card) | Anki's collection config, key `sheetcards::sheet_settings` — a cache of what the last sync read; the sheet stays the source of truth | **Yes** |
 | Note types and card templates | Anki's collection | **Yes** |
 | Connected decks, AnkiWeb setting, debug flags | `meta.json` in the add-on folder | No — machine-local |
 
@@ -1064,10 +1064,10 @@ Log in to AnkiWeb once through Anki's own Sync button; the add-on reuses that se
 
 **Anything else.**
 Turn on **Write a debug log** in *Settings* (`Ctrl+Shift+O`), reproduce the problem,
-then read or attach `debug_sheets2anki.log` (the *Open folder* button takes you there).
+then read or attach `debug_sheetcards.log` (the *Open folder* button takes you there).
 Please
 report issues at
-[github.com/tannc28/sheets2anki/issues](https://github.com/tannc28/sheets2anki/issues).
+[github.com/tannc28/sheetcards/issues](https://github.com/tannc28/sheetcards/issues).
 
 ---
 

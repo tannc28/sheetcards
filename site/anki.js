@@ -146,11 +146,11 @@ function typeBox(field, raw, mods, ctx) {
     JSON.stringify({ expect: expected, nc: mods.includes("nc") }),
   );
   return (
-    `<div class="s2a-type" data-typeans="${spec}">` +
+    `<div class="sc-type" data-typeans="${spec}">` +
     `<center><input type="text" id="typeans" autocomplete="off" ` +
     `autocapitalize="off" autocorrect="off" spellcheck="false" ` +
     `aria-label="${escapeHtml(field)}"></center>` +
-    `<div class="s2a-typeans" hidden></div></div>`
+    `<div class="sc-typeans" hidden></div></div>`
   );
 }
 

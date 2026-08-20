@@ -1,5 +1,5 @@
 """
-Configuration manager for the Sheets2Anki addon.
+Configuration manager for the SheetCards addon.
 
 This module implements a hierarchical configuration system that uses:
 - config.json: Addon default settings
@@ -347,7 +347,7 @@ def create_deck_info(
     # One options group for every connected deck. There used to be a choice of
     # three here, which was a setting about a setting: a study preset is Anki's to
     # configure, two clicks away in its own deck options.
-    options_group_name = "Sheets2Anki - Default Options"
+    options_group_name = "SheetCards - Default Options"
 
     # Ensure created_at always exists
     current_timestamp = int(time.time())
@@ -621,13 +621,13 @@ def verify_and_update_deck_info(url, local_deck_id, local_deck_name, silent=Fals
         deck_info["remote_deck_name"] = resolved_remote_name
 
         deck_info["local_deck_configurations_package_name"] = (
-            "Sheets2Anki - Default Options"
+            "SheetCards - Default Options"
         )
 
         updated = True
         if not silent:
             add_debug_msg(
-                f"[Sheets2Anki] Remote deck name updated from '{stored_remote_name}' to '{resolved_remote_name}'"
+                f"[SheetCards] Remote deck name updated from '{stored_remote_name}' to '{resolved_remote_name}'"
             )
 
     # Save changes if there were updates
@@ -1043,11 +1043,11 @@ def update_note_type_names_in_meta(url, new_remote_deck_name):
         for note_type_id, old_name in note_types.items():
             # Analyze old name to extract the note type
             # IMPORTANT: deck_name may contain " - ", so parse from the END
-            if old_name.startswith("Sheets2Anki - "):
+            if old_name.startswith("SheetCards - "):
                 parts = old_name.split(" - ")
 
                 if len(parts) >= 3:
-                    # Format: "Sheets2Anki - remote_name - type"
+                    # Format: "SheetCards - remote_name - type"
                     # Last part is the type (Basic/Cloze)
                     is_cloze = parts[-1].strip() == "Cloze"
                 else:
@@ -1137,7 +1137,7 @@ def ensure_deck_configurations_consistency():
         remote_deck_name = deck_info.get("remote_deck_name", "UnknownDeck")
         current_package_name = deck_info.get("local_deck_configurations_package_name")
 
-        expected_package_name = "Sheets2Anki - Default Options"
+        expected_package_name = "SheetCards - Default Options"
 
         # If configuration doesn't exist, add it
         if "local_deck_configurations_package_name" not in deck_info:
@@ -1265,12 +1265,12 @@ def sync_note_type_names_robustly(url, correct_remote_name):
 
         def extract_type_from_name(old_name):
             """Extracts the note type from old name."""
-            if not old_name.startswith("Sheets2Anki - "):
+            if not old_name.startswith("SheetCards - "):
                 return None, False
 
             parts = old_name.split(" - ")
             # IMPORTANT: deck_name may contain " - ", so parse from the END
-            if len(parts) >= 3:  # "Sheets2Anki - remote_name - type"
+            if len(parts) >= 3:  # "SheetCards - remote_name - type"
                 # Last part is the type (Basic/Cloze)
                 note_type = parts[-1].strip()
                 return note_type, note_type == "Cloze"

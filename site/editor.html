@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Sheets2Anki — build a settings row</title>
+<title>SheetCards — build a settings row</title>
 <meta name="description" content="Write one column's settings row and watch the card change, using the add-on's own code. Copy the cell when it looks right.">
 <script>
   try {
-    var t = localStorage.getItem("s2a-theme");
+    var t = localStorage.getItem("sc-theme");
     if (t === "dark") document.documentElement.dataset.theme = "dark";
   } catch (e) {}
 </script>
@@ -18,7 +18,7 @@
 
 <header class="masthead">
   <div class="brand">
-    <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="guideTag">editor</span></h1>
+    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="guideTag">editor</span></h1>
   </div>
 
   <button id="theme" class="themebtn" type="button"></button>

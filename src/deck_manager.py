@@ -1,5 +1,5 @@
 """
-Deck management for the Sheets2Anki addon.
+Deck management for the SheetCards addon.
 
 This module contains functions for adding, removing, and managing
 remote decks in Anki with support for automatic naming and
@@ -232,13 +232,13 @@ def _force_delete_note_types_by_suffix(suffix, remote_deck_name=None, url=None):
         for model in mw.col.models.all():
             model_name = model["name"]
 
-            # Check if it's a Sheets2Anki note type for THIS remote deck.
-            # Note type names are "Sheets2Anki - {deck} - {Type}", so require the
+            # Check if it's a SheetCards note type for THIS remote deck.
+            # Note type names are "SheetCards - {deck} - {Type}", so require the
             # deck name as a ' - '-delimited segment. A plain substring test
             # ("Bio" in name) would wrongly match a different deck whose name is
             # a superstring ("Biologia").
             if remote_deck_name and model_name.startswith(
-                f"Sheets2Anki - {remote_deck_name} - "
+                f"SheetCards - {remote_deck_name} - "
             ):
                 models_to_delete.append(model)
                 add_debug_msg(
@@ -497,7 +497,7 @@ def removeRemoteDeck():
                 disconnected_decks.append(deck_name)
 
         # Clean up orphaned deck option groups after disconnecting decks
-        # This removes any Sheets2Anki deck options that are no longer linked to any local decks
+        # This removes any SheetCards deck options that are no longer linked to any local decks
         from .utils import cleanup_orphaned_deck_option_groups
 
         cleaned_options = cleanup_orphaned_deck_option_groups()
@@ -640,9 +640,9 @@ class DeckNameManager:
 
     @staticmethod
     def generate_local_name(remote_name: str) -> str:
-        """The deck's name in Anki: ``s2a_{remote_name}``.
+        """The deck's name in Anki: ``sc_{remote_name}``.
 
-        A top-level deck rather than a child of one called "Sheets2Anki". The
+        A top-level deck rather than a child of one called "SheetCards". The
         prefix is what keeps synced decks apart from the ones you made yourself,
         without pushing every one of them a level down the deck list.
         """
@@ -1117,7 +1117,7 @@ class DeckNameManager:
         try:
             import urllib.request
 
-            headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
+            headers = {"User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"}
             request = urllib.request.Request(url, headers=headers)
 
             with urllib.request.urlopen(request, timeout=10) as response:
@@ -1247,12 +1247,12 @@ class DeckRecreationManager:
         try:
             new_deck_id, actual_name = DeckRecreationManager._create_new_deck(deck_info)
 
-            # Apply Sheets2Anki options to recreated deck
-            from .utils import apply_sheets2anki_options_to_deck
+            # Apply SheetCards options to recreated deck
+            from .utils import apply_sheetcards_options_to_deck
 
             remote_deck_name = deck_info.get("remote_deck_name")
             try:
-                apply_sheets2anki_options_to_deck(new_deck_id, remote_deck_name)
+                apply_sheetcards_options_to_deck(new_deck_id, remote_deck_name)
                 add_debug_message(
                     f"✅ Options applied to recreated deck: {actual_name}",
                     "DECK_RECREATION",

@@ -32,17 +32,17 @@ class NameConsistencyManager:
         Returns:
             Dict with all standard strings: local_deck_name, note_types, deck_option_name
         """
-        # 2. recreate local_deck_name in the pattern "s2a_{remote_deck_name}"
+        # 2. recreate local_deck_name in the pattern "sc_{remote_deck_name}"
         local_deck_name = deck_root_name(remote_deck_name)
 
-        # 3. recreate note_types in the pattern "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
+        # 3. recreate note_types in the pattern "SheetCards - {remote_deck_name} - Basic/Cloze"
         note_type_names = {
-            "basic": f"Sheets2Anki - {remote_deck_name} - Basic",
-            "cloze": f"Sheets2Anki - {remote_deck_name} - Cloze",
+            "basic": f"SheetCards - {remote_deck_name} - Basic",
+            "cloze": f"SheetCards - {remote_deck_name} - Cloze",
         }
 
-        # 4. recreate deck_option_name in the pattern "Sheets2Anki - {remote_deck_name}"
-        deck_option_name = f"Sheets2Anki - {remote_deck_name}"
+        # 4. recreate deck_option_name in the pattern "SheetCards - {remote_deck_name}"
+        deck_option_name = f"SheetCards - {remote_deck_name}"
 
         return {
             "local_deck_name": local_deck_name,
@@ -311,7 +311,7 @@ class NameConsistencyManager:
         if len(parts) < 3:
             return None
 
-        # Format is: "Sheets2Anki - {remote_name} - {type}"
+        # Format is: "SheetCards - {remote_name} - {type}"
         # But remote_name may contain hyphens, so we need to work backwards
 
         # Last element is always the type (Basic/Cloze)

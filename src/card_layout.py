@@ -31,7 +31,7 @@ from .sheet_config import THEMES
 # sync, so changing or dropping this is one re-sync instead of an edit to every
 # row. The cost is that a video needs this page to be reachable, on top of needing
 # YouTube — which is why the mobile link below stays as a way through.
-EMBED_PROXY = "https://tannc28.github.io/sheets2anki/player.html?src="
+EMBED_PROXY = "https://tannc28.github.io/sheetcards/player.html?src="
 
 # Writing a character is a different skill from recognising one, and no amount of
 # HTML can test it: the card has to take strokes and mark them. HanziWriter is the
@@ -245,7 +245,7 @@ def _signature(variant, name):
 def _palette(sheet_config):
     """The colour block at the top of the stylesheet, themed or not.
 
-    ``--s2a-muted``/``--s2a-accent`` are declared twice on purpose: once as the light
+    ``--sc-muted``/``--sc-accent`` are declared twice on purpose: once as the light
     default and once under ``.night_mode``, the class Anki puts on the card's body in
     dark mode. A single fixed value would make one of the two themes unreadable, which
     is the whole reason the named colours exist instead of hard-coded ones.
@@ -260,10 +260,10 @@ def _palette(sheet_config):
     """
     theme = THEMES.get(sheet_config.theme) or _DEFAULT_PALETTE
     lines = [
-        f":root {{ --s2a-muted: {theme['light']['muted']};"
-        f" --s2a-accent: {theme['light']['accent']}; }}\n",
-        f".night_mode {{ --s2a-muted: {theme['night']['muted']};"
-        f" --s2a-accent: {theme['night']['accent']}; }}\n",
+        f":root {{ --sc-muted: {theme['light']['muted']};"
+        f" --sc-accent: {theme['light']['accent']}; }}\n",
+        f".night_mode {{ --sc-muted: {theme['night']['muted']};"
+        f" --sc-accent: {theme['night']['accent']}; }}\n",
     ]
     if sheet_config.theme in THEMES:
         lines.append(f".card {{ {_painted(theme['light'])}; }}\n")
@@ -303,55 +303,55 @@ def _css(sheet_config):
         "<style>\n"
         + _font_imports(sheet_config)
         + _palette(sheet_config)
-        + f".s2a-wrap {{ text-align: {align}; }}\n"
-        f".s2a-front {{ font-size: {FRONT_SIZE_PX}px; line-height: 1.3; }}\n"
-        f".s2a-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
+        + f".sc-wrap {{ text-align: {align}; }}\n"
+        f".sc-front {{ font-size: {FRONT_SIZE_PX}px; line-height: 1.3; }}\n"
+        f".sc-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
         " margin-top: 14px; }\n"
-        ".s2a-label { font-size: 12px; letter-spacing: .06em;"
+        ".sc-label { font-size: 12px; letter-spacing: .06em;"
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
-        ".s2a-reveal > summary { cursor: pointer; font-size: 13px;"
+        ".sc-reveal > summary { cursor: pointer; font-size: 13px;"
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
-        ".s2a-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
+        ".sc-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
         " text-align: left; }\n"
-        ".s2a-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
+        ".sc-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
         " opacity: .6; margin: 12px 0 6px; text-align: left; }\n"
         # The snippet takes a whole row of its own: a voice name plus a button per
         # spoken column does not fit a phone's width side by side, and a wrapped
         # <code> next to a shrinking button is the worse of the two.
-        ".s2a-tts-row { display: flex; flex-wrap: wrap; align-items: center;"
+        ".sc-tts-row { display: flex; flex-wrap: wrap; align-items: center;"
         " gap: 6px 8px; padding: 6px 0 6px 10px; text-align: left;"
-        " border-left: 2px solid var(--s2a-muted); }\n"
-        ".s2a-tts-row code { flex: 1 1 100%; font-size: 11px;"
+        " border-left: 2px solid var(--sc-muted); }\n"
+        ".sc-tts-row code { flex: 1 1 100%; font-size: 11px;"
         " overflow-wrap: anywhere; }\n"
-        ".s2a-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
-        " border-radius: 6px; border: 1px solid var(--s2a-muted);"
+        ".sc-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
+        " border-radius: 6px; border: 1px solid var(--sc-muted);"
         " background: none; color: inherit; }\n"
         # The way to the voices this language shares with every other. Dashed and
         # on a line of its own, because it belongs to the group rather than to a
         # row, and quieter than a play button because it is not the thing to do.
-        ".s2a-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
+        ".sc-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
         " padding: 5px 9px; border-radius: 6px; border: 1px dashed"
-        " var(--s2a-muted); background: none; color: inherit; opacity: .7; }\n"
-        ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
+        " var(--sc-muted); background: none; color: inherit; opacity: .7; }\n"
+        ".sc-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
-        ".s2a-embed-link { display: none; }\n"
+        ".sc-embed-link { display: none; }\n"
         # A framed player cannot work on the mobile clients: their webview loads
         # the card from a file:// origin, so no HTTP Referer is sent and YouTube
         # answers with "Error 153: Video player configuration error" — a
         # referrerpolicy cannot help, because there is no origin to send. Anki
         # marks those clients with a `mobile` class, so the frame is simply not
         # shown there and a link that opens the video properly takes its place.
-        ".mobile .s2a-embed-link { display: inline-block; margin-top: 6px;"
+        ".mobile .sc-embed-link { display: inline-block; margin-top: 6px;"
         " font-size: 13px; opacity: .7; }\n"
         # The writing box is sized inline, from `size=`. `:empty` is the state
         # before the library has drawn anything into it — no network, a client
         # that refuses remote scripts, or simply the moment before it loads — and
         # in that state the box says which character it was going to ask for
         # rather than sitting there as a blank square.
-        ".s2a-draw { display: inline-flex; align-items: center;"
+        ".sc-draw { display: inline-flex; align-items: center;"
         " justify-content: center; vertical-align: top; margin: 4px;"
-        " border: 1px dashed var(--s2a-muted); border-radius: 8px; }\n"
-        ".s2a-draw:empty::before { content: attr(data-s2a-char);"
+        " border: 1px dashed var(--sc-muted); border-radius: 8px; }\n"
+        ".sc-draw:empty::before { content: attr(data-sc-char);"
         " font-size: 40px; opacity: .35; }\n"
         # Code is the one thing on a card that is not prose: left-aligned however
         # the deck is aligned, wrapped rather than cut, and scrolling inside its own
@@ -359,13 +359,13 @@ def _css(sheet_config):
         # rather than imported with a ready-made highlight.js theme, which would
         # paint its own light background and sit on a night-mode card as a white
         # rectangle — these sit on whatever the card is already.
-        ".s2a-code { text-align: left; direction: ltr; margin: 10px auto;"
+        ".sc-code { text-align: left; direction: ltr; margin: 10px auto;"
         " padding: 10px 12px; max-width: 40em; overflow-x: auto;"
         " border-radius: 8px; background: rgba(127, 127, 127, .12);"
         " font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;"
         " font-size: 15px; line-height: 1.5; white-space: pre-wrap;"
         " overflow-wrap: anywhere; }\n"
-        ".s2a-code code { font: inherit; background: none; padding: 0; }\n"
+        ".sc-code code { font: inherit; background: none; padding: 0; }\n"
         ".hljs-comment, .hljs-quote { opacity: .65; font-style: italic; }\n"
         ".hljs-keyword, .hljs-selector-tag, .hljs-literal { color: #a626a4; }\n"
         ".hljs-string, .hljs-attr, .hljs-regexp { color: #50a14f; }\n"
@@ -463,10 +463,10 @@ _MEDIA_ELEMENTS = {
     # on the phone while working perfectly on the desktop. Naming the policy makes
     # the webview send the origin it does have.
     "video": (
-        '<iframe src="' + EMBED_PROXY + '{ref}" class="s2a-embed" allowfullscreen '
+        '<iframe src="' + EMBED_PROXY + '{ref}" class="sc-embed" allowfullscreen '
         'referrerpolicy="strict-origin-when-cross-origin" '
         'allow="encrypted-media; picture-in-picture"{style}></iframe>'
-        '<a class="s2a-embed-link" href="{ref}">{caption}</a>'
+        '<a class="sc-embed-link" href="{ref}">{caption}</a>'
     ),
 }
 
@@ -505,7 +505,7 @@ def _code_html(field, cfg):
     simply colours nothing.
     """
     language = f' class="language-{escape(cfg.code)}"' if cfg.code else ""
-    return f'<pre class="s2a-code"><code{language}>{{{{text:{field}}}}}</code></pre>'
+    return f'<pre class="sc-code"><code{language}>{{{{text:{field}}}}}</code></pre>'
 
 
 def _media_html(field, cfg):
@@ -535,8 +535,8 @@ def _draw_html(field, cfg, quiz):
     """
     size = int(cfg.size) if cfg.size else 200
     return (
-        f'<div class="s2a-draw" data-s2a-char="{{{{text:{field}}}}}" '
-        f'data-s2a-size="{size}" data-s2a-quiz="{1 if quiz else 0}" '
+        f'<div class="sc-draw" data-sc-char="{{{{text:{field}}}}}" '
+        f'data-sc-size="{size}" data-sc-quiz="{1 if quiz else 0}" '
         f'style="min-width: {size}px; height: {size}px"></div>'
     )
 
@@ -549,19 +549,19 @@ _DRAW_SCRIPT = (
     "<script>\n"
     "(function () {\n"
     "  function draw() {\n"
-    '    document.querySelectorAll(".s2a-draw").forEach(function (box) {\n'
-    "      if (box.dataset.s2aDone) return;\n"
-    '      box.dataset.s2aDone = "1";\n'
+    '    document.querySelectorAll(".sc-draw").forEach(function (box) {\n'
+    "      if (box.dataset.scDone) return;\n"
+    '      box.dataset.scDone = "1";\n'
     "      var style = getComputedStyle(box);\n"
     "      var ink = style.color;\n"
     # The theme's own muted colour, so the outline to trace stays visible in both
     # light and night mode instead of being a fixed grey that vanishes in one.
-    '      var faint = style.getPropertyValue("--s2a-muted").trim() || "#888";\n'
-    "      var size = parseInt(box.dataset.s2aSize, 10) || 200;\n"
-    '      var quiz = box.dataset.s2aQuiz === "1";\n'
+    '      var faint = style.getPropertyValue("--sc-muted").trim() || "#888";\n'
+    "      var size = parseInt(box.dataset.scSize, 10) || 200;\n"
+    '      var quiz = box.dataset.scQuiz === "1";\n'
     # Array.from rather than split(""), which cuts a character above the basic
     # plane in half and asks the library to draw two halves of nothing.
-    '      Array.from((box.dataset.s2aChar || "").trim()).forEach(function (ch) {\n'
+    '      Array.from((box.dataset.scChar || "").trim()).forEach(function (ch) {\n'
     "        if (!ch.trim()) return;\n"
     '        var cell = document.createElement("div");\n'
     "        box.appendChild(cell);\n"
@@ -584,10 +584,10 @@ _DRAW_SCRIPT = (
     "    });\n"
     "  }\n"
     "  if (window.HanziWriter) { draw(); return; }\n"
-    '  var tag = document.getElementById("s2a-hanzi-writer");\n'
+    '  var tag = document.getElementById("sc-hanzi-writer");\n'
     "  if (!tag) {\n"
     '    tag = document.createElement("script");\n'
-    '    tag.id = "s2a-hanzi-writer";\n'
+    '    tag.id = "sc-hanzi-writer";\n'
     '    tag.src = "' + HANZI_WRITER + '";\n'
     "    document.head.appendChild(tag);\n"
     "  }\n"
@@ -604,17 +604,17 @@ _CODE_SCRIPT = (
     "<script>\n"
     "(function () {\n"
     "  function paint() {\n"
-    '    document.querySelectorAll("pre.s2a-code code").forEach(function (el) {\n'
-    "      if (el.dataset.s2aDone) return;\n"
-    '      el.dataset.s2aDone = "1";\n'
+    '    document.querySelectorAll("pre.sc-code code").forEach(function (el) {\n'
+    "      if (el.dataset.scDone) return;\n"
+    '      el.dataset.scDone = "1";\n'
     "      window.hljs && hljs.highlightElement(el);\n"
     "    });\n"
     "  }\n"
     "  if (window.hljs) { paint(); return; }\n"
-    '  var tag = document.getElementById("s2a-hljs");\n'
+    '  var tag = document.getElementById("sc-hljs");\n'
     "  if (!tag) {\n"
     '    tag = document.createElement("script");\n'
-    '    tag.id = "s2a-hljs";\n'
+    '    tag.id = "sc-hljs";\n'
     '    tag.src = "' + HIGHLIGHT_JS + '";\n'
     "    document.head.appendChild(tag);\n"
     "  }\n"
@@ -658,13 +658,13 @@ _NOVELTY_VOICES = (
 _TTS_VOICES_SCRIPT = (
     "<script>\n"
     "(function () {\n"
-    '  var box = document.querySelector(".s2a-tts-debug");\n'
-    "  if (!box || box.dataset.s2aReady) return;\n"
-    '  box.dataset.s2aReady = "1";\n'
-    '  var wanted = (box.dataset.s2aLangs || "").split(",").filter(Boolean);\n'
-    '  var raw = box.querySelector(".s2a-tts-raw");\n'
-    '  var list = box.querySelector(".s2a-tts-list");\n'
-    '  var note = box.querySelector(".s2a-tts-note");\n'
+    '  var box = document.querySelector(".sc-tts-debug");\n'
+    "  if (!box || box.dataset.scReady) return;\n"
+    '  box.dataset.scReady = "1";\n'
+    '  var wanted = (box.dataset.scLangs || "").split(",").filter(Boolean);\n'
+    '  var raw = box.querySelector(".sc-tts-raw");\n'
+    '  var list = box.querySelector(".sc-tts-list");\n'
+    '  var note = box.querySelector(".sc-tts-note");\n'
     # QtWebEngine has no Web Speech API, so there is nothing to press on the
     # desktop: the buttons are left out rather than shipped inert, and the line
     # above them stops inviting a tap.
@@ -673,7 +673,7 @@ _TTS_VOICES_SCRIPT = (
     '    note.textContent = "To use a voice, add its line to the column\'s #config cell.";\n'
     "  }\n"
     "  var srcs = [];\n"
-    '  box.querySelectorAll(".s2a-tts-src").forEach(function (el) {\n'
+    '  box.querySelectorAll(".sc-tts-src").forEach(function (el) {\n'
     '    var text = (el.textContent || "").trim();\n'
     "    if (text) srcs.push({ col: el.dataset.col, lang: el.dataset.lang, text: text });\n"
     "  });\n"
@@ -746,7 +746,7 @@ _TTS_VOICES_SCRIPT = (
     '    list.textContent = "This device has " + all.length + " voices, none of them " +\n'
     '      wanted.join("/") + ". It spells its codes this way — put one in tts=:";\n'
     '    var found = document.createElement("div");\n'
-    '    found.className = "s2a-tts-lang";\n'
+    '    found.className = "sc-tts-lang";\n'
     '    found.textContent = (near.length ? near : codes).join("   ");\n'
     "    list.appendChild(found);\n"
     "    return;\n"
@@ -769,14 +769,14 @@ _TTS_VOICES_SCRIPT = (
     "  }\n"
     "  function makeRow(v, cols) {\n"
     '    var row = document.createElement("div");\n'
-    '    row.className = "s2a-tts-row";\n'
+    '    row.className = "sc-tts-row";\n'
     '    var snippet = document.createElement("code");\n'
     '    snippet.textContent = "voices=" + v.name;\n'
     "    row.appendChild(snippet);\n"
     "    if (canSpeak) cols.forEach(function (s) {\n"
     '      var b = document.createElement("button");\n'
     '      b.type = "button";\n'
-    '      b.className = "s2a-tts-play";\n'
+    '      b.className = "sc-tts-play";\n'
     '      b.textContent = "▶ " + s.col;\n'
     '      b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);\n'
     "      b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };\n"
@@ -792,7 +792,7 @@ _TTS_VOICES_SCRIPT = (
     # device gave them.
     "    here.sort(function (a, b) { return better(a) - better(b); });\n"
     '    var head = document.createElement("div");\n'
-    '    head.className = "s2a-tts-lang";\n'
+    '    head.className = "sc-tts-lang";\n'
     '    head.textContent = "tts=" + lang;\n'
     "    list.appendChild(head);\n"
     "    var cols = srcs.filter(function (s) { return s.lang === lang; });\n"
@@ -818,7 +818,7 @@ _TTS_VOICES_SCRIPT = (
     "    if (rest.length) {\n"
     '      var more = document.createElement("button");\n'
     '      more.type = "button";\n'
-    '      more.className = "s2a-tts-more";\n'
+    '      more.className = "sc-tts-more";\n'
     '      more.textContent = "+ " + rest.length +\n'
     '        (rest.length === 1 ? " shared voice" : " shared voices");\n'
     "      more.onclick = function (e) {\n"
@@ -863,19 +863,19 @@ def _tts_debug_block(plan, sheet_config):
     # HTML the field may carry; an empty cell yields an empty span, which the
     # script skips.
     sources = "".join(
-        f'<span class="s2a-tts-src" data-col="{name}" data-lang="{lang}" '
+        f'<span class="sc-tts-src" data-col="{name}" data-lang="{lang}" '
         f"hidden>{{{{text:{name}}}}}</span>"
         for name, lang in spoken
     )
 
     return (
-        f'<details class="s2a-reveal s2a-tts-debug" data-s2a-langs="{",".join(langs)}">'
+        f'<details class="sc-reveal sc-tts-debug" data-sc-langs="{",".join(langs)}">'
         "<summary>TTS voices</summary>"
-        '<div class="s2a-tts-note">Tap \u25b6 to hear a voice. To use it, add its '
+        '<div class="sc-tts-note">Tap \u25b6 to hear a voice. To use it, add its '
         "line to the column's #config cell.</div>"
         f"{sources}"
-        '<div class="s2a-tts-raw">{{tts-voices:}}</div>'
-        '<div class="s2a-tts-list"></div>'
+        '<div class="sc-tts-raw">{{tts-voices:}}</div>'
+        '<div class="sc-tts-list"></div>'
         "</details>"
     ) + _TTS_VOICES_SCRIPT
 
@@ -962,7 +962,7 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
         style_attr = f' style="{style}"' if style else ""
         # The caption is user text from the sheet, so it is escaped; the field name is
         # not, because Anki matches ``{{Field}}`` on the name exactly as written.
-        label = f'<div class="s2a-label">{escape(cfg.label)}</div>' if cfg.label else ""
+        label = f'<div class="sc-label">{escape(cfg.label)}</div>' if cfg.label else ""
         if cfg.media:
             reference = _media_html(field, cfg)
             if cfg.hint:
@@ -971,7 +971,7 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
                 # element itself, needs no JavaScript, and works on mobile.
                 caption = escape(cfg.label) if cfg.label else cfg.media.capitalize()
                 reference = (
-                    f'<details class="s2a-reveal"><summary>{caption}</summary>'
+                    f'<details class="sc-reveal"><summary>{caption}</summary>'
                     f"{reference}</details>"
                 )
                 label = ""  # the summary already names it
@@ -984,7 +984,7 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
                 # which here is the character the box exists not to show.
                 caption = escape(cfg.label) if cfg.label else "Write it"
                 reference = (
-                    f'<details class="s2a-reveal"><summary>{caption}</summary>'
+                    f'<details class="sc-reveal"><summary>{caption}</summary>'
                     f"{reference}</details>"
                 )
                 label = ""
@@ -996,10 +996,10 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
         # card connects a piece of it back to the sheet — which makes it the one
         # thing a stylist cannot target and the one thing the preview cannot
         # point at. The value is the header exactly as written, so
-        # `[data-s2a-col="Pinyin"]` works in the note type's CSS too.
+        # `[data-sc-col="Pinyin"]` works in the note type's CSS too.
         out.append(
             f"{{{{#{field}}}}}"
-            f'<div class="{css_class}" data-s2a-col="{escape(name)}"{style_attr}>'
+            f'<div class="{css_class}" data-sc-col="{escape(name)}"{style_attr}>'
             f"{label}{reference}</div>"
             f"{{{{/{field}}}}}"
         )
@@ -1056,8 +1056,8 @@ def _one_template(
 
     qfmt = (
         _css(sheet_config)
-        + '<div class="s2a-wrap">\n'
-        + _rows(front_fields, sheet_config, "s2a-front", as_cloze=is_cloze, quiz=True)
+        + '<div class="sc-wrap">\n'
+        + _rows(front_fields, sheet_config, "sc-front", as_cloze=is_cloze, quiz=True)
         + type_box
         + "\n</div>"
         + heard[0]
@@ -1072,8 +1072,8 @@ def _one_template(
         # than pulling it in via {{FrontSide}}.
         back_head = (
             _css(sheet_config)
-            + '<div class="s2a-wrap">\n'
-            + _rows(front_fields, sheet_config, "s2a-front", as_cloze=True)
+            + '<div class="sc-wrap">\n'
+            + _rows(front_fields, sheet_config, "sc-front", as_cloze=True)
             + "\n</div>"
         )
     else:
@@ -1082,8 +1082,8 @@ def _one_template(
     afmt = (
         back_head
         + '\n<hr id="answer">\n'
-        + '<div class="s2a-wrap">\n'
-        + _rows(back_fields, sheet_config, "s2a-back")
+        + '<div class="sc-wrap">\n'
+        + _rows(back_fields, sheet_config, "sc-back")
         + "\n</div>"
         + heard[1]
         # A question that had boxes brings its own copy of this back inside

@@ -1,4 +1,4 @@
-# Sheets2Anki — Developer Guide
+# SheetCards — Developer Guide
 
 Long-form technical guide for contributors. It explains how the add-on is laid out,
 how a sync flows end to end, and how to set up, test, build, and debug it.
@@ -28,9 +28,9 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 
 ## What this is
 
-Sheets2Anki is an **Anki add-on**, not a standalone application. The repository root
+SheetCards is an **Anki add-on**, not a standalone application. The repository root
 *is* the add-on directory: Anki loads `__init__.py` from the root, which registers a
-`Tools → Sheets2Anki` menu and binds keyboard shortcuts. There is no server and no
+`Tools → SheetCards` menu and binds keyboard shortcuts. There is no server and no
 `main()` — all code runs inside Anki's Python/Qt6 process.
 
 The architecture is **function-oriented**, organized around a handful of cohesive
@@ -45,7 +45,7 @@ Three layers, from the outside in:
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │  Anki integration  (__init__.py)                                       │
-│  • Tools → Sheets2Anki menu     • 9 keyboard shortcuts (Ctrl+Shift+…)  │
+│  • Tools → SheetCards menu     • 9 keyboard shortcuts (Ctrl+Shift+…)  │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
@@ -90,7 +90,7 @@ Preserve this pattern when editing `src/`.
 ## Project structure
 
 ```
-sheets2anki/
+sheetcards/
 ├── __init__.py                 # Anki entry point: menu and shortcuts
 ├── config.json                 # Default settings (committed)
 ├── manifest.json               # Add-on metadata (version lives here + pyproject.toml)
@@ -239,7 +239,7 @@ in `column_model.py`.
   Duplicate non-empty IDs are detected during the build and reported
   (`RemoteDeck.duplicate_ids`), because they would silently collapse into one note.
 - **Note types (models)** are created dynamically, one set per
-  `Sheets2Anki - {deck} - Basic` / `- Cloze` (`utils.get_note_type_name()`,
+  `SheetCards - {deck} - Basic` / `- Cloze` (`utils.get_note_type_name()`,
   `templates_and_definitions.ensure_custom_models()` / `create_model()`). Their fields are
   `plan.note_type_fields()` — `["ID"] + content_headers`, with `ID` first because Anki
   uses the first field for duplicate detection. There is **no `- Reverse` note type**: the
@@ -253,13 +253,13 @@ in `column_model.py`.
 - **Cloze** is decided per row by scanning **every content column** for `{{c1::…}}`
   (`data_processor.row_has_cloze()` → `has_cloze_deletion()`), which routes the row to the
   Cloze note type.
-- **Deck hierarchy:** `Sheets2Anki::{deck}` followed by the row's `SUBDECK` levels
+- **Deck hierarchy:** `SheetCards::{deck}` followed by the row's `SUBDECK` levels
   (`utils.get_subdeck_name()`, `data_processor.determine_target_deck()`). A sheet with no
   `SUBDECK` columns keeps every note in the deck root. A row that fills in **no** level,
   on a sheet that does sort its rows, lands in `column_model.UNSORTED_DECK` (`Unsorted`) —
   see below.
-- **Tags** (`data_processor.build_tags()`): `sheets2anki` on every note the add-on owns,
-  `sheets2anki::<subdeck path>` mirroring the deck path, plus whatever the `TAGS` column
+- **Tags** (`data_processor.build_tags()`): `sheetcards` on every note the add-on owns,
+  `sheetcards::<subdeck path>` mirroring the deck path, plus whatever the `TAGS` column
   lists. Each component is folded to a safe lower-case tag by `clean_tag_text()`.
 
 ### The settings row (`src/sheet_config.py`)
@@ -295,14 +295,14 @@ Each cell is `key=value` pairs split on `;`; a bare key is a flag. Only
 | `side` | `front`, `back`, `hide` | `SIDES`; `hide` sets the `hidden` property |
 | `label` | any text | none — used as the caption above the value |
 | `size` | integer px (a `px` suffix is stripped, floats truncated) | **6–200**, else a warning and no value |
-| `color` | `muted`/`accent` (→ `var(--s2a-muted)` / `var(--s2a-accent)`), a **real** CSS colour name, or `#rgb`/`#rrggbb` | validated against `_CSS_COLOR_NAMES`, not a loose `[a-z]+` rule, so `grey1` is caught |
+| `color` | `muted`/`accent` (→ `var(--sc-muted)` / `var(--sc-accent)`), a **real** CSS colour name, or `#rgb`/`#rrggbb` | validated against `_CSS_COLOR_NAMES`, not a loose `[a-z]+` rule, so `grey1` is caught |
 | `align` | `left`, `center`, `right` | `ALIGNMENTS` |
 | `tts` | a full language code | `_LANG_RE` = `^[a-zA-Z]{2,3}[-_][a-zA-Z0-9]{2,4}$`, normalised to `zh_CN` shape |
 | `voices` | comma-separated names | at least one non-empty name |
 | `speed` | float | **0.5–2.0** |
 | `font` | a key of `FONTS` (`sc`/`tc`/`jp`/`kr`/`serif`/`sans`/`mono`) or any family name | a known key becomes its stack and its webfont is imported; anything else is passed to CSS as written |
 | `math` | bare, or `math=block` | `\(…\)` inline, `\[…\]` display — drawn by the MathJax Anki ships, so no library is loaded |
-| `code` | bare, or `code=python` | `<pre class="s2a-code"><code class="language-…">{{text:F}}</code></pre>`, coloured by `HIGHLIGHT_JS` |
+| `code` | bare, or `code=python` | `<pre class="sc-code"><code class="language-…">{{text:F}}</code></pre>`, coloured by `HIGHLIGHT_JS` |
 | `bold`, `italic`, `hint`, `furigana`, `rtl`, `vertical`, `sort` | flags | set to True by their mere presence |
 | `image`, `audio`, `video` (`MEDIA_KINDS`) | flags | all three land on the single `media` attribute (`"image"`/`"audio"`/`"video"`), not on three independent switches — one column holds one kind. A second, different kind is ignored with a warning |
 
@@ -435,8 +435,8 @@ layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` rende
   `test_hint_still_hides_media_behind_a_link` passes on an assertion the outer guard
   already satisfies. Real click-to-reveal would need markup of its own; `{{hint:Field}}`
   would only reveal the URL as text.
-- **The theme colours are CSS custom properties.** `_css()` declares `--s2a-muted` and
-  `--s2a-accent` twice — once as the light default and once under `.night_mode`, the class
+- **The theme colours are CSS custom properties.** `_css()` declares `--sc-muted` and
+  `--sc-accent` twice — once as the light default and once under `.night_mode`, the class
   Anki puts on the card body in dark mode. A single fixed value would make one of the two
   themes unreadable, which is the entire reason the named colours exist.
 - **Cloze.** `cloze:` outranks `hint`/`furigana` in `_reference()`, and the cloze back
@@ -457,13 +457,13 @@ layout record: `card_layout.build_templates(plan, sheet_config, is_cloze)` rende
   content (`apply_templates()` prunes templates the settings no longer produce).
 
 `sync_config.py` **caches** the `(plan, sheet_config)` pair each sync parsed, under
-`sheets2anki::sheet_settings`. That is what lets
+`sheetcards::sheet_settings`. That is what lets
 `templates_and_definitions.update_existing_note_type_templates()` rebuild a deck's
 templates outside a sync, and what the dialog reads. A cached entry with no
 `content_headers` deliberately yields `(None, None)`: rendering from it would produce a
 card with no fields on it.
 
-`src/ui/card_layout_dialog.py` (`Tools → Sheets2Anki → Configure Card Layout`,
+`src/ui/card_layout_dialog.py` (`Tools → SheetCards → Configure Card Layout`,
 `Ctrl+Shift+C`) is a **read-only** view of that cache. Do not add editing controls to it:
 with two places able to change one setting, the loser is silently overwritten on the next
 sync, and a control that "does nothing" is close to undiagnosable. Settings are changed by
@@ -477,7 +477,7 @@ Settings are split by whether they should follow the user to their other machine
 - **`meta.json`** (gitignored, auto-created by Anki in the add-on dir) — **the source of
   truth** for machine-local user settings and all connected remote decks.
 - **Anki's collection config** (`col.get_config()` / `col.set_config()`) — the **cache of
-  each sheet's parsed settings row**, under the single key `sheets2anki::sheet_settings`
+  each sheet's parsed settings row**, under the single key `sheetcards::sheet_settings`
   holding `{sheet_id: entry}`. Anki's `config` table carries a `usn`, so entries there
   sync through AnkiWeb along with the notes and note types; a second machine renders
   identical cards before it has ever downloaded the sheet, with no Google API and no extra
@@ -501,7 +501,7 @@ To run inside Anki during development, symlink (or copy) the repository into Ank
 add-ons folder, e.g.:
 
 ```bash
-ln -s "$(pwd)" ~/.local/share/Anki2/addons21/sheets2anki_dev   # Linux
+ln -s "$(pwd)" ~/.local/share/Anki2/addons21/sheetcards_dev   # Linux
 # macOS: ~/Library/Application Support/Anki2/addons21/
 ```
 
@@ -558,7 +558,7 @@ python scripts/build_packages.py        # interactive menu (recommended)
 # or run a specific builder:
 python scripts/create_ankiweb_package.py
 python scripts/create_standalone_package.py
-python scripts/validate_packages.py build/sheets2anki.ankiaddon
+python scripts/validate_packages.py build/sheetcards.ankiaddon
 ```
 
 The builders produce `build/*.ankiaddon` ZIPs. AnkiWeb requires: files at the **ZIP
@@ -573,7 +573,7 @@ mandatory fields; the standalone keeps the full manifest. See
 
 ## Debugging
 
-The add-on writes a debug log to **`debug_sheets2anki.log`** in the add-on directory.
+The add-on writes a debug log to **`debug_sheetcards.log`** in the add-on directory.
 Emit messages through `src/debug.py`:
 
 ```python

@@ -1,5 +1,5 @@
 /**
- * Sheets2Anki — pinyin in a cell.
+ * SheetCards — pinyin in a cell.
  *
  *   =PINYIN(A2)        行动             -> xíngdòng
  *   =PINYIN(E2)        我们需要立即行动   -> wǒmen xūyào lìjí xíngdòng

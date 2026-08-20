@@ -1,6 +1,6 @@
 """The example workbook has to keep working, and keep matching its sources.
 
-``examples/sheets2anki-examples.xlsx`` is not sample data sitting in a corner: it
+``examples/sheetcards-examples.xlsx`` is not sample data sitting in a corner: it
 is what the README, the add-on's *Import Test Deck* menu item and the preview
 site's landing page all point at. Two things can rot without anyone noticing —
 the committed workbook drifting away from the ``SHEETS`` it is generated from in
@@ -24,14 +24,14 @@ from src.workbook import sheet_tsv
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLES = REPO / "examples"
-WORKBOOK = EXAMPLES / "sheets2anki-examples.xlsx"
+WORKBOOK = EXAMPLES / "sheetcards-examples.xlsx"
 
 # The address the docs, the add-on and the site all hand people. It is spelled
 # out here rather than imported so that renaming the file cannot quietly rename
 # it in three places and leave every published link pointing at nothing.
 PUBLISHED_URL = (
-    "https://github.com/tannc28/sheets2anki/blob/main/examples/"
-    "sheets2anki-examples.xlsx"
+    "https://github.com/tannc28/sheetcards/blob/main/examples/"
+    "sheetcards-examples.xlsx"
 )
 
 
@@ -76,7 +76,7 @@ def test_workbook_matches_its_source():
     data, _ = builder().build_bytes()
     assert WORKBOOK.exists(), "run python scripts/build_examples.py"
     assert data == WORKBOOK.read_bytes(), (
-        "examples/sheets2anki-examples.xlsx is out of date — "
+        "examples/sheetcards-examples.xlsx is out of date — "
         "run python scripts/build_examples.py"
     )
 
@@ -86,7 +86,7 @@ def test_the_workbook_is_the_only_file_people_need(workbook_bytes):
     """One file, many sheets — not a folder of them."""
     assert sorted(p.name for p in EXAMPLES.iterdir()) == [
         "README.md",
-        "sheets2anki-examples.xlsx",
+        "sheetcards-examples.xlsx",
     ]
     assert sheet_names(workbook_bytes) == list(builder().SHEETS)
     assert len(sheet_names(workbook_bytes)) >= 15

@@ -958,7 +958,7 @@ wheels = [
 ]
 
 [[package]]
-name = "sheets2anki"
+name = "sheetcards"
 version = "6.23.0"
 source = { editable = "." }
 dependencies = [

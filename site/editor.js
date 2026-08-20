@@ -21,10 +21,10 @@ import { deckTree, treeHtml } from "./decktree.js";
 /** Everything the editor needs, computed by the add-on's own code. */
 const EDITOR = String.raw`
 import json
-from s2a.card_layout import build_templates, split_sides
-from s2a.column_model import deck_path, plan_columns
-from s2a.sheet_config import SheetConfig, is_config_row, parse_config_row
-from s2a.tsv_model import build_tags
+from sc.card_layout import build_templates, split_sides
+from sc.column_model import deck_path, plan_columns
+from sc.sheet_config import SheetConfig, is_config_row, parse_config_row
+from sc.tsv_model import build_tags
 
 
 def keys():
@@ -36,7 +36,7 @@ def keys():
     size) are suggestions and live on the page: there is no complete list of
     them to be wrong about.
     """
-    from s2a.sheet_config import (
+    from sc.sheet_config import (
         ALIGNMENTS,
         MEDIA_KINDS,
         SIDES,
@@ -314,7 +314,7 @@ function setTheme(on) {
   if (on) document.documentElement.dataset.theme = "dark";
   else delete document.documentElement.dataset.theme;
   try {
-    localStorage.setItem("s2a-theme", on ? "dark" : "light");
+    localStorage.setItem("sc-theme", on ? "dark" : "light");
   } catch {
     // A browser refusing storage is not a reason to refuse the theme.
   }

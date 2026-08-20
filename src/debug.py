@@ -1,4 +1,4 @@
-"""Debug logging for the Sheets2Anki addon (extracted from utils.py).
+"""Debug logging for the SheetCards addon (extracted from utils.py).
 
 Holds the DebugManager and the module-level add_debug_message / log helpers."""
 
@@ -6,7 +6,7 @@ from datetime import datetime
 
 
 class DebugManager:
-    """Centralized debug manager for Sheets2Anki."""
+    """Centralized debug manager for SheetCards."""
 
     def __init__(self):
         self.messages: list[str] = []
@@ -60,7 +60,7 @@ class DebugManager:
 
             # Determine log file path
             addon_path = os.path.dirname(os.path.dirname(__file__))
-            log_path = os.path.join(addon_path, "debug_sheets2anki.log")
+            log_path = os.path.join(addon_path, "debug_sheetcards.log")
 
             # Save to file
             with open(log_path, "a", encoding="utf-8") as f:
@@ -91,7 +91,7 @@ class DebugManager:
             import os
 
             addon_path = os.path.dirname(os.path.dirname(__file__))
-            log_path = os.path.join(addon_path, "debug_sheets2anki.log")
+            log_path = os.path.join(addon_path, "debug_sheetcards.log")
 
             # Create file if it doesn't exist or add session separator
             separator = f"\n{'='*60}\n=== NEW DEBUG SESSION - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n{'='*60}\n"
@@ -108,7 +108,7 @@ class DebugManager:
             with open(log_path, mode, encoding="utf-8") as f:
                 if mode == "w":
                     f.write(
-                        f"=== SHEETS2ANKI DEBUG LOG - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n"
+                        f"=== SHEETCARDS DEBUG LOG - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n"
                     )
                     if not accumulate and os.path.exists(log_path):
                         add_debug_message(
@@ -136,7 +136,7 @@ class DebugManager:
         import os
 
         addon_path = os.path.dirname(os.path.dirname(__file__))
-        return os.path.join(addon_path, "debug_sheets2anki.log")
+        return os.path.join(addon_path, "debug_sheetcards.log")
 
 
 # Global instance of the debug manager
@@ -191,7 +191,7 @@ def clear_debug_log():
 
         with open(log_path, "w", encoding="utf-8") as f:
             f.write(
-                f"=== SHEETS2ANKI DEBUG LOG - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n"
+                f"=== SHEETCARDS DEBUG LOG - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n"
             )
 
         # add_debug_message(f"Log cleared: {log_path}", "DEBUG")

@@ -1,4 +1,4 @@
-"""Sheets2Anki per-deck options-group management (extracted from utils.py)."""
+"""SheetCards per-deck options-group management (extracted from utils.py)."""
 
 try:
     from .compat import mw
@@ -12,7 +12,7 @@ from .debug import add_debug_message
 
 def _is_default_config(config, config_type="default"):
     """
-    Checks if the configuration still has Sheets2Anki default values.
+    Checks if the configuration still has SheetCards default values.
 
     Args:
         config (dict): Deck configuration
@@ -59,10 +59,10 @@ def _is_default_config(config, config_type="default"):
         return False
 
 
-def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
+def get_or_create_sheetcards_options_group(deck_name=None, deck_url=None):
     """The options group every connected deck studies under.
 
-    One group for all of them, ``Sheets2Anki - Default Options``, unless a group
+    One group for all of them, ``SheetCards - Default Options``, unless a group
     has been stored against a particular deck.
 
     There used to be three modes — shared, individual, manual — chosen in a window
@@ -84,7 +84,7 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
         add_debug_message("❌ Anki not available", "DECK_OPTIONS")
         return None
 
-    options_group_name = "Sheets2Anki - Default Options"
+    options_group_name = "SheetCards - Default Options"
     if deck_url:
         stored_package_name = get_deck_configurations_package_name(deck_url)
         if stored_package_name:
@@ -201,7 +201,7 @@ def get_or_create_sheets2anki_options_group(deck_name=None, deck_url=None):
         return None
 
 
-def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
+def apply_sheetcards_options_to_deck(deck_id, deck_name=None):
     """
     Applies the shared options group to a specific deck.
 
@@ -223,7 +223,7 @@ def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
         )
 
         # Get or create the options group
-        options_group_id = get_or_create_sheets2anki_options_group(deck_name)
+        options_group_id = get_or_create_sheetcards_options_group(deck_name)
 
         if not options_group_id:
             add_debug_message("❌ Failed to get options group", "DECK_OPTIONS")
@@ -262,7 +262,7 @@ def apply_sheets2anki_options_to_deck(deck_id, deck_name=None):
         return False
 
 
-def apply_sheets2anki_options_to_all_remote_decks():
+def apply_sheetcards_options_to_all_remote_decks():
     """
     Applies the shared options group to every connected deck.
 
@@ -324,7 +324,7 @@ def apply_sheets2anki_options_to_all_remote_decks():
                     add_debug_message(f"❌ {error_msg}", "DECK_OPTIONS")
                     continue
 
-                if apply_sheets2anki_options_to_deck(local_deck_id, None):
+                if apply_sheetcards_options_to_deck(local_deck_id, None):
                     stats["updated_decks"] += 1
                     add_debug_message(
                         f"✅ Deck {local_deck_name} successfully configured",
@@ -397,7 +397,7 @@ def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
                 add_debug_message(f"Subdeck found: {deck_name}", "DECK_OPTIONS")
                 deck_name_for_options = None
 
-                if apply_sheets2anki_options_to_deck(deck["id"], deck_name_for_options):
+                if apply_sheetcards_options_to_deck(deck["id"], deck_name_for_options):
                     add_debug_message(
                         f"✅ Options applied to subdeck: {deck_name}", "DECK_OPTIONS"
                     )
@@ -422,7 +422,7 @@ def apply_options_to_subdecks(parent_deck_name, remote_deck_name=None):
 
 def cleanup_orphaned_deck_option_groups():
     """
-    Removes orphaned deck options groups that start with "Sheets2Anki" and are not
+    Removes orphaned deck options groups that start with "SheetCards" and are not
     attached to any deck (total of zero attached decks).
 
     Returns:
@@ -439,15 +439,15 @@ def cleanup_orphaned_deck_option_groups():
 
         # Get all options groups
         all_option_groups = mw.col.decks.all_config()
-        sheets2anki_groups = []
+        sheetcards_groups = []
 
-        # Filter only groups that start with "Sheets2Anki"
+        # Filter only groups that start with "SheetCards"
         for group in all_option_groups:
-            if group["name"].startswith("Sheets2Anki"):
-                sheets2anki_groups.append(group)
+            if group["name"].startswith("SheetCards"):
+                sheetcards_groups.append(group)
 
-        if not sheets2anki_groups:
-            add_debug_message("No Sheets2Anki groups found", "DECK_OPTIONS_CLEANUP")
+        if not sheetcards_groups:
+            add_debug_message("No SheetCards groups found", "DECK_OPTIONS_CLEANUP")
             return 0
 
         # Get all decks to check which groups are in use
@@ -461,7 +461,7 @@ def cleanup_orphaned_deck_option_groups():
 
         # Identify orphaned groups (not used by any deck)
         orphaned_groups = []
-        for group in sheets2anki_groups:
+        for group in sheetcards_groups:
             group_id = group["id"]
             if group_id not in groups_in_use:
                 orphaned_groups.append(group)
@@ -510,7 +510,7 @@ def apply_automatic_deck_options_system():
     clicks the "Apply" button in the deck settings.
 
     Performs the following actions:
-    1. Applies options to root deck "Sheets2Anki"
+    1. Applies options to root deck "SheetCards"
     2. Applies options to all remote decks and subdecks
     3. Removes orphaned options groups (cleanup)
 
@@ -560,7 +560,7 @@ def apply_automatic_deck_options_system():
         )
         # 2. Apply options to all remote decks
         try:
-            remote_result = apply_sheets2anki_options_to_all_remote_decks()
+            remote_result = apply_sheetcards_options_to_all_remote_decks()
             if remote_result and remote_result.get("success", False):
                 stats["remote_decks_updated"] = remote_result.get("updated_decks", 0)
                 add_debug_message(
@@ -650,10 +650,10 @@ def apply_automatic_deck_options_system():
 def ensure_root_deck_has_root_options():
     """Nothing to do: the add-on no longer puts its decks under a parent.
 
-    Decks are named ``s2a_{sheet}`` and sit at the top level, so there is no
+    Decks are named ``sc_{sheet}`` and sit at the top level, so there is no
     single deck for a root options preset to hang on and no inheritance for it to
     drive. Every deck gets its options applied directly instead — see
-    ``apply_sheets2anki_options_to_deck``, which the add and sync paths call per
+    ``apply_sheetcards_options_to_deck``, which the add and sync paths call per
     deck.
 
     Kept as a no-op rather than deleted because the options system reports on it
@@ -673,7 +673,7 @@ def ensure_root_deck_has_root_options():
 
 def get_or_create_root_options_group():
     """
-    Gets or creates the specific options group for the root deck "Sheets2Anki - Root Options".
+    Gets or creates the specific options group for the root deck "SheetCards - Root Options".
 
     Returns:
         int: Options group ID or None if error
@@ -684,7 +684,7 @@ def get_or_create_root_options_group():
         )
         return None
 
-    options_group_name = "Sheets2Anki - Root Options"
+    options_group_name = "SheetCards - Root Options"
     add_debug_message(
         f"Searching/creating options group: '{options_group_name}'", "DECK_OPTIONS"
     )

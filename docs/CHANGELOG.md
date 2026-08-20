@@ -1,4 +1,4 @@
-# 📋 CHANGELOG - Sheets2Anki
+# 📋 CHANGELOG - SheetCards
 
 ## Complete History of Updates and Modifications
 
@@ -105,7 +105,7 @@ Two things it deliberately does not do:
   deeper one filled in still names a deck of its own.
 
 The tag mirrors the deck as always, so the pile is searchable as
-`sheets2anki::unsorted`. Nothing is drawn on the card: where a note is filed and how
+`sheetcards::unsorted`. Nothing is drawn on the card: where a note is filed and how
 a card looks stay separate jobs.
 
 If you are upgrading from a sheet that had rows sitting in its own deck beside the
@@ -138,7 +138,7 @@ did before, because a name the add-on chose for you would arrive in English in a
 deck list that is not.
 
 It is a deck-level setting and stays out of the card entirely. The tag mirrors the
-deck as always, so the pile is searchable as `sheets2anki::unsorted` too. A row that
+deck as always, so the pile is searchable as `sheetcards::unsorted` too. A row that
 fills in *some* level is not unsorted — a blank outer level with a deeper one filled
 in still names a deck of its own.
 
@@ -257,13 +257,13 @@ its slow repeat is heard and no longer printed as a duplicate line of text.
 ### Every block on a card now names the column it came from
 
 ```html
-<div class="s2a-back" data-s2a-col="Pinyin">…</div>
+<div class="sc-back" data-sc-col="Pinyin">…</div>
 ```
 
 Anki's own classes say only which *side* a block is on, so nothing in a finished card
 connected a piece of it back to the sheet. Two things follow from fixing that:
 
-- **A note type's CSS can target one column**: `[data-s2a-col="Pinyin"] { … }`, for
+- **A note type's CSS can target one column**: `[data-sc-col="Pinyin"] { … }`, for
   the rare thing the settings row does not cover.
 - **The preview can point at a field**, which is what the rest of this release is.
 
@@ -314,7 +314,7 @@ w01      HSK 1                写        to write
 w02      HSK 2                山        mountain
 ```
 
-→ `s2a_{file}::{sheet}::HSK 1`, and `Level` is still a field: style it, speak it,
+→ `sc_{file}::{sheet}::HSK 1`, and `Level` is still a field: style it, speak it,
 hide it with `side=hide`. Nothing about the old way changed — a sheet with
 `SUBDECK n` columns and no settings row behaves exactly as it did.
 
@@ -454,7 +454,7 @@ it. The examples are now a file here — [`examples/`](../examples/) — and eve
 points at the same one:
 
 ```text
-https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
+https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
 **Fifteen sheets, one deck each, ordered from the smallest sheet that works to every
@@ -535,7 +535,7 @@ reader, the same settings row, the same note types. Only fetching the bytes diff
 - **A file has no spreadsheet id**, so its address is hashed into a stable one
   (`file_…`). The browser address and the raw address of one file give the same id, so
   connecting from either is the same deck rather than two.
-- The deck is named after the file: `s2a_english::vocab`.
+- The deck is named after the file: `sc_english::vocab`.
 
 ### 🔒 The address check changed shape
 
@@ -565,7 +565,7 @@ One spreadsheet is one collapsible branch of the deck list rather than a scatter
 top-level decks:
 
 ```
-s2a_my-vocab-sheet
+sc_my-vocab-sheet
    vocab                 56 notes · Word, IPA, POS, Meaning, Collocation, Example
       2026-08-11
    grammar               11 notes · Original, Corrected, Fixes
@@ -577,7 +577,7 @@ own row in the sync dialog — and **each sheet keeps its own note type**, holdi
 that sheet's columns. Note types are named from the sheet rather than from the deck
 tree, so nesting the decks does not make the sheets share one.
 
-(v6.10.0 shipped these as flat top-level decks, `s2a_vocab`; the release below
+(v6.10.0 shipped these as flat top-level decks, `sc_vocab`; the release below
 describes the rest of what it changed.)
 
 ---
@@ -599,14 +599,14 @@ It was invisible to the previous release's testing because every check went thro
 the download router directly. The sync's own entry point was the one path not
 exercised, and it was the one that dropped the sheet.
 
-### 🗂️ Decks are named `s2a_{file}::{sheet}`
+### 🗂️ Decks are named `sc_{file}::{sheet}`
 
-The `Sheets2Anki::` parent deck is gone — one less level, and the prefix is what keeps
+The `SheetCards::` parent deck is gone — one less level, and the prefix is what keeps
 synced decks apart from the ones you made yourself. A spreadsheet is one collapsible
 branch and each sheet is a deck inside it:
 
 ```
-s2a_my-vocab-sheet
+sc_my-vocab-sheet
    vocab                      56 notes · Word, IPA, POS, Meaning, Collocation, Example
       2026-08-11
    grammar                    11 notes · Original, Corrected, Fixes
@@ -622,13 +622,13 @@ The name is now built in exactly one place (`tsv_model.deck_root_name`). It used
 spelled out as an f-string in four modules, which is how v6.9.2's "vocab+" happened.
 
 **This renames existing decks.** Anki's rename keeps the cards; the empty
-`Sheets2Anki` parent is left behind for you to delete.
+`SheetCards` parent is left behind for you to delete.
 
 ### 🔧 Also
 
 - The root deck options preset has nothing to attach to now and is a no-op; every deck
   still gets its options applied directly, as it already did.
-- The **Tools** menu is still called Sheets2Anki — that is the add-on's name, which
+- The **Tools** menu is still called SheetCards — that is the add-on's name, which
   only ever happened to be spelled the same as the deck prefix.
 
 ---
@@ -642,8 +642,8 @@ A deck for one sheet is named `{file}::{sheet}`. The name sanitiser replaced eve
 Anki puts between a deck and its parent.
 
 So the deck the add-on **registered** was the flat
-`Sheets2Anki::my-vocab-sheet__vocab`, while the notes were **filed** under the nested
-`Sheets2Anki::my-vocab-sheet::vocab::…` — two deck trees for one deck, computed in two
+`SheetCards::my-vocab-sheet__vocab`, while the notes were **filed** under the nested
+`SheetCards::my-vocab-sheet::vocab::…` — two deck trees for one deck, computed in two
 different modules from the same name. Renaming one onto the other left Anki to
 uniquify it, which it does by appending `+`, and the deck list showed a stray empty
 `vocab+` and `grammar+` beside the real decks.
@@ -676,7 +676,7 @@ Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
   **This one predates multi-sheet**: any sheet without a `cloze` directive hit it.
 
 - **An uploaded spreadsheet brought its file extension into Anki**, giving decks like
-  `Sheets2Anki::my-vocab-sheet.xlsx::vocab`. A Google Sheets document has no
+  `SheetCards::my-vocab-sheet.xlsx::vocab`. A Google Sheets document has no
   extension; it is left over from the file it was uploaded from, and Drive keeps the
   name it arrived with.
 
@@ -687,7 +687,7 @@ Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
 ### 📚 One Google Sheets file, one deck per sheet
 
 - Paste a file's link once and **every sheet in it becomes its own deck**, named
-  `Sheets2Anki::{file}::{sheet}`, each with its own columns, settings row and note
+  `SheetCards::{file}::{sheet}`, each with its own columns, settings row and note
   type. One spreadsheet can now hold a whole collection. `Ctrl+Shift+S` lists one row
   per sheet with no change to that dialog — it lists connected decks, and now there
   are more of them.
@@ -724,7 +724,7 @@ Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
 
 ### 📄 The preview reads uploaded files, not only links
 
-- **Upload a file** on <https://tannc28.github.io/sheets2anki/> — or drag one onto the
+- **Upload a file** on <https://tannc28.github.io/sheetcards/> — or drag one onto the
   page — reads `.xlsx`, `.xlsm`, `.csv` and `.tsv`. For a private sheet, a draft that
   is not in Google Sheets yet, or cards kept in Excel, there was previously no way to
   see what the add-on would make of them.
@@ -977,7 +977,7 @@ Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
 ### 🐞 The deck path was missing its root
 
 - The tree showed `HSK4::Bài 1`, but every deck the add-on makes hangs under
-  `Sheets2Anki`, so the real path is `Sheets2Anki::HSK4::Bài 1`. The constant now
+  `SheetCards`, so the real path is `SheetCards::HSK4::Bài 1`. The constant now
   lives in the pure layer next to `TAG_ROOT` and `templates_and_definitions`
   re-exports it, so the preview and `determine_target_deck` cannot disagree again.
 
@@ -1030,7 +1030,7 @@ Reported from an actual run of v6.9.0 that ended `0/2 decks synchronized`.
 
 ## ✨ **v6.2.0** - August 2026 *(Feature)*
 
-### 🔎 Preview a sheet in the browser — <https://tannc28.github.io/sheets2anki/>
+### 🔎 Preview a sheet in the browser — <https://tannc28.github.io/sheetcards/>
 
 - A static page that takes a Google Sheets link and shows what the add-on would make
   of it, before installing anything and without touching a collection: which column
@@ -1231,7 +1231,7 @@ built from a layout the user edits in a dialog instead of one hard-coded in Pyth
 - **No more `- Reverse` note type.** The reverse direction is a second card template on
   the same note type, so both directions are scheduled independently from one row of
   data, and switching it off removes its cards without touching the note.
-- Tags are now `sheets2anki`, `sheets2anki::<subdeck path>` and whatever `TAGS` lists.
+- Tags are now `sheetcards`, `sheetcards::<subdeck path>` and whatever `TAGS` lists.
   The `[missing_*]` placeholder tags are gone.
 
 ### ✨ Card layout
@@ -1263,7 +1263,7 @@ The multi-student feature is gone, and the card is cut back to what a study card
 - **Multi-student removed.** The `STUDENTS` column is no longer read, and the
   `[MISSING_STUDENT]` sentinel no longer exists. Notes are keyed by the plain
   spreadsheet `ID` (and `{id}_REV` for the reverse variant) instead of the composite
-  `{student}_{note_id}`; note types are `Sheets2Anki - {deck} - Basic|Cloze|Reverse`;
+  `{student}_{note_id}`; note types are `SheetCards - {deck} - Basic|Cloze|Reverse`;
   and the deck hierarchy loses its student level. Existing collections re-key and
   re-file their notes on the next sync.
 - **Empty hierarchy levels are skipped** in deck names rather than filled with
@@ -1639,7 +1639,7 @@ Users upgrading from v2.x should:
 
 #### 🏷️ **Complete Hierarchical Tag System**
 - **8 Categories**: Students, Topics, Exam Boards, Years, Careers, Importance, Extra Tags
-- **Hierarchical Structure**: Automatic organization in levels (`Sheets2Anki::Category::Item`)
+- **Hierarchical Structure**: Automatic organization in levels (`SheetCards::Category::Item`)
 - **Custom Tags**: Support for additional custom tags
 
 ### 🐛 **Bug Fixes**
@@ -1719,8 +1719,8 @@ Users upgrading from v2.x should:
 - **GitHub**: [@tannc28](https://github.com/tannc28)
 
 ### 🐛 **Report Bugs**
-- **Issues**: [GitHub Issues](https://github.com/tannc28/sheets2anki/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tannc28/sheets2anki/discussions)
+- **Issues**: [GitHub Issues](https://github.com/tannc28/sheetcards/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tannc28/sheetcards/discussions)
 
 ### 🌟 **Acknowledgments**
 - Anki community for the robust platform
@@ -1737,8 +1737,8 @@ This project is licensed under the **MIT License** - see the [`LICENSE`](../LICE
 
 ## 🔗 **Useful Links**
 
-- **🏠 Repository**: [github.com/tannc28/sheets2anki](https://github.com/tannc28/sheets2anki)
-- **🐛 Issues**: [GitHub Issues](https://github.com/tannc28/sheets2anki/issues)
+- **🏠 Repository**: [github.com/tannc28/sheetcards](https://github.com/tannc28/sheetcards)
+- **🐛 Issues**: [GitHub Issues](https://github.com/tannc28/sheetcards/issues)
 - **📖 Documentation**: [`README.md`](../README.md) · [`docs/README.md`](README.md) · [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 
 ---

@@ -1,5 +1,5 @@
 """
-Styled message boxes for Sheets2Anki.
+Styled message boxes for SheetCards.
 
 This module provides a consistent, beautiful UI for alerts and messages,
 matching the application's design system.

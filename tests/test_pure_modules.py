@@ -54,9 +54,9 @@ import importlib, importlib.util, json, sys, types
 
 # Build the same package Pyodide builds: the source files under one package name,
 # with nothing else from the repo importable.
-pkg = types.ModuleType("s2a")
+pkg = types.ModuleType("sc")
 pkg.__path__ = [{str(SRC)!r}]
-sys.modules["s2a"] = pkg
+sys.modules["sc"] = pkg
 
 # Anything reaching for Anki must fail loudly rather than find a mock.
 for blocked in ("aqt", "anki", "PyQt6"):
@@ -64,7 +64,7 @@ for blocked in ("aqt", "anki", "PyQt6"):
 
 loaded = []
 for name in {PURE_MODULES!r}:
-    importlib.import_module("s2a." + name)
+    importlib.import_module("sc." + name)
     loaded.append(name)
 print(json.dumps(loaded))
 """
@@ -87,14 +87,14 @@ def test_pure_layer_produces_templates_without_anki():
     """
     code = f"""
 import json, sys, types
-pkg = types.ModuleType("s2a"); pkg.__path__ = [{str(SRC)!r}]
-sys.modules["s2a"] = pkg
+pkg = types.ModuleType("sc"); pkg.__path__ = [{str(SRC)!r}]
+sys.modules["sc"] = pkg
 for blocked in ("aqt", "anki", "PyQt6"):
     sys.modules[blocked] = None
 
-from s2a.tsv_model import parse_tsv_data, row_to_dict, build_tags, row_has_cloze
-from s2a.sheet_config import is_config_row, parse_config_row
-from s2a.card_layout import build_templates
+from sc.tsv_model import parse_tsv_data, row_to_dict, build_tags, row_has_cloze
+from sc.sheet_config import is_config_row, parse_config_row
+from sc.card_layout import build_templates
 
 tsv = (
     "ID\\tSYNC\\tSUBDECK 1\\tHanzi\\tPinyin\\n"
@@ -124,7 +124,7 @@ print(json.dumps({{
     assert out["content"] == ["Hanzi", "Pinyin"]
     assert out["names"] == ["Card 1", "Card 2 (reverse)"]
     assert out["tts"] is True
-    assert out["tags"] == ["sheets2anki", "sheets2anki::unit_1"]
+    assert out["tags"] == ["sheetcards", "sheetcards::unit_1"]
     assert out["cloze"] is False
 
 

@@ -14,7 +14,7 @@ def main():
     script_dir = Path(__file__).parent
     build_dir = script_dir.parent / "build"
 
-    print("🚀 SHEETS2ANKI - PACKAGE CREATOR")
+    print("🚀 SHEETCARDS - PACKAGE CREATOR")
     print("=" * 40)
     print("Choose the package type:")
     print("1. AnkiWeb (for AnkiWeb upload)")
@@ -66,9 +66,9 @@ def main():
         print("\n📁 Check the 'build/' folder for the files:")
 
         if choice in ["1", "3"]:
-            print("   - sheets2anki.ankiaddon (for AnkiWeb)")
+            print("   - sheetcards.ankiaddon (for AnkiWeb)")
         if choice in ["2", "3"]:
-            print("   - sheets2anki-standalone.ankiaddon (for distribution)")
+            print("   - sheetcards-standalone.ankiaddon (for distribution)")
 
         # Run validation of created packages
         print("\n🔍 VALIDATING CREATED PACKAGES...")
@@ -79,9 +79,9 @@ def main():
 
         # Add files based on chosen options
         if choice in ["1", "3"]:  # AnkiWeb
-            files_to_validate.append(build_dir / "sheets2anki.ankiaddon")
+            files_to_validate.append(build_dir / "sheetcards.ankiaddon")
         if choice in ["2", "3"]:  # Standalone
-            files_to_validate.append(build_dir / "sheets2anki-standalone.ankiaddon")
+            files_to_validate.append(build_dir / "sheetcards-standalone.ankiaddon")
 
         # Validate each file
         validation_success = True

@@ -1,4 +1,4 @@
-/* Sheets2Anki preview.
+/* SheetCards preview.
 
    Three panels, one job each — where the sheet comes from, what deck it makes,
    what one card looks like — and every one of them collapses to its own header.
@@ -505,23 +505,23 @@ h3.spaced { margin-top: 18px; }
    panels away, a thing that merely changes colour is a thing you still have to
    go looking for. It runs once, on the click that chose the column — see `pop`
    in app.js, which is set from the same flag as the detail's flash. */
-@keyframes s2a-pop {
+@keyframes sc-pop {
   0%   { transform: translateY(0)     scale(1); }
   35%  { transform: translateY(-8px)  scale(1.06); }
   70%  { transform: translateY(2px)   scale(.99); }
   100% { transform: translateY(0)     scale(1); }
 }
-.pop { animation: s2a-pop .5s cubic-bezier(.2, .8, .2, 1); }
+.pop { animation: sc-pop .5s cubic-bezier(.2, .8, .2, 1); }
 /* transform does nothing to an inline box, and this one is a span. */
 .summary span.pop { display: inline-block; }
 
 /* The blink is the answer arriving, so it runs when a column is *chosen* and not
    on the repaints that follow — picking a row must not blink a panel nobody is
    looking at. app.js only sets this class on the click that opened it. */
-@keyframes s2a-colflash {
+@keyframes sc-colflash {
   from { background: var(--accent-soft); border-color: var(--accent); }
 }
-.coldetail.flash { animation: s2a-colflash .6s ease-out; }
+.coldetail.flash { animation: sc-colflash .6s ease-out; }
 
 /* ---- the editor page ----------------------------------------------------- */
 

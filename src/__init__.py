@@ -1,5 +1,5 @@
 """
-Sheets2Anki - Add-on for synchronizing Anki decks with Google Sheets spreadsheets
+SheetCards - Add-on for synchronizing Anki decks with Google Sheets spreadsheets
 
 This module implements the main functionality for synchronizing Anki decks
 with Google Sheets spreadsheets in TSV format.
@@ -14,9 +14,9 @@ try:
     from .utils import initialize_debug_log
 
     initialize_debug_log()
-    add_debug_message("🚀 Sheets2Anki addon loaded", "SYSTEM")
+    add_debug_message("🚀 SheetCards addon loaded", "SYSTEM")
 except Exception as e:
-    print(f"[SHEETS2ANKI] Error initializing debug: {e}")
+    print(f"[SHEETCARDS] Error initializing debug: {e}")
 
 # =============================================================================
 # MAIN EXPOSED FUNCTIONS (consolidated from main.py)

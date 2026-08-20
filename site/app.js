@@ -1,5 +1,5 @@
 /**
- * Sheets2Anki preview — runs the add-on's own Python in the browser.
+ * SheetCards preview — runs the add-on's own Python in the browser.
  *
  * The point of this page is that it does not reimplement anything. Pyodide loads
  * the very files under src/ that the add-on runs inside Anki, so the column
@@ -25,7 +25,7 @@ import { deckTree, treeHtml } from "./decktree.js";
 // added to the add-on gets an example in the same commit.
 // Overridden by ?url=, and by anything typed into the field.
 const DEMO_SHEET =
-  "https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx";
+  "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx";
 
 // Which of its sheets to open on. The workbook is a tour that starts at the
 // smallest sheet that works, and a landing page showing two columns and no
@@ -37,11 +37,11 @@ const DEMO_TAB = "15 Theme + subdeck (màu, tầng)";
 /** Everything the page needs, computed by the add-on's own code. */
 const ANALYZER = String.raw`
 import json
-from s2a import tsv_model as tm
-from s2a.card_layout import build_templates, split_sides
-from s2a.column_model import clean, deck_path
-from s2a.sheet_config import is_config_row
-from s2a.apkg import build_package
+from sc import tsv_model as tm
+from sc.card_layout import build_templates, split_sides
+from sc.column_model import clean, deck_path
+from sc.sheet_config import is_config_row
+from sc.apkg import build_package
 
 # The last analysis, so the package can be built from exactly the rows the page
 # drew rather than by parsing the sheet a second time.
@@ -290,7 +290,7 @@ async function boot() {
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
   const pack = py.globals.get("package_bytes");
   buildPackage = (sheetId) => pack(sheetId).toJs();
-  const wb = py.pyimport("s2a.workbook");
+  const wb = py.pyimport("sc.workbook");
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
   sheetNames = (bytes) => wb.sheet_names(bytes).toJs();
@@ -958,7 +958,7 @@ function setTheme(on) {
   if (on) document.documentElement.dataset.theme = "dark";
   else delete document.documentElement.dataset.theme;
   try {
-    localStorage.setItem("s2a-theme", on ? "dark" : "light");
+    localStorage.setItem("sc-theme", on ? "dark" : "light");
   } catch {
     // A browser refusing storage is not a reason to refuse the theme.
   }
@@ -1291,7 +1291,7 @@ function branchFor(name, levels, a) {
   // the cells: a level is cleaned on its way into a deck name — `::` and a few
   // other characters cannot survive there — so the cell and the segment are not
   // always the same text. Only the *count* of levels is taken from the cells.
-  const root = `s2a_${state.deckName}`.split("::").length;
+  const root = `sc_${state.deckName}`.split("::").length;
   let depth = 0;
   for (const level of levels) {
     const filled = String(row.values[level] ?? "").trim() !== "";
@@ -1319,7 +1319,7 @@ function revealField(name) {
   const go = () => {
     try {
       const el = frame.contentDocument?.querySelector(
-        `[data-s2a-col="${name.replace(/["\\]/g, "\\$&")}"]`,
+        `[data-sc-col="${name.replace(/["\\]/g, "\\$&")}"]`,
       );
       // "nearest" so a block already on screen does not move: the hop is the
       // motion, and sliding the card as well would be two things at once.

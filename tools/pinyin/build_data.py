@@ -20,7 +20,7 @@ from cedict import build
 
 HERE = Path(__file__).parent
 BANNER = """/**
- * Sheets2Anki — pinyin dictionary (generated, do not edit by hand).
+ * SheetCards — pinyin dictionary (generated, do not edit by hand).
  *
  * Built from CC-CEDICT (CC BY-SA 4.0, https://www.mdbg.net/chinese/dictionary?page=cedict).
  *

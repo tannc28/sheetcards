@@ -1,1 +1,1 @@
-"""UI dialogs and screens for the Sheets2Anki add-on."""
+"""UI dialogs and screens for the SheetCards add-on."""

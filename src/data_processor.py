@@ -1,5 +1,5 @@
 """
-Data and note processing for the Sheets2Anki addon.
+Data and note processing for the SheetCards addon.
 
 This module contains functionalities for:
 - Downloading and analyzing remote decks from Google Sheets
@@ -194,7 +194,7 @@ def _download(download_url, timeout):
     """
     _refuse_unsafe_url(download_url)
 
-    headers = {"User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"}
+    headers = {"User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"}
     request = urllib.request.Request(download_url, headers=headers)
 
     try:
@@ -1194,7 +1194,7 @@ def determine_target_deck(
     """
     Determines the target subdeck for a note.
 
-    The path is "s2a_{remote deck name}" followed by the row's deck levels — the
+    The path is "sc_{remote deck name}" followed by the row's deck levels — the
     reserved SUBDECK columns, or the content columns the settings row marked with
     ``subdeck=n`` — so a sheet that names neither keeps every note in the deck root.
 
@@ -1227,7 +1227,7 @@ def determine_target_deck(
 
         remote_deck_name = get_deck_remote_name(deck_url)
 
-        # Create base deck following pattern: s2a_{remote_deck_name}
+        # Create base deck following pattern: sc_{remote_deck_name}
         deck_with_remote_name = deck_root_name(remote_deck_name)
         subdeck_name = get_subdeck_name(
             deck_with_remote_name, deck_path(note_data, plan, sheet_config)

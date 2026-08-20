@@ -1,7 +1,7 @@
 """
-Sheets2Anki Add-on - Main Anki Integration Module
+SheetCards Add-on - Main Anki Integration Module
 
-This module serves as the entry point for the Sheets2Anki Anki add-on,
+This module serves as the entry point for the SheetCards Anki add-on,
 integrating remote deck synchronization features with Google Sheets.
 
 Main features:
@@ -50,7 +50,7 @@ try:
     from .src.templates_and_definitions import ADDON_MENU_NAME
 
 except Exception as e:
-    showInfo(f"Error importing Sheets2Anki plugin modules:\n{e}")
+    showInfo(f"Error importing SheetCards plugin modules:\n{e}")
     raise
 
 # =============================================================================
@@ -63,7 +63,7 @@ Hello! It seems an error occurred during execution.
 
 The error was: {}.
 
-If you'd like me to fix it, please report here: https://github.com/tannc28/sheets2anki
+If you'd like me to fix it, please report here: https://github.com/tannc28/sheetcards
 
 Please provide as much information as possible, especially the file that caused the error.
 """
@@ -177,7 +177,7 @@ def configure_card_layout():
 
 # Check if Anki is available before configuring the interface
 if mw is not None:
-    # Create main submenu for Sheets2Anki features
+    # Create main submenu for SheetCards features
     remoteDecksSubMenu = QMenu(ADDON_MENU_NAME, mw)
     mw.form.menuTools.addMenu(remoteDecksSubMenu)
 

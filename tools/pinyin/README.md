@@ -29,7 +29,7 @@ startup — present even for a function that returns a constant — is what make
 column of five hundred formulas feel slow, every time the file opens. The lookup
 underneath takes microseconds. An edit trigger pays that startup once, for the
 row you just touched, in the background while you keep typing; and a column of
-text opens instantly for ever after, which is also exactly what Sheets2Anki wants
+text opens instantly for ever after, which is also exactly what SheetCards wants
 to export.
 
 ## Setup, once per spreadsheet

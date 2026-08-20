@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Real unit tests for Sheets2Anki's pure logic.
+Real unit tests for SheetCards's pure logic.
 
 These import and exercise the ACTUAL ``src`` modules (see conftest for the Anki
 import-mocking). They also lock in the behaviour of several recent correctness/security
@@ -129,8 +129,8 @@ class TestTags:
             },
             plan,
         )
-        assert "sheets2anki" in tags
-        assert "sheets2anki::geography::europe" in tags
+        assert "sheetcards" in tags
+        assert "sheetcards::geography::europe" in tags
         assert "enem" in tags
         assert all(t == t.lower() for t in tags)
 
@@ -142,7 +142,7 @@ class TestTags:
             {"ID": "Q1", "SUBDECK 1": "Unit 3: opening", "Front": "q"}, plan
         )
         assert not any(" " in t for t in tags)
-        assert "sheets2anki::unit_3_opening" in tags
+        assert "sheetcards::unit_3_opening" in tags
 
     def test_spaces_and_colons_are_neutralised_in_non_ascii_deck_names(self):
         # Unicode coverage: multi-byte deck names are exactly where tag cleaning
@@ -154,7 +154,7 @@ class TestTags:
             {"ID": "Q1", "SUBDECK 1": "Bài 3: mở đầu", "Front": "q"}, plan
         )
         assert not any(" " in t for t in tags)
-        assert "sheets2anki::bài_3_mở_đầu" in tags
+        assert "sheetcards::bài_3_mở_đầu" in tags
 
 
 # =============================================================================

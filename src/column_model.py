@@ -1,4 +1,4 @@
-"""Column model for Sheets2Anki spreadsheets.
+"""Column model for SheetCards spreadsheets.
 
 The spreadsheet drives the schema: only a handful of column names carry special
 meaning, and every other column becomes an Anki note field named exactly like the

@@ -1,16 +1,16 @@
 # Scripts Directory
 
-Build and packaging tooling for the Sheets2Anki `.ankiaddon` packages.
+Build and packaging tooling for the SheetCards `.ankiaddon` packages.
 
 > **📸 Image processing is an in-Anki feature, not a script here.** It runs as a Google
-> Apps Script Web App that you configure from **Sheets2Anki → Configure Image
+> Apps Script Web App that you configure from **SheetCards → Configure Image
 > Processor** inside Anki (the add-on copies the script to your clipboard). The full
 > setup guide is [`IMAGE_PROCESSOR_README.md`](IMAGE_PROCESSOR_README.md). There is no
 > standalone command-line image tool.
 
 ## 🔧 Build and Packaging Scripts
 
-Python scripts to build and validate Sheets2Anki add-on packages.
+Python scripts to build and validate SheetCards add-on packages.
 
 ## Available Scripts
 
@@ -32,7 +32,7 @@ Specifically builds the package for AnkiWeb upload.
 
 - Removes optional fields from the manifest (keeps only mandatory ones)
 - Cleans all cache files (`__pycache__`, `.pyc`, `.pyo`)
-- Generates `build/sheets2anki.ankiaddon` ready for upload
+- Generates `build/sheetcards.ankiaddon` ready for upload
 - Validates the package structure
 
 ```bash
@@ -44,7 +44,7 @@ Builds a standalone package for independent distribution.
 
 - Keeps the complete manifest with all fields
 - Cleans cache files
-- Generates `build/sheets2anki-standalone.ankiaddon`
+- Generates `build/sheetcards-standalone.ankiaddon`
 - Validates the package structure
 
 ```bash
@@ -60,7 +60,7 @@ Validates existing `.ankiaddon` packages.
 - Lists all included files
 
 ```bash
-python scripts/validate_packages.py build/sheets2anki.ankiaddon
+python scripts/validate_packages.py build/sheetcards.ankiaddon
 ```
 
 ## Recommended Workflow

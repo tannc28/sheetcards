@@ -96,21 +96,21 @@ class TestPackageShape:
     def test_tags_carry_the_deck_path(self):
         _, notes, _ = _collection(_package(BASIC))
         tags = {t for note in notes for t in note[2].split()}
-        assert "sheets2anki" in tags
-        assert "sheets2anki::unit_1" in tags
+        assert "sheetcards" in tags
+        assert "sheetcards::unit_1" in tags
         assert "hsk4" in tags
 
     def test_every_ancestor_deck_exists(self):
         """Anki nests by name, but a package listing only the leaf imports oddly."""
         (_, _, decks, _), _, _ = _collection(_package(BASIC))
         names = {d["name"] for d in json.loads(decks).values()}
-        assert "s2a_HSK4" in names
-        assert "s2a_HSK4::Unit 1" in names
+        assert "sc_HSK4" in names
+        assert "sc_HSK4::Unit 1" in names
 
     def test_the_note_type_is_the_one_the_sync_would_make(self):
         (_, models, _, _), _, _ = _collection(_package(BASIC))
         model = next(iter(json.loads(models).values()))
-        assert model["name"] == "Sheets2Anki - HSK4 - Basic"
+        assert model["name"] == "SheetCards - HSK4 - Basic"
         assert model["type"] == 0
         assert [f["name"] for f in model["flds"]] == ["ID", "Word", "Meaning"]
 
@@ -181,10 +181,10 @@ import json, os, sys, tempfile, types
 import anki, anki.import_export_pb2 as pb
 from anki.collection import Collection
 
-pkg = types.ModuleType("s2a"); pkg.__path__ = [os.path.abspath("src")]
-sys.modules["s2a"] = pkg
-from s2a.tsv_model import parse_tsv_data, build_remote_deck_from_tsv
-from s2a.apkg import build_package
+pkg = types.ModuleType("sc"); pkg.__path__ = [os.path.abspath("src")]
+sys.modules["sc"] = pkg
+from sc.tsv_model import parse_tsv_data, build_remote_deck_from_tsv
+from sc.apkg import build_package
 
 ALWAYS = pb.ImportAnkiPackageUpdateCondition.IMPORT_ANKI_PACKAGE_UPDATE_CONDITION_ALWAYS
 
@@ -221,9 +221,9 @@ print(json.dumps({
     "notes": col.note_count(),
     "cards": col.card_count(),
     "decks": sorted(d.name for d in col.decks.all_names_and_ids()
-                    if d.name.startswith("s2a_")),
+                    if d.name.startswith("sc_")),
     "models": [m.name for m in col.models.all_names_and_ids()
-               if m.name.startswith("Sheets2Anki")],
+               if m.name.startswith("SheetCards")],
 }))
 col.close()
 """)
@@ -232,8 +232,8 @@ col.close()
     out = json.loads(result.stdout.strip().splitlines()[-1])
     assert out["notes"] == 1  # the SYNC=FALSE row never left the sheet
     assert out["cards"] == 2  # forward and reverse
-    assert out["decks"] == ["s2a_HSK4", "s2a_HSK4::Unit 1"]
-    assert out["models"] == ["Sheets2Anki - HSK4 - Basic"]
+    assert out["decks"] == ["sc_HSK4", "sc_HSK4::Unit 1"]
+    assert out["models"] == ["SheetCards - HSK4 - Basic"]
 
 
 @pytest.mark.slow

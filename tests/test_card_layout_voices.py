@@ -102,10 +102,10 @@ El.prototype.setAttribute = function () {};
 El.prototype.querySelector = function (s) { return this._q[s] || null; };
 El.prototype.querySelectorAll = function (s) { return this._qa[s] || []; };
 
-var raw = new El("s2a-tts-raw");
+var raw = new El("sc-tts-raw");
 raw.textContent = DUMP.split("\\n").join("");
-var list = new El("s2a-tts-list");
-var note = new El("s2a-tts-note");
+var list = new El("sc-tts-list");
+var note = new El("sc-tts-note");
 note.textContent = "Tap the play button to hear a voice.";
 
 var srcs = COLUMNS.map(function (c) {
@@ -115,10 +115,10 @@ var srcs = COLUMNS.map(function (c) {
   return el;
 });
 
-var box = new El("s2a-tts-debug");
-box.dataset = { s2aLangs: WANTED };
-box._q = { ".s2a-tts-raw": raw, ".s2a-tts-list": list, ".s2a-tts-note": note };
-box._qa = { ".s2a-tts-src": srcs };
+var box = new El("sc-tts-debug");
+box.dataset = { scLangs: WANTED };
+box._q = { ".sc-tts-raw": raw, ".sc-tts-list": list, ".sc-tts-note": note };
+box._qa = { ".sc-tts-src": srcs };
 
 global.document = {
   querySelector: function () { return box; },
@@ -130,20 +130,20 @@ SCRIPT
 
 if (REVEAL) {
   list.children
-    .filter(function (c) { return c.className === "s2a-tts-more"; })
+    .filter(function (c) { return c.className === "sc-tts-more"; })
     .forEach(function (b) { b.onclick({ preventDefault: function () {} }); });
 }
 
 var out = { note: note.removed ? null : note.textContent, message: "", rows: [] };
 list.children.forEach(function (c) {
-  if (c.className === "s2a-tts-lang") { out.rows.push({ lang: c.textContent }); return; }
-  if (c.className === "s2a-tts-more") { out.rows.push({ more: c.textContent }); return; }
+  if (c.className === "sc-tts-lang") { out.rows.push({ lang: c.textContent }); return; }
+  if (c.className === "sc-tts-more") { out.rows.push({ more: c.textContent }); return; }
   out.rows.push({
     voice: c.children[0].textContent,
     buttons: c.children.slice(1).map(function (b) { return b.textContent; }),
   });
 });
-if (!list.children.length || list.children[0].className !== "s2a-tts-lang") {
+if (!list.children.length || list.children[0].className !== "sc-tts-lang") {
   out.message = list.textContent;
 }
 console.log(JSON.stringify(out));

@@ -51,7 +51,7 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent or mw)
-        self.setWindowTitle("Sheets2Anki Settings")
+        self.setWindowTitle("SheetCards Settings")
         self.setModal(True)
         self.setMinimumWidth(460)
 

@@ -1,4 +1,4 @@
-# Sheets2Anki: Google Sheets to Anki
+# SheetCards: Google Sheets to Anki
 
 **Create flashcards in Google Sheets and sync them to Anki.**
 
@@ -18,13 +18,13 @@ Stop wasting time creating cards one by one. Use the power of spreadsheets to ma
 
 ## ⚡ Quick Start
 
-1.  **See it working first:** paste this link into `Tools` -> `Sheets2Anki` -> `Add Remote Deck` and sync it. It is the example workbook — fifteen sheets, one deck each, from the smallest sheet that works to every setting at once, including a Chinese character-writing deck.
-    `https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx`
-    (Or open <https://tannc28.github.io/sheets2anki/> and read it in the browser, with no install at all.)
+1.  **See it working first:** paste this link into `Tools` -> `SheetCards` -> `Add Remote Deck` and sync it. It is the example workbook — fifteen sheets, one deck each, from the smallest sheet that works to every setting at once, including a Chinese character-writing deck.
+    `https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx`
+    (Or open <https://tannc28.github.io/sheetcards/> and read it in the browser, with no install at all.)
 2.  **Build your own:** a new Google Sheet with an `ID` column and one column per thing you want on the card. Copy the sheet from the example that is nearest to what you are making.
 3.  **Connect:**
     *   In Sheets: `Share` -> `Anyone with the link can view` -> Copy Link.
-    *   In Anki: `Tools` -> `Sheets2Anki` -> `Add Remote Deck` -> Paste Link.
+    *   In Anki: `Tools` -> `SheetCards` -> `Add Remote Deck` -> Paste Link.
 4.  **Sync:** Press `Ctrl+Shift+S` to bring your cards into Anki.
 
 ## 📋 How it Works
@@ -37,17 +37,17 @@ The spreadsheet decides the schema. Only these headers are reserved:
 
 Every other column you add becomes a note field with the same name — `Question`, `Answer`, `Pinyin`, whatever your subject calls for. By default the first of them is the front of the card and the rest are the back.
 
-To change that, put one optional **settings row** right under the headers: write `#config` in its `ID` cell and, in each column's cell, what that column should do — `side=front; size=48; tts=zh_CN`, `color=muted; hint`, `furigana`, `image; size=320`. Without that `#config` cell there is no settings row and row 2 is just another card, so sheets made before this feature keep working untouched. `Tools` -> `Sheets2Anki` -> `Configure Card Layout` (`Ctrl+Shift+C`) shows you what the add-on read, including any typo it could not understand.
+To change that, put one optional **settings row** right under the headers: write `#config` in its `ID` cell and, in each column's cell, what that column should do — `side=front; size=48; tts=zh_CN`, `color=muted; hint`, `furigana`, `image; size=320`. Without that `#config` cell there is no settings row and row 2 is just another card, so sheets made before this feature keep working untouched. `Tools` -> `SheetCards` -> `Configure Card Layout` (`Ctrl+Shift+C`) shows you what the add-on read, including any typo it could not understand.
 
 The add-on handles the rest, creating beautiful, organized notes in your collection.
 
 ---
-*Support the project on GitHub: [tannc28/sheets2anki](https://github.com/tannc28/sheets2anki)*
+*Support the project on GitHub: [tannc28/sheetcards](https://github.com/tannc28/sheetcards)*
 
 👀 Try it in the browser, with nothing installed
 
-[--> Live preview <--](https://tannc28.github.io/sheets2anki/)
+[--> Live preview <--](https://tannc28.github.io/sheetcards/)
 
 👇 Full documentation and Instruction Manual
 
-[--> GitHub Page <--](https://github.com/tannc28/sheets2anki)
+[--> GitHub Page <--](https://github.com/tannc28/sheetcards)

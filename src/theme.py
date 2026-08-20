@@ -1,4 +1,4 @@
-"""Sheets2Anki's Qt UI draws from Anki's palette, not from one of its own.
+"""SheetCards's Qt UI draws from Anki's palette, not from one of its own.
 
 An add-on window sits among Anki's own windows, and every colour it invents is a
 colour that will disagree with them — on one of the two themes if not both, and on
@@ -408,7 +408,7 @@ def make_radio_choice(
 
     button = QRadioButton(title)
     button.setChecked(checked)
-    button.setProperty("s2a_key", key)
+    button.setProperty("sc_key", key)
     button_group.addButton(button, button_id)
     layout.addWidget(button)
 

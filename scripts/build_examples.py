@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds ``examples/sheets2anki-examples.xlsx`` — the one example the docs link.
+"""Builds ``examples/sheetcards-examples.xlsx`` — the one example the docs link.
 
 Everything that points a person at an example points at that single file: the
 README, the AnkiWeb description, the add-on's dev-only *Import Test Deck*, and the
@@ -33,7 +33,7 @@ from xml.sax.saxutils import quoteattr
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLES = REPO / "examples"
-WORKBOOK = EXAMPLES / "sheets2anki-examples.xlsx"
+WORKBOOK = EXAMPLES / "sheetcards-examples.xlsx"
 
 # Media is linked at its own address rather than copied into the repository:
 # every picture, recording and stroke-order animation below is a Wikimedia
@@ -645,11 +645,11 @@ def verify(data, names):
     import importlib.machinery
     import importlib.util
 
-    spec = importlib.machinery.ModuleSpec("s2a_examples", None, is_package=True)
+    spec = importlib.machinery.ModuleSpec("sc_examples", None, is_package=True)
     package = importlib.util.module_from_spec(spec)
     package.__path__ = [str(REPO / "src")]
-    sys.modules["s2a_examples"] = package
-    workbook = importlib.import_module("s2a_examples.workbook")
+    sys.modules["sc_examples"] = package
+    workbook = importlib.import_module("sc_examples.workbook")
 
     read = workbook.sheet_names(data)
     if read != names:

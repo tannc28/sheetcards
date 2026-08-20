@@ -1,4 +1,4 @@
-"""Custom exception types for the Sheets2Anki addon (extracted from utils.py)."""
+"""Custom exception types for the SheetCards addon (extracted from utils.py)."""
 
 
 class SyncError(Exception):

@@ -188,7 +188,7 @@ const STRINGS = {
       `Đã đọc ${n} cột — chỉ hiện một dòng data, ${extra} dòng còn lại không hiện`,
   },
   edTags: { en: "Tags", vi: "Tags" },
-  // The real root is `s2a_{file}::{sheet}` — the file and the sheet this row came
+  // The real root is `sc_{file}::{sheet}` — the file and the sheet this row came
   // from, which an editor with no sheet behind it does not have. Named for what it
   // is instead of invented, so nothing on screen claims to be a deck name.
   edDeckRoot: { en: "your sheet's deck", vi: "deck của sheet bạn" },
@@ -503,7 +503,7 @@ export const LANGUAGES = [
   { code: "vi", label: "VI" },
 ];
 
-const STORAGE_KEY = "s2a-lang";
+const STORAGE_KEY = "sc-lang";
 
 /** Remembered choice, else the browser's own language, else English. */
 function initial() {

@@ -72,7 +72,7 @@ def test_comment_quality():
 
 
 if __name__ == "__main__":
-    print("🚀 Correction Validation Test - Sheets2Anki")
+    print("🚀 Correction Validation Test - SheetCards")
     print("=" * 60)
 
     test_search_patterns()

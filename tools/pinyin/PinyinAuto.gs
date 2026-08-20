@@ -1,5 +1,5 @@
 /**
- * Sheets2Anki — pinyin that fills itself in.
+ * SheetCards — pinyin that fills itself in.
  *
  * Type a word in the Chinese column and its reading appears in the pinyin column
  * a moment later, as plain text. Nothing to run, no menu, no formula in the cell.
@@ -13,7 +13,7 @@
  *
  * An edit trigger pays it once, for the row you just touched, in the background
  * while you carry on typing. And what lands in the cell is text: the sheet opens
- * instantly ever after, nothing recalculates, and what Sheets2Anki exports is
+ * instantly ever after, nothing recalculates, and what SheetCards exports is
  * exactly what you can see.
  *
  * Set up the pairs below once. Columns are found by their heading rather than by
@@ -101,7 +101,7 @@ function pinyinWriteRows_(sheet, from, into, firstRow, lastRow) {
  *
  * A row is skipped rather than blanked when its word is empty — a half-typed
  * sheet should not have its pinyin column wiped — and the settings row is left
- * alone entirely, because `#config` holds Sheets2Anki's directives, not a word.
+ * alone entirely, because `#config` holds SheetCards's directives, not a word.
  */
 function pinyinReadingsFor_(words, markers, existing) {
   var readings = [];

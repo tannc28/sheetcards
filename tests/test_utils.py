@@ -245,14 +245,14 @@ class TestDeckUtilities:
         from src.utils import get_subdeck_name
 
         assert (
-            get_subdeck_name("Sheets2Anki", ["High", "Geography", "Capitals"])
-            == "Sheets2Anki::High::Geography::Capitals"
+            get_subdeck_name("SheetCards", ["High", "Geography", "Capitals"])
+            == "SheetCards::High::Geography::Capitals"
         )
 
     def test_get_subdeck_name_with_no_levels_is_the_deck_itself(self):
         from src.utils import get_subdeck_name
 
-        assert get_subdeck_name("Sheets2Anki", []) == "Sheets2Anki"
+        assert get_subdeck_name("SheetCards", []) == "SheetCards"
 
     def test_ensure_subdeck_exists(self, mock_mw):
         """Subdeck existence guarantee test."""
@@ -695,14 +695,14 @@ class TestGetNoteTypeName:
     def test_basic_name(self):
         from src.utils import get_note_type_name
 
-        assert get_note_type_name("url", "Deck") == "Sheets2Anki - Deck - Basic"
+        assert get_note_type_name("url", "Deck") == "SheetCards - Deck - Basic"
 
     def test_blank_remote_name_falls_back_not_none(self):
         # Regression: the builder must never return None (that would crash
         # col.models.by_name downstream).
         from src.utils import get_note_type_name
 
-        assert get_note_type_name("url", "") == "Sheets2Anki - RemoteDeck - Basic"
+        assert get_note_type_name("url", "") == "SheetCards - RemoteDeck - Basic"
 
     def test_cloze_flag(self):
         from src.utils import get_note_type_name

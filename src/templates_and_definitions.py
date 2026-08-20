@@ -1,5 +1,5 @@
 """
-Note types and card assets for the Sheets2Anki addon.
+Note types and card assets for the SheetCards addon.
 
 The spreadsheet defines its own columns (see ``column_model``) and its own
 presentation (see ``sheet_config``), so this module no longer knows any column names.
@@ -17,7 +17,7 @@ from .card_layout import build_templates
 # Defined in the pure layer, which is what actually builds the tags; re-exported
 # here so the long-standing `from .templates_and_definitions import TAG_ROOT`
 # keeps working and the constant has exactly one definition.
-ADDON_MENU_NAME = "Sheets2Anki"
+ADDON_MENU_NAME = "SheetCards"
 
 from .tsv_model import DECK_NAME_PREFIX  # noqa: F401  (facade)
 from .tsv_model import TAG_ROOT  # noqa: F401  (facade)
@@ -41,8 +41,8 @@ IS_DEVELOPMENT_MODE = True
 # address that serves the bytes.
 TEST_SHEETS_URLS = [
     (
-        "Sheets2Anki examples (15 sheets, basic → advanced)",
-        "https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx",
+        "SheetCards examples (15 sheets, basic → advanced)",
+        "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx",
     )
 ]
 

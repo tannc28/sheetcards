@@ -16,12 +16,12 @@ import pytest
 
 GOOGLE = "https://docs.google.com/spreadsheets/d/1AbC_dEf-123/edit?usp=sharing"
 GITHUB_BLOB = (
-    "https://github.com/tannc28/sheets2anki/blob/main/examples/"
-    "sheets2anki-examples.xlsx"
+    "https://github.com/tannc28/sheetcards/blob/main/examples/"
+    "sheetcards-examples.xlsx"
 )
 RAW = (
-    "https://raw.githubusercontent.com/tannc28/sheets2anki/main/examples/"
-    "sheets2anki-examples.xlsx"
+    "https://raw.githubusercontent.com/tannc28/sheetcards/main/examples/"
+    "sheetcards-examples.xlsx"
 )
 
 ACCEPTED = [

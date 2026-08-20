@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shared pytest configuration and fixtures for Sheets2Anki.
+Shared pytest configuration and fixtures for SheetCards.
 
 Unlike the previous version, these fixtures use the CURRENT (English) spreadsheet
 schema and the tests that consume them import and exercise the REAL ``src`` modules.

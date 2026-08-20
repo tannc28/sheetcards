@@ -85,16 +85,16 @@ jobs:
       - name: Validate packages
         if: steps.version.outputs.release == 'true'
         run: |
-          python scripts/validate_packages.py build/sheets2anki-standalone.ankiaddon
-          python scripts/validate_packages.py build/sheets2anki.ankiaddon
+          python scripts/validate_packages.py build/sheetcards-standalone.ankiaddon
+          python scripts/validate_packages.py build/sheetcards.ankiaddon
 
       - name: Name assets after the version
         if: steps.version.outputs.release == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          mv build/sheets2anki-standalone.ankiaddon "build/sheets2anki-${VERSION}.ankiaddon"
-          mv build/sheets2anki.ankiaddon "build/sheets2anki-${VERSION}-ankiweb.ankiaddon"
+          mv build/sheetcards-standalone.ankiaddon "build/sheetcards-${VERSION}.ankiaddon"
+          mv build/sheetcards.ankiaddon "build/sheetcards-${VERSION}-ankiweb.ankiaddon"
 
       # Tag only once everything above has passed, so a failed build never leaves a
       # tag behind that the next run would mistake for an already-published release.
@@ -124,13 +124,13 @@ jobs:
 
           ### Install
 
-          Download \`sheets2anki-${VERSION}.ankiaddon\` below, then in Anki:
+          Download \`sheetcards-${VERSION}.ankiaddon\` below, then in Anki:
           **Tools → Add-ons → Install from file…** and restart.
 
           | Asset | Use |
           |---|---|
-          | \`sheets2anki-${VERSION}.ankiaddon\` | Manual install (full manifest) |
-          | \`sheets2anki-${VERSION}-ankiweb.ankiaddon\` | Upload to AnkiWeb (stripped manifest) |
+          | \`sheetcards-${VERSION}.ankiaddon\` | Manual install (full manifest) |
+          | \`sheetcards-${VERSION}-ankiweb.ankiaddon\` | Upload to AnkiWeb (stripped manifest) |
           EOF
           )
 

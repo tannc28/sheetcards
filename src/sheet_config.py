@@ -29,8 +29,8 @@ MARKER = "#config"
 # Colours that follow the card's light/dark theme. A literal colour is allowed too,
 # but a hard-coded "black" vanishes in night mode, so these are what the docs push.
 THEME_COLORS = {
-    "muted": "var(--s2a-muted)",
-    "accent": "var(--s2a-accent)",
+    "muted": "var(--sc-muted)",
+    "accent": "var(--sc-accent)",
 }
 
 # A whole-card palette, named once in the marker cell: `#config theme=sakura`.

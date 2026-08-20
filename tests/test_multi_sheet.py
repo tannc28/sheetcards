@@ -124,9 +124,9 @@ def _legacy_entry(url=EDIT):
     return {
         "remote_deck_url": url,
         "local_deck_id": 1234,
-        "local_deck_name": "Sheets2Anki::My words",
+        "local_deck_name": "SheetCards::My words",
         "remote_deck_name": "My words",
-        "note_types": {"55": "Sheets2Anki - My words - Basic"},
+        "note_types": {"55": "SheetCards - My words - Basic"},
         "sync_count": 9,
     }
 
@@ -160,8 +160,8 @@ class TestAdoptingAnOlderDeck:
 
         moved = stored[f"{FILE_ID}#vocab"]
         assert moved["local_deck_id"] == 1234
-        assert moved["local_deck_name"] == "Sheets2Anki::My words"
-        assert moved["note_types"] == {"55": "Sheets2Anki - My words - Basic"}
+        assert moved["local_deck_name"] == "SheetCards::My words"
+        assert moved["note_types"] == {"55": "SheetCards - My words - Basic"}
         assert moved["sync_count"] == 9
 
     def test_the_stored_url_now_names_the_sheet(self, stored):
@@ -421,8 +421,8 @@ class TestTheDeckNameSurvivesSanitising:
 
     A deck for one sheet is named `{file}::{sheet}`. The sanitiser replaced every
     `:` with `_`, so the deck the add-on *registered* was the flat
-    `Sheets2Anki::my-vocab-sheet__vocab` while the notes were filed under the
-    nested `Sheets2Anki::my-vocab-sheet::vocab::…`. Two trees for one deck, and
+    `SheetCards::my-vocab-sheet__vocab` while the notes were filed under the
+    nested `SheetCards::my-vocab-sheet::vocab::…`. Two trees for one deck, and
     renaming one onto the other made Anki uniquify it to `…vocab+` — which is
     exactly what showed up in the deck list.
     """

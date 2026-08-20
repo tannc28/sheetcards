@@ -146,8 +146,8 @@ class TestTagsGeneration:
         }
         tags = d.build_tags(row, plan)
 
-        assert tags[0] == "sheets2anki"
-        assert "sheets2anki::unit_3::verbs" in tags
+        assert tags[0] == "sheetcards"
+        assert "sheetcards::unit_3::verbs" in tags
         assert "review" in tags and "hard" in tags
 
     def test_non_ascii_deck_levels_and_tags_are_kept(self):
@@ -164,8 +164,8 @@ class TestTagsGeneration:
         }
         tags = d.build_tags(row, plan)
 
-        assert tags[0] == "sheets2anki"
-        assert "sheets2anki::bài_3::động_từ" in tags
+        assert tags[0] == "sheetcards"
+        assert "sheetcards::bài_3::động_từ" in tags
         assert "ôn_tập" in tags and "汉字" in tags
 
     def test_a_blank_level_is_the_unsorted_pile_and_not_a_placeholder(self):
@@ -174,9 +174,9 @@ class TestTagsGeneration:
         # the tag — the pile stays searchable, and nothing invents a sentinel.
         plan = plan_columns(["ID", "SUBDECK 1", "Front"])
         tags = d.build_tags({"ID": "Q1", "SUBDECK 1": "", "Front": "q"}, plan)
-        assert tags == ["sheets2anki", "sheets2anki::unsorted"]
+        assert tags == ["sheetcards", "sheetcards::unsorted"]
 
     def test_a_sheet_that_sorts_nothing_gets_only_the_owner_tag(self):
         plan = plan_columns(["ID", "Front", "Back"])
         tags = d.build_tags({"ID": "Q1", "Front": "q", "Back": "a"}, plan)
-        assert tags == ["sheets2anki"]
+        assert tags == ["sheetcards"]

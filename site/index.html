@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Sheets2Anki — preview a sheet before you sync it</title>
-<meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the Sheets2Anki add-on would produce — running the add-on's own code in your browser.">
+<title>SheetCards — preview a sheet before you sync it</title>
+<meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the SheetCards add-on would produce — running the add-on's own code in your browser.">
 <script>
   // Read before the first paint: applied from the stylesheet instead, the page
   // would flash light on its way to the dark somebody chose.
   try {
-    var t = localStorage.getItem("s2a-theme");
+    var t = localStorage.getItem("sc-theme");
     if (t === "dark") document.documentElement.dataset.theme = "dark";
   } catch (e) {}
 </script>
@@ -22,13 +22,13 @@
 
 <header class="masthead">
   <div class="brand">
-    <h1 translate="no">Sheets2Anki <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
+    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
   </div>
 
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Language"></nav>
   <a class="ghost" href="./editor.html" data-i18n="toGuide">Editor</a>
-  <a class="ghost" href="https://github.com/tannc28/sheets2anki" rel="noopener">GitHub</a>
+  <a class="ghost" href="https://github.com/tannc28/sheetcards" rel="noopener">GitHub</a>
 </header>
 
 <p id="demo-note" class="demo-note" data-i18n="demoNote" hidden></p>

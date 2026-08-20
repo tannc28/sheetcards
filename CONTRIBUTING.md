@@ -1,6 +1,6 @@
-# Contributing to Sheets2Anki
+# Contributing to SheetCards
 
-Thanks for your interest in improving Sheets2Anki. This guide covers the development
+Thanks for your interest in improving SheetCards. This guide covers the development
 setup and where to find deeper documentation.
 
 ## Project layout

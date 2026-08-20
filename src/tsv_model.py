@@ -31,14 +31,14 @@ from .sheet_config import parse_config_row
 
 # Marks every note the add-on owns, so they can be found or bulk-removed from the
 # browser without touching notes the user made themselves.
-TAG_ROOT = "sheets2anki"
+TAG_ROOT = "sheetcards"
 
 # Every deck the add-on creates is named for its sheet and marked with this, so a
 # collection keeps its own decks and the synced ones apart without burying the
 # synced ones a level down. The full path a row lands in is
-# "s2a_{sheet name}::{SUBDECK levels}" — see data_processor's determine_target_deck,
+# "sc_{sheet name}::{SUBDECK levels}" — see data_processor's determine_target_deck,
 # which builds exactly that.
-DECK_NAME_PREFIX = "s2a_"
+DECK_NAME_PREFIX = "sc_"
 
 
 def deck_root_name(remote_deck_name):
@@ -172,9 +172,9 @@ def build_tags(note_data, plan, sheet_config=None):
 
     Three kinds of tag, and no placeholders for anything the row left blank:
 
-    1. ``sheets2anki`` — marks every note the add-on owns, so they can be found or
+    1. ``sheetcards`` — marks every note the add-on owns, so they can be found or
        bulk-removed without touching the user's own notes.
-    2. ``sheets2anki::<subdeck path>`` — mirrors the deck path, which makes the
+    2. ``sheetcards::<subdeck path>`` — mirrors the deck path, which makes the
        hierarchy searchable from the browser sidebar.
     3. whatever the TAGS column lists, verbatim (comma or semicolon separated).
     """
@@ -758,9 +758,9 @@ def get_subdeck_name(main_deck_name, path_levels):
 
 def get_note_type_name(url, remote_deck_name, is_cloze=False):
     """
-    Generates standardized name for Sheets2Anki note types.
+    Generates standardized name for SheetCards note types.
 
-    Format: "Sheets2Anki - {remote_deck_name} - Basic/Cloze"
+    Format: "SheetCards - {remote_deck_name} - Basic/Cloze"
     The remote_deck_name already has conflict resolution applied by config_manager.
     The reverse direction is a second card template on the same note type, so it
     does not get a name of its own.
@@ -778,4 +778,4 @@ def get_note_type_name(url, remote_deck_name, is_cloze=False):
     # Use remote name directly (already comes with conflict suffix from config_manager)
     clean_remote_name = remote_deck_name.strip() if remote_deck_name else "RemoteDeck"
 
-    return f"Sheets2Anki - {clean_remote_name} - {note_type}"
+    return f"SheetCards - {clean_remote_name} - {note_type}"

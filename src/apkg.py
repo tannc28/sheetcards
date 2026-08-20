@@ -320,7 +320,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
 
     Args:
         sheet_id (str): the spreadsheet's id, so guids stay stable per sheet
-        deck_name (str): the deck's own name, without the ``Sheets2Anki`` root
+        deck_name (str): the deck's own name, without the ``SheetCards`` root
         plan (ColumnPlan): the sheet's column roles
         sheet_config (SheetConfig): the parsed settings row
         rows (list[dict]): rows keyed by header, already media-rewritten
@@ -336,7 +336,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
 
     fields = plan.note_type_fields()
     templates = build_templates(plan, sheet_config, is_cloze=is_cloze)
-    model_name = f"Sheets2Anki - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
+    model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
     model_id = _stable_id("model", sheet_id, model_name)
 
     root = deck_root_name(deck_name)

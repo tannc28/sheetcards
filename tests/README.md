@@ -1,4 +1,4 @@
-# Sheets2Anki — Test Suite
+# SheetCards — Test Suite
 
 The pytest suite for the add-on. **Anki is auto-mocked**, so the tests run without an
 Anki install: `tests/conftest.py` installs an import hook that fabricates subclassable

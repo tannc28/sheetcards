@@ -100,9 +100,9 @@ class TestCardFrame:
     def _doc(self, opts):
         return _run(
             "import { cardDoc, cardFrame } from './cardframe.js';\n"
-            "const front = { html: '<div data-s2a-col=\"Word\">你好</div>' };\n"
-            'const back = { html: \'<div data-s2a-col="Word">你好</div>'
-            '<div data-s2a-col="Meaning">xin chào</div>\' };\n'
+            "const front = { html: '<div data-sc-col=\"Word\">你好</div>' };\n"
+            'const back = { html: \'<div data-sc-col="Word">你好</div>'
+            '<div data-sc-col="Meaning">xin chào</div>\' };\n'
             f"const doc = cardDoc({{ front, back, ...{opts} }});\n"
             "console.log(JSON.stringify({ doc, frame: cardFrame(doc) }));"
         )
@@ -128,20 +128,20 @@ class TestCardFrame:
 
     def test_a_ring_targets_the_column_that_asked_for_it(self):
         doc = self._doc('{ tab: "both", dark: false, ring: "Word" }')["doc"]
-        assert '[data-s2a-col="Word"]' in doc
+        assert '[data-sc-col="Word"]' in doc
         assert "outline: 2px solid" in doc
-        assert "animation: s2a-pop" not in doc
+        assert "animation: sc-pop" not in doc
 
         flashed = self._doc('{ tab: "both", dark: false, ring: "Word", flash: true }')
-        assert "animation: s2a-pop" in flashed["doc"]
+        assert "animation: sc-pop" in flashed["doc"]
 
     def test_a_column_name_with_a_quote_cannot_break_out_of_the_selector(self):
         doc = self._doc('{ tab: "both", dark: false, ring: \'Wo"rd\' }')["doc"]
-        assert '[data-s2a-col="Wo\\"rd"]' in doc
+        assert '[data-sc-col="Wo\\"rd"]' in doc
 
     def test_no_ring_means_no_rule_for_one(self):
         assert (
-            'data-s2a-col="'
+            'data-sc-col="'
             not in self._doc('{ tab: "both", dark: false }')["doc"].split("<body")[0]
         )
 

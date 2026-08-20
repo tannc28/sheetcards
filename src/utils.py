@@ -1,5 +1,5 @@
 """
-Utility functions for the Sheets2Anki addon.
+Utility functions for the SheetCards addon.
 
 This module contains auxiliary functions used in
 different parts of the project.
@@ -28,12 +28,12 @@ from .debug import is_debug_enabled  # noqa: F401
 from .deck_options import _is_default_config  # noqa: F401
 from .deck_options import apply_automatic_deck_options_system  # noqa: F401
 from .deck_options import apply_options_to_subdecks  # noqa: F401
-from .deck_options import apply_sheets2anki_options_to_all_remote_decks  # noqa: F401
-from .deck_options import apply_sheets2anki_options_to_deck  # noqa: F401
+from .deck_options import apply_sheetcards_options_to_all_remote_decks  # noqa: F401
+from .deck_options import apply_sheetcards_options_to_deck  # noqa: F401
 from .deck_options import cleanup_orphaned_deck_option_groups  # noqa: F401
 from .deck_options import ensure_root_deck_has_root_options  # noqa: F401
 from .deck_options import get_or_create_root_options_group  # noqa: F401
-from .deck_options import get_or_create_sheets2anki_options_group  # noqa: F401
+from .deck_options import get_or_create_sheetcards_options_group  # noqa: F401
 from .errors import CollectionSaveError  # noqa: F401
 from .errors import ConfigurationError  # noqa: F401
 from .errors import NoteProcessingError  # noqa: F401
@@ -424,7 +424,7 @@ def get_or_create_deck(col, deckName, remote_deck_name=None):
     # Apply options based on mode (new, or an existing deck this add-on owns)
     if is_addon_deck(deckName) or deck_was_created:
         try:
-            apply_sheets2anki_options_to_deck(deck_id, remote_deck_name)
+            apply_sheetcards_options_to_deck(deck_id, remote_deck_name)
         except Exception as e:
             add_debug_message(
                 f"Warning: Failed to apply options to deck '{actual_name}': {e}",
@@ -1033,7 +1033,7 @@ def validate_url(url):
     # Test TSV URL accessibility with timeout and proper error handling
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Sheets2Anki) AnkiAddon"  # More specific user agent
+            "User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"  # More specific user agent
         }
         request = urllib.request.Request(tsv_url, headers=headers)
 

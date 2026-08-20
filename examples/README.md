@@ -1,7 +1,7 @@
 # Example sheets
 
-`sheets2anki-examples.xlsx` is a working Sheets2Anki source, and it is what the
-[preview site](https://tannc28.github.io/sheets2anki/) and the add-on's
+`sheetcards-examples.xlsx` is a working SheetCards source, and it is what the
+[preview site](https://tannc28.github.io/sheetcards/) and the add-on's
 **Import Test Deck** point at. Thirty-one sheets, ordered so that reading them from
 the first to the last takes you from *the smallest sheet that works* to *a deck
 you would keep studying*.
@@ -14,10 +14,10 @@ Connect it exactly as you would your own spreadsheet — paste this link into
 `Ctrl+Shift+A`, or into the preview site:
 
 ```
-https://github.com/tannc28/sheets2anki/blob/main/examples/sheets2anki-examples.xlsx
+https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-Each sheet becomes its own deck, `s2a_sheets2anki-examples::<sheet name>`, with
+Each sheet becomes its own deck, `sc_sheetcards-examples::<sheet name>`, with
 its own columns, its own settings row and its own note type. That is the same
 thing that happens to a Google Sheets file with several tabs.
 
@@ -201,7 +201,7 @@ with the word being learned has failed at being wallpaper.
 
 Three `SUBDECK` levels build `…::English::B1::Verbs`, which is worth doing on day
 one: a level is a deck you can study on its own, and the path is mirrored into a
-`sheets2anki::english::b1::verbs` tag for you, so the same cards are one click away
+`sheetcards::english::b1::verbs` tag for you, so the same cards are one click away
 in the browser sidebar. The `TAGS` column is for the words you would search by
 rather than file by — here `cefr` and `b1`, which cut across the three levels.
 

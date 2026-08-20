@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to run all Sheets2Anki tests
+Script to run all SheetCards tests
 
 Usage:
     python run_tests.py              # Run all tests
@@ -19,7 +19,7 @@ from pathlib import Path
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Sheets2Anki tests")
+    parser = argparse.ArgumentParser(description="Run SheetCards tests")
 
     parser.add_argument("--unit", action="store_true", help="Run only unit tests")
     parser.add_argument(

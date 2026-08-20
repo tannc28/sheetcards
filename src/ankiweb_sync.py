@@ -1,5 +1,5 @@
 """
-Automatic synchronization module with AnkiWeb for the Sheets2Anki addon.
+Automatic synchronization module with AnkiWeb for the SheetCards addon.
 
 This module implements functionalities for automatic synchronization with AnkiWeb
 after remote deck synchronization, including options for:
@@ -187,7 +187,7 @@ def execute_ankiweb_sync_if_configured():
         add_debug_message(f"⚠️ {error_msg}", "ANKIWEB_SYNC")
 
         StyledMessageBox.warning(
-            None, "AnkiWeb Config Error", f"Sheets2Anki: {error_msg}"
+            None, "AnkiWeb Config Error", f"SheetCards: {error_msg}"
         )
 
         return {"success": False, "error": error_msg}

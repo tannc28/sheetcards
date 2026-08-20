@@ -1,4 +1,4 @@
-# Pre-commit hooks for Sheets2Anki.
+# Pre-commit hooks for SheetCards.
 #   Install:  pip install pre-commit && pre-commit install
 #   Refresh:  pre-commit autoupdate
 #

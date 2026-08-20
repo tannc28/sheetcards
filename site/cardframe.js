@@ -61,7 +61,7 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
                       line-height: 1.75; text-align: center; padding: 2px 6px;
                       border: 1px solid currentColor; border-radius: 4px;
                       background: transparent; color: inherit; }
-      .s2a-type { margin: 10px auto; max-width: 22em; }
+      .sc-type { margin: 10px auto; max-width: 22em; }
       code.typeans { white-space: pre-wrap; font-variant-ligatures: none;
                      font-family: inherit; line-height: 1.75; }
       .typeGood { background: #afa; color: #000; }
@@ -74,18 +74,18 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
                 stylesheet on the way in rather than reached for afterwards — there
                 is no frame to wait for and nothing to clean up when the selection
                 changes, because the frame is rebuilt either way. */
-             [data-s2a-col="${ring.replace(/["\\]/g, "\\$&")}"] {
+             [data-sc-col="${ring.replace(/["\\]/g, "\\$&")}"] {
                outline: 2px solid #1a73e8; outline-offset: 6px; border-radius: 4px;
-               ${flash ? "animation: s2a-pop .5s cubic-bezier(.2, .8, .2, 1);" : ""}
+               ${flash ? "animation: sc-pop .5s cubic-bezier(.2, .8, .2, 1);" : ""}
              }
-             @keyframes s2a-pop {
+             @keyframes sc-pop {
                0%   { transform: translateY(0)    scale(1); }
                35%  { transform: translateY(-8px) scale(1.06); }
                70%  { transform: translateY(2px)  scale(.99); }
                100% { transform: translateY(0)    scale(1); }
              }
              @media (prefers-reduced-motion: reduce) {
-               [data-s2a-col] { animation: none; }
+               [data-sc-col] { animation: none; }
              }`
           : ""
       }

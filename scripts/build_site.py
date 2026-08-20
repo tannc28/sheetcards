@@ -86,7 +86,7 @@ def build():
     names = modules_the_site_loads()
     check_purity(names)
 
-    pkg = OUT / "s2a"
+    pkg = OUT / "sc"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     for name in names:

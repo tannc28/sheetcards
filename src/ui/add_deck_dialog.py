@@ -586,7 +586,7 @@ class AddDeckDialog(QDialog):
         self.added_urls = [u for u, _ in added]
 
     def _add_one_sheet(self, url, file_name, offer):
-        """Connects one sheet of the file as its own deck: ``s2a_{file}::{sheet}``."""
+        """Connects one sheet of the file as its own deck: ``sc_{file}::{sheet}``."""
         from ..config_manager import create_deck_info
         from ..deck_manager import DeckNameManager
         from ..utils import url_for_sheet
@@ -617,9 +617,9 @@ class AddDeckDialog(QDialog):
             )
 
         try:
-            from ..utils import apply_sheets2anki_options_to_deck
+            from ..utils import apply_sheetcards_options_to_deck
 
-            apply_sheets2anki_options_to_deck(deck_id)
+            apply_sheetcards_options_to_deck(deck_id)
         except Exception as e:
             add_debug_message(f"Warning: Error applying options: {e}", "ADD_DECK")
 

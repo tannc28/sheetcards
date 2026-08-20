@@ -1,5 +1,5 @@
 """
-Main synchronization functions for the Sheets2Anki addon.
+Main synchronization functions for the SheetCards addon.
 
 This module contains the core functions for synchronizing
 decks with remote sources, using the new configuration system.
@@ -1960,15 +1960,15 @@ def _sync_single_deck(
                     if note_types_config:
                         # Look for common pattern in note types to extract actual name
                         for note_type_name in note_types_config.values():
-                            # Format: "Sheets2Anki - {remote_name} - {type}"
+                            # Format: "SheetCards - {remote_name} - {type}"
                             if " - " in note_type_name:
                                 parts = note_type_name.split(" - ")
-                                if len(parts) >= 3 and parts[0] == "Sheets2Anki":
+                                if len(parts) >= 3 and parts[0] == "SheetCards":
                                     # Reconstruct remote name (can have multiple hyphens)
-                                    # Get everything between "Sheets2Anki - " and " - {type}"
+                                    # Get everything between "SheetCards - " and " - {type}"
                                     start_idx = note_type_name.find(
-                                        "Sheets2Anki - "
-                                    ) + len("Sheets2Anki - ")
+                                        "SheetCards - "
+                                    ) + len("SheetCards - ")
                                     # Find last occurrence of " - {type}"
                                     last_dash_type = note_type_name.rfind(
                                         " - " + parts[-1]

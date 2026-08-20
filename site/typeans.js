@@ -155,10 +155,10 @@ export function typeansRuntime() {
   return `<script>
 ${compareAnswer.toString()}
 (function () {
-  for (const box of document.querySelectorAll(".s2a-type")) {
+  for (const box of document.querySelectorAll(".sc-type")) {
     const spec = JSON.parse(box.dataset.typeans);
     const input = box.querySelector("input");
-    const out = box.querySelector(".s2a-typeans");
+    const out = box.querySelector(".sc-typeans");
     const draw = () => {
       out.hidden = false;
       out.innerHTML = '<code class="typeans">'

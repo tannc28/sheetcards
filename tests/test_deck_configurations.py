@@ -47,9 +47,9 @@ def test_deck_configurations():
             # Check if configuration is correct for the mode
             expected_config = None
             if mode == "individual":
-                expected_config = f"Sheets2Anki - {deck_name}"
+                expected_config = f"SheetCards - {deck_name}"
             elif mode == "shared":
-                expected_config = "Sheets2Anki - Default Options"
+                expected_config = "SheetCards - Default Options"
             else:  # manual
                 expected_config = None
 
@@ -94,7 +94,7 @@ def test_configuration_functions():
         print(f"📊 Current mode: {current_mode}")
 
         # Check if configuration is valid
-        if current_config and "Sheets2Anki" in current_config:
+        if current_config and "SheetCards" in current_config:
             print("✅ Valid configuration found")
         else:
             print("❌ Invalid or missing configuration")
@@ -109,7 +109,7 @@ def test_configuration_functions():
 
 
 if __name__ == "__main__":
-    print("🚀 Deck Configuration Test - Sheets2Anki")
+    print("🚀 Deck Configuration Test - SheetCards")
     print("=" * 60)
 
     test_deck_configurations()

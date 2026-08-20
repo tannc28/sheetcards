@@ -1,4 +1,4 @@
-"""Card-template assets for Sheets2Anki: CSS and HTML string constants for the
+"""Card-template assets for SheetCards: CSS and HTML string constants for the
 card body and the reverse-card indicator.
 
 Pure string constants — the model-building functions in templates_and_definitions

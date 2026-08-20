@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "sheets2anki"
+name = "sheetcards"
 version = "6.23.0"
 description = "Anki add-on that syncs flashcard decks from Google Sheets, where the sheet declares the fields, the deck hierarchy and how each card looks."
 readme = "README.md"
@@ -71,11 +71,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tannc28/sheets2anki"
-Documentation = "https://github.com/tannc28/sheets2anki/blob/main/README.md"
-Repository = "https://github.com/tannc28/sheets2anki.git"
-"Bug Tracker" = "https://github.com/tannc28/sheets2anki/issues"
-Changelog = "https://github.com/tannc28/sheets2anki/blob/main/docs/CHANGELOG.md"
+Homepage = "https://github.com/tannc28/sheetcards"
+Documentation = "https://github.com/tannc28/sheetcards/blob/main/README.md"
+Repository = "https://github.com/tannc28/sheetcards.git"
+"Bug Tracker" = "https://github.com/tannc28/sheetcards/issues"
+Changelog = "https://github.com/tannc28/sheetcards/blob/main/docs/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
@@ -199,7 +199,7 @@ ignore = [
 "compat.py" = ["F401"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["sheets2anki"]
+known-first-party = ["sheetcards"]
 force-single-line = true
 
 # =============================================================================
