@@ -201,6 +201,10 @@ def get_colors() -> dict:
 # 16px, the size Anki gives an icon beside a line of text.
 ICON_SIZE = 16
 
+# Where a radio button's text starts, so a sentence under it lines up with the
+# words rather than with the dot.
+RADIO_INDENT = 22
+
 _ICON_CACHE: dict = {}
 
 
@@ -372,100 +376,49 @@ def make_header(colors: dict, title: str, subtitle: str = ""):
     return frame
 
 
-def make_radio_option_card(
+def make_radio_choice(
     colors: dict,
     *,
     key: str,
     checked: bool,
     title: str,
-    badge: str,
     description: str,
-    accent_color: str,
     button_group,
     button_id: int,
 ):
-    """Build a clickable radio "option card" (radio + title/badge/description).
+    """One exclusive choice: a radio button, and a sentence under it.
 
-    Used by the deck-options dialog for its mode picker. Adds ``radio`` to
-    ``button_group`` under ``button_id`` and makes the whole card click-to-select.
+    This is how Anki presents a choice of three — the preferences window is
+    nothing else — and it replaces a tinted card carrying an accent bar, a bold
+    heading, a coloured badge and a click handler bolted onto ``mousePressEvent``.
+    The card was three things saying "pick me" around one thing that already did.
+
+    The description is indented to the radio's text rather than to its dot, so the
+    two read as one item.
     """
-    from .compat import QFrame
-    from .compat import QHBoxLayout
     from .compat import QLabel
     from .compat import QRadioButton
     from .compat import QVBoxLayout
+    from .compat import QWidget
 
-    card = QFrame()
-    card.setObjectName(f"card_{key}")
-    card.setStyleSheet(f"""
-        QFrame#card_{key} {{
-            background-color: {colors['card_bg']};
-            border: 2px solid {colors['border']};
-            border-radius: 10px;
-            padding: 5px;
-        }}
-        QFrame#card_{key}:hover {{
-            border-color: {accent_color};
-        }}
-    """)
+    holder = QWidget()
+    layout = QVBoxLayout(holder)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(2)
 
-    card_layout = QHBoxLayout(card)
-    card_layout.setContentsMargins(15, 12, 15, 12)
-    card_layout.setSpacing(15)
+    button = QRadioButton(title)
+    button.setChecked(checked)
+    button.setProperty("s2a_key", key)
+    button_group.addButton(button, button_id)
+    layout.addWidget(button)
 
-    radio = QRadioButton()
-    radio.setChecked(checked)
-    radio.setStyleSheet(f"""
-        QRadioButton::indicator {{
-            width: 22px;
-            height: 22px;
-        }}
-        QRadioButton::indicator:checked {{
-            background-color: {colors['accent_primary']};
-            border: 2px solid {colors['accent_primary']};
-            border-radius: 11px;
-        }}
-        QRadioButton::indicator:unchecked {{
-            background-color: {colors['card_bg']};
-            border: 2px solid {colors['border']};
-            border-radius: 11px;
-        }}
-    """)
-    button_group.addButton(radio, button_id)
-    card_layout.addWidget(radio)
+    note = QLabel(description)
+    note.setWordWrap(True)
+    note.setStyleSheet(f"color: {colors['text_secondary']};")
+    note.setContentsMargins(RADIO_INDENT, 0, 0, 0)
+    layout.addWidget(note)
 
-    content_layout = QVBoxLayout()
-    content_layout.setSpacing(4)
-
-    title_row = QHBoxLayout()
-    title_label = QLabel(title)
-    title_label.setStyleSheet(
-        f"font-size: 13pt; font-weight: bold; color: {colors['text']};"
-    )
-    title_row.addWidget(title_label)
-
-    badge_label = QLabel(badge)
-    badge_label.setStyleSheet(f"""
-        background-color: {accent_color};
-        color: white;
-        font-size: 12pt;
-        font-weight: bold;
-        padding: 3px 10px;
-        border-radius: 10px;
-    """)
-    title_row.addWidget(badge_label)
-    title_row.addStretch()
-    content_layout.addLayout(title_row)
-
-    desc_label = QLabel(description)
-    desc_label.setStyleSheet(f"font-size: 12pt; color: {colors['text_secondary']};")
-    desc_label.setWordWrap(True)
-    content_layout.addWidget(desc_label)
-
-    card_layout.addLayout(content_layout, 1)
-
-    card.mousePressEvent = lambda e: radio.setChecked(True)
-    return card
+    return holder
 
 
 def primary_button_qss(colors: dict, kind: str = "primary") -> str:

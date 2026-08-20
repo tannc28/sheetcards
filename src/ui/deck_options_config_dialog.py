@@ -7,19 +7,22 @@ This module allows the user to choose between three modes:
 3. Manual - No automatic application of options
 """
 
+from ..compat import ButtonBox_Cancel
+from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
 from ..compat import QButtonGroup
 from ..compat import QDialog
-from ..compat import QHBoxLayout
-from ..compat import QPushButton
+from ..compat import QDialogButtonBox
+from ..compat import QGroupBox
+from ..compat import QLabel
 from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
+from ..theme import MARGIN
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
-from ..theme import make_header
-from ..theme import make_radio_option_card
-from ..theme import primary_button_qss
-from ..theme import secondary_button_qss
+from ..theme import icon
+from ..theme import make_radio_choice
 
 
 class DeckOptionsConfigDialog(QDialog):
@@ -40,113 +43,86 @@ class DeckOptionsConfigDialog(QDialog):
 
         self._setup_colors()
         self._setup_ui()
-        self._apply_styles()
         self._connect_signals()
 
     def _setup_colors(self):
         """Sets up color scheme based on theme."""
         self.colors = get_colors()
 
-    def _apply_styles(self):
-        """Applies styles to the dialog."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['bg']};
-                color: {self.colors['text']};
-            }}
-        """)
-
     def _setup_ui(self):
-        """Sets up the dialog interface."""
-        layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        """A sentence, three choices, the buttons."""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACE_SECTION)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # Header section
-        layout.addWidget(
-            make_header(
-                self.colors,
-                "Deck Options Management",
-                "Choose how Sheets2Anki should manage study settings for your decks.",
-            )
+        intro = QLabel(
+            "Choose how Sheets2Anki should manage study settings for your decks."
         )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
 
-        # Options section
         self.button_group = QButtonGroup()
 
-        # Option 1: Shared
-        shared_card = self._create_option_card(
-            "shared",
-            "Shared Options",
-            "Recommended",
-            "All remote decks use the same settings group. Configure once and all changes apply to all decks.",
-            self.colors["accent_success"],
-            0,
-        )
-        layout.addWidget(shared_card)
-
-        # Option 2: Individual
-        individual_card = self._create_option_card(
-            "individual",
-            "Individual Options",
-            "Per Deck",
-            "Each remote deck has its own settings group. Useful when decks have specific study needs.",
-            self.colors["accent_primary"],
-            1,
-        )
-        layout.addWidget(individual_card)
-
-        # Option 3: Manual
-        manual_card = self._create_option_card(
-            "manual",
-            "Manual Configuration",
-            "Advanced",
-            "The addon does not apply any settings automatically. Full control over each deck's options.",
-            self.colors["accent_warning"],
-            2,
-        )
-        layout.addWidget(manual_card)
+        # Three exclusive choices in a group box, which is what a Qt window uses to
+        # say "these three go together and one of them is on".
+        choices = QGroupBox("Deck options")
+        choices_layout = QVBoxLayout(choices)
+        choices_layout.setSpacing(SPACE_SECTION)
+        for index, (mode, title, description) in enumerate(
+            (
+                (
+                    "shared",
+                    "Shared options (recommended)",
+                    "Every connected deck uses one settings group. Change it once "
+                    "and the change reaches all of them.",
+                ),
+                (
+                    "individual",
+                    "Individual options",
+                    "Each connected deck gets a settings group of its own, for when "
+                    "one deck needs to be studied differently.",
+                ),
+                (
+                    "manual",
+                    "Manual",
+                    "The add-on applies no settings at all. Each deck's options are "
+                    "yours to set and yours to keep.",
+                ),
+            )
+        ):
+            choices_layout.addWidget(
+                self._create_option_card(mode, title, description, index)
+            )
+        layout.addWidget(choices)
 
         layout.addStretch()
 
-        # Buttons
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 10, 0, 0)
+        self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
+        ok_button = self.button_box.button(ButtonBox_Ok)
+        assert ok_button is not None  # just asked for, by name
+        ok_button.setText("Apply")
+        ok_button.setIcon(icon("success", "text"))
+        ok_button.setDefault(True)
+        self.ok_button = ok_button
+        self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        layout.addWidget(self.button_box)
 
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-
-        self.ok_button = QPushButton("✓ Apply")
-        self.ok_button.setStyleSheet(primary_button_qss(self.colors, "success"))
-        self.ok_button.setDefault(True)
-
-        buttons_layout.addStretch()
-        buttons_layout.addWidget(self.cancel_button)
-        buttons_layout.addWidget(self.ok_button)
-
-        layout.addLayout(buttons_layout)
-        self.setLayout(layout)
-
-    def _create_option_card(
-        self, mode, title, badge, description, accent_color, button_id
-    ):
-        """Creates a styled option card."""
-        return make_radio_option_card(
+    def _create_option_card(self, mode, title, description, button_id):
+        """One radio button and the sentence under it."""
+        return make_radio_choice(
             self.colors,
             key=mode,
             checked=self.current_mode == mode,
             title=title,
-            badge=badge,
             description=description,
-            accent_color=accent_color,
             button_group=self.button_group,
             button_id=button_id,
         )
 
     def _connect_signals(self):
         """Connects interface signals."""
-        self.ok_button.clicked.connect(self._apply_changes)
-        self.cancel_button.clicked.connect(self.reject)
+        self.button_box.accepted.connect(self._apply_changes)
+        self.button_box.rejected.connect(self.reject)
 
     def _apply_changes(self):
         """Applies configuration changes."""

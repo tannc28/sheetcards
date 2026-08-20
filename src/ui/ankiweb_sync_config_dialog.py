@@ -6,21 +6,24 @@ This module allows the user to choose between two synchronization modes:
 2. Sync - Execute sync after deck synchronization
 """
 
+from ..compat import ButtonBox_Cancel
+from ..compat import ButtonBox_Ok
+from ..compat import ButtonRole_Action
 from ..compat import DialogAccepted
 from ..compat import QButtonGroup
 from ..compat import QDialog
-from ..compat import QFrame
-from ..compat import QHBoxLayout
+from ..compat import QDialogButtonBox
+from ..compat import QGroupBox
 from ..compat import QLabel
 from ..compat import QPushButton
-from ..compat import QRadioButton
 from ..compat import QVBoxLayout
 from ..compat import safe_exec_dialog
 from ..styled_messages import StyledMessageBox
+from ..theme import MARGIN
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
-from ..theme import make_header
-from ..theme import primary_button_qss
-from ..theme import secondary_button_qss
+from ..theme import icon
+from ..theme import make_radio_choice
 
 
 class AnkiWebSyncConfigDialog(QDialog):
@@ -41,209 +44,85 @@ class AnkiWebSyncConfigDialog(QDialog):
 
         self._setup_colors()
         self._setup_ui()
-        self._apply_styles()
         self._connect_signals()
 
     def _setup_colors(self):
         """Sets up color scheme based on theme."""
         self.colors = get_colors()
 
-    def _apply_styles(self):
-        """Applies styles to the dialog."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['bg']};
-                color: {self.colors['text']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                font-size: 12pt;
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                margin-top: 16px;
-                padding: 12px;
-                padding-top: 28px;
-                background-color: {self.colors['card_bg']};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 12px;
-                top: 4px;
-                padding: 2px 10px;
-                background-color: {self.colors['card_bg']};
-                border-radius: 4px;
-                color: {self.colors['text_secondary']};
-                font-size: 12pt;
-            }}
-            QSpinBox {{
-                background-color: {self.colors['card_bg']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                padding: 8px 12px;
-                font-size: 12pt;
-                color: {self.colors['text']};
-            }}
-            QSpinBox::up-button, QSpinBox::down-button {{
-                width: 20px;
-                border: none;
-            }}
-
-        """)
-
     def _setup_ui(self):
-        """Sets up the dialog interface."""
-        layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        """A sentence, two choices, the buttons."""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACE_SECTION)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # Header section
-        layout.addWidget(
-            make_header(
-                self.colors,
-                "AnkiWeb Synchronization",
-                "Configure automatic synchronization with AnkiWeb after syncing remote decks.",
-            )
+        intro = QLabel(
+            "What should happen after Sheets2Anki finishes reading your sheets."
         )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
 
-        # Mode selection section
         self.mode_group = QButtonGroup()
 
-        # Option 1: Disabled
-        disabled_card = self._create_mode_card(
-            "none",
-            "Disabled",
-            "No automatic synchronization. Sync manually via Tools > Sync.",
-            self.colors["text_secondary"],
-            0,
-        )
-        layout.addWidget(disabled_card)
-
-        # Option 2: Sync
-        sync_card = self._create_mode_card(
-            "sync",
-            "Sync with AnkiWeb",
-            "Automatically sync with AnkiWeb after each deck synchronization. Recommended for multi-device users.",
-            self.colors["accent_success"],
-            1,
-        )
-        layout.addWidget(sync_card)
+        choices = QGroupBox("After a sync")
+        choices_layout = QVBoxLayout(choices)
+        choices_layout.setSpacing(SPACE_SECTION)
+        for index, (mode, title, description) in enumerate(
+            (
+                (
+                    "none",
+                    "Do nothing",
+                    "Your collection is uploaded when you sync it yourself, from "
+                    "Anki's own Sync button.",
+                ),
+                (
+                    "sync",
+                    "Sync with AnkiWeb",
+                    "Upload to AnkiWeb as soon as the decks have been read, so the "
+                    "new cards are on your phone before you pick it up.",
+                ),
+            )
+        ):
+            choices_layout.addWidget(
+                self._create_mode_card(mode, title, description, index)
+            )
+        layout.addWidget(choices)
 
         layout.addStretch()
 
-        # Buttons
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 10, 0, 0)
+        # Test Connection is not an OK and not a Cancel, so it goes in the box's
+        # action role rather than being a third button loose beside them.
+        self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
+        self.test_button = QPushButton("Test connection")
+        self.test_button.setIcon(icon("sync", "text_secondary"))
+        self.button_box.addButton(self.test_button, ButtonRole_Action)
 
-        # Test connection button
-        self.test_button = QPushButton("Test Connection")
-        self.test_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 20px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['primary_dark']};
-            }}
-        """)
-        self.test_button.clicked.connect(self._test_connection)
-        buttons_layout.addWidget(self.test_button)
+        save_button = self.button_box.button(ButtonBox_Ok)
+        assert save_button is not None  # just asked for, by name
+        save_button.setText("Save")
+        save_button.setIcon(icon("success", "text"))
+        save_button.setDefault(True)
+        self.save_button = save_button
+        self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        layout.addWidget(self.button_box)
 
-        buttons_layout.addStretch()
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-        self.cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.cancel_button)
-
-        self.save_button = QPushButton("✓ Save")
-        self.save_button.setStyleSheet(primary_button_qss(self.colors, "success"))
-        self.save_button.clicked.connect(self._save_settings)
-        self.save_button.setDefault(True)
-        buttons_layout.addWidget(self.save_button)
-
-        layout.addLayout(buttons_layout)
-        self.setLayout(layout)
-
-    def _create_mode_card(self, mode, title, description, accent_color, button_id):
-        """Creates a styled mode selection card."""
-        card = QFrame()
-        card.setObjectName(f"modeCard_{mode}")
-        card.setStyleSheet(f"""
-            QFrame#modeCard_{mode} {{
-                background-color: {self.colors['card_bg']};
-                border: 2px solid {self.colors['border']};
-                border-radius: 10px;
-                padding: 5px;
-            }}
-            QFrame#modeCard_{mode}:hover {{
-                border-color: {accent_color};
-            }}
-        """)
-
-        card_layout = QHBoxLayout(card)
-        card_layout.setContentsMargins(15, 12, 15, 12)
-        card_layout.setSpacing(15)
-
-        # Radio button
-        radio = QRadioButton()
-        radio.setChecked(self.current_mode == mode)
-        radio.setStyleSheet(f"""
-            QRadioButton::indicator {{
-                width: 22px;
-                height: 22px;
-            }}
-            QRadioButton::indicator:checked {{
-                background-color: {self.colors['accent_primary']};
-                border: 2px solid {self.colors['accent_primary']};
-                border-radius: 11px;
-            }}
-            QRadioButton::indicator:unchecked {{
-                background-color: {self.colors['card_bg']};
-                border: 2px solid {self.colors['border']};
-                border-radius: 11px;
-            }}
-        """)
-        self.mode_group.addButton(radio, button_id)
-        card_layout.addWidget(radio)
-
-        # Store reference
-        if mode == "none":
-            self.radio_none = radio
-        else:
-            self.radio_sync = radio
-
-        # Content
-        content_layout = QVBoxLayout()
-        content_layout.setSpacing(4)
-
-        title_label = QLabel(title)
-        title_label.setStyleSheet(
-            f"font-size: 13pt; font-weight: bold; color: {self.colors['text']};"
+    def _create_mode_card(self, mode, title, description, button_id):
+        """One radio button and the sentence under it."""
+        return make_radio_choice(
+            self.colors,
+            key=mode,
+            checked=self.current_mode == mode,
+            title=title,
+            description=description,
+            button_group=self.mode_group,
+            button_id=button_id,
         )
-        content_layout.addWidget(title_label)
-
-        desc_label = QLabel(description)
-        desc_label.setStyleSheet(
-            f"font-size: 12pt; color: {self.colors['text_secondary']};"
-        )
-        desc_label.setWordWrap(True)
-        content_layout.addWidget(desc_label)
-
-        card_layout.addLayout(content_layout, 1)
-
-        # Make entire card clickable
-        card.mousePressEvent = lambda e: radio.setChecked(True)
-
-        return card
 
     def _connect_signals(self):
-        """Connects control signals."""
-        pass  # Signals connected inline during setup
+        """The box's two roles, and the third button's own click."""
+        self.button_box.accepted.connect(self._save_settings)
+        self.button_box.rejected.connect(self.reject)
+        self.test_button.clicked.connect(self._test_connection)
 
     def _test_connection(self):
         """Tests connection with AnkiWeb."""

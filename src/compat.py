@@ -116,6 +116,10 @@ ButtonBox_No = QDialogButtonBox.StandardButton.No
 ButtonBox_Apply = QDialogButtonBox.StandardButton.Apply
 ButtonBox_Close = QDialogButtonBox.StandardButton.Close
 
+# A button that is neither an accept nor a reject — "Test connection" — so the
+# box places it on the side the platform keeps such things.
+ButtonRole_Action = QDialogButtonBox.ButtonRole.ActionRole
+
 # QMessageBox constants
 MessageBox_Yes = QMessageBox.StandardButton.Yes
 MessageBox_Ok = QMessageBox.StandardButton.Ok
