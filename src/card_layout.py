@@ -326,11 +326,6 @@ def _css(sheet_config):
         ".s2a-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
         " border-radius: 6px; border: 1px solid var(--s2a-muted);"
         " background: none; color: inherit; }\n"
-        # The way back to the voices folded away. Quieter than a play button and
-        # on a line of its own, since it belongs to the group rather than to a row.
-        ".s2a-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
-        " padding: 5px 9px; border-radius: 6px; border: 1px dashed"
-        " var(--s2a-muted); background: none; color: inherit; opacity: .7; }\n"
         ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
         ".s2a-embed-link { display: none; }\n"
@@ -780,28 +775,14 @@ _TTS_VOICES_SCRIPT = (
     "    list.appendChild(head);\n"
     "    var cols = srcs.filter(function (s) { return s.lang === lang; });\n"
     # Nineteen of an iPhone's twenty-eight en_US voices are the MacinTalk joke
-    # set, and a list where Zarvox outnumbers Samantha is a list nobody reads to
-    # the end. They are folded behind a count rather than dropped: they are on
-    # the device, someone may want one, and a voice silently missing from a list
-    # that claims to be the device's own is the worse failure. A language whose
-    # every voice is a novelty keeps them all — hiding the lot would leave a
-    # heading with nothing under it.
+    # set, and they are not offered at all: a list where Zarvox outnumbers
+    # Samantha is a list nobody reads to the end, and reading it to the end is
+    # the only thing this block is for. Nobody learns a language in the voice of
+    # a cello. A language whose every voice is a novelty keeps them — hiding the
+    # lot would leave a heading with nothing under it.
     "    var plain = here.filter(function (v) { return !novelty(v); });\n"
-    "    var extra = here.filter(novelty);\n"
-    "    if (!plain.length) { plain = extra; extra = []; }\n"
+    "    if (!plain.length) plain = here;\n"
     "    plain.forEach(function (v) { list.appendChild(makeRow(v, cols)); });\n"
-    "    if (extra.length) {\n"
-    '      var more = document.createElement("button");\n'
-    '      more.type = "button";\n'
-    '      more.className = "s2a-tts-more";\n'
-    '      more.textContent = "+ " + extra.length + " novelty voices";\n'
-    "      more.onclick = function (e) {\n"
-    "        e.preventDefault();\n"
-    "        extra.forEach(function (v) { list.insertBefore(makeRow(v, cols), more); });\n"
-    "        more.remove();\n"
-    "      };\n"
-    "      list.appendChild(more);\n"
-    "    }\n"
     "  });\n"
     "})();\n"
     "</script>"
