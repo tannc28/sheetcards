@@ -12,6 +12,7 @@ data, and turning the reverse card off later removes its cards without touching 
 note's content.
 """
 
+import json
 from html import escape
 
 from .sheet_config import ALIGNMENTS
@@ -325,6 +326,11 @@ def _css(sheet_config):
         ".s2a-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
         " border-radius: 6px; border: 1px solid var(--s2a-muted);"
         " background: none; color: inherit; }\n"
+        # The way back to the voices folded away. Quieter than a play button and
+        # on a line of its own, since it belongs to the group rather than to a row.
+        ".s2a-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
+        " padding: 5px 9px; border-radius: 6px; border: 1px dashed"
+        " var(--s2a-muted); background: none; color: inherit; opacity: .7; }\n"
         ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
         ".s2a-embed-link { display: none; }\n"
@@ -617,6 +623,37 @@ _CODE_SCRIPT = (
 )
 
 
+# Apple's MacinTalk novelty voices, which iOS still ships and Anki still
+# lists: a bell, a cello, a robot, a whisper. Lower-cased, spaces where the
+# voice name has them, matched against the spelled-out name rather than the
+# one Anki prints. Fixed since the nineties; nothing else on any platform
+# happens to be called Zarvox, so the list is inert everywhere else.
+_NOVELTY_VOICES = (
+    "albert",
+    "bad news",
+    "bahh",
+    "bells",
+    "boing",
+    "bubbles",
+    "cellos",
+    "deranged",
+    "fred",
+    "good news",
+    "hysterical",
+    "jester",
+    "junior",
+    "kathy",
+    "organ",
+    "pipe organ",
+    "ralph",
+    "superstar",
+    "trinoids",
+    "whisper",
+    "wobble",
+    "zarvox",
+)
+
+
 _TTS_VOICES_SCRIPT = (
     "<script>\n"
     "(function () {\n"
@@ -665,7 +702,10 @@ _TTS_VOICES_SCRIPT = (
     "  raw.remove();\n"
     '  function norm(lang) { return String(lang || "").toLowerCase().replace(/-/g, "_"); }\n'
     '  function stem(lang) { return norm(lang).split("_")[0]; }\n'
+    '  function spell(name) { return name.replace(/^[A-Za-z]+_/, "").replace(/_/g, " "); }\n'
     "  function better(v) { return /\\((?:premium|enhanced)\\)/i.test(v.name) ? 0 : 1; }\n"
+    "  var JUNK = " + json.dumps(_NOVELTY_VOICES) + ";\n"
+    "  function novelty(v) { return JUNK.indexOf(spell(v.name).toLowerCase()) !== -1; }\n"
     "  var rows = all.filter(function (v) {\n"
     "    return wanted.some(function (w) { return norm(w) === norm(v.lang); });\n"
     "  });\n"
@@ -702,13 +742,30 @@ _TTS_VOICES_SCRIPT = (
     # written as underscores. The Web Speech API knows the same voice as
     # Ava (Premium), so the name is spelled back before it is looked for, and a
     # device exposing only the plain voice still answers to the base name.
-    '    var want = voice.name.replace(/^[A-Za-z]+_/, "").replace(/_/g, " ");\n'
+    "    var want = spell(voice.name);\n"
     '    var base = want.replace(/\\s*\\(.*\\)$/, "");\n'
     "    var have = speechSynthesis.getVoices();\n"
     "    var hit = have.filter(function (o) { return o.name === want; })[0] ||\n"
     "      have.filter(function (o) { return o.name.indexOf(base) !== -1; })[0];\n"
     "    if (hit) { u.voice = hit; u.lang = hit.lang; }\n"
     "    speechSynthesis.speak(u);\n"
+    "  }\n"
+    "  function makeRow(v, cols) {\n"
+    '    var row = document.createElement("div");\n'
+    '    row.className = "s2a-tts-row";\n'
+    '    var snippet = document.createElement("code");\n'
+    '    snippet.textContent = "voices=" + v.name;\n'
+    "    row.appendChild(snippet);\n"
+    "    if (canSpeak) cols.forEach(function (s) {\n"
+    '      var b = document.createElement("button");\n'
+    '      b.type = "button";\n'
+    '      b.className = "s2a-tts-play";\n'
+    '      b.textContent = "▶ " + s.col;\n'
+    '      b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);\n'
+    "      b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };\n"
+    "      row.appendChild(b);\n"
+    "    });\n"
+    "    return row;\n"
     "  }\n"
     "  wanted.forEach(function (lang) {\n"
     "    var here = rows.filter(function (v) { return norm(v.lang) === norm(lang); });\n"
@@ -722,23 +779,29 @@ _TTS_VOICES_SCRIPT = (
     '    head.textContent = "tts=" + lang;\n'
     "    list.appendChild(head);\n"
     "    var cols = srcs.filter(function (s) { return s.lang === lang; });\n"
-    "    here.forEach(function (v) {\n"
-    '      var row = document.createElement("div");\n'
-    '      row.className = "s2a-tts-row";\n'
-    '      var snippet = document.createElement("code");\n'
-    '      snippet.textContent = "voices=" + v.name;\n'
-    "      row.appendChild(snippet);\n"
-    "      if (canSpeak) cols.forEach(function (s) {\n"
-    '        var b = document.createElement("button");\n'
-    '        b.type = "button";\n'
-    '        b.className = "s2a-tts-play";\n'
-    '        b.textContent = "▶ " + s.col;\n'
-    '        b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);\n'
-    "        b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };\n"
-    "        row.appendChild(b);\n"
-    "      });\n"
-    "      list.appendChild(row);\n"
-    "    });\n"
+    # Nineteen of an iPhone's twenty-eight en_US voices are the MacinTalk joke
+    # set, and a list where Zarvox outnumbers Samantha is a list nobody reads to
+    # the end. They are folded behind a count rather than dropped: they are on
+    # the device, someone may want one, and a voice silently missing from a list
+    # that claims to be the device's own is the worse failure. A language whose
+    # every voice is a novelty keeps them all — hiding the lot would leave a
+    # heading with nothing under it.
+    "    var plain = here.filter(function (v) { return !novelty(v); });\n"
+    "    var extra = here.filter(novelty);\n"
+    "    if (!plain.length) { plain = extra; extra = []; }\n"
+    "    plain.forEach(function (v) { list.appendChild(makeRow(v, cols)); });\n"
+    "    if (extra.length) {\n"
+    '      var more = document.createElement("button");\n'
+    '      more.type = "button";\n'
+    '      more.className = "s2a-tts-more";\n'
+    '      more.textContent = "+ " + extra.length + " novelty voices";\n'
+    "      more.onclick = function (e) {\n"
+    "        e.preventDefault();\n"
+    "        extra.forEach(function (v) { list.insertBefore(makeRow(v, cols), more); });\n"
+    "        more.remove();\n"
+    "      };\n"
+    "      list.appendChild(more);\n"
+    "    }\n"
     "  });\n"
     "})();\n"
     "</script>"

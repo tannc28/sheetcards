@@ -39,10 +39,22 @@ Enhanced: {{tts en-US voices=Apple_Ava_(Enhanced):Front}}
 {{tts en-US voices=Apple_Ava_(Enhanced):Front}}
 {{tts en-US voices=Apple_Ava_(Premium):Front}}
 {{tts en-US voices=Apple_Bad_News:Front}}
+{{tts en-US voices=Apple_Bells:Front}}
+{{tts en-US voices=Apple_Boing:Front}}
+{{tts en-US voices=Apple_Fred:Front}}
+{{tts en-US voices=Apple_Grandma:Front}}
 {{tts en-US voices=Apple_Samantha:Front}}
+{{tts en-US voices=Apple_Trinoids:Front}}
 {{tts en-US voices=Apple_Zarvox:Front}}
 {{tts vi-VN voices=Apple_Linh:Front}}
 {{tts zh-CN voices=Apple_Tingting:Front}}"""
+
+
+# A device where the only voice for the language is one of the joke set. Folding
+# it away would leave a heading with nothing under it.
+ONLY_JUNK = """Available TTS voices:
+{{tts en-US voices=Apple_Zarvox:Front}}
+{{tts vi-VN voices=Apple_Linh:Front}}"""
 
 
 def _script():
@@ -59,8 +71,19 @@ function El(cls) {
   this.className = cls || ""; this.dataset = {}; this.children = [];
   this.textContent = ""; this._q = {}; this._qa = {};
 }
-El.prototype.appendChild = function (c) { this.children.push(c); return c; };
-El.prototype.remove = function () { this.removed = true; };
+El.prototype.appendChild = function (c) { c.parent = this; this.children.push(c); return c; };
+El.prototype.insertBefore = function (c, before) {
+  c.parent = this;
+  this.children.splice(this.children.indexOf(before), 0, c);
+  return c;
+};
+El.prototype.remove = function () {
+  this.removed = true;
+  if (this.parent) {
+    var at = this.parent.children.indexOf(this);
+    if (at >= 0) this.parent.children.splice(at, 1);
+  }
+};
 El.prototype.setAttribute = function () {};
 El.prototype.querySelector = function (s) { return this._q[s] || null; };
 El.prototype.querySelectorAll = function (s) { return this._qa[s] || []; };
@@ -91,9 +114,16 @@ global.window = SPEAKS ? { speechSynthesis: {} } : {};
 
 SCRIPT
 
+if (REVEAL) {
+  list.children
+    .filter(function (c) { return c.className === "s2a-tts-more"; })
+    .forEach(function (b) { b.onclick({ preventDefault: function () {} }); });
+}
+
 var out = { note: note.removed ? null : note.textContent, message: "", rows: [] };
 list.children.forEach(function (c) {
   if (c.className === "s2a-tts-lang") { out.rows.push({ lang: c.textContent }); return; }
+  if (c.className === "s2a-tts-more") { out.rows.push({ more: c.textContent }); return; }
   out.rows.push({
     voice: c.children[0].textContent,
     buttons: c.children.slice(1).map(function (b) { return b.textContent; }),
@@ -106,13 +136,20 @@ console.log(JSON.stringify(out));
 """
 
 
-def _run(dump, wanted="en_US", columns=(("Word", "en_US", "hold"),), speaks=True):
+def _run(
+    dump,
+    wanted="en_US",
+    columns=(("Word", "en_US", "hold"),),
+    speaks=True,
+    reveal=False,
+):
     cols = [{"col": c, "lang": lang, "text": t} for c, lang, t in columns]
     script = (
         f"var DUMP = {json.dumps(dump)};\n"
         f"var WANTED = {json.dumps(wanted)};\n"
         f"var COLUMNS = {json.dumps(cols)};\n"
-        f"var SPEAKS = {json.dumps(speaks)};\n" + _HARNESS.replace("SCRIPT", _script())
+        f"var SPEAKS = {json.dumps(speaks)};\n"
+        f"var REVEAL = {json.dumps(reveal)};\n" + _HARNESS.replace("SCRIPT", _script())
     )
     result = subprocess.run(
         [NODE, "-e", script], capture_output=True, text=True, cwd=ROOT, timeout=30
@@ -219,6 +256,52 @@ class TestWhenNothingMatches:
         # written for and sat above an empty box.
         assert _run(IPHONE, wanted="en_UK")["note"] is None
         assert _run("Available TTS voices:")["note"] is None
+
+
+class TestTheJokeVoicesAreFoldedAway:
+    """Nineteen of an iPhone's twenty-eight en_US voices are MacinTalk jokes.
+
+    A bell, a cello, a robot, a whisper. They are on the device, so they are not
+    dropped — a list claiming to be the device's own that quietly is not is the
+    worse failure — but a list where Zarvox outnumbers Samantha is one nobody
+    reads to the end.
+    """
+
+    def test_the_real_voices_are_what_shows(self):
+        voices = _voices(_run(IPHONE))
+        assert "Samantha" in " ".join(voices)
+        for joke in ("Zarvox", "Bells", "Boing", "Trinoids", "Bad_News", "Albert"):
+            assert joke not in " ".join(voices)
+
+    def test_the_ones_folded_away_are_counted_not_hidden(self):
+        more = [r["more"] for r in _run(IPHONE)["rows"] if "more" in r]
+        assert more == ["+ 7 novelty voices"]
+
+    def test_pressing_it_puts_them_back(self):
+        before = _voices(_run(IPHONE))
+        after = _voices(_run(IPHONE, reveal=True))
+        assert len(after) == len(before) + 7
+        assert "Zarvox" in " ".join(after)
+
+    def test_they_come_back_under_their_own_language(self):
+        # Inserted where the button stood, not appended past the next heading.
+        rows = _run(IPHONE, reveal=True)["rows"]
+        assert "lang" in rows[0]
+        assert all("lang" not in r for r in rows[1:])
+
+    def test_nothing_is_left_offering_a_press(self):
+        assert not [r for r in _run(IPHONE, reveal=True)["rows"] if "more" in r]
+
+    def test_a_language_of_nothing_but_jokes_keeps_them(self):
+        out = _run(ONLY_JUNK)
+        assert "Zarvox" in " ".join(_voices(out))
+        assert not [r for r in out["rows"] if "more" in r]
+
+    def test_a_joke_name_from_another_engine_is_not_guessed_at(self):
+        # The list is Apple's, matched whole. A voice that merely contains one of
+        # the words is a voice, not a joke.
+        dump = "{{tts en-US voices=Google_Bells_of_Dublin:Front}}"
+        assert "Bells_of_Dublin" in " ".join(_voices(_run(dump)))
 
 
 if __name__ == "__main__":
