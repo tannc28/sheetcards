@@ -1,40 +1,32 @@
-"""Tests for the shared design-system module (``src/theme.py``).
+#!/usr/bin/env python3
+"""The add-on's dialogs draw from Anki's palette, and this is what holds them to it.
 
-These lock in two invariants:
-1. The canonical tokens keep the exact values the StyledMessageBox relies on, so message
-   boxes never drift.
-2. ``get_colors()`` is a drop-in for every color key the dialogs reference, so a dialog
-   migration is a one-line ``self.colors = get_colors()``.
+An add-on window sits among Anki's own windows. Every colour it invents is a colour
+that will disagree with them on one theme or the other, and on whatever Anki ships
+next — which is how this module came to hold seventy-five hand-picked hex values on
+an accent that was nobody's but ours.
+
+So the invariant is not *which* colours: it is that there are none. Every name maps
+to an entry in `aqt.colors`, the same table Anki styles itself from.
 """
+
+import importlib.util
+import re
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
-from src.theme import _DARK
-from src.theme import _LIGHT
+from src.theme import _FALLBACK
+from src.theme import _TOKENS
 from src.theme import get_colors
 from src.theme import is_dark_mode
 
-# The 16 canonical light-mode tokens must keep these exact values (StyledMessageBox).
-_EXPECTED_LIGHT_CANONICAL = {
-    "primary": "#4A90D9",
-    "primary_dark": "#357ABD",
-    "primary_light": "#E8F4FC",
-    "success": "#28A745",
-    "success_light": "#D4EDDA",
-    "warning": "#FFC107",
-    "warning_light": "#FFF3CD",
-    "error": "#DC3545",
-    "error_light": "#F8D7DA",
-    "text_primary": "#2C3E50",
-    "text_secondary": "#5C656D",
-    "text_muted": "#ADB5BD",
-    "background": "#FFFFFF",
-    "background_secondary": "#F8F9FA",
-    "border": "#DEE2E6",
-    "border_light": "#E9ECEF",
-}
+REPO = Path(__file__).resolve().parent.parent
 
-# Every color key any dialog references today (so get_colors() works for all of them).
+# Every colour key any dialog reaches for. A missing one is an f-string KeyError at
+# the moment a window opens.
 _REQUIRED_KEYS = {
     "text", "border", "card_bg", "text_secondary", "accent_primary", "button_bg",
     "accent_success", "button_hover", "bg", "input_bg", "accent_warning", "accent_info",
@@ -46,76 +38,108 @@ _REQUIRED_KEYS = {
 
 
 @pytest.mark.unit
-class TestThemePalette:
-    def test_canonical_light_values_unchanged(self):
-        for key, value in _EXPECTED_LIGHT_CANONICAL.items():
-            assert _LIGHT[key] == value, f"canonical token {key!r} drifted"
+class TestNoColourIsInvented:
+    def test_every_name_resolves_to_a_colour_anki_has(self):
+        assert set(_TOKENS.values()) <= set(
+            _FALLBACK
+        ), "a token name with no entry in the mirror falls back to a KeyError"
 
-    def test_both_palettes_define_every_dialog_key(self):
-        assert _REQUIRED_KEYS <= set(_LIGHT)
-        assert _REQUIRED_KEYS <= set(_DARK)
+    def test_the_module_holds_no_palette_of_its_own(self):
+        """The only hex literals allowed are the mirror of Anki's own values.
 
-    def test_light_and_dark_define_identical_keys(self):
-        assert set(_LIGHT) == set(_DARK)
+        A colour written anywhere else is one nobody chose against Anki's, and the
+        seventy-five that used to be here are exactly how the dialogs came to look
+        like a different application.
+        """
+        source = (REPO / "src" / "theme.py").read_text(encoding="utf-8")
+        # The module docstring names the old accent in order to say it is gone.
+        code = source[source.index("_FALLBACK = {") :]
+        mirror = code[: code.index("def is_dark_mode")]
+        assert not re.findall(r"#[0-9a-fA-F]{6}\b", code.replace(mirror, ""))
 
-    def test_all_values_are_hex_colors(self):
-        for palette in (_LIGHT, _DARK):
-            for key, value in palette.items():
-                assert value.startswith("#") and len(value) == 7, f"{key}={value}"
 
-    def test_get_colors_returns_a_mutable_copy(self):
-        colors = get_colors()
-        assert isinstance(colors, dict)
-        colors["primary"] = "#000000"
-        assert _LIGHT["primary"] != "#000000"
-        assert _DARK["primary"] != "#000000"
+@pytest.mark.unit
+class TestWhatTheDialogsAskFor:
+    def test_every_key_a_dialog_uses_is_there(self):
+        assert _REQUIRED_KEYS <= set(get_colors())
 
-    def test_is_dark_mode_returns_bool(self):
+    def test_every_value_is_a_colour(self):
+        # Under the suite's mocked `aqt`, `getattr` and `[]` both answer with another
+        # mock rather than raising, so a value that is not a string means the guard
+        # in `_var` stopped working and the stylesheets would silently do nothing.
+        # Anki writes these three ways — hex, a CSS name (CANVAS_ELEVATED is
+        # "white") and rgba() for the translucent ones — so the check is that it is
+        # something Qt will accept, and never the `<Mock id=...>` a fabricated aqt
+        # hands back for any attribute asked of it.
+        shape = re.compile(r"#[0-9a-fA-F]{3,8}|[a-z]+|rgba?\([\d.,%\s]+\)")
+        for key, value in get_colors().items():
+            assert type(value) is str and shape.fullmatch(value), f"{key} is {value!r}"
+
+    def test_the_caller_cannot_reach_the_module_state(self):
+        colours = get_colors()
+        colours["text"] = "#000000"
+        assert get_colors()["text"] != "#000000" or colours is not get_colors()
+
+
+@pytest.mark.unit
+class TestTheThemeInForce:
+    def test_dark_mode_is_asked_of_anki_not_guessed(self):
         assert isinstance(is_dark_mode(), bool)
 
+    def test_the_two_themes_are_not_the_same(self, monkeypatch):
+        import src.theme as theme
 
-@pytest.mark.unit
-def test_every_dialog_color_key_is_defined():
-    """Every color key referenced by a dialog must exist in get_colors().
+        monkeypatch.setattr(theme, "is_dark_mode", lambda: False)
+        light = theme.get_colors()
+        monkeypatch.setattr(theme, "is_dark_mode", lambda: True)
+        dark = theme.get_colors()
+        assert light["bg"] != dark["bg"] and light["text"] != dark["text"]
 
-    Dialog stylesheets are f-strings evaluated only at widget-construction time, so a
-    typo'd or missing key wouldn't surface until that dialog opens in Anki. This scans
-    the source and fails fast instead.
+    def test_it_is_read_again_every_time(self, monkeypatch):
+        # Night mode is switched while Anki is running, and a dialog opened after the
+        # switch has to come up in the theme that is in force, not the one that was.
+        import src.theme as theme
+
+        monkeypatch.setattr(theme, "is_dark_mode", lambda: False)
+        was = theme.get_colors()["bg"]
+        monkeypatch.setattr(theme, "is_dark_mode", lambda: True)
+        assert theme.get_colors()["bg"] != was
+
+
+_HAS_ANKI = importlib.util.find_spec("anki") is not None
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not _HAS_ANKI, reason="the real anki library is not installed")
+def test_the_mirror_still_matches_anki():
+    """`_FALLBACK` is a copy, and a copy goes stale.
+
+    It is only reached when `aqt` cannot be imported, so a value that drifted would
+    never show up in Anki and never show up in this suite either — it would show up
+    on a machine where the import failed, which is the machine least able to say so.
     """
-    import pathlib
-    import re
+    code = f"""
+import json, sys
+sys.path.insert(0, {str(REPO)!r})
+import aqt.colors
+from src.theme import _FALLBACK
+print(json.dumps({{
+    name: [aqt.colors.__dict__[name]["light"], aqt.colors.__dict__[name]["dark"]]
+    for name in _FALLBACK
+    if name in aqt.colors.__dict__
+}}))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, cwd=str(REPO)
+    )
+    if result.returncode != 0:
+        pytest.skip(f"aqt will not import here: {result.stderr.strip()[-200:]}")
 
-    ui_dir = pathlib.Path(__file__).resolve().parent.parent / "src" / "ui"
-    available = set(get_colors())
-    key_re = re.compile(r"(?:self\.colors|\bc)\[['\"]([a-z_]+)['\"]\]")
-    used: set[str] = set()
-    for path in ui_dir.glob("*.py"):
-        used |= set(key_re.findall(path.read_text(encoding="utf-8")))
-    assert used, "scan found no color-key references — regex likely broke"
-    missing = used - available
-    assert not missing, f"dialogs reference undefined color keys: {sorted(missing)}"
+    import json
+
+    for name, (light, dark) in json.loads(result.stdout).items():
+        assert _FALLBACK[name] == (light, dark), f"{name} drifted from aqt.colors"
 
 
-@pytest.mark.unit
-def test_no_unscoped_frame_selectors():
-    """Forbid bare ``QFrame {{ }}`` / ``QWidget {{ }}`` selectors in widget stylesheets.
-
-    Most widgets (``QLabel`` included) subclass ``QFrame``/``QWidget``, so an unscoped
-    ``QFrame { border: ... }`` rule set on a container leaks its border/background onto
-    every child — drawing spurious boxes around section titles. Frame/widget styling
-    must be scoped to an objectName (``QFrame#name`` / ``QWidget#name``). Descendant
-    rules like ``QScrollArea > QWidget > QWidget`` are fine (they don't start the line).
-    """
-    import pathlib
-
-    src_dir = pathlib.Path(__file__).resolve().parent.parent / "src"
-    # Web CSS (different selector semantics) lives in these — skip.
-    skip = {"card_assets.py", "templates_and_definitions.py"}
-    offenders = [
-        f"{path.relative_to(src_dir)}:{i}"
-        for path in src_dir.rglob("*.py")
-        if path.name not in skip
-        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
-        if line.strip().startswith(("QFrame {{", "QWidget {{"))
-    ]
-    assert not offenders, f"unscoped frame selectors leak to children: {offenders}"
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -1,15 +1,18 @@
-"""
-Dialog for synchronizing active decks.
+"""Which connected decks this sync should read.
 
-This module provides an interface for the user
-to select and synchronize active decks in the system.
+The window is drawn the way Anki draws its own: a sentence, a list, the buttons.
+Nothing here sets a background, a border or a radius — Anki styles every standard
+widget through a global stylesheet, so the most native thing this file can do is
+stay out of the way. The only rule it writes is a text colour, and that colour is
+one of Anki's.
 """
 
+from ..compat import ButtonBox_Cancel
+from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
 from ..compat import QCheckBox
 from ..compat import QDialog
-from ..compat import QFrame
-from ..compat import QGroupBox
+from ..compat import QDialogButtonBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
@@ -21,11 +24,10 @@ from ..compat import safe_exec
 from ..config_manager import get_active_decks
 from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
-from ..theme import base_dialog_qss
+from ..theme import MARGIN
+from ..theme import SPACE_ELEMENT
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
-from ..theme import make_header
-from ..theme import primary_button_qss
-from ..theme import secondary_button_qss
 from .url_helpers import copy_url_to_clipboard
 
 
@@ -41,18 +43,17 @@ class SyncDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Synchronize Decks")
         self.setModal(True)
-        self.setMinimumWidth(750)
-        self.setMinimumHeight(650)
+        # Sized like one of Anki's own dialogs rather than to fill the screen: the
+        # list is the only thing here that wants room, and it scrolls.
+        self.setMinimumSize(520, 420)
+        self.resize(600, 480)
 
         self.active_decks = []
         self.deck_checkboxes = {}  # hash_key -> QCheckBox
         self.deck_hash_mapping = {}  # URL -> hash_key (for compatibility)
 
-        # Define color scheme
         self._setup_colors()
         self._setup_ui()
-        self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._load_decks()
         self._load_persistent_selection()
         self._connect_signals()
@@ -61,139 +62,70 @@ class SyncDialog(QDialog):
         """Sets up color scheme based on theme."""
         self.colors = get_colors()
 
-    def _apply_styles(self):
-        """Applies styles to the dialog."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['bg']};
-                color: {self.colors['text']};
-            }}
-            QScrollArea {{
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                background-color: {self.colors['card_bg']};
-            }}
-            QScrollArea > QWidget > QWidget {{
-                background-color: {self.colors['card_bg']};
-            }}
-
-        """)
-
     def _setup_ui(self):
-        """Sets up the user interface."""
-        layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        """A sentence, the list, the buttons — Anki's own shape for a dialog."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
+        layout.setSpacing(SPACE_SECTION)
 
-        # Header section
-        layout.addWidget(
-            make_header(
-                self.colors,
-                "Synchronize Decks",
-                "Select which remote decks you want to synchronize. Your selection will be remembered for future synchronizations.",
-            )
+        intro = QLabel(
+            "Choose which connected decks to read again. "
+            "Your choice is remembered for next time."
         )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
 
-        # Remote decks section
-        remote_group = QGroupBox("Available Remote Decks")
-        remote_layout = QVBoxLayout()
-        remote_layout.setSpacing(10)
-
-        # Scroll area for checkboxes
+        # A plain scroll area. The rows inside it are checkboxes, so the list looks
+        # like Anki's own lists without being told to.
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setMinimumHeight(100)  # Reduced minimum height
-
         self.checkboxes_widget = QWidget()
-        self.checkboxes_layout = QVBoxLayout()
-        self.checkboxes_widget.setLayout(self.checkboxes_layout)
-        self.checkboxes_layout.setContentsMargins(10, 10, 10, 10)
-        self.checkboxes_layout.setSpacing(5)
-
+        self.checkboxes_layout = QVBoxLayout(self.checkboxes_widget)
+        self.checkboxes_layout.setContentsMargins(
+            SPACE_ELEMENT, SPACE_ELEMENT, SPACE_ELEMENT, SPACE_ELEMENT
+        )
+        self.checkboxes_layout.setSpacing(SPACE_ELEMENT)
         scroll_area.setWidget(self.checkboxes_widget)
-        remote_layout.addWidget(scroll_area, 1)  # Give scroll area stretch factor
+        layout.addWidget(scroll_area, 1)
 
-        remote_group.setLayout(remote_layout)
-        layout.addWidget(remote_group, 1)  # Give group box stretch factor
-
-        # Bulk selection buttons - OUTSIDE the group box
+        # The three bulk actions read as verbs, without a tick or a cross in front
+        # of them: no button in Anki carries a glyph, and these were the loudest
+        # thing in the window.
         buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(10)
-        buttons_layout.setContentsMargins(0, 5, 0, 5)
-
-        btn_style = f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-                border-color: {self.colors['accent_info']};
-            }}
-        """
-
-        self.select_all_button = QPushButton("✓ Select All")
-        self.select_all_button.setStyleSheet(btn_style)
+        buttons_layout.setSpacing(SPACE_ELEMENT)
+        self.select_all_button = QPushButton("Select All")
         self.select_all_button.setToolTip("Selects all decks for synchronization")
-
-        self.select_none_button = QPushButton("✗ Deselect All")
-        self.select_none_button.setStyleSheet(btn_style)
+        self.select_none_button = QPushButton("Select None")
         self.select_none_button.setToolTip("Deselects all decks")
-
-        self.invert_selection_button = QPushButton("⇄ Invert")
-        self.invert_selection_button.setStyleSheet(btn_style)
+        self.invert_selection_button = QPushButton("Invert")
         self.invert_selection_button.setToolTip("Inverts current selection")
-
-        buttons_layout.addWidget(self.select_all_button)
-        buttons_layout.addWidget(self.select_none_button)
-        buttons_layout.addWidget(self.invert_selection_button)
+        for button in (
+            self.select_all_button,
+            self.select_none_button,
+            self.invert_selection_button,
+        ):
+            buttons_layout.addWidget(button)
         buttons_layout.addStretch()
-
         layout.addLayout(buttons_layout)
 
-        # Selection information
+        # A count, in the colour Anki uses for a remark. It was a filled pill of
+        # white-on-green, which is how a status line ends up louder than the list
+        # it is counting.
         self.selection_info = QLabel("")
-        self.selection_info.setObjectName("selectionInfo")
+        self.selection_info.setStyleSheet(f"color: {self.colors['text_secondary']};")
         layout.addWidget(self.selection_info)
 
-        # Main buttons
-        main_buttons_layout = QHBoxLayout()
-        main_buttons_layout.setContentsMargins(0, 10, 0, 0)
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-
-        self.sync_button = QPushButton("Synchronize Selected")
-        self.sync_button.setStyleSheet(primary_button_qss(self.colors, "success"))
-
-        main_buttons_layout.addStretch()
-        main_buttons_layout.addWidget(self.cancel_button)
-        main_buttons_layout.addWidget(self.sync_button)
-
-        layout.addLayout(main_buttons_layout)
-        self.setLayout(layout)
-
-    def _get_copy_button_style(self):
-        """Returns the style for copy URL buttons."""
-        return f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['accent_info']};
-                color: white;
-                border-color: {self.colors['accent_info']};
-            }}
-        """
+        # A button box rather than two buttons in a row: it is what puts OK and
+        # Cancel in the order this platform puts them in, which is the one thing a
+        # hand-built row of buttons can never get right on every machine at once.
+        self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
+        sync_button = self.button_box.button(ButtonBox_Ok)
+        assert sync_button is not None  # just asked for, by name
+        sync_button.setText("Synchronize")
+        sync_button.setDefault(True)
+        self.sync_button = sync_button
+        self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        layout.addWidget(self.button_box)
 
     def _connect_signals(self):
         """Connects interface signals."""
@@ -202,9 +134,8 @@ class SyncDialog(QDialog):
         self.select_none_button.clicked.connect(self._select_none)
         self.invert_selection_button.clicked.connect(self._invert_selection)
 
-        # Main buttons
-        self.sync_button.clicked.connect(self._sync_selected)
-        self.cancel_button.clicked.connect(self.reject)
+        self.button_box.accepted.connect(self._sync_selected)
+        self.button_box.rejected.connect(self.reject)
 
     def _load_decks(self):
         """Loads active decks as checkboxes."""
@@ -227,22 +158,13 @@ class SyncDialog(QDialog):
             # Get remote deck name
             remote_name = get_deck_remote_name(remote_deck_url) or "Remote Deck"
 
-            # Create row widget
-            row_widget = QFrame()
-            row_widget.setObjectName(f"row_{hash_key[:8]}")
-            row_widget.setStyleSheet(f"""
-                QFrame#row_{hash_key[:8]} {{
-                    background-color: {self.colors['card_bg']};
-                    border-radius: 6px;
-                    padding: 4px;
-                }}
-                QFrame#row_{hash_key[:8]}:hover {{
-                    background-color: {self.colors['row_hover']};
-                }}
-            """)
+            # One row, drawn as nothing: a widget holding a checkbox, a count and a
+            # button. It was a rounded card with a hover tint, which made a list of
+            # three decks look like a pricing page.
+            row_widget = QWidget()
             row_layout = QHBoxLayout(row_widget)
-            row_layout.setContentsMargins(8, 6, 8, 6)
-            row_layout.setSpacing(10)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(SPACE_ELEMENT)
 
             # Check if deck exists locally
             if deck and deck["name"].strip().lower() != "default":
@@ -264,15 +186,8 @@ class SyncDialog(QDialog):
                     f"Remote deck: {remote_name}\nLocal deck: {local_deck_name}\nURL: {remote_deck_url}"
                 )
 
-                # Card count label
                 count_label = QLabel(f"{card_count} cards")
-                count_label.setStyleSheet(f"""
-                    color: {self.colors['text_secondary']};
-                    font-size: 12pt;
-                    padding: 2px 8px;
-                    background-color: {self.colors['bg']};
-                    border-radius: 4px;
-                """)
+                count_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
 
                 row_layout.addWidget(checkbox)
                 row_layout.addWidget(count_label)
@@ -283,30 +198,22 @@ class SyncDialog(QDialog):
                     get_deck_local_name(remote_deck_url) or "Deleted Local Deck"
                 )
 
-                checkbox_text = f"⚠️ {remote_name}"
-                checkbox = QCheckBox(checkbox_text)
+                checkbox = QCheckBox(remote_name)
                 checkbox.setToolTip(
                     f"Remote deck: {remote_name}\nLocal deck was deleted: {local_deck_name}\nWill be recreated during synchronization.\nURL: {remote_deck_url}"
                 )
 
-                # Warning label
+                # The one thing in the list that is not routine, so it is the one
+                # thing that is not the colour of the text around it.
                 warning_label = QLabel("Will be recreated")
-                warning_label.setStyleSheet(f"""
-                    color: {self.colors['accent_warning']};
-                    font-size: 12pt;
-                    padding: 2px 8px;
-                    background-color: rgba(255, 152, 0, 0.1);
-                    border-radius: 4px;
-                """)
+                warning_label.setStyleSheet(f"color: {self.colors['accent_warning']};")
 
                 row_layout.addWidget(checkbox)
                 row_layout.addWidget(warning_label)
                 card_count = 0
 
             # Copy URL button
-            copy_button = QPushButton("Copy URL")
-            copy_button.setMaximumWidth(80)
-            copy_button.setStyleSheet(self._get_copy_button_style())
+            copy_button = QPushButton("Copy link")
             copy_button.clicked.connect(
                 lambda checked, u=remote_deck_url: self._copy_url(u)
             )
@@ -400,26 +307,16 @@ class SyncDialog(QDialog):
         )
         total_count = len(self.deck_checkboxes)
 
-        # Update informative text
-        if selected_count == 0:
-            info_text = "⚠️ No deck selected"
-            bg_color = self.colors["border"]
+        # A count, said once. Three different colours of filled pill for "none",
+        # "some" and "all" was three ways of saying a number the reader can see.
+        if not total_count:
+            self.selection_info.setText("No connected decks")
         elif selected_count == total_count:
-            info_text = f"✓ All {total_count} deck(s) selected"
-            bg_color = self.colors["accent_success"]
+            self.selection_info.setText(f"All {total_count} decks selected")
         else:
-            info_text = f"📋 {selected_count} of {total_count} deck(s) selected"
-            bg_color = self.colors["accent_info"]
-
-        self.selection_info.setText(info_text)
-        self.selection_info.setStyleSheet(f"""
-            padding: 12px 16px;
-            background-color: {bg_color};
-            color: white;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 12pt;
-        """)
+            self.selection_info.setText(
+                f"{selected_count} of {total_count} decks selected"
+            )
 
         # Enable/disable sync button
         self.sync_button.setEnabled(selected_count > 0)

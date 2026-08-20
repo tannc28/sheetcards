@@ -1,20 +1,53 @@
-"""Central design system for Sheets2Anki's Qt UI.
+"""Sheets2Anki's Qt UI draws from Anki's palette, not from one of its own.
 
-Single source of truth for **theme detection** and the **color palette** so every
-dialog draws from one harmonized set of tokens instead of hardcoding its own colors.
-The accent identity is blue: ``#4A90D9`` (light) / ``#5BA3E0`` (dark).
+An add-on window sits among Anki's own windows, and every colour it invents is a
+colour that will disagree with them — on one of the two themes if not both, and on
+whatever Anki ships next. So there is no palette here. ``get_colors()`` resolves
+each name against **`aqt.colors`**, the same table Anki styles itself from, through
+``theme_manager.var()``, which picks the light or dark value the way the rest of the
+app does.
 
-Historically each dialog re-implemented ``is_dark_mode()`` (via the unreliable
-``bg_color.lightness() < 128``) and defined its own inline light/dark palette, which
-produced ~75 distinct hardcoded colors mixing Material Design and Bootstrap. This module
-replaces all of that.
+This module used to hold ~75 hand-picked hex values across two dicts, on an accent
+(``#4A90D9``) that was nobody's but ours: white cards on Anki's grey canvas, a blue
+gradient banner over every dialog, buttons with a border radius Anki does not use.
+It looked like a Bootstrap page embedded in Anki, which is what it was.
 
-``get_colors()`` returns a **superset** dict: the canonical semantic tokens (the ones
-that originated in ``styled_messages.py``) PLUS back-compat alias keys that the existing
-dialogs already reference (``accent_primary``, ``bg``, ``card_bg``, ``button_bg``,
-``input_bg``, …). That way migrating a dialog is a one-line change
-(``self.colors = get_colors()``) and ``styled_messages`` keeps its exact values.
+The key names are kept because the dialogs that have not been rewritten yet still
+ask for them; each now resolves to the nearest thing Anki actually has. A dialog
+being rewritten should stop asking altogether — Anki styles `QPushButton`,
+`QLineEdit`, `QListWidget` and the rest through a global stylesheet, so **the most
+native thing a dialog can do is set no stylesheet at all**.
 """
+
+# Anki's own values, copied for the case where aqt is not importable — the test
+# suite mocks it away. `aqt.colors` is the source; this is a mirror of the handful
+# of entries used here, and `_var` prefers the real thing whenever it is there.
+_FALLBACK = {
+    "CANVAS": ("#f5f5f5", "#2c2c2c"),
+    "CANVAS_ELEVATED": ("white", "#363636"),
+    "CANVAS_INSET": ("white", "#2c2c2c"),
+    "CANVAS_CODE": ("white", "#252525"),
+    "FG": ("#020202", "#fcfcfc"),
+    "FG_SUBTLE": ("#737373", "#858585"),
+    "FG_FAINT": ("#afafaf", "#545454"),
+    "FG_DISABLED": ("#858585", "#737373"),
+    "FG_LINK": ("#1d4ed8", "#bfdbfe"),
+    "BORDER": ("#c4c4c4", "#202020"),
+    "BORDER_SUBTLE": ("#e4e4e4", "#252525"),
+    "BORDER_STRONG": ("#858585", "#020202"),
+    "BORDER_FOCUS": ("#3b82f6", "#3b82f6"),
+    "BUTTON_BG": ("#fcfcfc", "#404040"),
+    "BUTTON_HOVER_BORDER": ("#999999", "#141414"),
+    "SELECTED_BG": ("rgba(214, 214, 214, 0.5)", "rgba(147, 197, 253, 0.5)"),
+    "SELECTED_FG": ("black", "white"),
+    "ACCENT_CARD": ("#60a5fa", "#93c5fd"),
+    "ACCENT_NOTE": ("#22c55e", "#4ade80"),
+    "ACCENT_DANGER": ("#ef4444", "#f87171"),
+    "STATE_LEARN": ("#dc2626", "#f87171"),
+    "STATE_REVIEW": ("#16a34a", "#22c55e"),
+    "HIGHLIGHT_BG": ("rgba(37, 99, 235, 0.5)", "rgba(147, 197, 253, 0.5)"),
+    "HIGHLIGHT_FG": ("black", "white"),
+}
 
 
 def is_dark_mode() -> bool:
@@ -38,120 +71,115 @@ def is_dark_mode() -> bool:
     return False
 
 
-# -----------------------------------------------------------------------------
-# LAYOUT SCALE (4px grid) — use these instead of ad-hoc margin/spacing numbers so
-# every window shares the same rhythm.
-# -----------------------------------------------------------------------------
-MARGIN = 20  # dialog outer content margin (all four sides)
-SPACE_SECTION = 16  # gap between sections
-SPACE_ELEMENT = 12  # gap between elements within a section
-SPACE_TIGHT = 8  # label <-> field, icon <-> text
+def _var(name: str) -> str:
+    """One colour out of Anki's table, resolved for the theme in force.
 
-# Border-radius scale.
-RADIUS_CARD = "12px"  # header banner, section cards, group boxes
-RADIUS_CONTROL = "8px"  # buttons, inputs, dropdowns
-RADIUS_SMALL = "6px"  # badges, pills, status chips
+    The result is checked to be a hex string rather than trusted: the test suite
+    fabricates `aqt`, and a mock answers `getattr` and `[]` with another mock quite
+    happily. A colour that is silently a mock is a stylesheet that silently does
+    nothing, which is the failure this module exists to stop.
+    """
+    dark = is_dark_mode()
+    try:
+        import aqt.colors
+
+        value = getattr(aqt.colors, name)["dark" if dark else "light"]
+        # A plain `str` and nothing else. Anki writes some of these as CSS names
+        # rather than hex ("white", "black"), so the check is on the type, not the
+        # shape — and a mock, which answers both getattr and [], is not a str.
+        if type(value) is str and value:
+            return value
+    except Exception:
+        pass
+    light, night = _FALLBACK[name]
+    return night if dark else light
+
+
+# -----------------------------------------------------------------------------
+# LAYOUT SCALE — Anki's dialogs are laid out on plain Qt defaults with a little
+# breathing room, so this is spacing only. The border-radius scale that used to
+# live here is gone with the cards it drew: Anki's global stylesheet already gives
+# every control the radius it wants, and a second one on top is the thing that
+# reads as a different application.
+# -----------------------------------------------------------------------------
+MARGIN = 12  # dialog outer content margin (all four sides)
+SPACE_SECTION = 12  # gap between sections
+SPACE_ELEMENT = 8  # gap between elements within a section
+SPACE_TIGHT = 6  # label <-> field, icon <-> text
+
+# Anki rounds every control it styles by 5px (aqt/stylesheets.py). These are here
+# only for the dialogs still drawing their own boxes; a rewritten dialog draws none
+# and inherits the radius with the rest of the style. They go when the last one does.
+RADIUS_CARD = "5px"
+RADIUS_CONTROL = "5px"
+RADIUS_SMALL = "5px"
 
 # =============================================================================
-# PALETTES
+# THE PALETTE — every entry is a name in `aqt.colors`
 # -----------------------------------------------------------------------------
-# The first 16 keys of each dict are the canonical semantic tokens and keep the exact
-# values that ``styled_messages.get_colors()`` used, so message boxes are unchanged.
-# The remaining keys are aliases the dialogs already reference, harmonized onto the same
-# blue identity (this is what collapses the old ~75-color sprawl).
+# Left column: the names the dialogs already ask for. Right column: what Anki calls
+# the nearest real thing. Where the old palette drew a distinction Anki does not
+# make — four accents, a separate list background, a hover shade per button — the
+# entries collapse onto the one colour Anki has, which is the point: a distinction
+# invented here is a distinction that will not match anything around it.
 # =============================================================================
 
-_LIGHT = {
-    # --- canonical semantic tokens (unchanged from styled_messages) ---
-    "primary": "#4A90D9",
-    "primary_dark": "#357ABD",
-    "primary_light": "#E8F4FC",
-    "success": "#28A745",
-    "success_light": "#D4EDDA",
-    "warning": "#FFC107",
-    "warning_light": "#FFF3CD",
-    "error": "#DC3545",
-    "error_light": "#F8D7DA",
-    "text_primary": "#2C3E50",
-    "text_secondary": "#5C656D",
-    "text_muted": "#ADB5BD",
-    "background": "#FFFFFF",
-    "background_secondary": "#F8F9FA",
-    "border": "#DEE2E6",
-    "border_light": "#E9ECEF",
-    "header_gradient_start": "#4A90D9",
-    "header_gradient_end": "#357ABD",
-    # --- dialog aliases (harmonized to the blue identity) ---
-    "text": "#2C3E50",  # == text_primary
-    "bg": "#F5F5F5",  # dialog window (recessed surface)
-    "card_bg": "#FFFFFF",  # raised panel (== background)
-    "list_bg": "#FFFFFF",
-    "input_bg": "#FFFFFF",
-    "accent_primary": "#4A90D9",
-    "accent_success": "#28A745",
-    "accent_warning": "#FFC107",
-    "accent_info": "#4A90D9",  # info folds into the primary blue
-    "accent_danger": "#DC3545",
-    "accent_purple": "#7B1FA2",
-    # hover/pressed (darker) shades for filled action buttons
-    "success_dark": "#218838",
-    "danger_dark": "#C0392B",
-    "warning_dark": "#E0A800",
-    "button_bg": "#E9ECEF",
-    "button_hover": "#DEE2E6",
-    "row_hover": "#E8F4FC",
-    "warning_bg": "#FFF3CD",
-}
-
-_DARK = {
-    # --- canonical semantic tokens (unchanged from styled_messages) ---
-    "primary": "#5BA3E0",
-    "primary_dark": "#4A90D9",
-    "primary_light": "#2A3F50",
-    "success": "#3CB371",
-    "success_light": "#1E3A2A",
-    "warning": "#E6A817",
-    "warning_light": "#3D3520",
-    "error": "#E05555",
-    "error_light": "#3D2020",
-    "text_primary": "#E0E0E0",
-    "text_secondary": "#B0B0B0",
-    "text_muted": "#707070",
-    "background": "#2D2D2D",
-    "background_secondary": "#383838",
-    "border": "#505050",
-    "border_light": "#454545",
-    "header_gradient_start": "#3A5A7C",
-    "header_gradient_end": "#2A4A6A",
-    # --- dialog aliases (harmonized to the blue identity) ---
-    "text": "#E0E0E0",  # == text_primary
-    "bg": "#1E1E1E",  # dialog window (recessed surface)
-    "card_bg": "#2D2D2D",  # raised panel (== background)
-    "list_bg": "#2D2D2D",
-    "input_bg": "#3D3D3D",
-    "accent_primary": "#5BA3E0",
-    "accent_success": "#3CB371",
-    "accent_warning": "#E6A817",
-    "accent_info": "#5BA3E0",
-    "accent_danger": "#E05555",
-    "accent_purple": "#9C27B0",
-    # hover/pressed (darker) shades for filled action buttons
-    "success_dark": "#2E9E5B",
-    "danger_dark": "#C0392B",
-    "warning_dark": "#C99000",
-    "button_bg": "#3D3D3D",
-    "button_hover": "#4A4A4A",
-    "row_hover": "#2A3F50",
-    "warning_bg": "#3D3520",
+_TOKENS = {
+    # --- canonical semantic tokens ---
+    "primary": "ACCENT_CARD",
+    "primary_dark": "ACCENT_CARD",
+    "primary_light": "SELECTED_BG",
+    "success": "ACCENT_NOTE",
+    "success_light": "CANVAS_INSET",
+    "warning": "STATE_LEARN",
+    "warning_light": "CANVAS_INSET",
+    "error": "ACCENT_DANGER",
+    "error_light": "CANVAS_INSET",
+    "text_primary": "FG",
+    "text_secondary": "FG_SUBTLE",
+    "text_muted": "FG_FAINT",
+    "background": "CANVAS_ELEVATED",
+    "background_secondary": "CANVAS_INSET",
+    "border": "BORDER",
+    "border_light": "BORDER_SUBTLE",
+    "header_gradient_start": "ACCENT_CARD",
+    "header_gradient_end": "ACCENT_CARD",
+    # --- dialog aliases ---
+    "text": "FG",
+    "bg": "CANVAS",
+    "card_bg": "CANVAS_ELEVATED",
+    "list_bg": "CANVAS_ELEVATED",
+    "input_bg": "CANVAS_ELEVATED",
+    "accent_primary": "ACCENT_CARD",
+    "accent_success": "ACCENT_NOTE",
+    "accent_warning": "STATE_LEARN",
+    "accent_info": "ACCENT_CARD",
+    "accent_danger": "ACCENT_DANGER",
+    "accent_purple": "ACCENT_CARD",
+    "success_dark": "ACCENT_NOTE",
+    "danger_dark": "ACCENT_DANGER",
+    "warning_dark": "STATE_LEARN",
+    "button_bg": "BUTTON_BG",
+    "button_hover": "BUTTON_HOVER_BORDER",
+    "row_hover": "SELECTED_BG",
+    "warning_bg": "CANVAS_INSET",
+    # --- names the rewritten dialogs use ---
+    "link": "FG_LINK",
+    "selected_bg": "SELECTED_BG",
+    "selected_text": "SELECTED_FG",
+    "code_bg": "CANVAS_CODE",
+    "focus": "BORDER_FOCUS",
 }
 
 
 def get_colors() -> dict:
-    """Return the active palette (dark or light) as a fresh dict.
+    """Anki's palette, under the names this add-on's dialogs ask for.
 
-    A copy is returned so callers can't mutate the module-level constants.
+    Resolved on every call rather than cached: night mode is switched while Anki is
+    running, and a dialog opened after the switch has to come up in the theme that
+    is in force, not the one that was.
     """
-    return dict(_DARK if is_dark_mode() else _LIGHT)
+    return {name: _var(token) for name, token in _TOKENS.items()}
 
 
 # =============================================================================
