@@ -5,11 +5,12 @@ This module provides an interface for the user
 to select and disconnect multiple remote decks using checkboxes.
 """
 
+from ..compat import ButtonBox_Cancel
+from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
 from ..compat import QCheckBox
 from ..compat import QDialog
-from ..compat import QFrame
-from ..compat import QGroupBox
+from ..compat import QDialogButtonBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
@@ -23,11 +24,13 @@ from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
 from ..config_manager import get_remote_decks
 from ..styled_messages import StyledMessageBox
-from ..theme import base_dialog_qss
+from ..theme import ICON_SIZE
+from ..theme import MARGIN
+from ..theme import SPACE_ELEMENT
+from ..theme import SPACE_SECTION
+from ..theme import SPACE_TIGHT
 from ..theme import get_colors
-from ..theme import make_header
-from ..theme import primary_button_qss
-from ..theme import secondary_button_qss
+from ..theme import icon
 from .url_helpers import copy_url_to_clipboard
 
 
@@ -53,8 +56,6 @@ class DisconnectDialog(QDialog):
         # Define color scheme
         self._setup_colors()
         self._setup_ui()
-        self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._load_decks()
         self._connect_signals()
 
@@ -62,205 +63,106 @@ class DisconnectDialog(QDialog):
         """Sets up color scheme based on theme."""
         self.colors = get_colors()
 
-    def _apply_styles(self):
-        """Applies styles to the dialog."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['bg']};
-                color: {self.colors['text']};
-            }}
-            QScrollArea {{
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                background-color: {self.colors['card_bg']};
-            }}
-            QScrollArea > QWidget > QWidget {{
-                background-color: {self.colors['card_bg']};
-            }}
-
-        """)
-
     def _setup_ui(self):
-        """Sets up the user interface."""
-        layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        """The consequence, the list, the buttons."""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACE_SECTION)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # Header section with danger styling
-        layout.addWidget(
-            make_header(
-                self.colors,
-                "Disconnect Remote Decks",
-                "Select which remote decks you want to disconnect. Local decks will remain in Anki but will no longer be synchronized.",
-            )
+        # What disconnecting means, said once and in the colour it deserves. It
+        # used to be a boxed banner with a 20pt emoji beside it and a two-pixel
+        # border, above a window whose title already said Disconnect.
+        warning_row = QHBoxLayout()
+        warning_row.setSpacing(SPACE_TIGHT)
+        warning_icon = QLabel()
+        warning_icon.setFixedWidth(ICON_SIZE)
+        warning_icon.setPixmap(
+            icon("warning", "accent_warning").pixmap(ICON_SIZE, ICON_SIZE)
         )
-
-        # Warning banner
-        warning_frame = QFrame()
-        warning_frame.setObjectName("warningFrame")
-        warning_frame.setStyleSheet(f"""
-            QFrame#warningFrame {{
-                background-color: {self.colors['warning_bg']};
-                border: 2px solid {self.colors['accent_warning']};
-                border-radius: 8px;
-                padding: 8px;
-            }}
-            QFrame#warningFrame QLabel {{
-                background: transparent;
-                border: none;
-            }}
-        """)
-        warning_layout = QHBoxLayout(warning_frame)
-        warning_layout.setContentsMargins(15, 12, 10, 12)
-        warning_layout.setSpacing(15)  # Space between icon and text
-
-        warning_icon = QLabel("⚠️")
-        warning_icon.setStyleSheet("font-size: 20pt;")
-        warning_layout.addWidget(warning_icon)
-
         warning_text = QLabel(
-            "This action will permanently disconnect selected decks.\n"
-            "To reconnect, you will need to add them again."
+            "The local decks stay in Anki, but they stop being read from your "
+            "spreadsheet. Reconnecting means adding the link again."
         )
-        warning_text.setStyleSheet(
-            f"color: {self.colors['accent_warning']}; font-size: 12pt;"
-        )
+        warning_text.setWordWrap(True)
+        warning_text.setStyleSheet(f"color: {self.colors['accent_warning']};")
+        warning_row.addWidget(warning_icon)
+        warning_row.addWidget(warning_text, 1)
+        layout.addLayout(warning_row)
 
-        warning_layout.addWidget(warning_text)
-
-        warning_layout.addStretch()  # Push content to center (right side)
-
-        layout.addWidget(warning_frame)
-
-        # Remote decks section
-        remote_group = QGroupBox("Configured Remote Decks")
-        remote_layout = QVBoxLayout()
-        remote_layout.setSpacing(10)
-
-        # Scroll area for checkboxes
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setMinimumHeight(100)  # Reduced minimum height
-
         self.checkboxes_widget = QWidget()
-        self.checkboxes_layout = QVBoxLayout()
-        self.checkboxes_widget.setLayout(self.checkboxes_layout)
-        self.checkboxes_layout.setContentsMargins(10, 10, 10, 10)
-        self.checkboxes_layout.setSpacing(5)
-
+        self.checkboxes_layout = QVBoxLayout(self.checkboxes_widget)
+        self.checkboxes_layout.setContentsMargins(
+            SPACE_ELEMENT, SPACE_ELEMENT, SPACE_ELEMENT, SPACE_ELEMENT
+        )
+        self.checkboxes_layout.setSpacing(SPACE_ELEMENT)
         scroll_area.setWidget(self.checkboxes_widget)
-        remote_layout.addWidget(scroll_area, 1)  # Give scroll area stretch factor
+        layout.addWidget(scroll_area, 1)
 
-        remote_group.setLayout(remote_layout)
-        layout.addWidget(remote_group, 1)  # Give group box stretch factor
-
-        # Bulk selection buttons - OUTSIDE the group box
         buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(10)
-        buttons_layout.setContentsMargins(0, 5, 0, 5)
-
-        btn_style = f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['button_hover']};
-                border-color: {self.colors['accent_info']};
-            }}
-        """
-
-        self.select_all_button = QPushButton("✓ Select All")
-        self.select_all_button.setStyleSheet(btn_style)
+        buttons_layout.setSpacing(SPACE_ELEMENT)
+        self.select_all_button = QPushButton("Select All")
+        self.select_all_button.setIcon(icon("success", "text_secondary"))
         self.select_all_button.setToolTip("Selects all decks for disconnection")
-
-        self.select_none_button = QPushButton("✗ Deselect All")
-        self.select_none_button.setStyleSheet(btn_style)
+        self.select_none_button = QPushButton("Select None")
+        self.select_none_button.setIcon(icon("error", "text_secondary"))
         self.select_none_button.setToolTip("Deselects all decks")
-
-        self.invert_selection_button = QPushButton("⇄ Invert")
-        self.invert_selection_button.setStyleSheet(btn_style)
+        self.invert_selection_button = QPushButton("Invert")
+        self.invert_selection_button.setIcon(icon("sync", "text_secondary"))
         self.invert_selection_button.setToolTip("Inverts current selection")
-
-        buttons_layout.addWidget(self.select_all_button)
-        buttons_layout.addWidget(self.select_none_button)
-        buttons_layout.addWidget(self.invert_selection_button)
+        for button in (
+            self.select_all_button,
+            self.select_none_button,
+            self.invert_selection_button,
+        ):
+            buttons_layout.addWidget(button)
         buttons_layout.addStretch()
-
         layout.addLayout(buttons_layout)
 
-        # Selection information
         self.selection_info = QLabel("")
-        self.selection_info.setObjectName("selectionInfo")
+        self.selection_info.setStyleSheet(f"color: {self.colors['text_secondary']};")
         layout.addWidget(self.selection_info)
 
-        # Option to delete local data
+        # The one irreversible thing in the window. A checkbox in a red-bordered
+        # tinted box shouted it; the icon beside it says the same thing at the
+        # weight everything else in this window is said at, and the tooltip keeps
+        # the detail.
+        delete_row = QHBoxLayout()
+        delete_row.setSpacing(SPACE_TIGHT)
+        delete_icon = QLabel()
+        delete_icon.setFixedWidth(ICON_SIZE)
+        delete_icon.setPixmap(
+            icon("warning", "accent_danger").pixmap(ICON_SIZE, ICON_SIZE)
+        )
         self.delete_local_data_checkbox = QCheckBox(
-            "🗑️ Delete local data (decks, cards, notes and note types)"
+            "Also delete the local decks, cards and note types"
         )
         self.delete_local_data_checkbox.setChecked(True)
         self.delete_local_data_checkbox.setToolTip(
-            "ATTENTION: This action is irreversible!\n\n"
-            "If checked, all local data for selected decks will be deleted:\n"
-            "• Local decks and subdecks\n"
-            "• All cards and notes\n"
-            "• Specific note types (if not used in other decks)\n\n"
-            "Use with caution!"
+            "This cannot be undone. Everything below the deck goes:\n"
+            "• the deck and its subdecks\n"
+            "• every card and note in them\n"
+            "• the note types, unless another deck is using them"
         )
-        self.delete_local_data_checkbox.setStyleSheet(f"""
-            QCheckBox {{
-                padding: 14px 16px;
-                background-color: {self.colors['warning_bg']};
-                border: 2px solid {self.colors['accent_danger']};
-                border-radius: 8px;
-                color: {self.colors['text']};
-                font-weight: bold;
-                font-size: 12pt;
-            }}
-            QCheckBox:hover {{
-                background-color: rgba(229, 57, 53, 0.2);
-            }}
-        """)
-        layout.addWidget(self.delete_local_data_checkbox)
+        self.delete_local_data_checkbox.setStyleSheet(
+            f"color: {self.colors['accent_danger']};"
+        )
+        delete_row.addWidget(delete_icon)
+        delete_row.addWidget(self.delete_local_data_checkbox, 1)
+        layout.addLayout(delete_row)
 
-        # Main buttons
-        main_buttons_layout = QHBoxLayout()
-        main_buttons_layout.setContentsMargins(0, 10, 0, 0)
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-
-        self.disconnect_button = QPushButton("Disconnect Selected")
-        self.disconnect_button.setStyleSheet(primary_button_qss(self.colors, "danger"))
-
-        main_buttons_layout.addStretch()
-        main_buttons_layout.addWidget(self.cancel_button)
-        main_buttons_layout.addWidget(self.disconnect_button)
-
-        layout.addLayout(main_buttons_layout)
-        self.setLayout(layout)
-
-    def _get_copy_button_style(self):
-        """Returns the style for copy URL buttons."""
-        return f"""
-            QPushButton {{
-                background-color: {self.colors['button_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {self.colors['accent_info']};
-                color: white;
-                border-color: {self.colors['accent_info']};
-            }}
-        """
+        self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
+        disconnect_button = self.button_box.button(ButtonBox_Ok)
+        assert disconnect_button is not None  # just asked for, by name
+        disconnect_button.setText("Disconnect")
+        disconnect_button.setIcon(icon("error", "text"))
+        self.disconnect_button = disconnect_button
+        self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        # Not the default: pressing Enter in this window should not be how a deck
+        # gets deleted.
+        self.cancel_button.setDefault(True)
+        layout.addWidget(self.button_box)
 
     def _connect_signals(self):
         """Connects interface signals."""
@@ -270,8 +172,8 @@ class DisconnectDialog(QDialog):
         self.invert_selection_button.clicked.connect(self._invert_selection)
 
         # Main buttons
-        self.disconnect_button.clicked.connect(self._disconnect_selected)
-        self.cancel_button.clicked.connect(self.reject)
+        self.button_box.accepted.connect(self._disconnect_selected)
+        self.button_box.rejected.connect(self.reject)
 
     def _load_decks(self):
         """Loads remote decks as checkboxes."""
@@ -286,13 +188,8 @@ class DisconnectDialog(QDialog):
 
         if not remote_decks:
             # Show message if no decks
-            no_decks_label = QLabel("No remote deck configured.")
-            no_decks_label.setStyleSheet(f"""
-                color: {self.colors['text_secondary']};
-                font-style: italic;
-                padding: 30px;
-                font-size: 12pt;
-            """)
+            no_decks_label = QLabel("No decks are connected.")
+            no_decks_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
             no_decks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.checkboxes_layout.addWidget(no_decks_label)
             return
@@ -307,23 +204,10 @@ class DisconnectDialog(QDialog):
             remote_deck_url = deck_info.get("remote_deck_url", "")
             remote_name = get_deck_remote_name(remote_deck_url) or "Remote Deck"
 
-            # Create row widget
-            row_widget = QFrame()
-            row_id = hash_key[:8] if hash_key else "unknown"
-            row_widget.setObjectName(f"row_{row_id}")
-            row_widget.setStyleSheet(f"""
-                QFrame#row_{row_id} {{
-                    background-color: {self.colors['card_bg']};
-                    border-radius: 6px;
-                    padding: 4px;
-                }}
-                QFrame#row_{row_id}:hover {{
-                    background-color: {self.colors['row_hover']};
-                }}
-            """)
+            row_widget = QWidget()
             row_layout = QHBoxLayout(row_widget)
-            row_layout.setContentsMargins(8, 6, 8, 6)
-            row_layout.setSpacing(10)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(SPACE_ELEMENT)
 
             # Check if deck exists locally
             if deck and deck["name"].strip().lower() != "default":
@@ -342,13 +226,7 @@ class DisconnectDialog(QDialog):
 
                 # Card count label
                 count_label = QLabel(f"{card_count} cards")
-                count_label.setStyleSheet(f"""
-                    color: {self.colors['text_secondary']};
-                    font-size: 12pt;
-                    padding: 2px 8px;
-                    background-color: {self.colors['bg']};
-                    border-radius: 4px;
-                """)
+                count_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
 
                 row_layout.addWidget(checkbox)
                 row_layout.addWidget(count_label)
@@ -359,31 +237,21 @@ class DisconnectDialog(QDialog):
                     get_deck_local_name(remote_deck_url) or "Deleted Local Deck"
                 )
 
-                checkbox_text = f"🗑️ {remote_name}"
-                checkbox = QCheckBox(checkbox_text)
+                checkbox = QCheckBox(remote_name)
                 checkbox.setToolTip(
                     f"Remote deck: {remote_name}\nLocal deck was deleted: {local_deck_name}\nConfiguration still exists.\nURL: {remote_deck_url}"
                 )
 
                 # Status label
-                status_label = QLabel("Local deck deleted")
-                status_label.setStyleSheet(f"""
-                    color: {self.colors['text_secondary']};
-                    font-size: 12pt;
-                    font-style: italic;
-                    padding: 2px 8px;
-                    background-color: {self.colors['bg']};
-                    border-radius: 4px;
-                """)
+                status_label = QLabel("Local deck already deleted")
+                status_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
 
                 row_layout.addWidget(checkbox)
                 row_layout.addWidget(status_label)
                 card_count = 0
 
             # Copy URL button
-            copy_button = QPushButton("Copy URL")
-            copy_button.setMaximumWidth(80)
-            copy_button.setStyleSheet(self._get_copy_button_style())
+            copy_button = QPushButton("Copy link")
             copy_button.clicked.connect(
                 lambda checked, u=remote_deck_url: self._copy_url(u)
             )
@@ -457,26 +325,17 @@ class DisconnectDialog(QDialog):
         selected_count = len(self.selected_urls)
         total_count = len(self.deck_checkboxes)
 
-        # Update informative text
-        if selected_count == 0:
-            info_text = "No deck selected"
-            bg_color = self.colors["border"]
+        # A count, said once. It was a filled pill that went grey, then amber, then
+        # red as more boxes were ticked — three colours for a number the reader can
+        # see, in a window that already has one thing coloured for a reason.
+        if not total_count:
+            self.selection_info.setText("No connected decks")
         elif selected_count == total_count:
-            info_text = f"⚠️ All {total_count} deck(s) selected for disconnection"
-            bg_color = self.colors["accent_danger"]
+            self.selection_info.setText(f"All {total_count} decks selected")
         else:
-            info_text = f"📋 {selected_count} of {total_count} deck(s) selected"
-            bg_color = self.colors["accent_warning"]
-
-        self.selection_info.setText(info_text)
-        self.selection_info.setStyleSheet(f"""
-            padding: 12px 16px;
-            background-color: {bg_color};
-            color: white;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 12pt;
-        """)
+            self.selection_info.setText(
+                f"{selected_count} of {total_count} decks selected"
+            )
 
         # Enable/disable disconnect button
         self.disconnect_button.setEnabled(selected_count > 0)

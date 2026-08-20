@@ -7,14 +7,17 @@ viewing debug logs, and clearing them.
 
 import os
 
+from ..compat import ButtonBox_Close
 from ..compat import QCheckBox
 from ..compat import QDialog
+from ..compat import QDialogButtonBox
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
 from ..compat import QTextEdit
 from ..compat import QVBoxLayout
+from ..compat import TextSelectableByMouse
 from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_meta
@@ -22,9 +25,11 @@ from ..config_manager import save_meta
 from ..config_manager import set_accumulate_logs
 from ..config_manager import should_accumulate_logs
 from ..styled_messages import StyledMessageBox
-from ..theme import base_dialog_qss
+from ..theme import ICON_SIZE
+from ..theme import MARGIN
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
-from ..theme import make_header
+from ..theme import icon
 from ..utils import add_debug_message
 from ..utils import clear_debug_log
 from ..utils import get_debug_log_path
@@ -49,42 +54,31 @@ class DebugModeDialog(QDialog):
         self.resize(900, 650)
 
         self._setup_ui()
-        self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + base_dialog_qss(get_colors()))
         self._load_debug_status()
         self._load_log_content()
 
     def _setup_ui(self):
         """Sets up the user interface."""
-        layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACE_SECTION)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # Header banner (consistent with the other dialogs)
-        layout.addWidget(
-            make_header(
-                get_colors(),
-                "Debug Mode Configuration",
-                "Toggle debug logging and view the Sheets2Anki log.",
-            )
-        )
-
-        # Debug mode toggle section
-        toggle_group = QGroupBox("Debug Mode Status")
+        toggle_group = QGroupBox("Logging")
         toggle_layout = QVBoxLayout()
 
         # Status and checkbox row
         status_row = QHBoxLayout()
 
-        self.debug_checkbox = QCheckBox("Enable Debug Mode")
-        self.debug_checkbox.setStyleSheet("font-size: 12pt; padding: 8px;")
+        self.debug_checkbox = QCheckBox("Write a debug log")
         self.debug_checkbox.toggled.connect(self._on_debug_toggled)
         status_row.addWidget(self.debug_checkbox)
 
         status_row.addStretch()
 
+        self.status_icon = QLabel()
+        self.status_icon.setFixedWidth(ICON_SIZE)
         self.status_label = QLabel("")
-        self.status_label.setStyleSheet("font-size: 12pt; padding: 5px;")
+        status_row.addWidget(self.status_icon)
         status_row.addWidget(self.status_label)
 
         toggle_layout.addLayout(status_row)
@@ -93,29 +87,31 @@ class DebugModeDialog(QDialog):
         self.accumulate_checkbox = QCheckBox(
             "Accumulate logs over time (do not clear at each sync)"
         )
-        self.accumulate_checkbox.setStyleSheet("font-size: 11pt; padding: 5px;")
         self.accumulate_checkbox.toggled.connect(self._on_accumulate_toggled)
         toggle_layout.addWidget(self.accumulate_checkbox)
 
         # Info text
+        # `gray` was a literal, so it was the same grey on a black window as on a
+        # white one. Anki has a colour for a remark and this is it.
         info_label = QLabel(
-            "ℹ️ When debug mode is enabled, detailed logs are written to a file. "
-            "This can help diagnose issues but may impact performance slightly."
+            "A detailed log of every sync is written to a file. Useful when "
+            "something goes wrong and worth turning off again afterwards."
         )
         info_label.setWordWrap(True)
-        info_label.setStyleSheet("font-size: 12pt; color: gray; padding: 5px;")
+        info_label.setStyleSheet(f"color: {get_colors()['text_secondary']};")
         toggle_layout.addWidget(info_label)
 
         toggle_group.setLayout(toggle_layout)
         layout.addWidget(toggle_group)
 
         # Log viewer section
-        log_group = QGroupBox("Debug Log")
+        log_group = QGroupBox("Debug log")
         log_layout = QVBoxLayout()
 
         # Log file path
         self.path_label = QLabel("")
-        self.path_label.setStyleSheet("font-size: 12pt; color: gray;")
+        self.path_label.setStyleSheet(f"color: {get_colors()['text_secondary']};")
+        self.path_label.setTextInteractionFlags(TextSelectableByMouse)
         self.path_label.setWordWrap(True)
         log_layout.addWidget(self.path_label)
 
@@ -129,20 +125,22 @@ class DebugModeDialog(QDialog):
         log_buttons = QHBoxLayout()
 
         self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.setIcon(icon("sync", "text_secondary"))
         self.refresh_btn.clicked.connect(self._load_log_content)
         log_buttons.addWidget(self.refresh_btn)
 
-        self.scroll_bottom_btn = QPushButton("Scroll to End")
+        self.scroll_bottom_btn = QPushButton("Scroll to end")
         self.scroll_bottom_btn.clicked.connect(self._scroll_to_bottom)
         log_buttons.addWidget(self.scroll_bottom_btn)
 
         log_buttons.addStretch()
 
-        self.clear_btn = QPushButton("Clear Log")
+        self.clear_btn = QPushButton("Clear log")
+        self.clear_btn.setIcon(icon("error", "text_secondary"))
         self.clear_btn.clicked.connect(self._clear_log)
         log_buttons.addWidget(self.clear_btn)
 
-        self.open_folder_btn = QPushButton("Open Log Folder")
+        self.open_folder_btn = QPushButton("Open log folder")
         self.open_folder_btn.clicked.connect(self._open_log_folder)
         log_buttons.addWidget(self.open_folder_btn)
 
@@ -151,76 +149,13 @@ class DebugModeDialog(QDialog):
         log_group.setLayout(log_layout)
         layout.addWidget(log_group)
 
-        # Close button
-        close_layout = QHBoxLayout()
-        close_layout.addStretch()
-
-        self.close_btn = QPushButton("Close")
-        self.close_btn.setMinimumWidth(100)
-        self.close_btn.clicked.connect(self.accept)
-        close_layout.addWidget(self.close_btn)
-
-        layout.addLayout(close_layout)
-
-        self.setLayout(layout)
-
-    def _apply_styles(self):
-        """Applies the shared design-system theme."""
-        c = get_colors()
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {c['bg']};
-                color: {c['text']};
-            }}
-            QLabel {{
-                color: {c['text']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                color: {c['text']};
-                border: 1px solid {c['border']};
-                border-radius: 6px;
-                margin-top: 12px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-            QTextEdit {{
-                background-color: {c['bg']};
-                color: {c['text']};
-                border: 1px solid {c['border']};
-                border-radius: 4px;
-                font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-                font-size: 12pt;
-                padding: 8px;
-            }}
-            QPushButton {{
-                background-color: {c['button_bg']};
-                color: {c['text']};
-                border: 1px solid {c['border']};
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-size: 12pt;
-            }}
-            QPushButton:hover {{
-                background-color: {c['button_hover']};
-                border-color: {c['text_secondary']};
-            }}
-            QPushButton:pressed {{
-                background-color: {c['border']};
-            }}
-            QCheckBox {{
-                spacing: 8px;
-                color: {c['text']};
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-            }}
-            """)
+        self.button_box = QDialogButtonBox(ButtonBox_Close)
+        close_button = self.button_box.button(ButtonBox_Close)
+        assert close_button is not None  # just asked for, by name
+        close_button.setDefault(True)
+        self.close_btn = close_button
+        self.button_box.rejected.connect(self.accept)
+        layout.addWidget(self.button_box)
 
     def _load_debug_status(self):
         """Loads the current debug mode status."""
@@ -237,17 +172,14 @@ class DebugModeDialog(QDialog):
     def _update_status_display(self, enabled: bool):
         """Updates the status display."""
         c = get_colors()
-        if enabled:
-            self.status_label.setText("✅ Debug mode is ACTIVE")
-            self.status_label.setStyleSheet(
-                f"font-size: 12pt; padding: 5px; color: {c['accent_success']};"
-                " font-weight: bold;"
-            )
-        else:
-            self.status_label.setText("⭕ Debug mode is INACTIVE")
-            self.status_label.setStyleSheet(
-                f"font-size: 12pt; padding: 5px; color: {c['text_muted']};"
-            )
+        shape, colour, text = (
+            ("success", "accent_success", "Logging")
+            if enabled
+            else ("info", "text_secondary", "Not logging")
+        )
+        self.status_icon.setPixmap(icon(shape, colour).pixmap(ICON_SIZE, ICON_SIZE))
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet(f"color: {c[colour]};")
 
     def _on_debug_toggled(self, checked: bool):
         """Handles debug mode toggle."""

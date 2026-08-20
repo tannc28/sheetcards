@@ -137,7 +137,10 @@ print(json.dumps({{
 
     import json
 
-    for name, (light, dark) in json.loads(result.stdout).items():
+    # The last line only: importing `src` runs the add-on's entry point, which
+    # prints a line of its own when the local meta.json has debug logging on.
+    payload = result.stdout.strip().splitlines()[-1]
+    for name, (light, dark) in json.loads(payload).items():
         assert _FALLBACK[name] == (light, dark), f"{name} drifted from aqt.colors"
 
 
