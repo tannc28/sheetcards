@@ -402,7 +402,10 @@ function chooseDeckName(fallback) {
 }
 
 /** Everything from "we have the text" to "the page is drawn". */
-function analyse(tsv, deckName, sheetId) {
+function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
+  // Where the reader was. A reload is for looking at the row just edited, so
+  // landing back on the deck's first row would answer the wrong question.
+  const was = state.row;
   state.deckName = deckName;
   // Kept rather than recovered from the URL field at download time: a file has
   // no link to recover it from, and the id is what makes a second import of the
@@ -413,6 +416,8 @@ function analyse(tsv, deckName, sheetId) {
   state.analysis = analyze(tsv, deckName);
   state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
   if (state.row < 0) state.row = 0;
+  // Only if the row is still there: a sheet can come back shorter than it went.
+  if (keepRow && was < state.analysis.rows.length) state.row = was;
   state.template = 0;
   state.deckFilter = null;
   // A column is chosen by position, and a different sheet has different columns
@@ -455,21 +460,29 @@ function noteSource(name) {
   // the header for.
   $("#source").textContent = name;
   $("#source").title = name;
+  $("#reload").hidden = false;
   if (narrow()) setPanel("source", false);
 }
 
-async function preview() {
+async function preview({ again = false } = {}) {
   const input = $("#url").value.trim();
   if (!input) return;
+
+  // Which sheet of the workbook was open. A reload that dropped you back on
+  // sheet 1 would be a reload nobody uses twice.
+  const at = again ? (upload?.index ?? 0) : null;
 
   $("#go").disabled = true;
   try {
     const workbookUrl = toWorkbookUrl(input);
-    status(t("downloading"), "", true);
+    status(t(again ? "reloading" : "downloading"), "", true);
 
     let res;
     try {
-      res = await fetch(workbookUrl);
+      // Never the browser's copy. The whole question this page answers is what
+      // the sheet says *now*, and a cached answer to that is a wrong answer —
+      // which on a reload is also the only thing the reader asked for.
+      res = await fetch(workbookUrl, { cache: "reload" });
     } catch {
       throw new Error(t("unreachable"));
     }
@@ -504,12 +517,42 @@ async function preview() {
       history.replaceState(null, "", url);
     }
 
-    showUpload(isDemo ? demoTab(upload.bytes) : 0);
+    showUpload(at ?? (isDemo ? demoTab(upload.bytes) : 0), { keepRow: again });
   } catch (err) {
     failed(err.message);
   } finally {
     $("#go").disabled = false;
   }
+}
+
+/**
+ * Reads the source again — the link refetched, the dropped file re-opened.
+ *
+ * The sheet is edited somewhere else and read here, so this is the loop the page
+ * is actually used in, and before this button the way round it was to unfold
+ * panel 1 and press Preview: two taps, on the panel a phone folds away the
+ * moment a sheet loads.
+ *
+ * A File is a reference rather than a copy, so re-reading one is only sometimes
+ * possible: a spreadsheet app writing a new file over the old one leaves the
+ * reference pointing at nothing, and the browser throws. That is said plainly
+ * rather than left as a silent no-op, because "nothing happened" is exactly what
+ * a stale preview looks like.
+ */
+async function reload() {
+  if (!upload) return;
+  if (!upload.file) return preview({ again: true });
+
+  $("#reload").disabled = true;
+  status(t("reloading"), "", true);
+  try {
+    upload.bytes = new Uint8Array(await upload.file.arrayBuffer());
+  } catch {
+    return failed(t("fileGone"));
+  } finally {
+    $("#reload").disabled = false;
+  }
+  showUpload(upload.index, { keepRow: true });
 }
 
 /** Where the example workbook should open, by name rather than by position.
@@ -552,7 +595,7 @@ function paintTabs() {
  * one gets its own deck name — naming fourteen decks after the file they came in
  * would make the download button produce fourteen indistinguishable packages.
  */
-function showUpload(index) {
+function showUpload(index, { keepRow = false } = {}) {
   $("#pick").disabled = true;
   try {
     let out;
@@ -571,6 +614,7 @@ function showUpload(index) {
       out.tsv,
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       `${upload.idBase}#${out.tab}`,
+      { keepRow },
     );
     noteSource(base);
   } catch (err) {
@@ -589,6 +633,10 @@ async function previewFile(file) {
       idBase: `file:${file.name}`,
       tabs: [],
       index: 0,
+      // Kept so the reload button has something to re-open. The bytes are read
+      // eagerly all the same: changing tab re-reads them, and a File that has
+      // moved on would leave the picker doing nothing.
+      file,
     };
   } catch (err) {
     return failed(t("unreadableFile", err.message));
@@ -1356,6 +1404,8 @@ $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
   preview();
 });
+
+$("#reload").addEventListener("click", reload);
 
 document.addEventListener("click", (e) => {
   const head = e.target.closest(".panel-toggle");

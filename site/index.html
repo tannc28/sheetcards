@@ -64,6 +64,13 @@
       <p class="field tabpick" id="tabfield" hidden>
         <select id="tabpick" data-i18n-attr="aria-label:tabLabel"></select>
       </p>
+      <!-- Beside the picker for the same reason: the sheet is edited in another
+           tab and read here, so fetching it again is something you do over and
+           over, and on a phone panel 1 is folded by then. -->
+      <button class="panel-act" id="reload" type="button" hidden
+              data-i18n-attr="title:reloadLabel,aria-label:reloadLabel">
+        <span aria-hidden="true">↻</span>
+      </button>
     </h2>
 
     <div class="panel-body" id="src-body">

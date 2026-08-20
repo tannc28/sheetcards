@@ -214,8 +214,26 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
    fold. It shrinks before the title does and never grows past a third of the row:
    a workbook tab can be a whole sentence, and a picker that pushed "1 SOURCE" off
    the screen would have solved one disappearance with another. */
-.panel-head .tabpick { flex: 0 1 auto; min-width: 0; margin: 0 var(--pad) 0 8px; }
+/* Panel 1 is the only header carrying controls, so the row's right padding moves
+   from the picker's margin onto the header itself: two controls each holding
+   their own edge spacing leave a gap when one of them is hidden. Scoped to this
+   panel, because on the other two the toggle still runs to the edge. */
+#p-source .panel-head { gap: 8px; padding-right: var(--pad); }
+.panel-head .tabpick { flex: 0 1 auto; min-width: 0; margin: 0; }
 .panel-head .tabpick[hidden] { display: none; }
+
+/* Fetch the sheet again. Beside the picker because it is the same kind of thing —
+   something you reach for while reading panels 2 and 3 — and because on a phone
+   the header is all of panel 1 that is still on screen by then. */
+.panel-act {
+  flex: none; padding: 3px 9px;
+  font: inherit; font-size: var(--t-sm); line-height: 1.5;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.panel-act:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
+.panel-act:disabled { opacity: .5; cursor: default; }
+.panel-act[hidden] { display: none; }
 .panel-head .tabpick select {
   max-width: 13rem; padding: 3px 6px;
   font-size: var(--t-xs); font-family: var(--mono);

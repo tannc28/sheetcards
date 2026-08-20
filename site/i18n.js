@@ -209,6 +209,15 @@ const STRINGS = {
     vi: "hoặc thả file vào bất kỳ đâu trên trang.",
   },
   tabLabel: { en: "Sheet", vi: "Trang" },
+  reloadLabel: {
+    en: "Fetch this sheet again",
+    vi: "Tải lại sheet này",
+  },
+  reloading: { en: "Fetching again…", vi: "Đang tải lại…" },
+  fileGone: {
+    en: "This file changed on disk. Drop it on the page again.",
+    vi: "File trên máy đã đổi. Kéo thả lại vào trang.",
+  },
 
   // --- the three panels -----------------------------------------------------
   // Each header doubles as what a shut panel has left to say, so the notes name
