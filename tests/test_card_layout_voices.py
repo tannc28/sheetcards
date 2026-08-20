@@ -33,20 +33,26 @@ pytestmark = pytest.mark.skipif(NODE is None, reason="node is not installed")
 IPHONE = """Available TTS voices:
 Enhanced: {{tts en-US voices=Apple_Ava_(Enhanced):Front}}
 {{tts de-DE voices=Apple_Anna:Front}}
+{{tts de-DE voices=Apple_Eddy:Front}}
+{{tts de-DE voices=Apple_Grandma:Front}}
 {{tts en-AU voices=Apple_Karen:Front}}
 {{tts en-GB voices=Apple_Daniel:Front}}
+{{tts en-GB voices=Apple_Eddy:Front}}
+{{tts en-GB voices=Apple_Grandma:Front}}
 {{tts en-US voices=Apple_Albert:Front}}
 {{tts en-US voices=Apple_Ava_(Enhanced):Front}}
 {{tts en-US voices=Apple_Ava_(Premium):Front}}
 {{tts en-US voices=Apple_Bad_News:Front}}
 {{tts en-US voices=Apple_Bells:Front}}
 {{tts en-US voices=Apple_Boing:Front}}
+{{tts en-US voices=Apple_Eddy:Front}}
 {{tts en-US voices=Apple_Fred:Front}}
 {{tts en-US voices=Apple_Grandma:Front}}
 {{tts en-US voices=Apple_Samantha:Front}}
 {{tts en-US voices=Apple_Trinoids:Front}}
 {{tts en-US voices=Apple_Zarvox:Front}}
 {{tts vi-VN voices=Apple_Linh:Front}}
+{{tts zh-CN voices=Apple_Eddy:Front}}
 {{tts zh-CN voices=Apple_Tingting:Front}}"""
 
 
@@ -55,6 +61,14 @@ Enhanced: {{tts en-US voices=Apple_Ava_(Enhanced):Front}}
 ONLY_JUNK = """Available TTS voices:
 {{tts en-US voices=Apple_Zarvox:Front}}
 {{tts vi-VN voices=Apple_Linh:Front}}"""
+
+# Every voice this language has, it shares with another. Counting them all away
+# would leave the same empty heading.
+ONLY_SHARED = """Available TTS voices:
+{{tts en-US voices=Apple_Eddy:Front}}
+{{tts en-US voices=Apple_Grandma:Front}}
+{{tts de-DE voices=Apple_Eddy:Front}}
+{{tts de-DE voices=Apple_Grandma:Front}}"""
 
 
 def _script():
@@ -72,6 +86,11 @@ function El(cls) {
   this.textContent = ""; this._q = {}; this._qa = {};
 }
 El.prototype.appendChild = function (c) { c.parent = this; this.children.push(c); return c; };
+El.prototype.insertBefore = function (c, before) {
+  c.parent = this;
+  this.children.splice(this.children.indexOf(before), 0, c);
+  return c;
+};
 El.prototype.remove = function () {
   this.removed = true;
   if (this.parent) {
@@ -109,9 +128,16 @@ global.window = SPEAKS ? { speechSynthesis: {} } : {};
 
 SCRIPT
 
+if (REVEAL) {
+  list.children
+    .filter(function (c) { return c.className === "s2a-tts-more"; })
+    .forEach(function (b) { b.onclick({ preventDefault: function () {} }); });
+}
+
 var out = { note: note.removed ? null : note.textContent, message: "", rows: [] };
 list.children.forEach(function (c) {
   if (c.className === "s2a-tts-lang") { out.rows.push({ lang: c.textContent }); return; }
+  if (c.className === "s2a-tts-more") { out.rows.push({ more: c.textContent }); return; }
   out.rows.push({
     voice: c.children[0].textContent,
     buttons: c.children.slice(1).map(function (b) { return b.textContent; }),
@@ -124,13 +150,20 @@ console.log(JSON.stringify(out));
 """
 
 
-def _run(dump, wanted="en_US", columns=(("Word", "en_US", "hold"),), speaks=True):
+def _run(
+    dump,
+    wanted="en_US",
+    columns=(("Word", "en_US", "hold"),),
+    speaks=True,
+    reveal=False,
+):
     cols = [{"col": c, "lang": lang, "text": t} for c, lang, t in columns]
     script = (
         f"var DUMP = {json.dumps(dump)};\n"
         f"var WANTED = {json.dumps(wanted)};\n"
         f"var COLUMNS = {json.dumps(cols)};\n"
-        f"var SPEAKS = {json.dumps(speaks)};\n" + _HARNESS.replace("SCRIPT", _script())
+        f"var SPEAKS = {json.dumps(speaks)};\n"
+        f"var REVEAL = {json.dumps(reveal)};\n" + _HARNESS.replace("SCRIPT", _script())
     )
     result = subprocess.run(
         [NODE, "-e", script], capture_output=True, text=True, cwd=ROOT, timeout=30
@@ -249,16 +282,23 @@ class TestTheJokeVoicesAreNotOffered:
 
     def test_the_real_voices_are_what_shows(self):
         voices = " ".join(_voices(_run(IPHONE)))
-        assert "Samantha" in voices and "Ava" in voices and "Grandma" in voices
+        assert "Samantha" in voices and "Ava" in voices
 
     def test_a_joke_voice_is_not_in_the_list_at_all(self):
         voices = " ".join(_voices(_run(IPHONE)))
         for joke in ("Zarvox", "Bells", "Boing", "Trinoids", "Bad_News", "Albert"):
             assert joke not in voices
 
-    def test_nothing_is_left_hinting_at_them(self):
-        # No count, no button, no line saying something was left out.
-        assert all("lang" in r or "voice" in r for r in _run(IPHONE)["rows"])
+    def test_they_are_not_even_in_the_count(self):
+        # The shared voices are counted; the jokes are not counted, not listed and
+        # not reachable. The fixture holds six of them and two shared ones.
+        rows = _run(IPHONE)["rows"]
+        assert [r["more"] for r in rows if "more" in r] == ["+ 2 shared voices"]
+
+    def test_pressing_the_count_does_not_bring_them_back(self):
+        voices = " ".join(_voices(_run(IPHONE, reveal=True)))
+        for joke in ("Zarvox", "Bells", "Boing", "Trinoids", "Bad_News", "Albert"):
+            assert joke not in voices
 
     def test_a_language_of_nothing_but_jokes_keeps_them(self):
         # Dropping the lot would leave a heading with nothing under it, which
@@ -270,6 +310,60 @@ class TestTheJokeVoicesAreNotOffered:
         # the words is a voice, not a joke.
         dump = "{{tts en-US voices=Google_Bells_of_Dublin:Front}}"
         assert "Bells_of_Dublin" in " ".join(_voices(_run(dump)))
+
+
+class TestALanguagesOwnVoicesComeFirst:
+    """Eight of an iPhone's voices are one model in nine hats.
+
+    Eddy, Flo, Grandma, Grandpa, Reed, Rocko, Sandy and Shelley are listed under
+    every major language the device speaks, which is the tell: a voice recorded
+    fourteen times is fourteen people, and nobody recorded Grandpa in Mandarin.
+    They are character presets over one shared neural model, they sound like each
+    other, and in front of the voice the language actually has they are the same
+    clutter the joke set was. So they are counted rather than listed — and the
+    count is derived from the device's own list, not from a list of names here.
+    """
+
+    def test_the_languages_own_voices_are_what_shows(self):
+        voices = _voices(_run(IPHONE))
+        assert [v for v in voices if "Samantha" in v]
+        assert [v for v in voices if "Ava_(Premium)" in v]
+        for shared in ("Eddy", "Grandma"):
+            assert not [v for v in voices if shared in v]
+
+    def test_the_shared_ones_are_counted(self):
+        assert [r["more"] for r in _run(IPHONE)["rows"] if "more" in r] == [
+            "+ 2 shared voices"
+        ]
+
+    def test_one_of_them_is_counted_in_the_singular(self):
+        more = [r["more"] for r in _run(IPHONE, wanted="zh_CN")["rows"] if "more" in r]
+        assert more == ["+ 1 shared voice"]
+
+    def test_pressing_it_puts_them_back_under_their_language(self):
+        rows = _run(IPHONE, reveal=True)["rows"]
+        assert "Eddy" in " ".join(_voices(_run(IPHONE, reveal=True)))
+        assert "lang" in rows[0] and all("lang" not in r for r in rows[1:])
+        assert not [r for r in rows if "more" in r]
+
+    def test_a_voice_of_one_language_only_is_never_counted_away(self):
+        # Vietnamese has exactly one voice and shares it with nobody.
+        out = _run(IPHONE, wanted="vi_VN")
+        assert "Linh" in " ".join(_voices(out))
+        assert not [r for r in out["rows"] if "more" in r]
+
+    def test_a_language_that_shares_all_of_them_keeps_them(self):
+        out = _run(ONLY_SHARED)
+        assert len(_voices(out)) == 2
+        assert not [r for r in out["rows"] if "more" in r]
+
+    def test_a_device_of_one_language_shares_nothing(self):
+        # Sharedness is evidence, and a device speaking one language offers none.
+        dump = (
+            "{{tts en-US voices=Apple_Samantha:Front}}\n"
+            "{{tts en-US voices=Apple_Eddy:Front}}"
+        )
+        assert len(_voices(_run(dump))) == 2
 
 
 if __name__ == "__main__":

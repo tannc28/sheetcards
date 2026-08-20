@@ -326,6 +326,12 @@ def _css(sheet_config):
         ".s2a-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
         " border-radius: 6px; border: 1px solid var(--s2a-muted);"
         " background: none; color: inherit; }\n"
+        # The way to the voices this language shares with every other. Dashed and
+        # on a line of its own, because it belongs to the group rather than to a
+        # row, and quieter than a play button because it is not the thing to do.
+        ".s2a-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
+        " padding: 5px 9px; border-radius: 6px; border: 1px dashed"
+        " var(--s2a-muted); background: none; color: inherit; opacity: .7; }\n"
         ".s2a-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
         ".s2a-embed-link { display: none; }\n"
@@ -701,6 +707,22 @@ _TTS_VOICES_SCRIPT = (
     "  function better(v) { return /\\((?:premium|enhanced)\\)/i.test(v.name) ? 0 : 1; }\n"
     "  var JUNK = " + json.dumps(_NOVELTY_VOICES) + ";\n"
     "  function novelty(v) { return JUNK.indexOf(spell(v.name).toLowerCase()) !== -1; }\n"
+    # Which languages each name turned up under. A voice heard in fourteen of
+    # them was not recorded fourteen times: iOS ships one neural model with a
+    # character preset per name, so Eddy, Flo, Grandma, Grandpa, Reed, Rocko,
+    # Sandy and Shelley are the same voice wearing different hats and sound like
+    # it. Samantha is under en-US alone because it really is en-US's own voice.
+    # The device says all of this itself, so nothing here is a list of names to
+    # keep up to date — count the languages and the answer falls out, on any
+    # platform, for whatever ships next.
+    "  var spoken = {};\n"
+    "  all.forEach(function (v) {\n"
+    "    var key = spell(v.name).toLowerCase();\n"
+    "    (spoken[key] = spoken[key] || {})[norm(v.lang)] = 1;\n"
+    "  });\n"
+    "  function shared(v) {\n"
+    "    return Object.keys(spoken[spell(v.name).toLowerCase()]).length > 1;\n"
+    "  }\n"
     "  var rows = all.filter(function (v) {\n"
     "    return wanted.some(function (w) { return norm(w) === norm(v.lang); });\n"
     "  });\n"
@@ -782,7 +804,30 @@ _TTS_VOICES_SCRIPT = (
     # lot would leave a heading with nothing under it.
     "    var plain = here.filter(function (v) { return !novelty(v); });\n"
     "    if (!plain.length) plain = here;\n"
-    "    plain.forEach(function (v) { list.appendChild(makeRow(v, cols)); });\n"
+    # What is left splits in two, and only the first half is offered outright:
+    # the voices that belong to this language, then a count for the shared ones.
+    # Both are real voices, so neither is dropped — but a learner picking a voice
+    # to hear a word in wants the one that language actually has, and eight
+    # variations on a personality in front of it is the same clutter the joke set
+    # was. A language whose voices are all shared keeps them all, or the heading
+    # would stand over nothing.
+    "    var main = plain.filter(function (v) { return !shared(v); });\n"
+    "    var rest = plain.filter(shared);\n"
+    "    if (!main.length) { main = plain; rest = []; }\n"
+    "    main.forEach(function (v) { list.appendChild(makeRow(v, cols)); });\n"
+    "    if (rest.length) {\n"
+    '      var more = document.createElement("button");\n'
+    '      more.type = "button";\n'
+    '      more.className = "s2a-tts-more";\n'
+    '      more.textContent = "+ " + rest.length +\n'
+    '        (rest.length === 1 ? " shared voice" : " shared voices");\n'
+    "      more.onclick = function (e) {\n"
+    "        e.preventDefault();\n"
+    "        rest.forEach(function (v) { list.insertBefore(makeRow(v, cols), more); });\n"
+    "        more.remove();\n"
+    "      };\n"
+    "      list.appendChild(more);\n"
+    "    }\n"
     "  });\n"
     "})();\n"
     "</script>"
