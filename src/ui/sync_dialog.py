@@ -24,10 +24,12 @@ from ..compat import safe_exec
 from ..config_manager import get_active_decks
 from ..config_manager import get_deck_local_name
 from ..config_manager import get_deck_remote_name
+from ..theme import ICON_SIZE
 from ..theme import MARGIN
 from ..theme import SPACE_ELEMENT
 from ..theme import SPACE_SECTION
 from ..theme import get_colors
+from ..theme import icon
 from .url_helpers import copy_url_to_clipboard
 
 
@@ -94,10 +96,13 @@ class SyncDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(SPACE_ELEMENT)
         self.select_all_button = QPushButton("Select All")
+        self.select_all_button.setIcon(icon("success", "text_secondary"))
         self.select_all_button.setToolTip("Selects all decks for synchronization")
         self.select_none_button = QPushButton("Select None")
+        self.select_none_button.setIcon(icon("error", "text_secondary"))
         self.select_none_button.setToolTip("Deselects all decks")
         self.invert_selection_button = QPushButton("Invert")
+        self.invert_selection_button.setIcon(icon("sync", "text_secondary"))
         self.invert_selection_button.setToolTip("Inverts current selection")
         for button in (
             self.select_all_button,
@@ -122,6 +127,7 @@ class SyncDialog(QDialog):
         sync_button = self.button_box.button(ButtonBox_Ok)
         assert sync_button is not None  # just asked for, by name
         sync_button.setText("Synchronize")
+        sync_button.setIcon(icon("sync", "text"))
         sync_button.setDefault(True)
         self.sync_button = sync_button
         self.cancel_button = self.button_box.button(ButtonBox_Cancel)
@@ -203,12 +209,17 @@ class SyncDialog(QDialog):
                     f"Remote deck: {remote_name}\nLocal deck was deleted: {local_deck_name}\nWill be recreated during synchronization.\nURL: {remote_deck_url}"
                 )
 
-                # The one thing in the list that is not routine, so it is the one
-                # thing that is not the colour of the text around it.
+                # The one row in the list that is not routine, said twice: in the
+                # colour, and in a shape. The shape is the one that survives being
+                # scanned rather than read.
+                warning_icon = QLabel()
+                warning_icon.setPixmap(
+                    icon("warning", "accent_warning").pixmap(ICON_SIZE, ICON_SIZE)
+                )
                 warning_label = QLabel("Will be recreated")
                 warning_label.setStyleSheet(f"color: {self.colors['accent_warning']};")
-
                 row_layout.addWidget(checkbox)
+                row_layout.addWidget(warning_icon)
                 row_layout.addWidget(warning_label)
                 card_count = 0
 

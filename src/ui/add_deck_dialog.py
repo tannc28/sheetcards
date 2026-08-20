@@ -11,11 +11,13 @@ from ..compat import DialogAccepted
 from ..compat import QDialog
 from ..compat import QDialogButtonBox
 from ..compat import QGroupBox
+from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QLineEdit
 from ..compat import QProgressBar
 from ..compat import QTimer
 from ..compat import QVBoxLayout
+from ..compat import QWidget
 from ..compat import TextSelectableByMouse
 from ..compat import mw
 from ..compat import safe_exec
@@ -25,10 +27,13 @@ from ..config_manager import is_deck_disconnected
 from ..data_processor import RemoteDeckError
 from ..data_processor import read_all_sheets
 from ..styled_messages import StyledMessageBox
+from ..theme import ICON_SIZE
 from ..theme import MARGIN
 from ..theme import SPACE_ELEMENT
 from ..theme import SPACE_SECTION
+from ..theme import SPACE_TIGHT
 from ..theme import get_colors
+from ..theme import icon
 from ..tsv_model import deck_root_name
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
@@ -116,10 +121,16 @@ class AddDeckDialog(QDialog):
         # What the link turned out to be, in the colour that says how it went. The
         # coloured circle that used to sit beside the field said the same thing a
         # second time, in emoji.
+        status_row = QHBoxLayout()
+        status_row.setSpacing(SPACE_TIGHT)
+        self.status_icon = QLabel()
+        self.status_icon.setFixedWidth(ICON_SIZE)
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
-        layout.addWidget(self.status_label)
+        status_row.addWidget(self.status_icon)
+        status_row.addWidget(self.status_label, 1)
+        layout.addLayout(status_row)
 
         return group
 
@@ -137,11 +148,22 @@ class AddDeckDialog(QDialog):
         self.stats_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
         layout.addWidget(self.stats_label)
 
+        conflict_row = QHBoxLayout()
+        conflict_row.setSpacing(SPACE_TIGHT)
+        self.conflict_icon = QLabel()
+        self.conflict_icon.setFixedWidth(ICON_SIZE)
+        self.conflict_icon.setPixmap(
+            icon("warning", "warning").pixmap(ICON_SIZE, ICON_SIZE)
+        )
         self.conflict_warning = QLabel("")
-        self.conflict_warning.setVisible(False)
         self.conflict_warning.setWordWrap(True)
         self.conflict_warning.setStyleSheet(f"color: {self.colors['warning']};")
-        layout.addWidget(self.conflict_warning)
+        conflict_row.addWidget(self.conflict_icon)
+        conflict_row.addWidget(self.conflict_warning, 1)
+        self.conflict_row_widget = QWidget()
+        self.conflict_row_widget.setLayout(conflict_row)
+        self.conflict_row_widget.setVisible(False)
+        layout.addWidget(self.conflict_row_widget)
 
         name_label = QLabel("Will be created as:")
         name_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
@@ -162,6 +184,7 @@ class AddDeckDialog(QDialog):
         add_button = self.button_box.button(ButtonBox_Ok)
         assert add_button is not None  # just asked for, by name
         add_button.setText("Add Deck")
+        add_button.setIcon(icon("plus", "text"))
         add_button.setEnabled(False)
         add_button.setDefault(True)
         self.add_button = add_button
@@ -391,16 +414,20 @@ class AddDeckDialog(QDialog):
         ⚪ 🔄 ✅ ⚠️ ❌ — saying in pictures what the sentence beside it already
         said in words. The sentence is what a reader reads.
         """
-        colour = {
-            "waiting": self.colors["text_secondary"],
-            "validating": self.colors["text_secondary"],
-            "success": self.colors["success"],
-            "warning": self.colors["warning"],
-            "error": self.colors["error"],
-        }.get(status_type, self.colors["text_secondary"])
+        shape, colour = {
+            "waiting": (None, "text_secondary"),
+            "validating": ("sync", "text_secondary"),
+            "success": ("success", "success"),
+            "warning": ("warning", "warning"),
+            "error": ("error", "error"),
+        }.get(status_type, ("info", "text_secondary"))
 
+        if shape:
+            self.status_icon.setPixmap(icon(shape, colour).pixmap(ICON_SIZE, ICON_SIZE))
+        else:
+            self.status_icon.clear()
         self.status_label.setText(message)
-        self.status_label.setStyleSheet(f"color: {colour};")
+        self.status_label.setStyleSheet(f"color: {self.colors[colour]};")
 
     def _sheet_summary(self, fresh):
         """What this link is about to become, in one line."""
@@ -482,9 +509,9 @@ class AddDeckDialog(QDialog):
                 f"A deck called '{self.suggested_name}' is already connected, so "
                 f"this one is named '{final_remote_name}'."
             )
-            self.conflict_warning.setVisible(True)
+            self.conflict_row_widget.setVisible(True)
         else:
-            self.conflict_warning.setVisible(False)
+            self.conflict_row_widget.setVisible(False)
         self.name_preview.setText(full_name)
 
         self._adjust_dialog_size()

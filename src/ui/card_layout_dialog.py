@@ -28,10 +28,12 @@ from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_remote_decks
 from ..sheet_config import THEMES
+from ..theme import ICON_SIZE
 from ..theme import MARGIN
 from ..theme import SPACE_ELEMENT
 from ..theme import SPACE_SECTION
 from ..theme import get_colors
+from ..theme import icon
 from ..theme import is_dark_mode
 
 # =============================================================================
@@ -352,6 +354,9 @@ class CardLayoutDialog(QDialog):
 
         deck_row = QHBoxLayout()
         deck_row.setSpacing(SPACE_ELEMENT)
+        deck_icon = QLabel()
+        deck_icon.setPixmap(icon("deck", "text_secondary").pixmap(ICON_SIZE, ICON_SIZE))
+        deck_row.addWidget(deck_icon)
         deck_row.addWidget(QLabel("Deck:"))
 
         self.deck_combo = QComboBox()

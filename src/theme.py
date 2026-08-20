@@ -183,6 +183,63 @@ def get_colors() -> dict:
 
 
 # =============================================================================
+# ICONS
+# -----------------------------------------------------------------------------
+# Anki draws its own icons as SVGs recoloured to the theme, and uses no emoji at
+# all — a grep of `aqt/` turns up one llama. So these are SVGs too, eight of them
+# in `src/icons/`, each written with the literal `INK` where a colour goes.
+# `icon()` substitutes one of Anki's own colours and renders the result, which is
+# what keeps a warning triangle the same red as the sentence beside it and keeps
+# both legible on either theme.
+#
+# Emoji would have been fewer lines, but they belong to the font rather than to
+# the theme: colour on macOS and Windows, monochrome or missing on a Linux box
+# without Noto Color Emoji, a different size and baseline in each, and never the
+# colour of the text they sit beside.
+# =============================================================================
+
+# 16px, the size Anki gives an icon beside a line of text.
+ICON_SIZE = 16
+
+_ICON_CACHE: dict = {}
+
+
+def icon(name: str, color: str = "text"):
+    """The named icon from ``src/icons``, inked in one of Anki's colours.
+
+    ``color`` is a key of :func:`get_colors`, so an icon changes with night mode
+    the same way the text around it does. Returns an empty ``QIcon`` when Qt is not
+    importable or the file is missing: an icon is decoration, and a window that
+    fails to open because one is absent would be a poor trade.
+    """
+    from .compat import QIcon
+    from .compat import QPixmap
+
+    ink = get_colors().get(color, color)
+    key = (name, ink)
+    if key in _ICON_CACHE:
+        return _ICON_CACHE[key]
+
+    result = QIcon()
+    try:
+        import os
+
+        path = os.path.join(os.path.dirname(__file__), "icons", f"{name}.svg")
+        with open(path, encoding="utf-8") as handle:
+            svg = handle.read().replace("INK", ink)
+        pixmap = QPixmap()
+        # Rendered from the string rather than from the file: the file on disk has
+        # no colour in it, only the word INK.
+        if pixmap.loadFromData(svg.encode("utf-8"), "SVG"):
+            result = QIcon(pixmap)
+    except Exception:
+        pass
+
+    _ICON_CACHE[key] = result
+    return result
+
+
+# =============================================================================
 # REUSABLE QSS HELPERS
 # -----------------------------------------------------------------------------
 # Shared stylesheet snippets so dialogs stop hand-rolling button/header styling. Each

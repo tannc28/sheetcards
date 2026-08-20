@@ -27,6 +27,7 @@ from aqt.qt import QFrame
 from aqt.qt import QGridLayout
 from aqt.qt import QGroupBox
 from aqt.qt import QHBoxLayout
+from aqt.qt import QIcon
 from aqt.qt import QInputDialog
 from aqt.qt import QKeySequence
 from aqt.qt import QLabel
@@ -36,6 +37,7 @@ from aqt.qt import QListWidgetItem
 from aqt.qt import QMenu
 from aqt.qt import QMessageBox
 from aqt.qt import QPalette
+from aqt.qt import QPixmap
 from aqt.qt import QProgressBar
 from aqt.qt import QProgressDialog
 from aqt.qt import QPushButton
