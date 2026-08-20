@@ -28,7 +28,6 @@ from .deck_manager import import_test_deck
 from .deck_manager import removeRemoteDeck
 from .deck_manager import syncDecksWithSelection
 from .sync import syncDecks
-from .ui.backup_dialog import show_backup_dialog
 from .ui.debug_dialog import show_debug_mode_dialog
 from .ui.sync_dialog import show_sync_dialog
 
@@ -40,6 +39,5 @@ __all__ = [
     "import_test_deck",
     "addNewDeck",
     "removeRemoteDeck",
-    "show_backup_dialog",
     "show_debug_mode_dialog",
 ]

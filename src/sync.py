@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 
-from .backup_system import SimplifiedBackupManager
 from .compat import AlignRight
 from .compat import Palette_Window
 from .compat import QDialog
@@ -25,7 +24,6 @@ from .compat import QTextEdit
 from .compat import QVBoxLayout
 from .compat import mw
 from .compat import safe_exec_dialog
-from .config_manager import get_meta
 from .config_manager import get_remote_decks
 from .config_manager import save_remote_decks
 from .config_manager import sync_note_type_names_robustly
@@ -1067,42 +1065,9 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
         _show_no_decks_message(selected_deck_names)
         return
 
-    # Check if backup is enabled (affects progress steps)
-    meta_config = get_meta().get("config", {})
-    backup_enabled = meta_config.get("auto_backup_enabled", False)
-
-    # Setup and show progress bar (includes backup step if enabled)
-    progress = _setup_progress_dialog(total_decks, include_backup=backup_enabled)
+    progress = _setup_progress_dialog(total_decks)
     status_msgs = []
     sync_errors = []
-
-    # Step 0: Backup before sync (if enabled)
-    if backup_enabled:
-        status_msgs.append("💾 Creating backup...")
-        _update_progress_text(progress, status_msgs)
-        progress.setValue(0)
-        mw.app.processEvents()
-
-        add_debug_message(
-            "💾 Creating automatic backup before synchronization...", "SYNC"
-        )
-        try:
-            backup_manager = SimplifiedBackupManager()
-            backup_success = backup_manager.create_auto_backup()
-            if backup_success:
-                add_debug_message("✅ Automatic backup created", "SYNC")
-                status_msgs.append("✅ Automatic backup created")
-            else:
-                add_debug_message("⚠️ Failed to create automatic backup", "SYNC")
-                status_msgs.append("⚠️ Backup skipped")
-        except Exception as e:
-            add_debug_message(f"⚠️ Error creating automatic backup: {e}", "SYNC")
-            status_msgs.append("⚠️ Backup error (continuing...)")
-            sync_errors.append(f"Backup Error: {str(e)}")
-
-        _update_progress_text(progress, status_msgs)
-        progress.setValue(1)
-        mw.app.processEvents()
 
     # Update existing note type templates before synchronization
     status_msgs.append("🎨 Updating card templates...")
@@ -1133,8 +1098,7 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
     add_debug_message(f"🎬 DEBUG SYSTEM ACTIVATED - Total decks: {total_decks}", "SYNC")
     _update_progress_text(progress, status_msgs)
 
-    # Start step counter (1 if backup was done, 0 otherwise)
-    step = 1 if backup_enabled else 0
+    step = 0
     try:
         # Synchronize each deck
         for deckKey in deck_keys:
@@ -1575,20 +1539,17 @@ class LogProgressDialog(QDialog):
         pass
 
 
-def _setup_progress_dialog(total_decks, include_backup=False):
+def _setup_progress_dialog(total_decks):
     """
     Configures and returns a modern, user-friendly progress dialog with scrollable log.
 
     Args:
         total_decks: Total number of decks to calculate bar maximum
-        include_backup: If True, adds 1 step for the backup phase
 
     Returns:
         LogProgressDialog: Configured progress dialog
     """
-    # Calculate total steps: backup (if enabled) + deck steps
-    backup_steps = 1 if include_backup else 0
-    total_steps = backup_steps + (total_decks * 3)
+    total_steps = total_decks * 3
 
     initial_message = "🔄 Synchronizing..."
 
@@ -1796,33 +1757,6 @@ def _sync_single_deck(
     msg = f"📥 {deckName}: Downloading data..."
     status_msgs.append(msg)
     _update_progress_text(progress, status_msgs)
-
-    # Process images if enabled (before downloading TSV)
-    try:
-        from .config_manager import get_image_processor_auto_process
-        from .config_manager import get_image_processor_enabled
-
-        if get_image_processor_enabled() and get_image_processor_auto_process():
-            msg = f"📸 {deckName}: Processing images..."
-            status_msgs.append(msg)
-            _update_progress_text(progress, status_msgs)
-
-            from .image_processor import process_images_for_sync
-
-            success, image_msg = process_images_for_sync(remote_deck_url)
-
-            if success:
-                status_msgs.append(f"  ✅ {image_msg}")
-            else:
-                status_msgs.append(f"  ⚠️ Image processing: {image_msg}")
-
-            _update_progress_text(progress, status_msgs)
-            mw.app.processEvents()
-    except Exception as img_error:
-        # Don't fail sync if image processing fails
-        add_debug_message(f"⚠️ Image processing error: {img_error}", "IMAGE_PROCESSOR")
-        status_msgs.append("  ⚠️ Image processing failed (continuing sync)")
-        _update_progress_text(progress, status_msgs)
 
     # The deck's own URL, not the export URL validate_url just built: converting to
     # "/export?format=tsv" drops the "#sheet=" fragment, and a deck with no sheet

@@ -51,7 +51,7 @@ Three layers, from the outside in:
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │  Add-on logic  (src/)                                                  │
 │  • sync engine / data processing  • configuration management           │
-│  • dialogs (src/ui/)              • backup, AnkiWeb, images            │
+│  • dialogs (src/ui/)              • AnkiWeb auto-sync                  │
 │  • compat.py — the single Qt/Anki gateway                              │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
@@ -162,16 +162,12 @@ split-out module:
 
 ### Features & integrations
 - **`ankiweb_sync.py`** — optional AnkiWeb auto-sync after changes.
-- **`backup_system.py`** — configuration/deck backup & restore.
-- **`image_processor.py`** + **`image_processor_script.py`** — the in-Anki image
-  workflow (a Google Apps Script Web App; see
-  [`scripts/IMAGE_PROCESSOR_README.md`](../scripts/IMAGE_PROCESSOR_README.md)).
 - **`compat.py`**, **`styled_messages.py`** — the Qt/Anki gateway and styled dialogs.
 
 ### UI (`src/ui/`)
-Nine Qt dialogs — add deck, sync, disconnect, backup, debug, deck-options config,
-AnkiWeb config, **card-layout config**, image-processor config — plus `url_helpers.py`
-(shared clean-URL / copy-to-clipboard helpers), one dialog per menu entry.
+Seven Qt dialogs — add deck, sync, disconnect, debug, deck-options config, AnkiWeb
+config and **card-layout config** — plus `url_helpers.py` (shared clean-URL /
+copy-to-clipboard helpers), one dialog per menu entry.
 Modules in `src/ui/` import siblings one level up (`from ..compat import …`).
 
 **`card_layout_dialog.py`** is a **read-only viewer** of a deck's card layout: the sides
@@ -550,8 +546,8 @@ Current test modules:
 | `test_deck_title.py` | Deriving a deck name from the localised Google Sheets page title |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
-| `test_theme.py` | Design-system tokens and `get_colors()` |
-| `test_backup_threading.py` | Backup/restore stays on the calling thread |
+| `test_theme.py` | Every colour resolves to one of Anki's own |
+| `test_icons.py` | The icon set: names, themability, one viewBox |
 | `test_ui_import_smoke.py` | Every dialog module imports cleanly |
 | `test_ui_instantiate_smoke.py` | Every dialog constructs (full `__init__`) |
 | `conftest.py` / `run_tests.py` | Mock-finder + fixtures / the test runner |

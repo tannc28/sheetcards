@@ -521,12 +521,6 @@ alone and **reported as a warning**, because framing one shows an error page whe
 video should be. An address already in `/embed` form is left as it is, so re-syncing
 never rewrites what it just wrote.
 
-**This is not the [Image Processor](#configure-image-processor).** `image` means *"I
-already have a URL"*; the Image Processor means *"I have a picture pasted into the cell"*
-and needs a Google Apps Script you deploy yourself to upload it and write an `<img>` tag
-into a separate `HTML IMAGE` column. They can live in the same sheet; they solve
-different problems.
-
 #### Deck-wide keys
 
 Written after the marker, in the `#config` cell itself.
@@ -760,14 +754,12 @@ count. Your ticks are saved to the add-on's settings the moment you click them, 
 selection is remembered next time (even if you then press Cancel). Pressing
 **Synchronize Selected** runs, in order:
 
-1. an automatic backup, if enabled;
-2. a rebuild of the card templates of every connected deck from the settings its last
+1. a rebuild of the card templates of every connected deck from the settings its last
    sync read out of the sheet;
-3. per deck: optional image processing → download → parse → create/update/delete notes
-   → name-consistency pass;
-4. removal of subdecks that ended up empty;
-5. application of the deck-options mode;
-6. after you close the summary, the AnkiWeb sync, if enabled.
+2. per deck: download → parse → create/update/delete notes → name-consistency pass;
+3. removal of subdecks that ended up empty;
+4. application of the deck-options mode;
+5. after you close the summary, the AnkiWeb sync, if enabled.
 
 The summary window has three views — **📊 Summary**, **📑 Full Details**,
 **⚠️ Errors Only** — and reports these row counts:
@@ -805,8 +797,9 @@ are cleaned up afterwards.
 **Caveats**
 
 - **Read the checkbox before confirming** — the destructive option is the default, and
-  the deletion cannot be undone from inside the add-on. (Anki's own *Undo* and the
-  add-on's [Backup](#remote-decks-backup) are your only recovery.)
+  the deletion cannot be undone from inside the add-on. Anki's own *Undo* and Anki's
+  automatic backups (Preferences → Backups) are the recovery, and the spreadsheet is
+  still there to sync from.
 - Reconnecting means adding the spreadsheet again; scheduling of deleted cards is gone.
 
 ### Configure Card Layout
@@ -856,67 +849,6 @@ content.
   template rebuild and shows nothing here until its first sync.
 - Hand-editing a Sheets2Anki note type in Anki's own card editor does not stick: the next
   sync rebuilds those templates from the sheet.
-
-### Configure Image Processor
-
-**What it does** — turns images pasted *into cells* of your spreadsheet into `<img>` tags
-that display on every device, including AnkiMobile.
-**Where** — Tools → Sheets2Anki → *Configure Image Processor* (`Ctrl+Shift+P`).
-
-> **Not the same thing as the `image` key.** Use the [`image` setting](#media-columns)
-> when a column already holds an image **URL** — nothing to deploy, nothing to upload.
-> Use the Image Processor when the picture is **pasted into the cell** and therefore
-> missing from the TSV export entirely. Both end up as an `<img>` on the card, and both
-> load over the network.
-
-**How it works.** In-cell Google Sheets images are not part of the TSV export, so they
-cannot be downloaded the way text is. Instead the add-on drives a **Google Apps Script
-Web App that you deploy yourself**:
-
-1. You add two ordinary content columns named **exactly** `IMAGE` and `HTML IMAGE`, and
-   insert pictures into the `IMAGE` column (*Insert → Image → Image in cell*).
-2. At sync time the add-on sends an HTTPS `POST` to your Web App with your ImgBB API key
-   and the spreadsheet ID.
-3. The script opens the spreadsheet, scans the `IMAGE` column, uploads each new picture
-   to [ImgBB](https://api.imgbb.com/), and writes
-   `<img src="…" style="max-width: 400px; height: auto;">` into the same row's
-   `HTML IMAGE` cell.
-4. `HTML IMAGE` is just another content column, so it syncs into a field of the same
-   name like any other and Anki renders the tag.
-
-**Setting it up (once)**
-
-The dialog walks you through it and includes a **Copy Script to Clipboard** button that
-puts the complete Apps Script on your clipboard:
-
-1. Get a free API key from [api.imgbb.com](https://api.imgbb.com/).
-2. **Copy Script to Clipboard** → [script.google.com](https://script.google.com) → New
-   project → paste → Save.
-3. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access: Anyone* →
-   Deploy.
-4. Paste the resulting `https://script.google.com/macros/s/…/exec` URL into the dialog,
-   paste your ImgBB key, tick *Enable automatic image processing*, and press
-   **Test Configuration**.
-
-One deployment works for all your spreadsheets — the add-on sends the spreadsheet ID
-with each request.
-
-**Caveats**
-
-- **The script only looks at a tab named exactly `Notes`.** Since the TSV export always
-  reads the *first* tab, name your first tab `Notes` for both halves to work.
-- Both column headers must be exactly `IMAGE` and `HTML IMAGE`.
-- A row whose `HTML IMAGE` cell is already filled is skipped. **To reprocess an image,
-  clear that cell.**
-- **Your images are uploaded to ImgBB, a third-party public image host.** Do not use it
-  for anything private. The card links to ImgBB's URL, so the images need a network
-  connection to display and will break if ImgBB does.
-- The Web App URL must be `https://` — the ImgBB key is sent in the request body and the
-  add-on refuses to transmit it in the clear.
-- **Test Configuration really uploads a 1×1 test image** to your ImgBB account.
-- Image processing is best-effort: if it fails, the sync logs a warning and continues
-  with whatever the sheet currently contains. Timeout is 120 s.
-- The original picture in the `IMAGE` column is never modified or deleted.
 
 ### Configure AnkiWeb Sync
 
@@ -969,44 +901,6 @@ root preset). **An existing preset is never overwritten** — once you tune
 - Switching to **Manual** does not restore whatever preset the decks had before; they
   simply keep what they were last given.
 - The shipped default is **Individual**.
-
-### Remote Decks Backup
-
-**What it does** — snapshots your Sheets2Anki setup (and optionally the deck itself) into
-a `.zip`, and restores it.
-**Where** — Tools → Sheets2Anki → *Remote Decks Backup* (`Ctrl+Shift+B`).
-
-| Kind | Contents |
-| :--- | :--- |
-| **Simple Backup** | `meta.json` + `config.json` — the connected-deck registry and all add-on settings |
-| **Complete Backup** | The above **plus** `sheets2anki_deck.apkg`: an export of the whole `Sheets2Anki` deck tree **including scheduling history and media** |
-
-**How it works.** The backup is a plain ZIP with a `backup_info.json` manifest; the deck
-half is produced by Anki's own `AnkiPackageExporter` with `includeSched` and
-`includeMedia` on. Restoring extracts the ZIP (rejecting any archive that tries to write
-outside its own folder), removes the current `Sheets2Anki` deck and its cards, writes the
-settings back, re-imports the `.apkg`, and then repairs the stored deck IDs so the remote
-links point at the freshly imported decks. **A safety backup is always taken first**, and
-the restore aborts before deleting anything if the archive turns out to be incomplete.
-
-**Automatic backups** — a checkbox in the same dialog runs a backup before *every* sync;
-you choose Simple or Complete and how many files to keep (default 50).
-
-**Where files go** — the directory you set in the dialog, defaulting to
-`~/Documents/Sheets2Anki/AutoBackups`. The **Backup Status** panel counts and sizes what
-it finds there.
-
-**Caveats**
-
-- A **Complete** backup and any restore run on Anki's main thread. Anki is frozen for the
-  duration and there is no cancel — an `.apkg` export of a large deck takes a while.
-- **Only automatic backups are rotated.** Manual and safety backups accumulate forever;
-  prune them yourself.
-- **Restore Settings** only rewrites configuration — your notes and cards are untouched.
-  **Full Restore** replaces the entire `Sheets2Anki` deck. Restart Anki afterwards.
-- Backup Status only scans the *configured* directory, so backups moved elsewhere will not
-  show up there.
-- Automatic backup is **enabled** (Simple) in the shipped configuration.
 
 ### Debug Mode
 
@@ -1111,8 +1005,6 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 | `Ctrl+Shift+O` | Configure Deck Options |
 | `Ctrl+Shift+W` | Configure AnkiWeb Sync |
 | `Ctrl+Shift+C` | Configure Card Layout |
-| `Ctrl+Shift+P` | Configure Image Processor |
-| `Ctrl+Shift+B` | Remote Decks Backup |
 | `Ctrl+Shift+L` | Debug Mode |
 
 ---
@@ -1123,11 +1015,11 @@ All of these live under **Tools → Sheets2Anki**. On macOS, ⌘ replaces Ctrl.
 | :--- | :--- | :--- |
 | The parsed settings row (sides, sizes, colours, speech, reverse card) | Anki's collection config, key `sheets2anki::sheet_settings` — a cache of what the last sync read; the sheet stays the source of truth | **Yes** |
 | Note types and card templates | Anki's collection | **Yes** |
-| Connected decks, deck-options mode, AnkiWeb mode, backup settings, ImgBB key, Web App URL, debug flags | `meta.json` in the add-on folder | No — machine-local |
+| Connected decks, deck-options mode, AnkiWeb mode, debug flags | `meta.json` in the add-on folder | No — machine-local |
 
 `config.json` in the add-on folder holds only the shipped defaults used to seed
 `meta.json` on first run. Out of the box: deck options *Individual*, AnkiWeb sync *on*,
-automatic *Simple* backup before each sync, image processor *off*, debug *off*.
+debug *off*.
 
 ---
 
@@ -1203,18 +1095,13 @@ Expected. Rename the spreadsheet instead — see
 [Renames](#renames-are-driven-by-the-spreadsheet).
 
 **Images do not appear on the cards.**
-Check, in order: the first tab is named `Notes`; the headers are exactly `IMAGE` and
-`HTML IMAGE`; the Image Processor is enabled with both an ImgBB key and a Web App URL;
-**Test Configuration** passes; the `HTML IMAGE` cell for that row is not already filled
-with something stale (clear it to reprocess).
+A picture *pasted into a cell* is not something Anki can reach — the cell holds a
+drawing, not an address. Put the picture somewhere with a link (Drive, imgur, a
+repository), put that link in the cell, and mark the column `image` in the settings
+row. The card then needs a network connection to show it.
 
 **"AnkiWeb not configured - access Tools > Sync in Anki"**
 Log in to AnkiWeb once through Anki's own Sync button; the add-on reuses that session.
-
-**"Backup Directory Not Configured" / "Backup Directory Not Found"**
-Open `Ctrl+Shift+B`, set a directory (or accept the default
-`~/Documents/Sheets2Anki/AutoBackups`), and press **✓ Save** — the backup actions read
-the *saved* directory, not what is merely typed in the box.
 
 **Anything else.**
 Enable **Debug Mode** (`Ctrl+Shift+L`), reproduce the problem, then read or attach
@@ -1227,9 +1114,7 @@ report issues at
 ## Contributing
 
 Development setup, the test suite and the architecture are documented in
-[`CLAUDE.md`](CLAUDE.md) and the build scripts under [`scripts/`](scripts/). Detailed
-Image Processor setup notes live in
-[`scripts/IMAGE_PROCESSOR_README.md`](scripts/IMAGE_PROCESSOR_README.md).
+[`CLAUDE.md`](CLAUDE.md) and the build scripts under [`scripts/`](scripts/).
 
 > **Maintainer note.** An extra menu entry, *Import Test Deck* (`Ctrl+Shift+T`), appears
 > only while `IS_DEVELOPMENT_MODE` is `True` in `src/templates_and_definitions.py`. The

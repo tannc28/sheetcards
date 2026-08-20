@@ -115,6 +115,7 @@ ButtonBox_Yes = QDialogButtonBox.StandardButton.Yes
 ButtonBox_No = QDialogButtonBox.StandardButton.No
 ButtonBox_Apply = QDialogButtonBox.StandardButton.Apply
 ButtonBox_Close = QDialogButtonBox.StandardButton.Close
+ButtonBox_Save = QDialogButtonBox.StandardButton.Save
 
 # A button that is neither an accept nor a reject — "Test connection" — so the
 # box places it on the side the platform keeps such things.

@@ -48,7 +48,6 @@ try:
     from .src.deck_manager import removeRemoteDeck as rDecks
     from .src.deck_manager import syncDecksWithSelection as sDecks
     from .src.templates_and_definitions import ADDON_MENU_NAME
-    from .src.ui.backup_dialog import show_backup_dialog
 
 except Exception as e:
     showInfo(f"Error importing Sheets2Anki plugin modules:\n{e}")
@@ -96,22 +95,6 @@ def addDeck():
 
             trace = traceback.format_exc()
             showInfo(str(trace))
-
-
-def backup_decks():
-    """
-    Opens the remote decks backup dialog.
-
-    This function allows the user to:
-    1. Create a complete backup of their configurations
-    2. Restore previous backups
-    3. Export/import specific configurations
-    """
-    try:
-        show_backup_dialog()
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
 
 
 def syncDecks():
@@ -218,24 +201,6 @@ def configure_card_layout():
         showInfo(error_msg)
 
 
-def configure_image_processor():
-    """
-    Opens the Image Processor configuration dialog.
-
-    This function allows the user to configure:
-    1. Enable/disable automatic image processing
-    2. ImgBB API key for image hosting
-    3. Google OAuth credentials for Sheets API
-    4. Auto-process setting for syncs
-    """
-    try:
-        from .src.ui.image_processor_config_dialog import show_image_processor_config
-
-        show_image_processor_config()
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
-
 
 # =============================================================================
 # ANKI INTERFACE CONFIGURATION
@@ -290,20 +255,8 @@ if mw is not None:
     qconnect(cardLayoutAction.triggered, configure_card_layout)
     remoteDecksSubMenu.addAction(cardLayoutAction)
 
-    # Action: Configure Image Processor
-    imageProcessorConfigAction = QAction("Configure Image Processor", mw)
-    imageProcessorConfigAction.setShortcut(QKeySequence("Ctrl+Shift+P"))
-    qconnect(imageProcessorConfigAction.triggered, configure_image_processor)
-    remoteDecksSubMenu.addAction(imageProcessorConfigAction)
-
     # Separator
     remoteDecksSubMenu.addSeparator()
-
-    # Action: Remote decks backup
-    backupDecksAction = QAction("Remote Decks Backup", mw)
-    backupDecksAction.setShortcut(QKeySequence("Ctrl+Shift+B"))
-    qconnect(backupDecksAction.triggered, backup_decks)
-    remoteDecksSubMenu.addAction(backupDecksAction)
 
     debugModeAction = QAction("Debug Mode", mw)
     debugModeAction.setShortcut(QKeySequence("Ctrl+Shift+L"))

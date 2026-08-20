@@ -6,15 +6,7 @@
         "sync_timeout_seconds": 60,
         "deck_options_mode": "individual",
         "ankiweb_sync_mode": "sync",
-        "auto_backup_enabled": true,
-        "auto_backup_directory": "",
-        "auto_backup_max_files": 50,
-        "auto_backup_type": "simple",
-        "accumulate_logs": true,
-        "image_processor_enabled": false,
-        "image_processor_imgbb_key": "",
-        "image_processor_webapp_url": "",
-        "image_processor_auto_process": true
+        "accumulate_logs": true
     },
     "decks": {}
 }

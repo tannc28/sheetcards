@@ -14,11 +14,9 @@ import pytest
 UI_MODULES = [
     "add_deck_dialog",
     "ankiweb_sync_config_dialog",
-    "backup_dialog",
     "debug_dialog",
     "deck_options_config_dialog",
     "disconnect_dialog",
-    "image_processor_config_dialog",
     "sync_dialog",
 ]
 

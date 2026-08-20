@@ -152,6 +152,15 @@ There is **no fixed column list**. The sheet decides the schema: only a handful 
 
 **Known cloze defect the preview surfaces**: a row is routed to the Cloze note type when *any* content column holds `{{c1::…}}`, but `card_layout` only applies `cloze:` to the **front** fields. Anki renders a clozed field with no deletion as nothing, so such a row yields a blank prompt with the raw markup on the answer. Fixing it properly means changing how note types are provisioned (the template must know which column carries the deletion); the README documents the workaround (`side=front`).
 
+### What this add-on deliberately does not do
+
+Two features were built and then removed in full, and the reasons are the same reason: **the spreadsheet is the source of truth, and a feature that forgets that is a feature doing someone else's job.**
+
+- **No backup or restore.** Anki already backs the whole collection up (Preferences → Backups) and does it before risky operations. Everything this add-on creates comes back from a sync, so a deck is never the thing at risk; the only irreplaceable state is `meta.json`, a few KB naming the connected links. ~1,750 lines went — a retention limit, safety copies, an `.apkg` export path and a pre-sync backup step in `syncDecks()`. If the link list ever needs saving, that is an export button writing one JSON file, not a subsystem.
+- **No image processing.** It solved "a picture pasted into a cell is not something Anki can reach", and charged an ImgBB account, an API key, a deployed Google Apps Script web app and an `Access: Anyone` deployment for it. A media column (`image` in the settings row, a URL in the cell) solves the same problem with none of that. ~960 lines went, along with `HTML IMAGE` as a reserved concept.
+
+Both were removed while the add-on had no users. Do not reintroduce either: the second way to do a thing is the one that gets out of date.
+
 ### `IS_DEVELOPMENT_MODE` (build-time flip)
 Defined `True` in `templates_and_definitions.py`. The AnkiWeb/standalone build scripts **rewrite it to `False`** in the packaged copy. It gates the "Import Test Deck" menu item and `TEST_SHEETS_URLS`. Leave it `True` in the repo.
 
