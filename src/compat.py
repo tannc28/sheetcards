@@ -102,6 +102,10 @@ WINDOW_MODAL = Qt.WindowModality.WindowModal
 APPLICATION_MODAL = Qt.WindowModality.ApplicationModal
 NON_MODAL = Qt.WindowModality.NonModal
 
+# A label the reader can select and copy — a deck name or an id is a string
+# they will want to paste somewhere.
+TextSelectableByMouse = Qt.TextInteractionFlag.TextSelectableByMouse
+
 # QDialogButtonBox constants
 ButtonBox_Ok = QDialogButtonBox.StandardButton.Ok
 ButtonBox_Cancel = QDialogButtonBox.StandardButton.Cancel

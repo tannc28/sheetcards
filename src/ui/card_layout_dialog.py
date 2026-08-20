@@ -13,13 +13,14 @@ sheet asks for, and roughly what the resulting card looks like.
 import re
 from html import escape
 
+from ..compat import ButtonBox_Close
 from ..compat import DialogAccepted
 from ..compat import QComboBox
 from ..compat import QDialog
+from ..compat import QDialogButtonBox
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
-from ..compat import QPushButton
 from ..compat import QTextBrowser
 from ..compat import QVBoxLayout
 from ..compat import QWidget
@@ -27,11 +28,11 @@ from ..compat import mw
 from ..compat import safe_exec_dialog
 from ..config_manager import get_remote_decks
 from ..sheet_config import THEMES
-from ..theme import base_dialog_qss
+from ..theme import MARGIN
+from ..theme import SPACE_ELEMENT
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
 from ..theme import is_dark_mode
-from ..theme import make_header
-from ..theme import secondary_button_qss
 
 # =============================================================================
 # sync_config adapter
@@ -308,8 +309,6 @@ class CardLayoutDialog(QDialog):
         self.voices, self.voices_error = _installed_voices()
 
         self._setup_ui()
-        self._apply_styles()
-        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._connect_signals()
         self._load_selected_deck()
 
@@ -340,24 +339,20 @@ class CardLayoutDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _setup_ui(self):
-        root = QVBoxLayout()
-        root.setSpacing(15)
-        root.setContentsMargins(20, 20, 20, 20)
+        root = QVBoxLayout(self)
+        root.setSpacing(SPACE_SECTION)
+        root.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        root.addWidget(
-            make_header(
-                self.colors,
-                "Card Layout",
-                "How your spreadsheet says the cards should look. This window only "
-                "reports what the last sync understood — nothing here is editable.",
-            )
+        intro = QLabel(
+            "How your spreadsheet says the cards should look. This window reports "
+            "what the last sync understood — nothing here is editable."
         )
+        intro.setWordWrap(True)
+        root.addWidget(intro)
 
         deck_row = QHBoxLayout()
-        deck_row.setSpacing(10)
-        deck_label = QLabel("Deck:")
-        deck_label.setStyleSheet(f"font-size: 12pt; color: {self.colors['text']};")
-        deck_row.addWidget(deck_label)
+        deck_row.setSpacing(SPACE_ELEMENT)
+        deck_row.addWidget(QLabel("Deck:"))
 
         self.deck_combo = QComboBox()
         for sheet_id, label, _info in self.decks:
@@ -371,22 +366,21 @@ class CardLayoutDialog(QDialog):
             "are laid out."
         )
         self.empty_label.setWordWrap(True)
-        self.empty_label.setObjectName("emptyState")
         root.addWidget(self.empty_label)
 
         self.body = QWidget()
         body_layout = QHBoxLayout(self.body)
         body_layout.setContentsMargins(0, 0, 0, 0)
-        body_layout.setSpacing(15)
+        body_layout.setSpacing(SPACE_SECTION)
 
         left_column = QVBoxLayout()
-        left_column.setSpacing(15)
+        left_column.setSpacing(SPACE_SECTION)
         left_column.addWidget(self._build_fields_group(), 3)
         left_column.addWidget(self._build_warnings_group(), 2)
         body_layout.addLayout(left_column, 3)
 
         right_column = QVBoxLayout()
-        right_column.setSpacing(15)
+        right_column.setSpacing(SPACE_SECTION)
         right_column.addWidget(self._build_preview_group(), 3)
         right_column.addWidget(self._build_voices_group(), 2)
         body_layout.addLayout(right_column, 2)
@@ -398,20 +392,15 @@ class CardLayoutDialog(QDialog):
             "that row and sync again (Ctrl+Shift+S) to change how the cards look."
         )
         source_note.setWordWrap(True)
-        source_note.setObjectName("sourceNote")
+        source_note.setStyleSheet(f"color: {self.colors['text_secondary']};")
         root.addWidget(source_note)
 
-        buttons = QHBoxLayout()
-        buttons.setContentsMargins(0, 10, 0, 0)
-        buttons.addStretch()
-
-        self.close_button = QPushButton("Close")
-        self.close_button.setStyleSheet(secondary_button_qss(self.colors))
-        self.close_button.setDefault(True)
-        buttons.addWidget(self.close_button)
-
-        root.addLayout(buttons)
-        self.setLayout(root)
+        self.button_box = QDialogButtonBox(ButtonBox_Close)
+        close_button = self.button_box.button(ButtonBox_Close)
+        assert close_button is not None  # just asked for, by name
+        close_button.setDefault(True)
+        self.close_button = close_button
+        root.addWidget(self.button_box)
 
         has_decks = bool(self.decks)
         self.empty_label.setVisible(not has_decks)
@@ -484,59 +473,9 @@ class CardLayoutDialog(QDialog):
         group.setLayout(layout)
         return group
 
-    def _apply_styles(self):
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['bg']};
-                color: {self.colors['text']};
-            }}
-            QLabel {{
-                color: {self.colors['text']};
-                font-size: 12pt;
-            }}
-            QLabel#emptyState {{
-                background-color: {self.colors['warning_bg']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 14px;
-            }}
-            QLabel#caption, QLabel#sourceNote {{
-                font-size: 11pt;
-                color: {self.colors['text_secondary']};
-                font-weight: normal;
-            }}
-            QComboBox {{
-                background-color: {self.colors['input_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 12pt;
-                font-weight: normal;
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                padding-right: 10px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {self.colors['input_bg']};
-                color: {self.colors['text']};
-                selection-background-color: {self.colors['accent_primary']};
-            }}
-            QTextBrowser {{
-                background-color: {self.colors['card_bg']};
-                color: {self.colors['text']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                padding: 8px;
-                font-size: 11pt;
-                font-weight: normal;
-            }}
-        """)
-
     def _connect_signals(self):
         self.deck_combo.currentIndexChanged.connect(self._load_selected_deck)
-        self.close_button.clicked.connect(self.accept)
+        self.button_box.rejected.connect(self.accept)
 
     # ------------------------------------------------------------------
     # Loading

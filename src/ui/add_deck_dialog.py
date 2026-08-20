@@ -5,18 +5,18 @@ This module provides a modern, user-friendly interface for adding decks
 with support for automatic naming and conflict resolution.
 """
 
-from ..compat import AlignCenter
+from ..compat import ButtonBox_Cancel
+from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
 from ..compat import QDialog
+from ..compat import QDialogButtonBox
 from ..compat import QGroupBox
-from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QLineEdit
 from ..compat import QProgressBar
-from ..compat import QPushButton
 from ..compat import QTimer
 from ..compat import QVBoxLayout
-from ..compat import QWidget
+from ..compat import TextSelectableByMouse
 from ..compat import mw
 from ..compat import safe_exec
 from ..config_manager import add_remote_deck
@@ -25,11 +25,10 @@ from ..config_manager import is_deck_disconnected
 from ..data_processor import RemoteDeckError
 from ..data_processor import read_all_sheets
 from ..styled_messages import StyledMessageBox
-from ..theme import base_dialog_qss
+from ..theme import MARGIN
+from ..theme import SPACE_ELEMENT
+from ..theme import SPACE_SECTION
 from ..theme import get_colors
-from ..theme import make_header
-from ..theme import primary_button_qss
-from ..theme import secondary_button_qss
 from ..tsv_model import deck_root_name
 from ..utils import add_debug_message
 from ..utils import get_or_create_deck
@@ -61,318 +60,113 @@ class AddDeckDialog(QDialog):
         # Get colors based on current theme
         self.colors = get_colors()
 
-        self._setup_styles()
-        self.setStyleSheet(self.styleSheet() + base_dialog_qss(self.colors))
         self._setup_ui()
         self._connect_signals()
         self._adjust_dialog_size()
 
-    def _setup_styles(self):
-        """Sets up the dialog's stylesheet."""
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {self.colors['background']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                font-size: 13px;
-                color: {self.colors['text_primary']};
-                border: 1px solid {self.colors['border']};
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 12px;
-                background-color: {self.colors['background']};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 8px;
-                background-color: {self.colors['background']};
-            }}
-            QLineEdit {{
-                padding: 12px 16px;
-                font-size: 13px;
-                border: 2px solid {self.colors['border']};
-                border-radius: 8px;
-                background-color: {self.colors['background']};
-                color: {self.colors['text_primary']};
-            }}
-            QLineEdit:focus {{
-                border-color: {self.colors['primary']};
-                background-color: {self.colors['primary_light']};
-            }}
-            QLineEdit:disabled {{
-                background-color: {self.colors['background_secondary']};
-                color: {self.colors['text_muted']};
-            }}
-            QLabel {{
-                color: {self.colors['text_primary']};
-            }}
-        """)
-
     def _setup_ui(self):
-        """Sets up the modern user interface."""
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(16)
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        """A link, then what it turned out to be, then the buttons.
 
-        # ===== HEADER SECTION =====
-        header_widget = self._create_header()
-        main_layout.addWidget(header_widget)
+        Two group boxes and nothing else: no banner, no numbered steps, no cards.
+        Anki styles a QGroupBox, a QLineEdit and a QProgressBar itself, so none of
+        them is told anything here.
+        """
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(SPACE_SECTION)
+        main_layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # ===== STEP 1: URL INPUT =====
-        step1_group = self._create_step1_section()
-        main_layout.addWidget(step1_group)
+        main_layout.addWidget(self._create_step1_section())
 
-        # ===== STEP 2: PREVIEW (Initially hidden) =====
         self.step2_group = self._create_step2_section()
         self.step2_group.setVisible(False)
         main_layout.addWidget(self.step2_group)
 
-        # ===== PROGRESS BAR =====
-        self.progress_bar = self._create_progress_bar()
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setTextVisible(False)
         main_layout.addWidget(self.progress_bar)
 
-        # ===== SPACER =====
         main_layout.addStretch()
-
-        # ===== BUTTONS =====
-        buttons_layout = self._create_buttons()
-        main_layout.addLayout(buttons_layout)
-
-        self.setLayout(main_layout)
-
-    def _create_header(self):
-        """Creates the gradient header banner (consistent with the other dialogs)."""
-        return make_header(
-            self.colors,
-            "Add Remote Deck",
-            "Connect a Google Sheet, or an .xlsx file at any https address.",
-        )
+        main_layout.addWidget(self._create_buttons())
 
     def _create_step1_section(self):
-        """Creates Step 1: URL input section."""
-        group = QGroupBox("Step 1: Paste Spreadsheet URL")
-        layout = QVBoxLayout()
-        layout.setSpacing(12)
-        layout.setContentsMargins(16, 20, 16, 16)
+        """The link, and how to get one."""
+        group = QGroupBox("Spreadsheet link")
+        layout = QVBoxLayout(group)
+        layout.setSpacing(SPACE_ELEMENT)
 
-        # Help text
+        # Instructions read as a remark under the field rather than as a tip in a
+        # tinted box with a lightbulb on it.
         help_text = QLabel(
-            "💡 <b>How to get the URL:</b> open your spreadsheet, click "
-            '<b>Share</b>, set access to <b>"Anyone with the link"</b>, then '
-            "copy the URL from your browser.<br>"
-            "Or paste a link ending in <b>.xlsx</b> or <b>.xlsm</b> — a file in a "
-            "GitHub repository, or on any https host, is read the same way."
+            "Open your spreadsheet, click <b>Share</b> and set access to "
+            "<b>Anyone with the link</b>, then copy the address from your browser. "
+            "A link ending in <b>.xlsx</b> or <b>.xlsm</b> — in a GitHub repository "
+            "or on any https host — is read the same way."
         )
-        help_text.setStyleSheet(f"""
-            font-size: 11px;
-            color: {self.colors['text_secondary']};
-            background-color: {self.colors['background_secondary']};
-            padding: 10px 12px;
-            border-radius: 6px;
-            line-height: 1.5;
-        """)
         help_text.setWordWrap(True)
+        help_text.setStyleSheet(f"color: {self.colors['text_secondary']};")
         layout.addWidget(help_text)
 
-        # URL input container
-        input_container = QWidget()
-        input_layout = QHBoxLayout(input_container)
-        input_layout.setContentsMargins(0, 0, 0, 0)
-        input_layout.setSpacing(8)
-
-        # URL input field
         self.url_edit = QLineEdit()
         self.url_edit.setPlaceholderText(
             "https://docs.google.com/spreadsheets/d/…  or  https://…/deck.xlsx"
         )
-        self.url_edit.setMinimumHeight(44)
-        input_layout.addWidget(self.url_edit)
+        layout.addWidget(self.url_edit)
 
-        # Status indicator button (visual only)
-        self.status_indicator = QLabel("⚪")
-        self.status_indicator.setFixedSize(32, 32)
-        self.status_indicator.setAlignment(AlignCenter)
-        self.status_indicator.setStyleSheet(f"""
-            font-size: 16px;
-            background-color: {self.colors['background_secondary']};
-            border-radius: 16px;
-        """)
-        input_layout.addWidget(self.status_indicator)
-
-        layout.addWidget(input_container)
-
-        # Status message area
-        self.status_container = QWidget()
-        status_layout = QHBoxLayout(self.status_container)
-        status_layout.setContentsMargins(0, 0, 0, 0)
-        status_layout.setSpacing(8)
-
+        # What the link turned out to be, in the colour that says how it went. The
+        # coloured circle that used to sit beside the field said the same thing a
+        # second time, in emoji.
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
-        self.status_label.setStyleSheet(f"""
-            font-size: 12px;
-            color: {self.colors['text_secondary']};
-            padding: 4px 0;
-        """)
-        status_layout.addWidget(self.status_label)
-        status_layout.addStretch()
+        self.status_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        layout.addWidget(self.status_label)
 
-        layout.addWidget(self.status_container)
-
-        group.setLayout(layout)
         return group
 
     def _create_step2_section(self):
-        """Creates Step 2: Preview section."""
-        group = QGroupBox("Step 2: Review Deck Details")
-        layout = QVBoxLayout()
-        layout.setSpacing(12)
-        layout.setContentsMargins(16, 20, 16, 16)
+        """What the link turned out to hold, and what it will be called."""
+        group = QGroupBox("Deck")
+        layout = QVBoxLayout(group)
+        layout.setSpacing(SPACE_ELEMENT)
 
-        # Statistics container
-        self.stats_widget = QWidget()
-        stats_layout = QHBoxLayout(self.stats_widget)
-        stats_layout.setContentsMargins(0, 0, 0, 0)
-        stats_layout.setSpacing(16)
+        # Four numbers, as a sentence. They were four tinted cards with an emoji
+        # each — 📝 🎯 🫥 👻 — which is a dashboard in a window that is asking one
+        # question.
+        self.stats_label = QLabel("")
+        self.stats_label.setWordWrap(True)
+        self.stats_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        layout.addWidget(self.stats_label)
 
-        # We'll add stat cards dynamically
-        self.stats_layout = stats_layout
-        layout.addWidget(self.stats_widget)
-
-        # Conflict warning (initially hidden)
         self.conflict_warning = QLabel("")
         self.conflict_warning.setVisible(False)
-        self.conflict_warning.setStyleSheet(f"""
-            font-size: 12px;
-            color: {self.colors['warning']};
-            background-color: {self.colors['warning_light']};
-            border: 1px solid {self.colors['warning']};
-            border-radius: 6px;
-            padding: 10px 14px;
-        """)
         self.conflict_warning.setWordWrap(True)
+        self.conflict_warning.setStyleSheet(f"color: {self.colors['warning']};")
         layout.addWidget(self.conflict_warning)
 
-        # Deck name preview section
-        name_section = QWidget()
-        name_layout = QVBoxLayout(name_section)
-        name_layout.setContentsMargins(0, 8, 0, 0)
-        name_layout.setSpacing(6)
+        name_label = QLabel("Will be created as:")
+        name_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        layout.addWidget(name_label)
 
-        name_label = QLabel("Deck will be created as:")
-        name_label.setStyleSheet(f"""
-            font-size: 11px;
-            color: {self.colors['text_secondary']};
-            font-weight: bold;
-        """)
-        name_layout.addWidget(name_label)
-
+        # A deck name is a string out of a spreadsheet, so it is set in the face
+        # Anki sets a name in, not in a filled blue box.
         self.name_preview = QLabel("")
-        self.name_preview.setStyleSheet(f"""
-            font-size: 14px;
-            font-weight: bold;
-            color: {self.colors['primary']};
-            background-color: {self.colors['primary_light']};
-            padding: 12px 16px;
-            border-radius: 6px;
-            border: 1px solid {self.colors['primary']};
-        """)
         self.name_preview.setWordWrap(True)
-        name_layout.addWidget(self.name_preview)
+        self.name_preview.setTextInteractionFlags(TextSelectableByMouse)
+        layout.addWidget(self.name_preview)
 
-        layout.addWidget(name_section)
-
-        group.setLayout(layout)
         return group
 
-    def _create_stat_card(self, icon, value, label):
-        """Creates a statistics card widget."""
-        card = QWidget()
-        card.setObjectName("statCard")
-        card.setStyleSheet(f"""
-            QWidget#statCard {{
-                background-color: {self.colors['background_secondary']};
-                border-radius: 8px;
-                min-width: 110px;
-            }}
-        """)
-
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(8)
-
-        # Icon and value
-        value_label = QLabel(f"{icon} {value}")
-        value_label.setStyleSheet(f"""
-            QLabel {{
-                font-size: 16px;
-                font-weight: bold;
-                color: {self.colors['text_primary']};
-            }}
-        """)
-        value_label.setAlignment(AlignCenter)
-        value_label.setWordWrap(True)
-        layout.addWidget(value_label)
-
-        # Label
-        text_label = QLabel(label)
-        text_label.setStyleSheet(f"""
-            QLabel {{
-                font-size: 10px;
-                color: {self.colors['text_secondary']};
-            }}
-        """)
-        text_label.setAlignment(AlignCenter)
-        text_label.setWordWrap(True)
-        layout.addWidget(text_label)
-
-        return card
-
-    def _create_progress_bar(self):
-        """Creates a modern progress bar."""
-        progress = QProgressBar()
-        progress.setVisible(False)
-        progress.setMaximumHeight(4)
-        progress.setTextVisible(False)
-        progress.setStyleSheet(f"""
-            QProgressBar {{
-                border: none;
-                background-color: {self.colors['border_light']};
-                border-radius: 2px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {self.colors['primary']};
-                border-radius: 2px;
-            }}
-        """)
-        return progress
-
     def _create_buttons(self):
-        """Creates the button section."""
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 8, 0, 0)
-        layout.setSpacing(12)
-
-        # Cancel button
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setMinimumHeight(40)
-        self.cancel_button.setMinimumWidth(100)
-        self.cancel_button.setStyleSheet(secondary_button_qss(self.colors))
-
-        # Add button
-        self.add_button = QPushButton("✓ Add Deck")
-        self.add_button.setEnabled(False)
-        self.add_button.setMinimumHeight(40)
-        self.add_button.setMinimumWidth(140)
-        self.add_button.setStyleSheet(primary_button_qss(self.colors, "success"))
-
-        layout.addStretch()
-        layout.addWidget(self.cancel_button)
-        layout.addWidget(self.add_button)
-
-        return layout
+        """OK and Cancel, in this platform's order."""
+        self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
+        add_button = self.button_box.button(ButtonBox_Ok)
+        assert add_button is not None  # just asked for, by name
+        add_button.setText("Add Deck")
+        add_button.setEnabled(False)
+        add_button.setDefault(True)
+        self.add_button = add_button
+        self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        return self.button_box
 
     def _connect_signals(self):
         """Connects interface signals."""
@@ -380,8 +174,8 @@ class AddDeckDialog(QDialog):
         self.validation_timer.timeout.connect(self._validate_url_auto)
 
         self.url_edit.textChanged.connect(self._on_url_changed)
-        self.add_button.clicked.connect(self._add_deck)
-        self.cancel_button.clicked.connect(self.reject)
+        self.button_box.accepted.connect(self._add_deck)
+        self.button_box.rejected.connect(self.reject)
 
     def _adjust_dialog_size(self):
         """Adjusts window size based on visible content."""
@@ -591,38 +385,22 @@ class AddDeckDialog(QDialog):
         self._adjust_dialog_size()
 
     def _show_status(self, message, status_type="info"):
-        """Shows status message with visual indicator."""
-        indicators = {
-            "waiting": (
-                "⚪",
-                self.colors["text_muted"],
-                self.colors["background_secondary"],
-            ),
-            "validating": ("🔄", self.colors["primary"], self.colors["primary_light"]),
-            "success": ("✅", self.colors["success"], self.colors["success_light"]),
-            "warning": ("⚠️", self.colors["warning"], self.colors["warning_light"]),
-            "error": ("❌", self.colors["error"], self.colors["error_light"]),
-        }
+        """Says how the link went, in one line and one colour.
 
-        icon, color, bg = indicators.get(
-            status_type,
-            ("ℹ️", self.colors["text_secondary"], self.colors["background_secondary"]),
-        )
-
-        self.status_indicator.setText(icon)
-        self.status_indicator.setStyleSheet(f"""
-            font-size: 16px;
-            background-color: {bg};
-            border-radius: 16px;
-        """)
+        There used to be an emoji per state in a tinted circle beside the field —
+        ⚪ 🔄 ✅ ⚠️ ❌ — saying in pictures what the sentence beside it already
+        said in words. The sentence is what a reader reads.
+        """
+        colour = {
+            "waiting": self.colors["text_secondary"],
+            "validating": self.colors["text_secondary"],
+            "success": self.colors["success"],
+            "warning": self.colors["warning"],
+            "error": self.colors["error"],
+        }.get(status_type, self.colors["text_secondary"])
 
         self.status_label.setText(message)
-        self.status_label.setStyleSheet(f"""
-            font-size: 12px;
-            color: {color};
-            padding: 4px 0;
-            font-weight: {'bold' if status_type in ['success', 'error'] else 'normal'};
-        """)
+        self.status_label.setStyleSheet(f"color: {colour};")
 
     def _sheet_summary(self, fresh):
         """What this link is about to become, in one line."""
@@ -642,38 +420,25 @@ class AddDeckDialog(QDialog):
         if not self.remote_deck:
             return
 
-        # Clear existing stat cards
-        while self.stats_layout.count():
-            item = self.stats_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        # Get statistics
         deck_stats = self.remote_deck.get_statistics()
+        rows = deck_stats.get("valid_note_lines", 0)
+        notes = deck_stats.get("total_potential_anki_notes", 0)
 
-        # Create stat cards
-        # Create stat cards - ALWAYS SHOW ALL for consistent UI
-        valid_lines = deck_stats.get("valid_note_lines", 0)
-        self.stats_layout.addWidget(
-            self._create_stat_card("📝", str(valid_lines), "Questions")
-        )
-
-        potential_notes = deck_stats.get("total_potential_anki_notes", 0)
-        self.stats_layout.addWidget(
-            self._create_stat_card("🎯", str(potential_notes), "Anki Notes")
-        )
-
-        invalid_lines = deck_stats.get("invalid_note_lines", 0)
-        self.stats_layout.addWidget(
-            self._create_stat_card("🫥", str(invalid_lines), "Invalid Rows")
-        )
-
-        ghost_rows = deck_stats.get("ignored_ghost_rows", 0)
-        self.stats_layout.addWidget(
-            self._create_stat_card("👻", str(ghost_rows), "Ghost Rows")
-        )
-
-        self.stats_layout.addStretch()
+        # The two numbers that answer "did it read the sheet". The other two are
+        # only worth a clause, and only when they are not zero: a row count of 0
+        # invalid and 0 ghost is a row count of nothing to say.
+        summary = f"{rows} rows to sync, {notes} notes"
+        aside = [
+            f"{deck_stats.get(key, 0)} {word}"
+            for key, word in (
+                ("invalid_note_lines", "invalid"),
+                ("ignored_ghost_rows", "ghost"),
+            )
+            if deck_stats.get(key, 0)
+        ]
+        if aside:
+            summary += f" ({', '.join(aside)})"
+        self.stats_label.setText(summary)
 
         # Update deck name preview
         self._update_deck_name_preview()
@@ -713,36 +478,14 @@ class AddDeckDialog(QDialog):
             full_name = deck_root_name(final_remote_name)
 
         if final_remote_name != self.suggested_name:
-            # CONFLICT - Show warning
             self.conflict_warning.setText(
-                f"⚠️ Name conflict detected! Original: '{self.suggested_name}' → "
-                f"Renamed to: '{final_remote_name}'"
+                f"A deck called '{self.suggested_name}' is already connected, so "
+                f"this one is named '{final_remote_name}'."
             )
             self.conflict_warning.setVisible(True)
-
-            self.name_preview.setText(full_name)
-            self.name_preview.setStyleSheet(f"""
-                font-size: 14px;
-                font-weight: bold;
-                color: {self.colors['warning']};
-                background-color: {self.colors['warning_light']};
-                padding: 12px 16px;
-                border-radius: 6px;
-                border: 1px solid {self.colors['warning']};
-            """)
         else:
-            # No conflict
             self.conflict_warning.setVisible(False)
-            self.name_preview.setText(full_name)
-            self.name_preview.setStyleSheet(f"""
-                font-size: 14px;
-                font-weight: bold;
-                color: {self.colors['primary']};
-                background-color: {self.colors['primary_light']};
-                padding: 12px 16px;
-                border-radius: 6px;
-                border: 1px solid {self.colors['primary']};
-            """)
+        self.name_preview.setText(full_name)
 
         self._adjust_dialog_size()
 
