@@ -4,6 +4,88 @@
 
 ---
 
+## 💥 **v7.0.0** - August 2026 *(Breaking)*
+
+### The add-on is called SheetCards, and it does less
+
+Sheets2Anki was already taken. AnkiWeb has a Sheets2Anki by somebody else and a
+Google Sheets to Anki beside it, so the name had to go before anything could be
+published under it. The old one was also describing a smaller thing than this had
+become: it reads an `.xlsx` from any https address and takes an uploaded `.csv` or
+`.tsv`, so "Sheets" was already wrong, and the browser preview builds an `.apkg`
+with no Anki involved at all, so "Anki" was narrowing something that had outgrown
+it. **SheetCards** says the input and the output and claims neither company.
+
+Everything moves with it: the deck prefix (`s2a_` → `sc_`), the tag root, the note
+type names, the deck-options preset, the collection-config key that caches a parsed
+settings row, the debug log's filename, and every CSS class a card template writes.
+**Decks and note types made by an earlier version are not renamed** — a sync after
+this creates the new ones beside them. Delete the old `Sheets2Anki` deck and its
+note types, then sync again.
+
+### Two features deleted
+
+**Backup and restore** is gone — around 1,750 lines of retention limits, safety
+copies, an `.apkg` export path and a step at the top of every sync. Anki already
+backs the whole collection up, on a schedule and before risky operations, and
+everything this add-on makes comes back from a sync: the deck was never the thing
+at risk.
+
+**Image processing** is gone — around 960 lines that wanted an ImgBB account, an
+API key and a hand-deployed Google Apps Script before producing a single card. It
+solved "a picture pasted into a cell is not something Anki can reach". A media
+column solves the same thing with a link in the cell and the word `image` in the
+settings row.
+
+### Nine menu entries became five
+
+**Add · Sync · Disconnect · Card Layout · Settings.**
+
+The choice of deck-options mode is gone: every connected deck studies under one
+preset, `SheetCards - Default Options`. Three modes in a window with a global
+shortcut of its own was a setting about a setting — a study preset is Anki's to
+configure, two clicks away in its own deck options.
+
+The AnkiWeb window and the Debug window are now one **Settings** window
+(`Ctrl+Shift+O`), and settings are written when you press Save rather than the
+moment a box is ticked, so Cancel means something. The in-app log viewer went with
+them; the window says where the log is and opens its folder.
+
+The Card Layout window lost its *Voices on this machine* panel. It answered for
+the desktop, while a wrong-sounding voice is met on a phone — and every card with
+a spoken column now carries that list itself.
+
+### Every window is drawn the way Anki draws its own
+
+There is no palette any more. `src/theme.py` resolves every colour against
+`aqt.colors`, the table Anki styles itself from; it used to hold about seventy-five
+hand-picked values on an accent that was nobody's but ours, spent on gradient
+banners, white cards over Anki's grey canvas and a border radius Anki does not use.
+
+The windows set no background, border or radius at all — Anki styles every standard
+widget through a global stylesheet, so staying out of the way is the whole
+technique. Banners, tinted cards, filled status pills, emoji in buttons and
+progress bars filled with a green gradient are all gone. Buttons sit in a
+`QDialogButtonBox`, which is the only thing that puts OK and Cancel in each
+platform's order and a destructive button where that platform puts one.
+
+Icons come back as SVGs inked at load time from Anki's own colours, so a warning
+triangle is the same red as the sentence beside it on either theme.
+
+### Also
+
+Every card with a spoken column carries a collapsed **TTS voices** block on its
+answer, listing the voices installed on the device doing the reviewing, rewritten
+into the sheet's own `voices=` syntax with a play button that speaks the card's
+real content. An iPhone's twenty-eight `en_US` voices come out as three lines: the
+joke voices are not offered, and the eight character presets it shares with every
+other language fold behind a count.
+
+The browser preview gained a **reload** button beside its sheet picker, keeping the
+sheet and the row you were on, and now always fetches past the browser cache.
+
+---
+
 ## ✨ **v6.23.0** - August 2026 *(Feature)*
 
 ### Five directives: sort, math, code, font, and the two writing directions

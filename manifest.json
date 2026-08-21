@@ -1,7 +1,7 @@
 {
     "package": "sheetcards",
     "name": "SheetCards",
-    "version": "6.23.0",
+    "version": "7.0.0",
     "author": "tannc28",
     "description": "Turn a Google Sheet into an Anki deck. The sheet declares the fields, the subdecks and how each card looks — no note-type editing.",
     "homepage": "https://github.com/tannc28/sheetcards",
