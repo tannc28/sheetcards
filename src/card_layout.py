@@ -311,6 +311,21 @@ def _css(sheet_config):
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
         ".sc-reveal > summary { cursor: pointer; font-size: 13px;"
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
+        # The last thing on the card, and the quietest. It is not part of what the
+        # sheet asked for — it describes the device doing the reviewing — so it
+        # sits under everything, hard left against the card's own centring, and
+        # faded until it is opened. Floating it over the card was tried and taken
+        # back out: `position: fixed` pins to the viewport rather than to the card,
+        # so on a card longer than the screen it rode up over the words.
+        ".sc-tts-debug { margin-top: 22px; text-align: left; opacity: .4; }\n"
+        ".sc-tts-debug[open] { opacity: 1; }\n"
+        # The last thing on the card, hard left against the card's own centring.
+        # It is not part of what the sheet asked for — it describes the device
+        # doing the reviewing — so it goes under everything and stays out of the
+        # way. Floating it over the card was tried and taken back out:
+        # `position: fixed` pins to the viewport rather than to the card, so on a
+        # card longer than the screen it rode up over the words.
+        ".sc-tts-debug { margin-top: 22px; text-align: left; }\n"
         ".sc-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
         " text-align: left; }\n"
         ".sc-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
