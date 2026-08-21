@@ -274,6 +274,15 @@ export function renderSide(template, values, opts = {}) {
     if (trimmed.startsWith("/")) return ""; // stray close tag
 
     const { filters, field } = parseReplacement(inner);
+
+    // `{{tts-voices:}}` names no field — it asks the client what voices it has, and
+    // the answer is the client's, not the note's. Without this the empty field name
+    // is reported as a column the row lacks, and every card carries a warning that
+    // names nothing at all.
+    if (filters.length === 1 && filters[0].trim() === "tts-voices") {
+      return ttsVoices();
+    }
+
     if (!(field in values)) {
       ctx.missingFields.add(field);
       return whole; // Anki shows the unknown field name too
