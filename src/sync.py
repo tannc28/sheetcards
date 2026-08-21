@@ -12,10 +12,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 
-from .compat import AlignRight
-from .compat import Palette_Window
 from .compat import QDialog
-from .compat import QGroupBox
 from .compat import QLabel
 from .compat import QProgressBar
 from .compat import QPushButton
@@ -414,11 +411,18 @@ def _show_sync_summary_with_scroll(
         on_close_callback (callable, optional): Function to be called when the dialogue is closed
         deck_results (list, optional): List of DeckSyncResult for per-deck visualization
     """
-    from .compat import Palette_Window
+    from .compat import ButtonBox_Close
     from .compat import QButtonGroup
-    from .compat import QFrame
+    from .compat import QDialogButtonBox
     from .compat import QHBoxLayout
     from .compat import QRadioButton
+    from .compat import QWidget
+    from .theme import ICON_SIZE
+    from .theme import MARGIN
+    from .theme import SPACE_ELEMENT
+    from .theme import SPACE_SECTION
+    from .theme import get_colors
+    from .theme import icon
 
     # Create custom dialog
     dialog = QDialog()
@@ -430,203 +434,60 @@ def _show_sync_summary_with_scroll(
     if on_close_callback and callable(on_close_callback):
         dialog.finished.connect(on_close_callback)
 
-    # Detect dark mode based on system default window background color
-    palette = dialog.palette()
-    bg_color = palette.color(Palette_Window)
-    is_dark_mode = bg_color.lightness() < 128
-
-    # Define color scheme based on theme
-    if is_dark_mode:
-        colors = {
-            "bg": "#1e1e1e",
-            "card_bg": "#2d2d2d",
-            "header_bg": "#363636",
-            "text": "#ffffff",
-            "text_secondary": "#b0b0b0",
-            "border": "#404040",
-            "accent_success": "#4CAF50",
-            "accent_warning": "#FF9800",
-            "accent_error": "#f44336",
-            "accent_info": "#2196F3",
-            "accent_purple": "#9C27B0",
-            "button_bg": "#3d3d3d",
-            "button_hover": "#4a4a4a",
-            "toggle_active": "#4CAF50",
-            "toggle_inactive": "#555555",
-        }
-    else:
-        colors = {
-            "bg": "#f5f5f5",
-            "card_bg": "#ffffff",
-            "header_bg": "#e8e8e8",
-            "text": "#1a1a1a",
-            "text_secondary": "#666666",
-            "border": "#d0d0d0",
-            "accent_success": "#4CAF50",
-            "accent_warning": "#FF9800",
-            "accent_error": "#e53935",
-            "accent_info": "#1976D2",
-            "accent_purple": "#7B1FA2",
-            "button_bg": "#e0e0e0",
-            "button_hover": "#d0d0d0",
-            "toggle_active": "#4CAF50",
-            "toggle_inactive": "#9e9e9e",
-        }
+    # Anki's palette, through the add-on's one gateway to it. This function used to
+    # carry two dicts of fifteen hand-picked hex values and pick between them by
+    # measuring the window's own background lightness — a heuristic that misreads a
+    # custom theme, which is why `is_dark_mode()` exists.
+    colors = get_colors()
 
     # Determine overall status
     has_errors = (sync_errors and len(sync_errors) > 0) or total_stats.errors > 0
 
-    # Apply general dialog style
-    dialog.setStyleSheet(f"""
-        QDialog {{
-            background-color: {colors['bg']};
-            color: {colors['text']};
-        }}
-        QGroupBox {{
-            font-weight: bold;
-            font-size: 14pt;
-            border: 1px solid {colors['border']};
-            border-radius: 8px;
-            margin-top: 18px;
-            padding: 12px;
-            padding-top: 12px;
-            background-color: {colors['card_bg']};
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 12px;
-            top: 6px;
-            padding: 2px 10px;
-            background-color: {colors['card_bg']};
-            border-radius: 4px;
-            color: {colors['text_secondary']};
-        }}
-        QRadioButton {{
-            font-size: 12pt;
-            padding: 8px 15px;
-            spacing: 8px;
-        }}
-        QRadioButton::indicator {{
-            width: 18px;
-            height: 18px;
-        }}
-    """)
+    main_layout = QVBoxLayout(dialog)
+    main_layout.setSpacing(SPACE_SECTION)
+    main_layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-    main_layout = QVBoxLayout()
-    main_layout.setSpacing(15)
-    main_layout.setContentsMargins(20, 15, 20, 15)
+    # One line saying how it went, with the icon that says the same thing at a
+    # glance. It was a banner: a tinted panel with a two-pixel coloured border and
+    # a 28pt emoji in it, over a window whose title already said Summary.
+    head_row = QHBoxLayout()
+    head_row.setSpacing(SPACE_ELEMENT)
+    shape, colour, status_text = (
+        ("warning", "accent_warning", "Finished, with problems")
+        if has_errors
+        else ("success", "accent_success", "Finished")
+    )
+    status_icon = QLabel()
+    status_icon.setPixmap(icon(shape, colour).pixmap(ICON_SIZE, ICON_SIZE))
+    status_icon.setFixedWidth(ICON_SIZE)
+    status_label = QLabel(f"<b>{status_text}</b>")
+    status_label.setStyleSheet(f"color: {colors[colour]};")
+    head_row.addWidget(status_icon)
+    head_row.addWidget(status_label)
+    head_row.addStretch()
+    main_layout.addLayout(head_row)
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # HEADER SECTION - Status banner with icon
-    # ═══════════════════════════════════════════════════════════════════════════
-    header_frame = QFrame()
-    header_frame.setFrameShape(QFrame.Shape.StyledPanel)
+    # The numbers, as a row of plain labels. They were five tinted cards with a
+    # coloured left border and an emoji over an 18pt figure — a dashboard on top of
+    # a window whose whole job is to be read once and closed.
+    stats_layout = QHBoxLayout()
+    stats_layout.setSpacing(SPACE_SECTION)
 
-    # Choose header style based on status
-    if has_errors:
-        status_icon = "⚠️"
-        status_text = "Synchronization Completed with Issues"
-        header_color = colors["accent_warning"]
-        header_bg = (
-            "rgba(255, 152, 0, 0.15)" if not is_dark_mode else "rgba(255, 152, 0, 0.2)"
-        )
-    else:
-        status_icon = "✅"
-        status_text = "Synchronization Completed Successfully"
-        header_color = colors["accent_success"]
-        header_bg = (
-            "rgba(76, 175, 80, 0.12)" if not is_dark_mode else "rgba(76, 175, 80, 0.18)"
-        )
-
-    header_frame.setObjectName("syncReportHeader")
-    header_frame.setStyleSheet(f"""
-        QFrame#syncReportHeader {{
-            background: {header_bg};
-            border: 2px solid {header_color};
-            border-radius: 12px;
-            padding: 5px;
-        }}
-    """)
-
-    header_layout = QHBoxLayout(header_frame)
-    header_layout.setContentsMargins(20, 15, 20, 15)
-
-    # Status icon (large)
-    icon_label = QLabel(status_icon)
-    icon_label.setStyleSheet("font-size: 28pt; background: transparent;")
-    header_layout.addWidget(icon_label)
-
-    # Status text
-    status_label = QLabel(status_text)
-    status_label.setStyleSheet(f"""
-        font-size: 16pt;
-        font-weight: bold;
-        color: {header_color};
-        background: transparent;
-        padding-left: 10px;
-    """)
-    header_layout.addWidget(status_label)
-    header_layout.addStretch()
-
-    main_layout.addWidget(header_frame)
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # STATISTICS CARDS - Visual summary of key metrics
-    # ═══════════════════════════════════════════════════════════════════════════
-    stats_frame = QFrame()
-    stats_frame.setObjectName("statsContainer")
-    stats_frame.setStyleSheet("""
-        QFrame#statsContainer {
-            background: transparent;
-            border: none;
-        }
-    """)
-    stats_layout = QHBoxLayout(stats_frame)
-    stats_layout.setSpacing(10)
-    stats_layout.setContentsMargins(0, 8, 0, 8)
-
-    def create_stat_card(value, label, icon, accent_color, card_id):
-        """Creates a statistics card widget with unique styling."""
-        card = QFrame()
-        card.setObjectName(card_id)
-        card.setStyleSheet(f"""
-            QFrame#{card_id} {{
-                background-color: {colors['card_bg']};
-                border: 1px solid {colors['border']};
-                border-radius: 8px;
-                border-left: 4px solid {accent_color};
-                padding: 8px;
-            }}
-            QFrame#{card_id} QLabel {{
-                background: transparent;
-                border: none;
-            }}
-        """)
-
+    def create_stat_card(value, label, icon_name, accent_color, card_id):
+        """One figure and its word, stacked."""
+        card = QWidget()
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(12, 8, 12, 8)
-        card_layout.setSpacing(2)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        card_layout.setSpacing(0)
 
-        # Combined icon and value on same line
-        value_label = QLabel(f"{icon}  {value}")
-        value_label.setStyleSheet(f"""
-            font-size: 18pt;
-            font-weight: bold;
-            color: {accent_color};
-        """)
+        value_label = QLabel(f"<b>{value}</b>")
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(value_label)
 
-        # Label below
         label_lbl = QLabel(label)
-        label_lbl.setStyleSheet(f"""
-            font-size: 12pt;
-            color: {colors['text_secondary']};
-        """)
         label_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_lbl.setStyleSheet(f"color: {colors['text_secondary']};")
         card_layout.addWidget(label_lbl)
-
         return card
 
     # Calculate total decks info
@@ -660,7 +521,7 @@ def _show_sync_summary_with_scroll(
             total_stats.skipped,
             "Skipped",
             "⏸️",
-            "#888888" if is_dark_mode else "#666666",
+            colors["text_secondary"],
             "cardSkipped",
         )
     )
@@ -684,100 +545,28 @@ def _show_sync_summary_with_scroll(
             )
         )
 
-    main_layout.addWidget(stats_frame)
+    main_layout.addLayout(stats_layout)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # VIEW MODE TOGGLE - Modern toggle buttons
-    # ═══════════════════════════════════════════════════════════════════════════
-    view_group = QGroupBox("View Mode")
-    view_layout = QHBoxLayout()
-    view_layout.setSpacing(8)
-
-    # Create styled radio buttons for view modes
-    simplified_radio = QRadioButton("📊 Summary")
-    detailed_radio = QRadioButton("📑 Full Details")
-    errors_radio = QRadioButton("⚠️ Errors Only")
-
+    # Three views of the same run. They were radio buttons styled to look like
+    # filled tabs, with the indicator hidden — which is a radio button pretending
+    # to be a thing Qt already has.
+    view_row = QHBoxLayout()
+    view_row.setSpacing(SPACE_SECTION)
+    simplified_radio = QRadioButton("Summary")
+    detailed_radio = QRadioButton("Full details")
+    errors_radio = QRadioButton("Errors only")
     simplified_radio.setChecked(True)
 
-    # Style the radio buttons as toggle buttons
-    radio_style = f"""
-        QRadioButton {{
-            background-color: {colors['button_bg']};
-            border: 1px solid {colors['border']};
-            border-radius: 6px;
-            padding: 10px 18px;
-            font-size: 12pt;
-            color: {colors['text']};
-        }}
-        QRadioButton:hover {{
-            background-color: {colors['button_hover']};
-        }}
-        QRadioButton:checked {{
-            background-color: {colors['accent_success']};
-            color: white;
-            border-color: {colors['accent_success']};
-            font-weight: bold;
-        }}
-        QRadioButton::indicator {{
-            width: 0;
-            height: 0;
-        }}
-    """
-
-    simplified_radio.setStyleSheet(radio_style)
-    detailed_radio.setStyleSheet(radio_style)
-    errors_radio.setStyleSheet(radio_style)
-
-    # Group radiobuttons
-    radio_group = QButtonGroup()
-    radio_group.addButton(simplified_radio)
-    radio_group.addButton(detailed_radio)
-    radio_group.addButton(errors_radio)
-
-    view_layout.addWidget(simplified_radio)
-    view_layout.addWidget(detailed_radio)
-    view_layout.addWidget(errors_radio)
-    view_layout.addStretch()
-
-    view_group.setLayout(view_layout)
-    main_layout.addWidget(view_group)
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # DETAILS TEXT AREA - Scrollable content area
-    # ═══════════════════════════════════════════════════════════════════════════
-    details_group = QGroupBox("Details")
-    details_layout = QVBoxLayout()
-    details_layout.setContentsMargins(10, 10, 10, 10)
+    radio_group = QButtonGroup(dialog)
+    for button in (simplified_radio, detailed_radio, errors_radio):
+        radio_group.addButton(button)
+        view_row.addWidget(button)
+    view_row.addStretch()
+    main_layout.addLayout(view_row)
 
     details_text = QTextEdit()
     details_text.setReadOnly(True)
-    details_text.setStyleSheet(f"""
-        QTextEdit {{
-            font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
-            font-size: 12pt;
-            line-height: 1.5;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid {colors['border']};
-            background-color: {colors['card_bg']};
-            color: {colors['text']};
-            selection-background-color: {colors['accent_info']};
-        }}
-        QScrollBar:vertical {{
-            background: {colors['bg']};
-            width: 10px;
-            border-radius: 5px;
-        }}
-        QScrollBar::handle:vertical {{
-            background: {colors['border']};
-            border-radius: 5px;
-            min-height: 20px;
-        }}
-        QScrollBar::handle:vertical:hover {{
-            background: {colors['text_secondary']};
-        }}
-    """)
 
     def update_details_view():
         """Updates details view based on radiobutton selection."""
@@ -875,45 +664,12 @@ def _show_sync_summary_with_scroll(
     # Set initial content
     update_details_view()
 
-    details_layout.addWidget(details_text)
-    details_group.setLayout(details_layout)
-    main_layout.addWidget(details_group)
+    main_layout.addWidget(details_text, 1)
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # ACTION BUTTONS - Close and optional actions
-    # ═══════════════════════════════════════════════════════════════════════════
-    button_layout = QHBoxLayout()
-    button_layout.setContentsMargins(0, 10, 0, 0)
+    button_box = QDialogButtonBox(ButtonBox_Close)
+    button_box.rejected.connect(dialog.accept)
+    main_layout.addWidget(button_box)
 
-    # Spacer to push button to the right
-    button_layout.addStretch()
-
-    # Close button with accent styling
-    close_button = QPushButton("✓ Close")
-    close_button.setMinimumWidth(140)
-    close_button.setStyleSheet(f"""
-        QPushButton {{
-            background-color: {colors['accent_success']};
-            color: white;
-            font-size: 12pt;
-            font-weight: bold;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-        }}
-        QPushButton:hover {{
-            background-color: #45a049;
-        }}
-        QPushButton:pressed {{
-            background-color: #3d8b40;
-        }}
-    """)
-    close_button.clicked.connect(dialog.accept)
-    button_layout.addWidget(close_button)
-
-    main_layout.addLayout(button_layout)
-
-    dialog.setLayout(main_layout)
     safe_exec_dialog(dialog)
 
 
@@ -1352,117 +1108,45 @@ class LogProgressDialog(QDialog):
     """
 
     def __init__(self, title, message, min_val, max_val, parent=None):
+        from .compat import ButtonBox_Cancel
+        from .compat import QDialogButtonBox
+        from .theme import MARGIN
+        from .theme import SPACE_ELEMENT
+
         super().__init__(parent)
-        self.setWindowTitle("📚 Deck Synchronization")
+        self.setWindowTitle("Synchronizing")
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(SPACE_ELEMENT)
+        layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
 
-        # Title/Status label
+        # What is happening now, in bold, and the log of what already has. It used
+        # to carry two dicts of nine hand-picked colours, chosen by measuring the
+        # window's background lightness, and a progress bar filled with a green
+        # gradient — Anki's own progress bars are not green and are not gradients.
         self.label = QLabel(title)
         self.label.setWordWrap(True)
-        # Detect dark mode
-        palette = self.palette()
-        bg_color = palette.color(Palette_Window)
-        is_dark_mode = bg_color.lightness() < 128
-
-        # Define colors based on theme
-        if is_dark_mode:
-            colors = {
-                "bg": "#2d2d2d",
-                "text": "#ffffff",
-                "input_bg": "#1e1e1e",
-                "input_text": "#e0e0e0",
-                "border": "#3d3d3d",
-                "progress_bg": "#404040",
-                "btn_bg": "#505050",
-                "btn_hover": "#606060",
-                "title": "#ffffff",
-            }
-        else:
-            colors = {
-                "bg": "#f5f5f5",
-                "text": "#1a1a1a",
-                "input_bg": "#ffffff",
-                "input_text": "#1a1a1a",
-                "border": "#d0d0d0",
-                "progress_bg": "#e0e0e0",
-                "btn_bg": "#e0e0e0",
-                "btn_hover": "#d0d0d0",
-                "title": "#1a1a1a",
-            }
-
-        # Title/Status label style
-        self.label.setStyleSheet(
-            f"font-weight: bold; font-size: 14pt; color: {colors['title']};"
-        )
+        self.label.setStyleSheet("font-weight: bold;")
         layout.addWidget(self.label)
 
-        # Progress bar
         self.bar = QProgressBar()
         self.bar.setRange(min_val, max_val)
         self.bar.setValue(0)
         self.bar.setTextVisible(True)
         layout.addWidget(self.bar)
 
-        # Scrollable log area
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
-        layout.addWidget(self.log_area)
+        layout.addWidget(self.log_area, 1)
 
-        # Cancel/Close button
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.reject)
-        layout.addWidget(self.cancel_btn, 0, AlignRight)
+        self.button_box = QDialogButtonBox(ButtonBox_Cancel)
+        cancel_btn = self.button_box.button(ButtonBox_Cancel)
+        assert cancel_btn is not None  # just asked for, by name
+        self.cancel_btn = cancel_btn
+        self.button_box.rejected.connect(self.reject)
+        layout.addWidget(self.button_box)
 
-        # Initial sizing
-        self.resize(600, 450)
-
-        # Apply style
-        self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {colors['bg']};
-                color: {colors['text']};
-                font-size: 12pt;
-            }}
-            QLabel {{
-                color: {colors['text']};
-                border: none;
-            }}
-            QTextEdit {{
-                background-color: {colors['input_bg']};
-                color: {colors['input_text']};
-                border: 1px solid {colors['border']};
-                border-radius: 4px;
-                font-family: monospace;
-                font-size: 11pt;
-            }}
-            QProgressBar {{
-                border: none;
-                border-radius: 4px;
-                background-color: {colors['progress_bg']};
-                height: 24px;
-                text-align: center;
-                color: {colors['text']};
-                font-weight: bold;
-            }}
-            QProgressBar::chunk {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4CAF50, stop:1 #8BC34A);
-                border-radius: 4px;
-            }}
-            QPushButton {{
-                background-color: {colors['btn_bg']};
-                color: {colors['text']};
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-                min-width: 80px;
-            }}
-            QPushButton:hover {{
-                background-color: {colors['btn_hover']};
-            }}
-        """)
+        self.resize(560, 420)
 
     def setValue(self, val):
         self.bar.setValue(val)
@@ -1496,16 +1180,25 @@ class LogProgressDialog(QDialog):
         self.log_area.setTextCursor(cursor)
 
     def setCancelButton(self, btn):
-        if btn is None:
-            self.cancel_btn.hide()
-        else:
-            self.layout().replaceWidget(self.cancel_btn, btn)
+        """Swaps the button for another one, or takes it away.
+
+        Asked of the button box rather than done by replacing a widget in a
+        layout: the box is what decides where a button sits on this platform, and
+        a widget dropped into the old one's place would sit wherever that happened
+        to be.
+        """
+        from .compat import ButtonRole_Reject
+
+        if self.cancel_btn is not None:
+            self.button_box.removeButton(self.cancel_btn)
             self.cancel_btn.deleteLater()
-            self.cancel_btn = btn
-            self.cancel_btn.show()
+        self.cancel_btn = btn
+        if btn is not None:
+            self.button_box.addButton(btn, ButtonRole_Reject)
 
     def setCancelButtonText(self, text):
-        self.cancel_btn.setText(text)
+        if self.cancel_btn is not None:
+            self.cancel_btn.setText(text)
 
     def setTitle(self, text):
         """Updates the title label."""
@@ -1613,7 +1306,6 @@ def _show_sync_completion(
         progress.setLabelText(completion_msg)
 
     # Add Close button
-    from .compat import QPushButton
 
     close_btn = QPushButton("Close")
 

@@ -108,6 +108,13 @@ NON_MODAL = Qt.WindowModality.NonModal
 # they will want to paste somewhere.
 TextSelectableByMouse = Qt.TextInteractionFlag.TextSelectableByMouse
 
+# An icon beside a paragraph lines up with the first line, not with the middle of
+# however many lines the paragraph turns out to be.
+TopAlign = Qt.AlignmentFlag.AlignTop
+
+# Messages carry <b> and <br> from their callers.
+RichText = Qt.TextFormat.RichText
+
 # QDialogButtonBox constants
 ButtonBox_Ok = QDialogButtonBox.StandardButton.Ok
 ButtonBox_Cancel = QDialogButtonBox.StandardButton.Cancel
@@ -120,6 +127,11 @@ ButtonBox_Save = QDialogButtonBox.StandardButton.Save
 # A button that is neither an accept nor a reject — "Test connection" — so the
 # box places it on the side the platform keeps such things.
 ButtonRole_Action = QDialogButtonBox.ButtonRole.ActionRole
+ButtonRole_Accept = QDialogButtonBox.ButtonRole.AcceptRole
+ButtonRole_Reject = QDialogButtonBox.ButtonRole.RejectRole
+# The button that deletes something. Qt places it where this platform places
+# such a button, which is not always beside the accept.
+ButtonRole_Destructive = QDialogButtonBox.ButtonRole.DestructiveRole
 
 # QMessageBox constants
 MessageBox_Yes = QMessageBox.StandardButton.Yes
