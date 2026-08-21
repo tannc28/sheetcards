@@ -259,11 +259,18 @@ def _palette(sheet_config):
     untouched sheet keeps whatever colours Anki and the note type already had.
     """
     theme = THEMES.get(sheet_config.theme) or _DEFAULT_PALETTE
+    # `--sc-surface`/`--sc-ink` are for the one thing on a card that is not the
+    # card: the voice list, which floats over whatever the sheet painted and so
+    # cannot inherit its colours. A themed card can be any colour at all, so these
+    # stay neutral rather than following the theme — a pill in the theme's own pink
+    # over a pink card is a pill nobody can see.
     lines = [
         f":root {{ --sc-muted: {theme['light']['muted']};"
-        f" --sc-accent: {theme['light']['accent']}; }}\n",
+        f" --sc-accent: {theme['light']['accent']};"
+        " --sc-surface: #ffffff; --sc-ink: #202124; }\n",
         f".night_mode {{ --sc-muted: {theme['night']['muted']};"
-        f" --sc-accent: {theme['night']['accent']}; }}\n",
+        f" --sc-accent: {theme['night']['accent']};"
+        " --sc-surface: #35383c; --sc-ink: #e8eaed; }\n",
     ]
     if sheet_config.theme in THEMES:
         lines.append(f".card {{ {_painted(theme['light'])}; }}\n")
@@ -311,8 +318,39 @@ def _css(sheet_config):
         " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
         ".sc-reveal > summary { cursor: pointer; font-size: 13px;"
         " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
-        ".sc-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
+        # The voice list is the one thing on a card that is not *of* the card: it
+        # describes the device doing the reviewing. So it is docked to the bottom
+        # left rather than given a share of the card's width, and closed it is a
+        # pill about two centimetres square. `position: fixed` pins to the card's
+        # own viewport — Anki's answer buttons are native and sit below the
+        # webview, so the pill lands above them rather than under them.
+        #
+        # It is a <details>, so closed really is only the summary: nothing else is
+        # rendered, and the pill cannot be stretched by the longest voice name
+        # inside it. That also means the open and closed states, and the keyboard,
+        # come from the element rather than from script.
+        # 12px, and the *left* corner: AnkiMobile keeps a floating settings cog in
+        # the bottom right of the card area, so the right corner is spoken for on
+        # the client this matters most on.
+        ".sc-tts-debug { position: fixed; left: 12px; z-index: 40;"
+        " bottom: calc(12px + env(safe-area-inset-bottom, 0px));"
+        " max-width: calc(100% - 24px); max-height: 70vh; overflow: auto;"
+        " background: var(--sc-surface); color: var(--sc-ink);"
+        " border: 1px solid var(--sc-muted); border-radius: 999px;"
+        " box-shadow: 0 2px 10px rgba(0, 0, 0, .18); text-align: left; }\n"
+        ".sc-tts-debug[open] { right: 12px; border-radius: 12px;"
+        " box-shadow: 0 6px 24px rgba(0, 0, 0, .28); }\n"
+        # 44px is the smallest thing a thumb hits reliably, and this is the one
+        # control on a card that is aimed at rather than read.
+        ".sc-tts-debug > summary { list-style: none; cursor: pointer;"
+        " display: flex; align-items: center; gap: 7px; min-height: 44px;"
+        " padding: 0 14px; font-size: 13px; font-weight: 600;"
+        " letter-spacing: .03em; opacity: 1; text-transform: none; }\n"
+        ".sc-tts-debug > summary::-webkit-details-marker { display: none; }\n"
+        ".sc-tts-debug[open] > summary { border-bottom: 1px solid var(--sc-muted); }\n"
+        ".sc-tts-note { font-size: 12px; opacity: .7; margin: 10px 14px 12px;"
         " text-align: left; }\n"
+        ".sc-tts-list { padding: 2px 14px 12px; }\n"
         ".sc-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
         " opacity: .6; margin: 12px 0 6px; text-align: left; }\n"
         # The snippet takes a whole row of its own: a voice name plus a button per
@@ -869,8 +907,16 @@ def _tts_debug_block(plan, sheet_config):
     )
 
     return (
-        f'<details class="sc-reveal sc-tts-debug" data-sc-langs="{",".join(langs)}">'
-        "<summary>TTS voices</summary>"
+        # No `sc-reveal`: that class is the disclosure a media column gets inside
+        # the card's flow, and this one is docked to the corner with styles of its
+        # own. A waveform rather than a word, because the pill has to say what it
+        # is in the width of a thumb.
+        f'<details class="sc-tts-debug" data-sc-langs="{",".join(langs)}">'
+        "<summary>"
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" '
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+        'aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>'
+        "</svg>Voices</summary>"
         '<div class="sc-tts-note">Tap \u25b6 to hear a voice. To use it, add its '
         "line to the column's #config cell.</div>"
         f"{sources}"

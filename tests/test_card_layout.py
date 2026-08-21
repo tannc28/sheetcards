@@ -1265,7 +1265,9 @@ class TestDeckFromAColumn:
         plan, config = self._levels({"Reading": "subdeck=1; tts=zh_CN"})
         rendered = _both(build_templates(plan, config)[0])
         assert "{{tts" not in rendered
-        assert "sc-tts-debug" not in rendered
+        # The stylesheet names the voice list's classes on every card, so the
+        # marker is the attribute only the block itself carries.
+        assert "data-sc-langs" not in rendered
 
     def test_the_field_exists_on_the_note_either_way(self):
         # Not rendering it is a decision about the card, not about the note: the
