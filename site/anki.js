@@ -154,6 +154,24 @@ function typeBox(field, raw, mods, ctx) {
   );
 }
 
+/**
+ * The voices this browser has, in the shape Anki's `{{tts-voices:}}` produces.
+ *
+ * Anki writes one tag per voice, joined by `<br>`, with the language underscored
+ * and spaces in the name written as underscores — the spelling a settings row has
+ * to use. Reproducing that exactly is what lets the card's own voice list, which
+ * parses this text, work unchanged here.
+ */
+function ttsVoices() {
+  const voices = (globalThis.speechSynthesis?.getVoices?.() ?? []).map((voice) => {
+    const lang = String(voice.lang || "").replace(/-/g, "_");
+    const name = String(voice.name || "").replace(/\s+/g, "_");
+    return `{{tts ${lang} voices=${name}}}`;
+  });
+  if (!voices.length) return "";
+  return `<div>Available TTS voices:<br>${voices.join("<br>")}</div>`;
+}
+
 function applyFilter(name, value, fieldName, ctx) {
   if (name.startsWith("tts ") || name === "tts") return ttsButton(name, value);
   switch (name) {
