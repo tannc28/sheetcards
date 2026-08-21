@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "sheetcards"
 version = "7.0.0"
-description = "Anki add-on that syncs flashcard decks from Google Sheets, where the sheet declares the fields, the deck hierarchy and how each card looks."
+description = "Turn a spreadsheet into flashcards. Preview the whole deck in your browser and download it as an .apkg — the Anki add-on then keeps it in sync."
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [

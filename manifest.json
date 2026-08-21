@@ -3,7 +3,7 @@
     "name": "SheetCards",
     "version": "7.0.0",
     "author": "tannc28",
-    "description": "Turn a Google Sheet into an Anki deck. The sheet declares the fields, the subdecks and how each card looks — no note-type editing.",
+    "description": "Turn a spreadsheet into flashcards. Preview the whole deck in your browser and download it as an .apkg — the Anki add-on then keeps it in sync.",
     "homepage": "https://github.com/tannc28/sheetcards",
     "min_point_version": 250000,
     "max_point_version": 260000,

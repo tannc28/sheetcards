@@ -1,10 +1,10 @@
 # SheetCards
 
-**SheetCards turns a Google Sheets spreadsheet into an Anki deck and keeps it in sync.**
-You write and organize your cards in a spreadsheet; the add-on downloads it, creates or
-updates one Anki note per row, files the notes into subdecks, tags them, and builds the
-card templates for you. Nothing is uploaded back to the sheet — the sheet is the source
-of truth, Anki is the copy.
+**Write your flashcards in a spreadsheet. Study them in Anki.**
+One row is one card. The columns you invent become the fields; one optional row of
+settings says how the card looks, what it reads aloud and which subdeck it files
+into. Nothing is written back — the spreadsheet is the source of truth and Anki is
+the copy.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Anki](https://img.shields.io/badge/Anki-25.x%20%7C%2026.x-blue)
@@ -15,21 +15,127 @@ of truth, Anki is the copy.
 
 ## Table of contents
 
-- [Requirements](#requirements)
-- [Preview a sheet in your browser](#preview-a-sheet-in-your-browser)
+**In a browser, nothing installed**
+- [Look before you install](#look-before-you-install)
+- [What a spreadsheet can be](#what-a-spreadsheet-can-be)
 - [The example workbook](#the-example-workbook)
-- [Install](#install)
-- [Quick start](#quick-start)
-- [Spreadsheet reference](#spreadsheet-reference)
-- [Features](#features)
-- [How syncing behaves](#how-syncing-behaves)
-- [Keyboard shortcuts](#keyboard-shortcuts)
-- [Where your settings live](#where-your-settings-live)
+
+**In Anki**
+- [Then bring it into Anki](#then-bring-it-into-anki)
+- [Requirements](#requirements) · [Install](#install) · [Quick start](#quick-start)
+
+**Reference**
+- [Spreadsheet reference](#spreadsheet-reference) — the settings row, in full
+- [Features](#features) · [How syncing behaves](#how-syncing-behaves)
+- [Keyboard shortcuts](#keyboard-shortcuts) · [Where your settings live](#where-your-settings-live)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
+## Look before you install
+
+Everything below happens **in a browser**, with nothing downloaded and no Anki
+open. Only when you like what you see does the add-on come into it.
+
+### **<https://tannc28.github.io/sheetcards/>**
+
+<!-- A screen recording belongs here. Record 20–30 seconds at 1280px wide —
+     paste a link, the deck tree appears, click a row, switch the card tabs, press
+     Download .apkg — save it as docs/images/demo.gif and uncomment the line below.
+![SheetCards in the browser](docs/images/demo.gif)
+-->
+
+Paste a spreadsheet link and the page shows you the deck it would build — every
+row's fate, the subdecks, the tags, the warnings, and the finished card you can
+click through and type into.
+
+![The preview site](docs/images/site-wide.png)
+
+Three columns, one question each: **where the sheet comes from**, **what deck it
+makes**, **what one card looks like**. Change something in the spreadsheet, press
+reload, and all three answer again.
+
+| On the page | What it answers |
+|---|---|
+| The sheet drawn as a sheet — its own row numbers and column letters | Is this the file I meant? |
+| Every row marked *syncs* / *not ticked* / *no ID*, with the sync's own counts | Why would it make 0 notes? |
+| The deck tree and the tags each row lands in | Did I typo a `SUBDECK`? |
+| Anything the settings row got wrong, spelled out | Otherwise this only shows up in a log |
+| The card — front, back, reverse, cloze, media, a speak button, a typed-answer box | Does it actually look and sound right? |
+
+**It reads on a phone too**, which is the point: the sheet is usually edited on one.
+
+<p align="center">
+  <img src="docs/images/site-phone.png" alt="The preview on a phone" width="300">
+</p>
+
+### It is not a demo of the add-on — it *is* the add-on
+
+The page downloads the add-on's own `column_model.py`, `sheet_config.py`,
+`card_layout.py`, `tsv_model.py` and `errors.py` and runs them in the browser
+through [Pyodide](https://pyodide.org). The columns, the warnings and the card
+templates you see are produced by the code that will produce them at sync time.
+
+![The card and its template](docs/images/site-template.png)
+
+Only the last step — painting the finished template as a picture — is written for
+the page. Inside Anki that step is Anki's own renderer, so read the card as a close
+approximation and the **template text as exact**.
+
+### Take the deck without installing anything
+
+The page will build you an **`.apkg`** and hand it over. Import it into Anki on any
+platform — including a phone, with no desktop anywhere in the story. Re-import
+later and it updates the same notes rather than duplicating them, because the note
+ids come from your `ID` column.
+
+### Write the settings row without memorising it
+
+<!-- MEDIA: docs/images/editor.png — the settings-row editor at 1280px wide. -->
+![The settings-row editor](docs/images/editor.png)
+
+The editor is a small spreadsheet you can select, copy, paste, fill-drag and undo
+in, with the directives as chips you click instead of syntax you remember. It draws
+the deck and the card beside it as you type.
+
+---
+
+## Then bring it into Anki
+
+<p align="center">
+  <img src="docs/images/anki-sync.png" alt="The sync window" width="560">
+</p>
+
+Once the preview shows the deck you want, the add-on keeps it in step: it downloads
+the sheet, creates or updates one note per row, deletes the notes whose rows are
+gone, files everything into subdecks and rebuilds the card templates — all from the
+sheet, with no note-type editing.
+
+**Tools → SheetCards**, or these five shortcuts:
+
+| Shortcut | Window |
+| :--- | :--- |
+| `Ctrl+Shift+A` | Add a deck from a link |
+| `Ctrl+Shift+S` | Sync |
+| `Ctrl+Shift+D` | Disconnect a deck |
+| `Ctrl+Shift+C` | See what the sheet said about the cards |
+| `Ctrl+Shift+O` | Settings |
+
+<p align="center">
+  <img src="docs/images/anki-add-deck.png" alt="Adding a deck" width="560">
+  <br><em>Paste the link; it tells you what it found before you commit to it.</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/anki-card-layout.png" alt="The card layout window" width="700">
+  <br><em>What the last sync understood, what it could not, and the card that came out.</em>
+</p>
+
+---
+
 ## Requirements
+
+The browser page needs no install at all. For the add-on:
 
 | Component | Version |
 | :--- | :--- |
@@ -37,36 +143,12 @@ of truth, Anki is the copy.
 | Qt | 6 |
 | Python | 3.13 (the one bundled with Anki) |
 
-There is no Qt5 / Anki 2.1.4x fallback. A Google account is needed only to *write* the
-sheet — Anki reads it anonymously over a public link.
+There is no Qt5 / Anki 2.1.4x fallback. A Google account is needed only to *write*
+the sheet — the add-on reads it anonymously over a public link, which is the same
+sharing the browser page needs (**Anyone with the link → Viewer**). If the preview
+can read your sheet, so can Anki.
 
-## Preview a sheet in your browser
-
-**<https://tannc28.github.io/sheetcards/>**
-
-Paste a Google Sheets link and the page shows what the add-on would make of it —
-before anything is installed and before your collection is touched:
-
-| It shows | Why that helps |
-|---|---|
-| The sheet itself, as a grid — its own row numbers and column letters, the settings row where it sits, and which rows will sync | Tells you straight away that the file that arrived is the one you meant |
-| Which column became `ID`, `SYNC`, `SUBDECK n`, `TAGS`, and which became fields | The commonest cause of "it synced nothing" is a column the add-on did not recognise |
-| Every row's fate: syncs, not ticked, or no ID — with the same counts the sync reports | Answers "why 0 notes?" without installing anything |
-| Whatever the settings row got wrong, spelled out | Otherwise these only appear in the debug log |
-| The deck tree and the tags each row lands in | Catches a `SUBDECK` typo before it creates a stray deck |
-| The card itself — front, back, reverse, cloze, media, a TTS button that speaks through your computer's voices, and a typed-answer box you can actually type into | The TTS button is a real test of whether a language code has a voice on this machine, and the typed-answer box marks what you type exactly as Anki does |
-
-The page is not a second implementation. It downloads the add-on's own
-`column_model.py`, `sheet_config.py`, `card_layout.py`, `tsv_model.py` and
-`errors.py` and runs them in the browser through [Pyodide](https://pyodide.org),
-so the columns, settings, warnings and card templates it shows are produced by the
-code that will produce them at sync time. Only the last step — drawing the finished
-template as a picture — is written for the page; inside Anki that step is Anki's own
-renderer, so treat the card image as a close approximation and the template text as
-exact.
-
-The sheet needs the same sharing the add-on needs (**Anyone with the link →
-Viewer**), so if the preview can read your sheet, so can Anki.
+## What a spreadsheet can be
 
 ### One file, one deck per sheet
 

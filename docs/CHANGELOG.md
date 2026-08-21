@@ -6,6 +6,24 @@
 
 ## 💥 **v7.0.0** - August 2026 *(Breaking)*
 
+### The browser is the front door now
+
+You no longer install anything to find out whether this suits you. Paste a
+spreadsheet link into **<https://tannc28.github.io/sheetcards/>** and the page shows
+the deck it would build — every row's fate, the subdecks, the tags, the warnings,
+and the finished card you can click through, hear read aloud and type into. It runs
+this add-on's own parsing and card-building code in the browser, so it is not a
+demonstration of the add-on; it is the add-on, without Anki. It will build the deck
+as an `.apkg` and hand it over, importable on a phone with no desktop involved.
+
+The add-on is what keeps that deck in step afterwards. That is the order the
+documentation, the listing and the package description now put them in, because it
+is the order people meet them in.
+
+This release also gained a **reload** button beside the sheet picker, which keeps
+the sheet and the row you were on and always fetches past the browser cache, and
+fixed a warning that sat under every card naming nothing at all.
+
 ### The add-on is called SheetCards, and it does less
 
 Sheets2Anki was already taken. AnkiWeb has a Sheets2Anki by somebody else and a

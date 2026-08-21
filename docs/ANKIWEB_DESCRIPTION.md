@@ -1,8 +1,22 @@
 # SheetCards: flashcards from a spreadsheet
 
-**Write your cards in a spreadsheet. Study them in Anki.**
+**Write your cards in a spreadsheet. See the whole deck in your browser. Then let this add-on keep Anki in step.**
 
-Stop wasting time creating cards one by one. Use the power of spreadsheets to manage your study material.
+## 👀 Look before you install anything
+
+**<https://tannc28.github.io/sheetcards/>**
+
+Paste a spreadsheet link into that page and it shows you the deck it would build — every row's fate, the subdecks, the tags, the warnings, and the finished card you can click through, hear read aloud and type into. Nothing downloaded, nothing installed, your collection untouched.
+
+It is not a mock-up of the add-on: the page downloads this add-on's own parsing and card-building code and runs it in the browser, so what you see is made by the code that will make it at sync time.
+
+It will even **build the deck for you as an `.apkg`** and hand it over — importable on any device, phone included, with no desktop anywhere in the story. Re-import later and it updates the same notes instead of duplicating them.
+
+There is also a **settings-row editor** on that site: a small spreadsheet with the directives as chips you click, drawing the deck and the card beside you as you type.
+
+## 🔁 What the add-on adds
+
+Everything above is a snapshot. Install the add-on and the deck stays in step with the sheet: it downloads the file, creates or updates one note per row, removes the notes whose rows are gone, files them into subdecks, tags them, and rebuilds the card templates — all from the sheet, with no note-type editing, as often as you press `Ctrl+Shift+S`.
 
 ## 🚀 Key Features
 
