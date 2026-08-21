@@ -325,7 +325,13 @@ def _css(sheet_config):
         # way. Floating it over the card was tried and taken back out:
         # `position: fixed` pins to the viewport rather than to the card, so on a
         # card longer than the screen it rode up over the words.
-        ".sc-tts-debug { margin-top: 22px; text-align: left; }\n"
+        ".sc-tts-debug { margin-top: 14px; text-align: left; }\n"
+        # A <summary> is a block, so its clickable box ran the whole width of the
+        # card for three centimetres of text. Shrunk to its own words it becomes
+        # what it looks like: a small control rather than a bar. The vertical
+        # padding is invisible — nothing paints a background here — and exists so
+        # a 15px line is still something a thumb can hit.
+        ".sc-tts-debug > summary { display: inline-block; padding: 8px 0; }\n"
         ".sc-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
         " text-align: left; }\n"
         ".sc-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
