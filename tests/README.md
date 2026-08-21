@@ -52,8 +52,9 @@ Coverage is **opt-in** via `--coverage` (it is not always-on).
 | `test_deck_title.py` | `strip_google_title_suffix()` — deriving a deck name from the localised Google Sheets page title |
 | `test_deck_configurations.py` | Deck-option handling |
 | `test_search_fix.py` | Note-search edge cases |
-| `test_theme.py` | Design-system tokens and `get_colors()` coverage |
-| `test_backup_threading.py` | Backup/restore must run on the calling thread |
+| `test_theme.py` | Every colour resolves to one of Anki's own |
+| `test_icons.py` | The icon set: names, themability, one viewBox |
+| `test_card_layout_voices.py` | The card's voice list, run in node against a real device dump |
 | `test_ui_import_smoke.py` | Import-smoke for every dialog module in `src/ui/` |
 | `test_ui_instantiate_smoke.py` | Construction-smoke: every Qt dialog's full `__init__` |
 | `conftest.py` | Anki mock-finder, `src` package registration, shared fixtures |

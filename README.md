@@ -267,7 +267,7 @@ By default the **first** content column is the front and the rest are the back, 
 example above gives you `Question` → `Answer`. To change that — or to set text sizes,
 colours, hints, furigana, text-to-speech, or to turn a column of URLs into pictures, sound
 or video — add a [settings row](#the-settings-row) to the sheet and sync again.
-**Configure Card Layout** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
+**View Card Layout** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
 but the sheet is where you edit it.
 
 The fastest way to see what a settings row can do is to connect
@@ -802,12 +802,12 @@ are cleaned up afterwards.
   still there to sync from.
 - Reconnecting means adding the spreadsheet again; scheduling of deleted cards is gone.
 
-### Configure Card Layout
+### View Card Layout
 
 **What it does** — shows, per deck, what the add-on read out of the sheet's
 [settings row](#the-settings-row): which fields it put on which side, how they are
 styled, what it did not understand, and which text-to-speech voices this machine has.
-**Where** — Tools → SheetCards → *Configure Card Layout* (`Ctrl+Shift+C`).
+**Where** — Tools → SheetCards → *View Card Layout* (`Ctrl+Shift+C`).
 
 > **This window is read-only.** The spreadsheet is the only place a card's appearance is
 > edited. That is deliberate: with two places able to change one setting, the loser is
@@ -965,7 +965,7 @@ All of these live under **Tools → SheetCards**. On macOS, ⌘ replaces Ctrl.
 | `Ctrl+Shift+S` | Synchronize Remote Decks |
 | `Ctrl+Shift+D` | Disconnect a Remote Deck |
 | `Ctrl+Shift+O` | Settings |
-| `Ctrl+Shift+C` | Configure Card Layout |
+| `Ctrl+Shift+C` | View Card Layout |
 
 ---
 

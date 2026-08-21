@@ -61,8 +61,9 @@ Three layers, from the outside in:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-The nine user-facing shortcuts are `Ctrl+Shift+` `A S D O W C P B L`; `Ctrl+Shift+T`
-("Import Test Deck") is bound only while `IS_DEVELOPMENT_MODE` is `True` and never ships.
+The five user-facing shortcuts are `Ctrl+Shift+` `A` (add), `S` (sync), `D`
+(disconnect), `C` (card layout) and `O` (settings); `Ctrl+Shift+T` ("Import Test Deck")
+is bound only while `IS_DEVELOPMENT_MODE` is `True` and never ships.
 
 **No runtime third-party dependencies.** The add-on imports nothing but the standard
 library and the modules Anki itself exposes. The old vendored `libs/` tree
