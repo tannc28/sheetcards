@@ -3,6 +3,7 @@
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -1497,6 +1498,45 @@ def _anki_accepts(headers, config, is_cloze=False):
     )
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
+
+
+class TestTheStylesheetSaysEachThingOnce:
+    """A selector declared twice is a rule nobody can see being overridden.
+
+    This is not hypothetical: a rule that fading the voice list would have needed
+    survived an edit that was withdrawn, landed *above* the rule meant to replace
+    it, and went on dimming the block to 40% from six lines up. Both rules read
+    correctly on their own; only their order gave the answer, and nothing on the
+    card said so.
+    """
+
+    def _stylesheet(self, cells):
+        plan = plan_columns(["ID", "Word", "Meaning", "Snippet"])
+        config = parse_config_row(
+            dict(zip(plan.note_type_fields(), cells, strict=True)), plan
+        )
+        qfmt = build_templates(plan, config)[0]["qfmt"]
+        return qfmt[qfmt.index("<style>") : qfmt.index("</style>")]
+
+    @pytest.mark.parametrize(
+        "cells",
+        [
+            ("#config", "tts=en_US", "", ""),
+            ("#config theme=sakura", "tts=en_US; draw", "hint", "code=python"),
+            ("#config align=left; reverse", "furigana; tts=ja_JP", "math", "image"),
+        ],
+    )
+    def test_no_selector_is_declared_twice(self, cells):
+        import collections
+
+        css = self._stylesheet(cells)
+        selectors = [
+            match.strip() for match in re.findall(r"^([^{@\n][^{\n]*)\{", css, re.M)
+        ]
+        repeated = [
+            name for name, count in collections.Counter(selectors).items() if count > 1
+        ]
+        assert not repeated
 
 
 class TestNothingInAScriptLooksLikeAField:
