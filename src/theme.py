@@ -19,6 +19,8 @@ being rewritten should stop asking altogether — Anki styles `QPushButton`,
 native thing a dialog can do is set no stylesheet at all**.
 """
 
+import re
+
 # Anki's own values, copied for the case where aqt is not importable — the test
 # suite mocks it away. `aqt.colors` is the source; this is a mirror of the handful
 # of entries used here, and `_var` prefers the real thing whenever it is there.
@@ -45,6 +47,7 @@ _FALLBACK = {
     "ACCENT_DANGER": ("#ef4444", "#f87171"),
     "STATE_LEARN": ("#dc2626", "#f87171"),
     "STATE_REVIEW": ("#16a34a", "#22c55e"),
+    "FLAG_2": ("#fb923c", "#fdba74"),
     "HIGHLIGHT_BG": ("rgba(37, 99, 235, 0.5)", "rgba(147, 197, 253, 0.5)"),
     "HIGHLIGHT_FG": ("black", "white"),
 }
@@ -107,6 +110,30 @@ SPACE_SECTION = 12  # gap between sections
 SPACE_ELEMENT = 8  # gap between elements within a section
 SPACE_TIGHT = 6  # label <-> field, icon <-> text
 
+# The smallest any of the add-on's windows may be made. A window asks for the room
+# it would like, never insists on it: a minimum of 750x700 was a window that could
+# not be opened whole on a 1366x768 laptop at 125%.
+MIN_WIDTH = 480
+MIN_HEIGHT = 360
+
+
+def size_dialog(dialog, width, height):
+    """Gives ``dialog`` the floor above and a starting size that fits its screen.
+
+    ``width``/``height`` are what the window would like; the screen it opens on
+    has the last word, less a margin so the title bar is never off the top.
+    """
+    dialog.setMinimumSize(MIN_WIDTH, MIN_HEIGHT)
+    try:
+        anchor = dialog.parentWidget() or dialog
+        area = anchor.screen().availableGeometry()
+        width = min(width, int(area.width() * 0.9))
+        height = min(height, int(area.height() * 0.9))
+    except Exception:
+        pass
+    dialog.resize(max(width, MIN_WIDTH), max(height, MIN_HEIGHT))
+
+
 # =============================================================================
 # THE PALETTE — every entry is a name in `aqt.colors`
 # -----------------------------------------------------------------------------
@@ -124,7 +151,11 @@ _TOKENS = {
     "primary_light": "SELECTED_BG",
     "success": "ACCENT_NOTE",
     "success_light": "CANVAS_INSET",
-    "warning": "STATE_LEARN",
+    # Caution is Anki's orange flag. It used to be STATE_LEARN, which is red on
+    # both themes, so "will be recreated" was the colour of a failure and a
+    # warning could not be told from an error at a glance. The orange is light on
+    # a light canvas, so the dialogs ink a shape with it, not a sentence.
+    "warning": "FLAG_2",
     "warning_light": "CANVAS_INSET",
     "error": "ACCENT_DANGER",
     "error_light": "CANVAS_INSET",
@@ -145,13 +176,13 @@ _TOKENS = {
     "input_bg": "CANVAS_ELEVATED",
     "accent_primary": "ACCENT_CARD",
     "accent_success": "ACCENT_NOTE",
-    "accent_warning": "STATE_LEARN",
+    "accent_warning": "FLAG_2",
     "accent_info": "ACCENT_CARD",
     "accent_danger": "ACCENT_DANGER",
     "accent_purple": "ACCENT_CARD",
     "success_dark": "ACCENT_NOTE",
     "danger_dark": "ACCENT_DANGER",
-    "warning_dark": "STATE_LEARN",
+    "warning_dark": "FLAG_2",
     "button_bg": "BUTTON_BG",
     "button_hover": "BUTTON_HOVER_BORDER",
     "row_hover": "SELECTED_BG",
@@ -200,6 +231,22 @@ RADIO_INDENT = 22
 
 _ICON_CACHE: dict = {}
 
+# The pixel sizes each icon is drawn at — 16, 24 and 32 are a 16px icon at 1x,
+# 1.5x and 2x; 48 and 64 the same for the 32px one a message box shows. `QIcon`
+# hands back the nearest for the size and screen it is asked for, so nothing is
+# drawn small and scaled up. A single 24px raster stretched to 32 physical pixels
+# is what made these soft on a Retina screen.
+_ICON_PIXELS = (16, 24, 32, 48, 64)
+
+_SVG_SIZE = re.compile(r'(<svg\b[^>]*?)\s(?:width|height)="[^"]*"')
+
+
+def _sized(svg: str, pixels: int) -> str:
+    """The same drawing, asking to be rendered ``pixels`` square."""
+    while _SVG_SIZE.search(svg):
+        svg = _SVG_SIZE.sub(r"\1", svg, count=1)
+    return svg.replace("<svg", f'<svg width="{pixels}" height="{pixels}"', 1)
+
 
 def icon(name: str, color: str = "text"):
     """The named icon from ``src/icons``, inked in one of Anki's colours.
@@ -224,13 +271,15 @@ def icon(name: str, color: str = "text"):
         path = os.path.join(os.path.dirname(__file__), "icons", f"{name}.svg")
         with open(path, encoding="utf-8") as handle:
             svg = handle.read().replace("INK", ink)
-        pixmap = QPixmap()
         # Rendered from the string rather than from the file: the file on disk has
-        # no colour in it, only the word INK.
-        if pixmap.loadFromData(svg.encode("utf-8"), "SVG"):
-            result = QIcon(pixmap)
+        # no colour in it, only the word INK. Once per size, from the vector, so
+        # each pixmap is drawn at the resolution it will be shown at.
+        for pixels in _ICON_PIXELS:
+            pixmap = QPixmap()
+            if pixmap.loadFromData(_sized(svg, pixels).encode("utf-8"), "SVG"):
+                result.addPixmap(pixmap)
     except Exception:
-        pass
+        result = QIcon()
 
     _ICON_CACHE[key] = result
     return result

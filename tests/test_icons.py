@@ -85,5 +85,32 @@ class TestTheyCanBeThemed:
         assert found and set(found.values()) == {"0 0 24 24"}, found
 
 
+@pytest.mark.unit
+class TestTheyAreDrawnAtTheSizeShown:
+    """One 24px raster stretched to 32 device pixels is a soft icon on Retina."""
+
+    def test_each_size_is_asked_of_the_vector(self):
+        from src.theme import _ICON_PIXELS
+        from src.theme import _sized
+
+        body = (ICONS / "warning.svg").read_text(encoding="utf-8")
+        for pixels in _ICON_PIXELS:
+            root = re.search(r"<svg\b[^>]*>", _sized(body, pixels)).group(0)
+            assert re.findall(r'\swidth="(\d+)"', root) == [str(pixels)]
+            assert re.findall(r'\sheight="(\d+)"', root) == [str(pixels)]
+            assert 'viewBox="0 0 24 24"' in root
+
+    def test_the_2x_of_a_16px_icon_is_among_them(self):
+        from src.theme import _ICON_PIXELS
+        from src.theme import ICON_SIZE
+
+        assert {ICON_SIZE, ICON_SIZE * 2, ICON_SIZE * 4} <= set(_ICON_PIXELS)
+
+    def test_a_missing_icon_is_empty_not_an_exception(self):
+        from src.theme import icon
+
+        icon("no-such-icon")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
