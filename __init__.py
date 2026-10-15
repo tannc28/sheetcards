@@ -187,7 +187,8 @@ if mw is not None:
 
     # Action: Add new remote deck
     remoteDeckAction = QAction("Add New Remote Deck", mw)
-    remoteDeckAction.setShortcut(QKeySequence("Ctrl+Shift+A"))
+    # No shortcut: Anki binds Ctrl+Shift+A to Tools → Add-ons, and two actions on
+    # one key is an ambiguous shortcut in Qt, so neither would fire.
     qconnect(remoteDeckAction.triggered, addDeck)
     remoteDecksSubMenu.addAction(remoteDeckAction)
 
@@ -199,7 +200,7 @@ if mw is not None:
 
     # Action: Disconnect remote deck
     removeRemoteDeck = QAction("Disconnect a Remote Deck", mw)
-    removeRemoteDeck.setShortcut(QKeySequence("Ctrl+Shift+D"))
+    # No shortcut: Ctrl+Shift+D is the reviewer's Set Due Date.
     qconnect(removeRemoteDeck.triggered, removeRemote)
     remoteDecksSubMenu.addAction(removeRemoteDeck)
 

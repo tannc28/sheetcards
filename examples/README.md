@@ -11,7 +11,7 @@ on at once, and none is wrong on purpose: both used to be here, and neither was 
 deck anybody could have learned from.
 
 Connect it exactly as you would your own spreadsheet — paste this link into
-`Ctrl+Shift+A`, or into the preview site:
+**Tools → SheetCards → Add New Remote Deck**, or into the preview site:
 
 ```
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx

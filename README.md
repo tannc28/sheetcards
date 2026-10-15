@@ -111,13 +111,11 @@ the sheet, creates or updates one note per row, deletes the notes whose rows are
 gone, files everything into subdecks and rebuilds the card templates — all from the
 sheet, with no note-type editing.
 
-**Tools → SheetCards**, or these five shortcuts:
+**Tools → SheetCards**, or these three shortcuts:
 
 | Shortcut | Window |
 | :--- | :--- |
-| `Ctrl+Shift+A` | Add a deck from a link |
 | `Ctrl+Shift+S` | Sync |
-| `Ctrl+Shift+D` | Disconnect a deck |
 | `Ctrl+Shift+C` | See what the sheet said about the cards |
 | `Ctrl+Shift+O` | Settings |
 
@@ -238,7 +236,7 @@ To run it locally: `python scripts/build_site.py --serve`.
 
 Every feature below has a working example, and they all live in one file in this
 repository: [`examples/`](examples/). Paste this link into the preview site, or
-into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
+into **Add New Remote Deck** (Tools → SheetCards), and study the result:
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
@@ -330,7 +328,7 @@ Copy the URL from the browser address bar (the normal `.../edit?...` link).
 
 ### 3. Connect it
 
-**Tools → SheetCards → Add New Remote Deck** (`Ctrl+Shift+A`). Paste the URL. The
+**Tools → SheetCards → Add New Remote Deck**. Paste the URL. The
 dialog validates it as you type (with a ~1.2 s pause after you stop), downloads the
 sheet, and shows how many rows it found and what the deck will be called.
 
@@ -796,7 +794,7 @@ Everything lives under **Tools → SheetCards**.
 ### Add New Remote Deck
 
 **What it does** — connects one Google Sheets spreadsheet as a new remote deck.
-**Where** — Tools → SheetCards → *Add New Remote Deck* (`Ctrl+Shift+A`).
+**Where** — Tools → SheetCards → *Add New Remote Deck*.
 
 **How it works.** You paste the ordinary `docs.google.com/spreadsheets/d/<ID>/edit…`
 link. The add-on rewrites it to `…/export?format=tsv` and downloads that with a plain
@@ -864,7 +862,7 @@ The summary window has three views — **📊 Summary**, **📑 Full Details**,
 ### Disconnect a Remote Deck
 
 **What it does** — stops syncing a deck, and optionally deletes it.
-**Where** — Tools → SheetCards → *Disconnect a Remote Deck* (`Ctrl+Shift+D`).
+**Where** — Tools → SheetCards → *Disconnect a Remote Deck*.
 
 **How it works.** Tick the decks to disconnect, then decide with a single checkbox:
 
@@ -1043,9 +1041,7 @@ All of these live under **Tools → SheetCards**. On macOS, ⌘ replaces Ctrl.
 
 | Shortcut | Menu entry |
 | :--- | :--- |
-| `Ctrl+Shift+A` | Add New Remote Deck |
 | `Ctrl+Shift+S` | Synchronize Remote Decks |
-| `Ctrl+Shift+D` | Disconnect a Remote Deck |
 | `Ctrl+Shift+O` | Settings |
 | `Ctrl+Shift+C` | View Card Layout |
 

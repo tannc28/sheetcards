@@ -342,8 +342,8 @@ class CardLayoutDialog(QDialog):
 
         self.empty_label = QLabel(
             "No decks are connected yet. Add a deck from Google Sheets "
-            "(Ctrl+Shift+A) first, then come back here to see how its cards "
-            "are laid out."
+            "(Tools → SheetCards → Add New Remote Deck) first, then come "
+            "back here to see how its cards are laid out."
         )
         self.empty_label.setWordWrap(True)
         root.addWidget(self.empty_label)
