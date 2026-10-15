@@ -13,6 +13,7 @@ note's content.
 """
 
 import json
+import math
 from html import escape
 
 from .sheet_config import ALIGNMENTS
@@ -160,18 +161,83 @@ def _data_uri(svg):
     return "data:image/svg+xml," + text.replace(" ", "%20")
 
 
-def _blossom_tile(variant):
-    """The theme's wallpaper: one tile of blossoms, or ``None`` for a plain palette."""
+# A maple leaf: five lobes, each a point with a tooth either side, and a stem.
+# Computed once from polar coordinates (angle clockwise from straight up, radius)
+# rather than written out, because a hand-typed outline came out as a spiky star:
+# what makes a leaf read as maple is broad lobes with deep notches between them.
+def _maple_outline():
+    lobes = ((0, 11), (52, 10), (106, 7.5), (-106, 7.5), (-52, 10))
+    points = []
+    for index, (angle, reach) in enumerate(lobes):
+        following = lobes[(index + 1) % len(lobes)][0]
+        gap = (following - angle) % 360
+        for turn, radius in ((-13, reach * 0.62), (0, reach), (13, reach * 0.62)):
+            points.append((angle + turn, radius))
+        # The notch between this lobe and the next; the wide one at the bottom is
+        # where the stem leaves the leaf.
+        points.append((angle + gap / 2, 2.2 if gap > 120 else 3.6))
+    coords = []
+    for angle, radius in points:
+        theta = math.radians(angle)
+        coords.append(f"{radius * math.sin(theta):.1f} {-radius * math.cos(theta):.1f}")
+    return "M" + " L".join(coords) + " Z M0 1.5 L0 11"
+
+
+_MAPLE = _maple_outline()
+# One arm of a six-armed snowflake, with a pair of branches; drawn six times.
+_FLAKE_ARM = "M0 0V-10M-3 -7.2L0 -4.6L3 -7.2"
+
+
+def _place(x, y, scale, rotation):
+    return f"translate({x} {y}) rotate({rotation}) scale({scale})"
+
+
+def _maple(x, y, scale, rotation, colour):
+    # Scaled up a little against the blossom: a leaf's outline is its whole
+    # identity, and at blossom size the teeth blur into a star.
+    return (
+        f"<path d='{_MAPLE}' fill='{colour}' stroke='{colour}' stroke-width='1.2'"
+        f" stroke-linejoin='round' transform='{_place(x, y, scale * 1.25, rotation)}'/>"
+    )
+
+
+def _flake(x, y, scale, rotation, colour):
+    arms = "".join(
+        f"<path d='{_FLAKE_ARM}' transform='rotate({turn})'/>"
+        for turn in (0, 60, 120, 180, 240, 300)
+    )
+    return (
+        f"<g transform='{_place(x, y, scale, rotation)}' stroke='{colour}'"
+        f" stroke-width='1.6' stroke-linecap='round' fill='none'>{arms}</g>"
+    )
+
+
+def _blossom_tile(variant, motif="blossom"):
+    """The theme's wallpaper: one tile of its motif, or ``None`` for a plain palette."""
     petal = variant.get("petal")
     if not petal:
         return None
     heart = variant.get("heart", petal)
-    flowers = "".join(_blossom(*spot, petal, heart) for spot in _BLOSSOMS)
-    loose = "".join(
-        f"<ellipse cx='0' cy='0' rx='4.6' ry='7.4' fill='{petal}'"
-        f" transform='translate({x} {y}) rotate({rotation}) scale({scale})'/>"
-        for x, y, scale, rotation in _PETALS
-    )
+    if motif == "maple":
+        # Two shades, alternating, so a scatter of leaves reads as autumn rather
+        # than as one stamp repeated.
+        flowers = "".join(
+            _maple(*spot, petal if i % 2 else heart) for i, spot in enumerate(_BLOSSOMS)
+        )
+        loose = "".join(_maple(x, y, s * 0.6, r, petal) for x, y, s, r in _PETALS)
+    elif motif == "snow":
+        flowers = "".join(_flake(*spot, petal) for spot in _BLOSSOMS)
+        loose = "".join(
+            f"<circle cx='{x}' cy='{y}' r='{2.6 * s:.1f}' fill='{heart}'/>"
+            for x, y, s, _ in _PETALS
+        )
+    else:
+        flowers = "".join(_blossom(*spot, petal, heart) for spot in _BLOSSOMS)
+        loose = "".join(
+            f"<ellipse cx='0' cy='0' rx='4.6' ry='7.4' fill='{petal}'"
+            f" transform='{_place(x, y, scale, rotation)}'/>"
+            for x, y, scale, rotation in _PETALS
+        )
     svg = (
         "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'"
         f" viewBox='0 0 240 240'><g opacity='{variant.get('veil', '0.5')}'>"
@@ -180,13 +246,13 @@ def _blossom_tile(variant):
     return _data_uri(svg)
 
 
-def _painted(variant):
+def _painted(variant, motif="blossom"):
     """The declarations that make a card look like its theme."""
     parts = [
         f"background-color: {variant['bg']}",
         f"color: {variant['fg']}",
     ]
-    tile = _blossom_tile(variant)
+    tile = _blossom_tile(variant, motif)
     if tile:
         # The colour stays in `background-color` rather than moving into the
         # shorthand: the pattern is a layer over the card's own paint, and a client
@@ -284,8 +350,9 @@ def _palette(sheet_config):
         f" --sc-accent: {theme['night']['accent']}; }}\n",
     ]
     if sheet_config.theme in THEMES:
-        lines.append(f".card {{ {_painted(theme['light'])}; }}\n")
-        lines.append(f".card.night_mode {{ {_painted(theme['night'])}; }}\n")
+        motif = theme.get("motif", "blossom")
+        lines.append(f".card {{ {_painted(theme['light'], motif)}; }}\n")
+        lines.append(f".card.night_mode {{ {_painted(theme['night'], motif)}; }}\n")
         sign = theme.get("sign")
         if sign:
             lines.append(f".card::after {{ {_signature(theme['light'], sign)}; }}\n")

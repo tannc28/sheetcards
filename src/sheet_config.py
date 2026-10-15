@@ -47,11 +47,18 @@ THEME_COLORS = {
 # that a sheet cannot correct per column.
 #
 # `petal`/`heart`/`veil` are the optional fourth part: a theme named after a season
-# owes the card more than that season's pink, so a variant carrying them gets
-# blossoms strewn behind the text (drawn by `card_layout`, from these colours).
-# `veil` is how faint they are — the pattern is wallpaper, and wallpaper that
-# competes with the word being learned has failed at being wallpaper. A theme with
-# no `petal` is simply a palette.
+# owes the card more than that season's colour, so a variant carrying them gets a
+# pattern strewn behind the text (drawn by `card_layout`, from these colours).
+# `motif` says which pattern — `blossom` (the default), `maple` or `snow` — and sits
+# beside the variants like `sign`, because a leaf does not change shape at night.
+# `petal` is the motif's main colour and `heart` its second. `veil` is how faint
+# they are — the pattern is wallpaper, and wallpaper that competes with the word
+# being learned has failed at being wallpaper. A theme with no `petal` is simply a
+# palette.
+#
+# Every `fg` reaches 7:1 against its `bg` and every `muted`/`accent` 4.5:1, in both
+# variants; `tests/test_card_layout.py` measures it, since a theme is the one thing
+# a sheet cannot correct per column.
 #
 # `sign` is who the theme was made for, drawn small in the corner of every card it
 # paints (again by `card_layout`). It sits beside the two variants rather than
@@ -62,8 +69,8 @@ _SAKURA = {
     "light": {
         "bg": "#fff5f8",
         "fg": "#43262f",
-        "muted": "#9c7382",
-        "accent": "#d6336c",
+        "muted": "#8a6271",
+        "accent": "#c4285e",
         "petal": "#f7bdd0",
         "heart": "#ef9ab6",
         "veil": "0.5",
@@ -82,9 +89,48 @@ _SAKURA = {
 # `ptrang` is the VIP edition of `sakura`: the same palette and blossoms, plus the
 # signed corner. `sakura` itself stays unsigned.
 THEMES: dict[str, dict] = {
+    # Plain palettes: chosen for reading, not for a season.
+    # Warm paper and ink — the calmest of them for a long session.
+    "paper": {
+        "light": {"bg": "#faf6ee", "fg": "#2b2620", "muted": "#6b604f", "accent": "#9a4a1f"},
+        "night": {"bg": "#1f1b16", "fg": "#ece4d6", "muted": "#b3a794", "accent": "#e8a878"},
+    },
+    # As much contrast as a screen has, for weak eyes or a phone in the sun.
+    "contrast": {
+        "light": {"bg": "#ffffff", "fg": "#000000", "muted": "#3d3d3d", "accent": "#0039a6"},
+        "night": {"bg": "#000000", "fg": "#ffffff", "muted": "#d0d0d0", "accent": "#ffd400"},
+    },
+    # Soft green tea.
+    "matcha": {
+        "light": {"bg": "#f3f7ee", "fg": "#24321f", "muted": "#56664f", "accent": "#3f6b2c"},
+        "night": {"bg": "#18211a", "fg": "#e3ecdc", "muted": "#a3b39b", "accent": "#9cc98a"},
+    },
+    # The seasons, each with its pattern.
     "sakura": _SAKURA,
+    "momiji": {
+        "motif": "maple",
+        "light": {
+            "bg": "#fff7f2", "fg": "#3a2218", "muted": "#80594a", "accent": "#b23c0c",
+            "petal": "#f4b79c", "heart": "#eb9a74", "veil": "0.5",
+        },
+        "night": {
+            "bg": "#241a16", "fg": "#f3e2d8", "muted": "#c09c8c", "accent": "#ff9a66",
+            "petal": "#6e3b28", "heart": "#84452c", "veil": "0.55",
+        },
+    },
+    "yuki": {
+        "motif": "snow",
+        "light": {
+            "bg": "#f5f8fc", "fg": "#1d2a3a", "muted": "#56677d", "accent": "#2c5a92",
+            "petal": "#b9cde6", "heart": "#cfdcee", "veil": "0.7",
+        },
+        "night": {
+            "bg": "#151c26", "fg": "#e2eaf4", "muted": "#9fb0c4", "accent": "#8fb8ea",
+            "petal": "#3a4c64", "heart": "#2f3f55", "veil": "0.7",
+        },
+    },
     "ptrang": {**_SAKURA, "sign": "Mèo"},
-}
+}  # fmt: skip
 
 # Fonts a sheet can name, and the stack each becomes. The first four are loaded
 # from Google Fonts by `card_layout` when a column asks for one; the rest are

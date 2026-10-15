@@ -232,6 +232,45 @@ class TestFieldMarkup:
         qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
         assert "::after" not in qfmt
 
+    @pytest.mark.parametrize("name", sorted(THEMES))
+    def test_every_theme_is_readable_in_both_modes(self, name):
+        # WCAG contrast: the card's own text at 7:1 (AAA), the two named colours at
+        # 4.5:1 (AA), since `color=muted`/`color=accent` are used for whole lines.
+        def luminance(hex_colour):
+            channels = [int(hex_colour[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+            r, g, b = (
+                c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+                for c in channels
+            )
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+        def ratio(a, b):
+            high, low = sorted((luminance(a), luminance(b)), reverse=True)
+            return (high + 0.05) / (low + 0.05)
+
+        for variant in ("light", "night"):
+            colours = THEMES[name][variant]
+            assert ratio(colours["fg"], colours["bg"]) >= 7, (name, variant)
+            for key in ("muted", "accent"):
+                assert ratio(colours[key], colours["bg"]) >= 4.5, (name, variant, key)
+
+    @pytest.mark.parametrize(
+        "name, mark",
+        [("sakura", "<ellipse"), ("momiji", "%3Cpath"), ("yuki", "stroke-linecap")],
+    )
+    def test_each_season_draws_its_own_motif(self, name, mark):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck=f"theme={name}"))[0]["qfmt"]
+        card = qfmt.split(".card {")[1].split("}")[0]
+        assert mark.replace("<", "%3C") in card
+
+    @pytest.mark.parametrize("name", ["paper", "contrast", "matcha"])
+    def test_a_plain_palette_has_no_pattern(self, name):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck=f"theme={name}"))[0]["qfmt"]
+        assert "background-image" not in qfmt.split(".card {")[1].split("}")[0]
+        assert "::after" not in qfmt
+
     def test_an_unthemed_sheet_has_no_corner_mark(self):
         assert "::after" not in build_templates(_plan(), SheetConfig())[0]["qfmt"]
 
