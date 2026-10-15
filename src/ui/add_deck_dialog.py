@@ -176,7 +176,7 @@ class AddDeckDialog(QDialog):
         )
         self.conflict_warning = QLabel("")
         self.conflict_warning.setWordWrap(True)
-        self.conflict_warning.setStyleSheet(f"color: {self.colors['warning']};")
+        self.conflict_warning.setStyleSheet(f"color: {self.colors['text']};")
         conflict_row.addWidget(self.conflict_icon)
         conflict_row.addWidget(self.conflict_warning, 1)
         self.conflict_row_widget = QWidget()

@@ -387,7 +387,10 @@ def _show_sync_summary_with_scroll(
     status_icon.setPixmap(icon(shape, colour).pixmap(ICON_SIZE, ICON_SIZE))
     status_icon.setFixedWidth(ICON_SIZE)
     status_label = QLabel(f"<b>{status_text}</b>")
-    status_label.setStyleSheet(f"color: {colors[colour]};")
+    # Anki's caution orange is an icon colour, too faint to read as text on the
+    # light theme, so a warning is said in the text colour beside an orange icon.
+    text_colour = "text" if colour == "accent_warning" else colour
+    status_label.setStyleSheet(f"color: {colors[text_colour]};")
     head_row.addWidget(status_icon)
     head_row.addWidget(status_label)
     head_row.addStretch()
@@ -500,7 +503,7 @@ def _show_sync_summary_with_scroll(
             .success-bold {{  background-color: {colors['accent_success']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
             .error {{ color: {colors['error']}; }}
             .error-bold {{ background-color: {colors['error']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
-            .warning {{ color: {colors['accent_warning']}; }}
+            .warning {{ color: {colors['text']}; font-weight: 600; }}
             .warning-bold {{ background-color: {colors['accent_warning']}; padding: 2px 8px; color: black !important; font-weight: bold; display: inline-block; }}
             .info {{ color: {colors['accent_info']}; }}
             .muted {{ color: {colors['text_secondary']}; }}
