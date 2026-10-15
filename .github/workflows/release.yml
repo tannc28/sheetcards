@@ -95,6 +95,9 @@ jobs:
         run: |
           mv build/sheetcards-standalone.ankiaddon "build/sheetcards-${VERSION}.ankiaddon"
           mv build/sheetcards.ankiaddon "build/sheetcards-${VERSION}-ankiweb.ankiaddon"
+          # One name that never changes, so the website can link to
+          # releases/latest/download/sheetcards.ankiaddon and always mean the newest.
+          cp "build/sheetcards-${VERSION}.ankiaddon" build/sheetcards.ankiaddon
 
       # Tag only once everything above has passed, so a failed build never leaves a
       # tag behind that the next run would mistake for an already-published release.
@@ -131,6 +134,7 @@ jobs:
           |---|---|
           | \`sheetcards-${VERSION}.ankiaddon\` | Manual install (full manifest) |
           | \`sheetcards-${VERSION}-ankiweb.ankiaddon\` | Upload to AnkiWeb (stripped manifest) |
+          | \`sheetcards.ankiaddon\` | Same as the first, under a name that stays the same across releases |
           EOF
           )
 
