@@ -1,7 +1,7 @@
 {
     "package": "sheetcards",
     "name": "SheetCards",
-    "version": "7.0.0",
+    "version": "0.1.0",
     "author": "tannc28",
     "description": "Turn a spreadsheet into flashcards. Preview the whole deck in your browser and download it as an .apkg — the Anki add-on then keeps it in sync.",
     "homepage": "https://github.com/tannc28/sheetcards",

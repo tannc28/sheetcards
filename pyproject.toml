@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sheetcards"
-version = "7.0.0"
+version = "0.1.0"
 description = "Turn a spreadsheet into flashcards. Preview the whole deck in your browser and download it as an .apkg — the Anki add-on then keeps it in sync."
 readme = "README.md"
 license = { file = "LICENSE" }
