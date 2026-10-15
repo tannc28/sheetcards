@@ -24,6 +24,9 @@
   --sunken: #eef0f5;
   --line: #e0e4ec;
   --line-soft: #eef0f4;
+  /* A form control's edge is how you find the control at all, so it has to reach
+     3:1 against the panel (WCAG 1.4.11); --line is a divider and does not. */
+  --line-strong: #8a93a3;
   --ink: #12161c;
   --muted: #5b6573;      /* neutrals carry a slight blue bias toward the accent */
   --accent: #2f55c4;
@@ -83,7 +86,7 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ground: #0e1116; --panel: #171c24; --sunken: #11151b;
-  --line: #262d38; --line-soft: #1e242d;
+  --line: #262d38; --line-soft: #1e242d; --line-strong: #5f6a7c;
   --ink: #e6eaf1; --muted: #96a0af;
   --accent: #86a2f2; --accent-ink: #0e1116; --accent-soft: #1b2440;
   --ok: #58cb90; --warn: #e0ad4d; --warn-soft: #241d10; --warn-line: #4a3c1c;
@@ -119,6 +122,12 @@ a { color: var(--accent); }
   outline-offset: -2px;
   border-radius: var(--r-sm);
 }
+/* An accent ring inside an accent fill is no ring at all. */
+.btn:focus-visible, .langs button.on:focus-visible { outline-offset: 2px; }
+
+/* `display: flex` on a class outranks the browser's own [hidden] rule, which is how
+   empty boxes came to show through while the page was still loading. */
+[hidden] { display: none !important; }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -320,10 +329,10 @@ input, select {
   font: inherit; font-size: var(--t-md);
   padding: 8px 11px; min-width: 0; width: 100%;
   color: var(--ink); background: var(--panel);
-  border: 1px solid var(--line); border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
 }
-input::placeholder { color: var(--muted); opacity: .8; }
-input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+input::placeholder { color: var(--muted); }
+input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line-strong)); }
 select { cursor: pointer; }
 
 .status {
@@ -463,7 +472,7 @@ h3.spaced { margin-top: 18px; }
   font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums;
 }
 .rowitem .txt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rowitem.row-skipped .txt, .rowitem.row-invalid .txt { opacity: .55; }
+.rowitem.row-skipped .txt, .rowitem.row-invalid .txt { color: var(--muted); }
 
 /* ---- panel 1: what each column turned into ------------------------------- */
 
@@ -639,7 +648,7 @@ h3.spaced { margin-top: 18px; }
 }
 .cell.marker input { color: var(--accent); }
 
-.cell.named input { padding-right: 22px; }
+.cell.named input { padding-right: 28px; }
 .sheet input, .sheet textarea {
   display: block; width: 100%; padding: 7px 9px; margin: 0;
   font-family: var(--mono); font-size: var(--t-sm); line-height: 1.45;
@@ -653,7 +662,7 @@ h3.spaced { margin-top: 18px; }
    the size of the cell would be tapped by accident on a phone. */
 .drop {
   position: absolute; top: 3px; right: 3px;
-  width: 18px; height: 18px; padding: 0; line-height: 1;
+  width: 24px; height: 24px; padding: 0; line-height: 1;
   font-size: 13px; color: var(--muted);
   background: transparent; border: 0; border-radius: var(--r-sm);
 }
@@ -793,7 +802,7 @@ h3.spaced { margin-top: 18px; }
 
 .rownav { margin-left: auto; display: flex; gap: 2px; }
 .stepper {
-  width: 24px; height: 22px; padding: 0; line-height: 1;
+  width: 28px; height: 28px; padding: 0; line-height: 1;
   background: transparent; color: var(--muted);
   border: 1px solid var(--line); border-radius: var(--r-sm);
 }
@@ -853,7 +862,7 @@ h3.spaced { margin-top: 18px; }
    row list beside it uses, said with the row number instead of a dot. */
 .sheetgrid tr.k-synced .rowh { color: var(--ok); }
 .sheetgrid tr.k-invalid .rowh { color: var(--bad); }
-.sheetgrid tr.k-skipped td { opacity: .55; }
+.sheetgrid tr.k-skipped td { color: var(--muted); }
 
 .sheetgrid tr[data-row] { cursor: pointer; }
 .sheetgrid tr[data-row]:hover td { background: var(--sunken); }

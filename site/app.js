@@ -978,6 +978,9 @@ function paintTheme() {
 
 /** Text that lives in index.html rather than in a render function. */
 function paintStatic() {
+  // A screen reader picks its voice from this, so it has to follow the page's
+  // language, not just the button that last changed it.
+  document.documentElement.lang = lang();
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.innerHTML = t(el.dataset.i18n);
   }
