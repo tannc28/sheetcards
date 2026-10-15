@@ -1,7 +1,8 @@
 /**
  * A settings row, and the card it makes.
  *
- * The reference for these directives is the README, and a copy of it here would
+ * The reference for these directives is docs/site/settings-row.md (published as
+ * the site's Settings row page), and a copy of it here would
  * be a copy that drifts. This is the other way of documenting them: type one and
  * watch the card change. What a value has to look like is taught by the warning
  * you get when it does not — and that warning is the add-on's own sentence, out
@@ -44,6 +45,7 @@ def keys():
         THEME_COLORS,
         THEMES,
         _DECK_KEYS,
+        listed_themes,
         _FIELD_KEYS,
     )
 
@@ -54,7 +56,9 @@ def keys():
             "closed": {
                 "side": list(SIDES),
                 "align": list(ALIGNMENTS),
-                "theme": list(THEMES),
+                # Not list(THEMES): a theme kept out of the docs is kept out of
+                # the picker too. A sheet that types its name still gets it.
+                "theme": listed_themes(),
             },
             "themeColors": list(THEME_COLORS),
             "media": list(MEDIA_KINDS),
