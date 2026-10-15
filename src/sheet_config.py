@@ -132,6 +132,16 @@ THEMES: dict[str, dict] = {
     "ptrang": {**_SAKURA, "sign": "Mèo"},
 }  # fmt: skip
 
+# Themes that work when named but are never offered: left out of the list an
+# unknown name is answered with and out of the editor's picker.
+UNLISTED_THEMES = frozenset({"ptrang"})
+
+
+def listed_themes():
+    """The theme names a sheet is told about, in a stable order."""
+    return sorted(name for name in THEMES if name not in UNLISTED_THEMES)
+
+
 # Fonts a sheet can name, and the stack each becomes. The first four are loaded
 # from Google Fonts by `card_layout` when a column asks for one; the rest are
 # whatever the machine already has.
@@ -700,7 +710,7 @@ def parse_config_row(row, plan):
             else:
                 warn(
                     f"'{MARKER}': unknown theme '{value}' — "
-                    f"the themes are {', '.join(sorted(THEMES))}"
+                    f"the themes are {', '.join(listed_themes())}"
                 )
         elif key == "speed":
             try:

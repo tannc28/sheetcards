@@ -281,6 +281,12 @@ class TestFieldMarkup:
         assert any("neon" in w for w in config.warnings)
         assert ".card {" not in build_templates(plan, config)[0]["qfmt"]
 
+    def test_an_unlisted_theme_works_but_is_never_offered(self):
+        plan = _plan()
+        assert _config(plan, deck="theme=ptrang").theme == "ptrang"
+        warning = " ".join(_config(plan, deck="theme=neon").warnings)
+        assert "sakura" in warning and "ptrang" not in warning
+
     def test_literal_colour_is_emitted_as_written(self):
         plan = _plan()
         config = _config(plan, {"Word": "color=#ff0000", "Reading": "color=crimson"})
