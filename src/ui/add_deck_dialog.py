@@ -724,7 +724,7 @@ class AddDeckDialog(QDialog):
 EXAMPLE_WORKBOOK_URL = (
     "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx"
 )
-PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/"
+PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/preview.html"
 
 
 def starter_links_html():

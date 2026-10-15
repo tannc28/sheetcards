@@ -972,6 +972,7 @@ dependencies = [
 dev = [
     { name = "anki" },
     { name = "black" },
+    { name = "markdown" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -996,6 +997,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "black", marker = "extra == 'dev'", specifier = "==26.5.1" },
     { name = "chardet", specifier = ">=5.2.0" },
+    { name = "markdown", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },

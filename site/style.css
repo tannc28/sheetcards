@@ -205,7 +205,7 @@ body.ready .hero { display: none; }
   border-bottom: 1px solid var(--line);
 }
 .brand { flex: 1 1 14rem; min-width: 0; }
-.brand h1 {
+.brand h1, .brand .name {
   margin: 0;
   font-size: var(--t-xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.15;
 }
@@ -1287,8 +1287,12 @@ iframe#card {
      is a single word, which overflows rather than shrinking. It wraps again:
      the name on one line, the controls on the next. */
   .masthead { padding: 10px var(--pad); gap: 8px; }
-  .brand { flex: 1 1 100%; }
-  .brand h1 { font-size: var(--t-lg); }
+  /* The name, the theme and the language share the first line; the site's own
+     links take the second, where five of them have the whole width. */
+  .brand { flex: 1 1 auto; }
+  .brand h1, .brand .name { font-size: var(--t-lg); }
+  .sitenav { order: 5; flex: 1 1 100%; margin-left: -7px; }
+  .masthead .sitenav a { padding: 6px 7px; }
   .langs button { padding: 5px 9px; }
   a.ghost { padding: 6px 10px; }
 
@@ -1304,3 +1308,509 @@ iframe#card {
   #rowlist { max-height: 60vh; overflow: auto; overscroll-behavior: contain; }
   #tree { max-height: 45vh; overflow: auto; overscroll-behavior: contain; }
 }
+
+/* ==== the site's own navigation ============================================
+
+   On every page: Home, Preview, Editor, Docs, GitHub. Words rather than
+   buttons, because five bordered boxes beside the theme and language switches
+   made the masthead louder than the page under it. The page you are on is
+   marked with the accent underline — the only colour in the row. No `flex`
+   here: the narrow rule above gives the row a line of its own, and this rule,
+   later in the file, would undo it. */
+
+.sitenav { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; }
+.sitenav a {
+  padding: 6px 9px; border-radius: var(--r-sm);
+  font-size: var(--t-sm); font-weight: 500; color: var(--muted); text-decoration: none;
+  white-space: nowrap;
+}
+.sitenav a:hover { color: var(--ink); background: var(--sunken); }
+.sitenav a[aria-current="page"] {
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--accent);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+@media (min-width: 56rem) {
+  .sitenav { flex: none; margin-right: 8px; }
+}
+
+/* ==== pages that are read: the landing page and the docs ===================
+
+   The preview fills the window and scrolls inside its columns; these are
+   documents and scroll as one. `body.page` outranks the full-height rule. */
+
+@media (min-width: 56rem) {
+  html:has(body.page) { height: auto; }
+  body.page { display: block; height: auto; overflow: visible; }
+}
+.page main:focus { outline: none; }
+
+/* ==== the landing page ===================================================== */
+
+.home {
+  /* The card's own ground, as cardframe.js paints it, so the frame and the box
+     around it are one surface while a card loads or turns. */
+  --card-bg: #ffffff;
+  --t-display: clamp(2.5rem, 1.5rem + 4vw, 4.75rem);
+  --t-section: clamp(1.6rem, 1.25rem + 1.3vw, 2.25rem);
+  --wrap: 74rem;
+}
+:root[data-theme="dark"] .home { --card-bg: #1b1f25; }
+
+.home code {
+  font-size: .9em; padding: 1px 5px; border-radius: 4px;
+  background: var(--sunken); color: var(--ink);
+}
+
+/* ---- hero ---- */
+
+/* Squared paper behind the hero, ruled like a sheet's cells (wide, short) and
+   fading out from behind the demo. The page's one texture, and it is the
+   material the product is made of. */
+.hero-home { position: relative; isolation: isolate; overflow: hidden; }
+.hero-home::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 6.5rem 2rem;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 65% at 72% 45%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 65% at 72% 45%, #000 10%, transparent 75%);
+  opacity: .7;
+}
+.hero-inner {
+  max-width: var(--wrap); margin: 0 auto;
+  padding: clamp(2.25rem, 6vw, 5rem) var(--pad) clamp(1rem, 3vw, 2rem);
+  display: grid; gap: clamp(2.25rem, 5vw, 3.5rem); align-items: center;
+}
+/* The words above, the demo under them at full width — the demo is a row of a
+   spreadsheet, and a spreadsheet squeezed into half a hero is a row of
+   ellipses. Wide, the headline and the buttons sit side by side so the demo
+   still starts above the fold. */
+@media (min-width: 60rem) {
+  .hero-text {
+    display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 5vw, 5rem); align-items: end;
+  }
+  .hero-text .display { max-width: 14ch; margin-bottom: 0; }
+  .hero-act .lead { max-width: 28rem; }
+}
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.display {
+  margin: .45em 0 .4em;
+  font-size: var(--t-display); font-weight: 780; line-height: 1;
+  letter-spacing: -.045em;
+  max-width: 11ch;
+}
+.lead {
+  margin: 0; max-width: 32rem;
+  font-size: clamp(1.05rem, .98rem + .35vw, 1.25rem); line-height: 1.55;
+  color: var(--muted);
+}
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin: 1.75rem 0 0; }
+.ctas > a { flex: 1 1 auto; }
+@media (min-width: 40rem) { .ctas > a { flex: none; } }
+a.btn, a.btn-quiet { text-decoration: none; border-radius: var(--r-sm); }
+.btn.big, .btn-quiet.big {
+  font-size: var(--t-base); padding: 13px 22px; border-radius: var(--r-md);
+}
+.btn-quiet {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 600; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line-strong);
+  transition: border-color .12s ease, background-color .12s ease;
+}
+.btn-quiet:hover { border-color: var(--accent); background: var(--accent-soft); }
+.btn-quiet .icon { color: var(--accent); }
+.btn .anki-mark { flex: none; }
+.btn .ext {
+  margin-left: -3px; font-family: var(--mono); font-size: .85em; font-weight: 500;
+  opacity: .85;
+}
+.fine { margin: 1rem 0 0; font-size: var(--t-sm); color: var(--muted); }
+
+/* ---- the demo ---- */
+
+.demo {
+  margin: 0; min-width: 0;
+  display: grid; gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "sheet" "flow" "card" "controls";
+  justify-items: center;
+}
+@media (min-width: 40rem) {
+  .demo {
+    grid-template-columns: minmax(0, 1fr) 3.5rem minmax(0, 20rem);
+    grid-template-areas: "sheet flow card" "controls controls controls";
+    align-items: center; column-gap: 6px; row-gap: 18px;
+  }
+}
+
+.demo-sheet {
+  grid-area: sheet; width: 100%; min-width: 0;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden;
+  font-family: var(--mono); font-size: 12px;
+}
+.fx {
+  display: flex; align-items: center; gap: 10px; height: 2.25rem; padding: 0 12px;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.fx-ref { flex: none; min-width: 2.25rem; color: var(--muted); }
+.fx-sign {
+  flex: none; padding-left: 10px; border-left: 1px solid var(--line);
+  font-family: Georgia, serif; font-style: italic; color: var(--muted);
+}
+.fx-val { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Sized before the script fills them (header, three rows), so nothing below
+   moves when it does. */
+.cells {
+  min-height: calc(1.6rem + 2 * 2.25rem + 3rem);
+  display: grid;
+  grid-template-columns: 1.75rem 2.75rem repeat(calc(var(--cols, 4) - 1), minmax(0, 1fr));
+}
+.cells .dcell > span {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cells .dcell {
+  display: flex; align-items: center; height: 2.25rem; padding: 0 8px; min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+  transition: background-color .3s ease, box-shadow .3s ease;
+}
+.cells .corner, .cells .letter, .cells .rownum {
+  justify-content: center;
+  background: var(--sunken); color: var(--muted); text-align: center;
+  font-size: 11px; padding: 0 2px;
+}
+.cells .letter, .cells .corner { height: 1.6rem; }
+.cells .rownum.here { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.cells .head { font-family: var(--sans); font-weight: 650; color: var(--ink); }
+.cells .conf { font-size: 11px; color: var(--muted); }
+/* The row itself may take two lines: it is what the card is made of, and
+   "to af…" says nothing about either. */
+.cells .data { height: 3rem; color: var(--ink); font-size: 13px; line-height: 1.3; }
+.cells .data > span {
+  white-space: normal; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+/* The range the card is showing, outlined the way a spreadsheet outlines a
+   selection — one rectangle round the run, the fill handle in its corner. */
+.cells .pick {
+  position: relative; background: var(--accent-soft);
+  --e: var(--accent);
+  box-shadow: inset 0 2px var(--e), inset 0 -2px var(--e);
+}
+.cells .pick.pick-l { box-shadow: inset 0 2px var(--e), inset 0 -2px var(--e), inset 2px 0 var(--e); }
+.cells .pick.pick-r { box-shadow: inset 0 2px var(--e), inset 0 -2px var(--e), inset -2px 0 var(--e); }
+.cells .pick.pick-l.pick-r {
+  box-shadow: inset 0 2px var(--e), inset 0 -2px var(--e), inset 2px 0 var(--e), inset -2px 0 var(--e);
+}
+.cells .pick-r::after {
+  content: ""; position: absolute; right: 0; bottom: 0; width: 6px; height: 6px;
+  background: var(--accent); outline: 1px solid var(--panel);
+}
+.sheettab {
+  display: flex; padding: 6px 8px; background: var(--sunken);
+  font-family: var(--sans);
+}
+.sheettab span {
+  min-height: 1.5rem; max-width: 100%; padding: 3px 10px; border-radius: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--panel); color: var(--accent);
+  font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgb(16 22 32 / .08);
+}
+
+.demo-flow {
+  grid-area: flow; width: 48px; height: 24px; overflow: visible;
+  transform: rotate(90deg);
+}
+@media (min-width: 40rem) { .demo-flow { transform: none; } }
+.demo-flow path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.flow-track { stroke: var(--line-strong); stroke-width: 2; stroke-dasharray: 2 5; }
+.flow-run { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 12 60; stroke-dashoffset: 12; }
+.flow-head { stroke: var(--accent); stroke-width: 2.5; }
+.demo-flow.run .flow-run { animation: sc-flow .7s cubic-bezier(.4, 0, .2, 1); }
+@keyframes sc-flow { from { stroke-dashoffset: 12; } to { stroke-dashoffset: -40; } }
+
+/* The reviewer: the card, and Anki's bar of buttons under it. */
+.demo-review {
+  grid-area: card; width: 100%; max-width: 21rem;
+  border-radius: var(--r-lg); box-shadow: var(--shadow);
+}
+.demo-card {
+  position: relative; height: 19.5rem;
+  perspective: 1400px;
+  /* What shows behind the card while it turns: the reviewer, not more card. */
+  background: var(--sunken);
+  border: 1px solid var(--line); border-bottom: 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.flip {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .8s cubic-bezier(.25, .8, .25, 1), opacity .35s ease, visibility 0s .35s;
+  opacity: 0; visibility: hidden;
+}
+.flip.active { opacity: 1; visibility: visible; transition-delay: 0s; }
+.flip.turned { transform: rotateY(180deg); }
+.flip .face {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; display: block; pointer-events: none;
+  background: var(--card-bg);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+}
+.flip .face.back { transform: rotateY(180deg); }
+
+.ankibar {
+  display: flex; align-items: center; justify-content: center;
+  height: 3.5rem; padding: 0 10px;
+  background: var(--sunken); border: 1px solid var(--line);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+.ease { display: flex; gap: 6px; }
+.ankibtn {
+  padding: 6px 13px; font-size: var(--t-sm); font-weight: 600;
+  background: var(--panel); border: 1px solid var(--line-strong);
+}
+.ankibtn:hover { border-color: var(--accent); }
+.ankibtn.show { padding: 7px 22px; color: var(--ink); }
+.ankibtn.again { color: var(--bad); }
+.ankibtn.hard { color: var(--muted); }
+.ankibtn.good { color: var(--ok); }
+.ankibtn.easy { color: var(--accent); }
+
+.demo-controls {
+  grid-area: controls; min-height: 2.4rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
+}
+.demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.demo-tabs button {
+  padding: 6px 13px; border-radius: 999px;
+  font-size: var(--t-sm); font-weight: 500; color: var(--muted);
+  border: 1px solid var(--line);
+}
+.demo-tabs button:hover { color: var(--ink); border-color: var(--line-strong); }
+.demo-tabs button[aria-pressed="true"] {
+  color: var(--accent); border-color: var(--accent); background: var(--accent-soft);
+  font-weight: 600;
+}
+.demo-controls .themebtn { border-radius: 999px; color: var(--muted); }
+.demo-controls .themebtn .icon { width: 14px; height: 14px; }
+
+/* ---- sections ---- */
+
+.band {
+  max-width: var(--wrap); margin: 0 auto;
+  padding: clamp(3.5rem, 8vw, 6rem) var(--pad) 0;
+}
+.section-title {
+  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  font-size: var(--t-section); font-weight: 760; letter-spacing: -.03em; line-height: 1.1;
+}
+
+.features {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: clamp(1.75rem, 3vw, 2.5rem) clamp(1.5rem, 3vw, 3rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+}
+.feat-icon {
+  display: inline-grid; place-items: center;
+  width: 42px; height: 42px; border-radius: var(--r-md);
+  background: var(--accent-soft); color: var(--accent);
+}
+.feat-icon .icon { width: 20px; height: 20px; }
+.feature h3 { margin: .9rem 0 .35rem; font-size: var(--t-lg); font-weight: 680; letter-spacing: -.01em; }
+.feature p { margin: 0; color: var(--muted); max-width: 30rem; }
+
+.how { display: grid; gap: clamp(2.5rem, 5vw, 4rem); align-items: start; }
+@media (min-width: 56rem) { .how { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+
+/* A real sequence, so it is numbered: a sheet has to exist before it is shared,
+   and shared before Anki can read it. The rule down the left joins the three. */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps li {
+  position: relative; counter-increment: step;
+  padding: 0 0 2rem 3.75rem; min-height: 2.75rem;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: -2px;
+  display: grid; place-items: center; width: 2.5rem; height: 2.5rem;
+  border-radius: 50%; border: 2px solid var(--accent); background: var(--panel);
+  color: var(--accent); font-weight: 750; font-variant-numeric: tabular-nums;
+}
+.steps li:not(:last-child)::after {
+  content: ""; position: absolute; left: calc(1.25rem - 1px); top: 2.75rem; bottom: .25rem;
+  width: 2px; background: var(--line);
+}
+.steps h3 { margin: .35rem 0 .3rem; font-size: var(--t-lg); font-weight: 680; }
+.steps p { margin: 0; color: var(--muted); }
+.steps b, .install b { color: var(--ink); font-weight: 600; }
+
+.install {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r-lg); box-shadow: var(--shadow);
+}
+.install h2 { margin: 0 0 .75rem; font-size: var(--t-lg); font-weight: 720; }
+.install ol { margin: 0 0 1.25rem; padding-left: 1.3rem; }
+.install li { margin: 0 0 .55rem; padding-left: .2rem; }
+.install li::marker { color: var(--accent); font-weight: 700; }
+
+.sitefoot {
+  margin-top: clamp(4rem, 10vw, 7rem);
+  padding: clamp(2rem, 5vw, 3rem) var(--pad) 2.5rem;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+.footlinks {
+  list-style: none; margin: 0 auto; padding: 0;
+  max-width: calc(var(--wrap) - 2 * var(--pad));
+  display: grid; gap: 1.5rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+.footlinks a { font-weight: 680; color: var(--ink); text-decoration: none; }
+.footlinks a:hover { color: var(--accent); text-decoration: underline; }
+.footlinks p { margin: .25rem 0 0; font-size: var(--t-sm); color: var(--muted); }
+.sitefoot > .fine {
+  max-width: calc(var(--wrap) - 2 * var(--pad)); margin: 2rem auto 0; font-size: var(--t-xs);
+}
+
+/* Rising into view as they scroll in. Only with `.motion` on the root, which the
+   page sets before its first paint and never when less motion was asked for —
+   so nothing here can hide content from somebody whose script did not run. */
+.motion .reveal {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity .6s ease, transform .7s cubic-bezier(.2, .7, .2, 1);
+}
+.motion .reveal.in { opacity: 1; transform: none; }
+.motion .features .reveal:nth-child(2) { transition-delay: 70ms; }
+.motion .features .reveal:nth-child(3) { transition-delay: 140ms; }
+.motion .features .reveal:nth-child(4) { transition-delay: 210ms; }
+.motion .features .reveal:nth-child(5) { transition-delay: 280ms; }
+.motion .features .reveal:nth-child(6) { transition-delay: 350ms; }
+.motion .steps .reveal:nth-child(2) { transition-delay: 90ms; }
+.motion .steps .reveal:nth-child(3) { transition-delay: 180ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flip, .cells .dcell, .btn-quiet { transition: none; }
+  .demo-flow.run .flow-run { animation: none; }
+}
+
+/* ==== the docs ============================================================= */
+
+.docs-layout {
+  max-width: var(--wrap, 74rem); margin: 0 auto;
+  padding: 1rem var(--pad) 4rem;
+  display: grid; gap: 1.25rem;
+}
+.docnav details {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.docnav summary {
+  padding: 11px 14px; cursor: pointer; font-weight: 600; font-size: var(--t-md);
+}
+.docnav details > :not(summary) { margin-left: 8px; margin-right: 8px; }
+.docnav details > ul:last-child { margin-bottom: 10px; }
+.docnav-group {
+  margin: .9rem 0 .25rem; padding: 0 10px;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.docnav ul { list-style: none; margin: 0; padding: 0; }
+.docnav a {
+  display: block; padding: 5px 10px; border-radius: var(--r-sm);
+  font-size: var(--t-md); color: var(--ink); text-decoration: none;
+}
+.docnav a:hover { background: var(--sunken); }
+.docnav a[aria-current="page"] {
+  background: var(--accent-soft); color: var(--accent); font-weight: 600;
+}
+.docnav-toc { margin: 2px 0 6px 10px !important; border-left: 1px solid var(--line); }
+.docnav-toc a { padding: 3px 10px 3px 12px; font-size: var(--t-sm); color: var(--muted); }
+
+@media (min-width: 56rem) {
+  .docs-layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 3.5rem; align-items: start; padding-top: 2rem;
+  }
+  .docnav {
+    position: sticky; top: 1rem;
+    max-height: calc(100vh - 2rem); overflow: auto; overscroll-behavior: contain;
+  }
+  .docnav details { background: none; border: 0; }
+  .docnav summary { display: none; }
+  .docnav details > :not(summary) { margin-left: 0; margin-right: 0; }
+  .docnav-group:first-of-type { margin-top: 0; }
+}
+
+.prose { min-width: 0; max-width: 46rem; line-height: 1.7; }
+.prose h1 {
+  margin: .2em 0 .6em;
+  font-size: clamp(1.9rem, 1.5rem + 1.5vw, 2.6rem); font-weight: 760;
+  letter-spacing: -.035em; line-height: 1.1;
+}
+.prose h2 {
+  margin: 2.2em 0 .6em; font-size: 1.4rem; font-weight: 700;
+  letter-spacing: -.02em; line-height: 1.25;
+  scroll-margin-top: 1rem;
+}
+.prose h3 { margin: 1.8em 0 .5em; font-size: var(--t-lg); font-weight: 650; }
+.prose p, .prose ul, .prose ol { margin: 0 0 1em; }
+.prose li { margin: .3em 0; }
+.prose li > p { margin: 0; }
+.prose code {
+  font-size: .88em; padding: .1em .35em; border-radius: 4px;
+  background: var(--sunken); overflow-wrap: anywhere;
+}
+.prose pre {
+  margin: 1.2em 0; padding: 14px 16px; overflow-x: auto;
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-md);
+  line-height: 1.5;
+}
+.prose pre code { padding: 0; background: none; font-size: var(--t-md); overflow-wrap: normal; }
+.prose blockquote {
+  margin: 1.2em 0; padding: .2em 0 .2em 1em; border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+.tablewrap {
+  margin: 1.25em 0; overflow-x: auto;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.prose table { border-collapse: collapse; width: 100%; font-size: var(--t-md); line-height: 1.5; }
+.prose th, .prose td {
+  padding: 8px 12px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+}
+.prose th { background: var(--sunken); font-weight: 650; white-space: nowrap; }
+.prose tr:last-child td { border-bottom: 0; }
+.headerlink {
+  margin-left: .35em; color: var(--muted); text-decoration: none; opacity: 0;
+  font-weight: 400;
+}
+.prose h2:hover .headerlink, .headerlink:focus-visible { opacity: 1; }
+
+.pager {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  margin-top: 3.5rem;
+}
+.pager a {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  color: var(--ink); text-decoration: none; line-height: 1.35; font-weight: 600;
+}
+.pager a:hover { border-color: var(--accent); background: var(--accent-soft); }
+.pager small {
+  display: block; font-size: var(--t-xs); font-weight: 500; color: var(--muted);
+}
+.pager .icon { color: var(--muted); }
+.pager .next { grid-column: 2; justify-content: flex-end; text-align: right; }
+.editlink { margin-top: 1.5rem; font-size: var(--t-sm); }

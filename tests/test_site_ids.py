@@ -13,7 +13,14 @@ from pathlib import Path
 
 SITE = Path(__file__).resolve().parent.parent / "site"
 
-PAGES = {"app.js": "index.html", "editor.js": "editor.html"}
+PAGES = {
+    "app.js": "preview.html",
+    "editor.js": "editor.html",
+    "home.js": "index.html",
+    # The chrome of the pages that are read: the landing page, and the docs
+    # template every documentation page is built from.
+    "page.js": ("index.html", "_docs.html"),
+}
 
 
 def _read(name):
@@ -42,15 +49,18 @@ def _built():
 
 def test_every_id_a_script_reaches_for_exists():
     built = _built()
-    for script, page in PAGES.items():
-        markup = set(re.findall(r'\bid="([\w-]+)"', _read(page)))
+    for script, pages in PAGES.items():
+        pages = (pages,) if isinstance(pages, str) else pages
+        markup = set()
+        for page in pages:
+            markup |= set(re.findall(r'\bid="([\w-]+)"', _read(page)))
         missing = sorted(_wanted(_read(script)) - markup - built)
         assert not missing, f"{script} reaches for ids no page has: {missing}"
 
 
 def test_every_translated_attribute_names_a_real_element():
     """`data-i18n-attr` is applied by selector, so a typo is silent."""
-    for page in PAGES.values():
+    for page in sorted(p.name for p in SITE.glob("*.html")):
         for pairs in re.findall(r'data-i18n-attr="([^"]+)"', _read(page)):
             for pair in pairs.split(","):
                 assert ":" in pair, f"{page}: {pair!r} is not attr:key"

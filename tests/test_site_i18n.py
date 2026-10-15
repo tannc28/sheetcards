@@ -107,6 +107,12 @@ def _keys_referenced(declared):
     through a table (`["statRows", n]`) or a ternary is still very much in use.
     """
     quoted = set(re.findall(r'["\'`]([\w]+)["\'`]', _page_source()))
+    # The landing page's demo labels are named beside the rows they label, in
+    # HOME_EXAMPLES in the build script, and reach the page through the cards
+    # it generates.
+    build = (REPO / "scripts" / "build_site.py").read_text(encoding="utf-8")
+    examples = build.split("HOME_EXAMPLES = [", 1)[1].split("\n]", 1)[0]
+    quoted |= set(re.findall(r'"(\w+)"\)', examples))
     return (quoted & declared) | _keys_called()
 
 

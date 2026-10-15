@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<script>
+  // The preview used to live at this address, and links to it are out there —
+  // in the add-on, in posts, in bookmarks — carrying ?url=… or a #fragment. Those
+  // were always asking for the preview, so they are sent on to it before anything
+  // is drawn. The fragments this page has of its own stay here.
+  (function () {
+    var own = ["#main", "#features", "#how", "#install"];
+    if (location.search || (location.hash && own.indexOf(location.hash) < 0)) {
+      location.replace("./preview.html" + location.search + location.hash);
+    }
+  })();
+</script>
+<title>SheetCards — your spreadsheet is your deck</title>
+<meta name="description" content="SheetCards is an Anki add-on: write flashcards in Google Sheets, one row each, and keep Anki in step with the sheet.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  try {
+    var t = localStorage.getItem("sc-theme");
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#171c24";
+    }
+  } catch (e) {}
+  // Sections rise into place as they scroll in — unless the reader asked for
+  // less motion. Set before the first paint so nothing jumps; and if the page's
+  // script never arrives, everything is shown anyway after a moment.
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+    document.documentElement.classList.add("motion");
+    setTimeout(function () {
+      if (!window.scHomeReady) document.documentElement.classList.remove("motion");
+    }, 2500);
+  }
+</script>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body class="page home">
+
+<a class="skip" href="#main" data-i18n="skipMain">Skip to the content</a>
+
+<header class="masthead">
+  <div class="brand">
+    <p class="name" translate="no">SheetCards</p>
+  </div>
+  <nav class="sitenav" aria-label="Site" data-i18n-attr="aria-label:navLabel">
+    <a href="./" aria-current="page" data-i18n="navHome">Home</a>
+    <a href="./preview.html" data-i18n="navPreview">Preview</a>
+    <a href="./editor.html" data-i18n="navEditor">Editor</a>
+    <a href="./docs/" data-i18n="navDocs">Docs</a>
+    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
+  </nav>
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Language" data-i18n-attr="aria-label:langLabel"></nav>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <section class="hero-home">
+   <div class="hero-inner">
+    <div class="hero-text">
+     <div class="hero-title">
+      <p class="eyebrow"><img src="./anki.png" alt="" width="16" height="16"><span
+         data-i18n="homeEyebrow">An add-on for Anki</span></p>
+      <h1 class="display" data-i18n="homeTitle">Your spreadsheet is your deck.</h1>
+     </div>
+     <div class="hero-act">
+      <p class="lead" data-i18n="homeLead">Write flashcards in Google Sheets, one row each. SheetCards brings them into Anki and keeps them in step whenever the sheet changes.</p>
+      <p class="ctas">
+        <!-- Anki's own icon, so a learner sees at a glance this is the file Anki
+             opens. anki.png is copied unchanged from Anki's source
+             (qt/aqt/data/qt/icons/anki.png, AGPL-3.0-or-later; the Anki name and
+             logo belong to Ankitects). -->
+        <a class="btn big" href="https://github.com/tannc28/sheetcards/releases/latest/download/sheetcards.ankiaddon"><img
+           class="anki-mark" src="./anki.png" alt="" width="18" height="18"><span
+           data-i18n="homeDownload">Download</span><span class="ext" translate="no">.ankiaddon</span></a>
+        <a class="btn-quiet big" href="./preview.html"><span data-icon="eye"></span><span
+           data-i18n="homeTry">Try the preview</span></a>
+      </p>
+      <p class="fine" data-i18n="homeNeeds">Free and open source · Anki 25.x or later on a computer</p>
+     </div>
+    </div>
+
+    <!-- The page's one claim, shown rather than said: a row of the example
+         workbook, and the card the add-on makes of it. The cards are the add-on's
+         real templates, rendered at build time by card_layout.py (see
+         scripts/build_site.py) — not a drawing of a card. Every box here has a
+         size of its own before the script fills it, so nothing moves as it does. -->
+    <figure class="demo" id="demo" role="group" data-i18n-attr="aria-label:demoLabel">
+      <div class="demo-sheet" id="demo-sheet" aria-hidden="true">
+        <div class="fx"><span class="fx-ref" id="fx-ref">B3</span><span class="fx-sign">fx</span><span
+             class="fx-val" id="fx-val"></span></div>
+        <div class="cells" id="demo-cells"></div>
+        <div class="sheettab"><span id="demo-tab"></span></div>
+      </div>
+
+      <svg class="demo-flow" id="demo-flow" viewBox="0 0 48 24" aria-hidden="true" focusable="false">
+        <path class="flow-track" d="M4 12h36"/>
+        <path class="flow-run" d="M4 12h36"/>
+        <path class="flow-head" d="m33 5 7 7-7 7"/>
+      </svg>
+
+      <div class="demo-review">
+        <div class="demo-card" id="demo-card"></div>
+        <div class="ankibar">
+          <button type="button" class="ankibtn show" id="show-answer" data-i18n="showAnswer">Show answer</button>
+          <span class="ease" id="ease" hidden>
+            <button type="button" class="ankibtn again" data-ease data-i18n="ankiAgain">Again</button>
+            <button type="button" class="ankibtn hard" data-ease data-i18n="ankiHard">Hard</button>
+            <button type="button" class="ankibtn good" data-ease data-i18n="ankiGood">Good</button>
+            <button type="button" class="ankibtn easy" data-ease data-i18n="ankiEasy">Easy</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="demo-controls">
+        <div class="demo-tabs" id="demo-tabs"></div>
+        <button type="button" class="themebtn" id="demo-play"></button>
+      </div>
+    </figure>
+   </div>
+  </section>
+
+  <section class="band" id="features" aria-labelledby="features-title">
+    <h2 class="section-title reveal" id="features-title" data-i18n="featTitle">What it does</h2>
+    <ul class="features">
+      <li class="feature reveal"><span class="feat-icon" data-icon="languages"></span>
+        <h3 data-i18n="featColumnsTitle">Your columns, any language</h3><p data-i18n="featColumns">Name columns <code>Word</code>, <code>Nghĩa</code> or <code>汉字</code>. Each one becomes a field in Anki.</p></li>
+      <li class="feature reveal"><span class="feat-icon" data-icon="sliders-horizontal"></span>
+        <h3 data-i18n="featSettingsTitle">One row of settings</h3><p data-i18n="featSettings">Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No template editing.</p></li>
+      <li class="feature reveal"><span class="feat-icon" data-icon="volume-2"></span>
+        <h3 data-i18n="featSpeechTitle">Read aloud</h3><p data-i18n="featSpeech">Add <code>tts=en_US</code> and Anki speaks the column with the voices on your device.</p></li>
+      <li class="feature reveal"><span class="feat-icon" data-icon="keyboard"></span>
+        <h3 data-i18n="featTypeTitle">Type the answer</h3><p data-i18n="featType"><code>type=nc</code> puts a box on the card and checks your spelling — tone marks optional.</p></li>
+      <li class="feature reveal"><span class="feat-icon" data-icon="pen-line"></span>
+        <h3 data-i18n="featDrawTitle">Cloze and handwriting</h3><p data-i18n="featDraw">Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.</p></li>
+      <li class="feature reveal"><span class="feat-icon" data-icon="eye"></span>
+        <h3 data-i18n="featPreviewTitle">See it before you sync</h3><p data-i18n="featPreview">The preview runs the add-on's own code in your browser, and can hand you an <code>.apkg</code> for your phone.</p></li>
+    </ul>
+  </section>
+
+  <section class="band how" id="how" aria-labelledby="how-title">
+    <div class="how-steps">
+      <h2 class="section-title reveal" id="how-title" data-i18n="homeHow">How it works</h2>
+      <ol class="steps">
+        <li class="reveal"><h3 data-i18n="homeHow1Title">Make a sheet</h3><p data-i18n="homeHow1">Row 1 holds the column names: <code>ID</code>, then any columns you like. Each row below is a card.</p></li>
+        <li class="reveal"><h3 data-i18n="homeHow2Title">Share it</h3><p data-i18n="homeHow2">In Google Sheets: <b>Share → Anyone with the link → Viewer</b>, then copy the link.</p></li>
+        <li class="reveal"><h3 data-i18n="homeHow3Title">Connect it</h3><p data-i18n="homeHow3">In Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> and paste the link. After that, <b>Ctrl+Shift+S</b> brings in whatever changed.</p></li>
+      </ol>
+    </div>
+
+    <aside class="install reveal" id="install" aria-labelledby="install-title">
+      <h2 id="install-title" data-i18n="homeInstall">Install</h2>
+      <ol>
+        <li data-i18n="homeInstall1">Download <code>sheetcards.ankiaddon</code>.</li>
+        <li data-i18n="homeInstall2">In Anki, open <b>Tools → Add-ons</b>, press <b>Install from file…</b> and pick that file.</li>
+        <li data-i18n="homeInstall3">Restart Anki. A <b>SheetCards</b> menu appears under <b>Tools</b>.</li>
+      </ol>
+      <a class="btn" href="https://github.com/tannc28/sheetcards/releases/latest/download/sheetcards.ankiaddon"><img
+         class="anki-mark" src="./anki.png" alt="" width="16" height="16"><span
+         data-i18n="homeDownload">Download</span><span class="ext" translate="no">.ankiaddon</span></a>
+      <p class="fine" data-i18n="homeNeeds">Free and open source · Anki 25.x or later on a computer</p>
+    </aside>
+  </section>
+
+</main>
+
+<footer class="sitefoot">
+  <ul class="footlinks">
+    <li><a href="./preview.html" data-i18n="navPreview">Preview</a><p data-i18n="homePreviewText">Paste a sheet link and see its decks and cards, with nothing installed.</p></li>
+    <li><a href="./editor.html" data-i18n="navEditor">Editor</a><p data-i18n="homeEditorText">Write a settings row and watch the card change as you type.</p></li>
+    <li><a href="./docs/" data-i18n="navDocs">Docs</a><p data-i18n="homeDocsText">Columns, settings, sound, pictures and syncing, explained.</p></li>
+    <li><a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a><p
+        data-i18n="homeGithubText">Source code, releases and bug reports.</p></li>
+  </ul>
+  <p class="fine" data-i18n="homeFootNote">MIT licence. SheetCards is not made by or affiliated with Anki or Ankitects.</p>
+</footer>
+
+<script type="module" src="./home.js"></script>
+</body>
+</html>

@@ -20,10 +20,149 @@ const STRINGS = {
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
   close: { en: "Close", vi: "Đóng" },
 
+  // --- the site's own navigation, on every page ---------------------------
+  navLabel: { en: "Site", vi: "Các trang" },
+  navHome: { en: "Home", vi: "Trang chủ" },
+  navPreview: { en: "Preview", vi: "Xem trước" },
+  navEditor: { en: "Editor", vi: "Trình soạn" },
+  navDocs: { en: "Docs", vi: "Tài liệu" },
+  docsTag: { en: "docs", vi: "tài liệu" },
+  skipMain: { en: "Skip to the content", vi: "Tới nội dung chính" },
+
+  // --- the landing page ---------------------------------------------------
+  // Written for somebody who has never used an add-on: what it does, the one
+  // file to download, the three steps that get it into Anki, and nothing else.
+  homeEyebrow: { en: "An add-on for Anki", vi: "Add-on cho Anki" },
+  homeTitle: {
+    en: "Your spreadsheet is your deck.",
+    vi: "Sheet của bạn chính là bộ thẻ.",
+  },
+  homeLead: {
+    en:
+      "Write flashcards in Google Sheets, one row each. SheetCards brings them " +
+      "into Anki and keeps them in step whenever the sheet changes.",
+    vi:
+      "Soạn flashcard trên Google Sheets, mỗi dòng một thẻ. SheetCards đưa chúng " +
+      "vào Anki và cập nhật theo mỗi khi sheet thay đổi.",
+  },
+  homeDownload: { en: "Download", vi: "Tải về" },
+  homeTry: { en: "Try the preview", vi: "Xem thử trên web" },
+  homeNeeds: {
+    en: "Free and open source · Anki 25.x or later on a computer",
+    vi: "Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
+  },
+
+  // The demo: a row of the example workbook and the card it becomes.
+  demoLabel: {
+    en: "Example: a row of a sheet and the Anki card it becomes",
+    vi: "Ví dụ: một dòng trong sheet và thẻ Anki tạo ra từ nó",
+  },
+  demoEnglish: { en: "English + sakura", vi: "Tiếng Anh + sakura" },
+  demoJapanese: { en: "Furigana", vi: "Furigana" },
+  demoCloze: { en: "Cloze", vi: "Điền chỗ trống" },
+  demoFront: { en: "Card front", vi: "Mặt trước thẻ" },
+  demoBack: { en: "Card back", vi: "Mặt sau thẻ" },
+  demoPause: { en: "Pause the example", vi: "Tạm dừng ví dụ" },
+  demoPlay: { en: "Play the example", vi: "Chạy ví dụ" },
+  // Anki's own words on its review screen, as Anki itself translates them.
+  showAnswer: { en: "Show answer", vi: "Xem đáp án" },
+  ankiAgain: { en: "Again", vi: "Lại" },
+  ankiHard: { en: "Hard", vi: "Khó" },
+  ankiGood: { en: "Good", vi: "Được" },
+  ankiEasy: { en: "Easy", vi: "Dễ" },
+
+  featTitle: { en: "What it does", vi: "Add-on làm được gì" },
+  featColumnsTitle: { en: "Your columns, any language", vi: "Cột của bạn, tiếng gì cũng được" },
+  featColumns: {
+    en: "Name columns <code>Word</code>, <code>Nghĩa</code> or <code>汉字</code>. Each one becomes a field in Anki.",
+    vi: "Đặt tên cột là <code>Word</code>, <code>Nghĩa</code> hay <code>汉字</code>. Mỗi cột thành một field trong Anki.",
+  },
+  featSettingsTitle: { en: "One row of settings", vi: "Một dòng cài đặt" },
+  featSettings: {
+    en: "Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No template editing.",
+    vi: "Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.",
+  },
+  featSpeechTitle: { en: "Read aloud", vi: "Đọc thành tiếng" },
+  featSpeech: {
+    en: "Add <code>tts=en_US</code> and Anki speaks the column with the voices on your device.",
+    vi: "Thêm <code>tts=en_US</code> là Anki đọc cột đó bằng giọng có sẵn trên máy.",
+  },
+  featTypeTitle: { en: "Type the answer", vi: "Gõ đáp án" },
+  featType: {
+    en: "<code>type=nc</code> puts a box on the card and checks your spelling — tone marks optional.",
+    vi: "<code>type=nc</code> đặt một ô nhập trên thẻ và kiểm tra chính tả — không cần gõ dấu.",
+  },
+  featDrawTitle: { en: "Cloze and handwriting", vi: "Điền chỗ trống và viết tay" },
+  featDraw: {
+    en: "Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.",
+    vi: "Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.",
+  },
+  featPreviewTitle: { en: "See it before you sync", vi: "Xem trước khi đồng bộ" },
+  featPreview: {
+    en: "The preview runs the add-on's own code in your browser, and can hand you an <code>.apkg</code> for your phone.",
+    vi: "Trang xem trước chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.",
+  },
+
+  homeHow: { en: "How it works", vi: "Cách hoạt động" },
+  homeHow1Title: { en: "Make a sheet", vi: "Tạo sheet" },
+  homeHow1: {
+    en:
+      "Row 1 holds the column names: <code>ID</code>, then any columns you like. " +
+      "Each row below is a card.",
+    vi:
+      "Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. " +
+      "Mỗi dòng bên dưới là một thẻ.",
+  },
+  homeHow2Title: { en: "Share it", vi: "Chia sẻ" },
+  homeHow2: {
+    en: "In Google Sheets: <b>Share → Anyone with the link → Viewer</b>, then copy the link.",
+    vi: "Trong Google Sheets: <b>Share → Anyone with the link → Viewer</b>, rồi copy link.",
+  },
+  homeHow3Title: { en: "Connect it", vi: "Kết nối" },
+  homeHow3: {
+    en:
+      "In Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> and paste the " +
+      "link. After that, <b>Ctrl+Shift+S</b> brings in whatever changed.",
+    vi:
+      "Trong Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán " +
+      "link. Từ đó về sau, <b>Ctrl+Shift+S</b> cập nhật những gì đã thay đổi.",
+  },
+  homeInstall: { en: "Install", vi: "Cài đặt" },
+  homeInstall1: {
+    en: "Download <code>sheetcards.ankiaddon</code>.",
+    vi: "Tải file <code>sheetcards.ankiaddon</code>.",
+  },
+  homeInstall2: {
+    en: "In Anki, open <b>Tools → Add-ons</b>, press <b>Install from file…</b> and pick that file.",
+    vi: "Trong Anki, mở <b>Tools → Add-ons</b>, bấm <b>Install from file…</b> rồi chọn file vừa tải.",
+  },
+  homeInstall3: {
+    en: "Restart Anki. A <b>SheetCards</b> menu appears under <b>Tools</b>.",
+    vi: "Khởi động lại Anki. Menu <b>SheetCards</b> sẽ xuất hiện trong <b>Tools</b>.",
+  },
+  homePreviewText: {
+    en: "Paste a sheet link and see its decks and cards, with nothing installed.",
+    vi: "Dán link sheet để xem deck và thẻ, không cần cài gì.",
+  },
+  homeEditorText: {
+    en: "Write a settings row and watch the card change as you type.",
+    vi: "Soạn settings row và xem thẻ thay đổi ngay khi gõ.",
+  },
+  homeDocsText: {
+    en: "Columns, settings, sound, pictures and syncing, explained.",
+    vi: "Cột, cài đặt, âm thanh, hình ảnh và đồng bộ (tiếng Anh; phần Bắt đầu có bản tiếng Việt).",
+  },
+  homeGithubText: {
+    en: "Source code, releases and bug reports.",
+    vi: "Mã nguồn, các bản phát hành và báo lỗi.",
+  },
+  homeFootNote: {
+    en: "MIT licence. SheetCards is not made by or affiliated with Anki or Ankitects.",
+    vi: "Giấy phép MIT. SheetCards không do Anki hay Ankitects làm ra và không liên kết với họ.",
+  },
+
   // --- the editor ---------------------------------------------------------
   guideTag: { en: "editor", vi: "trình soạn" },
-  backToPreview: { en: "Preview a sheet", vi: "Xem trước sheet" },
-  toGuide: { en: "Editor", vi: "Editor" },
   edPanelSheet: { en: "Sheet", vi: "Sheet" },
   edName: { en: "Column name", vi: "Tên cột" },
   edValue: { en: "What a cell holds", vi: "Nội dung một ô" },
@@ -434,7 +573,7 @@ const STRINGS = {
   downloadApkg: { en: "Download for Anki", vi: "Tải về cho Anki" },
   // The caveats used to be a four-sentence paragraph under the button, which is a
   // lot of reading to sit permanently under a control most people press once.
-  // README.md carries the long version.
+  // The docs page on sheets and files carries the long version.
   apkgTitle: {
     en:
       "Import straight into AnkiDroid or AnkiMobile. Importing again updates these " +

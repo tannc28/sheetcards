@@ -59,6 +59,9 @@ dev = [
     # mock cannot tell a valid .apkg from a broken one, and tests/conftest.py's
     # import hook still shadows it for every other module.
     "anki>=25.0",
+    # Build-only: scripts/build_site.py turns docs/site/*.md into the website's
+    # documentation pages. The add-on never imports it.
+    "markdown>=3.5",
 ]
 test = [
     "pytest>=8.0.0",
@@ -72,7 +75,7 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/tannc28/sheetcards"
-Documentation = "https://github.com/tannc28/sheetcards/blob/main/README.md"
+Documentation = "https://tannc28.github.io/sheetcards/docs/"
 Repository = "https://github.com/tannc28/sheetcards.git"
 "Bug Tracker" = "https://github.com/tannc28/sheetcards/issues"
 Changelog = "https://github.com/tannc28/sheetcards/blob/main/docs/CHANGELOG.md"
