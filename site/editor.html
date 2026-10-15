@@ -6,10 +6,14 @@
 <meta name="theme-color" content="#ffffff">
 <title>SheetCards — build a settings row</title>
 <meta name="description" content="Write one column's settings row and watch the card change, using the add-on's own code. Copy the cell when it looks right.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
     var t = localStorage.getItem("sc-theme");
-    if (t === "dark") document.documentElement.dataset.theme = "dark";
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#171c24";
+    }
   } catch (e) {}
 </script>
 <link rel="stylesheet" href="./style.css">
@@ -22,7 +26,7 @@
   </div>
 
   <button id="theme" class="themebtn" type="button"></button>
-  <nav id="langs" class="langs" aria-label="Language"></nav>
+  <nav id="langs" class="langs" aria-label="Language" data-i18n-attr="aria-label:langLabel"></nav>
   <a class="ghost" href="./" data-i18n="backToPreview">Preview a sheet</a>
 </header>
 
@@ -37,6 +41,17 @@
     </span></h2>
 
     <div class="panel-body ed-form">
+      <!-- Said once to somebody who has never heard of a settings row, then put
+           away for good: on a second visit it is a sentence between them and the
+           sheet. -->
+      <p id="intro" class="intro" hidden>
+        <span data-i18n="edIntro"></span>
+        <a href="https://github.com/tannc28/sheetcards#the-settings-row" rel="noopener"
+           data-i18n="edIntroMore">Read more</a>
+        <button id="intro-close" class="intro-close" type="button"
+                data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+      </p>
+
       <!-- Above the sheet, not beside the card: a warning is about what was just
            typed into row 2, and it is the sheet that has to change to clear it. -->
       <div id="warn" class="warnbar" hidden>
@@ -53,17 +68,24 @@
       <p class="sheettools">
         <span class="hint" data-i18n="edPasteHint">Drag to select cells, then copy — or paste rows from a spreadsheet</span>
         <button id="add" class="tool" type="button"
-                data-i18n-attr="title:edAddColumn,aria-label:edAddColumn">+</button>
-        <button id="copy" class="tool" type="button"
-                data-i18n-attr="title:edCopy,aria-label:edCopy">⧉</button>
+                data-i18n-attr="title:edAddColumn,aria-label:edAddColumn"><span data-icon="plus"></span></button>
         <button id="export" class="tool" type="button"
-                data-i18n-attr="title:edExport,aria-label:edExport">↓</button>
+                data-i18n-attr="title:edExport,aria-label:edExport"><span data-icon="file-down"></span></button>
       </p>
 
       <div class="sheetwrap">
         <div class="sheet" id="sheet" role="group"
              data-i18n-attr="aria-label:edSheet"></div>
       </div>
+
+      <!-- The one thing this page is for, so it is a labelled button with the step
+           after it written beside it — an icon in the grid's corner was the most
+           important control on the page and the least findable. -->
+      <p class="copyline">
+        <button id="copy" class="btn" type="button"><span data-icon="copy"></span><span
+                id="copy-label">Copy rows 1–2</span></button>
+        <span class="muted small" data-i18n="edCopyNext">Then paste into cell A1 of your sheet.</span>
+      </p>
 
       <p class="entry-alt">
         <span id="status" class="status" role="status" aria-live="polite">

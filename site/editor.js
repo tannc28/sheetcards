@@ -16,6 +16,7 @@ import { renderCard, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
+import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
 
 /** Everything the editor needs, computed by the add-on's own code. */
@@ -320,7 +321,7 @@ function setTheme(on) {
   }
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", on ? "#0f1216" : "#ffffff");
+    ?.setAttribute("content", on ? "#171c24" : "#ffffff");
   paintChrome();
   draw();
 }
@@ -407,14 +408,20 @@ function paintChrome() {
     }
   }
   const button = $("#theme");
-  button.textContent = dark() ? "☀" : "☾";
+  button.innerHTML = icon(dark() ? "sun" : "moon");
   button.title = button.ariaLabel = t(dark() ? "toLight" : "toDark");
 
-  $("#langs").innerHTML = LANGUAGES.map(
+  $("#langs").innerHTML = `<span class="langs-icon">${icon("languages")}</span>` + LANGUAGES.map(
     (l) =>
       `<button data-lang="${l.code}" class="${lang() === l.code ? "on" : ""}"` +
       ` aria-pressed="${lang() === l.code}">${l.label}</button>`,
   ).join("");
+  paintCopy();
+}
+
+/** The copy button says what it will copy: the selection, or rows 1 and 2. */
+function paintCopy() {
+  $("#copy-label").textContent = t(state.sel ? "edCopySel" : "edCopy");
 }
 
 /** The letters a spreadsheet puts across the top: A, B, … Z, AA. */
@@ -637,6 +644,7 @@ function paintSelection() {
   } else {
     FILL_HANDLE.remove();
   }
+  paintCopy();
 }
 
 const FILL_HANDLE = Object.assign(document.createElement("span"), {
@@ -706,7 +714,9 @@ function paintKeys() {
       (key) =>
         `<button class="col${on.has(key) ? " on" : ""}` +
         `${state.open === key ? " open" : ""}" data-key="${escapeHtml(key)}"` +
-        ` aria-pressed="${on.has(key)}">${escapeHtml(key)}</button>`,
+        ` aria-pressed="${on.has(key)}"` +
+        `${hasPanel(key) ? ` aria-expanded="${state.open === key}" aria-controls="opts"` : ""}` +
+        `>${escapeHtml(key)}</button>`,
     )
     .join("");
   $("#keyfor").textContent = deckActive()
@@ -805,11 +815,15 @@ function drawCard() {
   out.names.forEach((name, i) => (values[name] = state.columns[i].value));
   const { front, back } = renderCard(template, values, { ordinal: 1 });
 
-  $("#tabs").innerHTML = CARD_TABS.map(
+  // In a .tabset, as on the preview page: loose in the bar, the four buttons were
+  // spread across the whole width by its space-between and read as four controls
+  // rather than one.
+  $("#tabs").innerHTML = `<span class="tabset">${CARD_TABS.map(
     (name) =>
-      `<button data-tab="${name}" class="${state.tab === name ? "on" : ""}">` +
+      `<button type="button" data-tab="${name}" class="${state.tab === name ? "on" : ""}"` +
+      ` aria-pressed="${state.tab === name}">` +
       `${escapeHtml(t("tab" + name[0].toUpperCase() + name.slice(1)))}</button>`,
-  ).join("");
+  ).join("")}</span>`;
 
   const picker =
     out.templates.length > 1
@@ -840,7 +854,7 @@ function drawCard() {
   const doc = cardDoc({ front, back, tab: state.tab, dark: dark() });
 
   $("#view").innerHTML = `<div class="stagebox">${picker}
-    ${cardFrame(doc)}
+    ${cardFrame(doc, t("cardFrameTitle"))}
     <p class="muted small">${escapeHtml(
       t("edSides", out.front.length, out.back.length),
     )}</p>
@@ -1126,6 +1140,9 @@ document.addEventListener("click", (e) => {
     setLang(picker.dataset.lang);
     paintChrome();
     paintSheet();
+    // Still loading, the status line is the only sentence on the page that is
+    // not repainted by draw(), which waits for Python.
+    if (!run) bootStatus();
     return draw();
   }
 
@@ -1655,13 +1672,50 @@ addEventListener("message", (e) => {
   if (frame && height > 0) frame.style.height = `${Math.ceil(height)}px`;
 });
 
+// ---- the first-run sentence --------------------------------------------------
+
+const INTRO_KEY = "sc-editor-intro";
+try {
+  $("#intro").hidden = localStorage.getItem(INTRO_KEY) === "seen";
+} catch {
+  $("#intro").hidden = false;
+}
+$("#intro-close").addEventListener("click", () => {
+  $("#intro").hidden = true;
+  try {
+    localStorage.setItem(INTRO_KEY, "seen");
+  } catch {
+    // Without storage it comes back next visit, which is the lesser problem.
+  }
+});
+
+paintIcons();
 paintChrome();
 paintSheet();
-status(t("booting"), "", true);
-startPython(EDITOR, (step) =>
-  status(t(step === "boot" ? "booting" : "loadingCode"), "", true),
-)
+
+// The same words as the preview page for the same wait, including the line that
+// owns up to a slow network once ten seconds have gone by.
+let bootStep = "boot";
+let bootSlow = false;
+const bootStatus = () =>
+  status(
+    [t(bootStep === "boot" ? "booting" : "loadingCode"), bootSlow && t("slowBoot")]
+      .filter(Boolean)
+      .join("\n"),
+    "",
+    true,
+  );
+bootStatus();
+const slowTimer = setTimeout(() => {
+  bootSlow = true;
+  if (!run) bootStatus();
+}, 10_000);
+startPython(EDITOR, (step) => {
+  bootStep = step;
+  bootStatus();
+})
   .then((py) => {
+    clearTimeout(slowTimer);
     keys = JSON.parse(py.globals.get("keys")());
     const fn = py.globals.get("preview");
     run = (payload) => JSON.parse(fn(payload));

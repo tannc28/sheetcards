@@ -131,8 +131,10 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
  * and a preview that quietly filtered them would be reporting on a card nobody is
  * going to see.
  */
-export function cardFrame(doc) {
-  return `<iframe id="card" title="Card preview"
+export function cardFrame(doc, title = "Card preview") {
+  // The title is what a screen reader announces for the frame, so the page hands
+  // it over in the reader's language; this module has no strings of its own.
+  return `<iframe id="card" title="${escapeHtml(title)}"
     sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
     allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
     srcdoc="${escapeHtml(doc)}"></iframe>`;

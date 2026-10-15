@@ -14,6 +14,7 @@ import { LANGUAGES, lang, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
+import { icon, paintIcons } from "./icons.js";
 
 // A filled-in report is a better landing page than an empty form: a first-time
 // visitor sees what the tool actually answers instead of having to supply a sheet
@@ -234,6 +235,8 @@ function setPanel(name, open) {
   const el = document.getElementById(PANEL_ID[name]);
   el.dataset.open = String(open);
   el.querySelector(".panel-toggle").setAttribute("aria-expanded", String(open));
+  // Open, panel 1 shows its own status line again; the echo of it goes away.
+  if (name === "source" && open) $("#toast").hidden = true;
 }
 
 /**
@@ -276,15 +279,70 @@ let upload = null;
  * @param {boolean} busy  spin while something is genuinely running, so a still
  *   page reads as finished rather than as hung
  */
+let toastTimer = 0;
+
 function status(text, kind = "", busy = false) {
   $("#status-text").textContent = text;
   $("#status").className = `status ${kind} ${busy ? "busy" : ""}`;
+
+  // Stacked, the status line lives in panel 1, which folds itself the moment a
+  // sheet loads — so a reload, a download or a failure said nothing anybody could
+  // see. Echoed in a toast only while that panel is shut: the line inside it is
+  // then not displayed, and so not announced either, which keeps one voice.
+  const toast = $("#toast");
+  clearTimeout(toastTimer);
+  const show = Boolean(text) && narrow() && !state.panels.source;
+  toast.hidden = !show;
+  if (!show) return;
+  toast.textContent = text;
+  toast.className = `toast ${kind}`;
+  if (!busy) toastTimer = setTimeout(() => (toast.hidden = true), 4000);
+}
+
+// ---- the first load --------------------------------------------------------
+//
+// The previewer is the add-on's own Python, and on a first visit that is about
+// 5 MB from a CDN. The wait is said in a learner's words, with its size and the
+// fact that it happens once; after ten seconds it says the network is slow,
+// because a spinner that has turned for that long reads as broken. Preview is
+// never disabled for it: a link pasted while it loads is taken, said so, and run
+// the moment Python is ready.
+const booting = { step: "boot", slow: false, queued: false, done: false };
+let pending = null;
+
+function bootStatus() {
+  if (booting.done) return;
+  status(
+    [
+      booting.queued && t("queued"),
+      t(booting.step === "boot" ? "booting" : "loadingCode"),
+      booting.slow && t("slowBoot"),
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    "",
+    true,
+  );
+}
+
+/** Runs `job` now, or once Python has loaded if it has not yet. */
+function whenReady(job) {
+  if (booting.done) return job();
+  pending = job;
+  booting.queued = true;
+  bootStatus();
 }
 
 async function boot() {
-  const py = await startPython(ANALYZER, (step) =>
-    status(t(step === "boot" ? "booting" : "loadingCode"), "", true),
-  );
+  const slow = setTimeout(() => {
+    booting.slow = true;
+    bootStatus();
+  }, 10_000);
+  const py = await startPython(ANALYZER, (step) => {
+    booting.step = step;
+    bootStatus();
+  });
+  clearTimeout(slow);
 
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
@@ -294,8 +352,7 @@ async function boot() {
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
   sheetNames = (bytes) => wb.sheet_names(bytes).toJs();
-  $("#go").disabled = false;
-  $("#pick").disabled = false;
+  booting.done = true;
 }
 
 /**
@@ -432,8 +489,31 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   );
 }
 
-function failed(message) {
-  status(message, "bad");
+/**
+ * Puts a problem with the link under the link, or takes it away.
+ *
+ * The GOV.UK error-message pattern: the sentence sits beside the field it is
+ * about, the field says it is invalid and points at the sentence, and the cursor
+ * goes there — because the field is the thing that has to change.
+ */
+function fieldError(message) {
+  const input = $("#url");
+  $("#url-error").hidden = !message;
+  $("#url-error-text").textContent = message || "";
+  if (message) {
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "url-error");
+  } else {
+    input.removeAttribute("aria-invalid");
+    input.removeAttribute("aria-describedby");
+  }
+}
+
+function failed(message, { field = false } = {}) {
+  // Said once, in the place it belongs: a problem with the link is said at the
+  // link, anything else on the status line.
+  status(field ? "" : message, "bad");
+  fieldError(field ? message : "");
   document.body.classList.remove("ready");
   $("#p-deck").hidden = true;
   $("#p-card").hidden = true;
@@ -445,6 +525,28 @@ function failed(message) {
   // Back open: something has to be corrected, and the field that needs
   // correcting is the one a folded panel hides.
   setPanel("source", true);
+  if (field) $("#url").focus();
+}
+
+/**
+ * What went wrong fetching a link, said as what to do about it.
+ *
+ * Only a Google link is told about sharing — a file on GitHub has no Share
+ * button — and only a Google link is said to be a Google one. A private sheet
+ * answers its export with a redirect to a sign-in page, which the browser
+ * refuses to hand over cross-origin, so for Google a failed fetch while online
+ * is almost always the sharing setting.
+ */
+function fetchProblem({ google, code = null, html = false }) {
+  if (code === null && !html) {
+    if (navigator.onLine === false) return t("offline");
+    return t(google ? "notShared" : "fileUnreachable");
+  }
+  if (html) return t(google ? "notShared" : "notAFile");
+  if (code === 404 || code === 410) return t("notFound", google);
+  if (google && (code === 400 || code === 401 || code === 403)) return t("notShared");
+  if (code === 401 || code === 403) return t("fileRefused");
+  return t("httpError", code);
 }
 
 /**
@@ -473,32 +575,39 @@ async function preview({ again = false } = {}) {
   const at = again ? (upload?.index ?? 0) : null;
 
   $("#go").disabled = true;
+  fieldError("");
+  let bytes, res;
   try {
     const workbookUrl = toWorkbookUrl(input);
+    const google = Boolean(spreadsheetId(input));
     status(t(again ? "reloading" : "downloading"), "", true);
 
-    let res;
     try {
       // Never the browser's copy. The whole question this page answers is what
       // the sheet says *now*, and a cached answer to that is a wrong answer —
       // which on a reload is also the only thing the reader asked for.
       res = await fetch(workbookUrl, { cache: "reload" });
     } catch {
-      throw new Error(t("unreachable"));
+      throw new Error(fetchProblem({ google }));
     }
-    if (!res.ok) {
-      throw new Error(
-        res.status === 400 || res.status === 401 || res.status === 403
-          ? t("refused")
-          : t("httpError", res.status),
-      );
+    if (!res.ok) throw new Error(fetchProblem({ google, code: res.status }));
+    bytes = new Uint8Array(await res.arrayBuffer());
+    // An .xlsx is a ZIP and starts "PK". Anything else that came back with a 200
+    // — a sign-in page, a file host's download page — is not the file.
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
+      throw new Error(fetchProblem({ google, html: true }));
     }
+  } catch (err) {
+    $("#go").disabled = false;
+    return failed(err.message, { field: true });
+  }
 
+  try {
     // From here a link and a dropped file are the same thing: a spreadsheet file
     // with sheets in it. The sheet picker, the deck name and the package all come
     // out of the one path, so the page cannot treat them differently.
     upload = {
-      bytes: new Uint8Array(await res.arrayBuffer()),
+      bytes,
       name: `${deckNameFromHeaders(res) || fileNameFromUrl(input) || "Deck"}.xlsx`,
       // The key the add-on stores this deck under, so a package downloaded here
       // and a sync from the add-on agree about which notes are which.
@@ -618,7 +727,8 @@ function showUpload(index, { keepRow = false } = {}) {
     );
     noteSource(base);
   } catch (err) {
-    failed(err.message);
+    // The add-on's own sentence, not the twenty lines of traceback above it.
+    failed(pythonMessage(err));
   } finally {
     $("#pick").disabled = false;
   }
@@ -649,6 +759,8 @@ async function previewFile(file) {
   history.replaceState(null, "", url);
   $("#demo-note").hidden = true;
   $("#url").value = "";
+  // The link it complained about is gone, so the complaint goes with it.
+  fieldError("");
 
   showUpload(0);
 }
@@ -665,7 +777,9 @@ function deckPanel(a) {
 
   return `<ul class="tree">
     <li><button data-deck="" style="--depth:0"
-        class="${state.deckFilter === null ? "on" : ""}">
+        class="${state.deckFilter === null ? "on" : ""}"${
+          state.deckFilter === null ? ' aria-current="true"' : ""
+        }>
       <span class="name">${escapeHtml(t("allDecks"))}</span><span class="count">${tree.count}</span>
     </button></li>
     ${treeHtml(tree, {
@@ -701,6 +815,10 @@ function rowLabel(row, front) {
   return values.find((v) => !BARE_URL.test(v)) || values[0] || row.id || "—";
 }
 
+/** A row's fate in words — the legend's own, so the list and its key agree. */
+const KIND_LABEL = { synced: "legendSynced", skipped: "legendSkipped", invalid: "legendInvalid" };
+const kindLabel = (kind) => t(KIND_LABEL[kind] || "legendSynced");
+
 function rowList() {
   const visible = visibleRows();
   if (!visible.length) return `<p class="empty">${escapeHtml(t("noRowsHere"))}</p>`;
@@ -708,10 +826,15 @@ function rowList() {
   const front = state.analysis.sides.front;
   return visible
     .map(
+      // The dot's colour is backed by its shape (filled, hollow, diamond) for
+      // whoever cannot tell green from red, and by words for a screen reader.
       ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
-        data-row="${i}" title="row ${r.line} — ${escapeHtml(r.kind)}">
+        data-row="${i}" title="${escapeHtml(t("rowTitle", r.line, kindLabel(r.kind)))}"${
+          i === state.row ? ' aria-current="true"' : ""
+        }>
         <span class="n">${r.line}</span>
-        <span class="dot ${r.kind}"></span>
+        <span class="dot ${r.kind}" aria-hidden="true"></span>
+        <span class="sr-only">${escapeHtml(kindLabel(r.kind))}:</span>
         <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
         ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
       </button>`,
@@ -832,22 +955,22 @@ function cardView(a) {
         ? `<div class="cardbar">
             ${
               templates.length > 1
-                ? `<select id="tpl" aria-label="Card template">${templates
+                ? `<select id="tpl" aria-label="${escapeHtml(t("edTemplate"))}">${templates
                     .map((t, i) => `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
                     .join("")}</select>`
                 : ""
             }
             ${
               ordinals.length > 1
-                ? `<select id="ord" aria-label="Cloze card">${ordinals
-                    .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>card c${n}</option>`)
+                ? `<select id="ord" aria-label="${escapeHtml(t("clozeCard"))}">${ordinals
+                    .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>${escapeHtml(t("clozeCardN", n))}</option>`)
                     .join("")}</select>`
                 : ""
             }
           </div>`
         : ""
     }
-    ${cardFrame(doc)}
+    ${cardFrame(doc, t("cardFrameTitle"))}
     ${
       row.kind !== "synced"
         ? `<p class="note ${row.kind}">${escapeHtml(
@@ -908,15 +1031,16 @@ function tabBar() {
   return `
     <span class="tabset">${CARD_TABS.map(
       (name) =>
-        `<button data-tab="${name}" class="${state.tab === name ? "on" : ""}">` +
+        `<button type="button" data-tab="${name}" class="${state.tab === name ? "on" : ""}"` +
+        ` aria-pressed="${state.tab === name}">` +
         `${escapeHtml(t("tab" + name[0].toUpperCase() + name.slice(1)))}</button>`,
     ).join("")}</span>
     <span class="nav">
       <button data-step="-1" type="button" aria-label="${escapeHtml(t("prevRow"))}"
-              title="${escapeHtml(t("prevRow"))}">←</button>
+              title="${escapeHtml(t("prevRow"))}">${icon("arrow-left")}</button>
       <span class="at">${at + 1} / ${visible.length}</span>
       <button id="next" type="button" aria-label="${escapeHtml(t("nextRow"))}"
-              title="${escapeHtml(t("nextRow"))}">→</button>
+              title="${escapeHtml(t("nextRow"))}">${icon("arrow-right")}</button>
     </span>`;
 }
 
@@ -964,7 +1088,7 @@ function setTheme(on) {
   }
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", on ? "#0f1216" : "#ffffff");
+    ?.setAttribute("content", on ? "#171c24" : "#ffffff");
   paintTheme();
   // The card is a separate document that was handed the old palette.
   if (state.analysis) render();
@@ -972,7 +1096,8 @@ function setTheme(on) {
 
 function paintTheme() {
   const button = $("#theme");
-  button.textContent = dark() ? "☀" : "☾";
+  // What pressing it gives you: a sun on the dark page, a moon on the light one.
+  button.innerHTML = icon(dark() ? "sun" : "moon");
   button.title = button.ariaLabel = t(dark() ? "toLight" : "toDark");
 }
 
@@ -997,7 +1122,8 @@ function paintStatic() {
     escapeHtml(t("legendGhost"));
 
   paintTheme();
-  $("#langs").innerHTML = LANGUAGES.map(
+  // The glyph says "language" to somebody who reads neither EN nor VI as a word.
+  $("#langs").innerHTML = `<span class="langs-icon">${icon("languages")}</span>` + LANGUAGES.map(
     (l) =>
       `<button data-lang="${l.code}" class="${lang() === l.code ? "on" : ""}"` +
       ` aria-pressed="${lang() === l.code}">${l.label}</button>`,
@@ -1027,7 +1153,7 @@ function render() {
     $("#celllist").innerHTML = rowCells(a);
     for (const el of document.querySelectorAll(".stepper")) {
       const back = el.dataset.step === "-1";
-      el.textContent = back ? "←" : "→";
+      el.innerHTML = icon(back ? "arrow-left" : "arrow-right");
       el.title = el.ariaLabel = t(back ? "prevRow" : "nextRow");
     }
   }
@@ -1205,7 +1331,9 @@ function sheetGrid(a) {
         .join("");
       const row = at === undefined ? "" : ` data-row="${at}"`;
       return `<tr class="${cls}"${row}>
-        <th class="rowh" scope="row">${line}</th>${cellsHtml}</tr>`;
+        <th class="rowh" scope="row"${
+          kind ? ` title="${escapeHtml(kindLabel(kind))}"` : ""
+        }>${kind ? `<span class="dot ${kind}" aria-hidden="true"></span>` : ""}${line}</th>${cellsHtml}</tr>`;
     })
     .join("");
 
@@ -1398,15 +1526,36 @@ document.addEventListener("click", (e) => {
   // Everything on screen is produced by a render function, so switching
   // languages is a repaint rather than a reload — the sheet stays loaded.
   if (state.analysis) render();
-  else paintStatic();
+  else {
+    paintStatic();
+    bootStatus();
+  }
 });
 
 // A real form, so Enter submits from either field the way it does everywhere else
 // and the browser supplies the keyboard's "go" key on a phone.
 $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  preview();
+  whenReady(() => preview());
 });
+
+// The field opens holding the example's long address, and the first thing anyone
+// does with it is replace it. Selected whole on focus, so typing or pasting
+// replaces it instead of landing somewhere in the middle of a GitHub URL. The
+// mouseup that follows a click would collapse the selection to a caret, so that
+// one is swallowed.
+let keepSelection = false;
+$("#url").addEventListener("focus", (e) => {
+  if (e.target.value !== DEMO_SHEET) return;
+  e.target.select();
+  keepSelection = true;
+});
+$("#url").addEventListener("mouseup", (e) => {
+  if (keepSelection) e.preventDefault();
+  keepSelection = false;
+});
+// A changed link is a new question; the old complaint is about the last one.
+$("#url").addEventListener("input", () => fieldError(""));
 
 $("#reload").addEventListener("click", reload);
 
@@ -1429,7 +1578,7 @@ $("#file").addEventListener("change", (e) => {
   // Cleared so that choosing the same file twice fires a change event again —
   // the obvious thing to do after editing it and wanting the new version.
   e.target.value = "";
-  if (file) previewFile(file);
+  if (file) whenReady(() => previewFile(file));
 });
 
 // ---- drag and drop --------------------------------------------------------
@@ -1456,7 +1605,7 @@ addEventListener("drop", (e) => {
   dragDepth = 0;
   $("#drop").hidden = true;
   const file = e.dataTransfer.files[0];
-  if (file && !$("#pick").disabled) previewFile(file);
+  if (file && !$("#pick").disabled) whenReady(() => previewFile(file));
 });
 
 document.addEventListener("click", (e) => {
@@ -1520,14 +1669,16 @@ addEventListener("message", (e) => {
   if (frame && e.data?.h) frame.style.height = `${e.data.h + 8}px`;
 });
 
+paintIcons();
 paintStatic();
 // Written into the DOM rather than left implicit, so `data-open` and
 // `aria-expanded` say the same thing from the first paint.
 for (const name of Object.keys(state.panels)) setPanel(name, state.panels[name]);
 applyWidth();
-status(t("loading"), "", true);
+bootStatus();
 $("#url").value = new URLSearchParams(location.search).get("url") || DEMO_SHEET;
 
+// Whatever was asked for while loading, or else the link the page opened with.
 boot()
-  .then(preview)
+  .then(() => (pending || preview)())
   .catch((err) => status(t("bootFailed", err.message), "bad"));

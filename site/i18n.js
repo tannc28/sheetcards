@@ -17,6 +17,8 @@ const STRINGS = {
   brandTag: { en: "preview", vi: "xem trước" },
   skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
+  langLabel: { en: "Language", vi: "Ngôn ngữ" },
+  close: { en: "Close", vi: "Đóng" },
 
   // --- the editor ---------------------------------------------------------
   guideTag: { en: "editor", vi: "trình soạn" },
@@ -147,10 +149,27 @@ const STRINGS = {
     vi: "Bảng màu cho cả thẻ, dùng được ở cả nền sáng và nền tối.",
   },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
-  edCopy: { en: "Copy rows 1 and 2", vi: "Copy dòng 1 và 2" },
+  edCopy: { en: "Copy rows 1–2", vi: "Copy dòng 1–2" },
+  edCopySel: { en: "Copy selected cells", vi: "Copy các ô đã chọn" },
+  // The step after copying, said beside the button: a settings row pasted anywhere
+  // but A1 is not row 2 of anything.
+  edCopyNext: {
+    en: "Then paste into cell A1 of your sheet.",
+    vi: "Rồi dán vào ô A1 của sheet.",
+  },
+  // Said once, to someone who has never heard of a settings row, and then put away.
+  edIntro: {
+    en:
+      "Row 2 of your sheet is the settings row: each cell says how the column " +
+      "above it looks on the card. Type in row 2 below and watch the card change.",
+    vi:
+      "Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên thẻ " +
+      "ra sao. Gõ vào dòng 2 bên dưới và xem thẻ đổi theo.",
+  },
+  edIntroMore: { en: "Read more", vi: "Đọc thêm" },
   edExport: { en: "Download as .csv", vi: "Tải về dạng .csv" },
   edExported: { en: "Downloaded — open it in Sheets or Excel", vi: "Đã tải về — mở bằng Sheets hoặc Excel" },
-  edCopied: { en: "Copied — paste it at the top of your sheet", vi: "Đã copy — dán vào đầu sheet của bạn" },
+  edCopied: { en: "Copied — paste it into cell A1 of your sheet", vi: "Đã copy — dán vào ô A1 của sheet" },
   edCopiedCells: { en: "Copied — paste it into your sheet", vi: "Đã copy — dán vào sheet của bạn" },
   edCopyFailed: { en: "The browser refused to copy", vi: "Trình duyệt không cho copy" },
   edOk: { en: "Every setting was understood", vi: "Mọi setting đều hợp lệ" },
@@ -199,7 +218,7 @@ const STRINGS = {
   },
   urlLabel: { en: "Sheet link", vi: "Link sheet" },
   go: { en: "Preview", vi: "Xem trước" },
-  pick: { en: "Upload a file", vi: "Tải file lên" },
+  pick: { en: "Upload a file", vi: "Tải lên một file" },
   pickLabel: {
     en: "Preview a file from this computer — .xlsx, .xlsm, .csv or .tsv",
     vi: "Xem trước file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
@@ -208,7 +227,7 @@ const STRINGS = {
     en: "or drop one anywhere on this page.",
     vi: "hoặc thả file vào bất kỳ đâu trên trang.",
   },
-  tabLabel: { en: "Sheet", vi: "Trang" },
+  tabLabel: { en: "Sheet", vi: "Sheet" },
   reloadLabel: {
     en: "Fetch this sheet again",
     vi: "Tải lại sheet này",
@@ -285,25 +304,32 @@ const STRINGS = {
   },
 
   // --- status -------------------------------------------------------------
-  booting: { en: "Starting Python…", vi: "Đang khởi động Python…" },
-  loadingCode: {
-    en: "Loading the add-on's code…",
-    vi: "Đang tải code của add-on…",
+  // The previewer is the add-on itself running in Python, which is a download of
+  // its own. Said in the words of somebody waiting for a page, with the two facts
+  // that make the wait bearable: how big, and that it happens once.
+  booting: {
+    en: "Loading the previewer (~5 MB, first time only)…",
+    vi: "Đang tải trình xem trước (~5 MB, chỉ lần đầu)…",
   },
-  downloading: { en: "Downloading the file…", vi: "Đang tải file…" },
+  loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
+  slowBoot: {
+    en: "The network seems slow — still loading, nothing is wrong.",
+    vi: "Mạng có vẻ chậm — vẫn đang tải, bạn cứ chờ nhé.",
+  },
+  queued: {
+    en: "Got it — the preview starts as soon as loading finishes.",
+    vi: "Đã nhận — sẽ xem trước ngay khi tải xong.",
+  },
+  downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet về…" },
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
-  analysing: {
-    en: "Running the add-on's code…",
-    vi: "Đang chạy code của add-on…",
-  },
-  loading: { en: "Loading…", vi: "Đang tải…" },
+  analysing: { en: "Building the cards…", vi: "Đang dựng thẻ…" },
   readRows: {
     en: (n, s) => `${n} rows · ${s} will sync`,
     vi: (n, s) => `${n} dòng · ${s} sẽ sync`,
   },
   bootFailed: {
-    en: (m) => `Could not start Python: ${m}`,
-    vi: (m) => `Không khởi động được Python: ${m}`,
+    en: (m) => `The previewer could not load (${m}). Reload the page to try again.`,
+    vi: (m) => `Không tải được trình xem trước (${m}). Tải lại trang để thử lại.`,
   },
 
   // --- errors -------------------------------------------------------------
@@ -319,25 +345,50 @@ const STRINGS = {
     en: (m) => `The browser could not read that file: ${m}`,
     vi: (m) => `Trình duyệt không đọc được file đó: ${m}`,
   },
-  unreachable: {
+  // Read out before the message by a screen reader, the way GOV.UK does it: the
+  // red is not something everybody can see.
+  errorPrefix: { en: "Error:", vi: "Lỗi:" },
+  // What went wrong, said as what to do next. Only a Google link is told about
+  // sharing, because only Google has a Share button to press.
+  notShared: {
     en:
-      "The browser could not reach the sheet. This is what the add-on sees " +
-      "when a sheet is private: Share → “Anyone with the link” → Viewer.",
+      "This sheet is not shared yet. In Google Sheets: Share → “Anyone with the " +
+      "link” → Viewer, then try again.",
     vi:
-      "Trình duyệt không đọc được sheet. Add-on cũng gặp đúng lỗi này khi sheet " +
-      "còn private: Share → “Anyone with the link” → Viewer.",
+      "Sheet chưa được chia sẻ. Trong Google Sheets: Share → “Anyone with the " +
+      "link” → Viewer, rồi thử lại.",
   },
-  refused: {
-    en:
-      "Google refused the download — the sheet is not shared. " +
-      "Share → “Anyone with the link” → Viewer, then try again.",
-    vi:
-      "Google từ chối tải — sheet chưa được share. " +
-      "Share → “Anyone with the link” → Viewer rồi thử lại.",
+  notFound: {
+    en: (sheet) =>
+      sheet
+        ? "Sheet not found. Check the link — copy it again from the address bar. " +
+          "If the link is right, the sheet may not be shared yet."
+        : "There is no file at that address. Check the link.",
+    vi: (sheet) =>
+      sheet
+        ? "Không tìm thấy sheet. Kiểm tra lại link — copy lại từ thanh địa chỉ. " +
+          "Nếu link đúng, có thể sheet chưa được chia sẻ."
+        : "Không có file nào ở địa chỉ này. Kiểm tra lại link.",
+  },
+  offline: {
+    en: "No internet connection. Check your connection and try again.",
+    vi: "Không có kết nối mạng. Kiểm tra mạng rồi thử lại.",
+  },
+  fileUnreachable: {
+    en: "Could not download a file from that link. Check the link and your connection.",
+    vi: "Không tải được file từ link này. Kiểm tra lại link và kết nối mạng.",
+  },
+  fileRefused: {
+    en: "That site refused the download. The link has to open without signing in.",
+    vi: "Trang web đó không cho tải file. Link phải mở được mà không cần đăng nhập.",
+  },
+  notAFile: {
+    en: "That link opens a web page, not an .xlsx file. Use a link that downloads the file itself.",
+    vi: "Link này mở ra một trang web, không phải file .xlsx. Hãy dùng link tải thẳng file.",
   },
   httpError: {
-    en: (code) => `Google returned HTTP ${code}.`,
-    vi: (code) => `Google trả về HTTP ${code}.`,
+    en: (code) => `The server answered with error ${code}. Try again in a moment.`,
+    vi: (code) => `Máy chủ báo lỗi ${code}. Thử lại sau ít phút.`,
   },
 
   // --- demo ---------------------------------------------------------------
@@ -347,9 +398,18 @@ const STRINGS = {
       "demonstrates one thing, from the smallest one that works upwards. The " +
       "picker beside Source walks through them, or paste your own link instead.",
     vi:
-      "Đang hiện file ví dụ — ba mươi mốt sheet, mỗi sheet là một bộ thẻ dùng được " +
-      "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Ô chọn sheet " +
-      "cạnh chữ Source để xem lần lượt, hoặc dán link của bạn.",
+      "Đang hiện file ví dụ — ba mươi mốt sheet, mỗi sheet là một deck dùng được " +
+      "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Dùng ô chọn " +
+      "sheet cạnh chữ Nguồn để xem lần lượt, hoặc dán link của bạn.",
+  },
+  heroCaption: {
+    en: "Each row of your sheet becomes an Anki card. See them here before you sync.",
+    vi: "Mỗi dòng trong sheet thành một thẻ Anki. Xem trước ở đây rồi hãy sync.",
+  },
+  // The same note, in the one line a phone has room for above the fold.
+  demoNoteShort: {
+    en: "Example workbook — pick a sheet or paste your link.",
+    vi: "File ví dụ — chọn sheet khác hoặc dán link của bạn.",
   },
 
   // --- the numbers --------------------------------------------------------
@@ -370,7 +430,8 @@ const STRINGS = {
   rows: { en: "Rows", vi: "Dòng" },
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
   noRowsAtAll: { en: "No rows to show.", vi: "Không có dòng nào để hiện." },
-  downloadApkg: { en: "Download .apkg", vi: "Tải .apkg" },
+  // The extension sits beside this as a tag of its own, next to Anki's icon.
+  downloadApkg: { en: "Download for Anki", vi: "Tải về cho Anki" },
   // The caveats used to be a four-sentence paragraph under the button, which is a
   // lot of reading to sit permanently under a control most people press once.
   // README.md carries the long version.
@@ -400,6 +461,9 @@ const STRINGS = {
   tabBack: { en: "back", vi: "sau" },
   tabTemplate: { en: "template", vi: "template" },
   prevRow: { en: "Previous row", vi: "Dòng trước" },
+  clozeCard: { en: "Cloze card", vi: "Thẻ cloze" },
+  clozeCardN: { en: (n) => `card c${n}`, vi: (n) => `thẻ c${n}` },
+  cardFrameTitle: { en: "Card preview", vi: "Xem trước thẻ" },
   nextRow: { en: "Next row", vi: "Dòng sau" },
 
   // --- card ---------------------------------------------------------------
@@ -460,18 +524,22 @@ const STRINGS = {
     vi: (ids) =>
       `${ids}. Note được khoá theo ID, nên mỗi ID chỉ một dòng sống sót sau sync.`,
   },
+  // One sentence, and the reasoning behind a disclosure for whoever wonders.
   warningsFrom: {
     en:
-      "The ones labelled “Settings row” are the add-on's own words, unchanged, so " +
-      "they are exactly what Anki will tell you at sync time — which is why they " +
-      "stay in English. Nothing is silently ignored: a value the add-on does not " +
+      "Lines labelled “Settings row” are the add-on's own words, kept in English " +
+      "because that is exactly what Anki will show you at sync time." +
+      "<details><summary>Why?</summary>Translated, they would no longer match what " +
+      "Anki says. Nothing is silently ignored: a value the add-on does not " +
       "understand is refused, never guessed at, and the column keeps its default " +
-      "until the sheet is fixed.",
+      "until the sheet is fixed.</details>",
     vi:
-      "Những dòng gắn nhãn “Settings row” là nguyên văn add-on nói, không sửa — " +
-      "đúng câu chữ Anki sẽ báo lúc sync, nên tôi giữ tiếng Anh. Không có gì bị bỏ " +
-      "qua âm thầm: giá trị add-on không hiểu thì bị từ chối chứ không đoán, và cột " +
-      "giữ mặc định cho tới khi sheet được sửa.",
+      "Các dòng gắn nhãn “Settings row” là nguyên văn add-on báo, được giữ tiếng " +
+      "Anh vì đó đúng là câu Anki sẽ hiện lúc sync." +
+      "<details><summary>Tại sao?</summary>Dịch ra thì nó sẽ không còn khớp với " +
+      "câu Anki báo. Không có gì bị bỏ qua âm thầm: giá trị add-on không hiểu thì " +
+      "bị từ chối chứ không bị đoán, và cột giữ mặc định cho tới khi sheet được " +
+      "sửa.</details>",
   },
 
   templateFrom: {
@@ -488,6 +556,10 @@ const STRINGS = {
   rowsLegend: {
     en: "Click a row to see its card.",
     vi: "Bấm một dòng để xem thẻ của nó.",
+  },
+  rowTitle: {
+    en: (line, state) => `Row ${line} — ${state}`,
+    vi: (line, state) => `Dòng ${line} — ${state}`,
   },
   legendSynced: { en: "syncs", vi: "sẽ sync" },
   legendSkipped: { en: "not ticked in SYNC", vi: "chưa tick SYNC" },
