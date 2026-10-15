@@ -121,7 +121,11 @@ class StyledMessageBox(QDialog):
         # A button box, so OK and Cancel come out in this platform's order and a
         # destructive button lands where this platform puts one.
         self.button_box = QDialogButtonBox()
-        for spec in buttons or [{"text": "OK", "role": "accept", "primary": True}]:
+        specs = buttons or [{"text": "OK", "role": "accept", "primary": True}]
+        # When the accept button destroys something, Enter must not press it: the
+        # safe answer is the default, and the destructive one takes a click.
+        destructive = any(spec.get("destructive") for spec in specs)
+        for spec in specs:
             role = (
                 ButtonRole_Destructive
                 if spec.get("destructive")
@@ -136,9 +140,13 @@ class StyledMessageBox(QDialog):
                 )
             elif spec["role"] == "accept":
                 button.clicked.connect(self.accept)
-                button.setDefault(True)
+                button.setDefault(not destructive)
+                button.setAutoDefault(not destructive)
             else:
                 button.clicked.connect(self.reject)
+                if destructive:
+                    button.setDefault(True)
+                    button.setFocus()
         layout.addWidget(self.button_box)
 
     @staticmethod

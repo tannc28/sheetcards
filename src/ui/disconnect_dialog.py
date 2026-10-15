@@ -138,7 +138,10 @@ class DisconnectDialog(QDialog):
         self.delete_local_data_checkbox = QCheckBox(
             "Also delete the local decks, cards and note types"
         )
-        self.delete_local_data_checkbox.setChecked(True)
+        # Off by default: the sentence at the top of this window says the decks
+        # stay, and a destructive choice is one somebody makes, not one they
+        # have to notice and undo.
+        self.delete_local_data_checkbox.setChecked(False)
         self.delete_local_data_checkbox.setToolTip(
             "This cannot be undone. Everything below the deck goes:\n"
             "• the deck and its subdecks\n"
@@ -363,33 +366,29 @@ class DisconnectDialog(QDialog):
                     break
 
             if delete_local_data:
-                question_text = (
-                    f"Disconnect deck '{deck_name}' and DELETE all local data?"
-                )
+                question_text = f"Disconnect '{deck_name}' and delete its cards?"
             else:
-                question_text = f"Disconnect deck '{deck_name}' from remote source?"
+                question_text = f"Disconnect '{deck_name}' from its sheet?"
         else:
             if delete_local_data:
                 question_text = (
-                    f"Disconnect {selected_count} decks and DELETE all local data?"
+                    f"Disconnect {selected_count} decks and delete their cards?"
                 )
             else:
-                question_text = (
-                    f"Disconnect {selected_count} decks from their remote sources?"
-                )
+                question_text = f"Disconnect {selected_count} decks from their sheets?"
 
-        detailed_text = ""
         if delete_local_data:
             detailed_text = (
-                "⚠️ ATTENTION: ALL LOCAL DATA WILL BE PERMANENTLY DELETED!\n"
-                "• Local decks and subdecks\n"
-                "• All cards and notes\n"
-                "• Specific note types (if not used in other decks)\n\n"
-                "This action CANNOT be undone!"
+                "This also deletes, from this collection:\n"
+                "• the deck and its subdecks\n"
+                "• every card and note in them, with their review history\n"
+                "• the note types no other deck uses\n\n"
+                "It cannot be undone."
             )
         else:
             detailed_text = (
-                "This action cannot be undone. Local decks will remain in Anki."
+                "The cards stay in Anki with their review history; they just "
+                "stop updating from the sheet. Adding the link again reconnects it."
             )
 
         if StyledMessageBox.question(
