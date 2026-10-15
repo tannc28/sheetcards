@@ -63,6 +63,15 @@ class TestWhatTheDialogsAskFor:
     def test_every_key_a_dialog_uses_is_there(self):
         assert _REQUIRED_KEYS <= set(get_colors())
 
+    def test_every_key_the_source_asks_for_is_there(self):
+        # Read from the code rather than listed by hand: the list above did not
+        # know the sync summary still asked for `accent_error`, so a window that
+        # raised KeyError on every sync passed this file.
+        asked = set()
+        for path in (Path(__file__).parent.parent / "src").rglob("*.py"):
+            asked |= set(re.findall(r"colors\[['\"]([a-z_]+)['\"]\]", path.read_text()))
+        assert asked and asked <= set(get_colors()), asked - set(get_colors())
+
     def test_every_value_is_a_colour(self):
         # Under the suite's mocked `aqt`, `getattr` and `[]` both answer with another
         # mock rather than raising, so a value that is not a string means the guard

@@ -530,7 +530,7 @@ def _show_sync_summary_with_scroll(
             total_stats.errors + len(sync_errors or []),
             "Errors",
             "⚠️",
-            colors["accent_error"],
+            colors["error"],
             "cardErrors",
         )
     )
@@ -608,8 +608,8 @@ def _show_sync_summary_with_scroll(
             .stat-value {{ padding: 2px 6px; border-radius: 4px; }}
             .success {{ color: {colors['accent_success']}; }}
             .success-bold {{  background-color: {colors['accent_success']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
-            .error {{ color: {colors['accent_error']}; }}
-            .error-bold {{ background-color: {colors['accent_error']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
+            .error {{ color: {colors['error']}; }}
+            .error-bold {{ background-color: {colors['error']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
             .warning {{ color: {colors['accent_warning']}; }}
             .warning-bold {{ background-color: {colors['accent_warning']}; padding: 2px 8px; color: black !important; font-weight: bold; display: inline-block; }}
             .info {{ color: {colors['accent_info']}; }}
@@ -635,13 +635,13 @@ def _show_sync_summary_with_scroll(
             .section-header h2 {{ margin: 0; border: none; }}
             
             .deck-block {{ margin-bottom: 40px; border: 1px solid {colors['border']}; border-bottom: 5px solid {colors['border']}; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-            .deck-header {{ padding: 10px 15px; background: {colors['header_bg']}; border-bottom: 1px solid {colors['border']}; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; color: {colors['text']}; }}
+            .deck-header {{ padding: 10px 15px; background: {colors['background_secondary']}; border-bottom: 1px solid {colors['border']}; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; color: {colors['text']}; }}
             .deck-icon {{ margin-right: 10px; }}
             .tag-new {{ background: {colors['accent_success']}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 10px; vertical-align: middle; }}
             .success-deck {{ border-left: 4px solid {colors['accent_success']}; }}
-            .fail-deck {{ border-left: 4px solid {colors['accent_error']}; }}
+            .fail-deck {{ border-left: 4px solid {colors['error']}; }}
             
-            .error-banner {{ background: {colors['accent_error']}; color: white; padding: 10px; margin: 10px; border-radius: 4px; }}
+            .error-banner {{ background: {colors['error']}; color: white; padding: 10px; margin: 10px; border-radius: 4px; }}
             .deck-metrics-subsection {{ padding: 15px; }}
             
             .deck-separator-visual {{ text-align: center; margin: 40px 0; color: {colors['border']}; font-size: 24px; letter-spacing: 10px; }}
