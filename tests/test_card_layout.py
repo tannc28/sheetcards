@@ -213,9 +213,9 @@ class TestFieldMarkup:
 
     def test_a_signed_theme_marks_the_corner_of_its_cards(self):
         plan = _plan()
-        qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
+        qfmt = build_templates(plan, _config(plan, deck="theme=ptrang"))[0]["qfmt"]
         mark = qfmt.split(".card::after {")[1].split("}")[0]
-        assert f'content: "{THEMES["sakura"]["sign"]}"' in mark
+        assert f'content: "{THEMES["ptrang"]["sign"]}"' in mark
         # Drawn rather than typed: U+2665 is a colour emoji on some clients and a
         # missing glyph on others, so the heart is a path in the palette's colour.
         assert "♥" not in qfmt
@@ -224,7 +224,13 @@ class TestFieldMarkup:
             ("night", ".card.night_mode::after {"),
         ):
             block = qfmt.split(selector)[1].split("}")[0]
-            assert THEMES["sakura"][variant]["heart"].replace("#", "%23") in block
+            assert THEMES["ptrang"][variant]["heart"].replace("#", "%23") in block
+
+    def test_sakura_is_not_signed(self):
+        # The flowers are for anyone; the name in the corner is only on `ptrang`.
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, deck="theme=sakura"))[0]["qfmt"]
+        assert "::after" not in qfmt
 
     def test_an_unthemed_sheet_has_no_corner_mark(self):
         assert "::after" not in build_templates(_plan(), SheetConfig())[0]["qfmt"]

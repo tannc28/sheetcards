@@ -58,28 +58,32 @@ THEME_COLORS = {
 # inside them because a name does not change with the light. A theme without one is
 # simply not signed. The annotation is what keeps `sign` from narrowing the whole
 # table to its values' common type, which would leave the two variants unindexable.
-THEMES: dict[str, dict] = {
-    "sakura": {
-        "sign": "Mèo",
-        "light": {
-            "bg": "#fff5f8",
-            "fg": "#43262f",
-            "muted": "#9c7382",
-            "accent": "#d6336c",
-            "petal": "#f7bdd0",
-            "heart": "#ef9ab6",
-            "veil": "0.5",
-        },
-        "night": {
-            "bg": "#2a1d23",
-            "fg": "#f2dee5",
-            "muted": "#bd97a4",
-            "accent": "#ff8fb1",
-            "petal": "#7a4a5c",
-            "heart": "#95586c",
-            "veil": "0.55",
-        },
+_SAKURA = {
+    "light": {
+        "bg": "#fff5f8",
+        "fg": "#43262f",
+        "muted": "#9c7382",
+        "accent": "#d6336c",
+        "petal": "#f7bdd0",
+        "heart": "#ef9ab6",
+        "veil": "0.5",
     },
+    "night": {
+        "bg": "#2a1d23",
+        "fg": "#f2dee5",
+        "muted": "#bd97a4",
+        "accent": "#ff8fb1",
+        "petal": "#7a4a5c",
+        "heart": "#95586c",
+        "veil": "0.55",
+    },
+}
+
+# `ptrang` is the VIP edition of `sakura`: the same palette and blossoms, plus the
+# signed corner. `sakura` itself stays unsigned.
+THEMES: dict[str, dict] = {
+    "sakura": _SAKURA,
+    "ptrang": {**_SAKURA, "sign": "Mèo"},
 }
 
 # Fonts a sheet can name, and the stack each becomes. The first four are loaded
