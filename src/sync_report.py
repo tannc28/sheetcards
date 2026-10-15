@@ -1,6 +1,14 @@
 """HTML rendering for the sync summary dialog (extracted from sync.py).
 
-Pure string builders: they take SyncStats-like objects and return HTML."""
+Pure string builders: they take SyncStats-like objects and return HTML.
+
+No emoji: Anki uses none, and an emoji is drawn by the font rather than the
+theme — colour on one platform, monochrome or missing on another, never the
+colour of the text beside it. The table's own colours (``success``, ``error``…)
+already say what each row is.
+"""
+
+from html import escape
 
 
 def _generate_metrics_table_html(stats) -> str:
@@ -14,60 +22,53 @@ def _generate_metrics_table_html(stats) -> str:
         str: HTML string
     """
     # Define primary metrics
-    # Format: (Icon, Label, Value, StyleClass)
+    # Format: (Label, Value, StyleClass)
     metrics = [
-        ("📋", "Total spreadsheet rows", stats.remote_total_table_lines, ""),
+        ("Total spreadsheet rows", stats.remote_total_table_lines, ""),
         (
-            "✅",
             "Rows with content (Valid ID)",
             stats.remote_valid_note_lines,
             "success",
         ),
         (
-            "❌",
             "Rows skipped (Missing ID)",
             stats.remote_invalid_note_lines,
             "error" if stats.remote_invalid_note_lines > 0 else "muted",
         ),
-        ("👻", "Empty rows (Ignored)", stats.remote_ignored_ghost_rows, "muted"),
+        ("Empty rows (Ignored)", stats.remote_ignored_ghost_rows, "muted"),
         (
-            "🔄",
             "Rows enabled for sync (SYNC=TRUE)",
             stats.remote_sync_marked_lines,
             "info",
         ),
-        ("⏸️", "Rows disabled for sync (SYNC=FALSE)", stats.skipped, "muted"),
-        ("⏭️", "Notes matched (Unchanged)", stats.unchanged, "muted"),
+        ("Rows disabled for sync (SYNC=FALSE)", stats.skipped, "muted"),
+        ("Notes matched (Unchanged)", stats.unchanged, "muted"),
         (
-            "➕",
             "Created notes",
             stats.created,
             "success-bold" if stats.created > 0 else "muted",
         ),
         (
-            "✏️",
             "Updated notes",
             stats.updated,
             "warning-bold" if stats.updated > 0 else "muted",
         ),
         (
-            "🗑️",
             "Deleted notes",
             stats.deleted,
             "error-bold" if stats.deleted > 0 else "muted",
         ),
         (
-            "⚠️",
             "Warnings",
             len(stats.warnings),
             "warning-bold" if len(stats.warnings) > 0 else "muted",
         ),
-        ("❌", "Errors", stats.errors, "error-bold" if stats.errors > 0 else "muted"),
+        ("Errors", stats.errors, "error-bold" if stats.errors > 0 else "muted"),
     ]
 
     html = """<div class="metrics-container"><table class="metrics-table">"""
 
-    for icon, label, value, style_class in metrics:
+    for label, value, style_class in metrics:
         row_class = "metric-row"
         if style_class == "muted" and value == 0:
             row_class += " zero-value"
@@ -76,7 +77,6 @@ def _generate_metrics_table_html(stats) -> str:
 
         html += f"""
         <tr class="{row_class}">
-            <td class="icon-col">{icon}</td>
             <td class="label-col">{label}</td>
             <td class="value-col">{value_display}</td>
         </tr>
@@ -85,18 +85,17 @@ def _generate_metrics_table_html(stats) -> str:
     # Potential notes section - MERGED into same table with a separator
     html += """
     <tr class="separator-row">
-        <td colspan="3"><hr></td>
+        <td colspan="2"><hr></td>
     </tr>
     """
 
     potential_metrics = [
-        ("🚀", "Total notes to process", stats.remote_total_potential_anki_notes),
+        ("Total notes to process", stats.remote_total_potential_anki_notes),
     ]
 
-    for icon, label, value in potential_metrics:
+    for label, value in potential_metrics:
         html += f"""
         <tr class="metric-row info-row">
-            <td class="icon-col">{icon}</td>
             <td class="label-col">{label}</td>
             <td class="value-col">{value}</td>
         </tr>
@@ -107,13 +106,17 @@ def _generate_metrics_table_html(stats) -> str:
 
 
 def _generate_details_list_html(title, items, icon="•") -> str:
-    """Helper to generate a list of details."""
+    """Helper to generate a list of details.
+
+    Items are plain sentences (errors, warnings), escaped so one that quotes a
+    cell holding markup shows the markup rather than obeying it.
+    """
     if not items:
         return ""
 
-    html = f'<div class="details-block"><h3>{title}</h3><ul>'
+    html = f'<div class="details-block"><h3>{escape(title)}</h3><ul>'
     for item in items:
-        html += f"<li>{item}</li>"
+        html += f"<li>{escape(str(item))}</li>"
     html += "</ul></div>"
     return html
 
@@ -157,23 +160,21 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
         or total_stats.remote_total_potential_anki_notes > 0
     ):
 
-        html_parts.append(
-            '<div class="section-header"><h2>📊 Detailed Remote Deck Metrics</h2></div>'
-        )
+        html_parts.append('<div class="section-header"><h2>Spreadsheet rows</h2></div>')
         html_parts.append(_generate_metrics_table_html(total_stats))
 
     # 2. Errors
     all_errors = (sync_errors or []) + total_stats.error_details
     if all_errors:
         html_parts.append(
-            _generate_details_list_html(f"⚠️ Errors ({len(all_errors)})", all_errors)
+            _generate_details_list_html(f"Errors ({len(all_errors)})", all_errors)
         )
 
     # 2.1 Warnings
     if total_stats.warnings:
         html_parts.append(
             _generate_details_list_html(
-                f"⚠️ Warnings ({len(total_stats.warnings)})", total_stats.warnings
+                f"Warnings ({len(total_stats.warnings)})", total_stats.warnings
             )
         )
 
@@ -181,7 +182,7 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
     if total_stats.created > 0 and total_stats.creation_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"➕ Created Notes ({total_stats.created})",
+                f"Created notes ({total_stats.created})",
                 total_stats.creation_details,
                 "created",
             )
@@ -191,7 +192,7 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
     if total_stats.updated > 0 and total_stats.update_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"✏️ Updated Notes ({total_stats.updated})",
+                f"Updated notes ({total_stats.updated})",
                 total_stats.update_details,
                 "updated",
             )
@@ -201,7 +202,7 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
     if total_stats.deleted > 0 and total_stats.deletion_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"🗑️ Deleted Notes ({total_stats.deleted})",
+                f"Deleted notes ({total_stats.deleted})",
                 total_stats.deletion_details,
                 "deleted",
             )
@@ -216,7 +217,7 @@ def generate_simplified_view(total_stats, sync_errors=None, deck_results=None) -
     ):
         html_parts.append("""
          <div class="no-changes-info">
-            <h3>ℹ️ No detailed note modifications</h3>
+            <h3>No notes changed</h3>
             <p>This can happen when:</p>
             <ul>
                 <li>Notes were already up to date</li>
@@ -248,22 +249,20 @@ def generate_deck_detailed_metrics(stats, deck_name) -> str:
     # Errors
     if stats.errors > 0 or stats.error_details:
         html_parts.append(
-            _generate_details_list_html(
-                f"⚠️ Errors in {deck_name}", stats.error_details
-            )
+            _generate_details_list_html(f"Errors in {deck_name}", stats.error_details)
         )
 
     # Warnings
     if stats.warnings:
         html_parts.append(
-            _generate_details_list_html(f"⚠️ Warnings in {deck_name}", stats.warnings)
+            _generate_details_list_html(f"Warnings in {deck_name}", stats.warnings)
         )
 
     # Created
     if stats.created > 0 and stats.creation_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"➕ Created in {deck_name}", stats.creation_details, "created"
+                f"Created in {deck_name}", stats.creation_details, "created"
             )
         )
 
@@ -271,7 +270,7 @@ def generate_deck_detailed_metrics(stats, deck_name) -> str:
     if stats.updated > 0 and stats.update_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"✏️ Updated in {deck_name}", stats.update_details, "updated"
+                f"Updated in {deck_name}", stats.update_details, "updated"
             )
         )
 
@@ -279,7 +278,7 @@ def generate_deck_detailed_metrics(stats, deck_name) -> str:
     if stats.deleted > 0 and stats.deletion_details:
         html_parts.append(
             _generate_changes_list_html(
-                f"🗑️ Deleted from {deck_name}", stats.deletion_details, "deleted"
+                f"Deleted from {deck_name}", stats.deletion_details, "deleted"
             )
         )
 
@@ -298,9 +297,7 @@ def generate_detailed_html_view(
 
     # 2. Individual Deck Summary
     if deck_results and len(deck_results) >= 1:
-        html_parts.append(
-            '<div class="section-header"><h2>📊 Individual Deck Summary</h2></div>'
-        )
+        html_parts.append('<div class="section-header"><h2>Each deck</h2></div>')
 
         for i, deck_result in enumerate(deck_results, 1):
             # Add separator if not the first item
@@ -312,7 +309,7 @@ def generate_detailed_html_view(
             deck_name = deck_result.deck_name
             stats = deck_result.stats
             status_class = "success-deck" if deck_result.success else "fail-deck"
-            icon = "✅" if deck_result.success else "❌"
+            status = "" if deck_result.success else " — did not sync"
             new_label = (
                 ' <span class="tag-new">NEW</span>' if deck_result.was_new_deck else ""
             )
@@ -320,8 +317,7 @@ def generate_detailed_html_view(
             html_parts.append(f"""
             <div class="deck-block {status_class}">
                 <div class="deck-header">
-                    <span class="deck-icon">{icon}</span> 
-                    <span class="deck-name">{i}. {deck_name}</span>
+                    <span class="deck-name">{i}. {escape(deck_name)}{status}</span>
                     {new_label}
                 </div>
             """)
@@ -329,7 +325,7 @@ def generate_detailed_html_view(
             # Error message if failed
             if not deck_result.success and deck_result.error_message:
                 html_parts.append(
-                    f'<div class="error-banner">❌ {deck_result.error_message}</div>'
+                    f'<div class="error-banner">{escape(deck_result.error_message)}</div>'
                 )
 
             # Metrics
@@ -348,9 +344,7 @@ def generate_errors_view(total_stats, sync_errors=None, deck_results=None) -> st
     all_errors = (sync_errors or []) + total_stats.error_details
     if all_errors:
         html_parts.append(
-            _generate_details_list_html(
-                f"⚠️ General Errors ({len(all_errors)})", all_errors
-            )
+            _generate_details_list_html(f"Errors ({len(all_errors)})", all_errors)
         )
 
     # 2. Deck Errors
@@ -362,15 +356,21 @@ def generate_errors_view(total_stats, sync_errors=None, deck_results=None) -> st
                 or result.stats.error_details
             ):
                 deck_errors = []
-                if not result.success and result.error_message:
-                    deck_errors.append(f"Critical: {result.error_message}")
+                # The deck's error_message is usually its only error detail
+                # too; listed once.
+                if (
+                    not result.success
+                    and result.error_message
+                    and not result.stats.error_details
+                ):
+                    deck_errors.append(result.error_message)
 
                 deck_errors.extend(result.stats.error_details)
 
                 if deck_errors:
                     html_parts.append(
                         _generate_details_list_html(
-                            f"⚠️ Errors in {result.deck_name}", deck_errors
+                            f"Errors in {result.deck_name}", deck_errors
                         )
                     )
 
@@ -378,13 +378,11 @@ def generate_errors_view(total_stats, sync_errors=None, deck_results=None) -> st
             if result.stats.warnings:
                 html_parts.append(
                     _generate_details_list_html(
-                        f"⚠️ Warnings in {result.deck_name}", result.stats.warnings
+                        f"Warnings in {result.deck_name}", result.stats.warnings
                     )
                 )
 
     if not html_parts:
-        html_parts.append(
-            '<div class="no-changes-info"><h3>✅ No errors found!</h3></div>'
-        )
+        html_parts.append('<div class="no-changes-info"><h3>No errors.</h3></div>')
 
     return "".join(html_parts)

@@ -6,7 +6,6 @@ decks with remote sources, using the new configuration system.
 It also includes classes for statistics management and finalization.
 """
 
-import time
 import traceback
 from dataclasses import dataclass
 from dataclasses import field
@@ -15,18 +14,20 @@ from typing import Any
 from .compat import QDialog
 from .compat import QLabel
 from .compat import QProgressBar
-from .compat import QPushButton
 from .compat import Qt
 from .compat import QTextEdit
+from .compat import QueryOp
 from .compat import QVBoxLayout
 from .compat import mw
 from .compat import safe_exec_dialog
+from .compat import tooltip
 from .config_manager import get_remote_decks
 from .config_manager import save_remote_decks
 from .config_manager import sync_note_type_names_robustly
 from .config_manager import update_note_type_names_in_meta
 from .data_processor import create_or_update_notes
 from .data_processor import getRemoteDeck
+from .errors import user_message
 from .name_consistency_manager import NameConsistencyManager
 from .styled_messages import StyledMessageBox
 from .sync_report import _generate_changes_list_html  # noqa: F401
@@ -44,7 +45,6 @@ from .utils import add_debug_message
 from .utils import capture_deck_note_type_ids
 from .utils import clear_debug_messages
 from .utils import remove_empty_subdecks
-from .utils import validate_url
 
 # ========================================================================================
 # SYNC STATISTICS CLASSES (consolidated from sync_stats.py)
@@ -225,16 +225,12 @@ def _finalize_sync_cleanup(progress):
     Performs final cleanup operations for synchronization.
 
     Args:
-        progress: QProgressDialog instance to update status
+        progress: LogProgressDialog instance to update status
 
     Returns:
         int: Number of removed subdecks
     """
-    if hasattr(progress, "appendMessage"):
-        progress.appendMessage("🧹 Cleaning up empty subdecks...")
-    else:
-        progress.setLabelText("🧹 Cleaning up empty subdecks...")
-
+    progress.appendMessage("Removing empty subdecks…")
     mw.app.processEvents()
 
     from .config_manager import get_remote_decks
@@ -244,46 +240,21 @@ def _finalize_sync_cleanup(progress):
     remote_decks = get_remote_decks()
     removed_subdecks = remove_empty_subdecks(remote_decks)
 
-    # Apply automatic deck options system
-    if hasattr(progress, "appendMessage"):
-        progress.appendMessage("⚙️ Configuring deck options...")
-    else:
-        progress.setLabelText("⚙️ Configuring deck options...")
+    progress.appendMessage("Applying deck options…")
     mw.app.processEvents()
 
     options_result = apply_automatic_deck_options_system()
     add_debug_message(
-        f"✅ apply_automatic_deck_options_system() returned: {options_result}", "SYNC"
+        f"apply_automatic_deck_options_system() returned: {options_result}", "SYNC"
     )
 
-    if options_result and options_result.get("success"):
-        if (
-            options_result.get("root_deck_updated")
-            or options_result.get("remote_decks_updated", 0) > 0
-        ):
-            count = options_result.get("remote_decks_updated", 0)
-            root_txt = "Root + " if options_result.get("root_deck_updated") else ""
-            if hasattr(progress, "appendMessage"):
-                progress.appendMessage(
-                    f"   ✅ Options applied: {root_txt}{count} decks"
-                )
-        else:
-            if hasattr(progress, "appendMessage"):
-                progress.appendMessage("   ✅ Options verification: OK")
-
-    add_debug_message("🎬 Synchronization cleanup finished", "SYSTEM")
+    add_debug_message("Synchronization cleanup finished", "SYSTEM")
 
     # Update Anki interface to show changes
-    if hasattr(progress, "appendMessage"):
-        progress.appendMessage("🔄 Refreshing interface...")
-    else:
-        progress.setLabelText("🔄 Refreshing interface...")
+    progress.appendMessage("Refreshing Anki…")
     mw.app.processEvents()
 
     ensure_interface_refresh()
-
-    # Wait a moment to show the cleanup message
-    time.sleep(0.5)
 
     return removed_subdecks
 
@@ -309,79 +280,24 @@ def _show_sync_summary_new(
 
     summary = []
 
-    # Main statistics
-    if sync_errors or total_stats.errors > 0:
-        summary.append("❌ Synchronization completed with problems!")
-        summary.append(
-            f"📊 Decks: {decks_synced}/{total_decks} successfully synchronized"
-        )
-    else:
-        summary.append("✅ Synchronization completed successfully!")
-        summary.append(f"📊 Decks: {decks_synced}/{total_decks} synchronized")
-
-    # Summary statistics in header
-    if total_stats.created > 0:
-        # Check if any of the decks were new (based on robust detection by last_sync)
-        new_decks_detected = False
-        if deck_results:
-            new_decks_detected = any(
-                result.was_new_deck for result in deck_results if result.success
-            )
-
-        if new_decks_detected:
-            if total_decks == 1:
-                summary.append(
-                    f"➕ {total_stats.created} notes created (new deck added)"
-                )
-            else:
-                summary.append(
-                    f"➕ {total_stats.created} notes created (includes new decks)"
-                )
-        else:
-            summary.append(f"➕ {total_stats.created} notes created")
-
-    if total_stats.updated > 0:
-        summary.append(f"✏️ {total_stats.updated} notes updated")
-
-    if total_stats.deleted > 0:
-        summary.append(f"🗑️ {total_stats.deleted} notes deleted")
-
-    if total_stats.ignored > 0:
-        summary.append(f"⏭️ {total_stats.ignored} notes ignored")
-
-    # Cleanups
-    if removed_subdecks > 0:
-        summary.append(f"🧹 {removed_subdecks} empty subdecks removed")
-
-    # AnkiWeb synchronization
-    if ankiweb_result is not None:
-        if ankiweb_result.get("success", False):
-            summary.append(
-                "🔄 AnkiWeb: Synchronization started (automatically detecting changes)"
-            )
-        elif "error" in ankiweb_result:
-            summary.append(
-                f"❌ AnkiWeb: Synchronization failed - {ankiweb_result['error']}"
-            )
-    else:
-        # Check if configured but not executed
-        try:
-            from .config_manager import get_ankiweb_sync_mode
-
-            sync_mode = get_ankiweb_sync_mode()
-            if sync_mode == "disabled":
-                summary.append("⏹️ AnkiWeb: Automatic synchronization disabled")
-        except Exception:
-            pass
-
-    # Errors
     sync_errors = sync_errors or []
     total_errors = total_stats.errors + len(sync_errors)
-    if total_errors > 0:
-        summary.append(f"⚠️ {total_errors} errors found")
-
-    if total_stats.warnings:
-        summary.append(f"⚠️ {len(total_stats.warnings)} warnings found")
+    summary.append(
+        f"Finished with problems: {decks_synced} of {total_decks} decks synced."
+        if total_errors
+        else f"Finished: {decks_synced} of {total_decks} decks synced."
+    )
+    for count, word in (
+        (total_stats.created, "notes created"),
+        (total_stats.updated, "notes updated"),
+        (total_stats.deleted, "notes deleted"),
+        (total_stats.ignored, "notes ignored"),
+        (removed_subdecks, "empty subdecks removed"),
+        (total_errors, "errors"),
+        (len(total_stats.warnings), "warnings"),
+    ):
+        if count:
+            summary.append(f"{count} {word}")
 
     # Always use scrolled interface
     _show_sync_summary_with_scroll(
@@ -432,7 +348,7 @@ def _show_sync_summary_with_scroll(
 
     # Connect callback to closing if provided
     if on_close_callback and callable(on_close_callback):
-        dialog.finished.connect(on_close_callback)
+        dialog.finished.connect(lambda *_: on_close_callback())
 
     # Anki's palette, through the add-on's one gateway to it. This function used to
     # carry two dicts of fifteen hand-picked hex values and pick between them by
@@ -442,6 +358,7 @@ def _show_sync_summary_with_scroll(
 
     # Determine overall status
     has_errors = (sync_errors and len(sync_errors) > 0) or total_stats.errors > 0
+    has_warnings = bool(total_stats.warnings)
 
     main_layout = QVBoxLayout(dialog)
     main_layout.setSpacing(SPACE_SECTION)
@@ -452,11 +369,20 @@ def _show_sync_summary_with_scroll(
     # a 28pt emoji in it, over a window whose title already said Summary.
     head_row = QHBoxLayout()
     head_row.setSpacing(SPACE_ELEMENT)
-    shape, colour, status_text = (
-        ("warning", "accent_warning", "Finished, with problems")
-        if has_errors
-        else ("success", "accent_success", "Finished")
-    )
+    if has_errors:
+        shape, colour, status_text = (
+            "warning",
+            "error",
+            "Finished, but some decks or rows did not sync",
+        )
+    elif has_warnings:
+        shape, colour, status_text = (
+            "warning",
+            "accent_warning",
+            "Finished, with warnings to read",
+        )
+    else:
+        shape, colour, status_text = ("success", "accent_success", "Finished")
     status_icon = QLabel()
     status_icon.setPixmap(icon(shape, colour).pixmap(ICON_SIZE, ICON_SIZE))
     status_icon.setFixedWidth(ICON_SIZE)
@@ -473,7 +399,7 @@ def _show_sync_summary_with_scroll(
     stats_layout = QHBoxLayout()
     stats_layout.setSpacing(SPACE_SECTION)
 
-    def create_stat_card(value, label, icon_name, accent_color, card_id):
+    def create_stat_card(value, label):
         """One figure and its word, stacked."""
         card = QWidget()
         card_layout = QVBoxLayout(card)
@@ -496,53 +422,18 @@ def _show_sync_summary_with_scroll(
         len([r for r in deck_results if r.success]) if deck_results else 0
     )
 
-    # Add statistic cards with unique IDs
-    stats_layout.addWidget(
-        create_stat_card(
-            total_stats.created,
-            "Created",
-            "➕",
-            colors["accent_success"],
-            "cardCreated",
-        )
-    )
-    stats_layout.addWidget(
-        create_stat_card(
-            total_stats.updated, "Updated", "✏️", colors["accent_info"], "cardUpdated"
-        )
-    )
-    stats_layout.addWidget(
-        create_stat_card(
-            total_stats.deleted, "Deleted", "🗑️", colors["accent_purple"], "cardDeleted"
-        )
-    )
-    stats_layout.addWidget(
-        create_stat_card(
-            total_stats.skipped,
-            "Skipped",
-            "⏸️",
-            colors["text_secondary"],
-            "cardSkipped",
-        )
-    )
-    stats_layout.addWidget(
-        create_stat_card(
-            total_stats.errors + len(sync_errors or []),
-            "Errors",
-            "⚠️",
-            colors["accent_error"],
-            "cardErrors",
-        )
-    )
+    for value, label in (
+        (total_stats.created, "Created"),
+        (total_stats.updated, "Updated"),
+        (total_stats.deleted, "Deleted"),
+        (total_stats.skipped, "Skipped"),
+        (total_stats.errors + len(sync_errors or []), "Errors"),
+        (len(total_stats.warnings), "Warnings"),
+    ):
+        stats_layout.addWidget(create_stat_card(value, label))
     if total_decks > 0:
         stats_layout.addWidget(
-            create_stat_card(
-                f"{successful_decks}/{total_decks}",
-                "Decks",
-                "📚",
-                colors["accent_info"],
-                "cardDecks",
-            )
+            create_stat_card(f"{successful_decks}/{total_decks}", "Decks")
         )
 
     main_layout.addLayout(stats_layout)
@@ -601,15 +492,14 @@ def _show_sync_summary_with_scroll(
             .metric-row:last-child td {{ border-bottom: none; }}
             .zero-value {{ opacity: 0.5; }}
             
-            .icon-col {{ width: 24px; text-align: center; }}
             .label-col {{ font-weight: 500; }}
             .value-col {{ text-align: right; font-family: monospace; font-weight: bold; }}
             
             .stat-value {{ padding: 2px 6px; border-radius: 4px; }}
             .success {{ color: {colors['accent_success']}; }}
             .success-bold {{  background-color: {colors['accent_success']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
-            .error {{ color: {colors['accent_error']}; }}
-            .error-bold {{ background-color: {colors['accent_error']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
+            .error {{ color: {colors['error']}; }}
+            .error-bold {{ background-color: {colors['error']}; padding: 2px 8px; color: white !important; font-weight: bold; display: inline-block; }}
             .warning {{ color: {colors['accent_warning']}; }}
             .warning-bold {{ background-color: {colors['accent_warning']}; padding: 2px 8px; color: black !important; font-weight: bold; display: inline-block; }}
             .info {{ color: {colors['accent_info']}; }}
@@ -635,13 +525,12 @@ def _show_sync_summary_with_scroll(
             .section-header h2 {{ margin: 0; border: none; }}
             
             .deck-block {{ margin-bottom: 40px; border: 1px solid {colors['border']}; border-bottom: 5px solid {colors['border']}; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-            .deck-header {{ padding: 10px 15px; background: {colors['header_bg']}; border-bottom: 1px solid {colors['border']}; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; color: {colors['text']}; }}
-            .deck-icon {{ margin-right: 10px; }}
+            .deck-header {{ padding: 10px 15px; background: {colors['background_secondary']}; border-bottom: 1px solid {colors['border']}; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; color: {colors['text']}; }}
             .tag-new {{ background: {colors['accent_success']}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 10px; vertical-align: middle; }}
             .success-deck {{ border-left: 4px solid {colors['accent_success']}; }}
-            .fail-deck {{ border-left: 4px solid {colors['accent_error']}; }}
+            .fail-deck {{ border-left: 4px solid {colors['error']}; }}
             
-            .error-banner {{ background: {colors['accent_error']}; color: white; padding: 10px; margin: 10px; border-radius: 4px; }}
+            .error-banner {{ background: {colors['error']}; color: white; padding: 10px; margin: 10px; border-radius: 4px; }}
             .deck-metrics-subsection {{ padding: 15px; }}
             
             .deck-separator-visual {{ text-align: center; margin: 40px 0; color: {colors['border']}; font-size: 24px; letter-spacing: 10px; }}
@@ -767,14 +656,18 @@ def _is_anki_decks_ready():
 
 def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=False):
     """
-    Synchronizes all remote decks with their sources.
+    Synchronizes remote decks with their sources.
 
-    This is the main synchronization function that:
-    1. Downloads data from remote decks
-    2. Processes and validates data
-    3. Updates Anki database
-    4. Shows progress to user
-    5. Automatically updates names if configured
+    The work is split by thread, the way Anki asks add-ons to split it
+    (https://docs.ankiweb.net/addons/background-ops): each deck's sheet is
+    downloaded and parsed in a ``QueryOp`` on a background thread, and what it
+    turned into is written to the collection on the main thread when that
+    finishes. Downloads are the slow part — up to the 30 s timeout on a bad
+    connection — and they used to run on the main thread, which is what froze
+    Anki for the length of a sync.
+
+    Returns as soon as the run has started; :class:`_SyncRun` carries it to the
+    end and decides what to show then.
 
     Args:
         selected_deck_names: List of deck names to synchronize.
@@ -783,6 +676,8 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
                           If provided, takes precedence over selected_deck_names.
         new_deck_mode: If True, indicates this synchronization is for a newly added deck.
     """
+    global _ACTIVE_RUN
+
     # Check if mw.col is available
     if not _is_anki_ready():
         StyledMessageBox.warning(
@@ -792,15 +687,24 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
         )
         return
 
+    # The main window stays usable while a sync downloads, so the menu that
+    # starts one is reachable again before the first has finished.
+    if _ACTIVE_RUN is not None:
+        tooltip("A sync is already running.", parent=mw)
+        return
+
     col = mw.col
 
     # Several decks can live in one Google Sheets file, and each of them needs the
     # whole file. Downloading it once per run is the difference between one
     # request and one per deck; keeping it any longer than the run would mean
-    # syncing a sheet as it was hours ago.
+    # syncing a sheet as it was hours ago. The page titles deck names come from
+    # are remembered for the same span, for the same reasons.
     from .data_processor import clear_workbook_cache
+    from .deck_manager import clear_remote_name_cache
 
     clear_workbook_cache()
+    clear_remote_name_cache()
 
     remote_decks = get_remote_decks()
 
@@ -826,201 +730,363 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
     sync_errors = []
 
     # Update existing note type templates before synchronization
-    status_msgs.append("🎨 Updating card templates...")
+    status_msgs.append("Updating card templates…")
     _update_progress_text(progress, status_msgs)
-    mw.app.processEvents()
 
     try:
-        add_debug_message("🔄 Updating existing note type templates...", "SYNC")
+        add_debug_message("Updating existing note type templates...", "SYNC")
         updated_count = update_existing_note_type_templates(col, [])
-        add_debug_message(f"✅ {updated_count} note types successfully updated", "SYNC")
-
-        status_msgs.append(f"✅ Templates updated ({updated_count} types)")
+        add_debug_message(f"{updated_count} note types successfully updated", "SYNC")
+        status_msgs.append(f"Card templates updated ({updated_count} note types).")
         _update_progress_text(progress, status_msgs)
 
     except Exception as e:
-        add_debug_message(f"⚠️ Error updating templates: {e}", "SYNC")
-
-        status_msgs.append("⚠️ Template update failed (continuing...)")
-        sync_errors.append(f"Template Update Error: {str(e)}")
-        _update_progress_text(progress, status_msgs)
-        # Continue synchronization even if template update failed
-
-    # Initialize statistics system
-    stats_manager = SyncStatsManager()
-    # sync_errors already initialized above
-
-    # Add initial debug message
-    add_debug_message(f"🎬 DEBUG SYSTEM ACTIVATED - Total decks: {total_decks}", "SYNC")
-    _update_progress_text(progress, status_msgs)
-
-    step = 0
-    try:
-        # Synchronize each deck
-        for deckKey in deck_keys:
-            try:
-                step, deck_sync_increment, current_stats = _sync_single_deck(
-                    remote_decks,
-                    deckKey,
-                    progress,
-                    status_msgs,
-                    step,
-                    debug_messages=[],
-                )
-
-                # Create deck result
-                deck_name = remote_decks[deckKey].get("local_deck_name", "Unknown")
-                deck_url = remote_decks[deckKey].get("remote_deck_url", "")
-
-                # Check if the deck was new and update sync status
-                from .config_manager import update_deck_sync_status
-
-                was_new_deck = update_deck_sync_status(deck_url, success=True)
-
-                # Check for NON-CRITICAL errors captured in stats (that didn't raise exception)
-                has_errors = current_stats.has_errors()
-
-                deck_result = DeckSyncResult(
-                    deck_name=deck_name,
-                    deck_key=deckKey,
-                    deck_url=deck_url,
-                    success=not has_errors,  # Fail if there are any errors
-                    stats=current_stats,
-                    was_new_deck=was_new_deck,
-                    error_message="Completed with errors" if has_errors else None,
-                )
-                stats_manager.add_deck_result(deck_result)
-
-                if has_errors:
-                    add_debug_message(
-                        f"⚠️ Deck completed with ERRORS: {deckKey}", "SYNC"
-                    )
-                    # Explicitly state deck sync finished with errors
-                    status_msgs.append(
-                        f"⚠️ {deck_name}: Finished with {current_stats.errors} error(s)"
-                    )
-
-                    # Add to main errors list so it appears in the header
-                    sync_errors.append(
-                        f"{deck_name}: {current_stats.errors} error(s) during processing"
-                    )
-                else:
-                    add_debug_message(f"✅ Deck completed: {deckKey}", "SYNC")
-                    # Explicitly state deck sync is finished
-                    status_msgs.append(f"✅ {deck_name}: Synchronization finished")
-
-                _update_progress_text(progress, status_msgs)
-
-            except SyncError as e:
-                step, sync_errors = _handle_sync_error(
-                    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
-                )
-
-                # Add failure result
-                deck_name = remote_decks[deckKey].get("local_deck_name", "Unknown")
-                deck_url = remote_decks[deckKey].get("remote_deck_url", "")
-                failed_result = DeckSyncResult(
-                    deck_name=deck_name,
-                    deck_key=deckKey,
-                    deck_url=deck_url,
-                    success=False,
-                    stats=SyncStats(),
-                    error_message=str(e),
-                )
-                failed_result.stats.add_error(str(e))
-                stats_manager.add_deck_result(failed_result)
-                continue
-
-            except Exception as e:
-                step, sync_errors = _handle_unexpected_error(
-                    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
-                )
-
-                # Add unexpected error result
-                deck_name = remote_decks[deckKey].get("local_deck_name", "Unknown")
-                deck_url = remote_decks[deckKey].get("remote_deck_url", "")
-                failed_result = DeckSyncResult(
-                    deck_name=deck_name,
-                    deck_key=deckKey,
-                    deck_url=deck_url,
-                    success=False,
-                    stats=SyncStats(),
-                    error_message=f"Unexpected error: {str(e)}",
-                )
-                failed_result.stats.add_error(f"Unexpected error: {str(e)}")
-                stats_manager.add_deck_result(failed_result)
-                continue
-
-        # Get statistics summary
-        summary = stats_manager.get_summary()
-        successful_decks = len(stats_manager.get_successful_decks())
-        deck_results = stats_manager.deck_results  # Get results per deck
-
         add_debug_message(
-            f"🎯 Calling _finalize_sync_cleanup - successful_decks: {successful_decks}, total_decks: {total_decks}",
+            f"Error updating templates: {e}\n{traceback.format_exc()}", "SYNC"
+        )
+        status_msgs.append("Card templates could not be updated; syncing anyway.")
+        sync_errors.append(
+            "Card templates could not be updated. Cards keep their previous "
+            "layout until the next sync."
+        )
+        _update_progress_text(progress, status_msgs)
+
+    add_debug_message(f"Sync started - total decks: {total_decks}", "SYNC")
+
+    run = _SyncRun(
+        deck_keys=deck_keys,
+        remote_decks=remote_decks,
+        progress=progress,
+        status_msgs=status_msgs,
+        sync_errors=sync_errors,
+        new_deck_mode=new_deck_mode,
+    )
+    _ACTIVE_RUN = run
+    run.start()
+
+
+# The run in progress, if any. Held here so the run is not garbage-collected
+# between its background steps, and so a second sync cannot start on top of it.
+_ACTIVE_RUN = None
+
+
+def _fetch_deck(remote_deck_url):
+    """Downloads and parses one deck's sheet. Runs on a background thread.
+
+    Touches nothing but the network, the add-on's own files and the pure
+    layer: no ``mw.col``, no Qt. The deck's page title is read here too, so the
+    renaming that follows on the main thread finds it remembered rather than
+    asking Google again with the window frozen.
+
+    The deck's own URL, not an export URL built from it: converting to
+    "/export?format=tsv" drops the "#sheet=" fragment, and a deck with no sheet
+    named falls back to downloading the file's *first* sheet. Every deck of one
+    file then synced the same sheet — the second deck ending up with the first
+    one's columns, note type and rows. getRemoteDeck converts the URL itself.
+    """
+    from .deck_manager import DeckNameManager
+
+    remoteDeck = getRemoteDeck(remote_deck_url)
+    DeckNameManager.extract_remote_name_from_url(remote_deck_url)
+    return remoteDeck
+
+
+class _SyncRun:
+    """One sync, carried from deck to deck across background downloads.
+
+    For each deck: download in a :class:`QueryOp` (background), then write in
+    its success callback (main thread), then on to the next deck. Cancel is
+    honoured between decks — a deck half-written would be worse than a deck
+    not started — and the window says so while the current one finishes.
+
+    Why the writes are not a ``CollectionOp``: a deck's write is not one call
+    but the whole of :func:`_sync_single_deck` — renaming decks, provisioning
+    note types (adding a field is a schema change, which empties Anki's undo
+    queue anyway), adding/updating/removing notes, and saving ``meta.json``
+    between those steps. That code reaches for ``mw.col`` and the add-on's own
+    files throughout, and an undo step that reverted the notes but not
+    ``meta.json`` would leave the two disagreeing. The sheet is what a sync is
+    recovered from, not Undo, so the writes run on the main thread where all of
+    that is safe, and only the slow part — the network — is moved off it.
+    """
+
+    def __init__(
+        self,
+        deck_keys,
+        remote_decks,
+        progress,
+        status_msgs,
+        sync_errors,
+        new_deck_mode=False,
+    ):
+        self.deck_keys = list(deck_keys)
+        self.remote_decks = remote_decks
+        self.progress = progress
+        self.status_msgs = status_msgs
+        self.sync_errors = sync_errors
+        self.new_deck_mode = new_deck_mode
+        self.stats_manager = SyncStatsManager()
+        self.index = 0
+        self.cancelled = False
+        self.finished = False
+        progress.on_cancel = self.cancel
+
+    # -- driving -------------------------------------------------------------
+
+    def start(self):
+        self._next()
+
+    def cancel(self):
+        """Stop after the deck in hand. Called by the window's Cancel."""
+        if self.finished or self.cancelled:
+            return
+        self.cancelled = True
+        add_debug_message("Sync cancelled by the user", "SYNC")
+        self.progress.setTitle("Stopping after this deck…")
+        self.progress.setCancelEnabled(False)
+
+    def _deck_label(self, deck_key):
+        info = self.remote_decks.get(deck_key, {})
+        return info.get("local_deck_name") or info.get("remote_deck_name") or "Deck"
+
+    def _next(self):
+        if self.cancelled or self.index >= len(self.deck_keys):
+            self._finish()
+            return
+
+        deck_key = self.deck_keys[self.index]
+        try:
+            url = self.remote_decks[deck_key].get("remote_deck_url", "")
+            label = self._deck_label(deck_key)
+            self.progress.setTitle(
+                f"Downloading {label} ({self.index + 1} of {len(self.deck_keys)})…"
+            )
+            self.status_msgs.append(f"{label}: downloading…")
+            _update_progress_text(self.progress, self.status_msgs)
+
+            QueryOp(
+                parent=self.progress,
+                op=lambda _col: _fetch_deck(url),
+                success=self._on_fetched,
+            ).failure(self._on_fetch_failed).without_collection().run_in_background()
+        except Exception as e:
+            # Nothing is waiting on a background step now, so a failure here
+            # would otherwise leave the window up and every later sync refused
+            # as "already running".
+            self._record_failure(deck_key, e)
+            self._advance()
+
+    def _advance(self):
+        self.index += 1
+        self.progress.setValue(self.index * 3)
+        self._next()
+
+    # -- one deck, back on the main thread ------------------------------------
+
+    def _on_fetched(self, remote_deck):
+        deck_key = self.deck_keys[self.index]
+        try:
+            self._write_deck(deck_key, remote_deck)
+        except Exception as e:
+            self._record_failure(deck_key, e)
+        self._advance()
+
+    def _on_fetch_failed(self, error):
+        self._record_failure(self.deck_keys[self.index], error)
+        self._advance()
+
+    def _write_deck(self, deck_key, remote_deck):
+        remote_decks = self.remote_decks
+        self.progress.setTitle(f"Saving {self._deck_label(deck_key)}…")
+        _, _, current_stats = _sync_single_deck(
+            remote_decks,
+            deck_key,
+            self.progress,
+            self.status_msgs,
+            self.index * 3,
+            debug_messages=[],
+            remote_deck=remote_deck,
+        )
+
+        deck_name = remote_decks[deck_key].get("local_deck_name", "Unknown")
+        deck_url = remote_decks[deck_key].get("remote_deck_url", "")
+
+        # Check if the deck was new and update sync status
+        from .config_manager import update_deck_sync_status
+
+        was_new_deck = update_deck_sync_status(deck_url, success=True)
+
+        # Errors captured row by row, which did not stop the deck.
+        has_errors = current_stats.has_errors()
+        self.stats_manager.add_deck_result(
+            DeckSyncResult(
+                deck_name=deck_name,
+                deck_key=deck_key,
+                deck_url=deck_url,
+                success=not has_errors,
+                stats=current_stats,
+                was_new_deck=was_new_deck,
+                error_message="Completed with errors" if has_errors else None,
+            )
+        )
+
+        if has_errors:
+            add_debug_message(f"Deck completed with errors: {deck_key}", "SYNC")
+            n = current_stats.errors
+            self.status_msgs.append(
+                f"{deck_name}: finished with {n} error{'s' if n != 1 else ''}."
+            )
+            self.sync_errors.append(
+                f"{deck_name}: {n} row{'s' if n != 1 else ''} could not be synced."
+            )
+        else:
+            add_debug_message(f"Deck completed: {deck_key}", "SYNC")
+            self.status_msgs.append(f"{deck_name}: done.")
+        _update_progress_text(self.progress, self.status_msgs)
+
+    def _record_failure(self, deck_key, error):
+        """A deck that did not sync at all: say why, plainly, and log the rest."""
+        deck_name = _resolve_deck_name_for_error(deck_key, self.remote_decks)
+        sentence = user_message(error)
+        add_debug_message(
+            f"Deck failed: {deck_key} ({deck_name}) — "
+            f"{getattr(error, 'detail', None) or repr(error)}\n"
+            + "".join(
+                traceback.format_exception(type(error), error, error.__traceback__)
+            ),
             "SYNC",
         )
 
-        # Finalize cleanup
-        removed_subdecks = _finalize_sync_cleanup(progress)
+        # Recorded once, on the deck's own result: it reaches the summary's
+        # error list through the merged totals, and adding it to sync_errors
+        # as well listed every failed deck twice and counted it as two errors.
+        line = f"{deck_name}: {sentence}"
+        self.status_msgs.append(line)
+        _update_progress_text(self.progress, self.status_msgs)
 
-        # Define callback for AnkiWeb sync (to be called after summary window closes)
-        def execute_ankiweb_sync_after_close():
-            """Callback to execute AnkiWeb synchronization after the user closes the summary window"""
-            add_debug_message(
-                "🔄 Checking AnkiWeb synchronization configuration...", "SYNC"
-            )
-            try:
-                from .ankiweb_sync import execute_ankiweb_sync_if_configured
+        failed = DeckSyncResult(
+            deck_name=deck_name,
+            deck_key=deck_key,
+            deck_url=self.remote_decks.get(deck_key, {}).get("remote_deck_url", ""),
+            success=False,
+            stats=SyncStats(),
+            error_message=sentence,
+        )
+        failed.stats.add_error(line)
+        self.stats_manager.add_deck_result(failed)
 
-                ankiweb_result = execute_ankiweb_sync_if_configured()
+    # -- the end ---------------------------------------------------------------
 
-                if ankiweb_result:
-                    if ankiweb_result["success"]:
-                        add_debug_message(
-                            f"✅ AnkiWeb sync: {ankiweb_result['message']}", "SYNC"
-                        )
-                    else:
-                        add_debug_message(
-                            f"❌ AnkiWeb sync failed: {ankiweb_result['error']}", "SYNC"
-                        )
-                else:
-                    add_debug_message("⏹️ AnkiWeb sync disabled", "SYNC")
-            except Exception as ankiweb_error:
-                add_debug_message(
-                    f"❌ AnkiWeb synchronization error: {ankiweb_error}", "SYNC"
+    def _finish(self):
+        global _ACTIVE_RUN
+
+        self.finished = True
+        try:
+            self.progress.setCancelEnabled(False)
+            self.progress.setTitle("Finishing…")
+            removed_subdecks = _finalize_sync_cleanup(self.progress)
+            self.progress.setValue(self.progress.maximum())
+            self.progress.close_when_done()
+
+            summary = self.stats_manager.get_summary()
+            total_stats = summary["total_stats"]
+            deck_results = self.stats_manager.deck_results
+            successful = len(self.stats_manager.get_successful_decks())
+
+            # The AnkiWeb hand-off is what the user asked for after a sync, so
+            # it follows either way — straight away after a clean run, after
+            # the summary is closed otherwise. Not after Cancel: someone who
+            # stopped a sync did not ask for it to be pushed anywhere.
+            hand_off = None if self.cancelled else _hand_off_to_ankiweb
+
+            if _run_was_clean(self.sync_errors, total_stats, deck_results):
+                tooltip(
+                    clean_run_message(
+                        successful,
+                        len(self.deck_keys),
+                        total_stats,
+                        cancelled=self.cancelled,
+                    ),
+                    period=4000,
+                    parent=mw,
                 )
-
-        # Define callback to open summary window (to be called after progress bar closes)
-        def open_summary_window():
-            _show_sync_summary_new(
-                sync_errors,
-                summary["total_stats"],
-                successful_decks,
-                total_decks,
-                removed_subdecks,
-                ankiweb_result=None,
-                on_close_callback=execute_ankiweb_sync_after_close,
-                deck_results=deck_results,
-                new_deck_mode=new_deck_mode,
+                if hand_off:
+                    hand_off()
+            else:
+                _show_sync_summary_new(
+                    self.sync_errors,
+                    total_stats,
+                    successful,
+                    len(self.deck_keys),
+                    removed_subdecks,
+                    ankiweb_result=None,
+                    on_close_callback=hand_off,
+                    deck_results=deck_results,
+                    new_deck_mode=self.new_deck_mode,
+                )
+        except Exception as e:
+            add_debug_message(
+                f"Finishing the sync failed: {e!r}\n{traceback.format_exc()}", "SYNC"
             )
+        finally:
+            _ACTIVE_RUN = None
+            # However the end went, the window must not outlive the run: its
+            # Cancel does nothing once the run has finished.
+            self.progress.close_when_done()
 
-        # Set the action to perform when progress dialog is closed
-        on_close_action = open_summary_window
 
-    finally:
-        # Show completion status with Close button (dialog stays open)
-        if progress.isVisible():
-            _show_sync_completion(
-                progress,
-                status_msgs,
-                total_decks,
-                successful_decks if "successful_decks" in dir() else 0,
-                sync_errors if "sync_errors" in dir() else None,
-                on_close_callback=(
-                    on_close_action if "on_close_action" in locals() else None
-                ),
-            )
+def _run_was_clean(sync_errors, total_stats, deck_results):
+    """Nothing failed and nothing warned — so nothing needs reading."""
+    return (
+        not sync_errors
+        and not total_stats.errors
+        and not total_stats.warnings
+        and all(r.success for r in deck_results or [])
+    )
+
+
+def clean_run_message(decks_synced, total_decks, total_stats, cancelled=False):
+    """The one line a clean sync leaves behind, e.g. ``2 decks synced · 12 new``.
+
+    A sync that went as expected used to end in two windows and two Close
+    buttons; there is nothing in that case a reader needs beyond these numbers.
+    """
+    if cancelled:
+        noun = "deck" if total_decks == 1 else "decks"
+        head = f"Sync stopped · {decks_synced} of {total_decks} {noun} synced"
+    else:
+        noun = "deck" if decks_synced == 1 else "decks"
+        head = f"{decks_synced} {noun} synced"
+    parts = [
+        f"{n} {word}"
+        for n, word in (
+            (total_stats.created, "new"),
+            (total_stats.updated, "changed"),
+            (total_stats.deleted, "removed"),
+        )
+        if n
+    ]
+    return " · ".join([head] + (parts or ["no changes"]))
+
+
+def _hand_off_to_ankiweb(*_args):
+    """Runs AnkiWeb synchronization if configured. Last step of every sync."""
+    add_debug_message("Checking AnkiWeb synchronization configuration...", "SYNC")
+    try:
+        from .ankiweb_sync import execute_ankiweb_sync_if_configured
+
+        ankiweb_result = execute_ankiweb_sync_if_configured()
+        if ankiweb_result:
+            if ankiweb_result["success"]:
+                add_debug_message(f"AnkiWeb sync: {ankiweb_result['message']}", "SYNC")
+            else:
+                add_debug_message(
+                    f"AnkiWeb sync failed: {ankiweb_result['error']}", "SYNC"
+                )
+        else:
+            add_debug_message("AnkiWeb sync disabled", "SYNC")
+    except Exception as ankiweb_error:
+        add_debug_message(f"AnkiWeb synchronization error: {ankiweb_error}", "SYNC")
 
 
 def _get_deck_keys_to_sync(remote_decks, selected_deck_names, selected_deck_urls=None):
@@ -1105,6 +1171,10 @@ class LogProgressDialog(QDialog):
     """
     Custom progress dialog with a scrollable log area.
     Mimics QProgressDialog interface used in this module.
+
+    Cancel stops the run between decks (``on_cancel``, set by :class:`_SyncRun`)
+    rather than hiding the window: hiding it used to leave the sync carrying on
+    out of sight, which is the opposite of what the button says.
     """
 
     def __init__(self, title, message, min_val, max_val, parent=None):
@@ -1115,6 +1185,8 @@ class LogProgressDialog(QDialog):
 
         super().__init__(parent)
         self.setWindowTitle("Synchronizing")
+        self.on_cancel = None
+        self._done = False
 
         layout = QVBoxLayout(self)
         layout.setSpacing(SPACE_ELEMENT)
@@ -1179,26 +1251,9 @@ class LogProgressDialog(QDialog):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.log_area.setTextCursor(cursor)
 
-    def setCancelButton(self, btn):
-        """Swaps the button for another one, or takes it away.
-
-        Asked of the button box rather than done by replacing a widget in a
-        layout: the box is what decides where a button sits on this platform, and
-        a widget dropped into the old one's place would sit wherever that happened
-        to be.
-        """
-        from .compat import ButtonRole_Reject
-
+    def setCancelEnabled(self, enabled):
         if self.cancel_btn is not None:
-            self.button_box.removeButton(self.cancel_btn)
-            self.cancel_btn.deleteLater()
-        self.cancel_btn = btn
-        if btn is not None:
-            self.button_box.addButton(btn, ButtonRole_Reject)
-
-    def setCancelButtonText(self, text):
-        if self.cancel_btn is not None:
-            self.cancel_btn.setText(text)
+            self.cancel_btn.setEnabled(enabled)
 
     def setTitle(self, text):
         """Updates the title label."""
@@ -1222,19 +1277,39 @@ class LogProgressDialog(QDialog):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.log_area.setTextCursor(cursor)
 
-    def setAutoClose(self, b):
-        pass
+    # -- closing ---------------------------------------------------------------
+    #
+    # Cancel, Escape and the title bar's close button all mean "stop": while the
+    # run is going they ask it to stop after the current deck and leave the
+    # window up to say so; once it has finished, the window closes itself.
 
-    def setAutoReset(self, b):
-        pass
+    def reject(self):
+        if self._done:
+            super().reject()
+            return
+        if callable(self.on_cancel):
+            self.on_cancel()
 
-    def setMinimumDuration(self, ms):
-        pass
+    def closeEvent(self, event):
+        if self._done:
+            super().closeEvent(event)
+            return
+        event.ignore()
+        self.reject()
+
+    def close_when_done(self):
+        """Closes the window for good. Called by the run when it has finished."""
+        self._done = True
+        self.close()
 
 
 def _setup_progress_dialog(total_decks):
     """
-    Configures and returns a modern, user-friendly progress dialog with scrollable log.
+    Configures and returns the progress window with its scrollable log.
+
+    Window-modal over Anki's main window, like Anki's own progress windows: the
+    main window keeps painting and answering while the sheets download, but a
+    note cannot be edited out from under a sync that is about to write it.
 
     Args:
         total_decks: Total number of decks to calculate bar maximum
@@ -1242,84 +1317,14 @@ def _setup_progress_dialog(total_decks):
     Returns:
         LogProgressDialog: Configured progress dialog
     """
+    from .compat import WINDOW_MODAL
+
     total_steps = total_decks * 3
 
-    initial_message = "🔄 Synchronizing..."
-
-    progress = LogProgressDialog(initial_message, "", 0, total_steps, mw)
+    progress = LogProgressDialog("Synchronizing…", "", 0, total_steps, mw)
+    progress.setWindowModality(WINDOW_MODAL)
     progress.show()
-    mw.app.processEvents()
     return progress
-
-
-def _show_sync_completion(
-    progress,
-    status_msgs,
-    total_decks,
-    successful_decks,
-    errors=None,
-    on_close_callback=None,
-):
-    """
-    Shows sync completion status and adds a Close button.
-
-    Args:
-        progress: The progress dialog
-        status_msgs: List of status messages
-        total_decks: Total decks attempted
-        successful_decks: Number of successful syncs
-        errors: List of errors (if any)
-        on_close_callback: Optional function to call when dialog is closed
-    """
-    # Set progress to maximum
-    progress.setValue(progress.maximum())
-
-    # Build completion status
-    if successful_decks == total_decks:
-        completion_icon = "✅"
-        completion_status = "Synchronization Complete!"
-    elif successful_decks > 0:
-        completion_icon = "⚠️"
-        completion_status = "Synchronization Completed with Issues"
-    else:
-        completion_icon = "❌"
-        completion_status = "Synchronization Failed"
-
-    # Update title to show completion status
-    if hasattr(progress, "setTitle"):
-        progress.setTitle(f"{completion_icon} {completion_status}")
-
-    # Append simple finish message to log instead of replacing it
-    if hasattr(progress, "appendMessage"):
-        progress.appendMessage("-" * 40)
-        progress.appendMessage(f"Status: {completion_status}")
-        progress.appendMessage(
-            f"Results: {successful_decks}/{total_decks} decks synchronized."
-        )
-        progress.appendMessage("-" * 40)
-    else:
-        # Fallback if somehow using standard dialog
-        completion_msg = f"{completion_icon} {completion_status}\n\n"
-        completion_msg += f"📊 Results: {successful_decks}/{total_decks} decks synchronized successfully"
-        if errors:
-            completion_msg += f"\n⚠️ {len(errors)} error(s) occurred"
-        progress.setLabelText(completion_msg)
-
-    # Add Close button
-
-    close_btn = QPushButton("Close")
-
-    def on_close_click():
-        progress.close()
-        if on_close_callback:
-            on_close_callback()
-
-    close_btn.clicked.connect(on_close_click)
-
-    progress.setCancelButton(close_btn)
-    progress.setCancelButtonText("Close")
-
-    mw.app.processEvents()
 
 
 def _update_progress_text(
@@ -1358,10 +1363,20 @@ def _update_progress_text(
 
 
 def _sync_single_deck(
-    remote_decks, deckKey, progress, status_msgs, step, debug_messages=None
+    remote_decks,
+    deckKey,
+    progress,
+    status_msgs,
+    step,
+    debug_messages=None,
+    remote_deck=None,
 ):
     """
-    Synchronizes a single deck.
+    Writes one deck's downloaded sheet into the collection. Main thread only.
+
+    ``remote_deck`` is what :func:`_fetch_deck` made of the sheet on a
+    background thread; nothing in here touches the network any more, except as
+    a fallback when it is called without one.
 
     Args:
         remote_decks: Remote decks dictionary
@@ -1414,7 +1429,9 @@ def _sync_single_deck(
         local_deck_id = current_deck_id
 
         # Inform about recreation
-        msg = f"♻️ Recreating deck: '{current_deck_name}'"
+        msg = (
+            f"{current_deck_name}: the deck was missing in Anki and has been recreated."
+        )
         status_msgs.append(msg)
         _update_progress_text(progress, status_msgs)
 
@@ -1440,34 +1457,12 @@ def _sync_single_deck(
     # Update info in configuration with actual name used
     currentRemoteInfo["local_deck_name"] = deckName
 
-    # Reachability check only. What it returns is deliberately not used: it is an
-    # export URL with the "#sheet=" fragment stripped, which is the wrong thing to
-    # download from (see getRemoteDeck below).
-    validate_url(remote_deck_url)
+    if remote_deck is None:
+        remote_deck = _fetch_deck(remote_deck_url)
+    remoteDeck = remote_deck
 
-    # 1. Download
-    msg = f"📥 {deckName}: Downloading data..."
-    status_msgs.append(msg)
-    _update_progress_text(progress, status_msgs)
-
-    # The deck's own URL, not the export URL validate_url just built: converting to
-    # "/export?format=tsv" drops the "#sheet=" fragment, and a deck with no sheet
-    # named falls back to downloading the file's *first* sheet. Every deck of one
-    # file then synced the same sheet — the second deck ending up with the first
-    # one's columns, note type and rows. getRemoteDeck converts the URL itself.
-    remoteDeck = getRemoteDeck(remote_deck_url)
-
-    # NEW: Debug to check loaded notes
-    notes_count = (
-        len(remoteDeck.notes)
-        if hasattr(remoteDeck, "notes") and remoteDeck.notes
-        else 0
-    )
-    add_debug_message(f"📊 Notes loaded from remote deck: {notes_count}", "REMOTE_DECK")
-
-    step += 1
-    progress.setValue(step)
-    mw.app.processEvents()
+    notes_count = len(remoteDeck.notes) if getattr(remoteDeck, "notes", None) else 0
+    add_debug_message(f"Notes loaded from remote deck: {notes_count}", "REMOTE_DECK")
 
     # Update remote_deck_name with name extracted from URL
     new_remote_name_from_url = DeckNameManager.extract_remote_name_from_url(
@@ -1767,28 +1762,17 @@ def _sync_single_deck(
             # Update deck info in configuration
             currentRemoteInfo["local_deck_name"] = updated_name
 
-            msg = f"🏷️ {deckName} → {updated_name}: Name updated automatically"
+            msg = f"{deckName}: renamed to {updated_name}."
             deckName = updated_name
             remoteDeck.deckName = updated_name
 
             status_msgs.append(msg)
             _update_progress_text(progress, status_msgs)
-        else:
-            # Name verified but no changes needed
-            msg = f"🏷️ {deckName}: Name verification OK"
-            # Optional: Uncomment if we want this verbose line, but likely too verbose for every sync?
-            # For now, per user request "no step should be silent", we add it.
-            status_msgs.append(msg)
-            _update_progress_text(progress, status_msgs)
 
     # 2. Processing and writing to database
-    msg = f"⚙️ {deckName}: Processing data..."
-    status_msgs.append(msg)
-    _update_progress_text(progress, status_msgs)
-
     remoteDeck.deckName = deckName
 
-    msg = f"💾 {deckName}: Saving changes..."
+    msg = f"{deckName}: saving changes…"
     status_msgs.append(msg)
     _update_progress_text(progress, status_msgs)
 
@@ -1823,7 +1807,7 @@ def _sync_single_deck(
         # Return default stats with errors (add_error increments the counter,
         # so start at 0 to avoid double-counting this single failure).
         deck_stats = SyncStats(created=0, updated=0, deleted=0, errors=0, ignored=0)
-        deck_stats.add_error(f"Critical synchronization error: {e}")
+        deck_stats.add_error(user_message(e))
 
     add_debug_message(
         f"✅ create_or_update_notes COMPLETED - returned: {deck_stats}", "SYNC"
@@ -1885,15 +1869,13 @@ def _sync_single_deck(
                         f"✅ Consistency applied: {', '.join(updates)} updated",
                         "NAME_CONSISTENCY",
                     )
-                    status_msgs.append(f"🔧 Consistency applied: {', '.join(updates)}")
+                    status_msgs.append(f"{deckName}: updated {', '.join(updates)}.")
                     _update_progress_text(progress, status_msgs)
                 else:
                     add_debug_message(
                         "✅ Consistency verified: all names were already correct",
                         "NAME_CONSISTENCY",
                     )
-                    status_msgs.append("🔧 Name consistency verification: OK")
-                    _update_progress_text(progress, status_msgs)
             elif consistency_result and consistency_result.get("errors"):
                 # Error - but don't fail synchronization
                 for error in consistency_result["errors"]:
@@ -1945,15 +1927,16 @@ def _sync_single_deck(
                     "SYNC",
                 )
 
-            status_msgs.append(f"🔄 Note Types: {sync_result['updated_count']} synced")
+            n = sync_result["updated_count"]
+            status_msgs.append(
+                f"{deckName}: renamed {n} note type{'s' if n != 1 else ''}."
+            )
             _update_progress_text(progress, status_msgs)
 
         else:
             add_debug_message(
                 "[NOTE_TYPE_SYNC] ✅ All note_types are already consistent", "SYNC"
             )
-            status_msgs.append("🔄 Note Types verification: OK")
-            _update_progress_text(progress, status_msgs)
 
     except Exception as e:
         add_debug_message(
@@ -2005,42 +1988,3 @@ def _resolve_deck_name_for_error(deckKey, remote_decks):
         return "Unknown"
     except Exception:
         return "Unknown"
-
-
-def _report_deck_sync_error(message, progress, status_msgs, sync_errors, step):
-    """Records a deck error message and advances the progress bar."""
-    sync_errors.append(message)
-    status_msgs.append(message)
-    _update_progress_text(progress, status_msgs)
-    step += 3
-    progress.setValue(step)
-    mw.app.processEvents()
-    return step, sync_errors
-
-
-def _handle_sync_error(
-    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
-):
-    """Handles deck synchronization errors."""
-    deck_name = _resolve_deck_name_for_error(deckKey, remote_decks)
-    return _report_deck_sync_error(
-        f"❌ {deck_name}: Sync failed - {str(e)}",
-        progress,
-        status_msgs,
-        sync_errors,
-        step,
-    )
-
-
-def _handle_unexpected_error(
-    e, deckKey, remote_decks, progress, status_msgs, sync_errors, step
-):
-    """Handles unexpected errors during synchronization."""
-    deck_name = _resolve_deck_name_for_error(deckKey, remote_decks)
-    return _report_deck_sync_error(
-        f"🔥 {deck_name}: Unexpected error - {str(e)}",
-        progress,
-        status_msgs,
-        sync_errors,
-        step,
-    )

@@ -12,6 +12,10 @@ from typing import Optional
 # ANKI IMPORTS
 # =============================================================================
 from aqt import mw
+
+# Network work goes on a background thread through this, the way Anki asks
+# add-ons to do it; the result comes back to the main thread.
+from aqt.operations import QueryOp
 from aqt.qt import QAbstractItemView
 from aqt.qt import QAction
 from aqt.qt import QApplication
@@ -56,6 +60,7 @@ from aqt.qt import QTimer
 from aqt.qt import QVBoxLayout
 from aqt.qt import QWidget
 from aqt.qt import qconnect
+from aqt.utils import openLink
 from aqt.utils import showCritical
 from aqt.utils import showInfo
 from aqt.utils import showWarning
