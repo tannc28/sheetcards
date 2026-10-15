@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>SheetCards — preview sheet trước khi sync</title>
-<meta name="description" content="Dán link Google Sheets để preview deck, các dòng và card mà add-on SheetCards sẽ tạo — chạy chính code của add-on ngay trong trình duyệt.">
+<title>SheetCards — Create deck: deck Anki từ Google Sheets</title>
+<meta name="description" content="Create deck: tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on. Dán link, xem từng card, rồi tải file .apkg.">
 <!-- Two cards, the front one ruled like a sheet. Inline, so the icon costs no
      request and cannot go missing from a deploy. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -27,18 +27,18 @@
 
 <!-- To the working area rather than to the card: the card panel does not exist
      until a sheet has loaded, and a skip link to a hidden target goes nowhere. -->
-<a class="skip" href="#app" data-i18n="skip">Tới phần preview</a>
+<a class="skip" href="#app" data-i18n="skip">Tới phần Create deck</a>
 
 <header class="masthead">
   <div class="brand">
-    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
+    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="brandTag">create deck</span></h1>
   </div>
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" data-i18n="navHome">Home</a>
-    <a href="./preview.html" aria-current="page" data-i18n="navPreview">Preview</a>
+    <a href="./preview.html" aria-current="page" data-i18n="navPreview">Create deck</a>
     <a href="./editor.html" data-i18n="navEditor">Editor</a>
-    <a href="./docs/" data-i18n="navDocs">Docs</a>
+    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
   <button id="theme" class="themebtn" type="button"></button>

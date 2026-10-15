@@ -20,8 +20,8 @@
 
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
-  brandTag: { en: "preview", vi: "preview" },
-  skip: { en: "Skip to the preview", vi: "Tới phần preview" },
+  brandTag: { en: "create deck", vi: "create deck" },
+  skip: { en: "Skip to Create deck", vi: "Tới phần Create deck" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
   close: { en: "Close", vi: "Đóng" },
@@ -29,7 +29,7 @@ const STRINGS = {
   // --- the site's own navigation, on every page ---------------------------
   navLabel: { en: "Site", vi: "Các trang" },
   navHome: { en: "Home", vi: "Home" },
-  navPreview: { en: "Preview", vi: "Preview" },
+  navPreview: { en: "Create deck", vi: "Create deck" },
   navEditor: { en: "Editor", vi: "Editor" },
   navDocs: { en: "Docs", vi: "Docs" },
   docsTag: { en: "docs", vi: "docs" },
@@ -52,7 +52,7 @@ const STRINGS = {
       "vào Anki và sync lại mỗi khi sheet thay đổi.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
-  homeTry: { en: "Try the preview", vi: "Thử preview trên web" },
+  homeTry: { en: "Create deck", vi: "Create deck" },
   homeNeeds: {
     en: "Free and open source · Anki 25.x or later on a computer",
     vi: "Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
@@ -105,10 +105,10 @@ const STRINGS = {
     en: "Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.",
     vi: "Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.",
   },
-  featPreviewTitle: { en: "See it before you sync", vi: "Preview trước khi sync" },
+  featPreviewTitle: { en: "A deck without the add-on", vi: "Có deck mà không cần add-on" },
   featPreview: {
-    en: "The preview runs the add-on's own code in your browser, and can hand you an <code>.apkg</code> for your phone.",
-    vi: "Preview chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.",
+    en: "Create deck runs the add-on's own code in your browser, and hands you an <code>.apkg</code> for your phone or computer.",
+    vi: "Create deck chạy chính code của add-on trong trình duyệt, và tạo file <code>.apkg</code> cho điện thoại hoặc máy tính.",
   },
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
@@ -149,8 +149,8 @@ const STRINGS = {
     vi: "Khởi động lại Anki. Menu <b>SheetCards</b> sẽ xuất hiện trong <b>Tools</b>.",
   },
   homePreviewText: {
-    en: "Paste a sheet link and see its decks and cards, with nothing installed.",
-    vi: "Dán link sheet để xem deck và card, không cần cài gì.",
+    en: "Make an Anki deck from Google Sheets on your phone or computer, no add-on needed.",
+    vi: "Tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.",
   },
   homeEditorText: {
     en: "Write a settings row and watch the card change as you type.",
@@ -455,8 +455,8 @@ const STRINGS = {
   // its own. Said in the words of somebody waiting for a page, with the two facts
   // that make the wait bearable: how big, and that it happens once.
   booting: {
-    en: "Loading the previewer (~5 MB, first time only)…",
-    vi: "Đang tải preview (~5 MB, chỉ lần đầu)…",
+    en: "Loading Create deck (~5 MB, first time only)…",
+    vi: "Đang tải Create deck (~5 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -475,8 +475,8 @@ const STRINGS = {
     vi: (n, s) => `${n} dòng · ${s} sẽ sync`,
   },
   bootFailed: {
-    en: (m) => `The previewer could not load (${m}). Reload the page to try again.`,
-    vi: (m) => `Không tải được preview (${m}). Tải lại trang để thử lại.`,
+    en: (m) => `Create deck could not load (${m}). Reload the page to try again.`,
+    vi: (m) => `Không tải được Create deck (${m}). Tải lại trang để thử lại.`,
   },
 
   // --- errors -------------------------------------------------------------
@@ -767,6 +767,22 @@ export function t(key, ...args) {
   if (!entry) return key;
   const value = entry[current] ?? entry.en;
   return typeof value === "function" ? value(...args) : value;
+}
+
+/**
+ * Links into the docs, pointed at the docs in the page's language.
+ *
+ * The Vietnamese docs are at docs/, the English at docs/en/. A link carries the
+ * page it means in `data-doc` (`""` for the docs' front page) and a static href
+ * to the Vietnamese one, which is right before any script runs.
+ */
+export function paintDocLinks() {
+  for (const a of document.querySelectorAll("a[data-doc]")) {
+    a.setAttribute(
+      "href",
+      `./docs/${current === "en" ? "en/" : ""}${a.dataset.doc}`,
+    );
+  }
 }
 
 export { STRINGS };

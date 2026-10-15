@@ -49,9 +49,9 @@
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" aria-current="page" data-i18n="navHome">Home</a>
-    <a href="./preview.html" data-i18n="navPreview">Preview</a>
+    <a href="./preview.html" data-i18n="navPreview">Create deck</a>
     <a href="./editor.html" data-i18n="navEditor">Editor</a>
-    <a href="./docs/" data-i18n="navDocs">Docs</a>
+    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
   <button id="theme" class="themebtn" type="button"></button>
@@ -79,7 +79,7 @@
            class="anki-mark" src="./anki.png" alt="" width="18" height="18"><span
            data-i18n="homeDownload">Tải về</span><span class="ext" translate="no">.ankiaddon</span></a>
         <a class="btn-quiet big" href="./preview.html"><span data-icon="eye"></span><span
-           data-i18n="homeTry">Thử preview trên web</span></a>
+           data-i18n="homeTry">Create deck</span></a>
       </p>
       <p class="fine" data-i18n="homeNeeds">Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính</p>
      </div>
@@ -139,7 +139,7 @@
       <li class="feature reveal"><span class="feat-icon" data-icon="pen-line"></span>
         <h3 data-i18n="featDrawTitle">Cloze và viết tay</h3><p data-i18n="featDraw">Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="eye"></span>
-        <h3 data-i18n="featPreviewTitle">Preview trước khi sync</h3><p data-i18n="featPreview">Preview chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.</p></li>
+        <h3 data-i18n="featPreviewTitle">Có deck mà không cần add-on</h3><p data-i18n="featPreview">Create deck chạy chính code của add-on trong trình duyệt, và tạo file <code>.apkg</code> cho điện thoại hoặc máy tính.</p></li>
     </ul>
   </section>
 
@@ -171,9 +171,9 @@
 
 <footer class="sitefoot">
   <ul class="footlinks">
-    <li><a href="./preview.html" data-i18n="navPreview">Preview</a><p data-i18n="homePreviewText">Dán link sheet để xem deck và card, không cần cài gì.</p></li>
+    <li><a href="./preview.html" data-i18n="navPreview">Create deck</a><p data-i18n="homePreviewText">Tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.</p></li>
     <li><a href="./editor.html" data-i18n="navEditor">Editor</a><p data-i18n="homeEditorText">Soạn settings row và xem card thay đổi ngay khi gõ.</p></li>
-    <li><a href="./docs/" data-i18n="navDocs">Docs</a><p data-i18n="homeDocsText">Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.</p></li>
+    <li><a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a><p data-i18n="homeDocsText">Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.</p></li>
     <li><a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a><p
         data-i18n="homeGithubText">Mã nguồn, các bản phát hành và báo lỗi.</p></li>
   </ul>

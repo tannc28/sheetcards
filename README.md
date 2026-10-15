@@ -39,14 +39,15 @@ Requires Anki 25.x or later on Windows, macOS or Linux.
 
 ## Learn more
 
-- **Documentation:** <https://tannc28.github.io/sheetcards/docs/>: columns, the
+- **Documentation:** <https://tannc28.github.io/sheetcards/docs/en/> (Vietnamese at
+  <https://tannc28.github.io/sheetcards/docs/>): columns, the
   settings row, themes, pictures and video, text to speech, syncing, and
   troubleshooting.
-- **Preview:** <https://tannc28.github.io/sheetcards/preview.html>: paste a sheet
-  link and see the decks and cards it makes, in your browser, before you install
-  anything. It can also build an `.apkg` for AnkiDroid or AnkiMobile.
+- **Create deck:** <https://tannc28.github.io/sheetcards/preview.html>: paste a
+  sheet link, check the decks and cards it makes, and download an `.apkg` for
+  AnkiDroid, AnkiMobile or desktop Anki, with nothing installed.
 - **Example workbook:** thirty-one small decks, each showing one feature. Paste
-  this link into the preview or into *Connect a Google Sheet…*:
+  this link into Create deck or into *Connect a Google Sheet…*:
 
   ```text
   https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
@@ -57,7 +58,7 @@ Requires Anki 25.x or later on Windows, macOS or Linux.
 ## Developing
 
 Tests, the build and the release process are described in
-[For developers](https://tannc28.github.io/sheetcards/docs/developers.html),
+[For developers](https://tannc28.github.io/sheetcards/docs/en/developers.html),
 [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CLAUDE.md`](CLAUDE.md).
 
 ## License

@@ -214,6 +214,12 @@ body.ready .hero { display: none; }
   text-transform: uppercase; color: var(--accent);
   vertical-align: .35em; margin-left: 2px;
 }
+/* On a phone the masthead has one row for the name, the theme and the language
+   switch; "create deck" beside the name pushes the switch onto a row of its own,
+   and the nav underneath already says which page this is. */
+@media (max-width: 25rem) {
+  .brand-tag { display: none; }
+}
 
 .langs {
   flex: none; display: flex;
@@ -1822,3 +1828,9 @@ a.btn, a.btn-quiet { text-decoration: none; border-radius: var(--r-sm); }
 .pager .icon { color: var(--muted); }
 .pager .next { grid-column: 2; justify-content: flex-end; text-align: right; }
 .editlink { margin-top: 1.5rem; font-size: var(--t-sm); }
+/* The same page in the other language, above its title. */
+.doc-twin {
+  display: flex; align-items: center; gap: 6px; margin: 0 0 .4rem;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.doc-twin .icon { width: 15px; height: 15px; }

@@ -14,7 +14,7 @@
  */
 
 import { renderCard, escapeHtml } from "./anki.js";
-import { LANGUAGES, lang, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { icon, paintIcons } from "./icons.js";
@@ -402,6 +402,7 @@ function activeKeys() {
 
 function paintChrome() {
   document.documentElement.lang = lang();
+  paintDocLinks();
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.textContent = t(el.dataset.i18n);
   }

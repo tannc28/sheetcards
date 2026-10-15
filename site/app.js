@@ -10,7 +10,7 @@
  */
 
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
-import { LANGUAGES, lang, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
@@ -1106,6 +1106,7 @@ function paintStatic() {
   // A screen reader picks its voice from this, so it has to follow the page's
   // language, not just the button that last changed it.
   document.documentElement.lang = lang();
+  paintDocLinks();
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.innerHTML = t(el.dataset.i18n);
   }
