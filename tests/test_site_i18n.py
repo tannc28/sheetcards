@@ -112,7 +112,7 @@ def _keys_referenced(declared):
     # it generates.
     build = (REPO / "scripts" / "build_site.py").read_text(encoding="utf-8")
     examples = build.split("HOME_EXAMPLES = [", 1)[1].split("\n]", 1)[0]
-    quoted |= set(re.findall(r'"(\w+)"\)', examples))
+    quoted |= set(re.findall(r'"(\w+)"', examples))
     return (quoted & declared) | _keys_called()
 
 

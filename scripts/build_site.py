@@ -54,12 +54,15 @@ DOC_GROUPS = [
 VI_DOCS = {"index"}
 
 # The landing page's demo: (sheet in the example workbook, row ID, i18n key of
-# its label). Real rows, rendered with the real templates — the page claims the
-# sheet becomes this card, so it had better be the card the add-on makes.
+# its label, theme). Real rows, rendered with the real templates — the page
+# claims the sheet becomes this card, so it had better be the card the add-on
+# makes. Each card wears a different theme to show there is more than one; the
+# theme is written into the settings cell the strip shows, so the sheet on the
+# left still says exactly what made the card on the right.
 HOME_EXAMPLES = [
-    ("15 Theme + subdeck (màu, tầng)", "n01", "demoEnglish"),
-    ("13 Furigana (phiên âm kanji)", "f01", "demoJapanese"),
-    ("06 Cloze (điền chỗ trống)", "z01", "demoCloze"),
+    ("15 Theme + subdeck (màu, tầng)", "n01", "demoEnglish", "paper"),
+    ("13 Furigana (phiên âm kanji)", "f01", "demoJapanese", "sakura"),
+    ("06 Cloze (điền chỗ trống)", "z01", "demoCloze", "matcha"),
 ]
 
 
@@ -192,10 +195,24 @@ def home_cards(out):
     tm, card_layout, workbook = _pure_package(out)
     data = EXAMPLES.read_bytes()
     cards = []
-    for sheet, row_id, label in HOME_EXAMPLES:
-        parsed = tm.parse_tsv_data(workbook.sheet_tsv(data, sheet), [])
+    for sheet, row_id, label, theme in HOME_EXAMPLES:
+        tsv = workbook.sheet_tsv(data, sheet)
+        lines = tsv.split("\n")
+        marker, _, rest = lines[1].partition("\t")
+        if not marker.lower().startswith("#config"):
+            sys.exit(f"home demo: {sheet!r} has no settings row to set a theme in")
+        kept = [
+            pair.strip()
+            for pair in marker[len("#config") :].split(";")
+            if pair.strip() and not pair.strip().lower().startswith("theme")
+        ]
+        marker = "#config " + "; ".join(kept + [f"theme={theme}"])
+        lines[1] = marker + "\t" + rest
+        parsed = tm.parse_tsv_data("\n".join(lines), [])
         deck = tm.build_remote_deck_from_tsv(parsed, "", [])
         plan, cfg = deck.plan, deck.sheet_config
+        if cfg.theme != theme or cfg.warnings:
+            sys.exit(f"home demo: {sheet!r} did not take theme={theme}: {cfg.warnings}")
         headers = parsed["headers"]
         config, row, line = parsed["rows"][0], None, 0
         for at, raw in enumerate(parsed["rows"]):

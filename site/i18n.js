@@ -57,19 +57,21 @@ const STRINGS = {
     en: "Example: a row of a sheet and the Anki card it becomes",
     vi: "Ví dụ: một dòng trong sheet và thẻ Anki tạo ra từ nó",
   },
-  demoEnglish: { en: "English + sakura", vi: "Tiếng Anh + sakura" },
-  demoJapanese: { en: "Furigana", vi: "Furigana" },
-  demoCloze: { en: "Cloze", vi: "Điền chỗ trống" },
+  demoEnglish: { en: "English · paper", vi: "English · paper" },
+  demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
+  demoCloze: { en: "Cloze · matcha", vi: "Cloze · matcha" },
   demoFront: { en: "Card front", vi: "Mặt trước thẻ" },
   demoBack: { en: "Card back", vi: "Mặt sau thẻ" },
   demoPause: { en: "Pause the example", vi: "Tạm dừng ví dụ" },
   demoPlay: { en: "Play the example", vi: "Chạy ví dụ" },
-  // Anki's own words on its review screen, as Anki itself translates them.
-  showAnswer: { en: "Show answer", vi: "Xem đáp án" },
-  ankiAgain: { en: "Again", vi: "Lại" },
-  ankiHard: { en: "Hard", vi: "Khó" },
-  ankiGood: { en: "Good", vi: "Được" },
-  ankiEasy: { en: "Easy", vi: "Dễ" },
+  // Anki's own words on its review screen, kept in English in both languages:
+  // the learners this is for run Anki in English, and a demo that says "Lại"
+  // where their Anki says "Again" is showing a screen they will never see.
+  showAnswer: { en: "Show Answer", vi: "Show Answer" },
+  ankiAgain: { en: "Again", vi: "Again" },
+  ankiHard: { en: "Hard", vi: "Hard" },
+  ankiGood: { en: "Good", vi: "Good" },
+  ankiEasy: { en: "Easy", vi: "Easy" },
 
   featTitle: { en: "What it does", vi: "Add-on làm được gì" },
   featColumnsTitle: { en: "Your columns, any language", vi: "Cột của bạn, tiếng gì cũng được" },

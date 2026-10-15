@@ -112,8 +112,9 @@ def test_the_landing_demo_is_rendered_from_the_workbook(site):
     build, out = site
     text = (out / "home-cards.js").read_text(encoding="utf-8")
     assert text.count('"qfmt"') == len(build.HOME_EXAMPLES)
-    for sheet, row_id, _ in build.HOME_EXAMPLES:
+    for sheet, row_id, _label, theme in build.HOME_EXAMPLES:
         assert sheet in text and f'"{row_id}"' in text
+        assert f"theme={theme}" in text
 
 
 @pytest.mark.unit
