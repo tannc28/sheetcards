@@ -26,6 +26,7 @@ from ..compat import QDialogButtonBox
 from ..compat import QGroupBox
 from ..compat import QHBoxLayout
 from ..compat import QLabel
+from ..compat import QPushButton
 from ..compat import QTextBrowser
 from ..compat import QVBoxLayout
 from ..compat import QWidget
@@ -40,6 +41,8 @@ from ..theme import SPACE_SECTION
 from ..theme import get_colors
 from ..theme import icon
 from ..theme import is_dark_mode
+from ..theme import size_dialog
+from .url_helpers import connect_a_sheet
 
 # =============================================================================
 # sync_config adapter
@@ -277,8 +280,9 @@ class CardLayoutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent or mw)
         self.setWindowTitle("Card Layout")
-        self.setMinimumSize(900, 640)
-        self.resize(1000, 740)
+        # Two columns want room, but neither insists on it: the panels are text
+        # browsers that scroll. A 900x640 floor did not fit a small laptop.
+        size_dialog(self, 1000, 740)
 
         self.colors = get_colors()
         self.decks = self._load_decks()
@@ -332,7 +336,8 @@ class CardLayoutDialog(QDialog):
         deck_icon = QLabel()
         deck_icon.setPixmap(icon("deck", "text_secondary").pixmap(ICON_SIZE, ICON_SIZE))
         deck_row.addWidget(deck_icon)
-        deck_row.addWidget(QLabel("Deck:"))
+        self.deck_prompt = QLabel("Deck:")
+        deck_row.addWidget(self.deck_prompt)
 
         self.deck_combo = QComboBox()
         for sheet_id, label, _info in self.decks:
@@ -340,13 +345,27 @@ class CardLayoutDialog(QDialog):
         deck_row.addWidget(self.deck_combo, 1)
         root.addLayout(deck_row)
 
+        # With nothing connected there is no layout to show, and the one useful
+        # thing to offer is the way to connect a sheet. Opening that window edits
+        # nothing here, so this stays a viewer.
+        self.empty_state = QWidget()
+        empty_layout = QVBoxLayout(self.empty_state)
+        empty_layout.setContentsMargins(0, 0, 0, 0)
+        empty_layout.setSpacing(SPACE_ELEMENT)
         self.empty_label = QLabel(
-            "No decks are connected yet. Add a deck from Google Sheets "
-            "(Ctrl+Shift+A) first, then come back here to see how its cards "
-            "are laid out."
+            "No Google Sheet is connected yet. Connect one, and this window "
+            "shows how its cards are laid out."
         )
         self.empty_label.setWordWrap(True)
-        root.addWidget(self.empty_label)
+        empty_layout.addWidget(self.empty_label)
+        connect_row = QHBoxLayout()
+        self.connect_button = QPushButton("Connect a Google Sheet…")
+        self.connect_button.setIcon(icon("plus", "text"))
+        self.connect_button.clicked.connect(lambda: connect_a_sheet(self))
+        connect_row.addWidget(self.connect_button)
+        connect_row.addStretch()
+        empty_layout.addLayout(connect_row)
+        root.addWidget(self.empty_state)
 
         self.body = QWidget()
         body_layout = QHBoxLayout(self.body)
@@ -367,8 +386,9 @@ class CardLayoutDialog(QDialog):
         root.addWidget(self.body, 1)
 
         source_note = QLabel(
-            "These settings come from the '#config' row of your spreadsheet — edit "
-            "that row and sync again (Ctrl+Shift+S) to change how the cards look."
+            "These settings come from the '#config' row of your spreadsheet. Edit "
+            "that row, then Update Decks from Sheets (Ctrl+Shift+S) to change how "
+            "the cards look."
         )
         source_note.setWordWrap(True)
         source_note.setStyleSheet(f"color: {self.colors['text_secondary']};")
@@ -382,9 +402,20 @@ class CardLayoutDialog(QDialog):
         root.addWidget(self.button_box)
 
         has_decks = bool(self.decks)
-        self.empty_label.setVisible(not has_decks)
+        self.empty_state.setVisible(not has_decks)
         self.body.setVisible(has_decks)
         self.deck_combo.setEnabled(has_decks)
+        for widget in (intro, deck_icon, self.deck_prompt, source_note):
+            widget.setVisible(has_decks)
+        self.deck_combo.setVisible(has_decks)
+        if not has_decks:
+            # The two panels that took the spare height are hidden, so the
+            # message is held at the top rather than spread down the window, and
+            # the window is sized for what is left.
+            root.insertStretch(root.indexOf(self.button_box), 1)
+            size_dialog(self, 480, 360)
+            self.connect_button.setDefault(True)
+            self.close_button.setDefault(False)
 
     def _make_browser(self):
         """A read-only rich-text panel — the shared building block of this window."""
@@ -475,8 +506,9 @@ class CardLayoutDialog(QDialog):
 
     def _never_synced_note(self):
         return self._note(
-            "This deck has not been synced yet, so the add-on has not read its "
-            "columns. Run a sync (Ctrl+Shift+S) and open this window again."
+            "This deck has not been updated from its sheet yet, so the add-on has "
+            "not read its columns. Update Decks from Sheets (Ctrl+Shift+S) and "
+            "open this window again."
         )
 
     # ------------------------------------------------------------------
@@ -620,8 +652,8 @@ class CardLayoutDialog(QDialog):
         self.warnings_view.setHtml(
             self._note(
                 "The add-on ignored these settings because it could not read them. "
-                "Fix them in the spreadsheet and sync again.",
-                self.colors["accent_warning"],
+                "Fix them in the spreadsheet and update again.",
+                self.colors["text"],
             )
             + f'<ul style="color:{self.colors["text"]};">{items}</ul>'
         )
