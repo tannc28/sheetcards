@@ -16,16 +16,19 @@ from ..compat import QLabel
 from ..compat import QLineEdit
 from ..compat import QProgressBar
 from ..compat import QTimer
+from ..compat import QueryOp
 from ..compat import QVBoxLayout
 from ..compat import QWidget
 from ..compat import TextSelectableByMouse
 from ..compat import mw
+from ..compat import openLink
 from ..compat import safe_exec
 from ..config_manager import add_remote_deck
 from ..config_manager import get_remote_decks
 from ..config_manager import is_deck_disconnected
-from ..data_processor import RemoteDeckError
+from ..data_processor import clear_workbook_cache
 from ..data_processor import read_all_sheets
+from ..errors import user_message
 from ..styled_messages import StyledMessageBox
 from ..theme import ICON_SIZE
 from ..theme import MARGIN
@@ -61,6 +64,11 @@ class AddDeckDialog(QDialog):
         # decision about a file rather than about a single grid.
         self.offers = []
         self.validation_timer = QTimer()
+        # Each link check is numbered, so a slow answer about a link the reader
+        # has since changed is recognised as stale and dropped rather than
+        # painted over the answer to the link now in the field.
+        self._check_generation = 0
+        self._closed = False
 
         # Get colors based on current theme
         self.colors = get_colors()
@@ -117,6 +125,17 @@ class AddDeckDialog(QDialog):
             "https://docs.google.com/spreadsheets/d/…  or  https://…/deck.xlsx"
         )
         layout.addWidget(self.url_edit)
+
+        # Someone connecting their first deck may not have a sheet yet, and the
+        # dialog asking for a link is where that becomes a dead end. Shown only
+        # until a deck is connected: after that it is a line nobody needs.
+        self.starter_label = QLabel(starter_links_html())
+        self.starter_label.setWordWrap(True)
+        self.starter_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        self.starter_label.setOpenExternalLinks(False)
+        self.starter_label.linkActivated.connect(openLink)
+        self.starter_label.setVisible(not _has_connected_decks())
+        layout.addWidget(self.starter_label)
 
         # What the link turned out to be, in the colour that says how it went. The
         # coloured circle that used to sit beside the field said the same thing a
@@ -282,6 +301,9 @@ class AddDeckDialog(QDialog):
         self.remote_deck = None
         self.suggested_name = ""
         self.offers = []
+        # Whatever check is still out is about a link that is no longer there.
+        self._check_generation += 1
+        self.progress_bar.setVisible(False)
         self._adjust_dialog_size()
 
         url = self.url_edit.text().strip()
@@ -315,12 +337,25 @@ class AddDeckDialog(QDialog):
         self.validation_timer.start(1200)
 
     def _validate_url_auto(self):
-        """Validates URL automatically (called by timer)."""
-        from ..deck_manager import DeckNameManager
+        """Checks the link (called by the timer once typing pauses).
 
+        The format and the duplicate check are instant and run here. Reading the
+        file is a download — up to the 30 s timeout on a bad connection — so it
+        runs in a :class:`QueryOp` on a background thread and the answer comes
+        back to :meth:`_on_link_read`. It used to run here, on the main thread,
+        and the whole of Anki stopped answering until Google did.
+        """
         url = self.url_edit.text().strip()
 
         if not url:
+            return
+
+        try:
+            # Format only: the download below is the check that it answers, and
+            # it fails with the same sentence a probe would have.
+            self.tsv_url = validate_url(url, probe=False)
+        except ValueError as e:
+            self._show_status(str(e), "error")
             return
 
         # Check if URL is already in use
@@ -347,56 +382,96 @@ class AddDeckDialog(QDialog):
                     "and connect the other sheets beside it",
                     "warning",
                 )
+        else:
+            self._show_status("Reading the spreadsheet…", "validating")
 
         self._show_progress(True)
 
+        # What is in the file now, not what a sync an hour ago downloaded.
+        from ..deck_manager import clear_remote_name_cache
+
+        clear_workbook_cache()
+        clear_remote_name_cache()
+
+        self._check_generation += 1
+        generation = self._check_generation
+        QueryOp(
+            parent=self,
+            op=lambda _col: _read_link(url),
+            success=lambda result: self._on_link_read(generation, url, result),
+        ).failure(
+            lambda error: self._on_link_failed(generation, url, error)
+        ).without_collection().run_in_background()
+
+    def _is_stale(self, generation, url):
+        return (
+            self._closed
+            or generation != self._check_generation
+            or url != self.url_edit.text().strip()
+        )
+
+    def _on_link_read(self, generation, url, result):
+        """The file has been read (main thread): say what it will become."""
+        if self._is_stale(generation, url):
+            return
+        self._show_progress(False)
+        offers, suggested_name = result
+
+        # Read every sheet in the file. One download serves all of them, and
+        # what comes back decides how many decks this link becomes.
+        self.offers = offers
+        usable = [o for o in self.offers if o.usable]
+        if not usable:
+            skipped = (
+                "; ".join(f"{o.name}: {o.problem}" for o in self.offers)
+                or "the file has no sheets in it"
+            )
+            self._show_status(
+                f"No sheet in this file can become a deck — {skipped}", "error"
+            )
+            self.add_button.setEnabled(False)
+            return
+
+        # The first usable sheet fills the preview, which shows one set of
+        # numbers; the sheet list below it says what else is coming.
+        self.remote_deck = usable[0].deck
+        self.suggested_name = suggested_name
+
         try:
-            # Validate URL format
-            self.tsv_url = validate_url(url)
-
-            # Read every sheet in the file. One download serves all of them, and
-            # what comes back decides how many decks this link becomes.
-            self.offers = read_all_sheets(url)
-            usable = [o for o in self.offers if o.usable]
-            if not usable:
-                skipped = (
-                    "; ".join(f"{o.name}: {o.problem}" for o in self.offers)
-                    or "the file has no sheets in it"
-                )
-                self._show_status(
-                    f"No sheet in this file can become a deck — {skipped}", "error"
-                )
-                self.add_button.setEnabled(False)
-                return
-
-            # The first usable sheet fills the preview, which shows one set of
-            # numbers; the sheet list below it says what else is coming.
-            self.remote_deck = usable[0].deck
-
-            # Extract suggested name
-            self.suggested_name = DeckNameManager.extract_remote_name_from_url(url)
-
-            # Show preview
             self._show_deck_preview()
-
-            fresh = self._unconnected_sheets(url)
-            if not fresh:
-                self._show_status(
-                    f"All {len(usable)} sheets in this file are already connected",
-                    "error",
-                )
-                self.add_button.setEnabled(False)
-                return
-
-            self._show_status(self._sheet_summary(fresh), "success")
-            self.add_button.setEnabled(True)
-
-        except RemoteDeckError as e:
-            self._show_status(f"Error: {str(e)}", "error")
         except Exception as e:
-            self._show_status(f"Validation error: {str(e)}", "error")
-        finally:
-            self._show_progress(False)
+            add_debug_message(f"Preview failed for {url}: {e!r}", "ADD_DECK")
+            self._show_status(user_message(e), "error")
+            return
+
+        fresh = self._unconnected_sheets(url)
+        if not fresh:
+            self._show_status(
+                f"All {len(usable)} sheets in this file are already connected",
+                "error",
+            )
+            self.add_button.setEnabled(False)
+            return
+
+        self._show_status(self._sheet_summary(fresh), "success")
+        self.add_button.setEnabled(True)
+
+    def _on_link_failed(self, generation, url, error):
+        """The file could not be read (main thread): one sentence, what to do."""
+        if self._is_stale(generation, url):
+            return
+        self._show_progress(False)
+        add_debug_message(
+            f"Link check failed: {url} — {getattr(error, 'detail', None) or repr(error)}",
+            "ADD_DECK",
+        )
+        self._show_status(user_message(error), "error")
+
+    def done(self, result):
+        # A check still running answers into a window that has gone; this is
+        # what tells it so.
+        self._closed = True
+        super().done(result)
 
     def _show_progress(self, show):
         """Shows/hides progress bar."""
@@ -579,7 +654,7 @@ class AddDeckDialog(QDialog):
                 detailed_text=str(e),
             )
             self.add_button.setEnabled(True)
-            self.add_button.setText("✓ Add Deck")
+            self.add_button.setText("Add Deck")
         finally:
             self._show_progress(False)
 
@@ -644,6 +719,52 @@ class AddDeckDialog(QDialog):
             "name": f"{len(urls)} decks" if len(urls) > 1 else urls[0],
             "is_automatic": True,
         }
+
+
+EXAMPLE_WORKBOOK_URL = (
+    "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx"
+)
+PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/"
+
+
+def starter_links_html():
+    """The line that points a first-time user at something to start from."""
+    return (
+        "Need a sheet to start from? "
+        f'<a href="{EXAMPLE_WORKBOOK_URL}">Example workbook</a> · '
+        f'<a href="{PREVIEW_SITE_URL}">Preview site</a>'
+    )
+
+
+def _has_connected_decks():
+    try:
+        return bool(get_remote_decks())
+    except Exception:
+        return False
+
+
+def _read_link(url):
+    """Every sheet in the file behind ``url``, and the name it suggests.
+
+    Runs on a background thread: the network and the pure layer only, never
+    ``mw.col`` or a widget. The deck names of the file's sheets are read here
+    as well, so connecting them afterwards finds them remembered instead of
+    fetching the page again from the main thread.
+    """
+    from ..deck_manager import DeckNameManager
+    from ..utils import url_for_sheet
+
+    offers = read_all_sheets(url)
+    suggested = DeckNameManager.extract_remote_name_from_url(url)
+    for offer in offers:
+        if offer.usable:
+            try:
+                DeckNameManager.extract_remote_name_from_url(
+                    url_for_sheet(url, offer.name)
+                )
+            except Exception:
+                pass
+    return offers, suggested
 
 
 def show_add_deck_dialog(parent=None):

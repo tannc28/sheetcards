@@ -28,7 +28,10 @@ from .column_model import row_is_marked_for_sync
 # already imported these from here. The definitions live in the pure layer because
 # the preview site runs those very files in the browser and must not need Anki;
 # see tsv_model's docstring.
+from .errors import DownloadError
 from .errors import RemoteDeckError  # noqa: F401  (facade)
+from .errors import describe_download_failure
+from .errors import looks_like_login_page
 from .sheet_config import SheetConfig
 from .templates_and_definitions import ensure_custom_models
 from .tsv_model import TAG_ROOT  # noqa: F401  (facade)
@@ -131,9 +134,26 @@ def getRemoteDeck(url, debug_messages=None):
 
         return remote_deck
 
-    except Exception as e:
+    except RemoteDeckError as e:
+        # Already a sentence for the reader (a download that failed, a sheet
+        # that is gone, a missing ID column). Wrapping it again is how the
+        # screen came to say "Error: Error obtaining remote deck: HTTP Error…".
         add_debug_msg(f"Error processing remote deck: {e}")
-        raise RemoteDeckError(f"Error obtaining remote deck: {str(e)}")
+        add_debug_message(
+            f"Remote deck failed: {url} — {getattr(e, 'detail', e)}", "REMOTE_DECK"
+        )
+        raise
+    except Exception as e:
+        import traceback
+
+        add_debug_msg(f"Error processing remote deck: {e}")
+        add_debug_message(
+            f"Remote deck failed: {url} — {traceback.format_exc()}", "REMOTE_DECK"
+        )
+        raise RemoteDeckError(
+            "The sheet was downloaded but could not be read. Turn on debug "
+            "logging in Settings and sync again to see why."
+        ) from e
 
 
 def _refuse_unsafe_url(download_url):
@@ -174,7 +194,13 @@ def _refuse_unsafe_url(download_url):
     try:
         addresses = {info[4][0] for info in socket.getaddrinfo(host, parts.port or 443)}
     except OSError as e:
-        raise RemoteDeckError(f"Could not look up '{host}': {e}")
+        # Almost always no network at all, and said as such; the lookup's own
+        # words go to the log.
+        add_debug_message(f"Could not look up '{host}': {e}", "DOWNLOAD")
+        raise DownloadError(
+            describe_download_failure(e, url=download_url),
+            detail=f"Could not look up '{host}': {e}",
+        )
 
     for address in addresses:
         ip = ipaddress.ip_address(address)
@@ -190,42 +216,48 @@ def _download(download_url, timeout):
     """The bytes at a URL a deck may legitimately come from.
 
     Shared by the TSV and whole-file paths so both carry the same address check
-    and the same explanation of a 400, which is nearly always an unshared sheet.
+    and the same plain account of a failure: what went wrong is said once, in
+    :func:`errors.describe_download_failure`, and the status code and Python's
+    own words go to the debug log rather than onto the screen.
     """
     _refuse_unsafe_url(download_url)
 
     headers = {"User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"}
     request = urllib.request.Request(download_url, headers=headers)
 
+    def fail(error=None, status=None, detail=""):
+        detail = detail or f"{type(error).__name__}: {error}"
+        add_debug_message(f"Download failed: {download_url} — {detail}", "DOWNLOAD")
+        return DownloadError(
+            describe_download_failure(error, url=download_url, status=status),
+            detail=detail,
+        )
+
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            if response.getcode() != 200:
-                raise RemoteDeckError(
-                    f"HTTP {response.getcode()}: Failed to access URL"
+            status = response.getcode()
+            if status != 200:
+                raise fail(status=status, detail=f"HTTP {status}")
+            data = response.read()
+            content_type = response.headers.get("Content-Type", "")
+            if looks_like_login_page(content_type, response.geturl(), data):
+                # Answered, but with a web page — the sign-in page an unshared
+                # sheet redirects to — rather than with the sheet.
+                raise fail(
+                    status=401,
+                    detail=f"got a web page ({content_type}) from {response.geturl()}",
                 )
-            return response.read()
+            return data
 
-    except TimeoutError:
-        raise RemoteDeckError(f"Timeout of {timeout}s while accessing the URL")
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            raise RemoteDeckError(
-                "HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
-                "To fix:\n"
-                "1. Open spreadsheet in Google Sheets\n"
-                "2. Click 'Share'\n"
-                "3. Change access to 'Anyone with the link'\n"
-                "4. Set permission to 'Viewer'\n\n"
-                "Alternatively: File → Share → Publish to web"
-            )
-        else:
-            raise RemoteDeckError(f"HTTP Error {e.code}: {e.reason}")
-    except urllib.error.URLError as e:
-        raise RemoteDeckError(f"URL Error: {str(e.reason)}")
     except RemoteDeckError:
         raise
+    except urllib.error.HTTPError as e:
+        raise fail(e, detail=f"HTTP {e.code} {e.reason}")
+    except (urllib.error.URLError, OSError) as e:
+        # TimeoutError and socket errors are OSErrors.
+        raise fail(e)
     except Exception as e:
-        raise RemoteDeckError(f"Unexpected download error: {str(e)}")
+        raise fail(e)
 
 
 def download_tsv_data(url, timeout=30):

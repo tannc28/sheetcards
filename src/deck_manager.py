@@ -558,6 +558,17 @@ from typing import Any
 
 from .tsv_model import deck_root_name
 
+# The name each URL's page gave, for the length of one sync run or link check.
+# Filled from a background thread (see sync._fetch_deck), read from the main one.
+# Cleared at the start of each run, for the same reason the downloaded workbooks
+# are: a title renamed in Google Sheets must be picked up by the next sync.
+_REMOTE_NAMES: dict = {}
+
+
+def clear_remote_name_cache():
+    """Forgets every remembered title. Called when a sync run or link check starts."""
+    _REMOTE_NAMES.clear()
+
 
 class DeckNameManager:
     """
@@ -580,12 +591,28 @@ class DeckNameManager:
         """
         Extracts remote deck name using multiple strategies.
 
+        Reading a Google Sheet's title is a request for its web page, so the
+        answer is kept in :data:`_REMOTE_NAMES` for the length of one sync run
+        (or one link check). The run fetches it on a background thread first;
+        everything that asks again from the main thread — the rename pass, the
+        name-consistency pass, connecting the sheets — is answered from memory
+        instead of freezing Anki for another network round trip.
+
         Args:
             url: Google Sheets URL
 
         Returns:
             Extracted remote name or fallback
         """
+        cached = _REMOTE_NAMES.get(url)
+        if cached is not None:
+            return cached
+        name = DeckNameManager._extract_remote_name_uncached(url)
+        _REMOTE_NAMES[url] = name
+        return name
+
+    @staticmethod
+    def _extract_remote_name_uncached(url: str) -> str:
         try:
             # A file at a plain address has no page to read a title from, and its
             # own name is the obvious thing to call the deck.
