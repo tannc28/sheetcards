@@ -1,0 +1,76 @@
+/**
+ * The site's icons, as inline SVG — one set, one style, one place.
+ *
+ * Every path below is copied by hand from Lucide (https://lucide.dev), ISC
+ * licence, Copyright (c) Lucide Contributors 2022; portions derived from Feather,
+ * MIT licence, Copyright (c) 2013-2022 Cole Bemis. Copied rather than loaded, so
+ * nothing on the page depends on a CDN being up. All share Lucide's 24×24 box and
+ * 2px round stroke, and draw in `currentColor`, so an icon is the colour of the
+ * words beside it in either theme.
+ *
+ * An icon is here only when it helps somebody find or recognise an action
+ * faster. Placed next to a label it is `aria-hidden` and says nothing to a
+ * screen reader; an icon-only button carries its own `aria-label` instead.
+ *
+ * No emoji and no text glyphs (☾ ☀ ↻): those belong to the font, render as
+ * colour pictures on some systems and as tofu on others, and are never the
+ * colour of the text next to them.
+ */
+
+const PATHS = {
+  // Preview — what the main button does: look at the cards.
+  eye:
+    '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>' +
+    '<circle cx="12" cy="12" r="3"/>',
+  // Fetch the sheet again.
+  "rotate-cw":
+    '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  upload:
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+    '<polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+  copy:
+    '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>' +
+    '<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  "file-down":
+    '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>' +
+    '<path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  sun:
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>' +
+    '<path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>' +
+    '<path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/>' +
+    '<path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  languages:
+    '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/>' +
+    '<path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  "triangle-alert":
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>' +
+    '<path d="M12 9v4"/><path d="M12 17h.01"/>',
+  "circle-alert":
+    '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/>' +
+    '<line x1="12" x2="12.01" y1="16" y2="16"/>',
+  "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  "arrow-right": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+};
+
+/** One icon as markup, sized to the text around it (1em) unless CSS says more. */
+export function icon(name, cls = "") {
+  const body = PATHS[name];
+  if (!body) return "";
+  return (
+    `<svg class="icon${cls ? ` ${cls}` : ""}" viewBox="0 0 24 24" width="1em" height="1em" ` +
+    'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    `stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`
+  );
+}
+
+/** Fills every `data-icon` placeholder in the static markup. */
+export function paintIcons(root = document) {
+  for (const el of root.querySelectorAll("[data-icon]")) {
+    el.innerHTML = icon(el.dataset.icon);
+  }
+}
+
+export const ICON_NAMES = Object.keys(PATHS);

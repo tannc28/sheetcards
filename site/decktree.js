@@ -61,7 +61,9 @@ export function treeHtml(node, opts = {}) {
         : "";
       const row = pick
         ? `<button data-deck="${escapeHtml(child.path)}" style="--depth:${depth}"
-             class="${classes}">${inner}</button>`
+             class="${classes}"${
+               selected === child.path ? ' aria-current="true"' : ""
+             }>${inner}</button>`
         : `<span class="node" style="--depth:${depth}">${inner}</span>`;
       const below = child.children.size
         ? `<ul class="tree">${treeHtml(child, { ...opts, depth: depth + 1 })}</ul>`

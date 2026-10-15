@@ -152,6 +152,48 @@ a { color: var(--accent); }
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- icons ---------------------------------------------------------------- */
+
+/* Sized with the text (1em) and sat on its baseline, so an icon beside a word
+   lines up with it at any font size. See site/icons.js for where they come from. */
+.icon { flex: none; width: 1em; height: 1em; vertical-align: -0.14em; }
+[data-icon] { display: inline-flex; }
+/* A button with an icon and a label keeps them on one line, centred together. */
+.btn, button.linky, .copyline .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+button.linky { gap: 5px; }
+.themebtn, .panel-act, .tool, .stepper, .tabs .nav button, .intro-close {
+  display: inline-grid; place-items: center;
+}
+.themebtn .icon { width: 16px; height: 16px; }
+.langs-icon {
+  display: inline-flex; align-items: center; padding: 0 4px 0 8px;
+  color: var(--muted); font-size: 14px;
+}
+.err-icon { vertical-align: -0.14em; margin-right: 4px; }
+
+/* ---- the landing picture -------------------------------------------------- */
+
+/* Only before a sheet is loaded: afterwards the real grid and the real card say
+   the same thing better. */
+.hero { margin: 4px 0 16px; display: flex; flex-direction: column; gap: 6px; }
+body.ready .hero { display: none; }
+.hero svg { width: min(100%, 17rem); height: auto; }
+.hero figcaption { margin: 0; max-width: 34ch; }
+.hero .h-paper { fill: var(--panel); }
+.hero .h-head { fill: var(--sunken); }
+.hero .h-row { fill: var(--accent-soft); }
+.hero .h-grid { stroke: var(--line); stroke-width: 1.5; fill: none; }
+.hero .h-edge { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.hero .h-arrow {
+  fill: none; stroke: var(--accent); stroke-width: 2.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.hero .h-card { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
+.hero .h-front { fill: var(--ink); }
+.hero .h-back { fill: var(--muted); }
+
 /* ---- masthead ------------------------------------------------------------ */
 
 .masthead {
@@ -336,15 +378,18 @@ input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 60%, 
 select { cursor: pointer; }
 
 .status {
-  display: inline-flex; align-items: center; gap: 7px; min-width: 0;
+  display: inline-flex; align-items: flex-start; gap: 7px; min-width: 0;
   font-size: var(--t-sm); color: var(--muted);
 }
+/* The loading message can be two lines — what is happening, and after ten seconds
+   that the network is slow — and they are joined with a newline. */
+#status-text { white-space: pre-line; }
 .status.ok { color: var(--ok); }
 .status.bad { color: var(--bad); font-weight: 500; }
 
 /* Only spins while something is actually running, so a still page reads as idle
    rather than as frozen. */
-.spinner { display: none; flex: none; width: 13px; height: 13px; }
+.spinner { display: none; flex: none; width: 13px; height: 13px; margin-top: .2em; }
 .status.busy .spinner {
   display: block;
   border: 2px solid var(--line);
@@ -355,6 +400,7 @@ select { cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
   .status.busy .spinner {
     animation: none;
     border-top-color: var(--accent); border-right-color: var(--accent);
@@ -373,6 +419,47 @@ select { cursor: pointer; }
   background: var(--accent-soft); border-bottom: 1px solid var(--line);
 }
 .demo-note[hidden] { display: none; }
+/* Two versions of the note: the whole explanation where there is room for it,
+   one line on a phone, where three lines of it pushed the link field below the
+   fold before anybody had read a word of the preview. */
+.demo-note .short { display: none; }
+@media (max-width: 55.99rem) {
+  .demo-note .long { display: none; }
+  .demo-note .short {
+    display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
+
+/* A problem with the link, said at the link (the GOV.UK error-message pattern):
+   red, bold, between the label and the field, with the field's own edge turned
+   red to match. */
+.field-error {
+  display: block; font-size: var(--t-sm); font-weight: 600; line-height: 1.45;
+  color: var(--bad);
+}
+input[aria-invalid="true"] {
+  border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad);
+}
+
+/* The status line again, for a phone with panel 1 folded. Bottom of the screen,
+   clear of the home indicator, never wider than the screen. */
+.toast {
+  position: fixed; z-index: 70;
+  left: 50%; transform: translateX(-50%);
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: max-content; max-width: calc(100vw - 32px);
+  padding: 9px 14px; border-radius: var(--r-md);
+  font-size: var(--t-sm); line-height: 1.45; white-space: pre-line;
+  background: var(--ink); color: var(--panel); box-shadow: var(--shadow);
+  animation: toast-in .18s ease-out;
+}
+.toast.bad { background: var(--bad); color: #fff; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+@media (min-width: 56rem) { .toast { display: none; } }
+
+/* The skip link lands on the working area, which takes focus only to move the
+   reading position — it is not a control and should not look like one. */
+main:focus { outline: none; }
 
 .warnbar {
   padding: 11px var(--pad) 12px;
@@ -384,17 +471,19 @@ select { cursor: pointer; }
   display: flex; align-items: center; gap: 8px; margin: 0 0 6px;
   font-size: var(--t-md); font-weight: 650; color: var(--warn);
 }
-.warn-icon {
-  flex: none; display: grid; place-items: center;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: var(--warn); color: var(--warn-soft);
-  font-size: var(--t-xs); font-weight: 800;
-}
+.warn-icon { flex: none; display: inline-flex; color: var(--warn); font-size: 18px; }
 .warnbar .count { color: var(--warn); }
 .warnings { margin: 0; padding-left: 20px; }
 .warnings li { margin-bottom: 4px; font-size: var(--t-sm); line-height: 1.5; }
 .warnings li:last-child { margin-bottom: 0; }
 .warnbar > .small { margin: 8px 0 0; max-width: 78ch; }
+.warnfrom details { display: inline; }
+.warnfrom summary {
+  display: inline; cursor: pointer; margin-left: 4px;
+  color: var(--accent); text-decoration: underline; text-underline-offset: 2px;
+}
+.warnfrom summary::-webkit-details-marker { display: none; }
+.warnfrom details[open] { display: block; margin-top: 4px; }
 
 /* ---- panel 2: the deck --------------------------------------------------- */
 
@@ -434,6 +523,14 @@ h3.spaced { margin-top: 18px; }
   border-top: 1px solid var(--line); background: var(--panel);
 }
 .apkg-btn { width: 100%; padding: 10px; font-size: var(--t-md); }
+/* Anki's own icon, 32px drawn at 16, so the file Anki opens is recognisable before
+   the label is read. The extension is a tag of its own beside the words. */
+.apkg-btn .anki-mark { flex: none; width: 16px; height: 16px; }
+.apkg-btn .ext {
+  padding: 0 6px; border-radius: 4px;
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 600;
+  background: color-mix(in srgb, var(--accent-ink) 20%, transparent);
+}
 
 /* ---- deck tree ----------------------------------------------------------- */
 
@@ -574,6 +671,10 @@ h3.spaced { margin-top: 18px; }
   padding: 8px var(--pad) var(--pad);
   overflow: auto; overscroll-behavior: contain;
 }
+/* The form scrolls as a whole; its parts keep their own height. Left to shrink,
+   the sheet — whose sideways scroll makes it a box that may — gave up its rows
+   first and showed only the header once the intro and the copy line arrived. */
+.editor .ed-form > * { flex: none; }
 .editor .panel-toggle { cursor: default; }
 .editor .panel-toggle:hover { background: transparent; }
 .editor .chev { display: none; }
@@ -601,6 +702,28 @@ h3.spaced { margin-top: 18px; }
 /* All three act on the whole grid, so they sit together in its corner rather
    than trailing off the right-hand edge of a strip that scrolls — where, on a
    phone with two columns, "add a column" was already out of sight. */
+/* Under the sheet: the button that takes it away, and where to put it. */
+.copyline {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px;
+  margin: 0 0 12px;
+}
+.copyline .small { min-width: 0; }
+
+/* The first-run sentence: a note on the page, not a dialog in front of it. */
+.intro {
+  position: relative; margin: 0 0 10px; padding: 9px 40px 9px 12px;
+  font-size: var(--t-sm); line-height: 1.5;
+  background: var(--accent-soft); color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: var(--r-md);
+}
+.intro a { font-weight: 600; white-space: nowrap; }
+.intro-close {
+  position: absolute; top: 5px; right: 5px;
+  width: 28px; height: 28px; line-height: 1; font-size: 16px; color: var(--muted);
+}
+.intro-close:hover { color: var(--ink); background: var(--panel); }
+
 .sheettools {
   display: flex; align-items: center; justify-content: flex-end; gap: 4px 8px;
   flex-wrap: wrap; margin: 0 0 6px;
@@ -755,10 +878,26 @@ h3.spaced { margin-top: 18px; }
 .col:hover { border-color: var(--accent); color: var(--accent); }
 /* On means "this cell has it", and tapping again takes it away. A chip that only
    ever added had a second tap that did nothing, which reads as broken. */
-.col.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+/* Filled, bold and ticked: three differences rather than one, because "on" and
+   "open" sit side by side and a pale fill against a dashed edge was the only thing
+   telling them apart. The tick is drawn with borders, not a glyph, so it is the
+   chip's own colour in every font and on every system. */
+.col.on, .optbar .col.on {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+  font-weight: 700;
+}
+.col.on::before {
+  content: ""; display: inline-block;
+  width: 4px; height: 8px; margin: 0 6px 2px 0;
+  border: solid currentColor; border-width: 0 2px 2px 0;
+  transform: rotate(45deg); vertical-align: middle;
+}
 /* Open, not on: the chip whose values are showing below. Two different states —
    a directive can be open while the cell does not have it yet. */
 .col.open { border-color: var(--accent); border-style: dashed; }
+/* Open is a ring outside the chip, which reads the same whether or not the chip
+   is also on — the fill says one thing and the ring the other. */
+.col.open { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* The sentence comes before the choices: reading what a directive is, and then
    picking a value for it, is the order somebody who does not know it works in. */
@@ -1018,9 +1157,12 @@ iframe#card {
   flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: var(--muted); vertical-align: middle;
 }
+/* Three states, three shapes as well as three colours — filled, hollow, diamond —
+   so the list still reads for somebody who cannot tell the green from the red. */
 .dot.synced { background: var(--ok); }
-.dot.skipped { background: var(--muted); opacity: .5; }
-.dot.invalid { background: var(--bad); }
+.dot.skipped { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+.dot.invalid { background: var(--bad); border-radius: 1px; transform: rotate(45deg) scale(.9); }
+.sheetgrid .rowh .dot { width: 6px; height: 6px; margin-right: 5px; vertical-align: 1px; }
 
 /* ---- drop target --------------------------------------------------------- */
 

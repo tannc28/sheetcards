@@ -6,19 +6,28 @@
 <meta name="theme-color" content="#ffffff">
 <title>SheetCards — preview a sheet before you sync it</title>
 <meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the SheetCards add-on would produce — running the add-on's own code in your browser.">
+<!-- Two cards, the front one ruled like a sheet. Inline, so the icon costs no
+     request and cannot go missing from a deploy. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   // Read before the first paint: applied from the stylesheet instead, the page
-  // would flash light on its way to the dark somebody chose.
+  // would flash light on its way to the dark somebody chose. The browser's own
+  // bar is told at the same moment, or a phone draws a white strip over a dark page.
   try {
     var t = localStorage.getItem("sc-theme");
-    if (t === "dark") document.documentElement.dataset.theme = "dark";
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#171c24";
+    }
   } catch (e) {}
 </script>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-<a class="skip" href="#p-card" data-i18n="skip">Skip to the card</a>
+<!-- To the working area rather than to the card: the card panel does not exist
+     until a sheet has loaded, and a skip link to a hidden target goes nowhere. -->
+<a class="skip" href="#app" data-i18n="skip">Skip to the preview</a>
 
 <header class="masthead">
   <div class="brand">
@@ -26,19 +35,22 @@
   </div>
 
   <button id="theme" class="themebtn" type="button"></button>
-  <nav id="langs" class="langs" aria-label="Language"></nav>
+  <nav id="langs" class="langs" aria-label="Language" data-i18n-attr="aria-label:langLabel"></nav>
   <a class="ghost" href="./editor.html" data-i18n="toGuide">Editor</a>
   <a class="ghost" href="https://github.com/tannc28/sheetcards" rel="noopener">GitHub</a>
 </header>
 
-<p id="demo-note" class="demo-note" data-i18n="demoNote" hidden></p>
+<p id="demo-note" class="demo-note" hidden>
+  <span class="long" data-i18n="demoNote"></span>
+  <span class="short" data-i18n="demoNoteShort"></span>
+</p>
 
 <section id="warnbar" class="warnbar" hidden aria-labelledby="warnbar-title">
-  <h2 id="warnbar-title"><span class="warn-icon" aria-hidden="true">!</span>
+  <h2 id="warnbar-title"><span class="warn-icon" data-icon="triangle-alert" aria-hidden="true"></span>
     <span data-i18n="warnings">Warnings</span>
     <span id="warncount" class="count"></span></h2>
   <ul id="warnlist" class="warnings"></ul>
-  <p class="muted small" data-i18n="warningsFrom"></p>
+  <div class="muted small warnfrom" data-i18n="warningsFrom"></div>
 </section>
 
 <!-- Three columns, one job each: where the sheet comes from, what deck it makes,
@@ -46,7 +58,7 @@
      are things you look at while changing one of the others. On a phone there is
      no side by side, so they stack and each folds to its own header instead. -->
 
-<main id="app" class="app">
+<main id="app" class="app" tabindex="-1">
 
   <section class="panel" id="p-source">
     <h2 class="panel-head">
@@ -69,7 +81,7 @@
            over, and on a phone panel 1 is folded by then. -->
       <button class="panel-act" id="reload" type="button" hidden
               data-i18n-attr="title:reloadLabel,aria-label:reloadLabel">
-        <span aria-hidden="true">↻</span>
+        <span data-icon="rotate-cw"></span>
       </button>
     </h2>
 
@@ -77,21 +89,50 @@
       <form id="entry-form" class="stack">
         <p class="field">
           <label for="url" data-i18n="urlLabel">Sheet link</label>
+          <!-- Between the label and the field, where GOV.UK puts it: read before
+               the field it is about, and tied to it by aria-describedby. -->
+          <span id="url-error" class="field-error" hidden>
+            <span class="sr-only" data-i18n="errorPrefix">Error:</span>
+            <span class="err-icon" data-icon="circle-alert"></span>
+            <span id="url-error-text"></span>
+          </span>
           <input id="url" name="url" type="url" spellcheck="false" autocomplete="off"
                  enterkeyhint="go" data-i18n-attr="placeholder:urlPlaceholder">
         </p>
         <p class="field submit">
-          <button id="go" class="btn" type="submit" data-i18n="go" disabled>Preview</button>
+          <button id="go" class="btn" type="submit"><span data-icon="eye"></span><span
+                  data-i18n="go">Preview</span></button>
         </p>
       </form>
+
+      <!-- What the page does, drawn rather than explained, for the seconds before
+           there is a sheet to show it with: a row of a spreadsheet becomes a card.
+           Gone the moment a sheet loads (body.ready), when the real thing says it
+           better. Colours are the page's own tokens, so it follows the theme. -->
+      <figure class="hero">
+        <svg viewBox="0 0 264 96" aria-hidden="true" focusable="false">
+          <rect x="4" y="8" width="104" height="80" rx="6" class="h-paper"/>
+          <path d="M4 14a6 6 0 0 1 6-6h92a6 6 0 0 1 6 6v12H4Z" class="h-head"/>
+          <rect x="5" y="45" width="102" height="18" class="h-row"/>
+          <path d="M4 26h104M4 44h104M4 62h104M40 8v80M74 8v80" class="h-grid"/>
+          <rect x="4" y="8" width="104" height="80" rx="6" class="h-edge"/>
+          <path d="M120 54h30m-7-7 7 7-7 7" class="h-arrow"/>
+          <rect x="162" y="14" width="98" height="70" rx="8" class="h-card"/>
+          <rect x="185" y="27" width="52" height="9" rx="4.5" class="h-front"/>
+          <path d="M172 49h78" class="h-grid"/>
+          <rect x="192" y="60" width="38" height="7" rx="3.5" class="h-back"/>
+        </svg>
+        <figcaption class="muted small" data-i18n="heroCaption"></figcaption>
+      </figure>
 
       <div class="stack">
         <p class="entry-alt">
           <span class="pickline">
             <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
                    data-i18n-attr="aria-label:pickLabel">
-            <button id="pick" class="linky" type="button" disabled
-                    data-i18n="pick" data-i18n-attr="title:pickLabel">Upload a file</button>
+            <button id="pick" class="linky" type="button"
+                    data-i18n-attr="title:pickLabel"><span data-icon="upload"></span><span
+                    data-i18n="pick">Upload a file</span></button>
             <span data-i18n="orDrop">or drop one anywhere on this page.</span>
           </span>
           <span id="status" class="status" role="status" aria-live="polite">
@@ -150,8 +191,16 @@
         <div id="rowlist"></div>
 
         <div class="side-foot">
+          <!-- Anki's own icon, so a learner knows at a glance this is the file Anki
+               opens. anki.png is copied unchanged from Anki's source
+               (qt/aqt/data/qt/icons/anki.png, https://github.com/ankitects/anki,
+               AGPL-3.0-or-later; the Anki name and logo belong to Ankitects).
+               32px drawn at 16px, so it stays sharp on a 2x screen. alt="" because
+               the label beside it already says what the button does. -->
           <button id="apkg" class="btn apkg-btn" type="button"
-                  data-i18n="downloadApkg" data-i18n-attr="title:apkgTitle"></button>
+                  data-i18n-attr="title:apkgTitle"><img class="anki-mark" src="./anki.png"
+                  alt="" width="16" height="16"><span data-i18n="downloadApkg"></span><span
+                  class="ext" translate="no">.apkg</span></button>
         </div>
       </div>
     </div>
@@ -183,6 +232,12 @@
     <span data-i18n="dropTypes"></span>
   </div>
 </div>
+
+<!-- Panel 1's status line, repeated where a phone can see it. Stacked, panel 1
+     folds itself once a sheet loads, and a reload or a download then said nothing
+     from inside a folded panel. Shown only while that panel is folded, so the two
+     never speak at once. -->
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script type="module" src="./app.js"></script>
 </body>
