@@ -92,7 +92,13 @@ def test_every_docs_page_speaks_its_language_and_links_its_twin(site):
 @pytest.mark.unit
 def test_the_four_kinds_of_page_exist(site):
     _, out = site
-    for page in ("index.html", "preview.html", "editor.html", "player.html"):
+    for page in (
+        "index.html",
+        "create.html",
+        "preview.html",
+        "editor.html",
+        "player.html",
+    ):
         assert (out / page).is_file(), page
     # A build input, not a page.
     assert not (out / "_docs.html").exists()
@@ -144,13 +150,18 @@ def test_the_landing_demo_is_rendered_from_the_workbook(site):
 
 
 @pytest.mark.unit
-def test_old_preview_links_are_sent_to_the_preview(site):
-    """/?url=… was the preview's address; the landing page forwards it."""
+def test_old_preview_links_are_sent_to_create_deck(site):
+    """/?url=… and /preview.html were Create deck's addresses; both forward it.
+
+    What the forwarding scripts *do* is checked in tests/test_site_redirects.py;
+    this only proves the built pages still carry them.
+    """
     _, out = site
-    landing = (out / "index.html").read_text(encoding="utf-8")
-    assert re.search(
-        r'location\.replace\("\./preview\.html" \+ location\.search', landing
-    )
+    for page in ("index.html", "preview.html"):
+        text = (out / page).read_text(encoding="utf-8")
+        assert re.search(
+            r'location\.replace\("\./create\.html" \+ location\.search', text
+        ), page
 
 
 @pytest.mark.unit

@@ -58,5 +58,5 @@ def test_the_anki_mark_ships_at_the_top_level():
     # build_site.py copies site/ files only, not folders — an image in a
     # subfolder would be a broken picture on the published page.
     assert (SITE / "anki.png").is_file()
-    for page in ("preview.html", "index.html"):
+    for page in ("create.html", "index.html"):
         assert 'src="./anki.png"' in (SITE / page).read_text(encoding="utf-8")

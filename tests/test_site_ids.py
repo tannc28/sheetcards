@@ -14,7 +14,7 @@ from pathlib import Path
 SITE = Path(__file__).resolve().parent.parent / "site"
 
 PAGES = {
-    "app.js": "preview.html",
+    "app.js": "create.html",
     "editor.js": "editor.html",
     "home.js": "index.html",
     # The chrome of the pages that are read: the landing page, and the docs

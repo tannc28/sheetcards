@@ -1,12 +1,16 @@
 /**
- * SheetCards preview — runs the add-on's own Python in the browser.
+ * SheetCards Create deck — runs the add-on's own Python in the browser.
  *
  * The point of this page is that it does not reimplement anything. Pyodide loads
  * the very files under src/ that the add-on runs inside Anki, so the column
- * roles, the settings row, the warnings, the deck paths and the card templates
- * shown here are produced by the same code that will produce them at sync time.
- * The only part written for the browser is site/anki.js, which stands in for
- * Anki's own template renderer — see that file for why that one cannot be reused.
+ * roles, the settings row, the warnings, the deck paths, the card templates and
+ * the .apkg itself are produced by the same code that will produce them at sync
+ * time. The only part written for the browser is site/anki.js, which stands in
+ * for Anki's own template renderer — see that file for why that one cannot be
+ * reused.
+ *
+ * The page is three steps — a sheet, its cards, the file — and is laid out as
+ * that sequence (see create.html and the CLAUDE.md section on the website).
  */
 
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
@@ -14,25 +18,21 @@ import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
+import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 
-// A filled-in report is a better landing page than an empty form: a first-time
-// visitor sees what the tool actually answers instead of having to supply a sheet
-// to find out.
-//
-// The workbook lives in this repository (examples/, built by
+// The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
 // the docs describe and the sheet the page loads cannot drift apart — a directive
-// added to the add-on gets an example in the same commit.
-// Overridden by ?url=, and by anything typed into the field.
+// added to the add-on gets an example in the same commit. Loaded by the "use the
+// example" button, by create.html#example, and by ?url= pointing at it.
 const DEMO_SHEET =
   "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx";
 
 // Which of its sheets to open on. The workbook is a tour that starts at the
-// smallest sheet that works, and a landing page showing two columns and no
-// settings row would answer none of the questions people arrive with — so the
-// page opens on the widest of them and the picker walks back through the rest.
-// Not because that sheet is the point of the tour: no sheet is.
+// smallest sheet that works, and an example showing two columns and no settings
+// row would answer none of the questions people arrive with — so the page opens
+// on a sheet with a theme and a deck hierarchy, and the picker walks the rest.
 const DEMO_TAB = "15 Theme + subdeck (màu, tầng)";
 
 /** Everything the page needs, computed by the add-on's own code. */
@@ -61,7 +61,7 @@ def _settings(cfg):
     return {k: v for k, v in vars(cfg).items() if v not in (None, False, [])}
 
 
-# How many rows of the sheet the grid in panel 1 carries. A spreadsheet runs to
+# How many rows of the sheet the grid in the Sheet view carries. A spreadsheet runs to
 # tens of thousands of rows and each one would become a table row in the page;
 # this is a preview of the sheet, not a copy of it. What is cut is said out loud
 # above the grid rather than silently missing.
@@ -69,7 +69,7 @@ _GRID_ROWS = 400
 
 
 def _grid(headers, rows, offset):
-    """The sheet as it is written, for panel 1 to draw as a grid.
+    """The sheet as it is written, for the Sheet view to draw as a grid.
 
     Read off the parser rather than by splitting the TSV in the browser: a cell
     may hold a newline, and only the parser knows where a row really ends. Every
@@ -149,7 +149,7 @@ def analyze(tsv, deck_name):
                 h for h in plan.content_headers
                 if tm.has_cloze_deletion(str(note.get(h, "")))
             ],
-            # Every column, not only the ones that become fields. Panel 1 offers
+            # Every column, not only the ones that become fields. The Sheet view offers
             # SYNC, TAGS and the SUBDECK columns to be looked at, and a cell it
             # was never sent reads as an empty cell — which is a lie about the
             # sheet, told in the one place built to answer questions about it.
@@ -164,7 +164,7 @@ def analyze(tsv, deck_name):
     return json.dumps({
         # What each column became, and what the settings row said about it. This
         # was dropped once, along with a reference table nobody read. It is back
-        # because panel 1 now answers a question with it — "what did this column
+        # because the Sheet view answers a question with it — "what did this column
         # turn into" is the commonest thing to be wrong about a sheet — and it is
         # read straight off the plan the parser already built, not recomputed.
         #
@@ -207,58 +207,28 @@ def analyze(tsv, deck_name):
 const $ = (sel) => document.querySelector(sel);
 const state = {
   analysis: null, row: 0, template: 0, ordinal: 1, deckName: "", deckFilter: null,
-  // Which column of the sheet is opened up in panel 1, by its position in the
-  // header row, and whether the next repaint is the one that opened it.
+  // Which column of the sheet is opened up in the Sheet view, by its position in
+  // the header row, and whether the next repaint is the one that opened it.
   column: null, columnFlash: false,
   // What the .apkg derives its note ids from — a spreadsheet id for a link, the
   // file and tab for an upload. Either way it has to be the same next time or a
   // re-import duplicates every note instead of updating it.
   sheetId: "",
-  // What the stage shows: the card, or its source the way Anki puts the template
-  // editor beside it.
-  tab: "both",
-  // The three panels — where the sheet comes from, what deck it makes, what one
-  // card looks like. Each one collapses to its own header, which is what makes
-  // the page usable on a phone and what lets a wide window be given entirely to
-  // whichever of the three is being read.
-  panels: { source: true, deck: true, card: true },
+  // The card is a flashcard: question first, the answer once asked for.
+  answered: false,
+  // "empty" (the link form), "loading" (a sheet is on its way), "review".
+  stage: "empty",
+  view: "grid",
+  downloaded: false,
+  device: detectDevice(navigator),
 };
 
-const PANEL_ID = { source: "p-source", deck: "p-deck", card: "p-card" };
+// Beside the card from here up; a bottom sheet below. The card needs ~22rem and
+// the deck panel ~19rem, so two columns start being comfortable at 60rem.
+const WIDE = matchMedia("(min-width: 60rem)");
+const STILL = matchMedia("(prefers-reduced-motion: reduce)");
+const TOUCH = matchMedia("(hover: none)");
 
-const WIDE = matchMedia("(min-width: 56rem)");
-/** True on the layout where the panels are stacked rather than side by side. */
-const narrow = () => !WIDE.matches;
-
-function setPanel(name, open) {
-  state.panels[name] = open;
-  const el = document.getElementById(PANEL_ID[name]);
-  el.dataset.open = String(open);
-  el.querySelector(".panel-toggle").setAttribute("aria-expanded", String(open));
-  // Open, panel 1 shows its own status line again; the echo of it goes away.
-  if (name === "source" && open) $("#toast").hidden = true;
-}
-
-/**
- * Folding is a narrow-screen affordance.
- *
- * Side by side there is nothing to fold away — all three columns are already in
- * view — so the headers become plain labels: out of the tab order, and saying so
- * rather than announcing a button that will not do anything. Stacked, the three
- * columns are three screenfuls on top of each other and folding is the only way
- * to reach the third without scrolling past the first two.
- */
-function applyWidth() {
-  const wide = WIDE.matches;
-  for (const id of Object.values(PANEL_ID)) {
-    const toggle = document.querySelector(`#${id} .panel-toggle`);
-    toggle.tabIndex = wide ? -1 : 0;
-    toggle.setAttribute("aria-disabled", String(wide));
-  }
-  if (wide) for (const name of Object.keys(state.panels)) setPanel(name, true);
-}
-WIDE.addEventListener("change", applyWidth);
-const CARD_TABS = ["front", "both", "back", "template"];
 let analyze = null;
 let buildPackage = null;
 let readUpload = null;
@@ -268,50 +238,106 @@ let sheetNames = null;
 // it: a File object is gone once its input has moved on.
 let upload = null;
 
-
 // ---------------------------------------------------------------------------
-// Boot
+// The three stages
 // ---------------------------------------------------------------------------
 
 /**
- * @param {string} text
+ * Which of the page's three states is showing.
+ *
+ * The link form and the deck are never on screen together: on a phone either
+ * one is a screenful, and once there is a deck the question "which sheet" has
+ * been answered — the source bar above the card keeps the answer, the sheet
+ * picker and the reload button, and "change link" brings the form back.
+ */
+function setStage(stage) {
+  state.stage = stage;
+  $("#app").dataset.stage = stage;
+  $("#entry").hidden = stage !== "empty";
+  $("#deck").hidden = stage === "empty";
+  $("#skeleton").hidden = stage !== "loading";
+  $("#loadline").hidden = stage !== "loading";
+  if (stage === "empty") $("#toast").hidden = true;
+  paintRail();
+  placeDeckPanel();
+}
+
+/** The step rail: what is done, what is now, what is next. */
+function paintRail() {
+  const now = state.stage === "review" ? (state.downloaded ? 3 : 2) : 1;
+  for (const li of document.querySelectorAll("#rail li")) {
+    const n = Number(li.dataset.step);
+    const done = n < now || (n === 3 && state.downloaded);
+    li.className = done ? "done" : n === now ? "now" : "";
+    if (n === now && !done) li.setAttribute("aria-current", "step");
+    else li.removeAttribute("aria-current");
+    const mark = li.querySelector(".rail-n");
+    mark.innerHTML = done ? icon("check") : `<span>${n}</span>`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Status: one voice at a time
+// ---------------------------------------------------------------------------
+
+let toastTimer = 0;
+
+/**
+ * Says what is happening, wherever the reader is looking.
+ *
+ * Under the link field while the form is up; over the card placeholder while a
+ * sheet is on its way; as a toast once the deck is showing, since by then the
+ * form is gone. Only one of the three is ever written, so a screen reader hears
+ * each message once.
+ *
  * @param {""|"ok"|"bad"} kind
  * @param {boolean} busy  spin while something is genuinely running, so a still
  *   page reads as finished rather than as hung
  */
-let toastTimer = 0;
-
 function status(text, kind = "", busy = false) {
-  $("#status-text").textContent = text;
-  $("#status").className = `status ${kind} ${busy ? "busy" : ""}`;
-
-  // Stacked, the status line lives in panel 1, which folds itself the moment a
-  // sheet loads — so a reload, a download or a failure said nothing anybody could
-  // see. Echoed in a toast only while that panel is shut: the line inside it is
-  // then not displayed, and so not announced either, which keeps one voice.
+  const line = $("#status");
+  const load = $("#loadline");
   const toast = $("#toast");
   clearTimeout(toastTimer);
-  const show = Boolean(text) && narrow() && !state.panels.source;
-  toast.hidden = !show;
-  if (!show) return;
-  toast.textContent = text;
-  toast.className = `toast ${kind}`;
-  if (!busy) toastTimer = setTimeout(() => (toast.hidden = true), 4000);
+
+  if (state.stage === "empty") {
+    $("#status-text").textContent = text;
+    line.className = `status ${kind} ${busy ? "busy" : ""}`;
+    line.hidden = !text;
+    toast.hidden = true;
+    return;
+  }
+  if (state.stage === "loading") {
+    load.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${escapeHtml(text)}</span>`;
+    load.className = `loadline ${kind} busy`;
+    return;
+  }
+  toast.hidden = !text;
+  if (!text) return;
+  toast.innerHTML =
+    (busy ? '<span class="spinner" aria-hidden="true"></span>' : kind === "ok" ? icon("check") : kind === "bad" ? icon("circle-alert") : "") +
+    `<span>${escapeHtml(text)}</span>`;
+  toast.className = `toast ${kind} ${busy ? "busy" : ""}`;
+  if (!busy) toastTimer = setTimeout(() => (toast.hidden = true), 4200);
 }
 
 // ---- the first load --------------------------------------------------------
 //
-// The previewer is the add-on's own Python, and on a first visit that is about
+// Create deck is the add-on's own Python, and on a first visit that is about
 // 5 MB from a CDN. The wait is said in a learner's words, with its size and the
 // fact that it happens once; after ten seconds it says the network is slow,
-// because a spinner that has turned for that long reads as broken. Preview is
+// because a spinner that has turned for that long reads as broken. The form is
 // never disabled for it: a link pasted while it loads is taken, said so, and run
 // the moment Python is ready.
-const booting = { step: "boot", slow: false, queued: false, done: false };
+const booting = { step: "boot", slow: false, queued: false, done: false, failed: false };
 let pending = null;
 
 function bootStatus() {
-  if (booting.done) return;
+  if (booting.failed) return;
+  if (booting.done) {
+    if (state.stage === "empty") status(t("readyNow"), "ok");
+    return;
+  }
   status(
     [
       booting.queued && t("queued"),
@@ -319,7 +345,7 @@ function bootStatus() {
       booting.slow && t("slowBoot"),
     ]
       .filter(Boolean)
-      .join("\n"),
+      .join(" "),
     "",
     true,
   );
@@ -359,8 +385,8 @@ async function boot() {
  * The last line of a Python traceback, which is the part written for a person.
  *
  * Pyodide surfaces a raised exception as a JS Error carrying the whole traceback
- * in its message. Put in the status bar unedited it buries the sentence
- * workbook.py wrote under twenty lines of frames.
+ * in its message. Shown unedited it buries the sentence workbook.py wrote under
+ * twenty lines of frames.
  */
 function pythonMessage(err) {
   const lines = String(err?.message || err).trimEnd().split("\n");
@@ -381,8 +407,8 @@ function spreadsheetId(url) {
 // A deck's source does not have to be a Google Sheet: a .xlsx at a plain address
 // holds the same sheets and is read by the same reader. Mirrors
 // utils.is_spreadsheet_file_url / normalize_file_url — the add-on accepts exactly
-// these, and a page that accepted more would be previewing something that cannot
-// then be synced.
+// these, and a page that accepted more would be making decks from something that
+// cannot then be synced.
 const FILE_SUFFIXES = [".xlsx", ".xlsm"];
 
 function isFileUrl(url) {
@@ -428,9 +454,6 @@ function toWorkbookUrl(url) {
   return `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
 }
 
-/** Google names the download after the spreadsheet, which is close enough to seed
- *  the deck name — the add-on reads the page title instead, so this is a starting
- *  point the user can correct rather than a promise. */
 /** A file's own name, for a URL that serves no Content-Disposition. */
 function fileNameFromUrl(url) {
   const path = normalizeFileUrl(url).split("?")[0];
@@ -451,8 +474,8 @@ function deckNameFromHeaders(res) {
  * There used to be a field for this, seeded from the file and yours to correct.
  * It was the only control on the page that changed the *answer* rather than the
  * question, and it changed it into a guess: the add-on names a deck after the
- * spreadsheet and the sheet, so a name typed here made the preview describe a
- * deck the sync would never produce. The file already said what it is called.
+ * spreadsheet and the sheet, so a name typed here made the page describe a deck
+ * the sync would never produce. The file already said what it is called.
  */
 function chooseDeckName(fallback) {
   return fallback || "Deck";
@@ -477,9 +500,12 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   if (keepRow && was < state.analysis.rows.length) state.row = was;
   state.template = 0;
   state.deckFilter = null;
+  state.answered = false;
+  if (!keepRow) state.downloaded = false;
   // A column is chosen by position, and a different sheet has different columns
   // in those positions.
   state.column = null;
+  setStage("review");
   render();
 
   const s = state.analysis.stats;
@@ -509,22 +535,17 @@ function fieldError(message) {
   }
 }
 
-function failed(message, { field = false } = {}) {
+function failed(message, { field = false, share = false } = {}) {
+  // Back to the form: something has to be corrected, and the form is where.
+  // A deck left on screen under a failure would read as the thing that failed.
+  setStage("empty");
   // Said once, in the place it belongs: a problem with the link is said at the
   // link, anything else on the status line.
   status(field ? "" : message, "bad");
   fieldError(field ? message : "");
-  document.body.classList.remove("ready");
-  $("#p-deck").hidden = true;
-  $("#p-card").hidden = true;
-  $("#warnbar").hidden = true;
-  // Panel 1 stays open, but not still showing the sheet before this one: a grid
-  // under a failure reads as the thing that failed.
-  $("#gridbox").hidden = true;
-  $("#cells").hidden = true;
-  // Back open: something has to be corrected, and the field that needs
-  // correcting is the one a folded panel hides.
-  setPanel("source", true);
+  // A private sheet is the commonest failure by far, and the fix is four clicks
+  // in Google Sheets: show them, rather than describe them.
+  if (share) $("#sharehint").open = true;
   if (field) $("#url").focus();
 }
 
@@ -549,26 +570,21 @@ function fetchProblem({ google, code = null, html = false }) {
   return t("httpError", code);
 }
 
-/**
- * Names the loaded sheet in panel 1's header.
- *
- * A folded panel has only its header left to say what is inside it, so the
- * header carries the answer — and stacked, once the answer is there, the
- * question is a screenful in front of the two panels you came to read.
- */
+/** Names the loaded file in the source bar. Which of its sheets is loaded is
+ *  said by the picker beside it, which is a control rather than a sentence. */
 function noteSource(name) {
-  // Only the file: which of its sheets is loaded is said by the picker beside
-  // this, which is a control rather than a sentence and is the thing you came to
-  // the header for.
   $("#source").textContent = name;
   $("#source").title = name;
   $("#reload").hidden = false;
-  if (narrow()) setPanel("source", false);
 }
 
 async function preview({ again = false } = {}) {
   const input = $("#url").value.trim();
-  if (!input) return;
+  if (!input) {
+    fieldError(t("emptyLink"));
+    $("#url").focus();
+    return;
+  }
 
   // Which sheet of the workbook was open. A reload that dropped you back on
   // sheet 1 would be a reload nobody uses twice.
@@ -577,9 +593,13 @@ async function preview({ again = false } = {}) {
   $("#go").disabled = true;
   fieldError("");
   let bytes, res;
+  const google = Boolean(spreadsheetId(input));
   try {
     const workbookUrl = toWorkbookUrl(input);
-    const google = Boolean(spreadsheetId(input));
+    if (!again) {
+      setStage("loading");
+      $("#source").textContent = sourceLabel(input);
+    }
     status(t(again ? "reloading" : "downloading"), "", true);
 
     try {
@@ -599,7 +619,9 @@ async function preview({ again = false } = {}) {
     }
   } catch (err) {
     $("#go").disabled = false;
-    return failed(err.message, { field: true });
+    // For a Google link every fetch failure but "offline" may be the sharing
+    // setting — a private sheet can answer 404 as readily as a sign-in page.
+    return failed(err.message, { field: true, share: google && navigator.onLine !== false });
   }
 
   try {
@@ -616,15 +638,17 @@ async function preview({ again = false } = {}) {
       index: 0,
     };
 
-    // The example is what you get with no query string, so putting it back into
-    // the address bar would only make the landing URL longer for no gain.
+    // The example has an address of its own (#example), so putting the workbook
+    // link into the address bar would only make that longer for no gain.
     const isDemo = input === DEMO_SHEET;
     $("#demo-note").hidden = !isDemo;
-    if (!isDemo) {
-      const url = new URL(location.href);
+    const url = new URL(location.href);
+    if (isDemo) url.searchParams.delete("url");
+    else {
       url.searchParams.set("url", input);
-      history.replaceState(null, "", url);
+      url.hash = "";
     }
+    history.replaceState(null, "", url);
 
     showUpload(at ?? (isDemo ? demoTab(upload.bytes) : 0), { keepRow: again });
   } catch (err) {
@@ -634,13 +658,27 @@ async function preview({ again = false } = {}) {
   }
 }
 
+/** What to call a link in the source bar before its file has said its name. */
+function sourceLabel(url) {
+  return (isFileUrl(url) && fileNameFromUrl(url)) || shortLink(url);
+}
+
+/** A link short enough for the source bar while the file's own name is unknown. */
+function shortLink(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname.replace(/^www\./, "") + "/…";
+  } catch {
+    return url;
+  }
+}
+
 /**
  * Reads the source again — the link refetched, the dropped file re-opened.
  *
  * The sheet is edited somewhere else and read here, so this is the loop the page
- * is actually used in, and before this button the way round it was to unfold
- * panel 1 and press Preview: two taps, on the panel a phone folds away the
- * moment a sheet loads.
+ * is actually used in: edit a row in Sheets, come back, press this, look at the
+ * card again. It keeps the sheet of the workbook and the row you were on.
  *
  * A File is a reference rather than a copy, so re-reading one is only sometimes
  * possible: a spreadsheet app writing a new file over the old one leaves the
@@ -667,8 +705,8 @@ async function reload() {
 /** Where the example workbook should open, by name rather than by position.
  *
  *  Asked before the first read rather than after, so adding a sheet to the tour
- *  does not make the landing page draw one grid and then immediately redraw
- *  another. A name that is not in the file falls back to the first sheet.
+ *  does not make the page draw one deck and then immediately redraw another. A
+ *  name that is not in the file falls back to the first sheet.
  */
 function demoTab(bytes) {
   try {
@@ -683,7 +721,7 @@ function demoTab(bytes) {
 // Reading an uploaded file
 // ---------------------------------------------------------------------------
 
-/** The tab picker, drawn only for a workbook that has more than one grid. */
+/** The sheet picker, drawn only for a workbook that has more than one grid. */
 function paintTabs() {
   const el = $("#tabpick");
   const tabs = upload?.tabs || [];
@@ -719,13 +757,13 @@ function showUpload(index, { keepRow = false } = {}) {
     paintTabs();
 
     const base = upload.name.replace(/\.[^.]+$/, "").trim();
+    noteSource(base);
     analyse(
       out.tsv,
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       `${upload.idBase}#${out.tab}`,
       { keepRow },
     );
-    noteSource(base);
   } catch (err) {
     // The add-on's own sentence, not the twenty lines of traceback above it.
     failed(pythonMessage(err));
@@ -735,6 +773,8 @@ function showUpload(index, { keepRow = false } = {}) {
 }
 
 async function previewFile(file) {
+  setStage("loading");
+  $("#source").textContent = file.name;
   status(t("reading"), "", true);
   try {
     upload = {
@@ -756,6 +796,7 @@ async function previewFile(file) {
   // from a link would send the next person who opens it somewhere else entirely.
   const url = new URL(location.href);
   url.searchParams.delete("url");
+  url.hash = "";
   history.replaceState(null, "", url);
   $("#demo-note").hidden = true;
   $("#url").value = "";
@@ -765,8 +806,24 @@ async function previewFile(file) {
   showUpload(0);
 }
 
+/** Starts a load from whatever the form says, now or once Python is ready. */
+function submit() {
+  if (!$("#url").value.trim()) {
+    fieldError(t("emptyLink"));
+    $("#url").focus();
+    return;
+  }
+  // Said straight away, with the form still usable: the card placeholder and
+  // its status line take over the moment a link is accepted.
+  if (!booting.done) {
+    setStage("loading");
+    $("#source").textContent = sourceLabel($("#url").value.trim());
+  }
+  whenReady(() => preview());
+}
+
 // ---------------------------------------------------------------------------
-// Left pane — navigation only
+// The deck panel: the tree, the counts, the rows
 // ---------------------------------------------------------------------------
 
 function deckPanel(a) {
@@ -836,10 +893,51 @@ function rowList() {
         <span class="dot ${r.kind}" aria-hidden="true"></span>
         <span class="sr-only">${escapeHtml(kindLabel(r.kind))}:</span>
         <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
-        ${r.cloze ? '<span class="pill cloze">c</span>' : ""}
+        ${r.cloze ? '<span class="pill cloze">cloze</span>' : ""}
       </button>`,
     )
     .join("");
+}
+
+/** The counts as one readable line. Only "marked for sync" is ever a problem,
+ *  so only it turns red. */
+function summaryLine(a) {
+  const { stats, rows } = a;
+  const lit = chosen(a);
+  const cells = [
+    ["statRows", stats.total_table_lines],
+    ["statWithId", stats.valid_note_lines],
+    ["statSync", stats.sync_marked_lines],
+    ["statNotes", stats.total_potential_anki_notes],
+    ["statCloze", rows.filter((r) => r.cloze && r.kind === "synced").length],
+    ["statDecks", deckCount(a)],
+  ];
+  return cells
+    .map(
+      ([key, n]) =>
+        `<span class="${n === 0 && key === "statSync" ? "zero" : ""}${
+          lit.stat === key ? " lit" + popping() : ""
+        }">` + `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
+    )
+    .join("");
+}
+
+const syncedRows = (a) => a.rows.filter((r) => r.kind === "synced");
+const deckCount = (a) => new Set(syncedRows(a).map((r) => r.deck)).size;
+
+/**
+ * How many cards the package will hold — not rows, and not notes.
+ *
+ * A note makes one card per template (a reverse card doubles it), and a cloze
+ * note one per deletion. The number on the download button is the number a
+ * learner will see in Anki, so it is counted the way Anki will count it.
+ */
+function cardCount(a) {
+  return syncedRows(a).reduce((n, row) => {
+    if (!row.cloze) return n + a.templates.basic.length;
+    const ords = new Set(Object.values(row.values).flatMap((v) => clozeOrdinals(v)));
+    return n + Math.max(1, ords.size);
+  }, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -900,101 +998,353 @@ function warningItems(analysis) {
 }
 
 // ---------------------------------------------------------------------------
-// The stage — the card, or the template it came from
+// The card
 // ---------------------------------------------------------------------------
 
-function templateView(a) {
+/** The template the current row is drawn with, and the cloze card shown. */
+function currentCard(a) {
   const row = a.rows[state.row];
-  const templates = row?.cloze ? a.templates.cloze : a.templates.basic;
+  if (!row) return null;
+  const templates = row.cloze ? a.templates.cloze : a.templates.basic;
   const template = templates[Math.min(state.template, templates.length - 1)];
-  return `<div class="stagebox">
-    <p class="muted small">${t(
-      "templateFrom",
-      escapeHtml(row?.cloze ? a.noteTypes.cloze : a.noteTypes.basic),
-    )}</p>
-    <h2 class="src-head">${escapeHtml(t("frontTemplate"))}</h2>
-    <pre class="source">${escapeHtml(template.qfmt)}</pre>
-    <h2 class="src-head">${escapeHtml(t("backTemplate"))}</h2>
-    <pre class="source">${escapeHtml(template.afmt)}</pre>
-  </div>`;
-}
-
-function cardView(a) {
-  const row = a.rows[state.row];
-  if (!row) {
-    return `<div class="stagebox"><p class="empty">${escapeHtml(t("noRowsAtAll"))}</p></div>`;
-  }
-
-  const lit = chosen(a);
-  const isCloze = row.cloze;
-  const templates = isCloze ? a.templates.cloze : a.templates.basic;
-  const template = templates[Math.min(state.template, templates.length - 1)];
-
-  const ordinals = isCloze
+  const ordinals = row.cloze
     ? [...new Set(Object.values(row.values).flatMap((v) => clozeOrdinals(v)))]
     : [1];
   const ordinal = ordinals.includes(state.ordinal) ? state.ordinal : ordinals[0] || 1;
+  return { row, templates, template, ordinals, ordinal };
+}
 
+/**
+ * Draws the current card into its slot.
+ *
+ * The question side until the answer is asked for, then the question with the
+ * answer under a rule — what Anki shows after Show Answer. `typed` is whatever was
+ * typed into a type-in box on the question, carried across so the answer side
+ * compares it rather than an empty box.
+ */
+function paintCard({ typed = null } = {}) {
+  const a = state.analysis;
+  const slot = $("#cardslot");
+  const card = currentCard(a);
+  const visible = visibleRows();
+  const at = visible.findIndex(({ i }) => i === state.row);
+
+  $("#counter").textContent = visible.length ? `${at + 1} / ${visible.length}` : "";
+  $("#prev").disabled = $("#next").disabled = visible.length < 2;
+  // How many cards are left under this one, drawn as up to two edges of paper.
+  $("#stack").dataset.depth = String(Math.max(0, Math.min(2, visible.length - at - 1)));
+
+  $("#flip").disabled = !card;
+  $("#flip-text").textContent = t(state.answered ? "flipBack" : "showAnswer");
+  $("#flip").classList.toggle("answered", state.answered);
+  $("#fliphint").textContent = card ? t(TOUCH.matches ? "flipHintTouch" : "flipHintKeys") : "";
+
+  if (!card) {
+    slot.innerHTML = `<div class="nocard">${escapeHtml(t("noRowsAtAll"))}</div>`;
+    $("#cardmeta").innerHTML = "";
+    $("#cardbar").hidden = true;
+    $("#cardnotes").innerHTML = "";
+    return;
+  }
+
+  const { row, templates, template, ordinals, ordinal } = card;
+  const lit = chosen(a);
   const { front, back } = renderCard(template, row.values, { ordinal });
-
   const doc = cardDoc({
     front,
     back,
-    tab: state.tab,
+    tab: state.answered ? "both" : "front",
     dark: dark(),
     ring: lit.field,
     flash: state.columnFlash,
   });
 
+  // The new frame starts at the old one's height, so the card does not collapse
+  // and regrow on every turn while the new document measures itself.
+  const was = $("#card")?.style.height;
+  slot.innerHTML = cardFrame(doc, t("cardFrameTitle"));
+  const frame = $("#card");
+  if (was) frame.style.height = was;
+  frame.addEventListener("load", () => wireFrame(frame, typed), { once: true });
+
+  $("#cardmeta").innerHTML = cardMeta(a, row);
+  paintCardBar(templates, ordinals, ordinal);
+  $("#cardnotes").innerHTML = cardNotes(a, row, front, back);
+}
+
+/** Above the card: which row of the sheet it is, and where in the deck it lands. */
+function cardMeta(a, row) {
+  const root = `sc_${state.deckName}`.split("::").length;
+  const parts = row.deck.split("::");
+  const path = parts.length > root ? parts.slice(root) : parts.slice(-1);
+  const fate =
+    row.kind === "synced"
+      ? ""
+      : `<span class="fate ${row.kind}"><span class="dot ${row.kind}" aria-hidden="true"></span>${escapeHtml(
+          kindLabel(row.kind),
+        )}</span>`;
+  return (
+    `<span class="rowtag">${escapeHtml(t("valueInRow", row.line))}</span>` +
+    `<span class="crumbs" title="${escapeHtml(row.deck)}">${path
+      .map((p) => `<span>${escapeHtml(p)}</span>`)
+      .join(icon("chevron-right", "sep"))}</span>` +
+    fate
+  );
+}
+
+/** A note with a reverse card, or a cloze with several deletions, has more than
+ *  one card; these say which one is showing. */
+function paintCardBar(templates, ordinals, ordinal) {
+  const bar = $("#cardbar");
+  const parts = [];
+  if (templates.length > 1) {
+    parts.push(
+      `<select id="tpl" aria-label="${escapeHtml(t("edTemplate"))}">${templates
+        .map(
+          (tp, i) =>
+            `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(tp.name)}</option>`,
+        )
+        .join("")}</select>`,
+    );
+  }
+  if (ordinals.length > 1) {
+    parts.push(
+      `<select id="ord" aria-label="${escapeHtml(t("clozeCard"))}">${ordinals
+        .map(
+          (n) =>
+            `<option value="${n}" ${n === ordinal ? "selected" : ""}>${escapeHtml(t("clozeCardN", n))}</option>`,
+        )
+        .join("")}</select>`,
+    );
+  }
+  bar.hidden = !parts.length;
+  bar.innerHTML = parts.join("");
+}
+
+/** Under the card: why a row will not sync, what the renderer could not do, and
+ *  the deck and tags the note is filed under. */
+function cardNotes(a, row, front, back) {
   const unknown = [...new Set([...front.unknownFilters, ...back.unknownFilters])];
   const missing = [...new Set([...front.missingFields, ...back.missingFields])];
-
-  return `<div class="stagebox">
-    ${
-      templates.length > 1 || ordinals.length > 1
-        ? `<div class="cardbar">
-            ${
-              templates.length > 1
-                ? `<select id="tpl" aria-label="${escapeHtml(t("edTemplate"))}">${templates
-                    .map((t, i) => `<option value="${i}" ${i === state.template ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
-                    .join("")}</select>`
-                : ""
-            }
-            ${
-              ordinals.length > 1
-                ? `<select id="ord" aria-label="${escapeHtml(t("clozeCard"))}">${ordinals
-                    .map((n) => `<option value="${n}" ${n === ordinal ? "selected" : ""}>${escapeHtml(t("clozeCardN", n))}</option>`)
-                    .join("")}</select>`
-                : ""
-            }
-          </div>`
-        : ""
-    }
-    ${cardFrame(doc, t("cardFrameTitle"))}
-    ${
-      row.kind !== "synced"
-        ? `<p class="note ${row.kind}">${escapeHtml(
-            t(row.kind === "invalid" ? "rowInvalid" : "rowSkipped"),
-          )}</p>`
-        : ""
-    }
-    ${
-      row.clozeIn.length && !row.clozeIn.some((h) => a.sides.front.includes(h))
-        ? `<p class="note invalid">${t(
-            "clozeStranded",
-            row.clozeIn.map(escapeHtml).join("</code>, <code>"),
-          )}</p>`
-        : ""
-    }
-    ${missing.length ? `<p class="note">${t("missingFields", missing.map(escapeHtml).join("</code>, <code>"))}</p>` : ""}
-    ${unknown.length ? `<p class="note">${t("unknownFilters", unknown.map(escapeHtml).join("</code>, <code>"))}</p>` : ""}
-    <p class="cardmeta">${escapeHtml(t("deckAndTags"))}
-      <code>${escapeHtml(row.deck)}</code> · ${escapeHtml(t("tagsLabel"))}
-      ${row.tags
-        .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
-        .join("")}</p>
-  </div>`;
+  const lit = chosen(a);
+  return [
+    row.kind !== "synced"
+      ? `<p class="note ${row.kind}">${escapeHtml(
+          t(row.kind === "invalid" ? "rowInvalid" : "rowSkipped"),
+        )}</p>`
+      : "",
+    row.clozeIn.length && !row.clozeIn.some((h) => a.sides.front.includes(h))
+      ? `<p class="note invalid">${t(
+          "clozeStranded",
+          row.clozeIn.map(escapeHtml).join("</code>, <code>"),
+        )}</p>`
+      : "",
+    missing.length
+      ? `<p class="note">${t("missingFields", missing.map(escapeHtml).join("</code>, <code>"))}</p>`
+      : "",
+    unknown.length
+      ? `<p class="note">${t("unknownFilters", unknown.map(escapeHtml).join("</code>, <code>"))}</p>`
+      : "",
+    row.tags.length
+      ? `<p class="tags"><span class="tags-k">${escapeHtml(t("tagsLabel"))}</span>${row.tags
+          .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
+          .join("")}</p>`
+      : "",
+  ].join("");
 }
+
+// What inside a card is a control of its own: a tap there is for it, not a
+// request to turn the card over.
+const INTERACTIVE =
+  "a, button, input, textarea, select, label, audio, video, iframe, details, " +
+  "summary, [onclick], [data-tts], .sc-draw, .sc-reveal";
+
+/**
+ * Makes the card itself the thing you touch.
+ *
+ * The card is a same-origin srcdoc frame, so its document can be listened to: a
+ * tap anywhere that is not a control turns it over, a sideways drag moves to the
+ * next card with the card following the finger, and the keys work while focus is
+ * inside it. Enter in a type-in box asks for the answer, as it does in Anki.
+ */
+function wireFrame(frame, typed) {
+  let doc;
+  try {
+    doc = frame.contentDocument;
+  } catch {
+    return;
+  }
+  if (!doc) return;
+  doc.body.style.cursor = "pointer";
+
+  if (typed !== null && state.answered) {
+    const box = doc.querySelector("#typeans");
+    if (box) {
+      box.value = typed;
+      box.dispatchEvent(new Event("input"));
+    }
+  }
+
+  let swiped = false;
+  doc.addEventListener("click", (e) => {
+    if (swiped) {
+      swiped = false;
+      return;
+    }
+    if (e.target.closest(INTERACTIVE)) return;
+    flip();
+  });
+  doc.addEventListener("keydown", (e) => {
+    const typing = e.target.closest("input, textarea, select, [contenteditable]");
+    if (typing) {
+      if (e.key === "Enter" && e.target.id === "typeans" && !state.answered) {
+        e.preventDefault();
+        flip();
+      }
+      return;
+    }
+    // Enter or Space on a control in the card presses that control.
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest(INTERACTIVE)) return;
+    keys(e);
+  });
+
+  // Follow the finger, then either throw the card or let it settle back.
+  const slot = $("#cardslot");
+  let x0 = 0;
+  let y0 = 0;
+  let dx = 0;
+  let dragging = false;
+  doc.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length !== 1 || e.target.closest(INTERACTIVE)) return;
+      x0 = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      dx = 0;
+      dragging = null;
+    },
+    { passive: true },
+  );
+  doc.addEventListener(
+    "touchmove",
+    (e) => {
+      if (dragging === false || e.touches.length !== 1) return;
+      const mx = e.touches[0].clientX - x0;
+      const my = e.touches[0].clientY - y0;
+      if (dragging === null) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        dragging = Math.abs(mx) > Math.abs(my) * 1.2;
+        if (!dragging) return;
+      }
+      dx = mx;
+      if (!STILL.matches) {
+        slot.style.transition = "none";
+        slot.style.transform = `translateX(${dx}px) rotate(${dx / 28}deg)`;
+      }
+    },
+    { passive: true },
+  );
+  doc.addEventListener("touchend", () => {
+    if (!dragging) return;
+    dragging = false;
+    swiped = true;
+    setTimeout(() => (swiped = false), 400);
+    if (Math.abs(dx) > 64 && visibleRows().length > 1) step(dx < 0 ? 1 : -1);
+    else settle(slot);
+  });
+}
+
+function settle(slot) {
+  slot.style.transition = "";
+  slot.style.transform = "";
+}
+
+let moving = false;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Turns the card over: question to answer, or back. */
+async function flip() {
+  if (moving || !state.analysis || !currentCard(state.analysis)) return;
+  let typed = null;
+  try {
+    typed = $("#card")?.contentDocument?.querySelector("#typeans")?.value ?? null;
+  } catch {
+    // An unreadable frame only loses the typed text, never the turn.
+  }
+  if (STILL.matches) {
+    state.answered = !state.answered;
+    return paintCard({ typed });
+  }
+  moving = true;
+  const slot = $("#cardslot");
+  slot.classList.add("turn-out");
+  await wait(170);
+  state.answered = !state.answered;
+  paintCard({ typed });
+  slot.classList.remove("turn-out");
+  slot.classList.add("turn-in");
+  void slot.offsetWidth;
+  slot.classList.remove("turn-in");
+  await wait(200);
+  moving = false;
+}
+
+/** Moves to the card `by` places along, throwing the current one aside. */
+async function step(by) {
+  const visible = visibleRows();
+  if (!visible.length) return;
+  const at = visible.findIndex(({ i }) => i === state.row);
+  const target = visible[(at + by + visible.length) % visible.length].i;
+  const slot = $("#cardslot");
+
+  if (STILL.matches || moving) {
+    if (moving) return settle(slot);
+    state.row = target;
+    state.answered = false;
+    state.template = 0;
+    return render();
+  }
+  moving = true;
+  slot.style.transition = "transform .22s cubic-bezier(.4,0,1,1), opacity .22s ease";
+  slot.style.transform = `translateX(${by > 0 ? -115 : 115}%) rotate(${by > 0 ? -9 : 9}deg)`;
+  slot.style.opacity = "0";
+  await wait(200);
+
+  state.row = target;
+  state.answered = false;
+  state.template = 0;
+  // Up from the stack underneath: the next card was already there.
+  slot.style.transition = "none";
+  slot.style.transform = "translateY(14px) scale(.95)";
+  slot.style.opacity = ".3";
+  render();
+  void slot.offsetWidth;
+  slot.style.transition = "";
+  slot.style.transform = "";
+  slot.style.opacity = "";
+  await wait(260);
+  moving = false;
+}
+
+function keys(e) {
+  if (state.stage !== "review" || document.querySelector("dialog[open]:modal")) return;
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    step(1);
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    step(-1);
+  } else if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    flip();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Download, and what to do with the file
+// ---------------------------------------------------------------------------
+
+const fileName = () => `${state.deckName || "deck"}.apkg`.replace(/[\\/:*?"<>|]+/g, " ");
 
 /** Hands the built package to the browser as a download. */
 function downloadPackage() {
@@ -1011,10 +1361,13 @@ function downloadPackage() {
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${state.deckName || "deck"}.apkg`;
+    link.download = fileName();
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     status(t("packed", Math.round(bytes.length / 1024)), "ok");
+    state.downloaded = true;
+    paintRail();
+    openDone();
   } catch (err) {
     status(t("packFailed", err.message), "bad");
   } finally {
@@ -1022,50 +1375,35 @@ function downloadPackage() {
   }
 }
 
-function tabBar() {
-  const visible = visibleRows();
-  const at = visible.findIndex(({ i }) => i === state.row);
-  // The four sides are one control and stay one line, so a column too narrow for
-  // the whole bar drops the row stepper underneath rather than breaking "front |
-  // both | back | template" across three lines and reading as a bug.
-  return `
-    <span class="tabset">${CARD_TABS.map(
-      (name) =>
-        `<button type="button" data-tab="${name}" class="${state.tab === name ? "on" : ""}"` +
-        ` aria-pressed="${state.tab === name}">` +
-        `${escapeHtml(t("tab" + name[0].toUpperCase() + name.slice(1)))}</button>`,
-    ).join("")}</span>
-    <span class="nav">
-      <button data-step="-1" type="button" aria-label="${escapeHtml(t("prevRow"))}"
-              title="${escapeHtml(t("prevRow"))}">${icon("arrow-left")}</button>
-      <span class="at">${at + 1} / ${visible.length}</span>
-      <button id="next" type="button" aria-label="${escapeHtml(t("nextRow"))}"
-              title="${escapeHtml(t("nextRow"))}">${icon("arrow-right")}</button>
-    </span>`;
+/** The steps for opening the file, on whichever device is picked. */
+function paintDone() {
+  const name = fileName();
+  $("#done-name").textContent = name;
+  $("#devtabs").innerHTML = DEVICES.map((d) => {
+    const [label, sub] = DEVICE_LABELS[d];
+    const on = d === state.device;
+    return `<button type="button" role="tab" id="dev-${d}" data-device="${d}"
+      aria-selected="${on}" aria-controls="devpanel" tabindex="${on ? 0 : -1}">
+      ${icon(d === "desktop" ? "monitor" : "smartphone")}
+      <span><strong translate="no">${escapeHtml(t(label))}</strong><small>${escapeHtml(t(sub))}</small></span>
+    </button>`;
+  }).join("");
+  $("#devpanel").setAttribute("aria-labelledby", `dev-${state.device}`);
+  $("#devpanel").innerHTML = `<ol class="inst">${DEVICE_STEPS[state.device]
+    .map((key) => `<li>${t(key, escapeHtml(name))}</li>`)
+    .join("")}</ol>`;
 }
 
-/** The counts as one readable line. Six equal tiles said nothing about which of
- *  them mattered; only "marked for sync" is ever a problem, so only it is red. */
-function summaryLine(a) {
-  const { stats, rows } = a;
-  const lit = chosen(a);
-  const cells = [
-    ["statRows", stats.total_table_lines],
-    ["statWithId", stats.valid_note_lines],
-    ["statSync", stats.sync_marked_lines],
-    ["statNotes", stats.total_potential_anki_notes],
-    ["statCloze", rows.filter((r) => r.cloze && r.kind === "synced").length],
-    ["statDecks", new Set(rows.filter((r) => r.kind === "synced").map((r) => r.deck)).size],
-  ];
-  return cells
-    .map(
-      ([key, n]) =>
-        `<span class="${n === 0 && key === "statSync" ? "zero" : ""}${
-          lit.stat === key ? " lit" + popping() : ""
-        }">` + `<b>${n}</b> ${escapeHtml(t(key))}</span>`,
-    )
-    .join("");
+function openDone() {
+  paintDone();
+  const dlg = $("#done");
+  if (!dlg.open) dlg.showModal();
+  $(`#dev-${state.device}`)?.focus();
 }
+
+// ---------------------------------------------------------------------------
+// Painting
+// ---------------------------------------------------------------------------
 
 /**
  * Light unless somebody said otherwise.
@@ -1088,10 +1426,10 @@ function setTheme(on) {
   }
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", on ? "#171c24" : "#ffffff");
+    ?.setAttribute("content", on ? "#18151f" : "#ffffff");
   paintTheme();
   // The card is a separate document that was handed the old palette.
-  if (state.analysis) render();
+  if (state.analysis && state.stage === "review") paintCard();
 }
 
 function paintTheme() {
@@ -1101,7 +1439,7 @@ function paintTheme() {
   button.title = button.ariaLabel = t(dark() ? "toLight" : "toDark");
 }
 
-/** Text that lives in preview.html rather than in a render function. */
+/** Text that lives in create.html rather than in a render function. */
 function paintStatic() {
   // A screen reader picks its voice from this, so it has to follow the page's
   // language, not just the button that last changed it.
@@ -1117,10 +1455,10 @@ function paintStatic() {
     }
   }
   $("#rows-legend").innerHTML =
-    `${escapeHtml(t("rowsLegend"))} <span class="dot synced"></span> ${escapeHtml(t("legendSynced"))} · ` +
-    `<span class="dot skipped"></span> ${escapeHtml(t("legendSkipped"))} · ` +
-    `<span class="dot invalid"></span> ${escapeHtml(t("legendInvalid"))}. ` +
-    escapeHtml(t("legendGhost"));
+    `<span><span class="dot synced"></span> ${escapeHtml(t("legendSynced"))}</span>` +
+    `<span><span class="dot skipped"></span> ${escapeHtml(t("legendSkipped"))}</span>` +
+    `<span><span class="dot invalid"></span> ${escapeHtml(t("legendInvalid"))}</span>` +
+    `<span class="ghost">${escapeHtml(t("legendGhost"))}</span>`;
 
   paintTheme();
   // The glyph says "language" to somebody who reads neither EN nor VI as a word.
@@ -1129,68 +1467,119 @@ function paintStatic() {
       `<button data-lang="${l.code}" class="${lang() === l.code ? "on" : ""}"` +
       ` aria-pressed="${lang() === l.code}">${l.label}</button>`,
   ).join("");
+  paintRail();
 }
 
 function render() {
   const a = state.analysis;
   paintStatic();
-  document.body.classList.add("ready");
-  $("#p-deck").hidden = false;
-  $("#p-card").hidden = false;
   $("#summary").innerHTML = summaryLine(a);
   $("#tree").innerHTML = deckPanel(a);
   $("#rowlist").innerHTML = rowList();
   $("#rowcount").textContent = `${visibleRows().length}`;
-  $("#tabs").innerHTML = tabBar();
-  $("#view").innerHTML = state.tab === "template" ? templateView(a) : cardView(a);
+  paintCard();
+  paintSheetView(a);
 
+  // The flash and the scroll both mark *choosing a column*. Every other repaint
+  // — a row picked, a language switched — would otherwise blink a block nobody
+  // was looking at, and move the page under a reader who asked for nothing.
+  if (state.columnFlash) revealField(chosen(a).field);
+  state.columnFlash = false;
+
+  const cards = cardCount(a);
+  const decks = deckCount(a);
+  $("#dl-count").textContent = cards ? t("dlCards", cards) : t("noSyncRows");
+  $("#dl-decks").textContent = cards ? t("dlDecks", decks) : "";
+  $("#apkg").disabled = !cards;
+
+  // Above the card rather than behind a menu: a sheet that warns is telling you
+  // some cards will come out wrong. Folded to its count, so it is seen without
+  // being read before the card.
+  const warnings = warningItems(a);
+  $("#warnbar").hidden = !warnings.length;
+  $("#warntitle").textContent = t("warnTitle", warnings.length);
+  $("#warnlist").innerHTML = warnings.join("");
+
+  if ($("#done").open) paintDone();
+}
+
+// ---------------------------------------------------------------------------
+// The deck panel's two shapes
+// ---------------------------------------------------------------------------
+
+/**
+ * Beside the card when there is room, a bottom sheet when there is not.
+ *
+ * One `<dialog>`, shown non-modally as a side panel on a wide screen and modally
+ * on a phone, where it slides up over the card, traps focus and closes on Escape
+ * — so the tree and the rows exist once, and a phone gets them as the secondary
+ * thing they are rather than as a screenful above the card.
+ */
+function placeDeckPanel() {
+  const dlg = $("#deckpanel");
+  const want = WIDE.matches && state.stage === "review";
+  if (want) {
+    if (dlg.open && dlg.matches(":modal")) dlg.close();
+    if (!dlg.open) dlg.show();
+  } else if (dlg.open && !dlg.matches(":modal")) {
+    dlg.close();
+  }
+}
+WIDE.addEventListener("change", placeDeckPanel);
+
+function openDeckPanel() {
+  const dlg = $("#deckpanel");
+  if (WIDE.matches) {
+    dlg.querySelector(".tree button.on, .rowitem.on")?.focus();
+    return;
+  }
+  if (!dlg.open) dlg.showModal();
+  dlg.querySelector(".rowitem.on")?.scrollIntoView({ block: "center" });
+}
+
+function closeDeckPanel() {
+  const dlg = $("#deckpanel");
+  if (dlg.matches(":modal")) dlg.close();
+}
+
+// ---------------------------------------------------------------------------
+// The Sheet view — the sheet as a sheet, the row cell by cell, the template
+// ---------------------------------------------------------------------------
+
+function paintSheetView(a) {
+  for (const b of document.querySelectorAll("[data-view]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.view === state.view));
+  }
+  $("#gridview").hidden = state.view !== "grid";
+  $("#tplview").hidden = state.view !== "template";
+  if ($("#sheetview").hidden) return;
+  if (state.view === "template") {
+    $("#tplview").innerHTML = templateView(a);
+    return;
+  }
   paintGrid(a);
-
   const shown = a.rows[state.row];
   $("#cells").hidden = !shown;
   if (shown) {
     $("#cellhead").textContent = t("valueInRow", shown.line);
     $("#colcount").textContent = `${a.plan.headers.length}`;
     $("#celllist").innerHTML = rowCells(a);
-    for (const el of document.querySelectorAll(".stepper")) {
-      const back = el.dataset.step === "-1";
-      el.innerHTML = icon(back ? "arrow-left" : "arrow-right");
-      el.title = el.ariaLabel = t(back ? "prevRow" : "nextRow");
-    }
   }
-
-  // The flash and the scroll both mark *choosing a column*. Every other repaint
-  // — a row picked, a language switched — would otherwise blink a panel nobody
-  // was looking at, and move the page under a reader who asked for nothing.
-  if (state.columnFlash) revealField(chosen(a).field);
-  state.columnFlash = false;
-
-  // Each header says what its panel holds, because that sentence is all a shut
-  // panel has left.
-  const synced = a.rows.filter((r) => r.kind === "synced");
-  $("#deck-note").textContent = t(
-    "deckNote",
-    a.stats.sync_marked_lines,
-    a.stats.total_table_lines,
-    new Set(synced.map((r) => r.deck)).size,
-  );
-  const row = a.rows[state.row];
-  $("#card-note").textContent = row
-    ? t("cardNote", row.line, rowLabel(row, a.sides.front))
-    : "";
-
-  // Above the working area rather than behind a drawer: a sheet that warns is
-  // telling you the cards will come out wrong, which is the one thing on this
-  // page nobody should have to go looking for.
-  const warnings = warningItems(a);
-  $("#warnbar").hidden = !warnings.length;
-  $("#warncount").textContent = warnings.length ? `(${warnings.length})` : "";
-  $("#warnlist").innerHTML = warnings.join("");
 }
 
-// ---------------------------------------------------------------------------
-// Panel 1 — what each column turned into
-// ---------------------------------------------------------------------------
+function templateView(a) {
+  const card = currentCard(a);
+  if (!card) return "";
+  const { row, template } = card;
+  return `<p class="muted small">${t(
+      "templateFrom",
+      escapeHtml(row.cloze ? a.noteTypes.cloze : a.noteTypes.basic),
+    )}</p>
+    <h3 class="src-head">${escapeHtml(t("frontTemplate"))}</h3>
+    <pre class="source">${escapeHtml(template.qfmt)}</pre>
+    <h3 class="src-head">${escapeHtml(t("backTemplate"))}</h3>
+    <pre class="source">${escapeHtml(template.afmt)}</pre>`;
+}
 
 /**
  * The role a header ended up with, as `{kind, label}`.
@@ -1224,17 +1613,6 @@ function columnRole(name, index, a) {
   return { kind: "dead", label: t("roleUnused") };
 }
 
-/**
- * What the chosen column, if any, points at elsewhere on the page.
- *
- * Answering "what did this column become" in words and leaving the reader to go
- * find it is half an answer. Everything below returns something the other two
- * panels can light up at the same moment, so the word and the thing arrive
- * together.
- *
- * @returns {{name: string|null, field: string|null, deck: string|null,
- *            tags: boolean, stat: string|null}}
- */
 /**
  * Draws the grid, leaving it where the reader left it.
  *
@@ -1275,25 +1653,20 @@ function columnLetter(index) {
 /**
  * The sheet as a grid — the same rows and columns the spreadsheet shows.
  *
- * This page long refused to draw one, on the grounds that a grid is the wrong
- * shape for a phone and that what people come to check is a row. The first half
- * is true and is why the grid lives in a box of its own that scrolls rather than
- * pushing the page sideways; the second was answering a question nobody asked.
- * Before you can ask what a row became you have to recognise the sheet, and only
- * the sheet's own shape does that: the settings row sitting in row 2, the empty
- * column somebody left in the middle, the thirty rows below the ones you meant.
- *
- * Everything is here — blank rows, the settings row, columns with no header —
- * because a preview that quietly tidied would be a different sheet. What it adds
- * is what the parser knows: which rows sync, which one is the settings row, and
- * which column the click opens.
+ * It answers "is this the sheet I meant", which only the sheet's own shape
+ * answers: the settings row sitting in row 2, the empty column somebody left in
+ * the middle, the thirty rows below the ones you meant. Everything is here —
+ * blank rows, the settings row, columns with no header — because a preview that
+ * quietly tidied would be a different sheet. What it adds is what the parser
+ * knows: which rows sync, which one is the settings row, and which column a
+ * click opens.
  */
 function sheetGrid(a) {
   const g = a.grid;
   if (!g || !g.cells.length) return "";
 
-  // Row numbers are the sheet's own, so a row here and a row in the panels beside
-  // it are named the same thing.
+  // Row numbers are the sheet's own, so a row here and a row anywhere else on
+  // the page are named the same thing.
   const found = new Map(a.rows.map((row, i) => [row.line, i]));
   const selected = a.rows[state.row]?.line;
 
@@ -1349,8 +1722,7 @@ function sheetGrid(a) {
  * The grid above answers "is this the sheet I meant"; this answers "what is in
  * this row", which on a phone is the question a grid answers badly — fourteen
  * columns is a sideways scroll inside a downwards one. So it stays a list at
- * every width rather than a table that turns into something else below a
- * breakpoint, and each line doubles as the way to open that column.
+ * every width, and each line doubles as the way to open that column.
  */
 function rowCells(a) {
   const row = a.rows[state.row];
@@ -1364,7 +1736,7 @@ function rowCells(a) {
       const value = repeat ? "" : String(row.values[name] ?? "").trim();
       const line = `<button class="cellrow${repeat ? " dead" : ""}${
         state.column === i ? " on" : ""
-      }" data-col="${i}">
+      }" data-col="${i}" aria-expanded="${state.column === i}">
         <span class="k">${escapeHtml(name)}</span>
         <span class="v${value ? "" : " none"}">${escapeHtml(
           value || t(repeat ? "roleDuplicate" : "cellEmpty"),
@@ -1382,6 +1754,17 @@ function popping() {
   return state.columnFlash ? " pop" : "";
 }
 
+/**
+ * What the chosen column, if any, points at elsewhere on the page.
+ *
+ * Answering "what did this column become" in words and leaving the reader to go
+ * find it is half an answer. Everything below returns something the rest of the
+ * page can light up at the same moment — the block on the card, the branch of
+ * the deck tree, the count — so the word and the thing arrive together.
+ *
+ * @returns {{name: string|null, field: string|null, deck: string|null,
+ *            tags: boolean, stat: string|null}}
+ */
 function chosen(a) {
   const blank = { name: null, field: null, deck: null, tags: false, stat: null };
   if (state.column === null) return blank;
@@ -1411,18 +1794,16 @@ function chosen(a) {
 /**
  * The deck this column files the selected row into, or null.
  *
- * Rebuilt from the row's own cells rather than sliced off `row.deck`: an empty
- * level is dropped from the path, so the third column is not always the third
- * segment of the name.
+ * Sliced off the deck name the add-on itself produced rather than rebuilt from
+ * the cells: a level is cleaned on its way into a deck name — `::` and a few
+ * other characters cannot survive there — so the cell and the segment are not
+ * always the same text. Only the *count* of levels is taken from the cells, since
+ * an empty level is dropped from the path.
  */
 function branchFor(name, levels, a) {
   const row = a.rows[state.row];
   if (!row) return null;
 
-  // Sliced off the deck name the add-on itself produced rather than rebuilt from
-  // the cells: a level is cleaned on its way into a deck name — `::` and a few
-  // other characters cannot survive there — so the cell and the segment are not
-  // always the same text. Only the *count* of levels is taken from the cells.
   const root = `sc_${state.deckName}`.split("::").length;
   let depth = 0;
   for (const level of levels) {
@@ -1436,14 +1817,11 @@ function branchFor(name, levels, a) {
 }
 
 /**
- * Brings the ringed block into view, for a card taller than the panel.
+ * Brings the ringed block into view, for a card taller than its frame's slot.
  *
  * Only ever called from the click that opened a column: scrolling is a strong
- * thing to do to somebody, and doing it on every repaint — a row picked, a
- * language switched — would move the page under a reader who asked for nothing.
- *
- * The card is a same-origin srcdoc frame, so its elements can be reached and
- * `scrollIntoView` carries through the frame boundary to the panel outside it.
+ * thing to do to somebody, and doing it on every repaint would move the page
+ * under a reader who asked for nothing.
  */
 function revealField(name) {
   const frame = $("#card");
@@ -1453,8 +1831,6 @@ function revealField(name) {
       const el = frame.contentDocument?.querySelector(
         `[data-sc-col="${name.replace(/["\\]/g, "\\$&")}"]`,
       );
-      // "nearest" so a block already on screen does not move: the hop is the
-      // motion, and sliding the card as well would be two things at once.
       el?.scrollIntoView({ block: "nearest", behavior: "auto" });
     } catch {
       // A frame that cannot be read is not worth breaking the page over. The
@@ -1526,51 +1902,101 @@ document.addEventListener("click", (e) => {
   setLang(picker.dataset.lang);
   // Everything on screen is produced by a render function, so switching
   // languages is a repaint rather than a reload — the sheet stays loaded.
-  if (state.analysis) render();
+  if (state.analysis && state.stage === "review") render();
   else {
     paintStatic();
     bootStatus();
   }
 });
 
-// A real form, so Enter submits from either field the way it does everywhere else
-// and the browser supplies the keyboard's "go" key on a phone.
+// A real form, so Enter submits and the browser supplies the keyboard's "go"
+// key on a phone.
 $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  whenReady(() => preview());
+  submit();
 });
 
-// The field opens holding the example's long address, and the first thing anyone
-// does with it is replace it. Selected whole on focus, so typing or pasting
-// replaces it instead of landing somewhere in the middle of a GitHub URL. The
-// mouseup that follows a click would collapse the selection to a caret, so that
-// one is swallowed.
-let keepSelection = false;
-$("#url").addEventListener("focus", (e) => {
-  if (e.target.value !== DEMO_SHEET) return;
-  e.target.select();
-  keepSelection = true;
-});
-$("#url").addEventListener("mouseup", (e) => {
-  if (keepSelection) e.preventDefault();
-  keepSelection = false;
-});
 // A changed link is a new question; the old complaint is about the last one.
 $("#url").addEventListener("input", () => fieldError(""));
 
-$("#reload").addEventListener("click", reload);
-
-document.addEventListener("click", (e) => {
-  const head = e.target.closest(".panel-toggle");
-  if (!head || !narrow()) return;
-  const name = head.id.replace("-toggle", "").replace("src", "source");
-  setPanel(name, !state.panels[name]);
-  // Re-opening panel 1 means the link is about to be replaced, so put the cursor
-  // where the work is.
-  if (name === "source" && state.panels.source) {
+// Pasting is what everybody arriving here does next, and on a phone a long-press
+// in an empty field is a fiddly way to do it. Only offered where the browser can
+// read the clipboard at all; a refusal leaves the cursor in the field.
+if (navigator.clipboard?.readText) {
+  $("#paste").hidden = false;
+  $("#paste").addEventListener("click", async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (text) {
+        $("#url").value = text;
+        fieldError("");
+      }
+    } catch {
+      // Permission refused: the field is still there to paste into by hand.
+    }
     $("#url").focus();
-    $("#url").select();
+  });
+}
+
+$("#example").addEventListener("click", () => {
+  $("#url").value = DEMO_SHEET;
+  fieldError("");
+  submit();
+});
+
+$("#reload").addEventListener("click", reload);
+$("#change").addEventListener("click", () => {
+  // Whatever was waiting for Python is no longer what is wanted.
+  pending = null;
+  booting.queued = false;
+  setStage("empty");
+  bootStatus();
+  $("#url").focus();
+  $("#url").select();
+});
+
+$("#open-deck").addEventListener("click", openDeckPanel);
+$("#dp-close").addEventListener("click", closeDeckPanel);
+// A tap on the dimmed card behind the sheet puts the sheet away.
+$("#deckpanel").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget && e.currentTarget.matches(":modal")) closeDeckPanel();
+});
+
+$("#open-sheet").addEventListener("click", () => {
+  const view = $("#sheetview");
+  view.hidden = !view.hidden;
+  $("#open-sheet").setAttribute("aria-expanded", String(!view.hidden));
+  if (!view.hidden) {
+    paintSheetView(state.analysis);
+    view.scrollIntoView({ block: "start", behavior: STILL.matches ? "auto" : "smooth" });
   }
+});
+
+$("#flip").addEventListener("click", flip);
+$("#apkg").addEventListener("click", downloadPackage);
+$("#again").addEventListener("click", downloadPackage);
+for (const id of ["#done-close", "#done-ok"]) {
+  $(id).addEventListener("click", () => $("#done").close());
+}
+$("#done").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) $("#done").close();
+});
+$("#devtabs").addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-device]");
+  if (!tab) return;
+  state.device = tab.dataset.device;
+  paintDone();
+  $(`#dev-${state.device}`).focus();
+});
+// The tab pattern: arrows move between devices, one tab stop for the group.
+$("#devtabs").addEventListener("keydown", (e) => {
+  const move = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+  if (!move) return;
+  e.preventDefault();
+  const at = DEVICES.indexOf(state.device);
+  state.device = DEVICES[(at + move + DEVICES.length) % DEVICES.length];
+  paintDone();
+  $(`#dev-${state.device}`).focus();
 });
 
 $("#pick").addEventListener("click", () => $("#file").click());
@@ -1580,6 +2006,14 @@ $("#file").addEventListener("change", (e) => {
   // the obvious thing to do after editing it and wanting the new version.
   e.target.value = "";
   if (file) whenReady(() => previewFile(file));
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
+  // Enter and Space on a button press the button; only the bare page turns the
+  // card with them.
+  if ((e.key === " " || e.key === "Enter") && e.target.closest?.("button, a, summary, [tabindex]:not(#app)")) return;
+  keys(e);
 });
 
 // ---- drag and drop --------------------------------------------------------
@@ -1619,42 +2053,35 @@ document.addEventListener("click", (e) => {
     state.columnFlash = state.column !== null;
     return render();
   }
-  const tab = e.target.closest("[data-tab]");
-  if (tab) {
-    state.tab = tab.dataset.tab;
-    return render();
+  const view = e.target.closest("[data-view]");
+  if (view) {
+    state.view = view.dataset.view;
+    return paintSheetView(state.analysis);
   }
   const deckEl = e.target.closest("[data-deck]");
   if (deckEl) {
     state.deckFilter = deckEl.dataset.deck || null;
     const first = visibleRows()[0];
     if (first) state.row = first.i;
+    state.answered = false;
     return render();
   }
   const rowEl = e.target.closest("[data-row]");
   if (rowEl) {
     state.row = Number(rowEl.dataset.row);
     state.template = 0;
+    state.answered = false;
     render();
-    // Stacked, the card is below a list long enough to scroll: picking a row is
-    // the moment you stop browsing and start reading, so the list folds away and
-    // the card comes to you. Side by side it is already on screen.
-    if (narrow()) {
-      setPanel("deck", false);
-      document.getElementById("p-card").scrollIntoView({ block: "start" });
+    // Picking a row is the moment you stop browsing and start reading: the
+    // sheet goes away and the card comes to you.
+    if (rowEl.closest("#deckpanel") && !WIDE.matches) {
+      closeDeckPanel();
+      $("#stage").scrollIntoView({ block: "start" });
     }
     return;
   }
-  if (e.target.id === "apkg") return downloadPackage();
   const stepper = e.target.closest("[data-step]");
-  if (stepper) {
-    const visible = visibleRows();
-    if (!visible.length) return;
-    const at = visible.findIndex(({ i }) => i === state.row);
-    const step = Number(stepper.dataset.step);
-    state.row = visible[(at + step + visible.length) % visible.length].i;
-    return render();
-  }
+  if (stepper && stepper.closest(".reviewbar")) step(Number(stepper.dataset.step));
 });
 
 document.addEventListener("change", (e) => {
@@ -1662,24 +2089,39 @@ document.addEventListener("change", (e) => {
   if (e.target.id === "tpl") state.template = Number(e.target.value);
   else if (e.target.id === "ord") state.ordinal = Number(e.target.value);
   else return;
+  state.answered = false;
   render();
 });
 
 addEventListener("message", (e) => {
   const frame = $("#card");
-  if (frame && e.data?.h) frame.style.height = `${e.data.h + 8}px`;
+  if (!frame || e.source !== frame.contentWindow || !e.data?.h) return;
+  frame.style.height = `${e.data.h + 8}px`;
 });
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
 
 paintIcons();
 paintStatic();
-// Written into the DOM rather than left implicit, so `data-open` and
-// `aria-expanded` say the same thing from the first paint.
-for (const name of Object.keys(state.panels)) setPanel(name, state.panels[name]);
-applyWidth();
-bootStatus();
-$("#url").value = new URLSearchParams(location.search).get("url") || DEMO_SHEET;
 
-// Whatever was asked for while loading, or else the link the page opened with.
+// What the address asked for: a link (?url=, which the landing page and old
+// preview links forward here), the example (#example), or nothing — the form.
+const asked = new URLSearchParams(location.search).get("url");
+if (asked) $("#url").value = asked;
+else if (location.hash === "#example") $("#url").value = DEMO_SHEET;
+setStage("empty");
+if ($("#url").value) submit();
+else bootStatus();
+
 boot()
-  .then(() => (pending || preview)())
-  .catch((err) => status(t("bootFailed", err.message), "bad"));
+  .then(() => {
+    bootStatus();
+    if (pending) pending();
+  })
+  .catch((err) => {
+    booting.failed = true;
+    if (state.stage === "loading") setStage("empty");
+    status(t("bootFailed", err.message), "bad");
+  });

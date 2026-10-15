@@ -20,7 +20,6 @@
 
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
-  brandTag: { en: "create deck", vi: "create deck" },
   skip: { en: "Skip to Create deck", vi: "Tới phần Create deck" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
@@ -38,18 +37,19 @@ const STRINGS = {
   // --- the landing page ---------------------------------------------------
   // Written for somebody who has never used an add-on: what it does, the one
   // file to download, the three steps that get it into Anki, and nothing else.
-  homeEyebrow: { en: "An add-on for Anki", vi: "Add-on cho Anki" },
+  homeEyebrow: { en: "Free · Nothing to install", vi: "Miễn phí · Không cần cài đặt" },
   homeTitle: {
-    en: "Your spreadsheet is your deck.",
-    vi: "Sheet của bạn chính là deck của bạn.",
+    en: "Turn a Google Sheet into an Anki deck — <mark>right on your phone</mark>.",
+    vi: "Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.",
   },
   homeLead: {
     en:
-      "Write flashcards in Google Sheets, one row each. SheetCards brings them " +
-      "into Anki and keeps them in step whenever the sheet changes.",
+      "Write your vocabulary in a sheet, one row per card. Paste the link into " +
+      "Create deck, check every card, then download an .apkg that opens straight in " +
+      "AnkiDroid or AnkiMobile.",
     vi:
-      "Soạn flashcard trên Google Sheets, mỗi dòng một card. SheetCards đưa chúng " +
-      "vào Anki và sync lại mỗi khi sheet thay đổi.",
+      "Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Create deck, xem " +
+      "trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
   homeTry: { en: "Create deck", vi: "Create deck" },
@@ -60,8 +60,8 @@ const STRINGS = {
 
   // The demo: a row of the example workbook and the card it becomes.
   demoLabel: {
-    en: "Example: a row of a sheet and the Anki card it becomes",
-    vi: "Ví dụ: một dòng trong sheet và card Anki tạo ra từ nó",
+    en: "Example: from a row of a sheet to an .apkg on a phone",
+    vi: "Ví dụ: từ một dòng trong sheet tới file .apkg trên điện thoại",
   },
   demoEnglish: { en: "English · paper", vi: "English · paper" },
   demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
@@ -74,12 +74,8 @@ const STRINGS = {
   // the learners this is for run Anki in English, and a demo that says "Lại"
   // where their Anki says "Again" is showing a screen they will never see.
   showAnswer: { en: "Show Answer", vi: "Show Answer" },
-  ankiAgain: { en: "Again", vi: "Again" },
-  ankiHard: { en: "Hard", vi: "Hard" },
-  ankiGood: { en: "Good", vi: "Good" },
-  ankiEasy: { en: "Easy", vi: "Easy" },
 
-  featTitle: { en: "What it does", vi: "Add-on làm được gì" },
+  featTitle: { en: "One sheet, many kinds of card", vi: "Một sheet, nhiều kiểu card" },
   featColumnsTitle: { en: "Your columns, any language", vi: "Cột của bạn, tiếng gì cũng được" },
   featColumns: {
     en: "Name columns <code>Word</code>, <code>Nghĩa</code> or <code>汉字</code>. Each one becomes a field in Anki.",
@@ -105,14 +101,9 @@ const STRINGS = {
     en: "Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.",
     vi: "Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.",
   },
-  featPreviewTitle: { en: "A deck without the add-on", vi: "Có deck mà không cần add-on" },
-  featPreview: {
-    en: "Create deck runs the add-on's own code in your browser, and hands you an <code>.apkg</code> for your phone or computer.",
-    vi: "Create deck chạy chính code của add-on trong trình duyệt, và tạo file <code>.apkg</code> cho điện thoại hoặc máy tính.",
-  },
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
-  homeHow1Title: { en: "Make a sheet", vi: "Tạo sheet" },
+  homeHow1Title: { en: "Write a sheet", vi: "Soạn sheet" },
   homeHow1: {
     en:
       "Row 1 holds the column names: <code>ID</code>, then any columns you like. " +
@@ -121,21 +112,25 @@ const STRINGS = {
       "Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. " +
       "Mỗi dòng bên dưới là một card.",
   },
-  homeHow2Title: { en: "Share it", vi: "Chia sẻ sheet" },
+  homeHow2Title: { en: "Share it, paste the link", vi: "Chia sẻ và dán link" },
   homeHow2: {
-    en: "In Google Sheets: <b>Share → Anyone with the link → Viewer</b>, then copy the link.",
-    vi: "Trong Google Sheets: <b>Share → Anyone with the link → Viewer</b>, rồi copy link.",
+    en:
+      "In Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>. " +
+      "Copy the link, paste it into <b>Create deck</b> and look through the cards.",
+    vi:
+      "Trong Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>. " +
+      "Copy link, dán vào <b>Create deck</b> và xem từng card.",
   },
-  homeHow3Title: { en: "Connect it", vi: "Kết nối" },
+  homeHow3Title: { en: "Download .apkg", vi: "Download .apkg" },
   homeHow3: {
     en:
-      "In Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> and paste the " +
-      "link. After that, <b>Ctrl+Shift+S</b> brings in whatever changed.",
+      "Press <b>Download .apkg</b> and open the file in <b>AnkiDroid</b>, " +
+      "<b>AnkiMobile</b> or Anki on a computer. Changed the sheet? Download again and " +
+      "import over it.",
     vi:
-      "Trong Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán " +
-      "link. Từ đó về sau, <b>Ctrl+Shift+S</b> sync những gì đã thay đổi.",
+      "Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> " +
+      "hoặc Anki trên máy tính. Sửa sheet thì tải lại và import đè.",
   },
-  homeInstall: { en: "Install", vi: "Cài đặt" },
   homeInstall1: {
     en: "Download <code>sheetcards.ankiaddon</code>.",
     vi: "Tải file <code>sheetcards.ankiaddon</code>.",
@@ -360,20 +355,13 @@ const STRINGS = {
   edDeckRoot: { en: "your sheet's deck", vi: "deck của sheet bạn" },
   toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
   urlPlaceholder: {
-    en: "https://docs.google.com/spreadsheets/d/… or a link ending in .xlsx",
-    vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",
+    en: "Paste a Google Sheets link, or a link to an .xlsx",
+    vi: "Dán link Google Sheets hoặc link file .xlsx",
   },
-  urlLabel: { en: "Sheet link", vi: "Link sheet" },
-  go: { en: "Preview", vi: "Preview" },
-  pick: { en: "Upload a file", vi: "Tải lên một file" },
-  pickLabel: {
-    en: "Preview a file from this computer — .xlsx, .xlsm, .csv or .tsv",
-    vi: "Preview file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
-  },
-  orDrop: {
-    en: "or drop one anywhere on this page.",
-    vi: "hoặc thả file vào bất kỳ đâu trên trang.",
-  },
+  urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
+  go: { en: "Create deck", vi: "Tạo deck" },
+  pick: { en: "Choose an .xlsx or .csv file", vi: "Chọn file .xlsx hoặc .csv" },
+  orDrop: { en: "or drop one anywhere on this page", vi: "hoặc kéo thả file vào trang này" },
   tabLabel: { en: "Sheet", vi: "Sheet" },
   reloadLabel: {
     en: "Fetch this sheet again",
@@ -385,10 +373,7 @@ const STRINGS = {
     vi: "File trên máy đã đổi. Kéo thả lại vào trang.",
   },
 
-  // --- the three panels -----------------------------------------------------
-  // Each header doubles as what a shut panel has left to say, so the notes name
-  // what is inside rather than repeating the title.
-  panelSource: { en: "Source", vi: "Nguồn" },
+  // --- the editor's panel headers ------------------------------------------
   panelDeck: { en: "Deck", vi: "Deck" },
   panelCard: { en: "Card", vi: "Card" },
 
@@ -435,16 +420,7 @@ const STRINGS = {
   },
   valueInRow: { en: (line) => `Row ${line}`, vi: (line) => `Dòng ${line}` },
   cellEmpty: { en: "empty", vi: "trống" },
-  deckNote: {
-    en: (sync, total, decks) =>
-      `${sync} of ${total} rows sync · ${decks} deck${decks === 1 ? "" : "s"}`,
-    vi: (sync, total, decks) => `${sync}/${total} dòng sẽ sync · ${decks} deck`,
-  },
-  cardNote: {
-    en: (line, label) => `Row ${line} — ${label}`,
-    vi: (line, label) => `Dòng ${line} — ${label}`,
-  },
-  dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để preview" },
+  dropHere: { en: "Drop the file here", vi: "Thả file vào đây" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
     vi: ".xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt",
@@ -455,8 +431,8 @@ const STRINGS = {
   // its own. Said in the words of somebody waiting for a page, with the two facts
   // that make the wait bearable: how big, and that it happens once.
   booting: {
-    en: "Loading Create deck (~5 MB, first time only)…",
-    vi: "Đang tải Create deck (~5 MB, chỉ lần đầu)…",
+    en: "Getting Create deck ready (~5 MB, first time only)…",
+    vi: "Đang chuẩn bị Create deck (~5 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -464,8 +440,8 @@ const STRINGS = {
     vi: "Mạng có vẻ chậm — vẫn đang tải, bạn cứ chờ nhé.",
   },
   queued: {
-    en: "Got it — the preview starts as soon as loading finishes.",
-    vi: "Đã nhận — preview sẽ chạy ngay khi tải xong.",
+    en: "Got your link — the cards appear as soon as this finishes.",
+    vi: "Đã nhận link — card sẽ hiện ngay khi tải xong.",
   },
   downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet về…" },
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
@@ -540,24 +516,10 @@ const STRINGS = {
 
   // --- demo ---------------------------------------------------------------
   demoNote: {
-    en:
-      "Showing the example workbook — thirty-one sheets, each a deck that also " +
-      "demonstrates one thing, from the smallest one that works upwards. The " +
-      "picker beside Source walks through them, or paste your own link instead.",
-    vi:
-      "Đang hiện file ví dụ — ba mươi mốt sheet, mỗi sheet là một deck dùng được " +
-      "và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Dùng ô chọn " +
-      "sheet cạnh chữ Nguồn để xem lần lượt, hoặc dán link của bạn.",
-  },
-  heroCaption: {
-    en: "Each row of your sheet becomes an Anki card. See them here before you sync.",
-    vi: "Mỗi dòng trong sheet thành một card Anki. Xem trước ở đây rồi hãy sync.",
+    en: "This is the example workbook. Pick another sheet above, or change to your own link.",
+    vi: "Đang xem file ví dụ. Chọn sheet khác ở ô phía trên, hoặc đổi sang link của bạn.",
   },
   // The same note, in the one line a phone has room for above the fold.
-  demoNoteShort: {
-    en: "Example workbook — pick a sheet or paste your link.",
-    vi: "File ví dụ — chọn sheet khác hoặc dán link của bạn.",
-  },
 
   // --- the numbers --------------------------------------------------------
   statRows: { en: "rows in the sheet", vi: "dòng trong sheet" },
@@ -578,7 +540,9 @@ const STRINGS = {
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
   noRowsAtAll: { en: "No rows to show.", vi: "Không có dòng nào để hiện." },
   // The extension sits beside this as a tag of its own, next to Anki's icon.
-  downloadApkg: { en: "Download for Anki", vi: "Tải về cho Anki" },
+  // The button's own words stay English in both languages: it names the file
+  // Anki asks for, and "Download" is what the learner's phone will say next.
+  downloadApkg: { en: "Download .apkg", vi: "Download .apkg" },
   // The caveats used to be a four-sentence paragraph under the button, which is a
   // lot of reading to sit permanently under a control most people press once.
   // The docs page on sheets and files carries the long version.
@@ -607,11 +571,11 @@ const STRINGS = {
   tabBoth: { en: "both", vi: "cả hai" },
   tabBack: { en: "back", vi: "sau" },
   tabTemplate: { en: "template", vi: "template" },
-  prevRow: { en: "Previous row", vi: "Dòng trước" },
+  prevRow: { en: "Previous card", vi: "Card trước" },
   clozeCard: { en: "Cloze card", vi: "Card cloze" },
   clozeCardN: { en: (n) => `card c${n}`, vi: (n) => `card c${n}` },
   cardFrameTitle: { en: "Card preview", vi: "Preview card" },
-  nextRow: { en: "Next row", vi: "Dòng sau" },
+  nextRow: { en: "Next card", vi: "Card sau" },
 
   // --- card ---------------------------------------------------------------
   rowSkipped: {
@@ -640,7 +604,6 @@ const STRINGS = {
     en: (f) => `Filter not reproduced here: <code>${f}</code>`,
     vi: (f) => `Filter trang này chưa mô phỏng: <code>${f}</code>`,
   },
-  deckAndTags: { en: "Deck", vi: "Deck" },
   tagsLabel: { en: "tags", vi: "tags" },
 
   // --- detail -------------------------------------------------------------
@@ -700,10 +663,6 @@ const STRINGS = {
   frontTemplate: { en: "Front template", vi: "Front template" },
   backTemplate: { en: "Back template", vi: "Back template" },
 
-  rowsLegend: {
-    en: "Click a row to see its card.",
-    vi: "Bấm một dòng để xem card của nó.",
-  },
   rowTitle: {
     en: (line, state) => `Row ${line} — ${state}`,
     vi: (line, state) => `Dòng ${line} — ${state}`,
@@ -714,6 +673,203 @@ const STRINGS = {
   legendGhost: {
     en: "Blank rows are ignored entirely.",
     vi: "Dòng trống bị bỏ qua hoàn toàn.",
+  },
+
+  // --- Create deck: the three steps ------------------------------------------
+  railLabel: { en: "Steps", vi: "Các bước" },
+  crStep1: { en: "Add your sheet", vi: "Dán link sheet" },
+  crStep2: { en: "Check the cards", vi: "Kiểm tra cards" },
+  crStep3: { en: "Download .apkg", vi: "Download .apkg" },
+  crTitle: {
+    en: "Make an Anki deck from <mark>Google Sheets</mark>",
+    vi: "Tạo deck Anki từ <mark>Google Sheets</mark>",
+  },
+  crLead: {
+    en:
+      "Paste your sheet's link, look through the cards, then download an .apkg that " +
+      "AnkiDroid, AnkiMobile or Anki on a computer opens. Nothing to install.",
+    vi:
+      "Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, " +
+      "AnkiMobile hoặc Anki trên máy tính. Không cần cài gì.",
+  },
+  paste: { en: "Paste", vi: "Dán" },
+  emptyLink: {
+    en: "Paste the link of your Google Sheet first.",
+    vi: "Hãy dán link Google Sheets của bạn trước.",
+  },
+  useExample: { en: "Try the example file", vi: "Dùng file ví dụ" },
+  exampleHint: {
+    en: "31 sample sheets, simple to advanced",
+    vi: "31 sheet mẫu, từ đơn giản tới nâng cao",
+  },
+  // The four buttons themselves are drawn in English: they are English in every
+  // learner's Google Sheets, so they are the words to look for.
+  shareTitle: { en: "Share your sheet first", vi: "Sheet phải được chia sẻ trước" },
+  shareIntro: { en: "In Google Sheets, press in turn:", vi: "Trong Google Sheets, bấm lần lượt:" },
+  shareThen: {
+    en: "Then press Copy link and paste it above.",
+    vi: "Rồi bấm Copy link và dán vào ô phía trên.",
+  },
+  privacy: {
+    en: "Your sheet is read right here in your browser. Nothing is sent to a SheetCards server.",
+    vi: "Sheet được đọc ngay trong trình duyệt của bạn. Không có gì được gửi lên máy chủ của SheetCards.",
+  },
+  readyNow: { en: "Ready.", vi: "Đã sẵn sàng." },
+  deckLabel: { en: "Your deck", vi: "Deck của bạn" },
+  changeSource: { en: "Use another link", vi: "Đổi link" },
+  deckPanel: { en: "Decks & filter", vi: "Deck & bộ lọc" },
+  flipBack: { en: "Show front", vi: "Lật lại" },
+  flipHintTouch: {
+    en: "Tap the card to turn it · swipe for the next",
+    vi: "Chạm card để lật · vuốt để đổi card",
+  },
+  flipHintKeys: {
+    en: "Click or Space to turn · ← → for the next",
+    vi: "Bấm card hoặc Space để lật · ← → để đổi card",
+  },
+  warnTitle: {
+    en: (n) => `${n} thing${n === 1 ? "" : "s"} to check in this sheet`,
+    vi: (n) => `${n} điều cần xem lại trong sheet`,
+  },
+  viewGrid: { en: "Grid", vi: "Bảng" },
+  viewTemplate: { en: "Template", vi: "Template" },
+  dlCards: {
+    en: (n) => `${n} card${n === 1 ? "" : "s"}`,
+    vi: (n) => `${n} cards`,
+  },
+  dlDecks: {
+    en: (d) => `in ${d} deck${d === 1 ? "" : "s"}`,
+    vi: (d) => `trong ${d} deck`,
+  },
+
+  // --- after the download: opening the file -----------------------------------
+  // App and menu names stay English: they are what the learner's phone shows.
+  doneTitle: { en: "Open it in Anki", vi: "Mở file trong Anki" },
+  deviceLabel: { en: "Device", vi: "Thiết bị" },
+  devAndroid: { en: "AnkiDroid", vi: "AnkiDroid" },
+  devAndroidSub: { en: "Android", vi: "Android" },
+  devIos: { en: "AnkiMobile", vi: "AnkiMobile" },
+  devIosSub: { en: "iPhone, iPad", vi: "iPhone, iPad" },
+  devDesktop: { en: "Anki", vi: "Anki" },
+  devDesktopSub: { en: "Windows, Mac, Linux", vi: "Windows, Mac, Linux" },
+  instAndroid1: {
+    en: (file) =>
+      `Tap the download notification, or open <b>Files</b> → <b>Downloads</b> and tap <code>${file}</code>.`,
+    vi: (file) =>
+      `Chạm vào thông báo tải xong, hoặc mở app <b>Files</b> → <b>Downloads</b> rồi chạm vào <code>${file}</code>.`,
+  },
+  instAndroid2: {
+    en: () => "When asked which app to open it with, pick <b>AnkiDroid</b>. The deck imports straight away.",
+    vi: () => "Khi được hỏi mở bằng app nào, chọn <b>AnkiDroid</b>. Deck được import ngay.",
+  },
+  instAndroid3: {
+    en: () => "Or, inside AnkiDroid: open the menu → <b>Import</b> → choose the file.",
+    vi: () => "Hoặc trong AnkiDroid: mở menu → <b>Import</b> → chọn file.",
+  },
+  instIos1: {
+    en: (file) =>
+      `Open the <b>Files</b> app → <b>Downloads</b> (or Safari's downloads list) and tap <code>${file}</code>.`,
+    vi: (file) =>
+      `Mở app <b>Files</b> (Tệp) → <b>Downloads</b> (hoặc danh sách tải về của Safari) rồi chạm vào <code>${file}</code>.`,
+  },
+  instIos2: {
+    en: () => "Tap <b>Share</b>, then <b>AnkiMobile</b> — or <b>Copy to AnkiMobile</b>.",
+    vi: () => "Chạm nút <b>Share</b> → chọn <b>AnkiMobile</b> (hoặc <b>Copy to AnkiMobile</b>).",
+  },
+  instIos3: {
+    en: () => "AnkiMobile opens and offers to <b>Import</b> it. Tap that, and the deck is in.",
+    vi: () => "AnkiMobile mở ra và hỏi <b>Import</b>. Chạm vào là deck được thêm.",
+  },
+  instDesktop1: {
+    en: (file) => `Double-click <code>${file}</code> in your downloads. Anki opens and imports it.`,
+    vi: (file) => `Nhấp đúp vào <code>${file}</code> trong thư mục tải về. Anki tự mở và import.`,
+  },
+  instDesktop2: {
+    en: () => "Or, in Anki: <b>File → Import…</b> and choose the file.",
+    vi: () => "Hoặc trong Anki: <b>File → Import…</b> rồi chọn file.",
+  },
+  assureTitle: {
+    en: "Edited the sheet? Download again and import over it.",
+    vi: "Sửa sheet rồi tải lại? Cứ import đè.",
+  },
+  assureBody: {
+    en:
+      "Each note is matched by its ID column, so importing a new file updates the notes " +
+      "you already have and keeps your review progress — no duplicate cards. Use the same " +
+      "link (or the same file name) each time. A row deleted from the sheet is not removed " +
+      "from Anki.",
+    vi:
+      "Mỗi note được nhận ra nhờ cột ID, nên import file mới sẽ cập nhật đúng các note cũ " +
+      "và giữ nguyên tiến độ ôn tập, không nhân đôi card. Chỉ cần dùng lại cùng link " +
+      "(hoặc cùng tên file). Dòng đã xoá khỏi sheet thì không tự mất trong Anki.",
+  },
+  addonTip: {
+    en:
+      'Studying on a computer? The <a href="./#addon">SheetCards add-on</a> syncs ' +
+      "automatically whenever the sheet changes, deleted rows included.",
+    vi:
+      'Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi ' +
+      "sheet đổi, kể cả dòng đã xoá.",
+  },
+  downloadAgain: { en: "No file? Download again", vi: "Không thấy file? Tải lại" },
+  doneOk: { en: "Done", vi: "Xong" },
+
+  // --- the landing page, continued ------------------------------------------
+  homeExample: { en: "See an example", vi: "Xem ví dụ" },
+  homeRuns: {
+    en: "Runs in your browser · Android, iPhone, computer",
+    vi: "Chạy ngay trong trình duyệt · Android, iPhone, máy tính",
+  },
+  demoImported: { en: "Imported into AnkiDroid", vi: "Đã import vào AnkiDroid" },
+  whyTitle: { en: "Why Create deck", vi: "Vì sao dùng Create deck" },
+  whyPhoneTitle: { en: "No computer needed", vi: "Không cần máy tính" },
+  whyPhone: {
+    en: "Paste the link, check the cards, download the file and open it in AnkiDroid or AnkiMobile — every step works on a phone.",
+    vi: "Dán link, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.",
+  },
+  whyFreeTitle: { en: "Free, no account", vi: "Miễn phí, không cần tài khoản" },
+  whyFree: {
+    en: "No sign-up, no ads. Your sheet is read right in your browser and sent to no server.",
+    vi: "Không đăng ký, không quảng cáo. Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.",
+  },
+  whySourceTitle: { en: "Your sheet stays the original", vi: "Sheet vẫn là bản gốc" },
+  whySource: {
+    en: "Edit and add words in Google Sheets, write them with classmates or a teacher. The deck is always made again from the sheet.",
+    vi: "Sửa và thêm từ ngay trong Google Sheets, soạn chung với bạn học hay giáo viên. Deck luôn được tạo lại từ sheet.",
+  },
+  whyKeepTitle: { en: "Re-importing keeps your progress", vi: "Import lại vẫn giữ tiến độ" },
+  whyKeep: {
+    en: "Every note is tied to its ID column, so a new file updates the old cards instead of doubling them — your review schedule stays.",
+    vi: "Mỗi note gắn với cột ID, nên file mới cập nhật card cũ thay vì nhân đôi — lịch ôn tập không mất.",
+  },
+  featThemeTitle: { en: "A theme for the whole deck", vi: "Theme cho cả deck" },
+  featTheme: {
+    en: "Add <code>theme=sakura</code> to the settings row and every card changes colour, in light and dark.",
+    vi: "Thêm <code>theme=sakura</code> vào settings row là mọi card đổi màu, cả nền sáng lẫn nền tối.",
+  },
+  featEditorLink: { en: "Try a settings row in the Editor →", vi: "Thử settings row trong Editor →" },
+  addonEyebrow: { en: "The add-on for Anki on a computer", vi: "Add-on cho Anki trên máy tính" },
+  addonTitle: {
+    en: "Studying on a computer? Install the add-on and it syncs by itself.",
+    vi: "Học trên máy tính? Cài add-on để sync tự động.",
+  },
+  addonLead: {
+    en:
+      "The SheetCards add-on connects Anki on your computer straight to your sheet. " +
+      "Each sync adds new rows, updates changed ones and removes deleted ones — then " +
+      "AnkiWeb carries it all to your phone.",
+    vi:
+      "Add-on SheetCards nối Anki trên máy tính thẳng với sheet của bạn. Mỗi lần sync, " +
+      "nó thêm dòng mới, sửa dòng đã đổi và xoá dòng đã bỏ — rồi AnkiWeb đưa tất cả " +
+      "sang điện thoại.",
+  },
+  homeInstall4: {
+    en:
+      "Open <b>Tools → SheetCards → Connect a Google Sheet…</b> and paste the link. " +
+      "After that, <b>Ctrl+Shift+S</b> brings in whatever changed.",
+    vi:
+      "Mở <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán link. Từ đó, " +
+      "<b>Ctrl+Shift+S</b> sync những gì đã thay đổi.",
   },
 };
 

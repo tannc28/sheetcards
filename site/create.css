@@ -1,0 +1,772 @@
+/* SheetCards — Create deck.
+
+   Three steps in order: a sheet, its cards, the file. The page is laid out as
+   that sequence rather than as a dashboard of everything at once, because the
+   people using it are learning a language on a phone, not debugging a parser.
+
+   The card is the one big thing. It sits on a drawn stack of the cards still
+   to come, turns over when touched and is thrown aside by a swipe, because that
+   is what a pile of paper flashcards does and everybody here has held one. The
+   rest — the deck tree, the raw sheet, the template — is one tap away and never
+   in front of it. The download sits under the thumb, at the bottom of the
+   screen, from the moment there is something to download.
+
+   Builds on style.css (tokens, masthead, the shared tree, grid and row styles)
+   and adds only what this page needs. Mobile-first: the base rules are a phone,
+   and the deck panel moves beside the card at --wide (60rem). */
+
+.create {
+  --card-w: 36rem;
+  --card-r: 20px;
+  --card-min: clamp(13rem, 34vh, 26rem);
+  --card-bg: #ffffff;
+  --tap: 44px;
+  background: var(--ground);
+  min-height: 100vh;
+}
+:root[data-theme="dark"] .create { --card-bg: #1b1f25; }
+
+.create .masthead .name {
+  font-size: var(--t-lg); font-weight: 800; letter-spacing: -.03em;
+  color: var(--ink); text-decoration: none;
+}
+
+/* ==== the step rail ======================================================== */
+
+.rail {
+  list-style: none; margin: 0 auto; padding: 14px 0 6px;
+  width: min(100%, 34rem);
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  counter-reset: none;
+}
+.rail li {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center; color: var(--muted);
+  font-size: var(--t-xs); font-weight: 600; line-height: 1.25;
+}
+/* The line joining one step to the next, drawn from the circle's right edge to
+   the next circle's left: it fills in as the step before it is done. */
+.rail li + li::before {
+  content: ""; position: absolute; top: 12px; height: 2px;
+  right: calc(50% + 18px); left: calc(-50% + 18px);
+  background: var(--line); border-radius: 2px;
+  transition: background-color .4s ease;
+}
+.rail li.done + li::before { background: var(--accent); }
+.rail-n {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--line-strong); background: var(--panel);
+  font-size: var(--t-xs); font-weight: 800; font-variant-numeric: tabular-nums;
+  transition: background-color .3s ease, border-color .3s ease, color .3s ease, transform .3s ease;
+}
+.rail-n .icon { width: 14px; height: 14px; stroke-width: 3; }
+.rail li.now { color: var(--ink); }
+.rail li.now .rail-n {
+  border-color: var(--accent); background: var(--accent); color: var(--accent-ink);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.rail li.done { color: var(--ink); }
+.rail li.done .rail-n { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.rail-t { max-width: 12ch; }
+
+@media (min-width: 40rem) {
+  .rail { padding-top: 22px; }
+  .rail li { flex-direction: row; justify-content: center; gap: 8px; font-size: var(--t-sm); }
+  .rail li + li::before { top: 50%; right: calc(50% + 4.6rem); left: calc(-50% + 4.6rem); }
+  .rail-t { max-width: none; white-space: nowrap; }
+}
+
+/* Once the cards are up the rail has done its job of saying where you are, so on
+   a phone it gives its height back to the card. */
+@media (max-width: 39.99rem) {
+  .cr[data-stage="review"] .rail, .cr[data-stage="loading"] .rail { padding: 10px 0 0; }
+  .cr[data-stage="review"] .rail li:not(.now) .rail-t,
+  .cr[data-stage="loading"] .rail li:not(.now) .rail-t { visibility: hidden; height: 0; }
+  .cr[data-stage="review"] .rail-n, .cr[data-stage="loading"] .rail-n { width: 22px; height: 22px; }
+  .cr[data-stage="review"] .rail li + li::before, .cr[data-stage="loading"] .rail li + li::before { top: 10px; }
+}
+
+/* ==== the working area ===================================================== */
+
+.cr {
+  max-width: 78rem; margin: 0 auto;
+  padding: 0 var(--pad) 0;
+  padding-left: max(var(--pad), env(safe-area-inset-left));
+  padding-right: max(var(--pad), env(safe-area-inset-right));
+}
+
+/* ==== step 1: the link ===================================================== */
+
+.entry {
+  position: relative; isolation: isolate;
+  max-width: 38rem; margin: 0 auto;
+  padding: clamp(1.5rem, 6vw, 3.5rem) 0 4rem;
+}
+/* The page's one texture, and only behind the question it asks: the ruling of a
+   vở ô li — a large square, four fine lines inside it — fading out from behind
+   the title. */
+.entry::before {
+  content: ""; position: absolute; z-index: -1;
+  inset: 0 -50vw auto; height: 28rem;
+  background-image:
+    linear-gradient(to right, var(--rule) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, var(--rule) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--rule) 55%, transparent) 1px, transparent 1px);
+  background-size: 2.4rem 2.4rem, 2.4rem 2.4rem, 2.4rem .6rem;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 40rem 18rem at 50% 7rem, rgb(0 0 0 / .8) 10%, transparent 70%);
+  mask-image: radial-gradient(ellipse 40rem 18rem at 50% 7rem, rgb(0 0 0 / .8) 10%, transparent 70%);
+  pointer-events: none;
+}
+
+.entry-title {
+  margin: 0 0 .5em;
+  font-size: clamp(2rem, 1.35rem + 3.4vw, 3.25rem);
+  font-weight: 800; line-height: 1.12; letter-spacing: -.035em;
+  text-align: center;
+}
+/* A highlighter stroke, slightly askew and short of the descenders, under the
+   words the page is about. */
+mark {
+  color: inherit; background: none; padding: 0 .08em; margin: 0 -.04em;
+  background-image: linear-gradient(100deg, transparent .2em, var(--mark) .3em, var(--mark) calc(100% - .25em), transparent calc(100% - .1em));
+  background-size: 100% .5em; background-repeat: no-repeat; background-position: 0 85%;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.entry-lead {
+  margin: 0 auto 2rem; max-width: 32rem;
+  font-size: clamp(1rem, .95rem + .3vw, 1.125rem); line-height: 1.6;
+  color: var(--muted); text-align: center;
+}
+
+.linkform { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.linklabel { font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+.linkrow { display: flex; flex-direction: column; gap: 10px; }
+.linkbox {
+  position: relative; display: flex; align-items: center;
+  min-height: 58px; padding: 0 6px 0 16px; gap: 10px;
+  background: var(--panel);
+  border: 1.5px solid var(--line-strong); border-radius: 16px;
+  box-shadow: var(--shadow);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.linkbox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow);
+}
+.linkbox:has(input[aria-invalid="true"]) {
+  border-color: var(--bad); box-shadow: 0 0 0 4px var(--bad-soft);
+}
+.linkbox-icon { color: var(--muted); font-size: 18px; }
+.linkbox input {
+  flex: 1 1 auto; min-width: 0; height: 54px; padding: 0;
+  font-size: var(--t-base); /* 16px: anything less makes iOS zoom on focus */
+  border: 0; background: transparent; box-shadow: none; outline: none;
+}
+.linkbox input:focus-visible { outline: none; }
+.linkbox input[aria-invalid="true"] { box-shadow: none; }
+.paste {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap); padding: 0 14px; border-radius: 11px;
+  font-size: var(--t-sm); font-weight: 700; color: var(--accent);
+  background: var(--accent-soft);
+}
+.paste:hover { background: color-mix(in srgb, var(--accent) 16%, var(--accent-soft)); }
+
+.btn.big {
+  min-height: 54px; padding: 0 26px; border-radius: 14px;
+  font-size: var(--t-base); font-weight: 700; letter-spacing: -.005em;
+}
+.btn.go .icon { transition: transform .2s ease; }
+.btn.go:hover .icon { transform: translateX(3px); }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+@media (min-width: 40rem) {
+  .linkrow { flex-direction: row; align-items: stretch; }
+  .linkbox { flex: 1 1 auto; }
+  .btn.go { flex: none; min-height: 58px; }
+}
+
+.field-error {
+  display: flex; align-items: flex-start; gap: 6px; margin: 0;
+  padding: 10px 12px; border-radius: 12px;
+  background: var(--bad-soft); color: var(--bad);
+}
+.field-error .err-icon { margin: .15em 0 0; }
+
+/* Loading Python, said quietly under the form — never over it. */
+.status {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 14px 0 0; min-height: 1.5rem; text-align: center;
+}
+.status .spinner { margin-top: 0; }
+.status.ok .spinner { display: none; }
+.status.ok::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+}
+
+.alt {
+  display: grid; gap: 10px; margin: 1.75rem 0 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 34rem) { .alt { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.altcard {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 68px; padding: 12px 14px; text-align: left;
+  background: var(--panel); border: 1.5px solid var(--line); border-radius: 16px;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+#pick.altcard { border-style: dashed; border-color: var(--line-strong); }
+.altcard:hover:not(:disabled) {
+  border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow);
+}
+.altcard-icon {
+  flex: none; display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent); font-size: 19px;
+}
+#pick .altcard-icon { background: var(--ok-soft); color: var(--ok); }
+.altcard-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.altcard-text strong { font-size: var(--t-md); font-weight: 700; }
+.altcard-text span { font-size: var(--t-sm); color: var(--muted); }
+
+.sharehint {
+  margin: 1.25rem 0 0; padding: 0;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+}
+.sharehint summary {
+  display: flex; align-items: center; gap: 10px; min-height: 52px;
+  padding: 0 16px; cursor: pointer; list-style: none;
+  font-size: var(--t-md); font-weight: 650; border-radius: 16px;
+}
+.sharehint summary::-webkit-details-marker { display: none; }
+.sharehint summary > [data-icon]:first-child { color: var(--accent); font-size: 18px; }
+.caret { margin-left: auto; color: var(--muted); font-size: 18px; transition: transform .2s ease; }
+details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rotate(180deg); }
+.sharehint[open] { border-color: var(--accent); }
+.sharehint > p { margin: 0 16px; font-size: var(--t-sm); }
+.sharehint > p:last-child { margin: 12px 16px 16px; }
+/* The four buttons, drawn as buttons, in the order you press them. */
+.clicks {
+  list-style: none; margin: 10px 16px 0; padding: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 4px;
+}
+.clicks li { display: inline-flex; align-items: center; gap: 4px; }
+.clicks li + li::before {
+  content: ""; width: 14px; height: 2px; margin-right: 4px; border-radius: 2px;
+  background: var(--line-strong);
+}
+.click {
+  display: inline-block; padding: 6px 12px; border-radius: 999px;
+  font-size: var(--t-sm); font-weight: 600; white-space: nowrap;
+  background: var(--sunken); border: 1px solid var(--line);
+}
+.clicks li:first-child .click { background: #c2e7ff; border-color: #c2e7ff; color: #001d35; }
+.clicks li:last-child .click { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+.privacy {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 1.5rem auto 0; max-width: 30rem;
+  font-size: var(--t-sm); color: var(--muted); text-align: center;
+}
+.privacy [data-icon] { flex: none; }
+
+/* ==== steps 2 and 3: the deck ============================================== */
+
+.deckview { padding: 6px 0 0; }
+
+.sourcebar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  margin: 10px auto 0; max-width: var(--card-w);
+  padding: 4px 4px 4px 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+}
+.src-icon { flex: none; color: var(--ok); font-size: 18px; }
+.src-name {
+  flex: 1 1 0; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 700; font-size: var(--t-md);
+}
+.src-acts { flex: none; display: flex; gap: 4px; }
+.tabpick { order: 5; flex: 1 1 100%; min-width: 0; }
+.tabpick select {
+  min-height: var(--tap); padding: 0 34px 0 12px; border-radius: 11px;
+  font-size: var(--t-sm); font-weight: 600;
+  appearance: none; -webkit-appearance: none;
+  background: var(--sunken) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b87a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border-color: var(--line);
+}
+.iconbtn {
+  display: inline-grid; place-items: center;
+  width: var(--tap); height: var(--tap); border-radius: 12px;
+  color: var(--muted); font-size: 18px;
+}
+.iconbtn:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
+.iconbtn:disabled .icon { animation: spin .8s linear infinite; }
+/* Going back to a different link is the way out of the example, so it says so
+   in words rather than as a bare link icon. */
+.chgbtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap); padding: 0 12px; border-radius: 12px;
+  font-size: var(--t-sm); font-weight: 650; color: var(--accent);
+}
+.chgbtn:hover { background: var(--accent-soft); }
+
+@media (min-width: 40rem) {
+  .tabpick { order: 0; flex: 0 1 18rem; }
+  .create { --card-min: clamp(18rem, 48vh, 28rem); }
+}
+@media (max-width: 39.99rem) {
+  /* The card's height matters more here than a sentence the source bar already
+     implies: its name says it is the example, and "Đổi link" is beside it. */
+  .cr .demo-note { display: none; }
+  .tabpick { margin: 0 0 4px -10px; }
+  .tabpick select { min-height: 40px; }
+}
+
+.demo-note {
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px auto 0; max-width: var(--card-w);
+  padding: 9px 14px; border: 0; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: var(--t-sm); font-weight: 500;
+}
+.demo-note [data-icon] { flex: none; }
+
+/* Folded to one line: seen without being read before the card. */
+.create .warnbar {
+  margin: 10px auto 0; max-width: var(--card-w); padding: 0;
+  background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: 14px;
+}
+.create .warnbar > summary {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
+  cursor: pointer; list-style: none; border-radius: 14px;
+  font-size: var(--t-sm); font-weight: 650; color: var(--warn);
+}
+.create .warnbar > summary::-webkit-details-marker { display: none; }
+.create .warnbar .caret { color: var(--warn); }
+.create .warnbar .warnings { margin: 0 14px 0 32px; padding: 0 0 4px; }
+.create .warnbar .warnfrom { margin: 6px 14px 14px; }
+
+/* ---- the deck panel / bottom sheet ---------------------------------------- */
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 4px; }
+
+/* The base shape is the phone's: a sheet that rises from the bottom edge. */
+.deckpanel {
+  position: fixed; inset: auto 0 0 0; margin: 0;
+  width: 100%; max-width: 100%; max-height: min(82vh, 44rem);
+  padding: 0; border: 0; border-radius: 24px 24px 0 0;
+  background: var(--panel); color: var(--ink);
+  box-shadow: 0 -12px 40px -10px rgb(0 0 0 / .3);
+  overflow: hidden;
+}
+.deckpanel[open] { display: flex; flex-direction: column; }
+.deckpanel::backdrop { background: rgb(15 12 26 / .45); }
+.deckpanel:modal[open] { animation: sheet-up .32s cubic-bezier(.2, .9, .3, 1); }
+.deckpanel:modal[open]::backdrop { animation: fade-in .25s ease; }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } }
+
+.dp-head {
+  position: relative; flex: none;
+  display: flex; align-items: center; gap: 8px;
+  padding: 18px 10px 8px 20px;
+}
+.dp-grab {
+  position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+  width: 38px; height: 4px; border-radius: 4px; background: var(--line-strong); opacity: .6;
+}
+.dp-head h2 { flex: 1 1 auto; margin: 0; font-size: var(--t-lg); font-weight: 750; letter-spacing: -.01em; }
+.dp-body {
+  flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain;
+  padding: 0 14px max(18px, env(safe-area-inset-bottom));
+}
+.dp-body h3 {
+  margin: 18px 6px 6px;
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.deckpanel .summary {
+  margin: 0; padding: 10px 12px; gap: 4px 14px;
+  background: var(--sunken); border: 0; border-radius: 12px;
+  font-size: var(--t-sm);
+}
+.legend {
+  display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 0 6px 8px;
+  font-size: var(--t-xs); color: var(--muted);
+}
+.legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.legend .ghost { flex-basis: 100%; }
+.deckpanel .tree button, .deckpanel .rowitem { min-height: 40px; align-items: center; border-radius: 10px; }
+.deckpanel .rowitem { padding: 6px 10px; }
+.deckpanel .rowitem.on { box-shadow: inset 3px 0 0 var(--accent); }
+.rowitem .pill {
+  flex: none; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft);
+}
+
+/* ---- the stage ------------------------------------------------------------ */
+
+.stage {
+  min-width: 0; width: 100%; max-width: var(--card-w); margin: 0 auto;
+  padding: 14px 0 0;
+  display: flex; flex-direction: column;
+}
+
+.cardmeta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 0 2px 10px; min-height: 1.6rem;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.rowtag {
+  padding: 2px 9px; border-radius: 999px;
+  font-size: var(--t-xs); font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+}
+.crumbs { display: inline-flex; align-items: center; gap: 2px; min-width: 0; flex-wrap: wrap; }
+.crumbs .sep { opacity: .55; }
+.fate { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.fate.skipped { color: var(--warn); }
+.fate.invalid { color: var(--bad); }
+
+.cardbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.cardbar select { width: auto; min-height: 38px; border-radius: 10px; font-size: var(--t-sm); }
+
+/* The card on its stack. Two edges of paper under it, fewer as the deck runs
+   out: the depth is set from the number of cards left. */
+.deckstack {
+  position: relative; perspective: 1800px;
+  margin-bottom: 16px;
+}
+.deckstack::before, .deckstack::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  border-radius: var(--card-r); background: var(--panel);
+  border: 1px solid var(--line);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.deckstack::before { transform: translateY(8px) scale(.965); z-index: -1; opacity: .9; }
+.deckstack::after { transform: translateY(16px) scale(.93); z-index: -2; opacity: .55; }
+.deckstack[data-depth="1"]::after, .deckstack[data-depth="0"]::after { opacity: 0; transform: translateY(0) scale(.93); }
+.deckstack[data-depth="0"]::before { opacity: 0; transform: translateY(0) scale(.965); }
+
+.cardslot {
+  position: relative; z-index: 1;
+  min-height: var(--card-min);
+  background: var(--card-bg);
+  border: 1px solid var(--line); border-radius: var(--card-r);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  transition: transform .26s cubic-bezier(.2, .9, .3, 1.15), opacity .26s ease;
+  will-change: transform;
+}
+/* The turn, in two halves: edge-on, swap the face, and back. */
+.cardslot.turn-out { transform: rotateY(90deg) scale(.98); transition: transform .17s cubic-bezier(.5, 0, 1, .6); }
+.cardslot.turn-in { transform: rotateY(-90deg) scale(.98); transition: none; }
+.cardslot iframe#card {
+  display: block; width: 100%; height: var(--card-min); min-height: var(--card-min);
+  border: 0; background: transparent;
+}
+.nocard {
+  display: grid; place-items: center; min-height: var(--card-min); padding: 2rem;
+  color: var(--muted); text-align: center;
+}
+
+/* While the sheet is on its way: the card's outline, breathing. */
+.skeleton {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 3.5rem 2rem 2rem;
+  pointer-events: none;
+}
+.sk-line, .sk-rule {
+  display: block; height: 14px; border-radius: 8px;
+  background: linear-gradient(90deg, var(--sunken) 0%, var(--line) 40%, var(--sunken) 80%);
+  background-size: 300% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+.sk-line.w60 { width: 60%; height: 30px; }
+.sk-line.w30 { width: 30%; }
+.sk-line.w45 { width: 45%; }
+.sk-line.w70 { width: 70%; }
+.sk-rule { width: 100%; height: 2px; margin: 10px 0; animation: none; background: var(--line-soft); }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+.cr[data-stage="loading"] .reviewbar,
+.cr[data-stage="loading"] .counter,
+.cr[data-stage="loading"] .stage-tools,
+.cr[data-stage="loading"] .dlbar,
+.cr[data-stage="loading"] .cardmeta,
+.cr[data-stage="loading"] .tabpick,
+.cr[data-stage="loading"] #reload { visibility: hidden; }
+.cr[data-stage="loading"] .cardslot { box-shadow: var(--shadow); }
+.loadline {
+  position: absolute; z-index: 3; left: 1.25rem; right: 1.25rem; bottom: 1.5rem;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 0; font-size: var(--t-sm); color: var(--muted); text-align: center;
+}
+.loadline .spinner {
+  display: block; width: 16px; height: 16px; margin: 0;
+  border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+/* ---- under the card -------------------------------------------------------- */
+
+.reviewbar {
+  display: grid; grid-template-columns: var(--tap) minmax(0, 1fr) var(--tap);
+  align-items: center; gap: 10px;
+}
+.navbtn {
+  display: grid; place-items: center; width: var(--tap); height: 52px;
+  border-radius: 14px; font-size: 20px; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line);
+}
+.navbtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+/* Anki's own Show Answer: the thing you press most, so it is the widest and
+   tallest thing here — but neutral, because the one coloured button on the page
+   is the download. */
+.flipbtn.btn {
+  min-height: 52px; border-radius: 14px;
+  font-size: var(--t-base); font-weight: 700;
+  background: var(--ink); color: var(--panel);
+}
+.flipbtn.btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 85%, var(--accent)); }
+.flipbtn.answered { background: var(--panel); color: var(--ink); border-color: var(--line-strong); }
+.flipbtn.answered:hover:not(:disabled) { background: var(--sunken); }
+
+.counter {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  margin: 10px 0 0; text-align: center;
+}
+#counter { font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.fliphint { font-size: var(--t-xs); color: var(--muted); }
+
+.cardnotes { margin: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.cardnotes:empty { display: none; }
+.cardnotes .note { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: var(--t-sm); }
+.cardnotes .tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.tags-k { font-weight: 600; margin-right: 2px; }
+.cardnotes .chip { border-radius: 999px; padding: 2px 9px; }
+
+.stage-tools { display: flex; gap: 8px; margin: 18px 0 0; }
+.toolbtn {
+  flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 0 14px; border-radius: 13px;
+  font-size: var(--t-sm); font-weight: 650;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.toolbtn:hover { border-color: var(--accent); color: var(--accent); }
+.toolbtn [data-icon]:first-child { color: var(--accent); font-size: 17px; }
+.toolbtn .caret { margin-left: 0; font-size: 16px; }
+
+/* ---- the Sheet view ---------------------------------------------------------- */
+
+.sheetview {
+  margin: 12px 0 0; padding: 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  animation: rise .3s ease;
+}
+.seg {
+  display: inline-flex; padding: 3px; gap: 2px; margin: 0 0 12px;
+  background: var(--sunken); border-radius: 11px;
+}
+.seg button {
+  min-height: 36px; padding: 0 16px; border-radius: 9px;
+  font-size: var(--t-sm); font-weight: 650; color: var(--muted);
+}
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
+.sv-block { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
+.sv-block h3, .sheetview .src-head {
+  margin: 4px 0 0; display: flex; align-items: baseline; gap: 8px;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.sheetview .gridwrap { max-height: min(20rem, 46vh); border-radius: 10px; }
+.sheetview .cellrow { min-height: 40px; }
+
+/* ---- step 3: the download ---------------------------------------------------- */
+
+/* Rides the bottom of the screen on a phone — the thumb's place — and sits under
+   the card where there is room for both. */
+.dlbar {
+  position: sticky; bottom: 0; z-index: 20;
+  display: flex; align-items: center; gap: 12px;
+  margin: 18px calc(var(--pad) * -1) 0;
+  padding: 12px var(--pad);
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: var(--panel);
+  box-shadow: 0 -8px 24px -16px rgb(22 19 31 / .3);
+  border-top: 1px solid var(--line);
+}
+.dl-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.dl-meta strong { font-size: var(--t-base); font-weight: 800; font-variant-numeric: tabular-nums; }
+.dl-meta span { font-size: var(--t-xs); color: var(--muted); }
+.btn.dl {
+  flex: none; gap: 10px; padding: 0 20px 0 14px;
+  box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+.btn.dl .anki-mark { width: 24px; height: 24px; border-radius: 6px; background: #fff; padding: 2px; }
+
+@media (min-width: 40rem) {
+  .dlbar {
+    margin: 22px 0 18px; padding: 12px 12px 12px 20px;
+    border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    bottom: 14px;
+  }
+}
+
+/* ==== wide: the deck panel beside the card =============================== */
+
+@media (min-width: 60rem) {
+  /* The panel takes the left column from the top; everything else — the source
+     bar, the notes, the card — is centred in the right one. */
+  .create { --card-w: 40rem; }
+  .deckview {
+    display: grid; grid-template-columns: 19rem minmax(0, 1fr);
+    column-gap: clamp(1.5rem, 3vw, 3rem); align-items: start;
+  }
+  .workspace { display: contents; }
+  .deckview > :not(.workspace), .stage { grid-column: 2; width: 100%; }
+  .deckpanel, .deckpanel:not(:modal) {
+    grid-column: 1; grid-row: 1 / span 6;
+    position: sticky; inset: 14px auto auto; z-index: 1;
+    width: auto; max-height: calc(100vh - 28px); margin: 10px 0 0;
+    border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: none; animation: none;
+  }
+  .dp-grab, .dp-close { display: none; }
+  .dp-head { padding: 16px 16px 4px 20px; }
+  #open-deck { display: none; }
+  .stage { padding-top: 18px; }
+  /* No panel until there is a deck to fill it: while the sheet is on its way the
+     placeholder card stands centred on its own rather than beside an empty column. */
+  .cr[data-stage="loading"] .deckview { grid-template-columns: minmax(0, 1fr); }
+  .cr[data-stage="loading"] .deckview > :not(.workspace),
+  .cr[data-stage="loading"] .stage { grid-column: 1; max-width: var(--card-w); margin-inline: auto; }
+}
+
+/* ==== after the download ==================================================== */
+
+.donebox {
+  width: min(32rem, calc(100% - 24px)); max-height: calc(100vh - 32px);
+  padding: 0; border: 0; border-radius: 24px;
+  background: var(--panel); color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+}
+.donebox::backdrop { background: rgb(15 12 26 / .5); }
+.donebox[open] { animation: rise .3s cubic-bezier(.2, .9, .3, 1); }
+.donebox[open]::backdrop { animation: fade-in .25s ease; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px) scale(.98); } }
+
+.done-head { display: flex; align-items: flex-start; gap: 10px; padding: 20px 12px 6px 20px; }
+.done-file { flex: 1 1 auto; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.done-file img { flex: none; padding: 4px; border-radius: 9px; background: #fff; border: 1px solid var(--line); width: 40px; height: 40px; }
+.done-file > span { display: flex; flex-direction: column; min-width: 0; }
+.done-file strong { font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
+.done-file .mono { font-size: var(--t-xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.devtabs {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+  margin: 10px 20px 0; padding: 4px; border-radius: 14px; background: var(--sunken);
+}
+.devtabs button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-height: 60px; padding: 8px 4px; border-radius: 11px; text-align: center;
+  color: var(--muted);
+}
+.devtabs button .icon { font-size: 18px; }
+.devtabs button span { display: flex; flex-direction: column; line-height: 1.2; }
+.devtabs button strong { font-size: var(--t-sm); font-weight: 700; }
+.devtabs button small { font-size: 11px; }
+.devtabs button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
+.devtabs button[aria-selected="true"] .icon { color: var(--accent); }
+
+.inst { list-style: none; counter-reset: inst; margin: 16px 20px 0; padding: 0; }
+.inst li {
+  position: relative; counter-increment: inst;
+  padding: 0 0 14px 40px; min-height: 28px; font-size: var(--t-md); line-height: 1.55;
+}
+.inst li::before {
+  content: counter(inst); position: absolute; left: 0; top: -1px;
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink); font-size: var(--t-xs); font-weight: 800;
+}
+.inst li:last-child::before { background: var(--accent-soft); color: var(--accent); }
+.inst code { font-size: .85em; padding: 1px 5px; border-radius: 5px; background: var(--sunken); overflow-wrap: anywhere; }
+.inst b { font-weight: 700; }
+
+.assure {
+  display: flex; gap: 12px; margin: 4px 20px 0; padding: 14px;
+  border-radius: 16px; background: var(--ok-soft);
+}
+.assure-icon { flex: none; color: var(--ok); font-size: 20px; margin-top: 1px; }
+.assure strong { display: block; font-size: var(--t-md); font-weight: 750; }
+.assure p { margin: 4px 0 0; font-size: var(--t-sm); color: var(--muted); }
+.addon-tip {
+  display: flex; gap: 10px; align-items: flex-start; margin: 14px 20px 0;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.addon-tip [data-icon] { flex: none; margin-top: 3px; }
+.addon-tip a { font-weight: 650; }
+.done-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 20px 20px;
+}
+.done-foot .btn { min-height: 46px; padding: 0 26px; border-radius: 13px; font-size: var(--t-md); }
+
+@media (max-width: 39.99rem) {
+  .donebox {
+    width: 100%; max-width: 100%; margin: auto 0 0;
+    border-radius: 24px 24px 0 0; max-height: 92vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .donebox[open] { animation: sheet-up .32s cubic-bezier(.2, .9, .3, 1); }
+}
+
+/* ==== the toast ============================================================= */
+
+.create .toast {
+  display: flex; align-items: center; gap: 8px;
+  /* At the top, where it covers nothing anybody is pressing: the bottom of the
+     screen belongs to Show Answer and the download. */
+  top: max(12px, env(safe-area-inset-top)); bottom: auto;
+  padding: 10px 16px; border-radius: 999px;
+  font-weight: 600; box-shadow: var(--shadow-lg);
+}
+.create .toast[hidden] { display: none; }
+.create .toast.ok .icon { color: var(--ok); }
+:root:not([data-theme="dark"]) .create .toast.ok .icon { color: #7ee2ad; }
+.create .toast .spinner {
+  display: block; width: 14px; height: 14px; margin: 0;
+  border: 2px solid color-mix(in srgb, var(--panel) 30%, transparent);
+  border-top-color: var(--panel); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@media (min-width: 40rem) { .create .toast { top: 72px; } }
+
+/* ==== the drop target ======================================================= */
+
+.create .dropzone > div { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.drop-icon { font-size: 34px; color: var(--accent); }
+
+/* ==== arrival ================================================================ */
+
+.cr[data-stage="review"] .deckstack { animation: rise .45s cubic-bezier(.2, .9, .3, 1); }
+.entry > * { animation: rise .5s cubic-bezier(.2, .9, .3, 1) backwards; }
+.entry > :nth-child(2) { animation-delay: 50ms; }
+.entry > :nth-child(3) { animation-delay: 100ms; }
+.entry > :nth-child(5) { animation-delay: 150ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cardslot, .rail-n, .rail li + li::before, .altcard, .btn.go .icon, .caret { transition: none; }
+  .entry > *, .cr[data-stage="review"] .deckstack, .sheetview, .donebox[open],
+  .deckpanel:modal[open], .sk-line, .loadline .spinner, .iconbtn:disabled .icon { animation: none; }
+}

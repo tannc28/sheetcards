@@ -1,17 +1,21 @@
 /**
  * The landing page: the demo in the hero, and the sections rising into view.
  *
- * The demo is the page's one claim — this row becomes this card — so it is made
- * of the real thing. `home-cards.js` is written by scripts/build_site.py, which
- * runs the add-on's own card_layout.py over three rows of the example workbook;
- * here those templates are filled by the same `renderCard` and framed by the same
- * `cardDoc` the preview uses. No Pyodide: the Python already ran at build time.
+ * The demo is the page's one claim — this row becomes this card, on a phone, in
+ * a file Anki opens — so it is made of the real thing. `home-cards.js` is written
+ * by scripts/build_site.py, which runs the add-on's own card_layout.py over three
+ * rows of the example workbook; here those templates are filled by the same
+ * `renderCard` and framed by the same `cardDoc` Create deck uses. No Pyodide: the
+ * Python already ran at build time.
  *
- * It plays by itself, which an animation that changes on its own must let you
- * stop (WCAG 2.2.2): the button beside the examples pauses it, and anything you
- * do to the demo — turning the card, picking an example — stops it too, since by
- * then you are the one driving. With reduced motion asked for it never starts,
- * and the card turns without the flip.
+ * It tells Create deck's three steps in order — the link goes in, the card is
+ * checked front then back, the .apkg lands in Anki — and then does it again with
+ * the next example, each in a different theme. It plays by itself, which an
+ * animation that changes on its own must let you stop (WCAG 2.2.2): the button
+ * beside the examples pauses it, and anything you do to the demo — a step, an
+ * example, Show Answer — stops it too, since by then you are the one driving.
+ * With reduced motion asked for it never starts, and the card turns without the
+ * flip.
  */
 
 import { renderCard, escapeHtml } from "./anki.js";
@@ -24,12 +28,16 @@ import { CARDS } from "./home-cards.js";
 const $ = (sel) => document.querySelector(sel);
 
 const still = matchMedia("(prefers-reduced-motion: reduce)");
-const FRONT_FOR = 2800; // ms the question stays up before the card turns
-const BACK_FOR = 3600; // ms the answer stays up before the next example
+
+// The story, one phase at a time, and how long each stays up (ms).
+const PHASES = ["link", "front", "back", "apkg"];
+const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
+// Which of Create deck's three steps each phase is.
+const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
 const state = {
   at: 0,
-  turned: false,
+  phase: "front",
   playing: !still.matches,
   visible: true,
   timer: 0,
@@ -42,7 +50,7 @@ const rendered = CARDS.map((card) =>
 );
 
 /**
- * The card's own document, as the preview builds it, adjusted for a card that
+ * The card's own document, as Create deck builds it, adjusted for a card that
  * is looked at rather than studied: no scrollbars (the frame is sized to fit),
  * no "TTS voices" list (it lists the voices of the device reviewing the card,
  * and this page is not one), and no scripts — the ones a card carries are for
@@ -56,7 +64,7 @@ function faceDoc(index, tab) {
     .replace(
       '<meta charset="utf-8">',
       '<meta charset="utf-8"><style>html, body { overflow: hidden; } ' +
-        ".sc-tts-debug { display: none; }</style>",
+        "body { padding: 14px; font-size: 16px; } .sc-tts-debug { display: none; }</style>",
     );
 }
 
@@ -75,10 +83,11 @@ function buildCards() {
   $("#demo-card").innerHTML = CARDS.map(
     (_, i) =>
       `<div class="flip${i === state.at ? " active" : ""}${
-        i === state.at && state.turned ? " turned" : ""
+        i === state.at && state.phase === "back" ? " turned" : ""
       }" data-card="${i}" ${i === state.at ? "" : "inert"}>` +
+      // "both" on the back, as Anki and Create deck show an answered card.
       frame(i, "front") +
-      frame(i, "back") +
+      frame(i, "both") +
       "</div>",
   ).join("");
 }
@@ -100,8 +109,12 @@ function buildTabs() {
 function paintSheet() {
   const card = CARDS[state.at];
   const cols = card.columns;
-  const lit = state.turned ? "back" : "front";
-  const litIdx = cols.map((c, i) => (c.side === lit ? i : -1)).filter((i) => i >= 0);
+  // While the link goes in the whole row is the selection; after that, the
+  // columns on the side of the card that is showing.
+  const lit = state.phase === "back" ? "back" : "front";
+  const litIdx = cols
+    .map((c, i) => (state.phase === "link" || state.phase === "apkg" || c.side === lit ? i : -1))
+    .filter((i) => i >= 0);
   const first = litIdx[0];
   const last = litIdx[litIdx.length - 1];
 
@@ -137,43 +150,26 @@ function paintSheet() {
   $("#demo-tab").textContent = card.sheet;
 }
 
-function paintBar() {
-  $("#show-answer").hidden = state.turned;
-  $("#ease").hidden = !state.turned;
-}
-
-/** Shows example `index`, question side up. */
-function show(index, { turned = false } = {}) {
+/** Shows example `index` at `phase`. */
+function show(index, phase) {
   state.at = index;
-  state.turned = turned;
+  state.phase = phase;
+  const demo = $("#demo");
+  demo.dataset.phase = phase;
   for (const flip of document.querySelectorAll(".flip")) {
     const here = Number(flip.dataset.card) === index;
     flip.classList.toggle("active", here);
-    flip.classList.toggle("turned", here && turned);
+    flip.classList.toggle("turned", here && phase === "back");
     flip.toggleAttribute("inert", !here);
   }
   for (const b of document.querySelectorAll("[data-pick]")) {
     b.setAttribute("aria-pressed", String(Number(b.dataset.pick) === index));
   }
+  for (const b of document.querySelectorAll("[data-phase-to]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.phaseTo === STEP[phase]));
+  }
+  $("#show-answer").textContent = t(phase === "back" ? "flipBack" : "showAnswer");
   paintSheet();
-  paintBar();
-  pulse();
-}
-
-function turn() {
-  state.turned = true;
-  document.querySelector(".flip.active")?.classList.add("turned");
-  paintSheet();
-  paintBar();
-  pulse();
-}
-
-/** The arrow between the row and the card runs once per change. */
-function pulse() {
-  const flow = $("#demo-flow");
-  flow.classList.remove("run");
-  void flow.getBoundingClientRect();
-  flow.classList.add("run");
 }
 
 // --- the clock -------------------------------------------------------------
@@ -181,14 +177,12 @@ function pulse() {
 function schedule() {
   clearTimeout(state.timer);
   if (!state.playing || !state.visible || document.hidden) return;
-  state.timer = setTimeout(
-    () => {
-      if (!state.turned) turn();
-      else show((state.at + 1) % CARDS.length);
-      schedule();
-    },
-    state.turned ? BACK_FOR : FRONT_FOR,
-  );
+  state.timer = setTimeout(() => {
+    const next = PHASES.indexOf(state.phase) + 1;
+    if (next < PHASES.length) show(state.at, PHASES[next]);
+    else show((state.at + 1) % CARDS.length, PHASES[0]);
+    schedule();
+  }, HOLD[state.phase]);
 }
 
 function setPlaying(on) {
@@ -202,22 +196,19 @@ function setPlaying(on) {
 document.addEventListener("click", (e) => {
   if (e.target.closest("#show-answer")) {
     setPlaying(false);
-    turn();
-    // The button pressed has just been hidden; from the keyboard, focus goes to
-    // what replaced it rather than back to the top of the page.
-    if (e.detail === 0) $("#ease button")?.focus();
+    show(state.at, state.phase === "back" ? "front" : "back");
     return;
   }
-  if (e.target.closest("[data-ease]")) {
+  const step = e.target.closest("[data-phase-to]");
+  if (step) {
     setPlaying(false);
-    show((state.at + 1) % CARDS.length);
-    if (e.detail === 0) $("#show-answer").focus();
+    show(state.at, step.dataset.phaseTo);
     return;
   }
   const pick = e.target.closest("[data-pick]");
   if (pick) {
     setPlaying(false);
-    show(Number(pick.dataset.pick));
+    show(Number(pick.dataset.pick), "front");
     return;
   }
   if (e.target.closest("#demo-play")) setPlaying(!state.playing);
@@ -238,11 +229,9 @@ still.addEventListener("change", () => {
 
 onRepaint((what) => {
   // The card is a separate document that was handed the old palette.
-  if (what === "theme") buildCards();
-  else {
-    buildTabs();
-    buildCards();
-  }
+  if (what !== "theme") buildTabs();
+  buildCards();
+  show(state.at, state.phase);
 });
 
 // --- sections rising into view ----------------------------------------------
@@ -260,7 +249,9 @@ const reveal = new IntersectionObserver(
 for (const el of document.querySelectorAll(".reveal")) reveal.observe(el);
 window.scHomeReady = true;
 
+$("#demo-file").textContent = "sheetcards-examples.apkg";
 buildCards();
 buildTabs();
-show(0);
+// Still, the demo opens on the card — the step that needs no motion to read.
+show(0, still.matches ? "front" : "link");
 schedule();

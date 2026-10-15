@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>SheetCards — Create deck: deck Anki từ Google Sheets</title>
+<meta name="description" content="Create deck: tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on. Dán link, xem từng card, rồi Download .apkg.">
+<!-- Two cards, the front one ruled like a sheet. Inline, so the icon costs no
+     request and cannot go missing from a deploy. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  // Read before the first paint: applied from the stylesheet instead, the page
+  // would flash light on its way to the dark somebody chose. The browser's own
+  // bar is told at the same moment, or a phone draws a white strip over a dark page.
+  try {
+    var t = localStorage.getItem("sc-theme");
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#18151f";
+    }
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./create.css">
+</head>
+<body class="page create">
+
+<!-- To the working area: it holds the link field before a sheet is loaded and the
+     card after, so it is the right place to land either way. -->
+<a class="skip" href="#app" data-i18n="skip">Tới phần Create deck</a>
+
+<header class="masthead">
+  <div class="brand">
+    <a class="name" href="./" translate="no">SheetCards</a>
+  </div>
+
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Home</a>
+    <a href="./create.html" aria-current="page" data-i18n="navPreview">Create deck</a>
+    <a href="./editor.html" data-i18n="navEditor">Editor</a>
+    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
+    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
+  </nav>
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
+</header>
+
+<main id="app" class="cr" tabindex="-1" data-stage="empty">
+
+  <!-- The three steps, in order, because they are an order: a sheet before its
+       cards, the cards before the file. Each says whether it is done, which is
+       what a learner glancing at a phone needs from it. -->
+  <ol class="rail" id="rail" aria-label="Các bước" data-i18n-attr="aria-label:railLabel">
+    <li data-step="1"><span class="rail-n" aria-hidden="true"><span>1</span></span><span
+        class="rail-t" data-i18n="crStep1">Dán link sheet</span></li>
+    <li data-step="2"><span class="rail-n" aria-hidden="true"><span>2</span></span><span
+        class="rail-t" data-i18n="crStep2">Kiểm tra cards</span></li>
+    <li data-step="3"><span class="rail-n" aria-hidden="true"><span>3</span></span><span
+        class="rail-t" data-i18n="crStep3">Download .apkg</span></li>
+  </ol>
+
+  <!-- ==== step 1: where the sheet comes from ============================== -->
+  <section id="entry" class="entry" aria-labelledby="entry-title">
+    <h1 id="entry-title" class="entry-title" data-i18n="crTitle">Tạo deck Anki từ <mark>Google Sheets</mark></h1>
+    <p class="entry-lead" data-i18n="crLead">Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Không cần cài gì.</p>
+
+    <form id="entry-form" class="linkform" novalidate>
+      <label class="linklabel" for="url" data-i18n="urlLabel">Link Google Sheets</label>
+      <!-- Between the label and the field, where GOV.UK puts it: read before
+           the field it is about, and tied to it by aria-describedby. -->
+      <p id="url-error" class="field-error" hidden>
+        <span class="sr-only" data-i18n="errorPrefix">Lỗi:</span>
+        <span class="err-icon" data-icon="circle-alert"></span>
+        <span id="url-error-text"></span>
+      </p>
+      <div class="linkrow">
+        <div class="linkbox">
+          <span class="linkbox-icon" data-icon="link"></span>
+          <input id="url" name="url" type="url" spellcheck="false" autocomplete="off"
+                 autocapitalize="off" enterkeyhint="go"
+                 placeholder="Dán link Google Sheets hoặc link file .xlsx" data-i18n-attr="placeholder:urlPlaceholder">
+          <button id="paste" class="paste" type="button" hidden><span data-icon="clipboard"></span><span
+                  data-i18n="paste">Dán</span></button>
+        </div>
+        <button id="go" class="btn big go" type="submit"><span data-i18n="go">Tạo deck</span><span
+                data-icon="arrow-right"></span></button>
+      </div>
+    </form>
+
+    <!-- The first visit downloads the add-on's own Python (~5 MB). Said here,
+         quietly, while everything above stays usable: a link pasted now is taken
+         and run the moment it is ready. -->
+    <p id="status" class="status" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+    </p>
+
+    <div class="alt">
+      <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+             aria-label="Chọn file .xlsx hoặc .csv" data-i18n-attr="aria-label:pick">
+      <button id="pick" class="altcard" type="button">
+        <span class="altcard-icon" data-icon="upload"></span>
+        <span class="altcard-text"><strong data-i18n="pick">Chọn file .xlsx hoặc .csv</strong>
+          <span data-i18n="orDrop">hoặc kéo thả file vào trang này</span></span>
+      </button>
+      <button id="example" class="altcard" type="button">
+        <span class="altcard-icon" data-icon="sparkles"></span>
+        <span class="altcard-text"><strong data-i18n="useExample">Dùng file ví dụ</strong>
+          <span data-i18n="exampleHint">31 sheet mẫu, từ đơn giản tới nâng cao</span></span>
+      </button>
+    </div>
+
+    <!-- How to share, drawn as the buttons Google Sheets shows rather than
+         described: the words on them are English in every learner's Sheets, so
+         they are the thing to look for. Opened by itself when a link turns out
+         to be private. -->
+    <details class="sharehint" id="sharehint">
+      <summary><span data-icon="circle-alert"></span><span data-i18n="shareTitle">Sheet phải được chia sẻ trước</span><span
+               class="caret" data-icon="chevron-down"></span></summary>
+      <p data-i18n="shareIntro">Trong Google Sheets, bấm lần lượt:</p>
+      <ol class="clicks" translate="no">
+        <li><span class="click">Share</span></li>
+        <li><span class="click">General access</span></li>
+        <li><span class="click">Anyone with the link</span></li>
+        <li><span class="click">Viewer</span></li>
+      </ol>
+      <p class="muted small" data-i18n="shareThen">Rồi bấm Copy link và dán vào ô phía trên.</p>
+    </details>
+
+    <p class="privacy"><span data-icon="lock"></span><span data-i18n="privacy">Sheet được đọc ngay trong trình duyệt của bạn. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
+  </section>
+
+  <!-- ==== steps 2 and 3: the deck =========================================== -->
+  <section id="deck" class="deckview" hidden aria-label="Deck của bạn" data-i18n-attr="aria-label:deckLabel">
+
+    <!-- What is loaded, and the three things you do to it without starting over:
+         pick another sheet of the workbook, fetch it again after editing it in
+         another tab, or go back to a different link. -->
+    <div class="sourcebar">
+      <span class="src-icon" data-icon="sheet"></span>
+      <span class="src-name" id="source"></span>
+      <span class="tabpick" id="tabfield" hidden>
+        <select id="tabpick" aria-label="Sheet" data-i18n-attr="aria-label:tabLabel"></select>
+      </span>
+      <span class="src-acts">
+        <button class="iconbtn" id="reload" type="button" hidden
+                title="Tải lại sheet này" aria-label="Tải lại sheet này" data-i18n-attr="title:reloadLabel,aria-label:reloadLabel"><span
+                data-icon="rotate-cw"></span></button>
+        <button class="chgbtn" id="change" type="button"><span
+                data-icon="link"></span><span data-i18n="changeSource">Đổi link</span></button>
+      </span>
+    </div>
+
+    <p id="demo-note" class="demo-note" hidden><span data-icon="sparkles"></span><span
+       data-i18n="demoNote">Đang xem file ví dụ. Chọn sheet khác ở ô phía trên, hoặc đổi sang link của bạn.</span></p>
+
+    <!-- Visible without being asked for — a sheet that warns is saying some cards
+         will come out wrong — but folded to one line, because a learner reads the
+         card first and the reasons second. -->
+    <details id="warnbar" class="warnbar" hidden>
+      <summary><span class="warn-icon" data-icon="triangle-alert"></span><span id="warntitle"></span><span
+               class="caret" data-icon="chevron-down"></span></summary>
+      <ul id="warnlist" class="warnings"></ul>
+      <div class="muted small warnfrom" data-i18n="warningsFrom">Các dòng gắn nhãn “Settings row” là nguyên văn add-on báo, được giữ tiếng Anh vì đó đúng là câu Anki sẽ hiện lúc sync.<details><summary>Tại sao?</summary>Dịch ra thì nó sẽ không còn khớp với câu Anki báo. Không có gì bị bỏ qua âm thầm: giá trị add-on không hiểu thì bị từ chối chứ không bị đoán, và cột giữ mặc định cho tới khi sheet được sửa.</details></div>
+    </details>
+
+    <div class="workspace">
+
+      <!-- The deck and its rows. One element, two shapes: beside the card on a
+           wide screen (shown non-modally), a bottom sheet on a phone (shown
+           modally, so it traps focus and closes on Escape). -->
+      <dialog id="deckpanel" class="deckpanel" aria-labelledby="deckpanel-title">
+        <div class="dp-head">
+          <span class="dp-grab" aria-hidden="true"></span>
+          <h2 id="deckpanel-title" data-i18n="deckPanel">Deck & bộ lọc</h2>
+          <button class="iconbtn dp-close" id="dp-close" type="button"
+                  title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+        </div>
+        <div class="dp-body">
+          <p id="summary" class="summary"></p>
+          <h3 data-i18n="decks">Deck</h3>
+          <div id="tree"></div>
+          <h3><span data-i18n="rows">Dòng</span> <span id="rowcount" class="count"></span></h3>
+          <p id="rows-legend" class="legend"></p>
+          <div id="rowlist" class="rowlist"></div>
+        </div>
+      </dialog>
+
+      <div class="stage" id="stage">
+        <p class="cardmeta" id="cardmeta"></p>
+        <div class="cardbar" id="cardbar" hidden></div>
+
+        <!-- The card, sitting on the rest of the deck. The cards under it are
+             drawn, not real: they say how many are left, the way a stack of
+             paper cards would. -->
+        <div class="deckstack" id="stack">
+          <div class="cardslot" id="cardslot"></div>
+          <p class="loadline" id="loadline" role="status" aria-live="polite" hidden></p>
+          <div class="skeleton" id="skeleton" aria-hidden="true">
+            <span class="sk-line w60"></span><span class="sk-line w30"></span>
+            <span class="sk-rule"></span><span class="sk-line w45"></span><span class="sk-line w70"></span>
+          </div>
+        </div>
+
+        <div class="reviewbar">
+          <button class="navbtn" id="prev" type="button" data-step="-1"
+                  title="Card trước" aria-label="Card trước" data-i18n-attr="title:prevRow,aria-label:prevRow"><span
+                  data-icon="arrow-left"></span></button>
+          <button class="btn flipbtn" id="flip" type="button"><span id="flip-text">Show Answer</span></button>
+          <button class="navbtn" id="next" type="button" data-step="1"
+                  title="Card sau" aria-label="Card sau" data-i18n-attr="title:nextRow,aria-label:nextRow"><span
+                  data-icon="arrow-right"></span></button>
+        </div>
+        <p class="counter"><span id="counter" aria-live="polite"></span><span class="fliphint" id="fliphint"></span></p>
+
+        <div id="cardnotes" class="cardnotes"></div>
+
+        <div class="stage-tools">
+          <button class="toolbtn" id="open-deck" type="button" aria-haspopup="dialog" aria-controls="deckpanel"><span
+                  data-icon="layers"></span><span data-i18n="deckPanel">Deck & bộ lọc</span></button>
+          <button class="toolbtn" id="open-sheet" type="button" aria-expanded="false" aria-controls="sheetview"><span
+                  data-icon="sheet"></span><span data-i18n="gridHead">Sheet gốc</span><span
+                  class="caret" data-icon="chevron-down"></span></button>
+        </div>
+
+        <!-- For whoever wants to know why a card looks the way it does: the sheet
+             as a sheet, the chosen row cell by cell, and the template source. -->
+        <section id="sheetview" class="sheetview" hidden aria-labelledby="sheetview-title">
+          <h2 id="sheetview-title" class="sr-only" data-i18n="gridHead">Sheet gốc</h2>
+          <div class="seg" role="group" aria-label="Sheet gốc" data-i18n-attr="aria-label:gridHead">
+            <button type="button" data-view="grid" aria-pressed="true" data-i18n="viewGrid">Bảng</button>
+            <button type="button" data-view="template" aria-pressed="false" translate="no" data-i18n="viewTemplate">Template</button>
+          </div>
+
+          <div id="gridview">
+            <div class="sv-block" id="gridbox" hidden>
+              <h3><span data-i18n="gridHead">Sheet gốc</span><span class="count" id="gridcount"></span></h3>
+              <div class="gridwrap" id="grid" tabindex="0" role="region"
+                   aria-label="Sheet gốc" data-i18n-attr="aria-label:gridHead"></div>
+              <p class="muted small" id="gridcut" hidden></p>
+            </div>
+            <div class="sv-block" id="cells" hidden>
+              <h3><span id="cellhead"></span><span class="count" id="colcount"></span></h3>
+              <div id="celllist" aria-live="polite"></div>
+            </div>
+          </div>
+          <div id="tplview" hidden></div>
+        </section>
+
+        <!-- Step 3, always in reach: on a phone it rides the bottom of the screen
+             where the thumb is, because it is the one thing everyone came to press. -->
+        <div class="dlbar" id="dlbar">
+          <div class="dl-meta">
+            <strong id="dl-count"></strong>
+            <span id="dl-decks"></span>
+          </div>
+          <!-- Anki's own icon, so a learner knows at a glance this is the file Anki
+               opens. anki.png is copied unchanged from Anki's source
+               (qt/aqt/data/qt/icons/anki.png, https://github.com/ankitects/anki,
+               AGPL-3.0-or-later; the Anki name and logo belong to Ankitects).
+               alt="" because the label beside it already says what the button does. -->
+          <button id="apkg" class="btn big dl" type="button"
+                  title="Import thẳng vào AnkiDroid hoặc AnkiMobile. Import lại sẽ cập nhật chứ không nhân đôi, nhưng không xoá được." data-i18n-attr="title:apkgTitle"><img
+                  class="anki-mark" src="./anki.png" alt="" width="22" height="22"><span translate="no"
+                  data-i18n="downloadApkg">Download .apkg</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<!-- After the download: how to open the file, on the device in your hand. -->
+<dialog id="done" class="donebox" aria-labelledby="done-title">
+  <div class="done-head">
+    <span class="done-file"><img src="./anki.png" alt="" width="28" height="28"><span>
+      <strong id="done-title" data-i18n="doneTitle">Mở file trong Anki</strong>
+      <span id="done-name" class="mono"></span></span></span>
+    <button class="iconbtn" id="done-close" type="button"
+            title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+  </div>
+  <div class="devtabs" id="devtabs" role="tablist" aria-label="Thiết bị" data-i18n-attr="aria-label:deviceLabel"></div>
+  <div class="devpanel" id="devpanel" role="tabpanel"></div>
+  <div class="assure">
+    <span class="assure-icon" data-icon="history"></span>
+    <div><strong data-i18n="assureTitle">Sửa sheet rồi tải lại? Cứ import đè.</strong>
+      <p data-i18n="assureBody">Mỗi note được nhận ra nhờ cột ID, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card. Chỉ cần dùng lại cùng link (hoặc cùng tên file). Dòng đã xoá khỏi sheet thì không tự mất trong Anki.</p></div>
+  </div>
+  <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
+  <div class="done-foot">
+    <button class="linky" id="again" type="button"><span data-icon="download"></span><span data-i18n="downloadAgain">Không thấy file? Tải lại</span></button>
+    <button class="btn" id="done-ok" type="button" data-i18n="doneOk">Xong</button>
+  </div>
+</dialog>
+
+<!-- Covers the whole window while a file is over it, so a drop lands here rather
+     than inside the card's iframe — which would navigate the frame to the file. -->
+<div id="drop" class="dropzone" hidden>
+  <div>
+    <span class="drop-icon" data-icon="upload"></span>
+    <strong data-i18n="dropHere">Thả file vào đây</strong>
+    <span data-i18n="dropTypes">.xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt</span>
+  </div>
+</div>
+
+<!-- Once a sheet is loaded the status line above is gone with the form, so a
+     reload, a download or a failure speaks from here instead. Only one of the two
+     is ever written to. -->
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

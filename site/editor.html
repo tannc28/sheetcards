@@ -6,16 +6,19 @@
 <meta name="theme-color" content="#ffffff">
 <title>SheetCards — editor cho settings row</title>
 <meta name="description" content="Soạn settings row cho từng cột và xem card thay đổi ngay, bằng chính code của add-on. Ưng ý thì copy vào sheet.">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
     var t = localStorage.getItem("sc-theme");
     if (t === "dark") {
       document.documentElement.dataset.theme = "dark";
-      document.querySelector('meta[name="theme-color"]').content = "#171c24";
+      document.querySelector('meta[name="theme-color"]').content = "#18151f";
     }
   } catch (e) {}
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -27,7 +30,7 @@
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" data-i18n="navHome">Home</a>
-    <a href="./preview.html" data-i18n="navPreview">Create deck</a>
+    <a href="./create.html" data-i18n="navPreview">Create deck</a>
     <a href="./editor.html" aria-current="page" data-i18n="navEditor">Editor</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>

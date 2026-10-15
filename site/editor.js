@@ -325,7 +325,7 @@ function setTheme(on) {
   }
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", on ? "#171c24" : "#ffffff");
+    ?.setAttribute("content", on ? "#18151f" : "#ffffff");
   paintChrome();
   draw();
 }

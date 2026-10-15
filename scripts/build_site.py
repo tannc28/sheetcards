@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Assembles the website into build/site/.
 
-Four kinds of page: the landing page (``site/index.html``), the preview
-(``site/preview.html``), the settings-row editor (``site/editor.html``) and the
+Four kinds of page: the landing page (``site/index.html``), Create deck
+(``site/create.html``; ``site/preview.html`` is its old address, kept as a
+redirect), the settings-row editor (``site/editor.html``) and the
 documentation, written as Markdown under ``docs/site/`` (Vietnamese, served at
 ``/docs/``) and ``docs/site/en/`` (English, at ``/docs/en/``) and converted here.
 
