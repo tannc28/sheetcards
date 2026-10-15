@@ -6,7 +6,10 @@ in a key is worse: `t("rowsLegned")` renders the key itself on screen. Both are
 caught here rather than in front of someone.
 """
 
+import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -166,3 +169,67 @@ def test_placeholder_arity_matches_between_languages():
     ), "translations disagree on how many values they take:\n  " + "\n  ".join(
         mismatched
     )
+
+
+# The pages the static Vietnamese is baked into: what a reader sees before the
+# page's script runs, and all a crawler or a link preview ever sees.
+STATIC_PAGES = ("index.html", "preview.html", "editor.html", "_docs.html")
+
+_ELEMENT = re.compile(r'<(\w+)\b[^>]*\bdata-i18n="(\w+)"[^>]*>(.*?)</\1>', re.S)
+_ATTR_TAG = re.compile(r'<\w+\b[^>]*\bdata-i18n-attr="([^"]+)"[^>]*>', re.S)
+
+
+def _vietnamese():
+    """``{key: vi}`` for every plain-string entry, evaluated by node.
+
+    Evaluated rather than parsed: the strings are concatenations spread over
+    several lines, and only JavaScript knows exactly what they add up to.
+    """
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node is not installed")
+    script = (
+        f"import({json.dumps((SITE / 'i18n.js').as_uri())}).then((m) => {{"
+        "const o = {}; for (const [k, v] of Object.entries(m.STRINGS))"
+        " if (typeof v.vi === 'string') o[k] = v.vi;"
+        " process.stdout.write(JSON.stringify(o)); })"
+    )
+    out = subprocess.run(
+        [node, "--no-warnings", "-e", script],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return json.loads(out.stdout)
+
+
+def _same(text):
+    return " ".join(text.split())
+
+
+@pytest.mark.unit
+def test_static_vietnamese_matches_the_dictionary():
+    """The text baked into the HTML is exactly ``STRINGS[key].vi``.
+
+    Two copies of every sentence — one in i18n.js, one in the page — drift the
+    moment one is edited, and the page then says one thing until its script runs
+    and another thing after.
+    """
+    vi = _vietnamese()
+    drift = []
+    for name in STATIC_PAGES:
+        text = (SITE / name).read_text(encoding="utf-8")
+        for _tag, key, inner in _ELEMENT.findall(text):
+            if key in vi and _same(inner) != _same(vi[key]):
+                drift.append(f"{name} [{key}]: {_same(inner)!r} != {vi[key]!r}")
+        for tag in _ATTR_TAG.finditer(text):
+            for pair in tag.group(1).split(","):
+                attr, key = (s.strip() for s in pair.split(":"))
+                found = re.search(rf'\s{re.escape(attr)}="([^"]*)"', tag.group(0))
+                if not found:
+                    drift.append(f"{name} [{key}]: no static {attr}")
+                elif _same(found.group(1)) != _same(vi[key]):
+                    drift.append(
+                        f"{name} [{key}] {attr}: {found.group(1)!r} != {vi[key]!r}"
+                    )
+    assert not drift, "static HTML disagrees with i18n.js:\n  " + "\n  ".join(drift)

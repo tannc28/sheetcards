@@ -16,8 +16,8 @@
     }
   })();
 </script>
-<title>SheetCards — sheet của bạn chính là bộ thẻ</title>
-<meta name="description" content="SheetCards là add-on cho Anki: soạn flashcard trong Google Sheets, mỗi dòng một thẻ, và Anki luôn cập nhật theo sheet.">
+<title>SheetCards — sheet của bạn chính là deck của bạn</title>
+<meta name="description" content="SheetCards là add-on cho Anki: soạn flashcard trong Google Sheets, mỗi dòng một card, và Anki luôn sync theo sheet.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -48,10 +48,10 @@
     <p class="name" translate="no">SheetCards</p>
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./" aria-current="page" data-i18n="navHome">Trang chủ</a>
-    <a href="./preview.html" data-i18n="navPreview">Xem trước</a>
-    <a href="./editor.html" data-i18n="navEditor">Trình soạn</a>
-    <a href="./docs/" data-i18n="navDocs">Tài liệu</a>
+    <a href="./" aria-current="page" data-i18n="navHome">Home</a>
+    <a href="./preview.html" data-i18n="navPreview">Preview</a>
+    <a href="./editor.html" data-i18n="navEditor">Editor</a>
+    <a href="./docs/" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
   <button id="theme" class="themebtn" type="button"></button>
@@ -66,10 +66,10 @@
      <div class="hero-title">
       <p class="eyebrow"><img src="./anki.png" alt="" width="16" height="16"><span
          data-i18n="homeEyebrow">Add-on cho Anki</span></p>
-      <h1 class="display" data-i18n="homeTitle">Sheet của bạn chính là bộ thẻ.</h1>
+      <h1 class="display" data-i18n="homeTitle">Sheet của bạn chính là deck của bạn.</h1>
      </div>
      <div class="hero-act">
-      <p class="lead" data-i18n="homeLead">Soạn flashcard trên Google Sheets, mỗi dòng một thẻ. SheetCards đưa chúng vào Anki và cập nhật theo mỗi khi sheet thay đổi.</p>
+      <p class="lead" data-i18n="homeLead">Soạn flashcard trên Google Sheets, mỗi dòng một card. SheetCards đưa chúng vào Anki và sync lại mỗi khi sheet thay đổi.</p>
       <p class="ctas">
         <!-- Anki's own icon, so a learner sees at a glance this is the file Anki
              opens. anki.png is copied unchanged from Anki's source
@@ -79,7 +79,7 @@
            class="anki-mark" src="./anki.png" alt="" width="18" height="18"><span
            data-i18n="homeDownload">Tải về</span><span class="ext" translate="no">.ankiaddon</span></a>
         <a class="btn-quiet big" href="./preview.html"><span data-icon="eye"></span><span
-           data-i18n="homeTry">Xem thử trên web</span></a>
+           data-i18n="homeTry">Thử preview trên web</span></a>
       </p>
       <p class="fine" data-i18n="homeNeeds">Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính</p>
      </div>
@@ -90,7 +90,7 @@
          real templates, rendered at build time by card_layout.py (see
          scripts/build_site.py) — not a drawing of a card. Every box here has a
          size of its own before the script fills it, so nothing moves as it does. -->
-    <figure class="demo" id="demo" role="group" data-i18n-attr="aria-label:demoLabel">
+    <figure class="demo" id="demo" role="group" aria-label="Ví dụ: một dòng trong sheet và card Anki tạo ra từ nó" data-i18n-attr="aria-label:demoLabel">
       <div class="demo-sheet" id="demo-sheet" aria-hidden="true">
         <div class="fx"><span class="fx-ref" id="fx-ref">B3</span><span class="fx-sign">fx</span><span
              class="fx-val" id="fx-val"></span></div>
@@ -107,12 +107,12 @@
       <div class="demo-review">
         <div class="demo-card" id="demo-card"></div>
         <div class="ankibar">
-          <button type="button" class="ankibtn show" id="show-answer" data-i18n="showAnswer">Xem đáp án</button>
+          <button type="button" class="ankibtn show" id="show-answer" data-i18n="showAnswer">Show Answer</button>
           <span class="ease" id="ease" hidden>
-            <button type="button" class="ankibtn again" data-ease data-i18n="ankiAgain">Lại</button>
-            <button type="button" class="ankibtn hard" data-ease data-i18n="ankiHard">Khó</button>
-            <button type="button" class="ankibtn good" data-ease data-i18n="ankiGood">Được</button>
-            <button type="button" class="ankibtn easy" data-ease data-i18n="ankiEasy">Dễ</button>
+            <button type="button" class="ankibtn again" data-ease data-i18n="ankiAgain">Again</button>
+            <button type="button" class="ankibtn hard" data-ease data-i18n="ankiHard">Hard</button>
+            <button type="button" class="ankibtn good" data-ease data-i18n="ankiGood">Good</button>
+            <button type="button" class="ankibtn easy" data-ease data-i18n="ankiEasy">Easy</button>
           </span>
         </div>
       </div>
@@ -131,15 +131,15 @@
       <li class="feature reveal"><span class="feat-icon" data-icon="languages"></span>
         <h3 data-i18n="featColumnsTitle">Cột của bạn, tiếng gì cũng được</h3><p data-i18n="featColumns">Đặt tên cột là <code>Word</code>, <code>Nghĩa</code> hay <code>汉字</code>. Mỗi cột thành một field trong Anki.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="sliders-horizontal"></span>
-        <h3 data-i18n="featSettingsTitle">Một dòng cài đặt</h3><p data-i18n="featSettings">Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.</p></li>
+        <h3 data-i18n="featSettingsTitle">Một settings row</h3><p data-i18n="featSettings">Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="volume-2"></span>
         <h3 data-i18n="featSpeechTitle">Đọc thành tiếng</h3><p data-i18n="featSpeech">Thêm <code>tts=en_US</code> là Anki đọc cột đó bằng giọng có sẵn trên máy.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="keyboard"></span>
-        <h3 data-i18n="featTypeTitle">Gõ đáp án</h3><p data-i18n="featType"><code>type=nc</code> đặt một ô nhập trên thẻ và kiểm tra chính tả — không cần gõ dấu.</p></li>
+        <h3 data-i18n="featTypeTitle">Gõ đáp án</h3><p data-i18n="featType"><code>type=nc</code> đặt một ô nhập trên card và kiểm tra chính tả — không cần gõ dấu.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="pen-line"></span>
-        <h3 data-i18n="featDrawTitle">Điền chỗ trống và viết tay</h3><p data-i18n="featDraw">Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.</p></li>
+        <h3 data-i18n="featDrawTitle">Cloze và viết tay</h3><p data-i18n="featDraw">Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="eye"></span>
-        <h3 data-i18n="featPreviewTitle">Xem trước khi đồng bộ</h3><p data-i18n="featPreview">Trang xem trước chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.</p></li>
+        <h3 data-i18n="featPreviewTitle">Preview trước khi sync</h3><p data-i18n="featPreview">Preview chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.</p></li>
     </ul>
   </section>
 
@@ -147,9 +147,9 @@
     <div class="how-steps">
       <h2 class="section-title reveal" id="how-title" data-i18n="homeHow">Cách hoạt động</h2>
       <ol class="steps">
-        <li class="reveal"><h3 data-i18n="homeHow1Title">Tạo sheet</h3><p data-i18n="homeHow1">Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một thẻ.</p></li>
-        <li class="reveal"><h3 data-i18n="homeHow2Title">Chia sẻ</h3><p data-i18n="homeHow2">Trong Google Sheets: <b>Share → Anyone with the link → Viewer</b>, rồi copy link.</p></li>
-        <li class="reveal"><h3 data-i18n="homeHow3Title">Kết nối</h3><p data-i18n="homeHow3">Trong Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán link. Từ đó về sau, <b>Ctrl+Shift+S</b> cập nhật những gì đã thay đổi.</p></li>
+        <li class="reveal"><h3 data-i18n="homeHow1Title">Tạo sheet</h3><p data-i18n="homeHow1">Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.</p></li>
+        <li class="reveal"><h3 data-i18n="homeHow2Title">Chia sẻ sheet</h3><p data-i18n="homeHow2">Trong Google Sheets: <b>Share → Anyone with the link → Viewer</b>, rồi copy link.</p></li>
+        <li class="reveal"><h3 data-i18n="homeHow3Title">Kết nối</h3><p data-i18n="homeHow3">Trong Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán link. Từ đó về sau, <b>Ctrl+Shift+S</b> sync những gì đã thay đổi.</p></li>
       </ol>
     </div>
 
@@ -171,9 +171,9 @@
 
 <footer class="sitefoot">
   <ul class="footlinks">
-    <li><a href="./preview.html" data-i18n="navPreview">Xem trước</a><p data-i18n="homePreviewText">Dán link sheet để xem deck và thẻ, không cần cài gì.</p></li>
-    <li><a href="./editor.html" data-i18n="navEditor">Trình soạn</a><p data-i18n="homeEditorText">Soạn settings row và xem thẻ thay đổi ngay khi gõ.</p></li>
-    <li><a href="./docs/" data-i18n="navDocs">Tài liệu</a><p data-i18n="homeDocsText">Cột, cài đặt, âm thanh, hình ảnh và đồng bộ (tiếng Anh; phần Bắt đầu có bản tiếng Việt).</p></li>
+    <li><a href="./preview.html" data-i18n="navPreview">Preview</a><p data-i18n="homePreviewText">Dán link sheet để xem deck và card, không cần cài gì.</p></li>
+    <li><a href="./editor.html" data-i18n="navEditor">Editor</a><p data-i18n="homeEditorText">Soạn settings row và xem card thay đổi ngay khi gõ.</p></li>
+    <li><a href="./docs/" data-i18n="navDocs">Docs</a><p data-i18n="homeDocsText">Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.</p></li>
     <li><a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a><p
         data-i18n="homeGithubText">Mã nguồn, các bản phát hành và báo lỗi.</p></li>
   </ul>

@@ -8,25 +8,31 @@
  * one thing this page exists not to do. They stay in English, and the warning
  * banner says why.
  *
- * English is the default. Vietnamese is offered because the person who maintains
- * this add-on reads Vietnamese; anyone else gets the language they came with.
+ * Vietnamese is the default: the site is made for Vietnamese learners first.
+ * The Vietnamese keeps every technical word in English — deck, note, field,
+ * card, cloze, sync, settings row, preview, editor, every Anki and Google Sheets
+ * label — and only the explanation around it is translated. The learners run
+ * Anki in English, so a translated term is a word they will never see again.
+ *
+ * Each `data-i18n` element in the HTML carries its `vi` string as static text
+ * (what shows before any script runs); tests/test_site_i18n.py keeps the two equal.
  */
 
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
-  brandTag: { en: "preview", vi: "xem trước" },
-  skip: { en: "Skip to the preview", vi: "Tới phần xem trước" },
+  brandTag: { en: "preview", vi: "preview" },
+  skip: { en: "Skip to the preview", vi: "Tới phần preview" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
   close: { en: "Close", vi: "Đóng" },
 
   // --- the site's own navigation, on every page ---------------------------
   navLabel: { en: "Site", vi: "Các trang" },
-  navHome: { en: "Home", vi: "Trang chủ" },
-  navPreview: { en: "Preview", vi: "Xem trước" },
-  navEditor: { en: "Editor", vi: "Trình soạn" },
-  navDocs: { en: "Docs", vi: "Tài liệu" },
-  docsTag: { en: "docs", vi: "tài liệu" },
+  navHome: { en: "Home", vi: "Home" },
+  navPreview: { en: "Preview", vi: "Preview" },
+  navEditor: { en: "Editor", vi: "Editor" },
+  navDocs: { en: "Docs", vi: "Docs" },
+  docsTag: { en: "docs", vi: "docs" },
   skipMain: { en: "Skip to the content", vi: "Tới nội dung chính" },
 
   // --- the landing page ---------------------------------------------------
@@ -35,18 +41,18 @@ const STRINGS = {
   homeEyebrow: { en: "An add-on for Anki", vi: "Add-on cho Anki" },
   homeTitle: {
     en: "Your spreadsheet is your deck.",
-    vi: "Sheet của bạn chính là bộ thẻ.",
+    vi: "Sheet của bạn chính là deck của bạn.",
   },
   homeLead: {
     en:
       "Write flashcards in Google Sheets, one row each. SheetCards brings them " +
       "into Anki and keeps them in step whenever the sheet changes.",
     vi:
-      "Soạn flashcard trên Google Sheets, mỗi dòng một thẻ. SheetCards đưa chúng " +
-      "vào Anki và cập nhật theo mỗi khi sheet thay đổi.",
+      "Soạn flashcard trên Google Sheets, mỗi dòng một card. SheetCards đưa chúng " +
+      "vào Anki và sync lại mỗi khi sheet thay đổi.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
-  homeTry: { en: "Try the preview", vi: "Xem thử trên web" },
+  homeTry: { en: "Try the preview", vi: "Thử preview trên web" },
   homeNeeds: {
     en: "Free and open source · Anki 25.x or later on a computer",
     vi: "Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
@@ -55,13 +61,13 @@ const STRINGS = {
   // The demo: a row of the example workbook and the card it becomes.
   demoLabel: {
     en: "Example: a row of a sheet and the Anki card it becomes",
-    vi: "Ví dụ: một dòng trong sheet và thẻ Anki tạo ra từ nó",
+    vi: "Ví dụ: một dòng trong sheet và card Anki tạo ra từ nó",
   },
   demoEnglish: { en: "English · paper", vi: "English · paper" },
   demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
   demoCloze: { en: "Cloze · matcha", vi: "Cloze · matcha" },
-  demoFront: { en: "Card front", vi: "Mặt trước thẻ" },
-  demoBack: { en: "Card back", vi: "Mặt sau thẻ" },
+  demoFront: { en: "Card front", vi: "Mặt trước card" },
+  demoBack: { en: "Card back", vi: "Mặt sau card" },
   demoPause: { en: "Pause the example", vi: "Tạm dừng ví dụ" },
   demoPlay: { en: "Play the example", vi: "Chạy ví dụ" },
   // Anki's own words on its review screen, kept in English in both languages:
@@ -79,7 +85,7 @@ const STRINGS = {
     en: "Name columns <code>Word</code>, <code>Nghĩa</code> or <code>汉字</code>. Each one becomes a field in Anki.",
     vi: "Đặt tên cột là <code>Word</code>, <code>Nghĩa</code> hay <code>汉字</code>. Mỗi cột thành một field trong Anki.",
   },
-  featSettingsTitle: { en: "One row of settings", vi: "Một dòng cài đặt" },
+  featSettingsTitle: { en: "One row of settings", vi: "Một settings row" },
   featSettings: {
     en: "Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No template editing.",
     vi: "Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.",
@@ -92,17 +98,17 @@ const STRINGS = {
   featTypeTitle: { en: "Type the answer", vi: "Gõ đáp án" },
   featType: {
     en: "<code>type=nc</code> puts a box on the card and checks your spelling — tone marks optional.",
-    vi: "<code>type=nc</code> đặt một ô nhập trên thẻ và kiểm tra chính tả — không cần gõ dấu.",
+    vi: "<code>type=nc</code> đặt một ô nhập trên card và kiểm tra chính tả — không cần gõ dấu.",
   },
-  featDrawTitle: { en: "Cloze and handwriting", vi: "Điền chỗ trống và viết tay" },
+  featDrawTitle: { en: "Cloze and handwriting", vi: "Cloze và viết tay" },
   featDraw: {
     en: "Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.",
     vi: "Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.",
   },
-  featPreviewTitle: { en: "See it before you sync", vi: "Xem trước khi đồng bộ" },
+  featPreviewTitle: { en: "See it before you sync", vi: "Preview trước khi sync" },
   featPreview: {
     en: "The preview runs the add-on's own code in your browser, and can hand you an <code>.apkg</code> for your phone.",
-    vi: "Trang xem trước chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.",
+    vi: "Preview chạy chính code của add-on trong trình duyệt, và tạo được file <code>.apkg</code> cho điện thoại.",
   },
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
@@ -113,9 +119,9 @@ const STRINGS = {
       "Each row below is a card.",
     vi:
       "Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. " +
-      "Mỗi dòng bên dưới là một thẻ.",
+      "Mỗi dòng bên dưới là một card.",
   },
-  homeHow2Title: { en: "Share it", vi: "Chia sẻ" },
+  homeHow2Title: { en: "Share it", vi: "Chia sẻ sheet" },
   homeHow2: {
     en: "In Google Sheets: <b>Share → Anyone with the link → Viewer</b>, then copy the link.",
     vi: "Trong Google Sheets: <b>Share → Anyone with the link → Viewer</b>, rồi copy link.",
@@ -127,7 +133,7 @@ const STRINGS = {
       "link. After that, <b>Ctrl+Shift+S</b> brings in whatever changed.",
     vi:
       "Trong Anki: <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán " +
-      "link. Từ đó về sau, <b>Ctrl+Shift+S</b> cập nhật những gì đã thay đổi.",
+      "link. Từ đó về sau, <b>Ctrl+Shift+S</b> sync những gì đã thay đổi.",
   },
   homeInstall: { en: "Install", vi: "Cài đặt" },
   homeInstall1: {
@@ -144,15 +150,15 @@ const STRINGS = {
   },
   homePreviewText: {
     en: "Paste a sheet link and see its decks and cards, with nothing installed.",
-    vi: "Dán link sheet để xem deck và thẻ, không cần cài gì.",
+    vi: "Dán link sheet để xem deck và card, không cần cài gì.",
   },
   homeEditorText: {
     en: "Write a settings row and watch the card change as you type.",
-    vi: "Soạn settings row và xem thẻ thay đổi ngay khi gõ.",
+    vi: "Soạn settings row và xem card thay đổi ngay khi gõ.",
   },
   homeDocsText: {
     en: "Columns, settings, sound, pictures and syncing, explained.",
-    vi: "Cột, cài đặt, âm thanh, hình ảnh và đồng bộ (tiếng Anh; phần Bắt đầu có bản tiếng Việt).",
+    vi: "Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.",
   },
   homeGithubText: {
     en: "Source code, releases and bug reports.",
@@ -164,16 +170,16 @@ const STRINGS = {
   },
 
   // --- the editor ---------------------------------------------------------
-  guideTag: { en: "editor", vi: "trình soạn" },
+  guideTag: { en: "editor", vi: "editor" },
   edPanelSheet: { en: "Sheet", vi: "Sheet" },
   edName: { en: "Column name", vi: "Tên cột" },
   edValue: { en: "What a cell holds", vi: "Nội dung một ô" },
   edCell: { en: "Settings row cell", vi: "Ô trong settings row" },
   edSheet: { en: "The sheet you are writing", vi: "Sheet bạn đang soạn" },
-  edDeckCell: { en: "The #config cell — settings for the whole sheet", vi: "Ô #config — setting cho cả sheet" },
+  edDeckCell: { en: "The #config cell — settings for the whole sheet", vi: "Ô #config — settings cho cả sheet" },
   edAddColumn: { en: "Add a column", vi: "Thêm cột" },
   edRemoveColumn: { en: "Remove this column", vi: "Bỏ cột này" },
-  edTemplate: { en: "Card template", vi: "Template thẻ" },
+  edTemplate: { en: "Card template", vi: "Card template" },
   edForDeck: { en: "for the whole sheet", vi: "cho cả sheet" },
   edForColumn: { en: (name) => `for ${name}`, vi: (name) => `cho ${name}` },
   edNoMarker: {
@@ -189,15 +195,15 @@ const STRINGS = {
   // certain way, the sentence says which way — that is the whole difficulty.
   helpSide: {
     en: "Which side of the card this column goes on. Without it the first column is the front and the rest are the back.",
-    vi: "Cột này nằm ở mặt nào của thẻ. Không ghi thì cột đầu tiên là mặt trước, các cột còn lại ở mặt sau.",
+    vi: "Cột này nằm ở mặt nào của card. Không ghi thì cột đầu tiên là mặt trước, các cột còn lại ở mặt sau.",
   },
   helpSize: {
     en: "Text size in pixels, 6–200. On a picture or a writing box it is the width instead, and the range is 1–2000.",
-    vi: "Cỡ chữ tính bằng pixel, 6–200. Trên cột ảnh hoặc ô viết chữ thì nó là chiều rộng, khoảng 1–2000.",
+    vi: "Cỡ chữ tính bằng pixel, 6–200. Trên cột ảnh hoặc ô draw thì nó là chiều rộng, khoảng 1–2000.",
   },
   helpColor: {
     en: "Text colour. muted and accent follow the card's light/dark theme; anything else is a CSS colour name or a #hex.",
-    vi: "Màu chữ. muted và accent đổi theo nền sáng/tối của thẻ; ngoài ra là tên màu CSS hoặc mã #hex.",
+    vi: "Màu chữ. muted và accent đổi theo nền sáng/tối của card; ngoài ra là tên màu CSS hoặc mã #hex.",
   },
   helpAlign: {
     en: "Text alignment. Written in the #config cell it sets the default for every column.",
@@ -221,15 +227,15 @@ const STRINGS = {
   },
   helpType: {
     en: "Anki draws a box on the question and compares what you type against this column. type=nc ignores accents. One column per sheet.",
-    vi: "Anki hiện ô nhập ở mặt hỏi rồi so cái bạn gõ với cột này. type=nc bỏ qua dấu. Mỗi sheet một cột.",
+    vi: "Anki hiện ô nhập ở mặt câu hỏi rồi so cái bạn gõ với cột này. type=nc bỏ qua dấu. Mỗi sheet một cột.",
   },
   helpSubdeck: {
     en: "This column becomes a level of the deck path. It is never drawn on the card — filing a note and printing on it are different jobs.",
-    vi: "Cột này thành một tầng của deck. Nó không bao giờ hiện trên thẻ — xếp deck và in lên thẻ là hai việc khác nhau.",
+    vi: "Cột này thành một tầng trong đường dẫn deck. Nó không bao giờ hiện trên card — xếp note vào deck và in lên card là hai việc khác nhau.",
   },
   helpSort: {
     en: "Anki lists notes by this column in the browser and sorts a deck by it. Without it that is the ID column, which is a list of nothing. One column per sheet, and it is drawn on the card exactly as before.",
-    vi: "Anki sẽ hiện cột này ở Browse và sắp xếp deck theo nó. Không đặt thì nó lấy cột ID, tức là một danh sách vô nghĩa. Mỗi sheet một cột, và cột đó vẫn hiện trên thẻ như bình thường.",
+    vi: "Anki sẽ hiện cột này ở Browse và sắp xếp deck theo nó. Không đặt thì nó lấy cột ID, tức là một danh sách vô nghĩa. Mỗi sheet một cột, và cột đó vẫn hiện trên card như bình thường.",
   },
   helpMath: {
     en: "The cell is a formula, drawn by the MathJax that Anki already ships — write TeX without the delimiters. Bare math is inline; math=block is the centred display form.",
@@ -263,19 +269,19 @@ const STRINGS = {
   },
   helpCloze: {
     en: "This column holds the {{c1::…}} deletions. Declaring it makes the whole sheet cloze and this column becomes the prompt — a cell with no deletion in it renders as nothing at all.",
-    vi: "Cột này chứa chỗ trống {{c1::…}}. Khai báo nó là cả sheet thành cloze và cột này thành câu hỏi — ô nào không có chỗ trống thì hiện ra trống trơn.",
+    vi: "Cột này chứa các chỗ cloze {{c1::…}}. Khai báo nó thì cả sheet thành cloze và cột này thành câu hỏi — ô nào không có {{c1::…}} sẽ hiện ra trống trơn.",
   },
   helpDraw: {
     en: "Turns the column into a writing box for a Chinese character: on the question you write it stroke by stroke, on the answer it animates the strokes. Needs the network.",
-    vi: "Biến cột thành ô viết chữ Hán: mặt hỏi bạn viết từng nét, mặt trả lời nó chạy lại thứ tự nét. Cần mạng.",
+    vi: "Biến cột thành ô viết chữ Hán: ở mặt câu hỏi bạn viết từng nét, ở mặt đáp án nó chạy lại thứ tự nét. Cần mạng.",
   },
   helpImage: {
     en: "The cell holds a bare image URL and the card shows the picture instead of the address. size caps its width.",
-    vi: "Ô chứa link ảnh trần, thẻ hiện ảnh thay vì hiện địa chỉ. size giới hạn chiều rộng.",
+    vi: "Ô chứa link ảnh trần, card hiện ảnh thay vì hiện địa chỉ. size giới hạn chiều rộng.",
   },
   helpAudio: {
     en: "The cell holds a bare audio URL and the card shows a player. The file is fetched each time, so the card needs the network.",
-    vi: "Ô chứa link audio trần, thẻ hiện trình phát. File tải lại mỗi lần nên thẻ cần mạng.",
+    vi: "Ô chứa link audio trần, card hiện trình phát. File tải lại mỗi lần nên card cần mạng.",
   },
   helpVideo: {
     en: "The cell holds a video link — YouTube, Drive, or a direct file. The address is rewritten into that site's own player while it syncs.",
@@ -283,11 +289,11 @@ const STRINGS = {
   },
   helpReverse: {
     en: "Adds a second card that asks the back and answers with the front. One row, two cards, scheduled separately.",
-    vi: "Thêm thẻ thứ hai hỏi mặt sau và trả lời bằng mặt trước. Một dòng, hai thẻ, học riêng nhau.",
+    vi: "Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Một dòng, hai card, review riêng nhau.",
   },
   helpTheme: {
     en: "A colour palette for the whole card, in both light and dark mode.",
-    vi: "Bảng màu cho cả thẻ, dùng được ở cả nền sáng và nền tối.",
+    vi: "Bảng màu cho cả card, dùng được ở cả nền sáng và nền tối.",
   },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
   edCopy: { en: "Copy rows 1–2", vi: "Copy dòng 1–2" },
@@ -304,8 +310,8 @@ const STRINGS = {
       "Row 2 of your sheet is the settings row: each cell says how the column " +
       "above it looks on the card. Type in row 2 below and watch the card change.",
     vi:
-      "Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên thẻ " +
-      "ra sao. Gõ vào dòng 2 bên dưới và xem thẻ đổi theo.",
+      "Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên card " +
+      "ra sao. Gõ vào dòng 2 bên dưới và xem card đổi theo.",
   },
   edIntroMore: { en: "Read more", vi: "Đọc thêm" },
   edExport: { en: "Download as .csv", vi: "Tải về dạng .csv" },
@@ -358,11 +364,11 @@ const STRINGS = {
     vi: "https://docs.google.com/spreadsheets/d/… hoặc link kết thúc bằng .xlsx",
   },
   urlLabel: { en: "Sheet link", vi: "Link sheet" },
-  go: { en: "Preview", vi: "Xem trước" },
+  go: { en: "Preview", vi: "Preview" },
   pick: { en: "Upload a file", vi: "Tải lên một file" },
   pickLabel: {
     en: "Preview a file from this computer — .xlsx, .xlsm, .csv or .tsv",
-    vi: "Xem trước file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
+    vi: "Preview file trên máy — .xlsx, .xlsm, .csv hoặc .tsv",
   },
   orDrop: {
     en: "or drop one anywhere on this page.",
@@ -384,7 +390,7 @@ const STRINGS = {
   // what is inside rather than repeating the title.
   panelSource: { en: "Source", vi: "Nguồn" },
   panelDeck: { en: "Deck", vi: "Deck" },
-  panelCard: { en: "Card", vi: "Thẻ" },
+  panelCard: { en: "Card", vi: "Card" },
 
   // --- what each column turned into ---------------------------------------
   roleId: {
@@ -398,11 +404,11 @@ const STRINGS = {
   roleTags: { en: "TAGS — extra tags for the row", vi: "TAGS — tag thêm cho dòng" },
   roleSubdeck: {
     en: (level) => `Deck level ${level} — reserved, so it never reaches the card`,
-    vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên thẻ`,
+    vi: (level) => `Tầng deck ${level} — cột dành riêng, không bao giờ lên card`,
   },
   roleSubdeckOnly: {
     en: (level) => `Deck level ${level} — files the note, never drawn on the card`,
-    vi: (level) => `Tầng deck ${level} — xếp deck cho note, không hiện trên thẻ`,
+    vi: (level) => `Tầng deck ${level} — xếp note vào deck, không hiện trên card`,
   },
   roleField: {
     en: (where) => `A field on the ${where}`,
@@ -415,7 +421,7 @@ const STRINGS = {
   roleUnused: { en: "Not used", vi: "Không dùng tới" },
   sideFront: { en: "front", vi: "mặt trước" },
   sideBack: { en: "back", vi: "mặt sau" },
-  sideHidden: { en: "note only, hidden on the card", vi: "chỉ trong note, ẩn trên thẻ" },
+  sideHidden: { en: "note only, hidden on the card", vi: "chỉ trong note, ẩn trên card" },
   nothingSet: {
     en: "The settings row says nothing about this column.",
     vi: "Settings row không nói gì về cột này.",
@@ -438,7 +444,7 @@ const STRINGS = {
     en: (line, label) => `Row ${line} — ${label}`,
     vi: (line, label) => `Dòng ${line} — ${label}`,
   },
-  dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để xem trước" },
+  dropHere: { en: "Drop the file to preview it", vi: "Thả file vào đây để preview" },
   dropTypes: {
     en: ".xlsx, .xlsm, .csv or .tsv — nothing leaves this browser",
     vi: ".xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt",
@@ -450,7 +456,7 @@ const STRINGS = {
   // that make the wait bearable: how big, and that it happens once.
   booting: {
     en: "Loading the previewer (~5 MB, first time only)…",
-    vi: "Đang tải trình xem trước (~5 MB, chỉ lần đầu)…",
+    vi: "Đang tải preview (~5 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -459,18 +465,18 @@ const STRINGS = {
   },
   queued: {
     en: "Got it — the preview starts as soon as loading finishes.",
-    vi: "Đã nhận — sẽ xem trước ngay khi tải xong.",
+    vi: "Đã nhận — preview sẽ chạy ngay khi tải xong.",
   },
   downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet về…" },
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
-  analysing: { en: "Building the cards…", vi: "Đang dựng thẻ…" },
+  analysing: { en: "Building the cards…", vi: "Đang dựng card…" },
   readRows: {
     en: (n, s) => `${n} rows · ${s} will sync`,
     vi: (n, s) => `${n} dòng · ${s} sẽ sync`,
   },
   bootFailed: {
     en: (m) => `The previewer could not load (${m}). Reload the page to try again.`,
-    vi: (m) => `Không tải được trình xem trước (${m}). Tải lại trang để thử lại.`,
+    vi: (m) => `Không tải được preview (${m}). Tải lại trang để thử lại.`,
   },
 
   // --- errors -------------------------------------------------------------
@@ -545,7 +551,7 @@ const STRINGS = {
   },
   heroCaption: {
     en: "Each row of your sheet becomes an Anki card. See them here before you sync.",
-    vi: "Mỗi dòng trong sheet thành một thẻ Anki. Xem trước ở đây rồi hãy sync.",
+    vi: "Mỗi dòng trong sheet thành một card Anki. Xem trước ở đây rồi hãy sync.",
   },
   // The same note, in the one line a phone has room for above the fold.
   demoNoteShort: {
@@ -584,14 +590,14 @@ const STRINGS = {
       "Import thẳng vào AnkiDroid hoặc AnkiMobile. Import lại sẽ cập nhật chứ không " +
       "nhân đôi, nhưng không xoá được.",
   },
-  packing: { en: "Building the package…", vi: "Đang dựng gói…" },
+  packing: { en: "Building the package…", vi: "Đang đóng gói…" },
   packed: {
     en: (kb) => `Package ready — ${kb} KB`,
-    vi: (kb) => `Gói đã xong — ${kb} KB`,
+    vi: (kb) => `Đã đóng gói xong — ${kb} KB`,
   },
   packFailed: {
     en: (m) => `Could not build the package: ${m}`,
-    vi: (m) => `Không dựng được gói: ${m}`,
+    vi: (m) => `Không đóng gói được: ${m}`,
   },
 
   // --- tabs ---------------------------------------------------------------
@@ -602,9 +608,9 @@ const STRINGS = {
   tabBack: { en: "back", vi: "sau" },
   tabTemplate: { en: "template", vi: "template" },
   prevRow: { en: "Previous row", vi: "Dòng trước" },
-  clozeCard: { en: "Cloze card", vi: "Thẻ cloze" },
-  clozeCardN: { en: (n) => `card c${n}`, vi: (n) => `thẻ c${n}` },
-  cardFrameTitle: { en: "Card preview", vi: "Xem trước thẻ" },
+  clozeCard: { en: "Cloze card", vi: "Card cloze" },
+  clozeCardN: { en: (n) => `card c${n}`, vi: (n) => `card c${n}` },
+  cardFrameTitle: { en: "Card preview", vi: "Preview card" },
   nextRow: { en: "Next row", vi: "Dòng sau" },
 
   // --- card ---------------------------------------------------------------
@@ -622,7 +628,7 @@ const STRINGS = {
       `the prompt and prints the raw <code>{{c1::…}}</code> below. The picture ` +
       `above shows that faithfully.`,
     vi: (cols) =>
-      `Chỗ trống nằm ở <code>${cols}</code> chứ không ở mặt trước, nên Anki để ` +
+      `Chỗ cloze nằm ở <code>${cols}</code> chứ không ở mặt trước, nên Anki để ` +
       `trống câu hỏi và in nguyên <code>{{c1::…}}</code> bên dưới. Ảnh trên tái ` +
       `hiện đúng như vậy.`,
   },
@@ -652,9 +658,9 @@ const STRINGS = {
       `out with an empty front and the literal <code>{{c1::…}}</code> text on the ` +
       `back. Add <code>cloze</code> to that column in the settings row.`,
     vi: (count, rows, cols, prompt) =>
-      `${count} dòng (${rows}) đặt chỗ trống ở <code>${cols}</code>, nhưng câu hỏi ` +
-      `của thẻ là <code>${prompt}</code>. Anki render một field bọc cloze mà không ` +
-      `có chỗ trống thành rỗng, nên mấy thẻ này ra mặt trước trắng và in nguyên ` +
+      `${count} dòng (${rows}) đặt chỗ cloze ở <code>${cols}</code>, nhưng câu hỏi ` +
+      `của card là <code>${prompt}</code>. Anki render một field bọc cloze mà không ` +
+      `có chỗ cloze thành rỗng, nên mấy card này ra mặt trước trắng và in nguyên ` +
       `<code>{{c1::…}}</code> ở mặt sau. Thêm <code>cloze</code> vào cột đó trong ` +
       `settings row.`,
   },
@@ -691,12 +697,12 @@ const STRINGS = {
       `Đúng đoạn text add-on ghi vào Anki cho <code>${name}</code>, sinh ra ở đây ` +
       `bằng chính <code>card_layout.py</code> đang chạy trong add-on.`,
   },
-  frontTemplate: { en: "Front template", vi: "Template mặt trước" },
-  backTemplate: { en: "Back template", vi: "Template mặt sau" },
+  frontTemplate: { en: "Front template", vi: "Front template" },
+  backTemplate: { en: "Back template", vi: "Back template" },
 
   rowsLegend: {
     en: "Click a row to see its card.",
-    vi: "Bấm một dòng để xem thẻ của nó.",
+    vi: "Bấm một dòng để xem card của nó.",
   },
   rowTitle: {
     en: (line, state) => `Row ${line} — ${state}`,
@@ -736,10 +742,12 @@ let current = initial();
 
 export const lang = () => current;
 
-export function setLang(code) {
+/** Switch language; `remember` false shows it without making it the choice. */
+export function setLang(code, remember = true) {
   if (!LANGUAGES.some((l) => l.code === code)) return;
   current = code;
   document.documentElement.lang = code;
+  if (!remember) return;
   try {
     localStorage.setItem(STORAGE_KEY, code);
   } catch {
