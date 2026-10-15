@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>SheetCards — preview a sheet before you sync it</title>
-<meta name="description" content="Paste a Google Sheets link and see the decks, rows and cards the SheetCards add-on would produce — running the add-on's own code in your browser.">
+<title>SheetCards — xem trước sheet trước khi đồng bộ</title>
+<meta name="description" content="Dán link Google Sheets để xem trước deck, các dòng và thẻ mà add-on SheetCards sẽ tạo — chạy chính code của add-on ngay trong trình duyệt.">
 <!-- Two cards, the front one ruled like a sheet. Inline, so the icon costs no
      request and cannot go missing from a deploy. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -27,35 +27,35 @@
 
 <!-- To the working area rather than to the card: the card panel does not exist
      until a sheet has loaded, and a skip link to a hidden target goes nowhere. -->
-<a class="skip" href="#app" data-i18n="skip">Skip to the preview</a>
+<a class="skip" href="#app" data-i18n="skip">Tới phần xem trước</a>
 
 <header class="masthead">
   <div class="brand">
-    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="brandTag">preview</span></h1>
+    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="brandTag">xem trước</span></h1>
   </div>
 
-  <nav class="sitenav" aria-label="Site" data-i18n-attr="aria-label:navLabel">
-    <a href="./" data-i18n="navHome">Home</a>
-    <a href="./preview.html" aria-current="page" data-i18n="navPreview">Preview</a>
-    <a href="./editor.html" data-i18n="navEditor">Editor</a>
-    <a href="./docs/" data-i18n="navDocs">Docs</a>
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Trang chủ</a>
+    <a href="./preview.html" aria-current="page" data-i18n="navPreview">Xem trước</a>
+    <a href="./editor.html" data-i18n="navEditor">Trình soạn</a>
+    <a href="./docs/" data-i18n="navDocs">Tài liệu</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
   <button id="theme" class="themebtn" type="button"></button>
-  <nav id="langs" class="langs" aria-label="Language" data-i18n-attr="aria-label:langLabel"></nav>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
 
 <p id="demo-note" class="demo-note" hidden>
-  <span class="long" data-i18n="demoNote"></span>
-  <span class="short" data-i18n="demoNoteShort"></span>
+  <span class="long" data-i18n="demoNote">Đang hiện file ví dụ — ba mươi mốt sheet, mỗi sheet là một deck dùng được và đồng thời minh hoạ một tính năng, từ đơn giản nhất trở đi. Dùng ô chọn sheet cạnh chữ Nguồn để xem lần lượt, hoặc dán link của bạn.</span>
+  <span class="short" data-i18n="demoNoteShort">File ví dụ — chọn sheet khác hoặc dán link của bạn.</span>
 </p>
 
 <section id="warnbar" class="warnbar" hidden aria-labelledby="warnbar-title">
   <h2 id="warnbar-title"><span class="warn-icon" data-icon="triangle-alert" aria-hidden="true"></span>
-    <span data-i18n="warnings">Warnings</span>
+    <span data-i18n="warnings">Cảnh báo</span>
     <span id="warncount" class="count"></span></h2>
   <ul id="warnlist" class="warnings"></ul>
-  <div class="muted small warnfrom" data-i18n="warningsFrom"></div>
+  <div class="muted small warnfrom" data-i18n="warningsFrom">Các dòng gắn nhãn “Settings row” là nguyên văn add-on báo, được giữ tiếng Anh vì đó đúng là câu Anki sẽ hiện lúc sync.<details><summary>Tại sao?</summary>Dịch ra thì nó sẽ không còn khớp với câu Anki báo. Không có gì bị bỏ qua âm thầm: giá trị add-on không hiểu thì bị từ chối chứ không bị đoán, và cột giữ mặc định cho tới khi sheet được sửa.</details></div>
 </section>
 
 <!-- Three columns, one job each: where the sheet comes from, what deck it makes,
@@ -70,7 +70,7 @@
       <button class="panel-toggle" id="src-toggle" aria-expanded="true" aria-controls="src-body">
         <span class="chev" aria-hidden="true"></span>
         <span class="step" aria-hidden="true">1</span>
-        <span class="panel-name" data-i18n="panelSource">Source</span>
+        <span class="panel-name" data-i18n="panelSource">Nguồn</span>
         <span class="panel-note" id="source"></span>
       </button>
       <!-- Outside the toggle, not inside the panel: a workbook's sheets are what
@@ -93,11 +93,11 @@
     <div class="panel-body" id="src-body">
       <form id="entry-form" class="stack">
         <p class="field">
-          <label for="url" data-i18n="urlLabel">Sheet link</label>
+          <label for="url" data-i18n="urlLabel">Link sheet</label>
           <!-- Between the label and the field, where GOV.UK puts it: read before
                the field it is about, and tied to it by aria-describedby. -->
           <span id="url-error" class="field-error" hidden>
-            <span class="sr-only" data-i18n="errorPrefix">Error:</span>
+            <span class="sr-only" data-i18n="errorPrefix">Lỗi:</span>
             <span class="err-icon" data-icon="circle-alert"></span>
             <span id="url-error-text"></span>
           </span>
@@ -106,7 +106,7 @@
         </p>
         <p class="field submit">
           <button id="go" class="btn" type="submit"><span data-icon="eye"></span><span
-                  data-i18n="go">Preview</span></button>
+                  data-i18n="go">Xem trước</span></button>
         </p>
       </form>
 
@@ -127,7 +127,7 @@
           <path d="M172 49h78" class="h-grid"/>
           <rect x="192" y="60" width="38" height="7" rx="3.5" class="h-back"/>
         </svg>
-        <figcaption class="muted small" data-i18n="heroCaption"></figcaption>
+        <figcaption class="muted small" data-i18n="heroCaption">Mỗi dòng trong sheet thành một thẻ Anki. Xem trước ở đây rồi hãy sync.</figcaption>
       </figure>
 
       <div class="stack">
@@ -137,8 +137,8 @@
                    data-i18n-attr="aria-label:pickLabel">
             <button id="pick" class="linky" type="button"
                     data-i18n-attr="title:pickLabel"><span data-icon="upload"></span><span
-                    data-i18n="pick">Upload a file</span></button>
-            <span data-i18n="orDrop">or drop one anywhere on this page.</span>
+                    data-i18n="pick">Tải lên một file</span></button>
+            <span data-i18n="orDrop">hoặc thả file vào bất kỳ đâu trên trang.</span>
           </span>
           <span id="status" class="status" role="status" aria-live="polite">
             <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
@@ -152,7 +152,7 @@
            meant. It is a grid because a spreadsheet is a grid — the block under
            it is still where a single row is read. -->
       <div class="stack" id="gridbox" hidden>
-        <h3><span data-i18n="gridHead">The sheet</span><span class="count" id="gridcount"></span></h3>
+        <h3><span data-i18n="gridHead">Sheet gốc</span><span class="count" id="gridcount"></span></h3>
         <div class="gridwrap" id="grid" tabindex="0" role="region"
              data-i18n-attr="aria-label:gridHead"></div>
         <p class="muted small" id="gridcut" hidden></p>
@@ -188,10 +188,10 @@
       <p id="summary" class="summary"></p>
 
       <div class="side">
-        <h3 data-i18n="decks">Decks</h3>
+        <h3 data-i18n="decks">Deck</h3>
         <div id="tree"></div>
 
-        <h3 class="spaced"><span data-i18n="rows">Rows</span> <span id="rowcount" class="count"></span></h3>
+        <h3 class="spaced"><span data-i18n="rows">Dòng</span> <span id="rowcount" class="count"></span></h3>
         <p id="rows-legend" class="muted small"></p>
         <div id="rowlist"></div>
 
@@ -204,7 +204,7 @@
                the label beside it already says what the button does. -->
           <button id="apkg" class="btn apkg-btn" type="button"
                   data-i18n-attr="title:apkgTitle"><img class="anki-mark" src="./anki.png"
-                  alt="" width="16" height="16"><span data-i18n="downloadApkg"></span><span
+                  alt="" width="16" height="16"><span data-i18n="downloadApkg">Tải về cho Anki</span><span
                   class="ext" translate="no">.apkg</span></button>
         </div>
       </div>
@@ -216,7 +216,7 @@
       <button class="panel-toggle" id="card-toggle" aria-expanded="true" aria-controls="card-body">
         <span class="chev" aria-hidden="true"></span>
         <span class="step" aria-hidden="true">3</span>
-        <span class="panel-name" data-i18n="panelCard">Card</span>
+        <span class="panel-name" data-i18n="panelCard">Thẻ</span>
         <span class="panel-note" id="card-note"></span>
       </button>
     </h2>
@@ -233,8 +233,8 @@
      than inside the card's iframe — which would navigate the frame to the file. -->
 <div id="drop" class="dropzone" hidden>
   <div>
-    <strong data-i18n="dropHere">Drop the file to preview it</strong>
-    <span data-i18n="dropTypes"></span>
+    <strong data-i18n="dropHere">Thả file vào đây để xem trước</strong>
+    <span data-i18n="dropTypes">.xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt</span>
   </div>
 </div>
 

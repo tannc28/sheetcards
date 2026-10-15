@@ -40,7 +40,7 @@ EXAMPLES = REPO / "examples" / "sheetcards-examples.xlsx"
 # heading. Declared here rather than found, because order is information — the
 # build refuses a page that is missing from this list or a name with no file.
 DOC_GROUPS = [
-    ("Start", ["index", "getting-started-vi", "examples"]),
+    ("Start", ["index", "getting-started", "examples"]),
     (
         "Write a sheet",
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
@@ -48,6 +48,10 @@ DOC_GROUPS = [
     ("In Anki", ["menu", "syncing", "sources"]),
     ("Help", ["faq", "developers"]),
 ]
+
+# Docs pages written in Vietnamese. The docs open on one: most readers are
+# Vietnamese, so the first page anyone lands on is in their language.
+VI_DOCS = {"index"}
 
 # The landing page's demo: (sheet in the example workbook, row ID, i18n key of
 # its label). Real rows, rendered with the real templates — the page claims the
@@ -359,7 +363,7 @@ def build_docs(out):
         page = (
             template.replace("%%TITLE%%", html.escape(titles[name]))
             .replace("%%DESCRIPTION%%", html.escape(summary))
-            .replace("%%LANG%%", "vi" if name.endswith("-vi") else "en")
+            .replace("%%LANG%%", "vi" if name in VI_DOCS else "en")
             .replace("%%NAV%%", _nav(name, titles, toc))
             .replace("%%PAGER%%", _pager(names, index, titles))
             .replace("%%SOURCE%%", f"docs/site/{name}.md")

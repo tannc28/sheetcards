@@ -1,91 +1,90 @@
-# Getting started
+# Bắt đầu
 
-SheetCards is an Anki add-on that turns a spreadsheet into flashcards. You write
-your cards in Google Sheets, one row per card, and the add-on brings them into
-Anki. When you change the sheet, one click updates the cards. The spreadsheet is
-always the place you edit; Anki holds a copy.
+SheetCards là một add-on cho Anki, biến bảng tính thành flashcard. Bạn soạn thẻ
+trong Google Sheets, mỗi dòng là một thẻ, và add-on đưa chúng vào Anki. Khi bạn
+sửa sheet, chỉ cần một cú bấm là thẻ được cập nhật. Bạn luôn sửa trên sheet; Anki
+chỉ giữ một bản sao.
 
-This page takes you from an empty sheet to cards you can study, in five steps.
-*Đọc bằng tiếng Việt: [Bắt đầu](getting-started-vi.md).*
+Trang này đưa bạn từ một sheet trống tới những thẻ có thể học ngay, qua năm bước.
+Các trang tài liệu khác hiện chỉ có tiếng Anh.
+*Read in English: [Getting started](getting-started.md).*
 
-## What you need
+## Bạn cần gì
 
-- **Anki 25.x or later** on a computer (Windows, macOS or Linux).
-- **A Google account**, only to write the sheet. The add-on reads it without
-  signing in.
+- **Anki 25.x trở lên** trên máy tính (Windows, macOS hoặc Linux).
+- **Một tài khoản Google**, chỉ để soạn sheet. Add-on đọc sheet mà không cần đăng
+  nhập.
 
-## Install the add-on
+## Cài add-on
 
-1. Download
+1. Tải file
    [`sheetcards.ankiaddon`](https://github.com/tannc28/sheetcards/releases/latest/download/sheetcards.ankiaddon).
-2. In Anki, open **Tools → Add-ons**, press **Install from file…** and pick the
-   file you downloaded.
-3. Restart Anki.
+2. Trong Anki, mở **Tools → Add-ons**, bấm **Install from file…** rồi chọn file
+   vừa tải.
+3. Khởi động lại Anki.
 
-A **SheetCards** menu now appears under **Tools**. Everything the add-on does is
-in that menu.
+Menu **SheetCards** sẽ xuất hiện trong **Tools**. Mọi chức năng của add-on đều
+nằm trong menu đó.
 
-## 1. Make a sheet
+## 1. Tạo sheet
 
-Open a new Google Sheet and type this, starting in cell A1:
+Mở một Google Sheet mới và gõ bảng sau, bắt đầu từ ô A1:
 
-| ID | Word | Meaning |
+| ID | Word | Nghĩa |
 | :--- | :--- | :--- |
 | 1 | library | thư viện |
 | 2 | airport | sân bay |
 | 3 | season | mùa |
 
-- **Row 1 holds the column names.** `ID` is the only name the add-on requires.
-- **`ID` is each card's permanent label.** Any text works (`1`, `w01`, `HSK-17`),
-  as long as no two rows share one. Never change or reuse an ID: the add-on uses
-  it to know which card is which.
-- **Every other column is yours.** `Word` and `Meaning` could just as well be
-  `Từ` and `Nghĩa`, or `汉字` and `拼音`. Each becomes a field of that name in
-  Anki.
+- **Dòng 1 là tên các cột.** `ID` là tên cột duy nhất bắt buộc.
+- **`ID` là nhãn cố định của mỗi thẻ.** Ghi gì cũng được (`1`, `w01`, `HSK-17`),
+  miễn là không có hai dòng trùng nhau. Đừng bao giờ đổi hay dùng lại một ID:
+  add-on dựa vào nó để biết thẻ nào là thẻ nào.
+- **Các cột còn lại là của bạn.** `Word` và `Nghĩa` có thể đặt là `Từ` và
+  `Ý nghĩa`, hay `汉字` và `拼音`. Mỗi cột thành một field cùng tên trong Anki.
 
-By default the first of your columns goes on the front of the card and the rest
-go on the back. So this sheet makes cards that ask `library` and answer
-`thư viện`.
+Mặc định cột đầu tiên của bạn nằm ở mặt trước thẻ, các cột còn lại ở mặt sau.
+Vậy sheet này tạo ra thẻ hỏi `library` và trả lời `thư viện`.
 
-## 2. Share it
+## 2. Chia sẻ sheet
 
-In Google Sheets press **Share**, and under *General access* choose **Anyone with
-the link → Viewer**. Then copy the address from your browser's address bar (the
-normal link ending in `/edit…`).
+Trong Google Sheets bấm **Share**, ở mục *General access* chọn **Anyone with the
+link → Viewer**. Sau đó copy địa chỉ trên thanh địa chỉ của trình duyệt (link
+bình thường kết thúc bằng `/edit…`).
 
-The add-on downloads the sheet without signing in, so a private sheet cannot be
-read. Viewer access is enough: nothing is ever written back to your sheet.
+Add-on tải sheet mà không đăng nhập, nên sheet riêng tư sẽ không đọc được. Quyền
+Viewer là đủ: add-on không bao giờ ghi gì vào sheet của bạn.
 
-## 3. Check it in the preview (optional)
+## 3. Kiểm tra bằng trang xem trước (không bắt buộc)
 
-Paste the link into the [preview](../preview.html). It runs the add-on's own code
-in your browser and shows the decks, every row, and the finished cards, with
-nothing installed. If the preview can read your sheet, so can Anki.
+Dán link vào [trang xem trước](../preview.html). Trang này chạy chính code của
+add-on ngay trong trình duyệt và cho bạn xem các deck, từng dòng và thẻ hoàn
+chỉnh, không cần cài gì. Nếu trang xem trước đọc được sheet thì Anki cũng đọc
+được.
 
-## 4. Connect it
+## 4. Kết nối
 
-In Anki choose **Tools → SheetCards → Connect a Google Sheet…** and paste the
-link. The window checks the link as you type and tells you what it found: how
-many sheets, how many rows, and the names of the decks it will make.
+Trong Anki chọn **Tools → SheetCards → Connect a Google Sheet…** rồi dán link.
+Cửa sổ sẽ kiểm tra link khi bạn gõ và cho biết nó tìm thấy gì: bao nhiêu sheet,
+bao nhiêu dòng, và tên các deck sẽ được tạo.
 
-You do not name the deck. It is named after the file and the sheet, as
-`sc_<file name>::<sheet name>`. Each tab in the file becomes a deck of its own
-(see [Sheets, files and .apkg](sources.md)).
+Bạn không cần đặt tên deck. Deck được đặt theo tên file và tên sheet, dạng
+`sc_<tên file>::<tên sheet>`. Mỗi tab trong file thành một deck riêng.
 
-## 5. Sync
+## 5. Đồng bộ
 
-Choose **Tools → SheetCards → Update Decks from Sheets…** (`Ctrl+Shift+S`), tick
-your deck and press **Update**. When it finishes your cards are ready to study.
+Chọn **Tools → SheetCards → Update Decks from Sheets…** (`Ctrl+Shift+S`), tick
+vào deck của bạn rồi bấm **Update**. Xong là thẻ đã sẵn sàng để học.
 
-From now on the routine is: edit the sheet, press `Ctrl+Shift+S`. New rows become
-new cards, edited cells update their cards (your review history is kept), and
-deleted rows are removed. [Syncing](syncing.md) has the details.
+Từ giờ trở đi chỉ cần: sửa sheet, bấm `Ctrl+Shift+S`. Dòng mới thành thẻ mới, ô
+được sửa thì thẻ được cập nhật (lịch sử ôn tập vẫn giữ nguyên), dòng bị xoá thì
+thẻ bị xoá theo.
 
-## Next steps
+## Tiếp theo
 
-- **Change how the cards look.** Add a [settings row](settings-row.md) under the
-  column names to set sizes, colours, which side a column goes on, sound,
-  pictures and more. The [editor](../editor.html) helps you write one.
-- **Start from an example.** The [example workbook](examples.md) has 31 small
-  decks, each showing one feature.
-- **Something not working?** See [FAQ and troubleshooting](faq.md).
+- **Đổi giao diện thẻ.** Thêm một [settings row](settings-row.md) ngay dưới dòng
+  tên cột để chỉnh cỡ chữ, màu, cột nào ở mặt nào, âm thanh, hình ảnh và nhiều
+  thứ khác. [Trình soạn](../editor.html) giúp bạn viết dòng này.
+- **Bắt đầu từ ví dụ.** [Bộ ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
+  hoạ một tính năng.
+- **Có gì không chạy?** Xem [Câu hỏi thường gặp](faq.md) (tiếng Anh).

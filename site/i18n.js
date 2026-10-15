@@ -716,7 +716,10 @@ export const LANGUAGES = [
 
 const STORAGE_KEY = "sc-lang";
 
-/** Remembered choice, else the browser's own language, else English. */
+/** Remembered choice, else Vietnamese.
+
+The site is made for Vietnamese learners first, so it opens in Vietnamese
+whatever the browser says; English is one tap away and remembered once chosen. */
 function initial() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -724,7 +727,7 @@ function initial() {
   } catch {
     /* private browsing: fall through to the browser's language */
   }
-  return (navigator.language || "en").toLowerCase().startsWith("vi") ? "vi" : "en";
+  return "vi";
 }
 
 let current = initial();

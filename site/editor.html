@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>SheetCards — build a settings row</title>
-<meta name="description" content="Write one column's settings row and watch the card change, using the add-on's own code. Copy the cell when it looks right.">
+<title>SheetCards — soạn dòng cài đặt</title>
+<meta name="description" content="Soạn dòng cài đặt cho từng cột và xem thẻ thay đổi ngay, bằng chính code của add-on. Ưng ý thì copy vào sheet.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -22,18 +22,18 @@
 
 <header class="masthead">
   <div class="brand">
-    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="guideTag">editor</span></h1>
+    <h1 translate="no">SheetCards <span class="brand-tag" data-i18n="guideTag">trình soạn</span></h1>
   </div>
 
-  <nav class="sitenav" aria-label="Site" data-i18n-attr="aria-label:navLabel">
-    <a href="./" data-i18n="navHome">Home</a>
-    <a href="./preview.html" data-i18n="navPreview">Preview</a>
-    <a href="./editor.html" aria-current="page" data-i18n="navEditor">Editor</a>
-    <a href="./docs/" data-i18n="navDocs">Docs</a>
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Trang chủ</a>
+    <a href="./preview.html" data-i18n="navPreview">Xem trước</a>
+    <a href="./editor.html" aria-current="page" data-i18n="navEditor">Trình soạn</a>
+    <a href="./docs/" data-i18n="navDocs">Tài liệu</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
   <button id="theme" class="themebtn" type="button"></button>
-  <nav id="langs" class="langs" aria-label="Language" data-i18n-attr="aria-label:langLabel"></nav>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
 
 <!-- One column, not a whole settings row. A column is the unit people actually
@@ -51,9 +51,9 @@
            away for good: on a second visit it is a sentence between them and the
            sheet. -->
       <p id="intro" class="intro" hidden>
-        <span data-i18n="edIntro"></span>
+        <span data-i18n="edIntro">Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên thẻ ra sao. Gõ vào dòng 2 bên dưới và xem thẻ đổi theo.</span>
         <a href="./docs/settings-row.html"
-           data-i18n="edIntroMore">Read more</a>
+           data-i18n="edIntroMore">Đọc thêm</a>
         <button id="intro-close" class="intro-close" type="button"
                 data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
       </p>
@@ -72,7 +72,7 @@
            end of the header strip, and removing one is the "×" on the column
            itself — both where the thing they act on is. -->
       <p class="sheettools">
-        <span class="hint" data-i18n="edPasteHint">Drag to select cells, then copy — or paste rows from a spreadsheet</span>
+        <span class="hint" data-i18n="edPasteHint">Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào</span>
         <button id="add" class="tool" type="button"
                 data-i18n-attr="title:edAddColumn,aria-label:edAddColumn"><span data-icon="plus"></span></button>
         <button id="export" class="tool" type="button"
@@ -90,7 +90,7 @@
       <p class="copyline">
         <button id="copy" class="btn" type="button"><span data-icon="copy"></span><span
                 id="copy-label">Copy rows 1–2</span></button>
-        <span class="muted small" data-i18n="edCopyNext">Then paste into cell A1 of your sheet.</span>
+        <span class="muted small" data-i18n="edCopyNext">Rồi dán vào ô A1 của sheet.</span>
       </p>
 
       <p class="entry-alt">
@@ -102,7 +102,7 @@
       <!-- Tapped, not dragged: a drag is the one gesture that does not survive a
            phone, and most people are on one. -->
       <div class="stack">
-        <h3><span data-i18n="edAdd">Add a directive</span>
+        <h3><span data-i18n="edAdd">Thêm directive</span>
           <span class="count" id="keyfor"></span></h3>
         <div id="keys" class="collist"></div>
         <!-- The values on offer for whichever directive is open. Inline, because
@@ -130,7 +130,7 @@
   <section class="panel">
     <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
       <span class="step" aria-hidden="true">3</span>
-      <span class="panel-name" data-i18n="panelCard">Card</span>
+      <span class="panel-name" data-i18n="panelCard">Thẻ</span>
     </span></h2>
 
     <div class="panel-body">
