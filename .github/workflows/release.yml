@@ -148,3 +148,35 @@ jobs:
               --notes "$NOTES" \
               $DRAFT_FLAG
           fi
+
+      # AnkiWeb has no upload API and its terms allow no client but a browser and
+      # Anki's own apps, so the last step stays a person pressing Upload. This makes
+      # it thirty seconds: the file, the link and the text are all on the run page.
+      - name: Hand the AnkiWeb upload over
+        if: steps.version.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ADDON_ID: ${{ vars.ANKIWEB_ADDON_ID }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$ADDON_ID" ]; then
+            UPLOAD="https://ankiweb.net/shared/upload?id=${ADDON_ID}"
+          else
+            UPLOAD="https://ankiweb.net/shared/addons"
+          fi
+          ASSET="https://github.com/${REPO}/releases/download/v${VERSION}/sheetcards-${VERSION}-ankiweb.ankiaddon"
+          {
+            echo "## Upload v${VERSION} to AnkiWeb"
+            echo
+            echo "1. Download [\`sheetcards-${VERSION}-ankiweb.ankiaddon\`](${ASSET})."
+            echo "2. Open [the AnkiWeb upload page](${UPLOAD}) and attach it."
+            echo "3. Paste the description below if it changed, then press **Upload**."
+            echo
+            echo "<details><summary>Description (docs/ANKIWEB_DESCRIPTION.md)</summary>"
+            echo
+            echo '```markdown'
+            cat docs/ANKIWEB_DESCRIPTION.md
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
