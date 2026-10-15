@@ -1,233 +1,84 @@
 """
 SheetCards Add-on - Main Anki Integration Module
 
-This module serves as the entry point for the SheetCards Anki add-on,
-integrating remote deck synchronization features with Google Sheets.
-
-Main features:
-- Python environment configuration for dependencies
-- Integration with Anki user interface
-- Menu creation and actions for remote deck management
-- Error handling and user feedback
-- Bridge between Anki interface and synchronization logic
-
-Add-on structure:
-- __init__.py: Main module (this file)
-- src/: Synchronization and processing logic
+The entry point Anki loads: it adds a SheetCards submenu to Tools, binds the
+shortcuts, and points Anki's own Add-ons -> Config button at the settings window.
+Everything else lives in ``src/``.
 
 Author: tannc28
 Email: nguyencongtan1002.work@gmail.com
 """
 
-# =============================================================================
-# ANKI AND INTERNAL MODULE IMPORTS
-# =============================================================================
+from .src.compat import QAction
+from .src.compat import QKeySequence
+from .src.compat import QMenu
+from .src.compat import mw
+from .src.compat import safe_qconnect as qconnect
+from .src.deck_manager import addNewDeck
+from .src.deck_manager import import_test_deck
+from .src.deck_manager import removeRemoteDeck
+from .src.deck_manager import syncDecksWithSelection
+from .src.templates_and_definitions import ADDON_MENU_NAME
 
-# Main Anki imports with compatibility
-try:
-    from .src.compat import QAction
-    from .src.compat import QKeySequence
-    from .src.compat import QMenu
-    from .src.compat import mw
-    from .src.compat import safe_qconnect as qconnect
-    from .src.compat import showInfo
-except ImportError as e:
-    # Fallback for development
-    print(f"Error importing compatibility modules: {e}")
-    from aqt import mw
-    from aqt.qt import QAction
-    from aqt.qt import QKeySequence
-    from aqt.qt import QMenu
-    from aqt.qt import qconnect
-    from aqt.utils import showInfo
-
-# Internal module imports with robust error handling
-try:
-    from .src.deck_manager import addNewDeck
-    from .src.deck_manager import import_test_deck
-    from .src.deck_manager import removeRemoteDeck as rDecks
-    from .src.deck_manager import syncDecksWithSelection as sDecks
-    from .src.templates_and_definitions import ADDON_MENU_NAME
-
-except Exception as e:
-    showInfo(f"Error importing SheetCards plugin modules:\n{e}")
-    raise
-
-# =============================================================================
-# TEMPLATES AND CONFIGURATIONS
-# =============================================================================
-
-# Error message template for the user
-errorTemplate = """
-Hello! It seems an error occurred during execution.
-
-The error was: {}.
-
-If you'd like me to fix it, please report here: https://github.com/tannc28/sheetcards
-
-Please provide as much information as possible, especially the file that caused the error.
-"""
-
-# =============================================================================
-# USER INTERFACE FUNCTIONS
-# =============================================================================
-
-
-def addDeck():
-    """
-    Adds a new remote deck connected to a Google Sheets spreadsheet.
-
-    This function:
-    1. Initializes the Anki bridge
-    2. Calls the interface to add a new deck
-    3. Handles errors and displays appropriate feedback
-    4. Ensures resource cleanup even in case of error
-    """
-    try:
-        addNewDeck()
-    except Exception as e:
-        errorMessage = str(e)
-        showInfo(errorTemplate.format(errorMessage))
-        from .src.debug import is_debug_enabled
-
-        if is_debug_enabled():
-            import traceback
-
-            trace = traceback.format_exc()
-            showInfo(str(trace))
-
-
-def syncDecks():
-    """
-    Synchronizes all configured remote decks.
-
-    This function starts the synchronization process for all decks
-    registered in the system, downloading updated data from
-    Google Sheets spreadsheets.
-    """
-    try:
-        sDecks()
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
-
-
-def removeRemote():
-    """
-    Removes a remote deck connection from the system.
-
-    This function:
-    1. Initializes the Anki bridge
-    2. Allows the user to disconnect a remote deck
-    3. Handles errors and displays appropriate feedback
-    4. Ensures resource cleanup
-    """
-    try:
-        rDecks()
-    except Exception as e:
-        errorMessage = str(e)
-        showInfo(errorTemplate.format(errorMessage))
-        from .src.debug import is_debug_enabled
-
-        if is_debug_enabled():
-            import traceback
-
-            trace = traceback.format_exc()
-            showInfo(str(trace))
+# There is no error wrapper around these. An exception raised from a menu action
+# reaches Anki's own handler, which names the add-on that raised it, shows the
+# traceback behind a button and points at the add-on's page — everything the old
+# "Hello! It seems an error occurred" box tried to do, done the way every other
+# add-on's errors look.
 
 
 def open_settings():
-    """Opens the add-on's settings window.
+    """The add-on's one settings window: the AnkiWeb hand-off and the debug log."""
+    from .src.ui.settings_dialog import show_settings_dialog
 
-    One window for what used to be three: the AnkiWeb hand-off and the debug log.
-    The deck-options mode that was the third is gone — every connected deck
-    studies under one options group, which is Anki's to configure anyway.
-    """
-    try:
-        from .src.ui.settings_dialog import show_settings_dialog
-
-        show_settings_dialog(mw)
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
+    show_settings_dialog(mw)
 
 
-def configure_card_layout():
-    """
-    Opens the card layout viewer.
+def open_card_layout():
+    """What the last sync read out of each sheet's '#config' row. Read-only."""
+    from .src.ui.card_layout_dialog import show_card_layout_dialog
 
-    The layout is declared in the spreadsheet's '#config' row, so this window is
-    read-only. Per connected deck it shows:
-    1. What the last sync understood for each column, and anything it could not read
-    2. Which speech voices this machine has for the languages the sheet asks for
-    3. An approximate preview of the resulting card
-    """
-    try:
-        from .src.ui.card_layout_dialog import show_card_layout_dialog
-
-        show_card_layout_dialog(mw)
-    except Exception as e:
-        error_msg = errorTemplate.format(str(e))
-        showInfo(error_msg)
+    show_card_layout_dialog(mw)
 
 
-# =============================================================================
-# ANKI INTERFACE CONFIGURATION
-# =============================================================================
+def _action(menu, text, handler, shortcut=None):
+    action = QAction(text, mw)
+    if shortcut:
+        action.setShortcut(QKeySequence(shortcut))
+    qconnect(action.triggered, handler)
+    menu.addAction(action)
+    return action
 
-# Check if Anki is available before configuring the interface
+
 if mw is not None:
-    # Create main submenu for SheetCards features
     remoteDecksSubMenu = QMenu(ADDON_MENU_NAME, mw)
     mw.form.menuTools.addMenu(remoteDecksSubMenu)
 
-    # =========================================================================
-    # MENU ACTIONS
-    # =========================================================================
-
-    # Action: Add new remote deck
-    remoteDeckAction = QAction("Add New Remote Deck", mw)
-    remoteDeckAction.setShortcut(QKeySequence("Ctrl+Shift+A"))
-    qconnect(remoteDeckAction.triggered, addDeck)
-    remoteDecksSubMenu.addAction(remoteDeckAction)
-
-    # Action: Synchronize remote decks
-    syncDecksAction = QAction("Synchronize Remote Decks", mw)
-    syncDecksAction.setShortcut(QKeySequence("Ctrl+Shift+S"))
-    qconnect(syncDecksAction.triggered, syncDecks)
-    remoteDecksSubMenu.addAction(syncDecksAction)
-
-    # Action: Disconnect remote deck
-    removeRemoteDeck = QAction("Disconnect a Remote Deck", mw)
-    removeRemoteDeck.setShortcut(QKeySequence("Ctrl+Shift+D"))
-    qconnect(removeRemoteDeck.triggered, removeRemote)
-    remoteDecksSubMenu.addAction(removeRemoteDeck)
-
-    # Separator
+    # Connecting and disconnecting carry no shortcut. Anki already owns
+    # Ctrl+Shift+A (Tools -> Add-ons) and Ctrl+Shift+D (Set Due Date while
+    # reviewing); a second binding makes the key ambiguous, and Qt then fires
+    # neither. Both are rare enough to be reached through the menu.
+    _action(remoteDecksSubMenu, "Connect a Google Sheet…", addNewDeck)
+    _action(
+        remoteDecksSubMenu,
+        "Update Decks from Sheets…",
+        syncDecksWithSelection,
+        "Ctrl+Shift+S",
+    )
+    _action(remoteDecksSubMenu, "Disconnect a Sheet…", removeRemoteDeck)
     remoteDecksSubMenu.addSeparator()
-
-    # Action: View card layout (declared in the sheet, so read-only)
-    cardLayoutAction = QAction("View Card Layout", mw)
-    cardLayoutAction.setShortcut(QKeySequence("Ctrl+Shift+C"))
-    qconnect(cardLayoutAction.triggered, configure_card_layout)
-    remoteDecksSubMenu.addAction(cardLayoutAction)
-
-    # Separator
+    _action(remoteDecksSubMenu, "Card Layout…", open_card_layout, "Ctrl+Shift+C")
     remoteDecksSubMenu.addSeparator()
+    _action(remoteDecksSubMenu, "Settings…", open_settings, "Ctrl+Shift+O")
 
-    settingsAction = QAction("Settings", mw)
-    settingsAction.setShortcut(QKeySequence("Ctrl+Shift+O"))
-    qconnect(settingsAction.triggered, open_settings)
-    remoteDecksSubMenu.addAction(settingsAction)
+    # Anki's Add-ons window has a Config button. Without this it opens the raw
+    # config.json, which holds defaults only — the settings that matter live in
+    # meta.json, behind the window above.
+    mw.addonManager.setConfigAction(__name__, open_settings)
 
-    # Action: Import test deck (development/debug only)
-    try:
-        from .src.templates_and_definitions import IS_DEVELOPMENT_MODE
+    from .src.templates_and_definitions import IS_DEVELOPMENT_MODE
 
-        if IS_DEVELOPMENT_MODE:
-            importTestDeckAction = QAction("Import Test Deck", mw)
-            importTestDeckAction.setShortcut(QKeySequence("Ctrl+Shift+T"))
-            qconnect(importTestDeckAction.triggered, import_test_deck)
-            remoteDecksSubMenu.addAction(importTestDeckAction)
-    except ImportError:
-        pass  # If import fails, don't show the menu
+    if IS_DEVELOPMENT_MODE:
+        _action(
+            remoteDecksSubMenu, "Import Test Deck", import_test_deck, "Ctrl+Shift+T"
+        )

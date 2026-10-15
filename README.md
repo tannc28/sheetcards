@@ -111,15 +111,15 @@ the sheet, creates or updates one note per row, deletes the notes whose rows are
 gone, files everything into subdecks and rebuilds the card templates — all from the
 sheet, with no note-type editing.
 
-**Tools → SheetCards**, or these five shortcuts:
+Everything is under **Tools → SheetCards**:
 
-| Shortcut | Window |
-| :--- | :--- |
-| `Ctrl+Shift+A` | Add a deck from a link |
-| `Ctrl+Shift+S` | Sync |
-| `Ctrl+Shift+D` | Disconnect a deck |
-| `Ctrl+Shift+C` | See what the sheet said about the cards |
-| `Ctrl+Shift+O` | Settings |
+| Menu entry | Shortcut | What it does |
+| :--- | :--- | :--- |
+| Connect a Google Sheet… | — | Add a deck from a link |
+| Update Decks from Sheets… | `Ctrl+Shift+S` | Sync |
+| Disconnect a Sheet… | — | Stop syncing a deck |
+| Card Layout… | `Ctrl+Shift+C` | See what the sheet said about the cards |
+| Settings… | `Ctrl+Shift+O` | Settings (also Anki's Add-ons → Config) |
 
 <p align="center">
   <img src="docs/images/anki-add-deck.png" alt="Adding a deck" width="560">
@@ -238,7 +238,7 @@ To run it locally: `python scripts/build_site.py --serve`.
 
 Every feature below has a working example, and they all live in one file in this
 repository: [`examples/`](examples/). Paste this link into the preview site, or
-into **Add New Remote Deck** (`Ctrl+Shift+A`), and study the result:
+into **Connect a Google Sheet…**, and study the result:
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
@@ -330,7 +330,7 @@ Copy the URL from the browser address bar (the normal `.../edit?...` link).
 
 ### 3. Connect it
 
-**Tools → SheetCards → Add New Remote Deck** (`Ctrl+Shift+A`). Paste the URL. The
+**Tools → SheetCards → Connect a Google Sheet…**. Paste the URL. The
 dialog validates it as you type (with a ~1.2 s pause after you stop), downloads the
 sheet, and shows how many rows it found and what the deck will be called.
 
@@ -339,8 +339,8 @@ deck is always created as `sc_<file name>::<sheet name>`.
 
 ### 4. Sync
 
-**Tools → SheetCards → Synchronize Remote Decks** (`Ctrl+Shift+S`), tick your deck,
-press **Synchronize Selected**. A summary window reports what was created, updated and
+**Tools → SheetCards → Update Decks from Sheets…** (`Ctrl+Shift+S`), tick your deck,
+press **Update**. A summary window reports what was created, updated and
 deleted. Your cards are ready to study.
 
 ### 5. Decide what the card looks like
@@ -349,7 +349,7 @@ By default the **first** content column is the front and the rest are the back, 
 example above gives you `Question` → `Answer`. To change that — or to set text sizes,
 colours, hints, furigana, text-to-speech, or to turn a column of URLs into pictures, sound
 or video — add a [settings row](#the-settings-row) to the sheet and sync again.
-**View Card Layout** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
+**Card Layout…** (`Ctrl+Shift+C`) shows you what the add-on read out of that row,
 but the sheet is where you edit it.
 
 The fastest way to see what a settings row can do is to connect
@@ -452,7 +452,7 @@ Written in that column's cell of the settings row.
 | :--- | :--- | :--- | :--- |
 | `side` | `front`, `back`, `hide` | first content column front, all others back | Which side the column appears on. `hide` keeps the field and its content in Anki but shows it on neither side |
 | `label` | any text | no caption | Prints a small caption above the value. Without it the value stands alone |
-| `size` | a number of pixels — **6–200** on a text column, **1–2000** on a media one (`size=48` or `size=48px`) | 40 px on the front, 18 px on the back; no width cap on media | **Font size** on a text column, maximum **width** on an `image` or `video` column. The range that applies is the one for whatever the cell turned out to be, so `size=480; video` works as well as `video; size=480` |
+| `size` | a number of pixels — **6–200** on a text column, **1–2000** on a media one (`size=48` or `size=48px`) | 40 px on the front (shrinking to 24 px on a phone-width screen), 18 px on the back; no width cap on media | **Font size** on a text column, maximum **width** on an `image` or `video` column. The range that applies is the one for whatever the cell turned out to be, so `size=480; video` works as well as `video; size=480` |
 | `color` | `muted`, `accent`, a CSS colour name (`crimson`), or a `#hex` value | the card's normal text colour | `muted` and `accent` **follow Anki's light/dark theme**; a fixed colour does not, so a hard-coded `black` disappears in night mode |
 | `bold` | switch | off | Bold text |
 | `italic` | switch | off | Italic text |
@@ -793,10 +793,12 @@ themselves (`{{type:cloze:…}}`).
 
 Everything lives under **Tools → SheetCards**.
 
-### Add New Remote Deck
+### Connect a Google Sheet
 
 **What it does** — connects one Google Sheets spreadsheet as a new remote deck.
-**Where** — Tools → SheetCards → *Add New Remote Deck* (`Ctrl+Shift+A`).
+**Where** — Tools → SheetCards → *Connect a Google Sheet…*. It has no shortcut:
+`Ctrl+Shift+A` is Anki's own Tools → Add-ons. The Update, Disconnect and Card Layout
+windows also offer it when nothing is connected yet.
 
 **How it works.** You paste the ordinary `docs.google.com/spreadsheets/d/<ID>/edit…`
 link. The add-on rewrites it to `…/export?format=tsv` and downloads that with a plain
@@ -826,15 +828,15 @@ and the dialog tells you.
 - Re-adding a spreadsheet that is already connected is blocked; a spreadsheet that was
   *disconnected* is reconnected instead.
 
-### Synchronize Remote Decks
+### Update Decks from Sheets
 
 **What it does** — downloads each selected sheet and reconciles it with Anki.
-**Where** — Tools → SheetCards → *Synchronize Remote Decks* (`Ctrl+Shift+S`).
+**Where** — Tools → SheetCards → *Update Decks from Sheets…* (`Ctrl+Shift+S`).
 
 **How it works.** The dialog lists every connected deck with a checkbox and a card
 count. Your ticks are saved to the add-on's settings the moment you click them, so the
 selection is remembered next time (even if you then press Cancel). Pressing
-**Synchronize Selected** runs, in order:
+**Update** runs, in order:
 
 1. a rebuild of the card templates of every connected deck from the settings its last
    sync read out of the sheet;
@@ -861,14 +863,16 @@ The summary window has three views — **📊 Summary**, **📑 Full Details**,
   works.
 - A failed deck does not abort the others; its error appears in the summary.
 
-### Disconnect a Remote Deck
+### Disconnect a Sheet
 
 **What it does** — stops syncing a deck, and optionally deletes it.
-**Where** — Tools → SheetCards → *Disconnect a Remote Deck* (`Ctrl+Shift+D`).
+**Where** — Tools → SheetCards → *Disconnect a Sheet…*. It has no shortcut:
+`Ctrl+Shift+D` is Anki's Set Due Date while reviewing, and a deletion is not something
+to reach by a key.
 
 **How it works.** Tick the decks to disconnect, then decide with a single checkbox:
 
-> 🗑️ **Delete local data (decks, cards, notes and note types)** — **checked by default.**
+> **Also delete the local decks, cards and note types** — **checked by default.**
 
 Left checked, disconnecting deletes the local deck and all its subdecks, every card and
 note in them, and the deck's `SheetCards - … - Basic` / `- Cloze` note types (only if no
@@ -884,12 +888,12 @@ are cleaned up afterwards.
   still there to sync from.
 - Reconnecting means adding the spreadsheet again; scheduling of deleted cards is gone.
 
-### View Card Layout
+### Card Layout
 
 **What it does** — shows, per deck, what the add-on read out of the sheet's
 [settings row](#the-settings-row): which fields it put on which side, how they are
 styled, what it did not understand, and which text-to-speech voices this machine has.
-**Where** — Tools → SheetCards → *View Card Layout* (`Ctrl+Shift+C`).
+**Where** — Tools → SheetCards → *Card Layout…* (`Ctrl+Shift+C`).
 
 > **This window is read-only.** The spreadsheet is the only place a card's appearance is
 > edited. That is deliberate: with two places able to change one setting, the loser is
@@ -934,7 +938,8 @@ content.
 ### Settings
 
 **What it does** — the two things about the add-on that are not about a sheet.
-**Where** — Tools → SheetCards → *Settings* (`Ctrl+Shift+O`).
+**Where** — Tools → SheetCards → *Settings…* (`Ctrl+Shift+O`), or the **Config** button
+for SheetCards in Anki's Tools → Add-ons.
 
 **Upload to AnkiWeb.** Ticked, a normal AnkiWeb sync runs right after a deck sync, so
 the new cards reach your phone without a second click. There is no separate sync
@@ -1043,11 +1048,13 @@ All of these live under **Tools → SheetCards**. On macOS, ⌘ replaces Ctrl.
 
 | Shortcut | Menu entry |
 | :--- | :--- |
-| `Ctrl+Shift+A` | Add New Remote Deck |
-| `Ctrl+Shift+S` | Synchronize Remote Decks |
-| `Ctrl+Shift+D` | Disconnect a Remote Deck |
-| `Ctrl+Shift+O` | Settings |
-| `Ctrl+Shift+C` | View Card Layout |
+| `Ctrl+Shift+S` | Update Decks from Sheets… |
+| `Ctrl+Shift+C` | Card Layout… |
+| `Ctrl+Shift+O` | Settings… |
+
+*Connect a Google Sheet…* and *Disconnect a Sheet…* have none: Anki already uses
+`Ctrl+Shift+A` (Tools → Add-ons) and `Ctrl+Shift+D` (Set Due Date), and a key bound
+twice fires neither.
 
 ---
 
