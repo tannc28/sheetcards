@@ -115,6 +115,33 @@ class TestTheThemeInForce:
         assert theme.get_colors()["bg"] != was
 
 
+@pytest.mark.unit
+class TestCautionIsNotFailure:
+    def test_a_warning_is_not_the_colour_of_an_error(self, monkeypatch):
+        # Both used to be red, so "will be recreated" read as "failed".
+        import src.theme as theme
+
+        for dark in (False, True):
+            monkeypatch.setattr(theme, "is_dark_mode", lambda d=dark: d)
+            colours = theme.get_colors()
+            assert colours["accent_warning"] != colours["accent_danger"]
+            assert colours["warning"] != colours["error"]
+
+
+@pytest.mark.unit
+class TestWindowSizes:
+    def test_no_window_insists_on_more_than_a_small_laptop_has(self):
+        import src.theme as theme
+
+        assert theme.MIN_WIDTH <= 480 and theme.MIN_HEIGHT <= 360
+
+    def test_the_dialogs_ask_through_size_dialog_not_a_fixed_minimum(self):
+        for name in ("sync_dialog", "disconnect_dialog", "card_layout_dialog"):
+            source = (REPO / "src" / "ui" / f"{name}.py").read_text(encoding="utf-8")
+            assert "size_dialog(self" in source, name
+            assert not re.search(r"setMinimum(?:Size|Width|Height)\(", source), name
+
+
 _HAS_ANKI = importlib.util.find_spec("anki") is not None
 
 

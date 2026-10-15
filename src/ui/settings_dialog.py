@@ -107,6 +107,10 @@ class SettingsDialog(QDialog):
         self.accumulate_check = QCheckBox("Keep the logs from earlier syncs")
         self.accumulate_check.setContentsMargins(RADIO_INDENT, 0, 0, 0)
         group_layout.addWidget(self.accumulate_check)
+        # Keeping old logs is a property of a log that is being written. With
+        # logging off the box says nothing, so it is greyed out rather than left
+        # looking like a second, independent switch.
+        self.debug_check.toggled.connect(self.accumulate_check.setEnabled)
 
         note = QLabel(
             "Useful when something goes wrong, and worth turning off again "
@@ -138,6 +142,7 @@ class SettingsDialog(QDialog):
         self.ankiweb_check.setChecked(get_ankiweb_sync_mode() == "sync")
         self.debug_check.setChecked(is_debug_enabled())
         self.accumulate_check.setChecked(should_accumulate_logs())
+        self.accumulate_check.setEnabled(self.debug_check.isChecked())
 
     def _save(self):
         """Writes all three settings, then closes.
@@ -157,7 +162,7 @@ class SettingsDialog(QDialog):
             save_meta(meta)
             set_accumulate_logs(self.accumulate_check.isChecked())
             if debug_on:
-                add_debug_message("🔧 Debug logging enabled", "DEBUG")
+                add_debug_message("Debug logging enabled", "DEBUG")
 
             self.accept()
         except Exception as error:

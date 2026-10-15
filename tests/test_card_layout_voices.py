@@ -219,7 +219,7 @@ class TestOneButtonPerSpokenColumn:
         )
         for row in out["rows"]:
             if "voice" in row:
-                assert row["buttons"] == ["▶ Word", "▶ Example"]
+                assert row["buttons"] == ["\u25b6\ufe0e Word", "\u25b6\ufe0e Example"]
 
     def test_a_column_of_another_language_is_not_offered(self):
         out = _run(
@@ -228,7 +228,7 @@ class TestOneButtonPerSpokenColumn:
         )
         for row in out["rows"]:
             if "voice" in row:
-                assert row["buttons"] == ["▶ Word"]
+                assert row["buttons"] == ["\u25b6\ufe0e Word"]
 
     def test_the_desktop_gets_no_buttons_and_no_invitation(self):
         # QtWebEngine has no Web Speech API. A button that cannot play is worse

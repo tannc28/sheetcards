@@ -7,6 +7,7 @@ stay out of the way. The only rule it writes is a text colour, and that colour i
 one of Anki's.
 """
 
+from ..compat import AlignCenter
 from ..compat import ButtonBox_Cancel
 from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
@@ -30,7 +31,10 @@ from ..theme import SPACE_ELEMENT
 from ..theme import SPACE_SECTION
 from ..theme import get_colors
 from ..theme import icon
+from ..theme import size_dialog
+from .url_helpers import connect_a_sheet
 from .url_helpers import copy_url_to_clipboard
+from .url_helpers import open_url_in_browser
 
 
 class SyncDialog(QDialog):
@@ -43,12 +47,11 @@ class SyncDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Synchronize Decks")
+        self.setWindowTitle("Update Decks from Sheets")
         self.setModal(True)
         # Sized like one of Anki's own dialogs rather than to fill the screen: the
         # list is the only thing here that wants room, and it scrolls.
-        self.setMinimumSize(520, 420)
-        self.resize(600, 480)
+        size_dialog(self, 600, 480)
 
         self.active_decks = []
         self.deck_checkboxes = {}  # hash_key -> QCheckBox
@@ -71,11 +74,12 @@ class SyncDialog(QDialog):
         layout.setSpacing(SPACE_SECTION)
 
         intro = QLabel(
-            "Choose which connected decks to read again. "
+            "Choose which sheets to read again. "
             "Your choice is remembered for next time."
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
+        self.intro = intro
 
         # A plain scroll area. The rows inside it are checkboxes, so the list looks
         # like Anki's own lists without being told to.
@@ -109,6 +113,10 @@ class SyncDialog(QDialog):
             self.select_none_button,
             self.invert_selection_button,
         ):
+            # Not a candidate for Enter. A QPushButton in a dialog becomes the
+            # default the moment it has focus, so Enter pressed after a click on
+            # Select All selected everything again instead of starting the sync.
+            button.setAutoDefault(False)
             buttons_layout.addWidget(button)
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
@@ -126,12 +134,26 @@ class SyncDialog(QDialog):
         self.button_box = QDialogButtonBox(ButtonBox_Ok | ButtonBox_Cancel)
         sync_button = self.button_box.button(ButtonBox_Ok)
         assert sync_button is not None  # just asked for, by name
-        sync_button.setText("Synchronize")
+        sync_button.setText("Update")
         sync_button.setIcon(icon("sync", "text"))
         sync_button.setDefault(True)
         self.sync_button = sync_button
         self.cancel_button = self.button_box.button(ButtonBox_Cancel)
+        # Only Update answers Enter. An auto-default Cancel took the default
+        # for itself as the window showed, so Enter cancelled.
+        self.cancel_button.setAutoDefault(False)
         layout.addWidget(self.button_box)
+
+    def showEvent(self, event):  # noqa: N802 - Qt's name
+        """Puts the keyboard in the list once the window is up.
+
+        Asked for any earlier, Qt hands focus to the first auto-default button
+        as the dialog shows instead.
+        """
+        super().showEvent(event)
+        first = getattr(self, "_first_focus", None)
+        if first is not None:
+            first.setFocus()
 
     def _connect_signals(self):
         """Connects interface signals."""
@@ -153,6 +175,9 @@ class SyncDialog(QDialog):
 
         # Load active decks
         active_decks = get_active_decks()
+        if not active_decks:
+            self._show_empty_state()
+            return
 
         for hash_key, deck_info in active_decks.items():
             local_deck_id = deck_info["local_deck_id"]
@@ -217,19 +242,26 @@ class SyncDialog(QDialog):
                     icon("warning", "accent_warning").pixmap(ICON_SIZE, ICON_SIZE)
                 )
                 warning_label = QLabel("Will be recreated")
-                warning_label.setStyleSheet(f"color: {self.colors['accent_warning']};")
+                warning_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
                 row_layout.addWidget(checkbox)
                 row_layout.addWidget(warning_icon)
                 row_layout.addWidget(warning_label)
                 card_count = 0
 
-            # Copy URL button
+            open_button = QPushButton("Open sheet")
+            open_button.setAutoDefault(False)
+            open_button.setToolTip("Opens the spreadsheet in your browser")
+            open_button.clicked.connect(
+                lambda checked, u=remote_deck_url: open_url_in_browser(u)
+            )
             copy_button = QPushButton("Copy link")
+            copy_button.setAutoDefault(False)
             copy_button.clicked.connect(
                 lambda checked, u=remote_deck_url: self._copy_url(u)
             )
 
             row_layout.addStretch()
+            row_layout.addWidget(open_button)
             row_layout.addWidget(copy_button)
 
             # Add to main layout
@@ -261,7 +293,48 @@ class SyncDialog(QDialog):
         # Add stretch at the end
         self.checkboxes_layout.addStretch()
 
+        # Keyboard focus starts in the list, on the first deck, so Space ticks
+        # it and Enter means Update — not on whichever bulk button Qt reached
+        # first in tab order.
+        first = next(iter(self.deck_checkboxes.values()), None)
+        if first is not None:
+            self._first_focus = first
+
         # Update information
+        self._update_selection_info()
+
+    def _show_empty_state(self):
+        """No sheet is connected: say so, and offer the way to connect one.
+
+        A list with nothing in it, three bulk buttons with nothing to act on and
+        a disabled Update button is a window that answers no question. The one
+        thing worth doing from here is connecting a sheet, so that is the button.
+        """
+        message = QLabel("No Google Sheet is connected yet.")
+        message.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        message.setAlignment(AlignCenter)
+        connect_button = QPushButton("Connect a Google Sheet…")
+        connect_button.setIcon(icon("plus", "text"))
+        connect_button.clicked.connect(lambda: connect_a_sheet(self))
+        row = QHBoxLayout()
+        row.addStretch()
+        row.addWidget(connect_button)
+        row.addStretch()
+        self.checkboxes_layout.addStretch()
+        self.checkboxes_layout.addWidget(message)
+        self.checkboxes_layout.addLayout(row)
+        self.checkboxes_layout.addStretch()
+        for button in (
+            self.select_all_button,
+            self.select_none_button,
+            self.invert_selection_button,
+        ):
+            button.setVisible(False)
+        self.selection_info.setVisible(False)
+        self.intro.setVisible(False)
+        size_dialog(self, 480, 360)
+        self.connect_button = connect_button
+        self._first_focus = connect_button
         self._update_selection_info()
 
     def _load_persistent_selection(self):
@@ -280,20 +353,30 @@ class SyncDialog(QDialog):
         self._update_selection_info()
 
     def _on_checkbox_changed(self, hash_key, checked):
-        """Callback for when a checkbox is changed."""
+        """Callback for when a checkbox is changed.
+
+        Nothing is written here. The ticks used to be saved on every toggle, so
+        Cancel kept whatever had been clicked on the way to it; they are saved
+        with the sync now, in ``_save_selection``.
+        """
+        self._update_selection_info()
+
+    def _save_selection(self):
+        """Remembers each deck's tick in meta.json, for the next time."""
         from ..config_manager import get_meta
         from ..config_manager import save_meta
 
-        # Update is_sync in meta.json
         meta = get_meta()
-        if "decks" not in meta:
-            meta["decks"] = {}
-
-        if hash_key in meta["decks"]:
-            meta["decks"][hash_key]["is_sync"] = checked
+        decks = meta.setdefault("decks", {})
+        changed = False
+        for hash_key, checkbox in self.deck_checkboxes.items():
+            if hash_key in decks and decks[hash_key].get("is_sync") != (
+                checkbox.isChecked()
+            ):
+                decks[hash_key]["is_sync"] = checkbox.isChecked()
+                changed = True
+        if changed:
             save_meta(meta)
-
-        self._update_selection_info()
 
     def _select_all(self):
         """Selects all decks."""
@@ -339,7 +422,7 @@ class SyncDialog(QDialog):
         Args:
             url (str): Remote deck URL
         """
-        copy_url_to_clipboard(url)
+        copy_url_to_clipboard(url, self)
 
     def _sync_selected(self):
         """Synchronizes selected decks."""
@@ -355,6 +438,7 @@ class SyncDialog(QDialog):
 
         # Store selected URLs for later use
         self.selected_urls = selected_urls
+        self._save_selection()
 
         self.accept()
 

@@ -5,6 +5,7 @@ This module provides an interface for the user
 to select and disconnect multiple remote decks using checkboxes.
 """
 
+from ..compat import AlignCenter
 from ..compat import ButtonBox_Cancel
 from ..compat import ButtonBox_Ok
 from ..compat import DialogAccepted
@@ -15,7 +16,6 @@ from ..compat import QHBoxLayout
 from ..compat import QLabel
 from ..compat import QPushButton
 from ..compat import QScrollArea
-from ..compat import Qt
 from ..compat import QVBoxLayout
 from ..compat import QWidget
 from ..compat import mw
@@ -31,7 +31,10 @@ from ..theme import SPACE_SECTION
 from ..theme import SPACE_TIGHT
 from ..theme import get_colors
 from ..theme import icon
+from ..theme import size_dialog
+from .url_helpers import connect_a_sheet
 from .url_helpers import copy_url_to_clipboard
+from .url_helpers import open_url_in_browser
 
 
 class DisconnectDialog(QDialog):
@@ -44,10 +47,11 @@ class DisconnectDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Disconnect Remote Decks")
+        self.setWindowTitle("Disconnect a Sheet")
         self.setModal(True)
-        self.setMinimumWidth(750)
-        self.setMinimumHeight(700)
+        # It used to insist on 750x700, which is more than a 1366x768 laptop at
+        # 125% has to give. The list scrolls; the window can be small.
+        size_dialog(self, 600, 520)
 
         self.remote_decks = []
         self.deck_checkboxes = {}  # URL -> QCheckBox
@@ -74,17 +78,16 @@ class DisconnectDialog(QDialog):
         # border, above a window whose title already said Disconnect.
         warning_row = QHBoxLayout()
         warning_row.setSpacing(SPACE_TIGHT)
-        warning_icon = QLabel()
+        warning_icon = self.warning_icon = QLabel()
         warning_icon.setFixedWidth(ICON_SIZE)
         warning_icon.setPixmap(
             icon("warning", "accent_warning").pixmap(ICON_SIZE, ICON_SIZE)
         )
-        warning_text = QLabel(
-            "The local decks stay in Anki, but they stop being read from your "
-            "spreadsheet. Reconnecting means adding the link again."
+        warning_text = self.warning_text = QLabel(
+            "A disconnected deck stops being read from its spreadsheet. "
+            "Reconnecting means adding the link again."
         )
         warning_text.setWordWrap(True)
-        warning_text.setStyleSheet(f"color: {self.colors['accent_warning']};")
         warning_row.addWidget(warning_icon)
         warning_row.addWidget(warning_text, 1)
         layout.addLayout(warning_row)
@@ -116,6 +119,9 @@ class DisconnectDialog(QDialog):
             self.select_none_button,
             self.invert_selection_button,
         ):
+            # Not a candidate for Enter: a focused QPushButton in a dialog becomes
+            # the default, so Enter after a click on Select All selected all again.
+            button.setAutoDefault(False)
             buttons_layout.addWidget(button)
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
@@ -130,7 +136,7 @@ class DisconnectDialog(QDialog):
         # the detail.
         delete_row = QHBoxLayout()
         delete_row.setSpacing(SPACE_TIGHT)
-        delete_icon = QLabel()
+        delete_icon = self.delete_icon = QLabel()
         delete_icon.setFixedWidth(ICON_SIZE)
         delete_icon.setPixmap(
             icon("warning", "accent_danger").pixmap(ICON_SIZE, ICON_SIZE)
@@ -138,15 +144,14 @@ class DisconnectDialog(QDialog):
         self.delete_local_data_checkbox = QCheckBox(
             "Also delete the local decks, cards and note types"
         )
-        # Off by default: the sentence at the top of this window says the decks
-        # stay, and a destructive choice is one somebody makes, not one they
-        # have to notice and undo.
+        # Off by default: a destructive choice is one somebody makes, not one
+        # they have to notice and undo.
         self.delete_local_data_checkbox.setChecked(False)
         self.delete_local_data_checkbox.setToolTip(
             "This cannot be undone. Everything below the deck goes:\n"
-            "• the deck and its subdecks\n"
-            "• every card and note in them\n"
-            "• the note types, unless another deck is using them"
+            "- the deck and its subdecks\n"
+            "- every card and note in them\n"
+            "- the note types, unless another deck is using them"
         )
         self.delete_local_data_checkbox.setStyleSheet(
             f"color: {self.colors['accent_danger']};"
@@ -161,11 +166,24 @@ class DisconnectDialog(QDialog):
         disconnect_button.setText("Disconnect")
         disconnect_button.setIcon(icon("error", "text"))
         self.disconnect_button = disconnect_button
+        # Never the button Enter reaches, even with focus on it.
+        disconnect_button.setAutoDefault(False)
         self.cancel_button = self.button_box.button(ButtonBox_Cancel)
         # Not the default: pressing Enter in this window should not be how a deck
         # gets deleted.
         self.cancel_button.setDefault(True)
         layout.addWidget(self.button_box)
+
+    def showEvent(self, event):  # noqa: N802 - Qt's name
+        """Puts the keyboard in the list once the window is up.
+
+        Asked for any earlier, Qt hands focus to the first auto-default button
+        as the dialog shows instead.
+        """
+        super().showEvent(event)
+        first = getattr(self, "_first_focus", None)
+        if first is not None:
+            first.setFocus()
 
     def _connect_signals(self):
         """Connects interface signals."""
@@ -190,11 +208,7 @@ class DisconnectDialog(QDialog):
         remote_decks = get_remote_decks()
 
         if not remote_decks:
-            # Show message if no decks
-            no_decks_label = QLabel("No decks are connected.")
-            no_decks_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
-            no_decks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.checkboxes_layout.addWidget(no_decks_label)
+            self._show_empty_state()
             return
 
         for hash_key, deck_info in remote_decks.items():
@@ -253,13 +267,20 @@ class DisconnectDialog(QDialog):
                 row_layout.addWidget(status_label)
                 card_count = 0
 
-            # Copy URL button
+            open_button = QPushButton("Open sheet")
+            open_button.setAutoDefault(False)
+            open_button.setToolTip("Opens the spreadsheet in your browser")
+            open_button.clicked.connect(
+                lambda checked, u=remote_deck_url: open_url_in_browser(u)
+            )
             copy_button = QPushButton("Copy link")
+            copy_button.setAutoDefault(False)
             copy_button.clicked.connect(
                 lambda checked, u=remote_deck_url: self._copy_url(u)
             )
 
             row_layout.addStretch()
+            row_layout.addWidget(open_button)
             row_layout.addWidget(copy_button)
 
             # Add to main layout
@@ -290,12 +311,50 @@ class DisconnectDialog(QDialog):
         # Add stretch at the end
         self.checkboxes_layout.addStretch()
 
+        # Focus starts on the first deck in the list, not on a bulk button.
+        first = next(iter(self.deck_checkboxes.values()), None)
+        if first is not None:
+            self._first_focus = first
+
         # Update information
         self._update_selection_info()
 
+    def _show_empty_state(self):
+        """Nothing to disconnect: say so, and offer the way to connect a sheet."""
+        message = QLabel("No Google Sheet is connected.")
+        message.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        message.setAlignment(AlignCenter)
+        connect_button = QPushButton("Connect a Google Sheet…")
+        connect_button.setIcon(icon("plus", "text"))
+        connect_button.clicked.connect(lambda: connect_a_sheet(self))
+        row = QHBoxLayout()
+        row.addStretch()
+        row.addWidget(connect_button)
+        row.addStretch()
+        self.checkboxes_layout.addStretch()
+        self.checkboxes_layout.addWidget(message)
+        self.checkboxes_layout.addLayout(row)
+        self.checkboxes_layout.addStretch()
+        # Everything else in the window is about a list that is not there.
+        for widget in (
+            self.select_all_button,
+            self.select_none_button,
+            self.invert_selection_button,
+            self.selection_info,
+            self.delete_local_data_checkbox,
+            self.delete_icon,
+            self.warning_icon,
+            self.warning_text,
+        ):
+            widget.setVisible(False)
+        size_dialog(self, 480, 360)
+        self.connect_button = connect_button
+        self._first_focus = connect_button
+        self._update_selection_info()
+
     def _copy_url(self, url):
-        """Copies URL to clipboard and opens in browser"""
-        copy_url_to_clipboard(url)
+        """Copies the sheet's link to the clipboard."""
+        copy_url_to_clipboard(url, self)
 
     def _on_checkbox_changed(self, url, checked):
         """Callback for when a checkbox is changed."""
@@ -366,34 +425,36 @@ class DisconnectDialog(QDialog):
                     break
 
             if delete_local_data:
-                question_text = f"Disconnect '{deck_name}' and delete its cards?"
+                question_text = (
+                    f"Disconnect '{deck_name}' and delete its cards from Anki?"
+                )
             else:
                 question_text = f"Disconnect '{deck_name}' from its sheet?"
         else:
             if delete_local_data:
                 question_text = (
-                    f"Disconnect {selected_count} decks and delete their cards?"
+                    f"Disconnect {selected_count} decks and delete their cards "
+                    "from Anki?"
                 )
             else:
                 question_text = f"Disconnect {selected_count} decks from their sheets?"
 
         if delete_local_data:
             detailed_text = (
-                "This also deletes, from this collection:\n"
-                "• the deck and its subdecks\n"
-                "• every card and note in them, with their review history\n"
-                "• the note types no other deck uses\n\n"
-                "It cannot be undone."
+                "This deletes, permanently:\n"
+                "- the decks and their subdecks\n"
+                "- every card and note in them\n"
+                "- their note types, unless another deck uses them\n\n"
+                "This cannot be undone."
             )
         else:
             detailed_text = (
-                "The cards stay in Anki with their review history; they just "
-                "stop updating from the sheet. Adding the link again reconnects it."
+                "The decks stay in Anki. Reconnecting means adding the link again."
             )
 
         if StyledMessageBox.question(
             self,
-            "Confirm Disconnection",
+            "Disconnect",
             question_text,
             detailed_text=detailed_text,
             yes_text="Disconnect",

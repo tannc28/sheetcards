@@ -1545,6 +1545,55 @@ class TestTheStylesheetSaysEachThingOnce:
         assert not repeated
 
 
+@pytest.mark.unit
+class TestReadableOnAPhone:
+    """A card is read at arm's length on a 360px screen as often as on a desktop."""
+
+    def _qfmt(self, cells):
+        plan = _plan(["Word", "Meaning"])
+        return build_templates(plan, _config(plan, cells))[0]["qfmt"]
+
+    def test_the_prompt_shrinks_on_a_narrow_screen_and_stops_at_40px(self):
+        qfmt = self._qfmt({})
+        assert re.search(r"\.sc-front \{ font-size: clamp\(24px, 7vw, 40px\)", qfmt)
+
+    def test_size_still_wins_over_the_fluid_default(self):
+        qfmt = self._qfmt({"Word": "size=60"})
+        assert '<div class="sc-front" data-sc-col="Word" style="font-size: 60px">' in (
+            qfmt
+        )
+
+    def test_no_small_text_is_smaller_than_13px_or_fainter_than_70_percent(self):
+        css = self._qfmt({"Word": "tts=en_US; label=Word"})
+        css = css[css.index("<style>") : css.index("</style>")]
+        for rule in re.findall(r"\.sc-(?:label|tts-[\w-]+|reveal)[^{]*\{[^}]*\}", css):
+            for px in re.findall(r"font-size: (\d+)px", rule):
+                assert int(px) >= 13, rule
+            for value in re.findall(r"opacity: ([\d.]+)", rule):
+                assert float(value) >= 0.7, rule
+
+    @pytest.mark.parametrize(
+        "code,lang",
+        [("ja_JP", "ja"), ("zh_CN", "zh-CN"), ("zh_TW", "zh-TW"), ("en-us", "en")],
+    )
+    def test_a_spoken_column_says_its_language(self, code, lang):
+        # A phone picks the shapes of a Han character by the text's language, so
+        # without this a Japanese 直 is drawn the Chinese way.
+        qfmt = self._qfmt({"Word": f"tts={code}"})
+        assert f'data-sc-col="Word" lang="{lang}"' in qfmt
+
+    def test_a_column_that_is_not_spoken_has_no_lang(self):
+        assert " lang=" not in self._qfmt({})
+
+    def test_the_play_triangle_is_never_an_emoji(self):
+        # U+25B6 alone becomes a colour emoji button on iOS; U+FE0E keeps it text.
+        plan = _plan(["Word", "Clip"])
+        config = _config(plan, {"Word": "tts=en_US", "Clip": "video"})
+        both = "".join(_both(t) for t in build_templates(plan, config))
+        assert "▶" in both
+        assert not re.search("▶(?!︎)", both)
+
+
 class TestNothingInAScriptLooksLikeAField:
     """The trap that a mock cannot see.
 

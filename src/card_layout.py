@@ -64,13 +64,31 @@ HIGHLIGHT_JS = (
 # the font arrives, rather than showing nothing while a review is waiting.
 FONT_CSS = "https://fonts.googleapis.com/css2?family={family}&display=swap"
 
+# A play triangle as text. U+25B6 alone is drawn as a colour emoji button on iOS
+# and some Android keyboards' fonts; the text-presentation selector after it keeps
+# it a glyph in the colour of the words beside it.
+PLAY = "\u25b6\ufe0e"
+
 FRONT_TEMPLATE_NAME = "Card 1"
 REVERSE_TEMPLATE_NAME = "Card 2 (reverse)"
 
 # Sizes a field falls back to when the settings row says nothing: the prompt reads
 # large, the answer reads at body size. ``size=`` overrides them per field.
+#
+# The prompt scales with the screen between two bounds. A fixed 40px suits a word,
+# but a sentence or a cloze on a 360px phone came out at five words a line, and
+# the card scrolled before the learner had read the question. 7vw is 25px on that
+# phone and reaches 40px at 572px, so a desktop or tablet sees what it always did.
 FRONT_SIZE_PX = 40
+FRONT_MIN_PX = 24
+FRONT_FLUID = "7vw"
 BACK_SIZE_PX = 18
+
+# The smallest text a card prints and how faint it may be. Captions and the voice
+# list were 11-12px at 55-60% opacity, which on a phone held at arm's length is
+# below what a tired reader can make out against a themed background.
+SMALL_PX = 13
+FAINT = ".7"
 
 
 def _escape_field(name):
@@ -304,13 +322,15 @@ def _css(sheet_config):
         + _font_imports(sheet_config)
         + _palette(sheet_config)
         + f".sc-wrap {{ text-align: {align}; }}\n"
-        f".sc-front {{ font-size: {FRONT_SIZE_PX}px; line-height: 1.3; }}\n"
+        f".sc-front {{ font-size: clamp({FRONT_MIN_PX}px, {FRONT_FLUID},"
+        f" {FRONT_SIZE_PX}px); line-height: 1.3; }}\n"
         f".sc-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
         " margin-top: 14px; }\n"
-        ".sc-label { font-size: 12px; letter-spacing: .06em;"
-        " text-transform: uppercase; opacity: .55; margin-bottom: 2px; }\n"
-        ".sc-reveal > summary { cursor: pointer; font-size: 13px;"
-        " letter-spacing: .06em; text-transform: uppercase; opacity: .6; }\n"
+        f".sc-label {{ font-size: {SMALL_PX}px; letter-spacing: .06em;"
+        f" text-transform: uppercase; opacity: {FAINT}; margin-bottom: 2px; }}\n"
+        f".sc-reveal > summary {{ cursor: pointer; font-size: {SMALL_PX}px;"
+        " letter-spacing: .06em; text-transform: uppercase;"
+        f" opacity: {FAINT}; }}\n"
         # The last thing on the card, hard left against the card's own centring.
         # It is not part of what the sheet asked for — it describes the device
         # doing the reviewing — so it goes under everything and stays out of the
@@ -324,27 +344,29 @@ def _css(sheet_config):
         # padding is invisible — nothing paints a background here — and exists so
         # a 15px line is still something a thumb can hit.
         ".sc-tts-debug > summary { display: inline-block; padding: 8px 0; }\n"
-        ".sc-tts-note { font-size: 12px; opacity: .7; margin: 6px 0 12px;"
+        f".sc-tts-note {{ font-size: {SMALL_PX}px; opacity: {FAINT};"
+        " margin: 6px 0 12px; text-align: left; }\n"
+        ".sc-tts-lang { font-family: ui-monospace, monospace;"
+        f" font-size: {SMALL_PX}px; opacity: {FAINT}; margin: 12px 0 6px;"
         " text-align: left; }\n"
-        ".sc-tts-lang { font-family: ui-monospace, monospace; font-size: 11px;"
-        " opacity: .6; margin: 12px 0 6px; text-align: left; }\n"
         # The snippet takes a whole row of its own: a voice name plus a button per
         # spoken column does not fit a phone's width side by side, and a wrapped
         # <code> next to a shrinking button is the worse of the two.
         ".sc-tts-row { display: flex; flex-wrap: wrap; align-items: center;"
         " gap: 6px 8px; padding: 6px 0 6px 10px; text-align: left;"
         " border-left: 2px solid var(--sc-muted); }\n"
-        ".sc-tts-row code { flex: 1 1 100%; font-size: 11px;"
+        f".sc-tts-row code {{ flex: 1 1 100%; font-size: {SMALL_PX}px;"
         " overflow-wrap: anywhere; }\n"
-        ".sc-tts-play { flex: none; font-size: 11px; padding: 5px 9px;"
+        f".sc-tts-play {{ flex: none; font-size: {SMALL_PX}px; padding: 5px 9px;"
         " border-radius: 6px; border: 1px solid var(--sc-muted);"
         " background: none; color: inherit; }\n"
         # The way to the voices this language shares with every other. Dashed and
         # on a line of its own, because it belongs to the group rather than to a
         # row, and quieter than a play button because it is not the thing to do.
-        ".sc-tts-more { display: block; margin: 8px 0 0; font-size: 11px;"
-        " padding: 5px 9px; border-radius: 6px; border: 1px dashed"
-        " var(--sc-muted); background: none; color: inherit; opacity: .7; }\n"
+        ".sc-tts-more { display: block; margin: 8px 0 0;"
+        f" font-size: {SMALL_PX}px; padding: 5px 9px; border-radius: 6px;"
+        " border: 1px dashed var(--sc-muted); background: none; color: inherit;"
+        f" opacity: {FAINT}; }}\n"
         ".sc-embed { width: 100%; aspect-ratio: 16 / 9; border: 0;"
         " display: block; margin: 0 auto; }\n"
         ".sc-embed-link { display: none; }\n"
@@ -535,7 +557,7 @@ def _media_html(field, cfg):
     return template.format(
         ref=f"{{{{{field}}}}}",
         style=style,
-        caption=escape(cfg.label) if cfg.label else "▶ Watch the video",
+        caption=escape(cfg.label) if cfg.label else f"{PLAY} Watch the video",
     )
 
 
@@ -790,7 +812,7 @@ _TTS_VOICES_SCRIPT = (
     '      var b = document.createElement("button");\n'
     '      b.type = "button";\n'
     '      b.className = "sc-tts-play";\n'
-    '      b.textContent = "▶ " + s.col;\n'
+    '      b.textContent = "\u25b6\ufe0e " + s.col;\n'
     '      b.setAttribute("aria-label", "Play " + s.col + " with " + v.name);\n'
     "      b.onclick = function (e) { e.preventDefault(); speak(v, s.text); };\n"
     "      row.appendChild(b);\n"
@@ -884,7 +906,7 @@ def _tts_debug_block(plan, sheet_config):
     return (
         f'<details class="sc-reveal sc-tts-debug" data-sc-langs="{",".join(langs)}">'
         "<summary>TTS voices</summary>"
-        '<div class="sc-tts-note">Tap \u25b6 to hear a voice. To use it, add its '
+        f'<div class="sc-tts-note">Tap {PLAY} to hear a voice. To use it, add its '
         "line to the column's #config cell.</div>"
         f"{sources}"
         '<div class="sc-tts-raw">{{tts-voices:}}</div>'
@@ -956,6 +978,25 @@ def _type_box(field, cfg, cloze_field):
     return f"<div>{{{{type:{prefix}{field}}}}}</div>"
 
 
+def _html_lang(tts):
+    """The HTML ``lang`` for a column spoken in ``tts`` (``zh_CN`` -> ``zh-CN``).
+
+    A spoken column says what language it is in, and the card should say so too:
+    a phone picks the glyphs for a Han character by the text's language, so
+    without it Japanese ``直`` and ``骨`` are drawn in the Chinese shapes. Chinese
+    keeps its region because the region is the script (``zh-CN`` simplified,
+    ``zh-TW`` traditional); every other language is named by itself, which is
+    what font selection reads and all an accent of English would add is noise.
+    """
+    code = str(tts or "").strip().replace("_", "-")
+    if not code:
+        return ""
+    head, _, region = code.partition("-")
+    if head.lower() == "zh" and region:
+        return f"zh-{region.upper()}"
+    return head.lower()
+
+
 def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
     """Renders one side's fields, each wrapped so an empty field leaves no trace.
 
@@ -1010,9 +1051,12 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
         # thing a stylist cannot target and the one thing the preview cannot
         # point at. The value is the header exactly as written, so
         # `[data-sc-col="Pinyin"]` works in the note type's CSS too.
+        lang = _html_lang(cfg.tts)
+        lang_attr = f' lang="{escape(lang)}"' if lang else ""
         out.append(
             f"{{{{#{field}}}}}"
-            f'<div class="{css_class}" data-sc-col="{escape(name)}"{style_attr}>'
+            f'<div class="{css_class}" data-sc-col="{escape(name)}"'
+            f"{lang_attr}{style_attr}>"
             f"{label}{reference}</div>"
             f"{{{{/{field}}}}}"
         )
