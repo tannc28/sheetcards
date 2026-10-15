@@ -1,7 +1,7 @@
 # Example sheets
 
 `sheetcards-examples.xlsx` is a working SheetCards source, and it is what the
-[preview site](https://tannc28.github.io/sheetcards/) and the add-on's
+[preview site](https://tannc28.github.io/sheetcards/preview.html) and the add-on's
 **Import Test Deck** point at. Thirty-one sheets, ordered so that reading them from
 the first to the last takes you from *the smallest sheet that works* to *a deck
 you would keep studying*.

@@ -5,7 +5,8 @@ how a sync flows end to end, and how to set up, test, build, and debug it.
 
 - For the **concise architecture reference and conventions**, see [`CLAUDE.md`](../CLAUDE.md).
 - For **setup and the contribution workflow**, see [`CONTRIBUTING.md`](../CONTRIBUTING.md).
-- For the **end-user manual**, see the root [`README.md`](../README.md).
+- For the **end-user manual**, see the [documentation site](https://tannc28.github.io/sheetcards/docs/)
+  (Markdown sources in [`docs/site/`](site/)).
 
 > **Requirements:** Anki **25.x or newer** (Qt6, PyQt6), Python **3.13**. There is no
 > Qt5 fallback and no support for older Anki versions — this is v3.0.0+.

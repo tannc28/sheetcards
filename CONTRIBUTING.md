@@ -19,7 +19,8 @@ root. There is no server and no `main()`; all code runs inside Anki's Python/Qt6
 
 | Document | Audience |
 | :--- | :--- |
-| [`README.md`](README.md) | End users — install and usage. |
+| [`README.md`](README.md) | End users — what it is and how to install it (short; it ships inside the `.ankiaddon`). |
+| [`docs/site/`](docs/site/) | End users — the documentation, published at <https://tannc28.github.io/sheetcards/docs/> by `scripts/build_site.py`. |
 | [`CLAUDE.md`](CLAUDE.md) | Architecture & conventions reference (concise; also used by AI tooling). |
 | [`docs/README.md`](docs/README.md) | Long-form developer guide. |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Release history. |
