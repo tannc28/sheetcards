@@ -987,24 +987,30 @@ def convert_edit_url_to_xlsx(url):
     return tsv_url.replace("/export?format=tsv", "/export?format=xlsx")
 
 
-def validate_url(url):
+def validate_url(url, probe=True):
     """
     Validates if the URL is a valid Google Sheets edit URL.
 
     Args:
         url (str): The URL to be validated
+        probe (bool): Also fetch the export once to see that it answers. The
+            sync and the Add dialog pass False: each downloads the sheet straight
+            afterwards, and that download fails with the same sentence, so a
+            probe first was a second request for nothing.
 
     Returns:
         str: URL in valid TSV format for download
 
     Raises:
-        ValueError: If the URL is invalid or inaccessible
-        URLError: If there are network connectivity issues
-        HTTPError: If the server returns a status error
+        ValueError: If the URL is malformed, or (with ``probe``) the sheet cannot
+            be fetched — in which case the message is the plain sentence from
+            :func:`errors.describe_download_failure`.
     """
-    import socket
     import urllib.error
     import urllib.request
+
+    from .errors import describe_download_failure
+    from .errors import looks_like_login_page
 
     # Check if URL is not empty
     if not url or not isinstance(url, str):
@@ -1030,64 +1036,32 @@ def validate_url(url):
     except ValueError as e:
         raise ValueError(f"Invalid URL: {str(e)}")
 
-    # Test TSV URL accessibility with timeout and proper error handling
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"  # More specific user agent
-        }
-        request = urllib.request.Request(tsv_url, headers=headers)
-
-        # USE LOCAL TIMEOUT instead of global it to avoid conflicts
-        response = urllib.request.urlopen(request, timeout=30)  # ✅ LOCAL TIMEOUT
-
-        if response.getcode() != 200:
-            raise ValueError(
-                f"URL returned unexpected status code: {response.getcode()}"
-            )
-
-        # Validate content type
-        content_type = response.headers.get("Content-Type", "").lower()
-        if not any(
-            valid_type in content_type
-            for valid_type in ["text/tab-separated-values", "text/plain", "text/csv"]
-        ):
-            raise ValueError(
-                f"URL does not return TSV content (received {content_type})"
-            )
-
-        # Return valid TSV URL
+    if not probe:
         return tsv_url
 
-    except TimeoutError:
-        raise ValueError(
-            "Connection timeout when accessing the URL (30s). Check your connection or try again."
+    def fail(error=None, status=None, detail=""):
+        add_debug_message(
+            f"URL check failed: {tsv_url} — {detail or error!r}", "DOWNLOAD"
         )
+        return ValueError(describe_download_failure(error, url=tsv_url, status=status))
+
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (SheetCards) AnkiAddon"}
+        request = urllib.request.Request(tsv_url, headers=headers)
+        with urllib.request.urlopen(request, timeout=30) as response:
+            if response.getcode() != 200:
+                raise fail(status=response.getcode())
+            content_type = response.headers.get("Content-Type", "")
+            if looks_like_login_page(content_type, response.geturl(), b""):
+                raise fail(status=401, detail=f"got a web page ({content_type})")
+        return tsv_url
+
+    except ValueError:
+        raise
     except urllib.error.HTTPError as e:
-        if e.code == 400:
-            raise ValueError(
-                "HTTP Error 400: The spreadsheet is not publicly accessible.\n\n"
-                "To fix:\n"
-                "1. Open the spreadsheet in Google Sheets\n"
-                "2. Click 'Share'\n"
-                "3. Change access to 'Anyone with the link'\n"
-                "4. Set permission to 'Viewer'\n\n"
-                "Alternatively: File → Share → Publish to the web"
-            )
-        else:
-            raise ValueError(f"HTTP Error {e.code}: {e.reason}")
-    except urllib.error.URLError as e:
-        if isinstance(e.reason, socket.timeout):
-            raise ValueError(
-                "Connection timeout when accessing the URL. Check your connection or try again."
-            )
-        elif isinstance(e.reason, socket.gaierror):
-            raise ValueError("DNS Error. Check your internet connection.")
-        else:
-            raise ValueError(
-                f"Error accessing URL - Network or server problem: {str(e.reason)}"
-            )
+        raise fail(e, detail=f"HTTP {e.code} {e.reason}")
     except Exception as e:
-        raise ValueError(f"Unexpected error accessing URL: {str(e)}")
+        raise fail(e)
 
 
 # ========================================================================================
