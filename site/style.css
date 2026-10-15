@@ -1291,8 +1291,16 @@ iframe#card {
      links take the second, where five of them have the whole width. */
   .brand { flex: 1 1 auto; }
   .brand h1, .brand .name { font-size: var(--t-lg); }
-  .sitenav { order: 5; flex: 1 1 100%; margin-left: -7px; }
-  .masthead .sitenav a { padding: 6px 7px; }
+  /* One row, never two: five Vietnamese labels are wider than a 375px phone, and
+     a lone link wrapped onto a third line reads as a separate menu. The row
+     scrolls sideways inside itself instead — the one place besides the sheet
+     grid that may — and the page itself still never does. */
+  .sitenav {
+    order: 5; flex: 1 1 100%; margin-left: -6px;
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+  }
+  .sitenav::-webkit-scrollbar { display: none; }
+  .masthead .sitenav a { padding: 6px 6px; }
   .langs button { padding: 5px 9px; }
   a.ghost { padding: 6px 10px; }
 
