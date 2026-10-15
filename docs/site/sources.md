@@ -30,7 +30,7 @@ mỗi sheet một deck. File nằm trong một repository GitHub cũng được:
 
 ## Create deck
 
-[Create deck](../preview.html) tạo deck Anki từ sheet ngay trên điện thoại hoặc
+[Create deck](../create.html) tạo deck Anki từ sheet ngay trên điện thoại hoặc
 máy tính, không cần cài add-on. Trước khi tải về, nó cho bạn thấy SheetCards làm
 ra gì từ sheet: từng dòng và việc nó có được sync hay không, cây deck, tag, cảnh
 báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật, nghe và gõ đáp

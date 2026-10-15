@@ -724,7 +724,9 @@ class AddDeckDialog(QDialog):
 EXAMPLE_WORKBOOK_URL = (
     "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx"
 )
-PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/preview.html"
+# Create deck: the site's main page, which makes an .apkg from a sheet without
+# the add-on and shows what a sync would make of it.
+PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/create.html"
 
 
 def starter_links_html():
@@ -732,7 +734,7 @@ def starter_links_html():
     return (
         "Need a sheet to start from? "
         f'<a href="{EXAMPLE_WORKBOOK_URL}">Example workbook</a> · '
-        f'<a href="{PREVIEW_SITE_URL}">Preview site</a>'
+        f'<a href="{PREVIEW_SITE_URL}">Create deck</a>'
     )
 
 

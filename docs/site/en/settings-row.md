@@ -37,7 +37,7 @@ sheet that never asks for settings is not affected.
 **Mistakes are reported, never guessed at.** An unknown key (`siz=48`), a bad
 value (`color=notacolour`) or a number out of range (`size=400`) produces a
 warning naming the column, and that one setting is left out. The rest of the row
-still applies. You see the warnings in the [Create deck](../../preview.html), in the
+still applies. You see the warnings in the [Create deck](../../create.html), in the
 editor, and in Anki under **Tools → SheetCards → Card Layout…**.
 
 ## Per-column keys

@@ -1,7 +1,7 @@
 # The example workbook
 
 Every feature has a working example, and they all live in one file. Paste this
-link into [Create deck](../../preview.html), or into **Tools → SheetCards → Connect
+link into [Create deck](../../create.html), or into **Tools → SheetCards → Connect
 a Google Sheet…**, and look at the result:
 
 ```text

@@ -4,7 +4,7 @@
 
 ## 👀 Look before you install anything
 
-**<https://tannc28.github.io/sheetcards/preview.html>**
+**<https://tannc28.github.io/sheetcards/create.html>**
 
 Paste a spreadsheet link into that page and it shows you the deck it would build — every row's fate, the subdecks, the tags, the warnings, and the finished card you can click through, hear read aloud and type into. Nothing downloaded, nothing installed, your collection untouched.
 
@@ -35,7 +35,7 @@ Everything above is a snapshot. Install the add-on and the deck stays in step wi
 
 1.  **See it working first:** paste this link into `Tools` -> `SheetCards` -> `Connect a Google Sheet…` and sync it. It is the example workbook — thirty-one sheets, one deck each, from the smallest sheet that works up to a Chinese character-writing deck.
     `https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx`
-    (Or open <https://tannc28.github.io/sheetcards/preview.html> and read it in the browser, with no install at all.)
+    (Or open <https://tannc28.github.io/sheetcards/create.html> and read it in the browser, with no install at all.)
 2.  **Build your own:** a new Google Sheet with an `ID` column and one column per thing you want on the card. Copy the sheet from the example that is nearest to what you are making.
 3.  **Connect:**
     *   In Sheets: `Share` -> `Anyone with the link can view` -> Copy Link.
@@ -61,7 +61,7 @@ The add-on handles the rest, creating beautiful, organized notes in your collect
 
 👀 Try it in the browser, with nothing installed
 
-[--> Live preview <--](https://tannc28.github.io/sheetcards/preview.html)
+[--> Live preview <--](https://tannc28.github.io/sheetcards/create.html)
 
 👇 Full documentation and Instruction Manual
 

@@ -1,7 +1,7 @@
 # File ví dụ
 
 Mỗi tính năng đều có một ví dụ chạy được, và tất cả nằm trong một file. Dán link
-này vào [Create deck](../preview.html), hoặc vào **Tools → SheetCards → Connect a
+này vào [Create deck](../create.html), hoặc vào **Tools → SheetCards → Connect a
 Google Sheet…**, rồi xem kết quả:
 
 ```text

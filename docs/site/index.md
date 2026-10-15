@@ -52,7 +52,7 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 
 ## 3. Tạo deck
 
-1. Dán link vào [Create deck](../preview.html). Trang này chạy chính code của
+1. Dán link vào [Create deck](../create.html). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
    sẽ làm ra.
 2. Kiểm tra các card: các deck, từng dòng, và từng card hoàn chỉnh mà bạn có thể

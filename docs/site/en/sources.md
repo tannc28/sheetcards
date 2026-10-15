@@ -30,7 +30,7 @@ address your browser shows and the add-on fetches the file behind it.
 
 ## Create deck
 
-[Create deck](../../preview.html) makes an Anki deck from a sheet on a phone or a
+[Create deck](../../create.html) makes an Anki deck from a sheet on a phone or a
 computer, without the add-on. It shows what SheetCards makes of the sheet first: every row and whether it syncs, the deck tree, the tags, the
 warnings from the settings row, and each finished card, which you can turn over,
 listen to and type into. It runs the add-on's own code in your browser, so what

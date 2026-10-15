@@ -38,7 +38,7 @@ thường, nên sheet không cần settings thì không bị ảnh hưởng gì.
 **Lỗi được báo ra, không bao giờ bị đoán.** Một key lạ (`siz=48`), một giá trị
 sai (`color=notacolour`) hay một số ngoài khoảng cho phép (`size=400`) sẽ tạo ra
 một cảnh báo nêu tên cột, và chỉ setting đó bị bỏ đi. Phần còn lại của dòng vẫn
-áp dụng. Bạn thấy các cảnh báo trong [Create deck](../preview.html), trong editor, và
+áp dụng. Bạn thấy các cảnh báo trong [Create deck](../create.html), trong editor, và
 trong Anki ở **Tools → SheetCards → Card Layout…**.
 
 ## Key cho từng cột

@@ -54,7 +54,7 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
 
 ## 3. Create the deck
 
-1. Paste the link into [Create deck](../../preview.html). It runs the add-on's
+1. Paste the link into [Create deck](../../create.html). It runs the add-on's
    own code in your browser, so what you see is what the add-on would make.
 2. Check the cards: the decks, every row, and each finished card, which you can
    turn over, listen to and type into.
