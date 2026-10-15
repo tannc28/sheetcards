@@ -9,10 +9,16 @@
  * to redraw, it registers with `onRepaint`.
  */
 
-import { LANGUAGES, lang, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { icon, paintIcons } from "./icons.js";
 
 const repaints = [];
+
+// A docs page is written in one language, so its chrome speaks that language
+// whatever was chosen before — without making it the choice. Picking the other
+// language there means wanting the other page, so the switch goes to its twin.
+const written = document.body.dataset.lang;
+if (written) setLang(written, false);
 
 /** Called after every theme or language change, with which one it was. */
 export function onRepaint(fn) {
@@ -41,6 +47,7 @@ function setTheme(on) {
 /** Every translated string on the page, and the two switches. */
 export function paint() {
   document.documentElement.lang = lang();
+  paintDocLinks();
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.innerHTML = t(el.dataset.i18n);
   }
@@ -72,6 +79,11 @@ document.addEventListener("click", (e) => {
   const picker = e.target.closest("[data-lang]");
   if (!picker) return;
   setLang(picker.dataset.lang);
+  const twin = document.querySelector('link[rel="alternate"][hreflang]');
+  if (written && twin && picker.dataset.lang !== written) {
+    location.href = twin.href;
+    return;
+  }
   paint();
   for (const fn of repaints) fn("lang");
 });

@@ -1,58 +1,58 @@
-# The example workbook
+# File ví dụ
 
-Every feature has a working example, and they all live in one file. Paste this
-link into the [preview](../preview.html), or into **Tools → SheetCards → Connect
-a Google Sheet…**, and look at the result:
+Mỗi tính năng đều có một ví dụ chạy được, và tất cả nằm trong một file. Dán link
+này vào [Create deck](../preview.html), hoặc vào **Tools → SheetCards → Connect a
+Google Sheet…**, rồi xem kết quả:
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-It has thirty-one sheets, each its own deck, ordered from the smallest sheet that
-works to decks you could keep studying. Most of it is English for Vietnamese
-speakers; Chinese, Japanese and Korean appear where a feature belongs to them
-(handwriting, furigana, headers in other scripts). Nothing in the add-on is
-specific to languages: a deck of anatomy works the same way.
+File có ba mươi mốt sheet, mỗi sheet là một deck riêng, xếp từ sheet nhỏ nhất
+chạy được tới những deck bạn có thể học tiếp lâu dài. Phần lớn là tiếng Anh cho
+người Việt; tiếng Trung, Nhật và Hàn xuất hiện ở những tính năng dành cho chúng
+(viết tay, furigana, tên cột bằng chữ khác). Không có gì trong add-on gắn với
+riêng ngôn ngữ: một deck giải phẫu học cũng chạy y như vậy.
 
-The quickest way to learn a feature is to find the sheet below that uses it, open
-it in the preview and copy its settings row.
+Cách nhanh nhất để học một tính năng là tìm sheet dùng nó trong bảng dưới, mở
+trong Create deck và copy settings row của nó.
 
-| Sheet | What it shows |
+| Sheet | Nội dung minh hoạ |
 | :--- | :--- |
-| `01 Basic (cơ bản)` | `ID`, `Front`, `Back` — a word each in English, Chinese, Japanese, Korean, German and Spanish, answered in Vietnamese. No settings row, no `SYNC` |
-| `02 Sync & subdecks (deck con)` | `SYNC` gating, `SUBDECK 1`/`2`, `TAGS` |
-| `03 Card layout (bố cục thẻ)` | `side`, `size`, all three colour forms, `bold`, `italic`, `label`, `hint`, `side=hide`, deck-wide `align` |
-| `04 Reverse (thẻ ngược)` | one row, two cards |
-| `05 Type the answer (gõ đáp án)` | `type=nc`, so the Vietnamese marks do not have to be typed |
-| `06 Cloze (điền chỗ trống)` | a declared `cloze` column, including a row with two deletions |
-| `07 Images (hình ảnh)` | `image` on the prompt, with `size` — the picture asks and the Chinese word answers |
-| `08 Audio (âm thanh)` | `audio`, listen-then-recall: an English word spoken by a person, not a synthesiser |
-| `09 Video (video nhúng)` | every YouTube link form the add-on rewrites, plus a direct file |
-| `10 Speech (đọc thành tiếng)` | `tts=en_US`, a `voices=` preference, deck-wide `speed`, and a hidden column that repeats the phrase at half speed |
-| `11 Chinese writing (gõ chữ)` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` filing it by HSK level |
-| `12 Chinese drawing (viết tay)` | `draw` — you write the character stroke by stroke and each stroke is marked |
-| `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
-| `14 Any headers (mọi ngôn ngữ)` | headers written as `汉字`, `拼音`, `释义`, `例句` |
-| `15 Theme + subdeck (màu, tầng)` | English vocabulary filed three `SUBDECK` levels deep — `English::B1::Verbs` — in `theme=sakura`, spoken, and sorted by the word |
-| `16 Picture words (từ vựng ảnh)` | a picture on the front and a native recording on the back — `image` and `audio` on one card, filed by `Group` |
-| `17 Draw & type (viết và gõ)` | write the character stroke by stroke *and* type its pinyin: `draw` and `type=nc` asking the same thing two ways |
-| `18 Grammar cloze (ngữ pháp)` | the word carrying the grammar point deleted, and typed rather than recalled — `cloze` plus `type` |
-| `19 Dictation (nghe rồi gõ)` | the sentence is spoken and drawn nowhere: `side=hide` + `tts` + `type`, so the only way through is to listen |
-| `20 Video lesson (bài video)` | the clip *is* the question — `video` on the front, filed by lesson |
-| `21 Formulas & code (công thức)` | `math` for formulas and `code=python` for listings — the two kinds of cell that are not prose, plus `sort` |
-| `22 Arabic (phải sang trái)` | `rtl`, the direction Arabic, Hebrew and Persian are written in |
-| `23 Vertical text (viết dọc)` | `vertical` — top to bottom, right to left, the way Japanese is set in a book |
-| `24 Korean (tiếng Hàn)` | `font=kr` and a Korean voice — a script with a font of its own |
-| `25 Traditional (chữ phồn thể)` | the same word in `font=tc` and `font=sc` side by side, spoken in `zh_TW` |
-| `26 Shell commands (dòng lệnh)` | `code=bash` — the answer is a command, filed by what it is for |
-| `27 Web dev (HTML & JS)` | two code columns on one card, `code=html` and `code=javascript` |
-| `28 Chemistry (hoá học)` | `math=block` equations under a plain-language answer |
-| `29 Phrasal verbs (cụm động từ)` | `cloze` on the particle that is hardest to look up, and the sentence spoken |
-| `30 German (tiếng Đức)` | der/die/das asked on the front, `tts=de_DE` on the noun and the example |
-| `31 Spanish (tiếng Tây Ban Nha)` | `type=nc` again, where the accents are Spanish and `ñ` still has to be typed |
+| `01 Basic (cơ bản)` | `ID`, `Front`, `Back` — mỗi thứ tiếng một từ: Anh, Trung, Nhật, Hàn, Đức và Tây Ban Nha, trả lời bằng tiếng Việt. Không có settings row, không có `SYNC` |
+| `02 Sync & subdecks (deck con)` | bật/tắt dòng bằng `SYNC`, `SUBDECK 1`/`2`, `TAGS` |
+| `03 Card layout (bố cục thẻ)` | `side`, `size`, cả ba dạng màu, `bold`, `italic`, `label`, `hint`, `side=hide`, `align` cho cả deck |
+| `04 Reverse (thẻ ngược)` | một dòng, hai card |
+| `05 Type the answer (gõ đáp án)` | `type=nc`, nên không phải gõ dấu tiếng Việt |
+| `06 Cloze (điền chỗ trống)` | một cột `cloze` được khai báo, có cả một dòng với hai chỗ trống |
+| `07 Images (hình ảnh)` | `image` ở mặt hỏi, kèm `size` — ảnh hỏi và từ tiếng Trung trả lời |
+| `08 Audio (âm thanh)` | `audio`, nghe rồi nhớ lại: một từ tiếng Anh do người thật đọc, không phải giọng máy |
+| `09 Video (video nhúng)` | mọi dạng link YouTube mà add-on chuyển đổi, cộng một file trực tiếp |
+| `10 Speech (đọc thành tiếng)` | `tts=en_US`, ưu tiên giọng bằng `voices=`, `speed` cho cả deck, và một cột ẩn đọc lại câu với nửa tốc độ |
+| `11 Chinese writing (gõ chữ)` | viết chữ, rồi đối chiếu với hoạt hình thứ tự nét — `type` + `image` + `hint` + `tts` trên một card, và `subdeck=1` xếp theo cấp HSK |
+| `12 Chinese drawing (viết tay)` | `draw` — bạn viết chữ từng nét và mỗi nét đều được chấm |
+| `13 Furigana (phiên âm kanji)` | `furigana` trên chữ kanji |
+| `14 Any headers (mọi ngôn ngữ)` | tên cột viết là `汉字`, `拼音`, `释义`, `例句` |
+| `15 Theme + subdeck (màu, tầng)` | từ vựng tiếng Anh xếp sâu ba tầng `SUBDECK` — `English::B1::Verbs` — với `theme=sakura`, có đọc to, và sắp xếp theo từ |
+| `16 Picture words (từ vựng ảnh)` | ảnh ở mặt trước và giọng người bản xứ ở mặt sau — `image` và `audio` trên một card, xếp theo `Group` |
+| `17 Draw & type (viết và gõ)` | viết chữ từng nét *và* gõ pinyin của nó: `draw` và `type=nc` hỏi cùng một thứ theo hai cách |
+| `18 Grammar cloze (ngữ pháp)` | giấu từ mang điểm ngữ pháp, và gõ ra chứ không chỉ nhớ — `cloze` cộng `type` |
+| `19 Dictation (nghe rồi gõ)` | câu được đọc lên mà không hiện ở đâu: `side=hide` + `tts` + `type`, nên cách duy nhất là nghe |
+| `20 Video lesson (bài video)` | đoạn clip *chính là* câu hỏi — `video` ở mặt trước, xếp theo bài |
+| `21 Formulas & code (công thức)` | `math` cho công thức và `code=python` cho code — hai loại ô không phải văn xuôi, cộng thêm `sort` |
+| `22 Arabic (phải sang trái)` | `rtl`, hướng viết của tiếng Ả Rập, Do Thái và Ba Tư |
+| `23 Vertical text (viết dọc)` | `vertical` — từ trên xuống, phải sang trái, như tiếng Nhật in trong sách |
+| `24 Korean (tiếng Hàn)` | `font=kr` và một giọng tiếng Hàn — một hệ chữ có font riêng |
+| `25 Traditional (chữ phồn thể)` | cùng một từ bằng `font=tc` và `font=sc` cạnh nhau, đọc bằng `zh_TW` |
+| `26 Shell commands (dòng lệnh)` | `code=bash` — đáp án là một câu lệnh, xếp theo công dụng |
+| `27 Web dev (HTML & JS)` | hai cột code trên một card, `code=html` và `code=javascript` |
+| `28 Chemistry (hoá học)` | phương trình `math=block` dưới một đáp án bằng lời thường |
+| `29 Phrasal verbs (cụm động từ)` | `cloze` trên tiểu từ khó tra nhất, và câu được đọc to |
+| `30 German (tiếng Đức)` | hỏi der/die/das ở mặt trước, `tts=de_DE` trên danh từ và câu ví dụ |
+| `31 Spanish (tiếng Tây Ban Nha)` | lại là `type=nc`, lần này dấu là của tiếng Tây Ban Nha và `ñ` vẫn phải gõ |
 
-The workbook is generated from `SHEETS` in
+File này được sinh ra từ `SHEETS` trong
 [`scripts/build_examples.py`](https://github.com/tannc28/sheetcards/blob/main/scripts/build_examples.py),
-and the test suite fails if any setting has no example in it.
+và bộ test sẽ fail nếu có setting nào không có ví dụ trong đó.
 [`examples/README.md`](https://github.com/tannc28/sheetcards/blob/main/examples/README.md)
-walks through each sheet in detail.
+giải thích chi tiết từng sheet.

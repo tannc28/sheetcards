@@ -1,89 +1,88 @@
-# Syncing
+# Sync
 
-Every time you choose **Update Decks from Sheets…** (`Ctrl+Shift+S`), the add-on
-downloads each sheet you ticked and makes Anki match it. Nothing is ever written
-back to the sheet.
+Mỗi lần bạn chọn **Update Decks from Sheets…** (`Ctrl+Shift+S`), add-on tải về
+từng sheet bạn đã tick và làm cho Anki khớp với nó. Add-on không bao giờ ghi gì
+ngược lại vào sheet.
 
-## Notes are matched by `ID`
+## Note được nhận ra nhờ `ID`
 
-Each row's `ID` is stored in the note's first field, also called `ID`. On every
-sync the add-on reads that field to pair rows with notes. So:
+`ID` của mỗi dòng được lưu trong field đầu tiên của note, cũng tên là `ID`. Mỗi
+lần sync, add-on đọc field đó để ghép dòng với note. Vì vậy:
 
-- **Never change an ID.** A changed ID looks like one row deleted and a new one
-  added: the old note is removed and a new one is created, without its review
-  history.
-- **Never reuse an ID.** Two rows with the same ID become one note. The sync
-  lists duplicates as an error: *"Duplicate IDs in the spreadsheet"*.
-- **A row with an empty `ID` is never synced.**
-- **Keep the notes in their deck.** A note moved out of its `sc_…` deck in Anki
-  is no longer found, and the next sync creates it again.
+- **Đừng bao giờ đổi ID.** Đổi ID trông như xoá một dòng và thêm một dòng mới:
+  note cũ bị xoá và một note mới được tạo, mất luôn lịch sử review.
+- **Đừng dùng lại ID.** Hai dòng cùng ID thành một note. Sync báo trùng lặp như
+  một lỗi: *"Duplicate IDs in the spreadsheet"*.
+- **Dòng có `ID` trống không bao giờ được sync.**
+- **Để note nằm yên trong deck của nó.** Note bị chuyển ra khỏi deck `sc_…`
+  trong Anki sẽ không còn được tìm thấy, và lần sync sau sẽ tạo lại nó.
 
-## What each change does
+## Mỗi thay đổi dẫn tới gì
 
-| You do this in the sheet | The sync does this |
+| Bạn làm điều này trong sheet | Sync sẽ làm điều này |
 | :--- | :--- |
-| Add a row | Creates a note |
-| Edit a cell | Updates that field; the note keeps its review history |
-| Change a `SUBDECK` cell | Moves the note's cards to the new subdeck and updates its tags |
-| Set `SYNC` to anything but yes | **Leaves the note as it is** and stops updating it. It is not deleted |
-| Set `SYNC` back to yes | Updates that note again |
-| Delete a row | **Deletes the note** |
-| Add a column | Adds a field of that name and puts it on the back of the card |
-| Remove a column | **Keeps the field and its content in Anki** and stops showing it |
-| Rename a column | Counts as removing one column and adding another: a new empty field appears, and the old one keeps its content |
-| Edit the [settings row](settings-row.md) | Rebuilds the card design. Notes and review history are untouched |
+| Thêm một dòng | Tạo một note |
+| Sửa một ô | Cập nhật field đó; note giữ nguyên lịch sử review |
+| Đổi một ô `SUBDECK` | Chuyển card của note sang subdeck mới và cập nhật tag |
+| Đặt `SYNC` thành bất cứ gì khác yes | **Giữ nguyên note** và ngừng cập nhật nó. Note không bị xoá |
+| Đặt `SYNC` lại thành yes | Cập nhật note đó trở lại |
+| Xoá một dòng | **Xoá note** |
+| Thêm một cột | Thêm một field cùng tên và đặt nó ở mặt sau card |
+| Bỏ một cột | **Giữ field và nội dung của nó trong Anki** và thôi hiện nó |
+| Đổi tên một cột | Tính như bỏ một cột và thêm một cột khác: một field trống mới xuất hiện, field cũ vẫn giữ nội dung |
+| Sửa [settings row](settings-row.md) | Dựng lại thiết kế card. Note và lịch sử review không bị đụng tới |
 
-## Safety rules
+## Quy tắc an toàn
 
-- **No valid rows, no deletions.** If a download comes back with no row that has
-  an `ID` (an empty sheet, the wrong tab, a broken export), every note would look
-  deleted. The add-on deletes nothing and says so: *"Sync safety: the spreadsheet
-  returned no valid rows…"*.
-- **Changing a note's type never loses it.** When a sheet becomes a cloze sheet,
-  or stops being one, each note has to be recreated as the other type. The new
-  note is created before the old one is removed. Its review history starts again;
-  Anki cannot change a note's type in place.
-- **Removing a column never deletes what you collected** in it.
+- **Không có dòng hợp lệ thì không xoá gì.** Nếu bản tải về không có dòng nào có
+  `ID` (sheet trống, nhầm tab, export bị lỗi), mọi note sẽ trông như đã bị xoá.
+  Add-on không xoá gì cả và báo rõ: *"Sync safety: the spreadsheet returned no
+  valid rows…"*.
+- **Đổi note type không bao giờ làm mất note.** Khi một sheet trở thành sheet
+  cloze, hoặc thôi là sheet cloze, mỗi note phải được tạo lại theo note type kia.
+  Note mới được tạo trước khi note cũ bị xoá. Lịch sử review của nó bắt đầu lại
+  từ đầu; Anki không đổi được note type của một note tại chỗ.
+- **Bỏ một cột không bao giờ xoá những gì bạn đã thu thập** trong cột đó.
 
-## Names come from the sheet
+## Tên lấy từ sheet
 
-A deck is named after the spreadsheet file and the sheet: `sc_<file>::<sheet>`,
-and its note types `SheetCards - <deck> - Basic` and `- Cloze`. When you rename
-the spreadsheet file, the next sync renames the deck and note types to match.
+Deck được đặt theo tên file spreadsheet và tên sheet: `sc_<file>::<sheet>`, còn
+note type là `SheetCards - <deck> - Basic` và `- Cloze`. Khi bạn đổi tên file
+spreadsheet, lần sync sau sẽ đổi tên deck và note type cho khớp.
 
-**Renaming a SheetCards deck or note type inside Anki does not last**: the next
-sync renames it back. Rename the spreadsheet instead.
+**Đổi tên deck hay note type của SheetCards ngay trong Anki sẽ không giữ được**:
+lần sync sau sẽ đổi lại. Hãy đổi tên spreadsheet thay vào đó.
 
-Editing a SheetCards note type's front or back template in Anki does not last
-either: it is rebuilt from the sheet on every sync. The Styling section can carry
-your own CSS; see [the settings row](settings-row.md#styling-one-column-with-css).
+Sửa front template hay back template của một note type SheetCards trong Anki
+cũng không giữ được: nó được dựng lại từ sheet mỗi lần sync. Phần Styling thì có
+thể chứa CSS của riêng bạn; xem [settings row](settings-row.md#dinh-dang-mot-cot-bang-css).
 
-## When a sync finishes
+## Khi sync xong
 
-- Subdecks left with no cards are removed.
-- All connected decks study under one Anki preset, **SheetCards - Default
-  Options**, created if missing. A new preset starts at 20 new and 200 review
-  cards a day. Change it in Anki's own deck options; the add-on never overwrites
-  a preset that already exists.
-- A clean sync ends with a short message. If something needs your attention, a
-  summary window opens with three views (*Summary*, *Full details*, *Errors
-  only*) and the row counts: rows in the sheet, rows with an ID, rows skipped for
-  a missing ID, empty rows ignored, rows ticked and not ticked in `SYNC`, and
-  notes created, updated, deleted and unchanged.
-- If **Upload to AnkiWeb** is on in Settings, Anki's own sync runs next, so the
-  new cards reach your phone.
+- Subdeck không còn card nào sẽ bị xoá.
+- Mọi deck đã kết nối dùng chung một preset của Anki, **SheetCards - Default
+  Options**, được tạo nếu chưa có. Preset mới bắt đầu với 20 card mới và 200
+  card review mỗi ngày. Hãy đổi nó trong deck options của Anki; add-on không bao
+  giờ ghi đè một preset đã có.
+- Một lần sync suôn sẻ kết thúc bằng một thông báo ngắn. Nếu có gì cần bạn để
+  ý, một cửa sổ tóm tắt sẽ mở ra với ba chế độ xem (*Summary*, *Full details*,
+  *Errors only*) và các con số: số dòng trong sheet, số dòng có ID, số dòng bị
+  bỏ qua vì thiếu ID, số dòng trống bị bỏ qua, số dòng được tick và không được
+  tick ở `SYNC`, và số note được tạo, cập nhật, xoá và giữ nguyên.
+- Nếu **Upload to AnkiWeb** đang bật trong Settings, sync của chính Anki sẽ chạy
+  tiếp theo, nên card mới lên được điện thoại của bạn.
 
-A deck that fails does not stop the others; its error appears in the summary.
-Syncing runs in the background, and **Cancel** stops after the current deck.
+Một deck bị lỗi không làm dừng các deck khác; lỗi của nó hiện trong bản tóm tắt.
+Sync chạy ở chế độ nền, và **Cancel** sẽ dừng sau deck đang chạy.
 
-## Where settings are kept
+## Setting được lưu ở đâu
 
-| What | Where | Travels to your other devices? |
+| Cái gì | Ở đâu | Có theo sang thiết bị khác không? |
 | :--- | :--- | :--- |
-| The card design read from the settings row | Anki's collection | **Yes**, with AnkiWeb |
-| Note types, notes and cards | Anki's collection | **Yes** |
-| Which sheets are connected, the AnkiWeb and debug settings | `meta.json` in the add-on's folder | No, this computer only |
+| Thiết kế card đọc từ settings row | Collection của Anki | **Có**, qua AnkiWeb |
+| Note type, note và card | Collection của Anki | **Có** |
+| Những sheet nào đã kết nối, setting AnkiWeb và debug | `meta.json` trong thư mục của add-on | Không, chỉ máy này |
 
-The settings row is copied into the collection so a second computer shows the
-same cards before it has downloaded the sheet itself. The sheet is still the
-source: the next sync overwrites that copy.
+Settings row được chép vào collection để máy tính thứ hai hiện đúng các card đó
+trước cả khi nó tự tải sheet về. Sheet vẫn là nguồn gốc: lần sync sau sẽ ghi đè
+bản chép đó.

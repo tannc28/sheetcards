@@ -1,6 +1,7 @@
 """The website builds, and nothing in it links to a page or a heading it lacks.
 
-The documentation is Markdown under ``docs/site/``, converted by
+The documentation is Markdown under ``docs/site/`` (Vietnamese) and
+``docs/site/en/`` (English), converted by
 ``scripts/build_site.py``; a renamed heading or page breaks a link silently, and a
 reader finds out by landing at the top of the wrong page. This builds the whole
 site into a temporary folder and follows every link that stays on it.
@@ -59,10 +60,33 @@ def site(tmp_path_factory):
 @pytest.mark.unit
 def test_every_docs_page_is_built(site):
     build, out = site
-    for _, names in build.DOC_GROUPS:
-        for name in names:
-            assert (out / "docs" / f"{name}.html").is_file(), name
-    assert (out / "docs" / "index.html").is_file()
+    for folder in build.DOC_LANGS.values():
+        for _, names in build.DOC_GROUPS:
+            for name in names:
+                assert (out / "docs" / folder / f"{name}.html").is_file(), name
+        assert (out / "docs" / folder / "index.html").is_file()
+
+
+@pytest.mark.unit
+def test_every_docs_page_speaks_its_language_and_links_its_twin(site):
+    """Vietnamese at /docs/, English at /docs/en/, and each page names the other."""
+    build, out = site
+    for lang, folder in build.DOC_LANGS.items():
+        (other,) = set(build.DOC_LANGS) - {lang}
+        for _, names in build.DOC_GROUPS:
+            for name in names:
+                path = out / "docs" / folder / f"{name}.html"
+                text = path.read_text(encoding="utf-8")
+                assert f'<html lang="{lang}">' in text, path
+                twin = re.search(
+                    rf'<link rel="alternate" hreflang="{other}" href="([^"]+)">', text
+                )
+                assert twin, f"{path} names no {other} twin"
+                target = (path.parent / twin.group(1)).resolve()
+                if target.is_dir():
+                    target = target / "index.html"
+                expected = out / "docs" / build.DOC_LANGS[other] / f"{name}.html"
+                assert target == expected.resolve(), (path, twin.group(1))
 
 
 @pytest.mark.unit
@@ -104,7 +128,9 @@ def test_no_internal_link_is_broken(site):
 def test_the_docs_link_the_example_workbook(site):
     _, out = site
     url = "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx"
-    assert url in (out / "docs" / "examples.html").read_text(encoding="utf-8")
+    for folder in ("", "en"):
+        page = out / "docs" / folder / "examples.html"
+        assert url in page.read_text(encoding="utf-8"), page
 
 
 @pytest.mark.unit
@@ -131,5 +157,11 @@ def test_old_preview_links_are_sent_to_the_preview(site):
 def test_an_unlisted_theme_is_never_published(site):
     """Hidden themes stay out of everything a reader can open."""
     _, out = site
-    for path in list(out.rglob("*.html")) + [REPO / "README.md"]:
+    pages = list(out.rglob("*.html"))
+    sources = list((REPO / "docs" / "site").rglob("*.md"))
+    # Both languages of the docs, built and as written.
+    assert any("/docs/en/" in p.as_posix() for p in pages)
+    assert any(p.parent.name == "en" for p in sources)
+    assert any(p.parent.name == "site" for p in sources)
+    for path in pages + sources + [REPO / "README.md"]:
         assert "ptrang" not in path.read_text(encoding="utf-8"), path

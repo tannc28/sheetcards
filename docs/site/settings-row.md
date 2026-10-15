@@ -1,89 +1,90 @@
-# The settings row
+# Settings row
 
-Without one, the first of your columns is the front of the card and the rest are
-the back, in plain text. **The settings row says how each column should look and
-behave**: which side it goes on, how big it is, whether it is read aloud, whether
-a link in it becomes a picture or a video, and more.
+Khi không có settings row, cột đầu tiên của bạn là mặt trước của card, các cột
+còn lại là mặt sau, chữ thường. **Settings row (dòng thiết lập) quy định mỗi cột
+trông ra sao và hoạt động thế nào**: nằm ở mặt nào, cỡ chữ bao nhiêu, có được đọc
+thành tiếng không, link trong ô có thành ảnh hay video không, và nhiều thứ khác.
 
-It is one optional row, directly under the column names. Nothing about it is
-edited inside Anki: change the row, sync again, and the cards follow.
+Đây là một dòng không bắt buộc, nằm ngay dưới dòng tên cột. Bạn không sửa gì
+trong Anki cả: đổi dòng này, sync lại, và card đổi theo.
 
-The [editor](../editor.html) lets you build one by clicking, and shows the card
-as you go.
+[Editor](../editor.html) cho bạn tạo settings row bằng cách bấm chọn, và hiện
+card ngay khi bạn soạn.
 
-## How to write it
+## Cách viết
 
-**Row 2 is the settings row when its `ID` cell starts with `#config`.** Your
-cards then start on row 3. Without that marker row 2 is an ordinary card, so a
-sheet that never asks for settings is not affected.
+**Dòng 2 là settings row khi ô `ID` của nó bắt đầu bằng `#config`.** Khi đó card
+của bạn bắt đầu từ dòng 3. Không có dấu hiệu đó thì dòng 2 là một card bình
+thường, nên sheet không cần settings thì không bị ảnh hưởng gì.
 
 | ID | Word | Reading | Meaning |
 | :--- | :--- | :--- | :--- |
 | `#config` | `size=48; tts=zh_CN` | `furigana; color=muted` | |
 | 1 | 推迟 | 推迟[tuī chí] | to postpone |
 
-- **Each cell holds `key=value` pairs separated by `;`.** `size=48; color=muted`.
-- **A key on its own is a switch**: `bold`, `hint`, `reverse`. Write `bold=false`
-  (or `no`, `0`, `off`) to spell out that it is off.
-- **An empty cell means "the defaults"**, so you only write what you change.
-- **Settings for the whole sheet go in the `#config` cell itself**, after the
-  marker and a space: `#config align=left; speed=0.9; reverse`.
-- `#CONFIG` works too. `#config;align=left` also works, but a value like
-  `#configuration` is not the marker, so that row would be a card.
-- Only your own columns read their cell. Anything in the settings row's `SYNC`,
-  `TAGS` or `SUBDECK` cells is ignored.
-- The settings row is never a card and is not counted in the sync's row totals.
+- **Mỗi ô chứa các cặp `key=value`, cách nhau bằng `;`.** `size=48; color=muted`.
+- **Một key đứng một mình là một công tắc (switch)**: `bold`, `hint`, `reverse`.
+  Ghi `bold=false` (hoặc `no`, `0`, `off`) nếu muốn nói rõ là tắt.
+- **Ô trống nghĩa là "dùng mặc định"**, nên bạn chỉ cần ghi những gì muốn đổi.
+- **Settings cho cả sheet nằm ngay trong ô `#config`**, sau dấu hiệu và một dấu
+  cách: `#config align=left; speed=0.9; reverse`.
+- `#CONFIG` cũng được. `#config;align=left` cũng được, nhưng một giá trị như
+  `#configuration` thì không phải dấu hiệu, nên dòng đó sẽ là một card.
+- Chỉ các cột của bạn mới đọc ô của mình. Mọi thứ trong ô `SYNC`, `TAGS` hay
+  `SUBDECK` của settings row đều bị bỏ qua.
+- Settings row không bao giờ là một card và không được tính vào tổng số dòng khi
+  sync.
 
-**Mistakes are reported, never guessed at.** An unknown key (`siz=48`), a bad
-value (`color=notacolour`) or a number out of range (`size=400`) produces a
-warning naming the column, and that one setting is left out. The rest of the row
-still applies. You see the warnings in the [preview](../preview.html), in the
-editor, and in Anki under **Tools → SheetCards → Card Layout…**.
+**Lỗi được báo ra, không bao giờ bị đoán.** Một key lạ (`siz=48`), một giá trị
+sai (`color=notacolour`) hay một số ngoài khoảng cho phép (`size=400`) sẽ tạo ra
+một cảnh báo nêu tên cột, và chỉ setting đó bị bỏ đi. Phần còn lại của dòng vẫn
+áp dụng. Bạn thấy các cảnh báo trong [Create deck](../preview.html), trong editor, và
+trong Anki ở **Tools → SheetCards → Card Layout…**.
 
-## Per-column keys
+## Key cho từng cột
 
-Written in that column's cell.
+Ghi trong ô của chính cột đó.
 
-| Key | Values | What it does |
+| Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
-| `side` | `front`, `back`, `hide` | Which side the column appears on. `hide` keeps the field in Anki but shows it on neither side. Default: the first column front, the rest back. |
-| `size` | a number of pixels: **6–200** for text, **1–2000** for a picture, video or writing box (`size=48` or `size=48px`) | Font size for text; maximum width for an `image` or `video`; the side of the box for `draw`. Default: 40 px on the front (smaller on a phone), 18 px on the back. |
-| `color` | `muted`, `accent`, a CSS colour name (`crimson`), or `#hex` | Text colour. `muted` and `accent` follow Anki's light and dark mode and the sheet's [theme](text.md#themes). A fixed colour like `black` does not, and disappears in night mode. |
-| `bold`, `italic` | switch | Bold or italic text. |
-| `align` | `left`, `center`, `right` | Alignment for this column only. |
-| `label` | any text | A small caption above the value. |
-| `hint` | switch | Hides the value behind a link you click to reveal. |
-| `furigana` | switch | Prints the reading above the text. The cell must be written `日本語[にほんご]`: text, then the reading in square brackets. |
-| `font` | `sc`, `tc`, `jp`, `kr`, `serif`, `sans`, `mono`, or any font name | The typeface. See [Themes and text](text.md#fonts-for-chinese-japanese-and-korean). |
-| `rtl` | switch | Right-to-left text, for Arabic, Hebrew and Persian. |
-| `vertical` | switch | Top-to-bottom text, the way Japanese is set in a book. |
-| `math` | switch, or `math=block` | The cell is a formula. See [Themes and text](text.md#formulas-and-code). |
-| `code` | switch, or `code=python` (any language name) | The cell is source code, coloured by language. |
-| `tts` | a **full** language code: `en_US`, `zh_CN`, `ja_JP` | Anki reads the column aloud. See [Text to speech](tts.md). |
-| `voices` | voice names, separated by commas | Which voices you would prefer. Anki falls back to any voice of that language. |
-| `speed` | **0.5–2.0** | Speaking rate for this column. |
-| `image`, `audio`, `video` | switch | The cell holds a link, and the card shows the picture, a player, or the video. See [Media](media.md). |
-| `cloze` | switch | The column holds `{{c1::…}}` deletions, and the whole sheet becomes a cloze sheet. See [Card types](card-types.md#cloze). |
-| `type` | switch, or `type=nc` | A box on the question where you type the answer. `nc` ignores accents. See [Card types](card-types.md#typing-the-answer). |
-| `draw` | switch | The cell holds a Chinese character that you write by hand on the card. See [Card types](card-types.md#writing-a-character-by-hand). |
-| `subdeck` | a level number: `subdeck=1` | The column is that level of the deck path, and is not shown on the card. See below. |
-| `sort` | switch | Anki's browser lists and sorts the notes by this column instead of by `ID`. |
+| `side` | `front`, `back`, `hide` | Cột hiện ở mặt nào. `hide` giữ field trong Anki nhưng không hiện ở mặt nào cả. Mặc định: cột đầu tiên ở mặt trước, các cột còn lại ở mặt sau. |
+| `size` | số pixel: **6–200** cho chữ, **1–2000** cho ảnh, video hoặc ô viết chữ (`size=48` hoặc `size=48px`) | Cỡ chữ với chữ; chiều rộng tối đa với `image` hoặc `video`; cạnh của ô với `draw`. Mặc định: 40 px ở mặt trước (nhỏ hơn trên điện thoại), 18 px ở mặt sau. |
+| `color` | `muted`, `accent`, tên màu CSS (`crimson`), hoặc `#hex` | Màu chữ. `muted` và `accent` đổi theo chế độ sáng/tối của Anki và [theme](text.md#theme) của sheet. Màu cố định như `black` thì không, và sẽ biến mất ở night mode. |
+| `bold`, `italic` | switch | Chữ đậm hoặc nghiêng. |
+| `align` | `left`, `center`, `right` | Căn lề, chỉ cho cột này. |
+| `label` | chữ bất kỳ | Một nhãn nhỏ phía trên giá trị. |
+| `hint` | switch | Giấu giá trị sau một link, bấm vào mới hiện. |
+| `furigana` | switch | In cách đọc phía trên chữ. Ô phải viết dạng `日本語[にほんご]`: chữ, rồi cách đọc trong ngoặc vuông. |
+| `font` | `sc`, `tc`, `jp`, `kr`, `serif`, `sans`, `mono`, hoặc tên font bất kỳ | Kiểu chữ. Xem [Theme và chữ](text.md#font-cho-tieng-trung-nhat-va-han). |
+| `rtl` | switch | Chữ viết từ phải sang trái, cho tiếng Ả Rập, Do Thái và Ba Tư. |
+| `vertical` | switch | Chữ viết từ trên xuống, như tiếng Nhật in trong sách. |
+| `math` | switch, hoặc `math=block` | Ô là một công thức. Xem [Theme và chữ](text.md#cong-thuc-va-code). |
+| `code` | switch, hoặc `code=python` (tên ngôn ngữ bất kỳ) | Ô là source code, tô màu theo ngôn ngữ. |
+| `tts` | mã ngôn ngữ **đầy đủ**: `en_US`, `zh_CN`, `ja_JP` | Anki đọc to cột này. Xem [Text to speech](tts.md). |
+| `voices` | tên giọng, cách nhau bằng dấu phẩy | Giọng bạn muốn ưu tiên. Không có thì Anki dùng giọng bất kỳ của ngôn ngữ đó. |
+| `speed` | **0.5–2.0** | Tốc độ đọc cho cột này. |
+| `image`, `audio`, `video` | switch | Ô chứa một link, và card hiện ảnh, trình phát, hoặc video. Xem [Media](media.md). |
+| `cloze` | switch | Cột chứa các chỗ trống `{{c1::…}}`, và cả sheet thành sheet cloze. Xem [Các loại card](card-types.md#cloze). |
+| `type` | switch, hoặc `type=nc` | Một ô ở mặt hỏi để bạn gõ đáp án. `nc` bỏ qua dấu. Xem [Các loại card](card-types.md#go-dap-an). |
+| `draw` | switch | Ô chứa một chữ Hán để bạn viết tay trên card. Xem [Các loại card](card-types.md#viet-chu-bang-tay). |
+| `subdeck` | số tầng: `subdeck=1` | Cột là tầng đó của đường dẫn deck, và không hiện trên card. Xem bên dưới. |
+| `sort` | switch | Browse của Anki liệt kê và sắp xếp note theo cột này thay vì theo `ID`. |
 
-## Sheet-wide keys
+## Key cho cả sheet
 
-Written after `#config` in the marker cell.
+Ghi sau `#config` trong ô dấu hiệu.
 
-| Key | Values | What it does |
+| Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
-| `align` | `left`, `center`, `right` | Alignment for the whole card. A column's own `align` still wins. |
-| `speed` | a number; keep it within 0.5–2.0 | Speaking rate for every spoken column that does not set its own. Unlike the per-column `speed`, this one is not checked, so an odd value reaches Anki as it is. |
-| `reverse` | switch | Adds a second card that asks the back and answers with the front. See [Card types](card-types.md#reverse-cards). |
-| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. See [Themes and text](text.md#themes). |
+| `align` | `left`, `center`, `right` | Căn lề cho cả card. `align` riêng của một cột vẫn được ưu tiên. |
+| `speed` | một con số; nên giữ trong khoảng 0.5–2.0 | Tốc độ đọc cho mọi cột có đọc mà không tự đặt tốc độ. Khác với `speed` của từng cột, cái này không được kiểm tra, nên giá trị lạ sẽ tới Anki nguyên như vậy. |
+| `reverse` | switch | Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Xem [Các loại card](card-types.md#reverse-card). |
+| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Xem [Theme và chữ](text.md#theme). |
 
-## Filing notes with a column (`subdeck`)
+## Xếp note vào deck bằng một cột (`subdeck`)
 
-`SUBDECK 1`, `SUBDECK 2` are names the add-on chose. `subdeck=1` says the same
-thing from one of your own columns, so you can keep your own column name:
+`SUBDECK 1`, `SUBDECK 2` là tên do add-on đặt. `subdeck=1` nói cùng một điều đó
+từ một cột của bạn, nên bạn giữ được tên cột của mình:
 
 ```text
 ID       Level        Word     Meaning
@@ -92,35 +93,34 @@ w01      HSK 1        写       to write
 w02      HSK 2        山       mountain
 ```
 
-This files `w01` in `sc_<file>::<sheet>::HSK 1`, and `Level` is not drawn on the
-card. Where a note is filed is shown by the deck it sits in, so it is not
-repeated on the card; the card settings (`size`, `color`, `side`, `tts` and the
-rest) are refused on such a column with a warning. `sort` is the one exception,
-because it is about the note too.
+Sheet này xếp `w01` vào `sc_<file>::<sheet>::HSK 1`, và `Level` không hiện trên
+card. Note nằm ở đâu thì deck chứa nó đã cho thấy, nên không cần lặp lại trên
+card; các setting của card (`size`, `color`, `side`, `tts` và những cái khác) bị
+từ chối trên cột như vậy, kèm cảnh báo. `sort` là ngoại lệ duy nhất, vì nó cũng
+nói về note.
 
-- The number is the level, so the order comes from the numbers, not from where
-  the columns sit.
-- An empty cell drops that level, just like an empty `SUBDECK` cell.
-- Two columns cannot be the same level, and a media column cannot be a level.
-- If a sheet uses both, the settings row wins, and the warning names the
-  `SUBDECK` columns it overrules.
+- Con số là tầng, nên thứ tự lấy theo con số, không theo vị trí các cột.
+- Ô trống thì bỏ tầng đó, giống hệt một ô `SUBDECK` trống.
+- Hai cột không thể cùng một tầng, và cột media không thể là một tầng.
+- Nếu sheet dùng cả hai cách, settings row thắng, và cảnh báo sẽ nêu tên các cột
+  `SUBDECK` bị nó ghi đè.
 
-## Heard but not shown (`side=hide` with `tts`)
+## Nghe được nhưng không hiện (`side=hide` với `tts`)
 
-A column with both `side=hide` and `tts` is read aloud but not printed. That is a
-listening card: the sentence is spoken with nothing on screen to read it from.
+Một cột có cả `side=hide` và `tts` thì được đọc to nhưng không in ra. Đó là một
+card luyện nghe: câu được đọc lên mà không có gì trên màn hình để nhìn theo.
 
 ```text
 ID       Chinese              Pinyin   Meaning   Once more, slowly
 #config  size=40; tts=zh_CN                      side=hide; tts=zh_CN; speed=0.5
 ```
 
-It is spoken on the side it would have been drawn on, and a reverse card swaps it
-along with everything else.
+Cột được đọc ở mặt mà lẽ ra nó sẽ hiện, và một reverse card đảo nó cùng với mọi
+thứ khác.
 
-## A worked example
+## Một ví dụ cụ thể
 
-| Column | Its cell in the settings row |
+| Cột | Ô của nó trong settings row |
 | :--- | :--- |
 | `ID` | `#config reverse` |
 | `Word` | `side=front; size=48; tts=zh_CN; voices=Huihui` |
@@ -128,29 +128,27 @@ along with everything else.
 | `Meaning` | `size=20` |
 | `Example` | `size=16; color=muted; hint` |
 
-With the data row `42 | 推迟 | 推迟[tuī chí] | to postpone, to delay | 会议推迟到下周。`
-this gives:
+Với dòng dữ liệu `42 | 推迟 | 推迟[tuī chí] | to postpone, to delay | 会议推迟到下周。`
+kết quả là:
 
-- **Front:** `推迟` at 48 px, read aloud in Mandarin, by the *Huihui* voice if
-  the device has it.
-- **Back:** the reading printed above the characters, captioned *Pinyin*, in the
-  muted colour; the meaning at 20 px; the example at 16 px, muted, behind a hint
-  link.
-- **A second card** (`reverse`) that asks the back and answers with `推迟`.
+- **Mặt trước:** `推迟` cỡ 48 px, được đọc to bằng tiếng Phổ thông, bằng giọng
+  *Huihui* nếu thiết bị có.
+- **Mặt sau:** cách đọc in phía trên chữ Hán, có nhãn *Pinyin*, màu muted; nghĩa
+  cỡ 20 px; câu ví dụ cỡ 16 px, màu muted, giấu sau một link hint.
+- **Một card thứ hai** (`reverse`) hỏi mặt sau và trả lời bằng `推迟`.
 
-Everything not mentioned keeps its default, which is why `Meaning` only needs
-`size=20`.
+Những gì không nhắc tới đều giữ mặc định, nên `Meaning` chỉ cần `size=20`.
 
-## Styling one column with CSS
+## Định dạng một cột bằng CSS
 
-Every block on a card carries the name of the column it came from:
+Mỗi khối trên card đều mang tên của cột sinh ra nó:
 
 ```html
 <div class="sc-back" data-sc-col="Pinyin">…</div>
 ```
 
-So for something the settings row does not cover, the note type's **Styling** in
-Anki can reach one column, for example
-`[data-sc-col="Pinyin"] { letter-spacing: .04em; }`. Edit only the Styling: the
-front and back templates are rebuilt from the sheet on every sync, so edits to
-them do not last.
+Nên với những gì settings row không làm được, phần **Styling** của note type
+trong Anki có thể nhắm tới đúng một cột, ví dụ
+`[data-sc-col="Pinyin"] { letter-spacing: .04em; }`. Chỉ sửa phần Styling: template
+mặt trước và mặt sau được dựng lại từ sheet mỗi lần sync, nên sửa ở đó sẽ không
+giữ được.

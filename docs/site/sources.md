@@ -1,72 +1,72 @@
-# Sheets, files and .apkg
+# Sheet, file và .apkg
 
-Where your cards can live, and the ways they can reach Anki.
+Card của bạn có thể nằm ở đâu, và có những cách nào để chúng vào Anki.
 
-## One file, one deck per sheet
+## Một file, mỗi sheet một deck
 
-A Google Sheets file holds several sheets, the tabs along the bottom. SheetCards
-connects **each sheet as a deck of its own**, named `sc_<file>::<sheet>`, with
-its own columns, settings row and note type. Paste the file's link once and one
-spreadsheet can hold your whole collection. `Ctrl+Shift+S` then lists one line
-per sheet, so you choose which to update.
+Một file Google Sheets chứa nhiều sheet, tức các tab ở phía dưới. SheetCards kết
+nối **mỗi sheet thành một deck riêng**, tên là `sc_<file>::<sheet>`, với cột,
+settings row và note type của riêng nó. Chỉ cần dán link của file một lần là một
+spreadsheet có thể chứa cả collection của bạn. Sau đó `Ctrl+Shift+S` liệt kê mỗi
+sheet một dòng, để bạn chọn sheet nào cần cập nhật.
 
-- **A sheet with no `ID` column is skipped**, and the window says which. Notes, a
-  colour key or a draft can sit in the same file. Hidden sheets are skipped too.
-- **A deck remembers its sheet by name.** Move a sheet to another position and
-  its deck follows. **Rename a sheet and the deck can no longer find it**: the
-  sync says so and lists the names that do exist. Connect the file again to pick
-  up the new name.
+- **Sheet không có cột `ID` sẽ bị bỏ qua**, và cửa sổ cho biết là sheet nào. Ghi
+  chép, bảng chú thích màu hay bản nháp có thể nằm chung file. Sheet bị ẩn cũng
+  bị bỏ qua.
+- **Deck nhớ sheet của nó theo tên.** Chuyển sheet sang vị trí khác thì deck vẫn
+  theo được. **Đổi tên sheet thì deck không tìm thấy nó nữa**: sync sẽ báo và
+  liệt kê các tên đang có. Kết nối lại file để nhận tên mới.
 
-## An .xlsx file instead of a Google Sheet
+## File .xlsx thay cho Google Sheet
 
-A link to an `.xlsx` or `.xlsm` file works as well, read the same way, one deck
-per sheet. A file in a GitHub repository is fine: paste the `…/blob/main/decks.xlsx`
-address your browser shows and the add-on fetches the file behind it.
+Link tới một file `.xlsx` hoặc `.xlsm` cũng dùng được, đọc theo cùng một cách,
+mỗi sheet một deck. File nằm trong một repository GitHub cũng được: dán địa chỉ
+`…/blob/main/decks.xlsx` mà trình duyệt hiện, add-on sẽ tải file phía sau nó.
 
-- **A file has to be uploaded again before a sync sees a change.** For a deck you
-  edit often, Google Sheets is the better home.
-- **The address must be public and start with `https`.** The add-on refuses
-  other kinds of address, and any address inside a private network.
+- **File phải được upload lại thì sync mới thấy thay đổi.** Với deck bạn sửa
+  thường xuyên, Google Sheets là chỗ hợp hơn.
+- **Địa chỉ phải công khai và bắt đầu bằng `https`.** Add-on từ chối các loại
+  địa chỉ khác, và mọi địa chỉ trong mạng nội bộ.
 
-## The preview
+## Create deck
 
-The [preview](../preview.html) shows what the add-on would make of a sheet,
-before you sync it: every row and whether it syncs, the deck tree, the tags, the
-warnings from the settings row, and each finished card, which you can turn over,
-listen to and type into. It runs the add-on's own code in your browser, so what
-it shows is made the same way the sync makes it. Only the very last step, drawing
-the card, is the page's own approximation of Anki; the template text it shows is
-exact.
+[Create deck](../preview.html) tạo deck Anki từ sheet ngay trên điện thoại hoặc
+máy tính, không cần cài add-on. Trước khi tải về, nó cho bạn thấy SheetCards làm
+ra gì từ sheet: từng dòng và việc nó có được sync hay không, cây deck, tag, cảnh
+báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật, nghe và gõ đáp
+án vào. Nó chạy chính code của add-on trong trình duyệt, nên những gì nó hiện ra
+được làm đúng như cách sync làm. Chỉ có bước cuối cùng, vẽ card, là trang tự mô
+phỏng lại Anki; còn nội dung template nó hiện ra là chính xác.
 
-Press the reload button beside the sheet name after editing your sheet, and the
-preview fetches it again and keeps your place.
+Sau khi sửa sheet, bấm nút tải lại cạnh tên sheet, Create deck sẽ tải sheet lại và
+giữ nguyên chỗ bạn đang xem.
 
-### Upload a file
+### Upload một file
 
-**Upload a file**, or drag one onto the page, to preview an `.xlsx`, `.xlsm`,
-`.csv` or `.tsv` from your computer. Each tab of a workbook becomes its own deck.
-The file never leaves your browser.
+Bấm **Tải lên một file**, hoặc kéo một file vào trang, để mở một file `.xlsx`,
+`.xlsm`, `.csv` hoặc `.tsv` trên máy bạn. Mỗi tab của workbook thành một deck
+riêng. File không bao giờ rời khỏi trình duyệt của bạn.
 
-- **The add-on itself still needs a link.** An uploaded file reaches Anki
-  through the `.apkg` download below.
-- **A cell is read as the sheet shows it.** A date comes out as `2025-01-21`, a
-  whole number as `1` rather than `1.0`.
+- **Bản thân add-on vẫn cần một link.** File đã upload đến được Anki qua bản tải
+  `.apkg` bên dưới.
+- **Ô được đọc đúng như sheet hiện.** Ngày ra dạng `2025-01-21`, số nguyên ra
+  `1` chứ không phải `1.0`.
 
-### Download an .apkg
+### Tải về một file .apkg
 
-The preview can build the deck as an `.apkg` file. **AnkiDroid and AnkiMobile
-import it directly**, so a sheet can reach your phone without Anki on a computer
-at all. It is built by the add-on's own code, with the same fields and card
-design, and the note identity comes from your `ID` column, so **importing again
-updates those notes instead of duplicating them**.
+Nút **Tải về cho Anki** dựng deck thành một file `.apkg`. **AnkiDroid và AnkiMobile
+import thẳng được file này**, nên sheet có thể lên điện thoại mà không cần Anki
+trên máy tính. File được dựng bằng chính code của add-on, với cùng field và
+thiết kế card, và danh tính của note lấy từ cột `ID` của bạn, nên **import lại sẽ
+cập nhật các note đó chứ không nhân đôi**.
 
-What an import cannot do is **delete**: Anki never removes a note that is missing
-from the file. A row you delete from the sheet stays in your collection until you
-delete it there. That is the real difference between importing and syncing.
+Điều import không làm được là **xoá**: Anki không bao giờ xoá một note không có
+trong file. Dòng bạn xoá khỏi sheet vẫn nằm trong collection cho tới khi bạn xoá
+nó ở đó. Đó chính là khác biệt thật sự giữa import và sync.
 
-## The editor
+## Editor
 
-The [editor](../editor.html) is a small spreadsheet for writing a
-[settings row](settings-row.md). Pick settings from a list instead of
-remembering them, and the deck and the card update beside you as you type. Copy
-rows 1 and 2 when it looks right and paste them into cell A1 of your sheet.
+[Editor](../editor.html) là một spreadsheet nhỏ để viết
+[settings row](settings-row.md). Bạn chọn setting từ một danh sách thay vì phải
+nhớ, và deck cùng card cập nhật ngay bên cạnh khi bạn gõ. Khi đã ưng ý, copy dòng
+1 và 2 rồi dán vào ô A1 của sheet.

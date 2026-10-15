@@ -1,14 +1,17 @@
 <!doctype html>
-<html lang="vi">
+<html lang="%%LANG%%">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <!-- The template every documentation page is built from: scripts/build_site.py
-     fills in the %%…%% slots from docs/site/*.md. Not published itself — a name
-     starting with "_" is a build input. -->
+     fills in the %%…%% slots from docs/site/*.md (Vietnamese, /docs/) and
+     docs/site/en/*.md (English, /docs/en/). Not published itself — a name
+     starting with "_" is a build input. %%ROOT%% is the way back to the site's
+     root from the page's folder. -->
 <title>%%TITLE%% — SheetCards docs</title>
 <meta name="description" content="%%DESCRIPTION%%">
+<link rel="alternate" hreflang="%%TWIN_LANG%%" href="%%TWIN%%">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%232f55c4' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%232f55c4'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -19,9 +22,9 @@
     }
   } catch (e) {}
 </script>
-<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="%%ROOT%%style.css">
 </head>
-<body class="page docs">
+<body class="page docs" data-lang="%%LANG%%">
 
 <a class="skip" href="#main" data-i18n="skipMain">Tới nội dung chính</a>
 
@@ -30,9 +33,9 @@
     <p class="name" translate="no">SheetCards <span class="brand-tag" data-i18n="docsTag">docs</span></p>
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="../" data-i18n="navHome">Home</a>
-    <a href="../preview.html" data-i18n="navPreview">Preview</a>
-    <a href="../editor.html" data-i18n="navEditor">Editor</a>
+    <a href="%%ROOT%%" data-i18n="navHome">Home</a>
+    <a href="%%ROOT%%preview.html" data-i18n="navPreview">Create deck</a>
+    <a href="%%ROOT%%editor.html" data-i18n="navEditor">Editor</a>
     <a href="./" aria-current="page" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
@@ -43,22 +46,24 @@
 <div class="docs-layout">
   <!-- One list of pages, open beside the text on a wide screen and folded into a
        "Contents" disclosure above it on a phone, where a sidebar has no room. -->
-  <nav class="docnav" aria-label="Documentation">
+  <nav class="docnav" aria-label="%%W_NAV%%">
     <details id="docnav">
-      <summary>Contents</summary>
+      <summary>%%W_CONTENTS%%</summary>
       %%NAV%%
     </details>
   </nav>
 
   <main id="main" class="prose" lang="%%LANG%%" tabindex="-1">
+    <p class="doc-twin" lang="%%TWIN_LANG%%"><span data-icon="languages"></span><a
+       href="%%TWIN%%" hreflang="%%TWIN_LANG%%">%%TWIN_TEXT%%</a></p>
 %%BODY%%
-    <nav class="pager" aria-label="More pages">
+    <nav class="pager" aria-label="%%W_PAGES%%">
 %%PAGER%%
     </nav>
-    <p class="editlink"><a href="https://github.com/tannc28/sheetcards/blob/main/%%SOURCE%%" rel="noopener">Edit this page on GitHub</a></p>
+    <p class="editlink"><a href="https://github.com/tannc28/sheetcards/blob/main/%%SOURCE%%" rel="noopener">%%W_EDIT%%</a></p>
   </main>
 </div>
 
-<script type="module" src="../page.js"></script>
+<script type="module" src="%%ROOT%%page.js"></script>
 </body>
 </html>

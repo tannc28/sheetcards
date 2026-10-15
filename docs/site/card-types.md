@@ -1,12 +1,12 @@
-# Card types
+# Các loại card
 
-A plain sheet makes one card per row: the front asks, the back answers. The
-[settings row](settings-row.md) can turn that into other kinds of card.
+Một sheet bình thường tạo một card cho mỗi dòng: mặt trước hỏi, mặt sau trả lời.
+[Settings row](settings-row.md) có thể biến nó thành các loại card khác.
 
-## Reverse cards
+## Reverse card
 
-`reverse` in the `#config` cell adds a second card for every row that asks the
-back and answers with the front.
+`reverse` trong ô `#config` thêm, cho mỗi dòng, một card thứ hai hỏi mặt sau và
+trả lời bằng mặt trước.
 
 ```text
 ID       Vietnamese   English
@@ -14,15 +14,16 @@ ID       Vietnamese   English
 r01      đọc          to read
 ```
 
-gives one card asking `đọc` and one asking `to read`. Both are scheduled
-separately, from the same row. Remove `reverse` later and those second cards go
-away without touching your content. Cloze sheets cannot have reverse cards, and a
-card with nothing on one of its sides gets none either.
+cho một card hỏi `đọc` và một card hỏi `to read`. Hai card được lên lịch review
+riêng, từ cùng một dòng. Sau này bỏ `reverse` đi thì các card thứ hai đó biến mất
+mà không đụng tới nội dung của bạn. Sheet cloze không có reverse card, và card nào
+có một mặt trống cũng không có.
 
 ## Cloze
 
-A cloze card hides part of a sentence. Write the deletions with Anki's usual
-`{{c1::…}}` markup and **say which column holds them** with `cloze`:
+Cloze card (điền chỗ trống) giấu một phần của câu. Viết các chỗ trống bằng
+markup quen thuộc của Anki `{{c1::…}}` và **nói cột nào chứa chúng** bằng
+`cloze`:
 
 ```text
 ID       Word      Example
@@ -30,54 +31,52 @@ ID       Word      Example
 1        熟悉       我对这里{{c1::很熟悉}}，也{{c2::常来}}。
 ```
 
-- That column becomes the question, wherever it sits in the sheet.
-- Anki makes **one card per deletion**: two for the row above.
-- The other columns appear as usual beside it.
-- One cloze column per sheet. A second is ignored with a warning.
+- Cột đó thành câu hỏi, dù nó nằm ở đâu trong sheet.
+- Anki tạo **một card cho mỗi chỗ trống**: dòng trên cho hai card.
+- Các cột khác hiện bên cạnh như bình thường.
+- Mỗi sheet một cột cloze. Cột thứ hai bị bỏ qua kèm cảnh báo.
 
-Why declare it? A sheet shares one card design across all its rows, so "which
-column is the cloze" has to be answered once. Anki shows a cloze field that holds
-no deletion as nothing at all, so guessing wrong would silently blank a column.
+Tại sao phải khai báo? Một sheet dùng chung một thiết kế card cho mọi dòng, nên
+câu hỏi "cột nào là cloze" phải được trả lời một lần. Anki hiện một field cloze
+không có chỗ trống nào thành trống trơn, nên đoán sai sẽ lặng lẽ làm mất một cột.
 
-A row with `{{c1::…}}` on a sheet that declares no cloze column is reported as a
-warning, in the preview and in Anki's Card Layout window.
+Dòng có `{{c1::…}}` trên một sheet không khai báo cột cloze nào sẽ bị báo cảnh
+báo, trong Create deck và trong cửa sổ Card Layout của Anki.
 
-## Typing the answer
+## Gõ đáp án
 
-`type` on a column draws a box on the question. You type the answer, and Anki
-compares it with that column, letter by letter, when you turn the card.
+`type` trên một cột đặt một ô nhập ở mặt hỏi. Bạn gõ đáp án, và khi lật card Anki
+so nó với cột đó, từng chữ một.
 
 ```text
 ID       Hán tự    Pinyin        Meaning
 #config            type=nc
 ```
 
-- `type=nc` ignores accents and tone marks, so typing `shuxi` matches `shúxī`.
-  Useful when the marks are hard to type but not the point.
-- One `type` column per sheet; Anki allows one box per card.
-- The box is not repeated on the reverse card.
-- On a cloze sheet, `type` on the cloze column asks you to type the deleted
-  words.
+- `type=nc` bỏ qua dấu và thanh điệu, nên gõ `shuxi` vẫn khớp `shúxī`. Hữu ích
+  khi dấu khó gõ mà lại không phải điều cần học.
+- Mỗi sheet một cột `type`; Anki chỉ cho một ô nhập mỗi card.
+- Ô nhập không lặp lại trên reverse card.
+- Trên sheet cloze, `type` trên cột cloze sẽ bắt bạn gõ những chữ bị giấu.
 
-## Writing a character by hand
+## Viết chữ bằng tay
 
-`draw` turns a column holding Chinese characters into a writing box. Typing tests
-whether you can spell a word; this tests whether you can write it.
+`draw` biến một cột chứa chữ Hán thành ô viết chữ. Gõ thì kiểm tra bạn có đánh
+vần được một từ không; cái này kiểm tra bạn có viết được nó không.
 
-- **On the question** the box is empty. You write the character stroke by stroke,
-  each stroke is checked, and a hint appears after two misses.
-- **On the answer** the correct strokes are animated.
-- A cell can hold several characters: `你好` gives two boxes.
-- `size` is the side of the box in pixels (1–2000); 200–300 is comfortable.
-- `color` sets the colour of the strokes. `tts` still works, so the character can
-  also be read aloud.
-- `hint` puts the box behind a click.
+- **Ở mặt hỏi** ô để trống. Bạn viết chữ từng nét, mỗi nét đều được kiểm tra, và
+  gợi ý hiện ra sau hai lần sai.
+- **Ở mặt trả lời** các nét đúng được chạy hoạt hình.
+- Một ô có thể chứa nhiều chữ: `你好` cho hai ô viết.
+- `size` là cạnh của ô tính bằng pixel (1–2000); 200–300 là vừa tay.
+- `color` đặt màu của các nét. `tts` vẫn chạy, nên chữ đó cũng có thể được đọc
+  to.
+- `hint` giấu ô viết sau một cú bấm.
 
-The stroke data comes from [HanziWriter](https://hanziwriter.org) over the
-internet, so a `draw` card needs a connection. Without one the box shows the
-character faintly instead. It is tested on Anki for desktop; on AnkiDroid and
-AnkiMobile it depends on whether the app allows the card to load it. Only Chinese
-characters have stroke data; anything else is printed in the box.
+Dữ liệu nét chữ lấy từ [HanziWriter](https://hanziwriter.org) qua internet, nên
+card có `draw` cần mạng. Không có mạng thì ô hiện chữ đó mờ mờ thay vào. Đã thử
+trên Anki cho máy tính; trên AnkiDroid và AnkiMobile thì tuỳ app có cho card tải
+nó hay không. Chỉ chữ Hán mới có dữ liệu nét; thứ khác thì được in vào ô.
 
-The example workbook's `12 Chinese drawing (viết tay)` sheet is a ready-made
-deck.
+Sheet `12 Chinese drawing (viết tay)` trong file ví dụ là một deck dùng được
+ngay.

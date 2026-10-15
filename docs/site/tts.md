@@ -1,6 +1,7 @@
 # Text to speech
 
-`tts=` on a column makes Anki read it aloud with the voices on your device:
+`tts=` trên một cột khiến Anki đọc to cột đó bằng các giọng có sẵn trên máy của
+bạn (text to speech, tức chuyển chữ thành giọng nói):
 
 ```text
 ID       Word                 Meaning
@@ -8,64 +9,64 @@ ID       Word                 Meaning
 1        library              thư viện
 ```
 
-The word is spoken when the side it is on appears, and there is a button to hear
-it again.
+Từ được đọc khi mặt chứa nó hiện ra, và có một nút để nghe lại.
 
-## The language code must be complete
+## Mã ngôn ngữ phải đầy đủ
 
-Write the full code: **`en_US`, `zh_CN`, `ja_JP`, `ko_KR`, `de_DE`, `pt_BR`**.
-`zh-CN` is accepted too. A short code like `zh` is **refused with a warning**:
-Anki matches the code against your installed voices exactly, so `zh` would match
-nothing and play silence. Guessing is not safe either: `zh_CN` would be wrong for
-someone learning Traditional Chinese (`zh_TW`).
+Ghi mã đầy đủ: **`en_US`, `zh_CN`, `ja_JP`, `ko_KR`, `de_DE`, `pt_BR`**. Ghi
+`zh-CN` cũng được. Mã ngắn như `zh` sẽ **bị từ chối kèm cảnh báo**: Anki so mã
+này với các giọng đã cài một cách chính xác tuyệt đối, nên `zh` không khớp giọng
+nào và chỉ phát ra im lặng. Đoán thay cũng không an toàn: `zh_CN` sẽ sai với
+người học tiếng Trung phồn thể (`zh_TW`).
 
-## Choosing a voice and speed
+## Chọn giọng và tốc độ
 
-- **`voices=`** names the voices you would like, separated by commas:
-  `tts=zh_CN; voices=Huihui,Yaoyao`. It is a preference: if none of them exist on
-  a device, Anki uses any voice for that language. So the same sheet works on your
-  computer and your phone.
-- **`speed=`** sets the speaking rate, from 0.5 to 2.0. Written in the `#config`
-  cell it is the default for every spoken column.
+- **`voices=`** ghi tên các giọng bạn muốn, cách nhau bằng dấu phẩy:
+  `tts=zh_CN; voices=Huihui,Yaoyao`. Đây chỉ là ưu tiên: nếu máy không có giọng
+  nào trong số đó, Anki dùng bất kỳ giọng nào của ngôn ngữ đó. Nhờ vậy cùng một
+  sheet chạy được cả trên máy tính lẫn điện thoại.
+- **`speed=`** đặt tốc độ đọc, từ 0.5 đến 2.0. Ghi trong ô `#config` thì nó là
+  mặc định cho mọi cột được đọc.
 
-## Finding the voices a device has
+## Tìm các giọng có trên máy
 
-Which voices exist depends on the device doing the reviewing, and your phone
-usually has different ones from your computer. So **every card with a spoken
-column carries a small collapsed "TTS voices" section on its answer side**. Open
-it on the device you study on to see:
+Máy nào có giọng nào là tuỳ vào thiết bị bạn dùng để review, và điện thoại
+thường có giọng khác với máy tính. Vì vậy **mỗi card có cột được đọc đều mang một
+mục "TTS voices" nhỏ, thu gọn, ở mặt trả lời**. Mở nó trên thiết bị bạn học để
+xem:
 
-- the voices that device has for your language, the natural-sounding
-  *Premium* and *Enhanced* ones first;
-- each one written the way to put it in your sheet (`voices=…`), ready to copy;
-- if nothing matches, the language codes the device does have, so you can see
-  whether your `tts=` code is the problem.
+- các giọng thiết bị đó có cho ngôn ngữ của bạn, các giọng nghe tự nhiên
+  *Premium* và *Enhanced* đứng đầu;
+- mỗi giọng được viết sẵn đúng cách ghi vào sheet (`voices=…`), copy là dùng
+  được;
+- nếu không có giọng nào khớp, danh sách mã ngôn ngữ mà thiết bị có, để bạn thấy
+  có phải mã `tts=` của bạn là vấn đề không.
 
-On a phone each voice has a play button so you can hear it first. Joke voices
-(Zarvox, Bells, Bubbles and the like) are left out, and character voices shared
-by every language (Eddy, Flo, Grandma…) are folded behind a button.
+Trên điện thoại mỗi giọng có một nút play để nghe thử trước. Các giọng đùa
+(Zarvox, Bells, Bubbles và những giọng tương tự) bị bỏ ra, còn các giọng nhân vật
+dùng chung cho mọi ngôn ngữ (Eddy, Flo, Grandma…) được gom sau một nút bấm.
 
-## Installing voices
+## Cài giọng đọc
 
-A language with no voice installed is **silent, with no error**: the sheet is
-fine, the device is missing the voice.
+Ngôn ngữ chưa cài giọng nào sẽ **im lặng, không báo lỗi gì**: sheet không sai,
+chỉ là thiết bị thiếu giọng.
 
 - **Windows:** Settings → Time & Language → Speech.
 - **macOS:** System Settings → Accessibility → Spoken Content.
-- **iPhone and iPad:** Settings → Accessibility → Spoken Content → Voices.
-- **Android:** the text-to-speech settings of your phone, under Accessibility or
-  Languages.
+- **iPhone và iPad:** Settings → Accessibility → Spoken Content → Voices.
+- **Android:** phần cài đặt text-to-speech của điện thoại, nằm trong
+  Accessibility hoặc Languages.
 
-## Things to know
+## Cần biết
 
-- **One cell, one language.** Anki reads the whole field with one voice, so a
-  cell holding a Chinese sentence and its English translation is read entirely in
-  Chinese. Give each language its own column, each with its own `tts=`.
-- **An empty cell is not spoken.**
-- **`hint` hides text, not sound.** A column with both `hint` and `tts` is still
-  read when its side appears.
-- **`furigana` and `tts` together read the reading.** On a furigana column the
-  voice is given the reading in brackets, so `日本語[にほんご]` is spoken once,
-  correctly.
-- **Heard but not shown:** `side=hide; tts=…` reads a column without printing it;
-  see [the settings row](settings-row.md#heard-but-not-shown-sidehide-with-tts).
+- **Một ô, một ngôn ngữ.** Anki đọc cả field bằng một giọng, nên ô chứa một câu
+  tiếng Trung kèm bản dịch tiếng Anh sẽ bị đọc toàn bộ bằng tiếng Trung. Hãy để
+  mỗi ngôn ngữ một cột, mỗi cột có `tts=` riêng.
+- **Ô trống thì không được đọc.**
+- **`hint` giấu chữ, không giấu tiếng.** Cột có cả `hint` và `tts` vẫn được đọc
+  khi mặt của nó hiện ra.
+- **`furigana` đi cùng `tts` thì đọc phần phiên âm.** Trên cột furigana, giọng
+  đọc được đưa phần phiên âm trong ngoặc vuông, nên `日本語[にほんご]` được đọc
+  một lần, và đọc đúng.
+- **Nghe được nhưng không hiện:** `side=hide; tts=…` đọc một cột mà không in nó
+  lên card; xem [settings row](settings-row.md#nghe-duoc-nhung-khong-hien-sidehide-voi-tts).

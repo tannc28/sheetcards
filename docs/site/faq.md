@@ -1,113 +1,112 @@
-# FAQ and troubleshooting
+# FAQ và xử lý lỗi
 
-## Common messages
+## Các thông báo thường gặp
+
+Các thông báo dưới đây được giữ nguyên tiếng Anh, đúng như add-on hiện ra.
 
 **"This sheet isn't shared."**
-The sheet is private. In Google Sheets: **Share → General access → Anyone with
-the link → Viewer**.
+Sheet đang ở chế độ riêng tư. Trong Google Sheets: **Share → General access →
+Anyone with the link → Viewer**.
 
 **"This file isn't public."**
-The `.xlsx` link needs signing in. Make sure anyone with the link can open it.
+Link `.xlsx` đòi đăng nhập. Hãy chắc rằng ai có link cũng mở được.
 
 **"There's no sheet at this address."**
-The link is mistyped, or the file was deleted.
+Link bị gõ sai, hoặc file đã bị xoá.
 
 **"Can't reach Google."**
-No internet connection, or Google could not be reached. Try again.
+Không có mạng, hoặc không kết nối được tới Google. Thử lại.
 
 **"URL must be a Google Sheets edit URL…"**
-Paste the link from your browser's address bar, the one that looks like
+Dán link từ thanh địa chỉ của trình duyệt, link có dạng
 `https://docs.google.com/spreadsheets/d/…/edit…`.
 
 **"Refusing to download over 'http'…" / "…inside a private network"**
-The address must be public and start with `https`. See
-[Sheets, files and .apkg](sources.md#an-xlsx-file-instead-of-a-google-sheet).
+Địa chỉ phải là địa chỉ công khai và bắt đầu bằng `https`. Xem
+[Sheet, file và .apkg](sources.md#file-xlsx-thay-cho-google-sheet).
 
 **"Mandatory header missing: 'ID'"**
-Row 1 has no `ID` column. Only row 1 is read as the column names, so a title row
-above it breaks this.
+Dòng 1 không có cột `ID`. Chỉ dòng 1 được đọc làm tên cột, nên một dòng tiêu đề
+nằm phía trên nó sẽ gây ra lỗi này.
 
 **"The sheet has no content columns"**
-The sheet only has `ID`, `SYNC`, `TAGS` or `SUBDECK` columns. Add at least one
-column of your own.
+Sheet chỉ có các cột `ID`, `SYNC`, `TAGS` hoặc `SUBDECK`. Thêm ít nhất một cột
+của riêng bạn.
 
 **"Duplicate IDs in the spreadsheet"**
-Two or more rows share an `ID`, and only one of them reaches Anki. Give every row
-its own.
+Hai dòng trở lên dùng chung một `ID`, và chỉ một trong số đó vào được Anki. Hãy
+cho mỗi dòng một ID riêng.
 
 **"Sync safety: the spreadsheet returned no valid rows…"**
-Nothing was deleted, on purpose. Check that row 1 holds the column names and the
-`ID` column is filled, then sync again.
+Không có gì bị xoá, và đó là cố ý. Kiểm tra dòng 1 có chứa tên cột và cột `ID`
+đã được điền, rồi sync lại.
 
 **"AnkiWeb not configured - access Tools > Sync in Anki"**
-Sign in to AnkiWeb once through Anki's own **Tools → Sync**; the add-on uses
-that session.
+Đăng nhập AnkiWeb một lần qua **Tools → Sync** của chính Anki; add-on dùng phiên
+đăng nhập đó.
 
-## Cards and settings
+## Card và setting
 
-**I changed the settings row and nothing happened.**
-The settings row is read during a sync, so press `Ctrl+Shift+S` first. Then open
-**Card Layout…** (`Ctrl+Shift+C`) and look at **Warnings**: a misspelled key
-(`siz=48`) or a value out of range is reported there instead of being applied.
+**Tôi đã sửa settings row mà không thấy gì thay đổi.**
+Settings row được đọc trong lúc sync, nên hãy bấm `Ctrl+Shift+S` trước. Sau đó
+mở **Card Layout…** (`Ctrl+Shift+C`) và xem phần **Warnings**: key gõ sai
+(`siz=48`) hay giá trị nằm ngoài khoảng cho phép sẽ được báo ở đó thay vì được
+áp dụng.
 
-**A row full of `key=value` text became a card, or my first card is missing.**
-The settings row is recognised only when its `ID` cell starts with `#config`.
-Write `#config` alone, or `#config` followed by a space and the sheet-wide
-settings. Equally, a row whose `ID` happens to start with `#config` is treated as
-settings and never becomes a card.
+**Một dòng toàn chữ `key=value` lại thành card, hoặc card đầu tiên của tôi bị mất.**
+Settings row chỉ được nhận ra khi ô `ID` của nó bắt đầu bằng `#config`. Ghi
+`#config` một mình, hoặc `#config` rồi một dấu cách và các setting cho cả sheet.
+Ngược lại, dòng nào có `ID` tình cờ bắt đầu bằng `#config` sẽ bị coi là settings
+và không bao giờ thành card.
 
-**Text to speech is silent.**
-Check, in this order: the code is complete (`zh_CN`, not `zh`); the device has a
-voice for that language installed (open the **TTS voices** section on the back of
-the card to see what it has); the cell is not empty. See
-[Text to speech](tts.md).
+**Text to speech không phát ra tiếng.**
+Kiểm tra lần lượt: mã ngôn ngữ đầy đủ (`zh_CN`, không phải `zh`); thiết bị đã cài
+giọng cho ngôn ngữ đó (mở mục **TTS voices** ở mặt sau card để xem máy có gì); ô
+không bị trống. Xem [Text to speech](tts.md).
 
-**The wrong language is read for part of a card.**
-Anki reads a whole field with one voice. Put each language in its own column with
-its own `tts=`.
+**Một phần của card bị đọc sai ngôn ngữ.**
+Anki đọc cả field bằng một giọng. Hãy để mỗi ngôn ngữ một cột, với `tts=` riêng.
 
-**`furigana` prints nothing above the text.**
-The cell has to be written `推迟[tuī chí]`: text, then the reading in square
-brackets.
+**`furigana` không in gì phía trên chữ.**
+Ô phải được viết dạng `推迟[tuī chí]`: chữ, rồi cách đọc trong ngoặc vuông.
 
-**`reverse` does nothing on some sheets.**
-Cloze sheets cannot have reverse cards.
+**`reverse` không có tác dụng ở một số sheet.**
+Sheet cloze không có reverse card được.
 
-**A cloze card's question is blank, with `{{c1::…}}` printed on the back.**
-The sheet does not say which column holds the deletions. Add `cloze` to that
-column in the settings row. See [Card types](card-types.md#cloze).
+**Câu hỏi của card cloze bị trống, còn `{{c1::…}}` bị in ra ở mặt sau.**
+Sheet chưa nói cột nào chứa phần cần che. Thêm `cloze` vào cột đó trong settings
+row. Xem [Các loại card](card-types.md#cloze).
 
-**Pictures do not appear.**
-A picture pasted into a cell is not a link Anki can reach. Upload it somewhere
-with a link, put the link in the cell and mark the column `image`. The card then
-needs the internet to show it. See [Media](media.md).
+**Hình ảnh không hiện.**
+Hình dán thẳng vào ô không phải là link mà Anki lấy được. Hãy tải hình lên chỗ
+nào có link, đặt link vào ô và đánh dấu cột là `image`. Khi đó card cần có mạng
+để hiện hình. Xem [Hình ảnh, âm thanh và video](media.md).
 
-**A video shows an error.**
-The link names a channel, playlist or folder rather than one video, or the video
-does not allow embedding. The preview's warnings say which.
+**Video hiện lỗi.**
+Link trỏ tới một channel, playlist hoặc thư mục thay vì một video, hoặc video
+không cho phép nhúng. Phần cảnh báo trong Create deck sẽ cho biết là trường hợp nào.
 
-## Decks
+## Deck
 
-**Anki renamed my deck back after I renamed it.**
-That is expected: names come from the sheet. Rename the spreadsheet file instead.
-See [Syncing](syncing.md#names-come-from-the-sheet).
+**Tôi đổi tên deck rồi mà Anki lại đổi về tên cũ.**
+Đó là bình thường: tên lấy từ sheet. Hãy đổi tên file spreadsheet thay vì đổi
+tên deck. Xem [Sync](syncing.md#ten-lay-tu-sheet).
 
-**I renamed a sheet tab and its deck stopped updating.**
-A deck remembers its sheet by name. Connect the file again to pick up the new
-name.
+**Tôi đổi tên một tab sheet và deck của nó không còn cập nhật nữa.**
+Deck nhớ sheet của nó theo tên. Hãy kết nối lại file để add-on nhận tên mới.
 
-**I deleted a row but the card is still in Anki.**
-If you imported an `.apkg` from the preview, that is how imports work: they
-update and add but never delete. Syncing with the add-on does delete.
+**Tôi đã xoá một dòng mà card vẫn còn trong Anki.**
+Nếu bạn import file `.apkg` từ Create deck thì import vốn hoạt động như vậy: nó cập
+nhật và thêm mới nhưng không bao giờ xoá. Sync bằng add-on thì có xoá.
 
-**I set `SYNC` to no, but the card was not deleted.**
-That is on purpose: an unticked row is left as it is and stops being updated.
-Delete the row to delete the card.
+**Tôi đặt `SYNC` là no mà card không bị xoá.**
+Đó là cố ý: dòng không được tick sẽ được giữ nguyên và ngừng cập nhật. Muốn xoá
+card thì xoá dòng.
 
-## Anything else
+## Những vấn đề khác
 
-Turn on **Write a debug log** in **Settings…** (`Ctrl+Shift+O`), do whatever went
-wrong again, and look at `debug_sheetcards.log` (the **Open folder** button takes
-you there). Please report problems at
+Bật **Write a debug log** trong **Settings…** (`Ctrl+Shift+O`), làm lại thao tác
+bị lỗi, rồi xem file `debug_sheetcards.log` (nút **Open folder** sẽ đưa bạn tới
+đó). Hãy báo lỗi tại
 [github.com/tannc28/sheetcards/issues](https://github.com/tannc28/sheetcards/issues),
-and read the log before attaching it: it contains your sheet's content.
+và đọc qua file log trước khi đính kèm: nó chứa nội dung sheet của bạn.

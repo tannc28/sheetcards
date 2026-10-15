@@ -1,81 +1,80 @@
-# Themes and text
+# Theme và chữ
 
-How a card looks: its colour scheme, and the colour, typeface and direction of
-the words on it, plus the two kinds of cell that are not ordinary text. All of
-these are keys in the [settings row](settings-row.md).
+Trang này nói về vẻ ngoài của card: bảng màu (theme), rồi màu, font và hướng viết
+của chữ trên card, cộng thêm hai loại ô không phải chữ thường. Tất cả đều là key
+trong [settings row](settings-row.md).
 
-## Themes
+## Theme
 
-Without a theme a card has Anki's own colours. A theme colours the whole card.
-Name it in the settings row's marker cell:
+Không có theme thì card dùng màu mặc định của Anki. Theme tô màu cho cả card.
+Ghi tên theme trong ô đánh dấu của settings row:
 
 ```text
 #config theme=paper
 ```
 
-| Theme | What it looks like |
+| Theme | Trông như thế nào |
 | :--- | :--- |
-| `paper` | Warm paper and ink; the calmest for long sessions. |
-| `contrast` | Black and white with a blue accent (yellow at night), for weak eyes or a phone in sunlight. |
-| `matcha` | Soft green tea. |
-| `momiji` | Autumn: warm tones with maple leaves drawn behind the text. |
-| `yuki` | Winter: cool blue with snowflakes. |
-| `sakura` | Spring: cherry-blossom pink with blossoms drawn behind the text. |
+| `paper` | Giấy ấm và mực; dịu mắt nhất khi học lâu. |
+| `contrast` | Đen trắng, điểm nhấn màu xanh (ban đêm là màu vàng), cho người mắt kém hoặc khi dùng điện thoại ngoài nắng. |
+| `matcha` | Màu trà xanh nhẹ. |
+| `momiji` | Mùa thu: tông ấm, có lá phong vẽ phía sau chữ. |
+| `yuki` | Mùa đông: xanh lạnh, có bông tuyết. |
+| `sakura` | Mùa xuân: hồng hoa anh đào, có hoa vẽ phía sau chữ. |
 
-- Every theme has a light and a dark version, and follows Anki's night mode.
-- A theme sets what `color=muted` and `color=accent` mean, so columns using
-  them match the theme.
-- The leaves, snowflakes and blossoms are drawn by the card itself; they need no
-  internet.
-- A theme colours the card, not Anki around it: on a computer the top bar and
-  the answer buttons keep Anki's colours. On a phone the card fills the screen.
-- An unknown name is refused with a warning, and the card keeps Anki's colours.
+- Theme nào cũng có bản sáng và bản tối, và tự đổi theo night mode của Anki.
+- Theme quyết định `color=muted` và `color=accent` là màu gì, nên các cột dùng
+  hai giá trị này luôn hợp với theme.
+- Lá, bông tuyết và hoa do chính card vẽ ra; không cần mạng.
+- Theme tô màu card chứ không tô phần Anki xung quanh: trên máy tính, thanh trên
+  cùng và các nút trả lời vẫn giữ màu của Anki. Trên điện thoại thì card chiếm
+  cả màn hình.
+- Tên theme không có sẵn sẽ bị từ chối kèm cảnh báo, và card giữ màu của Anki.
 
-## Colour
+## Màu chữ
 
-`color=` takes one of:
+`color=` nhận một trong các giá trị:
 
-- **`muted`** or **`accent`**: a quiet grey and a highlight colour that follow
-  Anki's light and dark mode. Prefer these.
-- **A CSS colour name** such as `crimson` or `teal`.
-- **A `#hex` value** such as `#c2410c`.
+- **`muted`** hoặc **`accent`**: một màu xám dịu và một màu nổi bật, đổi theo
+  chế độ sáng/tối của Anki. Nên ưu tiên dùng hai giá trị này.
+- **Tên màu CSS** như `crimson` hay `teal`.
+- **Mã `#hex`** như `#c2410c`.
 
-A fixed colour stays the same in night mode, so `color=black` disappears on a
-dark card. `muted` and `accent` do not have that problem.
+Màu cố định thì vẫn giữ nguyên trong night mode, nên `color=black` sẽ biến mất
+trên card nền tối. `muted` và `accent` không bị vấn đề này.
 
-## Fonts for Chinese, Japanese and Korean
+## Font cho tiếng Trung, Nhật và Hàn
 
-Many Chinese, Japanese and Korean characters share one code but are drawn
-differently in each language: `直` and `骨` look different in a Chinese and a
-Japanese font. A device with only a Japanese font draws a Chinese deck in
-Japanese shapes. `font=` tells the card which one you mean:
+Nhiều chữ Trung, Nhật và Hàn dùng chung một mã nhưng mỗi ngôn ngữ vẽ một kiểu:
+`直` và `骨` trông khác nhau trong font tiếng Trung và font tiếng Nhật. Máy chỉ có
+font tiếng Nhật sẽ vẽ deck tiếng Trung bằng nét chữ Nhật. `font=` cho card biết
+bạn muốn kiểu nào:
 
-| Value | Font |
+| Giá trị | Font |
 | :--- | :--- |
-| `sc` | Noto Sans SC, Simplified Chinese |
-| `tc` | Noto Sans TC, Traditional Chinese |
-| `jp` | Noto Sans JP, Japanese |
-| `kr` | Noto Sans KR, Korean |
-| `serif`, `sans`, `mono` | The device's own serif, sans-serif or monospace font |
-| any other name | That font, if the device has it |
+| `sc` | Noto Sans SC, tiếng Trung giản thể |
+| `tc` | Noto Sans TC, tiếng Trung phồn thể |
+| `jp` | Noto Sans JP, tiếng Nhật |
+| `kr` | Noto Sans KR, tiếng Hàn |
+| `serif`, `sans`, `mono` | Font serif, sans-serif hoặc monospace có sẵn trên máy |
+| tên bất kỳ khác | Font đó, nếu máy có cài |
 
-The four Noto fonts are loaded from Google Fonts, so they need a connection the
-first time.
+Bốn font Noto được tải từ Google Fonts, nên lần đầu cần có mạng.
 
-## Writing direction
+## Hướng viết
 
-- **`rtl`** writes right to left, for Arabic, Hebrew and Persian. The text is
-  right-aligned unless `align` says otherwise.
-- **`vertical`** writes top to bottom, columns right to left, the way Japanese is
-  set in a book. Latin letters stay upright.
+- **`rtl`** viết từ phải sang trái, cho tiếng Ả Rập, Do Thái và Ba Tư. Chữ được
+  canh phải, trừ khi `align` ghi khác.
+- **`vertical`** viết từ trên xuống, các cột từ phải sang trái, như tiếng Nhật
+  in trong sách. Chữ Latin vẫn đứng thẳng.
 
-A column takes one direction; if both are written, `rtl` wins.
+Mỗi cột chỉ một hướng viết; nếu ghi cả hai thì `rtl` thắng.
 
-## Formulas and code
+## Công thức và code
 
-**`math`** says the cell is a formula written in LaTeX. Anki draws it with the
-MathJax it already ships, so nothing extra is needed. `math` keeps it in the
-line; `math=block` centres it on its own.
+**`math`** cho biết ô là một công thức viết bằng LaTeX. Anki vẽ nó bằng MathJax
+có sẵn, nên không cần cài thêm gì. `math` giữ công thức nằm trong dòng;
+`math=block` đặt nó căn giữa trên một dòng riêng.
 
 ```text
 ID       Formula               Meaning
@@ -83,12 +82,12 @@ ID       Formula               Meaning
 1        E = mc^2              mass-energy equivalence
 ```
 
-**`code`** says the cell is source code. It is kept exactly as typed, left
-aligned, and coloured by language: `code=python`, `code=bash`, `code=html`,
-`code=javascript` and so on. The colouring is done by highlight.js, loaded over
-the internet; without a connection the code is shown uncoloured.
+**`code`** cho biết ô là source code. Code được giữ nguyên như bạn gõ, canh trái,
+và tô màu theo ngôn ngữ: `code=python`, `code=bash`, `code=html`,
+`code=javascript`, v.v. Phần tô màu do highlight.js làm, tải qua mạng; không có
+mạng thì code hiện ra không màu.
 
-## Sort order in Anki's browser
+## Thứ tự sắp xếp trong Browse của Anki
 
-`sort` on a column makes Anki's browser list and sort the notes by that column.
-Without it they are listed by `ID`, which reads `w01, w02, w03`.
+`sort` trên một cột khiến Browse của Anki liệt kê và sắp xếp các note theo cột
+đó. Không có nó thì note được liệt kê theo `ID`, đọc lên là `w01, w02, w03`.

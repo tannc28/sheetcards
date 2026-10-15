@@ -3,7 +3,8 @@
 
 Four kinds of page: the landing page (``site/index.html``), the preview
 (``site/preview.html``), the settings-row editor (``site/editor.html``) and the
-documentation, written as Markdown under ``docs/site/`` and converted here.
+documentation, written as Markdown under ``docs/site/`` (Vietnamese, served at
+``/docs/``) and ``docs/site/en/`` (English, at ``/docs/en/``) and converted here.
 
 The site is static, but it is not self-contained in the repository on purpose:
 the Python it runs in the browser is copied straight out of ``src/`` at build
@@ -35,23 +36,49 @@ DOCS = REPO / "docs" / "site"
 OUT = REPO / "build" / "site"
 EXAMPLES = REPO / "examples" / "sheetcards-examples.xlsx"
 
-# The documentation's table of contents: (group, [page, ...]). A page is the
-# name of a Markdown file in docs/site/, and its title is that file's first
-# heading. Declared here rather than found, because order is information — the
-# build refuses a page that is missing from this list or a name with no file.
+# The documentation's table of contents: ({language: group}, [page, ...]). A
+# page is the name of a Markdown file, written once per language, and its title
+# is that file's first heading. Declared here rather than found, because order is
+# information — the build refuses a page missing from this list, or from either
+# language, and a name with no file.
 DOC_GROUPS = [
-    ("Start", ["index", "getting-started", "examples"]),
+    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples"]),
     (
-        "Write a sheet",
+        {"vi": "Viết sheet", "en": "Write a sheet"},
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
     ),
-    ("In Anki", ["menu", "syncing", "sources"]),
-    ("Help", ["faq", "developers"]),
+    ({"vi": "Trong Anki", "en": "In Anki"}, ["menu", "syncing", "sources"]),
+    ({"vi": "Trợ giúp", "en": "Help"}, ["faq", "developers"]),
 ]
 
-# Docs pages written in Vietnamese. The docs open on one: most readers are
-# Vietnamese, so the first page anyone lands on is in their language.
-VI_DOCS = {"index"}
+# The docs in each language: the folder under docs/site/ it is written in, which
+# is also the folder under /docs/ it is served from. Vietnamese is the docs'
+# front door, because most readers are Vietnamese; every page links its twin.
+DOC_LANGS = {"vi": "", "en": "en"}
+
+# The words the docs' own chrome says around a page, per language.
+DOC_CHROME = {
+    "vi": {
+        "nav": "Docs",
+        "contents": "Mục lục",
+        "pages": "Các trang khác",
+        "previous": "Trang trước",
+        "next": "Trang sau",
+        "permalink": "Link tới mục này",
+        "edit": "Sửa trang này trên GitHub",
+        "twin": "Read this page in English",
+    },
+    "en": {
+        "nav": "Documentation",
+        "contents": "Contents",
+        "pages": "More pages",
+        "previous": "Previous",
+        "next": "Next",
+        "permalink": "Link to this section",
+        "edit": "Edit this page on GitHub",
+        "twin": "Đọc trang này bằng tiếng Việt",
+    },
+}
 
 # The landing page's demo: (sheet in the example workbook, row ID, i18n key of
 # its label, theme). Real rows, rendered with the real templates — the page
@@ -268,18 +295,33 @@ def build_home_cards(out):
 # ---------------------------------------------------------------------------
 
 
-def _doc_names():
+def _doc_names(lang):
+    folder = DOCS / DOC_LANGS[lang]
     listed = [name for _, names in DOC_GROUPS for name in names]
-    found = sorted(p.stem for p in DOCS.glob("*.md"))
+    found = sorted(p.stem for p in folder.glob("*.md"))
     missing = sorted(set(listed) - set(found))
     unlisted = sorted(set(found) - set(listed))
     if missing or unlisted or len(listed) != len(set(listed)):
         sys.exit(
-            "docs/site and DOC_GROUPS disagree:"
+            f"{folder.relative_to(REPO)} and DOC_GROUPS disagree:"
             + (f"\n  listed but no file: {missing}" if missing else "")
             + (f"\n  file but not listed: {unlisted}" if unlisted else "")
         )
     return listed
+
+
+def _slug_vi(value, separator):
+    """An ASCII anchor for a Vietnamese heading: ``Đặt tên deck`` → ``dat-ten-deck``.
+
+    The toc extension's ``slugify`` already drops the tone marks, but ``đ`` has no
+    decomposition and would vanish (``at-ten-deck``); a heading in no Latin script
+    at all falls back to keeping its own letters.
+    """
+    from markdown.extensions.toc import slugify
+    from markdown.extensions.toc import slugify_unicode
+
+    ascii_value = value.replace("đ", "d").replace("Đ", "D")
+    return slugify(ascii_value, separator) or slugify_unicode(value, separator)
 
 
 def _href(name):
@@ -304,10 +346,10 @@ def _wrap_tables(text):
     )
 
 
-def _nav(current, titles, toc):
+def _nav(current, titles, toc, lang):
     parts = []
     for group, names in DOC_GROUPS:
-        parts.append(f'<p class="docnav-group">{html.escape(group)}</p><ul>')
+        parts.append(f'<p class="docnav-group">{html.escape(group[lang])}</p><ul>')
         for name in names:
             here = ' aria-current="page"' if name == current else ""
             parts.append(
@@ -325,49 +367,61 @@ def _nav(current, titles, toc):
     return "\n".join(parts)
 
 
-def _pager(names, index, titles):
+def _pager(names, index, titles, words):
     links = []
     if index > 0:
         prev = names[index - 1]
         links.append(
             f'<a class="prev" href="{_href(prev)}"><span data-icon="arrow-left">'
-            f"</span><span><small>Previous</small>{html.escape(titles[prev])}</span></a>"
+            f"</span><span><small>{words['previous']}</small>{html.escape(titles[prev])}</span></a>"
         )
     if index < len(names) - 1:
         nxt = names[index + 1]
         links.append(
-            f'<a class="next" href="{_href(nxt)}"><span><small>Next</small>'
+            f'<a class="next" href="{_href(nxt)}"><span><small>{words["next"]}</small>'
             f'{html.escape(titles[nxt])}</span><span data-icon="arrow-right"></span></a>'
         )
     return "\n".join(links)
 
 
 def build_docs(out):
-    """docs/site/*.md → out/docs/*.html, in the site's own chrome."""
+    """docs/site/**.md → out/docs/**.html, one tree per language."""
+    template = (SITE / "_docs.html").read_text(encoding="utf-8")
+    return sum(build_docs_in(out, lang, template) for lang in DOC_LANGS)
+
+
+def build_docs_in(out, lang, template):
     import markdown
     from markdown.extensions.toc import slugify_unicode
 
-    names = _doc_names()
-    template = (SITE / "_docs.html").read_text(encoding="utf-8")
-    sources = {n: (DOCS / f"{n}.md").read_text(encoding="utf-8") for n in names}
+    folder = DOC_LANGS[lang]
+    words = DOC_CHROME[lang]
+    names = _doc_names(lang)
+    source_dir = DOCS / folder
+    sources = {n: (source_dir / f"{n}.md").read_text(encoding="utf-8") for n in names}
     titles = {}
     for name, text in sources.items():
         heading = re.search(r"^# (.+)$", text, re.M)
         if not heading:
-            sys.exit(f"docs/site/{name}.md has no '# Title' line")
+            sys.exit(f"{source_dir.relative_to(REPO)}/{name}.md has no '# Title' line")
         titles[name] = heading.group(1).strip()
 
-    target = out / "docs"
-    target.mkdir()
+    # The other language's copy of a page: Vietnamese sits at /docs/, English
+    # one folder down at /docs/en/.
+    (twin_lang,) = set(DOC_LANGS) - {lang}
+    up = "../" if folder else ""
+    root = "../" + up
+    target = out / "docs" / folder
+    target.mkdir(parents=True, exist_ok=True)
     for index, name in enumerate(names):
         md = markdown.Markdown(
             extensions=["tables", "fenced_code", "toc", "sane_lists"],
             extension_configs={
                 "toc": {
-                    "slugify": slugify_unicode,
+                    "slugify": _slug_vi if lang == "vi" else slugify_unicode,
                     "permalink": "#",
                     "permalink_class": "headerlink",
-                    "permalink_title": "Link to this section",
+                    "permalink_title": words["permalink"],
                     "toc_depth": "2",
                 }
             },
@@ -377,13 +431,24 @@ def build_docs(out):
         first = re.search(r"<p>(.*?)</p>", body, re.S)
         summary = re.sub(r"<[^>]+>", "", first.group(1)) if first else ""
         summary = " ".join(summary.split())[:200]
+        twin = up + (DOC_LANGS[twin_lang] + "/" if DOC_LANGS[twin_lang] else "")
+        twin = (twin or "./") if name == "index" else twin + f"{name}.html"
+        source = "/".join(p for p in ("docs/site", folder, f"{name}.md") if p)
         page = (
             template.replace("%%TITLE%%", html.escape(titles[name]))
             .replace("%%DESCRIPTION%%", html.escape(summary))
-            .replace("%%LANG%%", "vi" if name in VI_DOCS else "en")
-            .replace("%%NAV%%", _nav(name, titles, toc))
-            .replace("%%PAGER%%", _pager(names, index, titles))
-            .replace("%%SOURCE%%", f"docs/site/{name}.md")
+            .replace("%%LANG%%", lang)
+            .replace("%%ROOT%%", root)
+            .replace("%%TWIN_LANG%%", twin_lang)
+            .replace("%%TWIN%%", twin)
+            .replace("%%TWIN_TEXT%%", words["twin"])
+            .replace("%%W_NAV%%", words["nav"])
+            .replace("%%W_CONTENTS%%", words["contents"])
+            .replace("%%W_PAGES%%", words["pages"])
+            .replace("%%W_EDIT%%", words["edit"])
+            .replace("%%NAV%%", _nav(name, titles, toc, lang))
+            .replace("%%PAGER%%", _pager(names, index, titles, words))
+            .replace("%%SOURCE%%", source)
             .replace("%%BODY%%", body)
         )
         (target / f"{name}.html").write_text(page, encoding="utf-8")

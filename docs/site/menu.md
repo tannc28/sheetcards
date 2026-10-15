@@ -1,75 +1,76 @@
-# Menu and shortcuts
+# Menu và phím tắt
 
-Everything is under **Tools → SheetCards** in Anki.
+Mọi thứ đều nằm trong **Tools → SheetCards** của Anki.
 
-| Menu item | Shortcut | What it does |
+| Menu item | Phím tắt | Chức năng |
 | :--- | :--- | :--- |
-| Connect a Google Sheet… | none | Adds decks from a sheet link |
-| Update Decks from Sheets… | `Ctrl+Shift+S` | Syncs the decks you tick |
-| Disconnect a Sheet… | none | Stops syncing a deck, and can delete it |
-| Card Layout… | `Ctrl+Shift+C` | Shows what the sheet's settings row said |
-| Settings… | `Ctrl+Shift+O` | AnkiWeb upload and the debug log |
+| Connect a Google Sheet… | không có | Thêm deck từ một link sheet |
+| Update Decks from Sheets… | `Ctrl+Shift+S` | Sync các deck bạn tick |
+| Disconnect a Sheet… | không có | Ngừng sync một deck, và có thể xoá nó |
+| Card Layout… | `Ctrl+Shift+C` | Cho xem settings row của sheet nói gì |
+| Settings… | `Ctrl+Shift+O` | Upload lên AnkiWeb và debug log |
 
-On macOS, `Cmd` replaces `Ctrl`. Connect and Disconnect have no shortcut because
-Anki already uses `Ctrl+Shift+A` (Add-ons) and `Ctrl+Shift+D` (Set Due Date).
+Trên macOS, `Cmd` thay cho `Ctrl`. Connect và Disconnect không có phím tắt vì
+Anki đã dùng `Ctrl+Shift+A` (Add-ons) và `Ctrl+Shift+D` (Set Due Date).
 
 ## Connect a Google Sheet…
 
-Paste the link to a Google Sheet, or to an `.xlsx` file. The window checks the
-link a moment after you stop typing, downloads it, and tells you what it found:
-the sheets, their rows, and the decks it will make. Each sheet with an `ID`
-column becomes a deck; see [Sheets, files and .apkg](sources.md).
+Dán link tới một Google Sheet, hoặc tới một file `.xlsx`. Cửa sổ kiểm tra link
+ngay sau khi bạn ngừng gõ, tải nó về và cho biết nó tìm thấy gì: các sheet, số
+dòng của từng sheet, và các deck sẽ được tạo. Mỗi sheet có cột `ID` thành một
+deck; xem [Sheet, file và .apkg](sources.md).
 
-- There is no name field: decks are named after the file and the sheet.
-- A sheet already connected cannot be added twice.
-- The sheet must be shared as **Anyone with the link → Viewer**.
+- Không có ô đặt tên: deck được đặt theo tên file và tên sheet.
+- Một sheet đã kết nối thì không thêm lần thứ hai được.
+- Sheet phải được chia sẻ ở chế độ **Anyone with the link → Viewer**.
 
-When nothing is connected yet, the other windows offer this one too.
+Khi chưa có sheet nào được kết nối, các cửa sổ khác cũng mở cửa sổ này cho bạn.
 
 ## Update Decks from Sheets…
 
-Lists every connected deck with a tick box and its card count. Your ticks are
-remembered for next time. Press **Update** to sync; see [Syncing](syncing.md).
+Liệt kê mọi deck đã kết nối, mỗi deck một ô tick kèm số card. Các ô bạn tick
+được nhớ cho lần sau. Bấm **Update** để sync; xem [Sync](syncing.md).
 
 ## Disconnect a Sheet…
 
-Tick the decks to stop syncing. One box decides what happens to them in Anki:
+Tick các deck muốn ngừng sync. Một ô tick quyết định chuyện gì xảy ra với chúng
+trong Anki:
 
-- **Left unticked (the default):** the decks, cards and review history stay in
-  Anki exactly as they are; only the link to the sheet is removed.
-- **Ticked, "Also delete the local decks, cards and note types":** the decks and
-  their subdecks, every card in them, and their SheetCards note types are deleted.
+- **Để trống (mặc định):** deck, card và lịch sử review vẫn nằm nguyên trong
+  Anki; chỉ có liên kết tới sheet bị gỡ.
+- **Tick ô "Also delete the local decks, cards and note types":** deck cùng các
+  subdeck, mọi card trong đó và các note type SheetCards của chúng đều bị xoá.
 
-Pressing Enter on the confirmation cancels rather than deletes. If you delete by
-mistake, Anki's **Edit → Undo** and its automatic backups (**Preferences →
-Backups**) can bring the collection back, and the sheet is still there to sync
-from. Review history of deleted cards cannot come back from the sheet.
+Bấm Enter ở hộp xác nhận sẽ huỷ chứ không xoá. Nếu lỡ xoá nhầm, **Edit → Undo**
+của Anki và các bản backup tự động (**Preferences → Backups**) có thể khôi phục
+collection, và sheet vẫn còn đó để sync lại. Riêng lịch sử review của các card
+đã xoá thì không lấy lại từ sheet được.
 
 ## Card Layout…
 
-A read-only window showing, for each deck, what the add-on understood from the
-sheet's [settings row](settings-row.md):
+Một cửa sổ chỉ để xem, cho biết với từng deck, add-on đã hiểu gì từ
+[settings row](settings-row.md) của sheet:
 
-- **Front** and **Back**: which columns go on each side, and which are hidden.
-- **Settings**: each column's settings as the add-on read them.
-- **Warnings**: everything it could not understand, by column.
-- **Preview**: the card design it built.
+- **Front** và **Back**: cột nào ở mặt nào, và cột nào bị ẩn.
+- **Settings**: setting của từng cột, đúng như add-on đọc được.
+- **Warnings**: mọi thứ nó không hiểu, theo từng cột.
+- **Preview**: thiết kế card mà nó dựng ra.
 
-It shows the result of the **last sync**, so after editing the sheet press
-`Ctrl+Shift+S` first. It has no editing controls on purpose: a card's look is
-changed in the sheet, so there is only one place it can be changed.
+Cửa sổ hiện kết quả của **lần sync gần nhất**, nên sau khi sửa sheet hãy bấm
+`Ctrl+Shift+S` trước. Nó cố ý không có nút chỉnh sửa: giao diện card được đổi
+trong sheet, nên chỉ có đúng một chỗ để đổi.
 
 ## Settings…
 
-Also opened by the **Config** button for SheetCards in **Tools → Add-ons**.
+Cũng mở được bằng nút **Config** của SheetCards trong **Tools → Add-ons**.
 
-- **Upload to AnkiWeb after a sync.** On by default. After a sync, Anki's own
-  sync runs, so new cards reach your phone without a second click. You need to
-  have signed in to AnkiWeb once through **Tools → Sync**.
-- **Write a debug log.** Off by default. Records every step of a sync in
-  `debug_sheetcards.log` in the add-on's folder; the window shows the path and
-  opens the folder. A second box chooses between a fresh log per sync and one
-  that keeps growing. Turn it on before reproducing a problem. The log contains
-  your sheet's content, so read it before sharing it publicly.
+- **Upload to AnkiWeb after a sync.** Bật sẵn. Sau khi sync xong, Anki tự chạy
+  sync của chính nó, nên card mới lên điện thoại mà không cần bấm thêm. Bạn cần
+  đăng nhập AnkiWeb một lần qua **Tools → Sync**.
+- **Write a debug log.** Tắt sẵn. Ghi lại từng bước của một lần sync vào
+  `debug_sheetcards.log` trong thư mục của add-on; cửa sổ hiện đường dẫn và mở
+  thư mục đó cho bạn. Một ô thứ hai chọn giữa log mới cho mỗi lần sync và một
+  log cứ dài thêm. Hãy bật nó trước khi làm lại một lỗi. Log có chứa nội dung
+  sheet của bạn, nên đọc qua trước khi chia sẻ công khai.
 
-Changes are saved when you press **Save**.
+Thay đổi được lưu khi bạn bấm **Save**.

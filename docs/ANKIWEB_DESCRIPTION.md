@@ -65,4 +65,4 @@ The add-on handles the rest, creating beautiful, organized notes in your collect
 
 👇 Full documentation and Instruction Manual
 
-[--> Documentation <--](https://tannc28.github.io/sheetcards/docs/)
+[--> Documentation <--](https://tannc28.github.io/sheetcards/docs/en/)
