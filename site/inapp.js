@@ -89,17 +89,21 @@ export function mountInAppBanner({ t, icon, nav = globalThis.navigator, doc = gl
   const app = inAppBrowser({ userAgent: nav.userAgent || "", standalone });
   if (!app) return "";
   const android = /Android/i.test(nav.userAgent || "");
+  // Taken now: a page may tidy its address once it has read it (Create sheet
+  // drops a shared sheet's #s= after opening it), and the sheet is what has
+  // to reach the other browser.
+  const href = doc.location.href;
   const say = (key) => `<span data-i18n="${key}">${t(key)}</span>`;
   const bar = doc.createElement("div");
   bar.className = "inapp";
   bar.setAttribute("role", "alert");
   bar.innerHTML =
     `<p class="inapp-text">${icon("triangle-alert")}<span><strong>` +
-    (app === "WebView" ? say("inappTitle") : `${say("inappTitleIn")} ${app}`) +
+    (app === "WebView" ? say("inappTitle") : `${say("inappTitleIn")} ${app}.`) +
     `</strong> ${say(android ? "inappAndroid" : "inappIos")}</span></p>` +
     '<p class="inapp-acts">' +
     (android
-      ? `<a class="btn" href="${chromeIntent(doc.location.href).replace(/"/g, "&quot;")}">` +
+      ? `<a class="btn" href="${chromeIntent(href).replace(/"/g, "&quot;")}">` +
         `${icon("external-link")}${say("inappOpenChrome")}</a>`
       : "") +
     `<button type="button" class="${android ? "toolbtn" : "btn"} inapp-copy">${icon("copy")}${say("inappCopy")}</button></p>` +
@@ -107,13 +111,13 @@ export function mountInAppBanner({ t, icon, nav = globalThis.navigator, doc = gl
   bar.querySelector(".inapp-copy").addEventListener("click", async () => {
     const label = bar.querySelector(".inapp-copy [data-i18n]");
     try {
-      await nav.clipboard.writeText(doc.location.href);
+      await nav.clipboard.writeText(href);
       label.dataset.i18n = "inappCopied";
       label.textContent = t("inappCopied");
     } catch {
       // No clipboard in this WebView: the address, to copy by hand.
       const line = bar.querySelector(".inapp-url");
-      line.textContent = doc.location.href;
+      line.textContent = href;
       line.hidden = false;
     }
   });
