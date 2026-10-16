@@ -66,7 +66,7 @@
   <!-- ==== step 1: where the sheet comes from ============================== -->
   <section id="entry" class="entry" aria-labelledby="entry-title">
     <h1 id="entry-title" class="entry-title" data-i18n="crTitle">Tạo flashcard Anki từ <mark>Google Sheets</mark></h1>
-    <p class="entry-lead" data-i18n="crLead">Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Không cần cài gì.</p>
+    <p class="entry-lead" data-i18n="crLead">Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Không cần cài add-on — chỉ cần app Anki để học.</p>
 
     <form id="entry-form" class="linkform" novalidate>
       <label class="linklabel" for="url" data-i18n="urlLabel">Link Google Sheets</label>
@@ -291,10 +291,20 @@
   <div class="devtabs" id="devtabs" role="tablist" aria-label="Thiết bị" data-i18n-attr="aria-label:deviceLabel"></div>
   <div class="devpanel" id="devpanel" role="tabpanel"></div>
   <div class="schemanote" id="done-schema" role="note" hidden></div>
+  <!-- Studying happens in Anki, and a newcomer may not have it yet. -->
+  <div class="needapp">
+    <strong data-i18n="ankiNeedTitle">Chưa có app Anki? Cài trước đã</strong>
+    <ul class="ankiapps compact" id="done-apps"></ul>
+  </div>
   <div class="assure">
     <span class="assure-icon" data-icon="history"></span>
     <div><strong data-i18n="assureTitle">Sửa sheet rồi tải lại? Cứ import đè.</strong>
       <p data-i18n="assureBody">Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.</p></div>
+  </div>
+  <div class="assure">
+    <span class="assure-icon" data-icon="link"></span>
+    <div><strong data-i18n="nextTimeTitle">Tuần sau thêm từ</strong>
+      <p data-i18n="nextTimeBody">Mở lại sheet — link sheet bạn đã lưu, file .csv hoặc Google Sheet của bạn — thêm từ, bấm Tạo flashcard, tải file .apkg mới rồi import. Card cũ được cập nhật, không nhân đôi.</p></div>
   </div>
   <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
   <div class="done-foot">

@@ -30,6 +30,7 @@ import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
 import { CARDS, HANZI_WRITER } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
+import { ankiAppsHtml, detectDevice } from "./devices.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -379,6 +380,14 @@ onRepaint((what) => {
   buildCards();
   show(state.at, state.phase);
 });
+
+// --- the Anki app ---------------------------------------------------------------
+//
+// Studying needs one of three apps; the reader's own device goes first.
+
+const paintApps = () => ($("#ankiapps").innerHTML = ankiAppsHtml(t, detectDevice(navigator)));
+paintApps();
+onRepaint((what) => what === "lang" && paintApps());
 
 // --- step 1, on the landing page ---------------------------------------------
 //

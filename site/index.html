@@ -10,14 +10,14 @@
   // were always asking for Sheet to Anki, so they are sent on to it before anything
   // is drawn. The fragments this page has of its own stay here.
   (function () {
-    var own = ["#main", "#why", "#how", "#features", "#addon"];
+    var own = ["#main", "#why", "#how", "#anki", "#features", "#addon"];
     if (location.search || (location.hash && own.indexOf(location.hash) < 0)) {
       location.replace("./create.html" + location.search + location.hash);
     }
   })();
 </script>
 <title data-i18n="titleHome">SheetCards — tạo deck Anki từ Google Sheets ngay trên điện thoại</title>
-<meta name="description" content="Dán link Google Sheets, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Miễn phí, chạy ngay trong trình duyệt.">
+<meta name="description" content="Dán link Google Sheets, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. SheetCards miễn phí, chạy ngay trong trình duyệt; học bằng app Anki.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -68,38 +68,47 @@
   <section class="hero-home">
    <div class="hero-inner">
     <div class="hero-text">
-      <p class="eyebrow"><span data-icon="sparkles"></span><span data-i18n="homeEyebrow">Miễn phí · Không cần cài đặt</span></p>
+      <p class="eyebrow"><span data-icon="sparkles"></span><span data-i18n="homeEyebrow">SheetCards miễn phí · Không cần tài khoản</span></p>
       <h1 class="display" data-i18n="homeTitle">Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.</h1>
       <p class="lead" data-i18n="homeLead">Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Sheet to Anki, xem trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.</p>
-      <!-- Sheet to Anki's first step, right here: a link goes over in ?url=, a file
-           through IndexedDB (handoff.js), so nothing is loaded on this page and
-           the learner never meets an empty form twice. -->
-      <form class="quick" id="quick" novalidate>
-        <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán link Google Sheets để bắt đầu</label>
-        <div class="quick-field">
-          <span class="quick-icon" data-icon="link"></span>
-          <input id="q-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
-                 aria-describedby="q-err"
-                 placeholder="https://docs.google.com/spreadsheets/d/…"
-                 data-i18n-attr="placeholder:homeLinkPlaceholder">
-          <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo flashcard</span><span data-icon="arrow-right"></span></button>
-        </div>
-        <p class="quick-err" id="q-err" role="alert" hidden></p>
-        <div class="quick-alt">
-          <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
-                  data-i18n="homeUpload">Upload file .xlsx / .csv</span></button>
-          <a class="quick-file" href="./create.html#example"><span data-icon="sparkles"></span><span
-             data-i18n="homeExample">Xem ví dụ</span></a>
-        </div>
-        <input id="q-file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" hidden>
-      </form>
-      <p class="quick-template"><span data-icon="pen-line"></span><span data-i18n="homeTemplateLead">Chưa có Google Sheet?</span>
-        <a href="./sheet.html" data-i18n="homeWriteHere">Soạn ngay trên web → Tạo Sheet</a>
-        <span aria-hidden="true">·</span>
-        <a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">file mẫu (.xlsx)</a>
-        <span aria-hidden="true">·</span>
-        <a href="./sheetcards-examples.xlsx" download data-i18n="homeExamplesFile">31 sheet ví dụ</a></p>
-      <p class="fine" data-i18n="homeRuns">Chạy ngay trong trình duyệt · Android, iPhone, máy tính</p>
+      <!-- Two doors, as equal as a phone allows: a sheet that exists already,
+           and one that does not yet. The first is Sheet to Anki's first step,
+           right here — a link goes over in ?url=, a file through IndexedDB
+           (handoff.js), so nothing is loaded on this page and the learner never
+           meets an empty form twice. The second is Create sheet. -->
+      <div class="doors">
+        <section class="door" aria-labelledby="door-have">
+          <h2 class="door-title" id="door-have"><span data-icon="link"></span><span data-i18n="doorHaveTitle">Đã có Google Sheet hoặc file</span></h2>
+          <form class="quick" id="quick" novalidate>
+            <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán link Google Sheets để bắt đầu</label>
+            <div class="quick-field">
+              <span class="quick-icon" data-icon="link"></span>
+              <input id="q-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+                     aria-describedby="q-err"
+                     placeholder="https://docs.google.com/spreadsheets/d/…"
+                     data-i18n-attr="placeholder:homeLinkPlaceholder">
+              <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo flashcard</span><span data-icon="arrow-right"></span></button>
+            </div>
+            <p class="quick-err" id="q-err" role="alert" hidden></p>
+            <div class="quick-alt">
+              <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
+                      data-i18n="homeUpload">Upload file .xlsx / .csv</span></button>
+              <a class="quick-file" href="./create.html#example"><span data-icon="sparkles"></span><span
+                 data-i18n="homeExample">Xem ví dụ</span></a>
+            </div>
+            <input id="q-file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" hidden>
+          </form>
+        </section>
+        <section class="door door-new" aria-labelledby="door-new">
+          <h2 class="door-title" id="door-new"><span data-icon="pen-line"></span><span data-i18n="doorNewTitle">Chưa có — soạn ngay trên web</span></h2>
+          <p class="door-text" data-i18n="doorNewText">Chọn một template, gõ từ ngay trên điện thoại, rồi bấm Tạo flashcard. Không cần Google Sheets, không cần máy tính.</p>
+          <a class="btn big door-go" href="./sheet.html"><span data-i18n="doorNewGo">Mở Tạo Sheet</span><span data-icon="arrow-right"></span></a>
+          <p class="door-files"><a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">file mẫu (.xlsx)</a>
+            <span aria-hidden="true">·</span>
+            <a href="./sheetcards-examples.xlsx" download data-i18n="homeExamplesFile">31 sheet ví dụ</a></p>
+        </section>
+      </div>
+      <p class="needanki"><img src="./anki.png" alt="" width="18" height="18"><span data-i18n="homeNeedAnki">Để học, bạn cần app Anki: AnkiDroid (Android, miễn phí), AnkiMobile (iPhone, trả phí) hoặc Anki trên máy tính (miễn phí). <a href="#anki">Cài app Anki</a></span></p>
     </div>
 
     <!-- The page's one claim, shown rather than said: a row of the example
@@ -171,9 +180,9 @@
     <h2 class="section-title reveal" id="why-title" data-i18n="whyTitle">Vì sao dùng Sheet to Anki</h2>
     <ul class="whys">
       <li class="why reveal"><span class="why-icon" data-icon="smartphone"></span>
-        <h3 data-i18n="whyPhoneTitle">Không cần máy tính</h3><p data-i18n="whyPhone">Dán link, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.</p></li>
+        <h3 data-i18n="whyPhoneTitle">Không cần máy tính</h3><p data-i18n="whyPhone">Soạn sheet, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.</p></li>
       <li class="why reveal"><span class="why-icon" data-icon="gift"></span>
-        <h3 data-i18n="whyFreeTitle">Miễn phí, không cần tài khoản</h3><p data-i18n="whyFree">Không đăng ký, không quảng cáo. Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.</p></li>
+        <h3 data-i18n="whyFreeTitle">SheetCards miễn phí, không cần tài khoản</h3><p data-i18n="whyFree">Không đăng ký, không quảng cáo. Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.</p></li>
       <li class="why reveal"><span class="why-icon" data-icon="sheet"></span>
         <h3 data-i18n="whySourceTitle">Sheet vẫn là bản gốc</h3><p data-i18n="whySource">Sửa và thêm từ ngay trong Google Sheets, soạn chung với bạn học hay giáo viên. Deck luôn được tạo lại từ sheet.</p></li>
       <li class="why reveal"><span class="why-icon" data-icon="history"></span>
@@ -184,11 +193,21 @@
   <section class="band how" id="how" aria-labelledby="how-title">
     <h2 class="section-title reveal" id="how-title" data-i18n="homeHow">Cách hoạt động</h2>
     <ol class="steps">
-      <li class="reveal"><h3 data-i18n="homeHow1Title">Soạn sheet</h3><p data-i18n="homeHow1">Trong Google Sheets, Excel, hoặc ngay trên web với <b>Tạo Sheet</b>. Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.</p></li>
-      <li class="reveal"><h3 data-i18n="homeHow2Title">Mở trong Sheet to Anki</h3><p data-i18n="homeHow2">Từ Tạo Sheet, bấm <b>Tạo flashcard</b> là xong. Từ Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. Xem lại từng card.</p></li>
-      <li class="reveal"><h3 data-i18n="homeHow3Title">Download .apkg</h3><p data-i18n="homeHow3">Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> hoặc Anki trên máy tính. Sửa sheet thì tải lại và import đè.</p></li>
+      <li class="reveal"><h3 data-i18n="homeHow1Title">Tạo template (cột & card)</h3><p data-i18n="homeHow1">Trong <b>Tạo Sheet</b>, chọn một template có sẵn: mỗi cột là một field, và settings row (dòng 2) quyết định card trông thế nào. Hoặc tự đặt tên cột trong Google Sheets hay Excel: <code>ID</code>, rồi cột nào bạn muốn.</p></li>
+      <li class="reveal"><h3 data-i18n="homeHow2Title">Thêm thẻ</h3><p data-i18n="homeHow2">Mỗi dòng là một từ, thành một card. Gõ ngay trên điện thoại trong Tạo Sheet rồi bấm <b>Tạo flashcard</b>. Soạn trong Google Sheets thì bấm <b>Share → General access → Anyone with the link → Viewer</b> rồi dán link vào Sheet to Anki.</p></li>
+      <li class="reveal"><h3 data-i18n="homeHow3Title">Tải .apkg, mở bằng app Anki</h3><p data-i18n="homeHow3">Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> hoặc Anki trên máy tính. Lần sau thêm từ: mở lại sheet, thêm từ, tải file mới và import đè — card cũ được cập nhật, không nhân đôi.</p></li>
     </ol>
-    <p class="how-cta reveal"><a class="btn big" href="./create.html"><span data-i18n="homeTry">Sheet to Anki</span><span data-icon="arrow-right"></span></a></p>
+    <p class="how-cta reveal"><a class="btn big" href="./sheet.html"><span data-i18n="navSheet">Tạo Sheet</span><span data-icon="arrow-right"></span></a>
+      <a class="btn big btn-quiet" href="./create.html"><span data-i18n="homeTry">Sheet to Anki</span><span data-icon="arrow-right"></span></a></p>
+  </section>
+
+  <!-- The one thing SheetCards cannot do for anyone: studying happens in Anki,
+       and on an iPhone that app is paid. Said before the features, plainly. -->
+  <section class="band" id="anki" aria-labelledby="anki-title">
+    <h2 class="section-title reveal" id="anki-title" data-i18n="ankiTitle">Bạn cần app Anki để học</h2>
+    <p class="anki-lead reveal" data-i18n="ankiLead">SheetCards làm ra file .apkg; học và ôn bài diễn ra trong app Anki. Cài app cho máy của bạn trước, rồi mở file .apkg bằng app đó.</p>
+    <ul class="ankiapps reveal" id="ankiapps"></ul>
+    <p class="fine reveal" data-i18n="ankiPaidNote">SheetCards miễn phí. AnkiDroid và Anki trên máy tính cũng miễn phí; riêng AnkiMobile trên iPhone/iPad là app trả phí của nhóm làm ra Anki — giá có thể khác theo quốc gia, xem trong App Store.</p>
   </section>
 
   <section class="band" id="features" aria-labelledby="features-title">
@@ -197,7 +216,7 @@
       <li class="feature reveal"><span class="feat-icon" data-icon="languages"></span>
         <h3 data-i18n="featColumnsTitle">Cột của bạn, tiếng gì cũng được</h3><p data-i18n="featColumns">Đặt tên cột là <code>Word</code>, <code>Nghĩa</code> hay <code>汉字</code>. Mỗi cột thành một field trong Anki.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="sliders-horizontal"></span>
-        <h3 data-i18n="featSettingsTitle">Một settings row</h3><p data-i18n="featSettings">Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.</p></li>
+        <h3 data-i18n="featSettingsTitle">Một settings row</h3><p data-i18n="featSettings">Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không cần đụng tới card template của Anki.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="volume-2"></span>
         <h3 data-i18n="featSpeechTitle">Đọc thành tiếng</h3><p data-i18n="featSpeech">Thêm <code>tts=en_US</code> là Anki đọc cột đó bằng giọng có sẵn trên máy.</p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="keyboard"></span>
@@ -225,7 +244,7 @@
       <a class="btn big" href="https://github.com/tannc28/sheetcards/releases/latest/download/sheetcards.ankiaddon"><img
          class="anki-mark" src="./anki.png" alt="" width="18" height="18"><span
          data-i18n="homeDownload">Tải về</span><span class="ext" translate="no">.ankiaddon</span></a>
-      <p class="fine" data-i18n="homeNeeds">Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính</p>
+      <p class="fine" data-i18n="homeNeeds">Add-on miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính</p>
     </div>
     <ol class="install">
       <li data-i18n="homeInstall1">Tải file <code>sheetcards.ankiaddon</code>.</li>

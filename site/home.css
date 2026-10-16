@@ -114,7 +114,37 @@ a.btn, a.btn-quiet { text-decoration: none; }
 /* The product's first step, as the hero's call to action: one big field that
    takes the link, the button that makes the deck, and the two other ways in.
    It reads as the thing to do on arrival, not as a form to fill in later. */
-.quick { margin: 1.9rem 0 0; max-width: 40rem; }
+/* Two doors of one weight: a sheet that exists, and one written here. */
+.doors { display: grid; gap: 14px; margin: 1.9rem 0 0; max-width: 40rem; }
+.door {
+  padding: 18px; border-radius: 22px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line);
+}
+.door-title {
+  display: flex; align-items: center; gap: 9px; margin: 0 0 .9rem;
+  font-size: var(--t-lg); font-weight: 750; letter-spacing: -.01em;
+}
+.door-title .icon { color: var(--accent); width: 20px; height: 20px; }
+.door-text { margin: 0 0 1rem; color: var(--muted); }
+.door-go { min-height: 52px; border-radius: 13px; }
+.door-files { margin: .9rem 0 0; font-size: var(--t-sm); color: var(--muted); }
+.door-files a { font-weight: 650; color: var(--accent); }
+@media (max-width: 30rem) {
+  .door { padding: 14px; }
+  .door-go { width: 100%; }
+}
+@media (min-width: 100rem) { .doors { max-width: 46rem; } }
+.needanki {
+  display: flex; gap: 9px; align-items: flex-start; max-width: 40rem;
+  margin: 1.1rem 0 0; font-size: var(--t-sm); color: var(--muted);
+}
+.needanki img { flex: none; border-radius: 4px; margin-top: 2px; }
+.needanki a { font-weight: 650; color: var(--accent); }
+.anki-lead { margin: 0 0 1.5rem; color: var(--muted); max-width: 44rem; }
+#anki > .fine { max-width: 44rem; margin-top: 1.25rem; }
+
+.quick { margin: 0; }
 .quick-label { display: block; margin: 0 0 .6rem; font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
 .quick-field {
   display: flex; align-items: center; gap: 8px;
@@ -164,7 +194,6 @@ a.btn, a.btn-quiet { text-decoration: none; }
   .quick-field .btn.big { flex: 1 1 100%; }
   .quick-alt > * { flex: 1 1 100%; justify-content: center; }
 }
-@media (min-width: 100rem) { .quick { max-width: 46rem; } }
 
 /* A file dragged over the page: the whole window is the target. */
 .dropzone {
@@ -531,7 +560,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .steps h3 { margin: 0 0 .35rem; font-size: var(--t-lg); font-weight: 750; }
 .steps p { margin: 0; color: var(--muted); }
 .steps b, .install b { color: var(--ink); font-weight: 650; }
-.how-cta { margin: 2.25rem 0 0; }
+.how-cta { margin: 2.25rem 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
 
 .features {
   list-style: none; margin: 0; padding: 0;

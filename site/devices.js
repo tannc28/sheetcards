@@ -39,3 +39,45 @@ export function detectDevice({ userAgent = "", maxTouchPoints = 0 } = {}) {
   if (/Macintosh/i.test(userAgent) && maxTouchPoints > 1) return "ios";
   return "desktop";
 }
+
+/**
+ * Where each Anki comes from, and what it costs. Studying happens in one of
+ * these, never on this site, and on an iPhone the only one is paid — said in
+ * so many words, since "free" on this site means SheetCards and only that.
+ * AnkiMobile's price was read off the App Store in October 2026 (799.000đ in
+ * Vietnam, US$24.99 in the US); the strings say it varies by country.
+ */
+export const ANKI_APPS = {
+  android: {
+    url: "https://play.google.com/store/apps/details?id=com.ichi2.anki",
+    store: "Google Play",
+    price: "ankiFree",
+  },
+  ios: {
+    url: "https://apps.apple.com/app/ankimobile-flashcards/id373493387",
+    store: "App Store",
+    price: "ankiPaidIos",
+  },
+  desktop: { url: "https://apps.ankiweb.net/", store: "apps.ankiweb.net", price: "ankiFree" },
+};
+
+/**
+ * The three apps as list items, the reader's own device first and marked.
+ * `t` is the page's translator, so this module stays free of the DOM.
+ */
+export function ankiAppsHtml(t, mine = "", { only = false } = {}) {
+  const order = only ? [mine] : mine ? [mine, ...DEVICES.filter((d) => d !== mine)] : DEVICES;
+  return order
+    .map((d) => {
+      const app = ANKI_APPS[d];
+      const [name, sub] = DEVICE_LABELS[d];
+      return (
+        `<li${d === mine ? ' class="mine"' : ""}><a class="ankiapp" href="${app.url}" rel="noopener" target="_blank">` +
+        '<img src="./anki.png" alt="" width="32" height="32">' +
+        `<span class="ankiapp-text"><strong>${t(name)}</strong><span>${t(sub)}</span>` +
+        `<span class="ankiapp-price ${app.price === "ankiFree" ? "free" : "paid"}">${t(app.price)}</span></span>` +
+        `<span class="ankiapp-store">${d === mine && !only ? `<em>${t("ankiYours")}</em>` : ""}${t("ankiGetAt", app.store)}</span></a></li>`
+      );
+    })
+    .join("");
+}

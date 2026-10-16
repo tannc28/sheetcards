@@ -1359,3 +1359,33 @@ iframe#card {
   margin-top: 8px !important; padding: 8px 10px 8px 30px;
   font-family: var(--mono); font-size: var(--t-xs); word-break: break-all; user-select: all;
 }
+
+/* ---- the three Anki apps (devices.js ankiAppsHtml) ------------------------ */
+.ankiapps {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}
+.ankiapp {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 4px 12px; align-items: start;
+  height: 100%; padding: 14px 16px; border-radius: 16px;
+  background: var(--panel); border: 1px solid var(--line);
+  color: var(--ink); text-decoration: none;
+}
+.ankiapp:hover { border-color: var(--accent); }
+.ankiapps .mine .ankiapp { border: 1.5px solid var(--accent); }
+.ankiapp img { border-radius: 7px; }
+.ankiapp-text { display: grid; gap: 1px; font-size: var(--t-sm); color: var(--muted); }
+.ankiapp-text strong { font-size: var(--t-base); color: var(--ink); }
+.ankiapp-price { margin-top: 4px; font-weight: 650; }
+.ankiapp-price.free { color: var(--ok); }
+.ankiapp-price.paid { color: var(--warn); }
+.ankiapp-store {
+  grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-size: var(--t-sm); font-weight: 650; color: var(--accent);
+}
+.ankiapp-store em {
+  font-style: normal; font-size: var(--t-xs); padding: 1px 8px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.ankiapps.compact { grid-template-columns: 1fr; margin-top: 8px; }
+.ankiapps.compact .ankiapp { padding: 10px 12px; }

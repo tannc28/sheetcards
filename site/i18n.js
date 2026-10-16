@@ -63,7 +63,7 @@ const STRINGS = {
   // --- the landing page ---------------------------------------------------
   // Written for somebody who has never used an add-on: what it does, the one
   // file to download, the three steps that get it into Anki, and nothing else.
-  homeEyebrow: { en: "Free · Nothing to install", vi: "Miễn phí · Không cần cài đặt" },
+  homeEyebrow: { en: "SheetCards is free · No account", vi: "SheetCards miễn phí · Không cần tài khoản" },
   homeTitle: {
     en: "Turn a Google Sheet into an Anki deck — <mark>right on your phone</mark>.",
     vi: "Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.",
@@ -80,8 +80,8 @@ const STRINGS = {
   homeDownload: { en: "Download", vi: "Tải về" },
   homeTry: { en: "Sheet to Anki", vi: "Sheet to Anki" },
   homeNeeds: {
-    en: "Free and open source · Anki 25.x or later on a computer",
-    vi: "Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
+    en: "The add-on is free and open source · Anki 25.x or later on a computer",
+    vi: "Add-on miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
   },
 
   // The demo: a row of the example workbook and the card it becomes.
@@ -110,8 +110,8 @@ const STRINGS = {
   },
   featSettingsTitle: { en: "One row of settings", vi: "Một settings row" },
   featSettings: {
-    en: "Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No template editing.",
-    vi: "Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không phải sửa template.",
+    en: "Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No card template to edit in Anki.",
+    vi: "Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không cần đụng tới card template của Anki.",
   },
   featSpeechTitle: { en: "Read aloud", vi: "Đọc thành tiếng" },
   featSpeech: {
@@ -130,35 +130,41 @@ const STRINGS = {
   },
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
-  homeHow1Title: { en: "Write a sheet", vi: "Soạn sheet" },
+  homeHow1Title: { en: "Make a template (columns & card)", vi: "Tạo template (cột & card)" },
   homeHow1: {
     en:
-      "In Google Sheets, in Excel, or right here with <b>Create sheet</b>. Row 1 holds " +
-      "the column names: <code>ID</code>, then any columns you like. Each row below is a card.",
+      "In <b>Create sheet</b>, pick a ready-made template: each column is a field, and the " +
+      "settings row (row 2) decides how the card looks. Or name the columns yourself in " +
+      "Google Sheets or Excel: <code>ID</code>, then any columns you like.",
     vi:
-      "Trong Google Sheets, Excel, hoặc ngay trên web với <b>Tạo Sheet</b>. Dòng 1 là " +
-      "tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.",
+      "Trong <b>Tạo Sheet</b>, chọn một template có sẵn: mỗi cột là một field, và settings " +
+      "row (dòng 2) quyết định card trông thế nào. Hoặc tự đặt tên cột trong Google Sheets " +
+      "hay Excel: <code>ID</code>, rồi cột nào bạn muốn.",
   },
-  homeHow2Title: { en: "Open it in Sheet to Anki", vi: "Mở trong Sheet to Anki" },
+  homeHow2Title: { en: "Add cards", vi: "Thêm thẻ" },
   homeHow2: {
     en:
-      "From Create sheet, one tap on <b>Make flashcards</b>. From Google Sheets: " +
-      "<b>Share → General access → Anyone with the link → Viewer</b>, then paste the link. " +
-      "Look through the cards one by one.",
+      "Each row is one word, and becomes a card. Type them on your phone in Create sheet and " +
+      "press <b>Make flashcards</b>. Writing in Google Sheets instead? Press " +
+      "<b>Share → General access → Anyone with the link → Viewer</b> and paste the link " +
+      "into Sheet to Anki.",
     vi:
-      "Từ Tạo Sheet, bấm <b>Tạo flashcard</b> là xong. Từ Google Sheets: " +
-      "<b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. " +
-      "Xem lại từng card.",
+      "Mỗi dòng là một từ, thành một card. Gõ ngay trên điện thoại trong Tạo Sheet rồi bấm " +
+      "<b>Tạo flashcard</b>. Soạn trong Google Sheets thì bấm " +
+      "<b>Share → General access → Anyone with the link → Viewer</b> rồi dán link vào " +
+      "Sheet to Anki.",
   },
-  homeHow3Title: { en: "Download .apkg", vi: "Download .apkg" },
+  homeHow3Title: { en: "Download the .apkg, open it in Anki", vi: "Tải .apkg, mở bằng app Anki" },
   homeHow3: {
     en:
       "Press <b>Download .apkg</b> and open the file in <b>AnkiDroid</b>, " +
-      "<b>AnkiMobile</b> or Anki on a computer. Changed the sheet? Download again and " +
-      "import over it.",
+      "<b>AnkiMobile</b> or Anki on a computer. Adding words later: open the sheet again, " +
+      "add them, download a new file and import it over the old one — the cards you have " +
+      "are updated, not doubled.",
     vi:
       "Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> " +
-      "hoặc Anki trên máy tính. Sửa sheet thì tải lại và import đè.",
+      "hoặc Anki trên máy tính. Lần sau thêm từ: mở lại sheet, thêm từ, tải file mới và " +
+      "import đè — card cũ được cập nhật, không nhân đôi.",
   },
   homeInstall1: {
     en: "Download <code>sheetcards.ankiaddon</code>.",
@@ -1065,10 +1071,10 @@ const STRINGS = {
   crLead: {
     en:
       "Paste your sheet's link, look through the cards, then download an .apkg that " +
-      "AnkiDroid, AnkiMobile or Anki on a computer opens. Nothing to install.",
+      "AnkiDroid, AnkiMobile or Anki on a computer opens. No add-on to install — just the Anki app to study with.",
     vi:
       "Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, " +
-      "AnkiMobile hoặc Anki trên máy tính. Không cần cài gì.",
+      "AnkiMobile hoặc Anki trên máy tính. Không cần cài add-on — chỉ cần app Anki để học.",
   },
   paste: { en: "Paste", vi: "Dán" },
   emptyLink: {
@@ -1194,6 +1200,30 @@ const STRINGS = {
   downloadAgain: { en: "No file? Download again", vi: "Không thấy file? Tải lại" },
   doneOk: { en: "Done", vi: "Xong" },
 
+  // --- the Anki app, which studying needs ---------------------------------------
+  ankiTitle: { en: "You need the Anki app to study", vi: "Bạn cần app Anki để học" },
+  ankiLead: {
+    en: "SheetCards makes the .apkg file; studying and reviewing happen in the Anki app. Install the app for your device first, then open the .apkg with it.",
+    vi: "SheetCards làm ra file .apkg; học và ôn bài diễn ra trong app Anki. Cài app cho máy của bạn trước, rồi mở file .apkg bằng app đó.",
+  },
+  ankiPaidNote: {
+    en: "SheetCards is free. AnkiDroid and Anki on a computer are free too; only AnkiMobile on iPhone/iPad is a paid app, from the people who make Anki — the price varies by country, see the App Store.",
+    vi: "SheetCards miễn phí. AnkiDroid và Anki trên máy tính cũng miễn phí; riêng AnkiMobile trên iPhone/iPad là app trả phí của nhóm làm ra Anki — giá có thể khác theo quốc gia, xem trong App Store.",
+  },
+  ankiFree: { en: "Free", vi: "Miễn phí" },
+  ankiPaidIos: {
+    en: "Paid, one-time: 799,000₫ in Vietnam, US$24.99 in the US",
+    vi: "Trả phí một lần: 799.000đ ở Việt Nam, 24,99 USD ở Mỹ",
+  },
+  ankiYours: { en: "Your device", vi: "Máy của bạn" },
+  ankiGetAt: { en: (store) => `Get it on ${store}`, vi: (store) => `Tải ở ${store}` },
+  ankiNeedTitle: { en: "No Anki app yet? Install one first", vi: "Chưa có app Anki? Cài trước đã" },
+  nextTimeTitle: { en: "Adding words next week", vi: "Tuần sau thêm từ" },
+  nextTimeBody: {
+    en: "Open the sheet again — the sheet link you saved, your .csv file or your Google Sheet — add the words, press Make flashcards, download the new .apkg and import it. Your old cards are updated, not doubled.",
+    vi: "Mở lại sheet — link sheet bạn đã lưu, file .csv hoặc Google Sheet của bạn — thêm từ, bấm Tạo flashcard, tải file .apkg mới rồi import. Card cũ được cập nhật, không nhân đôi.",
+  },
+
   // --- the landing page, continued ------------------------------------------
   homeExample: { en: "See an example", vi: "Xem ví dụ" },
   homeLinkLabel: { en: "Paste a Google Sheets link to start", vi: "Dán link Google Sheets để bắt đầu" },
@@ -1203,8 +1233,17 @@ const STRINGS = {
   },
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
-  homeTemplateLead: { en: "No Google Sheet?", vi: "Chưa có Google Sheet?" },
-  homeWriteHere: { en: "Write one on the web → Create sheet", vi: "Soạn ngay trên web → Tạo Sheet" },
+  doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
+  doorNewTitle: { en: "Not yet — write one on the web", vi: "Chưa có — soạn ngay trên web" },
+  doorNewText: {
+    en: "Pick a template, type your words right on your phone, then press Make flashcards. No Google Sheets, no computer.",
+    vi: "Chọn một template, gõ từ ngay trên điện thoại, rồi bấm Tạo flashcard. Không cần Google Sheets, không cần máy tính.",
+  },
+  doorNewGo: { en: "Open Create sheet", vi: "Mở Tạo Sheet" },
+  homeNeedAnki: {
+    en: 'To study, you need the Anki app: AnkiDroid (Android, free), AnkiMobile (iPhone, paid) or Anki on a computer (free). <a href="#anki">Get Anki</a>',
+    vi: 'Để học, bạn cần app Anki: AnkiDroid (Android, miễn phí), AnkiMobile (iPhone, trả phí) hoặc Anki trên máy tính (miễn phí). <a href="#anki">Cài app Anki</a>',
+  },
   homeTemplate: { en: "starter file (.xlsx)", vi: "file mẫu (.xlsx)" },
   homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
   homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
@@ -1256,18 +1295,14 @@ const STRINGS = {
     en: "This file's text could not be read: it is not UTF-8 and no Windows code page fits. In Excel, choose Save As → “CSV UTF-8”, then open that file.",
     vi: "Không đọc được chữ trong file này: không phải UTF-8 và không khớp bảng mã Windows nào. Trong Excel, chọn Save As → “CSV UTF-8” rồi mở file đó.",
   },
-  homeRuns: {
-    en: "Runs in your browser · Android, iPhone, computer",
-    vi: "Chạy ngay trong trình duyệt · Android, iPhone, máy tính",
-  },
   demoImported: { en: "Imported into AnkiDroid", vi: "Đã import vào AnkiDroid" },
   whyTitle: { en: "Why Sheet to Anki", vi: "Vì sao dùng Sheet to Anki" },
   whyPhoneTitle: { en: "No computer needed", vi: "Không cần máy tính" },
   whyPhone: {
-    en: "Paste the link, check the cards, download the file and open it in AnkiDroid or AnkiMobile — every step works on a phone.",
-    vi: "Dán link, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.",
+    en: "Write the sheet, check the cards, download the file and open it in AnkiDroid or AnkiMobile — every step works on a phone.",
+    vi: "Soạn sheet, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.",
   },
-  whyFreeTitle: { en: "Free, no account", vi: "Miễn phí, không cần tài khoản" },
+  whyFreeTitle: { en: "SheetCards is free, no account", vi: "SheetCards miễn phí, không cần tài khoản" },
   whyFree: {
     en: "No sign-up, no ads. Your sheet is read right in your browser and sent to no server.",
     vi: "Không đăng ký, không quảng cáo. Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.",
