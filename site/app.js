@@ -18,6 +18,7 @@ import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
+import { takeFile } from "./handoff.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 
@@ -226,6 +227,10 @@ const state = {
 // Beside the card from here up; a bottom sheet below. The card needs ~22rem and
 // the deck panel ~19rem, so two columns start being comfortable at 60rem.
 const WIDE = matchMedia("(min-width: 60rem)");
+// Wide enough for a third column: the Sheet view stops being a toggle under the
+// card and stands open beside it, so a big screen shows the sheet and the card
+// it makes at once instead of leaving both margins empty.
+const XWIDE = matchMedia("(min-width: 100rem)");
 const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 const TOUCH = matchMedia("(hover: none)");
 
@@ -260,6 +265,7 @@ function setStage(stage) {
   if (stage === "empty") $("#toast").hidden = true;
   paintRail();
   placeDeckPanel();
+  placeSheetView();
 }
 
 /** The step rail: what is done, what is now, what is next. */
@@ -1527,6 +1533,21 @@ function placeDeckPanel() {
 }
 WIDE.addEventListener("change", placeDeckPanel);
 
+/** Beside the card on a very wide screen, behind its toggle everywhere else. */
+function placeSheetView() {
+  const view = $("#sheetview");
+  const beside = XWIDE.matches && state.stage === "review";
+  $("#open-sheet").hidden = beside;
+  if (beside) {
+    view.hidden = false;
+    if (state.analysis) paintSheetView(state.analysis);
+  } else if (view.dataset.beside) {
+    view.hidden = $("#open-sheet").getAttribute("aria-expanded") !== "true";
+  }
+  view.dataset.beside = beside ? "1" : "";
+}
+XWIDE.addEventListener("change", placeSheetView);
+
 function openDeckPanel() {
   const dlg = $("#deckpanel");
   if (WIDE.matches) {
@@ -1966,6 +1987,7 @@ $("#open-sheet").addEventListener("click", () => {
   const view = $("#sheetview");
   view.hidden = !view.hidden;
   $("#open-sheet").setAttribute("aria-expanded", String(!view.hidden));
+  view.dataset.beside = "";
   if (!view.hidden) {
     paintSheetView(state.analysis);
     view.scrollIntoView({ block: "start", behavior: STILL.matches ? "auto" : "smooth" });
@@ -2113,7 +2135,19 @@ if (asked) $("#url").value = asked;
 else if (location.hash === "#example") $("#url").value = DEMO_SHEET;
 setStage("empty");
 if ($("#url").value) submit();
-else bootStatus();
+else if (location.hash === "#file") {
+  // A file picked on the landing page, handed over through IndexedDB. The hash
+  // goes at once: it names a one-off delivery, not something to come back to.
+  history.replaceState(null, "", location.pathname);
+  setStage("loading");
+  takeFile().then((file) => {
+    if (file) whenReady(() => previewFile(file));
+    else {
+      setStage("empty");
+      bootStatus();
+    }
+  });
+} else bootStatus();
 
 boot()
   .then(() => {

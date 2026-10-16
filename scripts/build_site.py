@@ -37,6 +37,26 @@ DOCS = REPO / "docs" / "site"
 OUT = REPO / "build" / "site"
 EXAMPLES = REPO / "examples" / "sheetcards-examples.xlsx"
 
+# The file a learner downloads from the landing page to start from: one sheet,
+# four columns, a settings row and three words — the smallest sheet that already
+# makes a good card. Served beside the example workbook, which is copied in too,
+# so both downloads are same-origin files rather than GitHub pages.
+STARTER_NAME = "sheetcards-mau.xlsx"
+STARTER = {
+    "Vocabulary": [
+        ["ID", "Word", "Meaning", "Example"],
+        [
+            "#config",
+            "size=44; bold; tts=en_US",
+            "side=back; size=22",
+            "side=back; color=muted; italic; tts=en_US",
+        ],
+        ["w01", "hello", "xin chào", "Hello, how are you today?"],
+        ["w02", "thank you", "cảm ơn", "Thank you for your help."],
+        ["w03", "goodbye", "tạm biệt", "Goodbye, see you tomorrow."],
+    ],
+}
+
 # The documentation's table of contents: ({language: group}, [page, ...]). A
 # page is the name of a Markdown file, written once per language, and its title
 # is that file's first heading. Declared here rather than found, because order is
@@ -62,6 +82,7 @@ DOC_CHROME = {
     "vi": {
         "nav": "Docs",
         "contents": "Mục lục",
+        "onpage": "Trên trang này",
         "pages": "Các trang khác",
         "previous": "Trang trước",
         "next": "Trang sau",
@@ -72,6 +93,7 @@ DOC_CHROME = {
     "en": {
         "nav": "Documentation",
         "contents": "Contents",
+        "onpage": "On this page",
         "pages": "More pages",
         "previous": "Previous",
         "next": "Next",
@@ -165,6 +187,7 @@ def build(out=OUT):
         shutil.copy2(SRC / f"{name}.py", pkg / f"{name}.py")
 
     build_home_cards(out)
+    build_downloads(out)
     pages = build_docs(out)
 
     # GitHub Pages runs the output through Jekyll unless told not to, which
@@ -178,6 +201,18 @@ def build(out=OUT):
     print(f"  python    : {', '.join(names)}")
     print(f"  total     : {total / 1024:.0f} KB (Pyodide itself loads from a CDN)")
     return out
+
+
+def build_downloads(out):
+    """The two workbooks the landing page offers: the starter and the examples."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        import build_examples
+    finally:
+        sys.path.pop(0)
+    data, _ = build_examples.build_bytes(STARTER)
+    (out / STARTER_NAME).write_bytes(data)
+    shutil.copy2(EXAMPLES, out / EXAMPLES.name)
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +403,18 @@ def _nav(current, titles, toc, lang):
     return "\n".join(parts)
 
 
+def _onpage(toc, words):
+    """The page's own headings, for the third column a very wide screen has room
+    for; narrower, the same list sits under the page's name in the sidebar."""
+    if not toc:
+        return ""
+    items = "".join(f'<li><a href="#{e["id"]}">{e["name"]}</a></li>' for e in toc)
+    return (
+        f'<aside class="onpage" aria-label="{html.escape(words["onpage"])}">'
+        f'<p class="docnav-group">{html.escape(words["onpage"])}</p><ul>{items}</ul></aside>'
+    )
+
+
 def _pager(names, index, titles, words):
     links = []
     if index > 0:
@@ -448,6 +495,7 @@ def build_docs_in(out, lang, template):
             .replace("%%W_PAGES%%", words["pages"])
             .replace("%%W_EDIT%%", words["edit"])
             .replace("%%NAV%%", _nav(name, titles, toc, lang))
+            .replace("%%ONPAGE%%", _onpage(toc, words))
             .replace("%%PAGER%%", _pager(names, index, titles, words))
             .replace("%%SOURCE%%", source)
             .replace("%%BODY%%", body)

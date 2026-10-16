@@ -72,6 +72,11 @@
   --deck-w: clamp(15rem, 22vw, 26rem);
   --card-w: 34rem;
   --pad: clamp(1rem, 3vw, 1.75rem);
+  /* How wide a page may grow. The site uses the screen it is given: content runs
+     to this, with margins that grow with the window (--gutter), and only prose
+     keeps its own measure. 120rem is a 1920px screen edge to edge. */
+  --site-wrap: 120rem;
+  --gutter: clamp(1rem, 3.5vw, 4.5rem);
 }
 
 /* Chosen, never guessed: the toggle in the masthead writes data-theme onto the
@@ -172,6 +177,15 @@ button.linky { gap: 5px; }
 .err-icon { vertical-align: -0.14em; margin-right: 4px; }
 
 /* ---- masthead ------------------------------------------------------------ */
+
+/* The landing page, Create deck and the docs run to the screen's width; their
+   gutter is the masthead's too, so the name sits over the content's left edge
+   and the switches over its right one, at every width. */
+body.page { --pad: var(--gutter); }
+body.page .masthead {
+  padding-left: max(var(--pad), env(safe-area-inset-left), calc((100% - var(--site-wrap)) / 2 + var(--pad)));
+  padding-right: max(var(--pad), env(safe-area-inset-right), calc((100% - var(--site-wrap)) / 2 + var(--pad)));
+}
 
 .masthead {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -1213,7 +1227,7 @@ iframe#card {
 /* ==== the docs ============================================================= */
 
 .docs-layout {
-  max-width: var(--wrap, 74rem); margin: 0 auto;
+  max-width: var(--site-wrap); margin: 0 auto;
   padding: 1rem var(--pad) 4rem;
   display: grid; gap: 1.25rem;
 }
@@ -1258,6 +1272,24 @@ iframe#card {
 }
 
 .prose { min-width: 0; max-width: 46rem; line-height: 1.7; }
+.onpage { display: none; }
+/* Room for a third column: the page's own headings move out of the sidebar into
+   it, and the text column grows to a long but still readable measure. */
+@media (min-width: 90rem) {
+  .docs-layout { grid-template-columns: 16rem minmax(0, 1fr) 14rem; gap: clamp(3rem, 4vw, 5rem); }
+  .prose { max-width: 52rem; justify-self: center; width: 100%; }
+  .docnav-toc { display: none; }
+  .onpage {
+    display: block; position: sticky; top: 1rem;
+    max-height: calc(100vh - 2rem); overflow: auto; padding-top: .5rem;
+  }
+  .onpage ul { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line); }
+  .onpage a {
+    display: block; padding: 4px 0; font-size: var(--t-sm); color: var(--muted);
+    text-decoration: none; line-height: 1.4;
+  }
+  .onpage a:hover { color: var(--ink); }
+}
 .prose h1 {
   margin: .2em 0 .6em;
   font-size: clamp(1.9rem, 1.5rem + 1.5vw, 2.6rem); font-weight: 760;

@@ -90,7 +90,7 @@
 /* ==== the working area ===================================================== */
 
 .cr {
-  max-width: 78rem; margin: 0 auto;
+  max-width: var(--site-wrap); margin: 0 auto;
   padding: 0 var(--pad) 0;
   padding-left: max(var(--pad), env(safe-area-inset-left));
   padding-right: max(var(--pad), env(safe-area-inset-right));
@@ -454,7 +454,7 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
 
 .cardslot {
   position: relative; z-index: 1;
-  min-height: var(--card-min);
+  min-height: min(var(--card-min), var(--card-fit));
   background: var(--card-bg);
   border: 1px solid var(--line); border-radius: var(--card-r);
   box-shadow: var(--shadow-lg);
@@ -467,16 +467,20 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
 .cardslot.turn-out { transform: rotateY(90deg) scale(.98); transition: transform .17s cubic-bezier(.5, 0, 1, .6); }
 .cardslot.turn-in { transform: rotateY(-90deg) scale(.98); transition: none; }
 .cardslot iframe#card {
-  display: block; width: 100%; height: var(--card-min); min-height: var(--card-min);
+  display: block; width: 100%; height: var(--card-min);
+  min-height: min(var(--card-min), var(--card-fit));
   border: 0; background: transparent;
   /* A card grows with what it holds, and a long answer pushed Show Answer and
      the arrows under the download bar. Capped to what the window has left after
      the chrome above and below it, the card scrolls inside itself instead, so
      the controls stay on screen at every width. */
-  max-height: max(var(--card-min), calc(100dvh - var(--chrome-h)));
+  max-height: var(--card-fit);
 }
-.create { --chrome-h: 33rem; }
-@media (min-width: 40rem) { .create { --chrome-h: 30rem; } }
+/* What the window leaves for the card once the bars above and below it are
+   drawn. The card's own minimum gives way to it on a short window, since a card
+   that has to scroll beats controls that cannot be reached. */
+.create { --chrome-h: 33rem; --card-fit: max(14rem, calc(100dvh - var(--chrome-h))); }
+@media (min-width: 40rem) { .create { --chrome-h: 29.5rem; } }
 .nocard {
   display: grid; place-items: center; min-height: var(--card-min); padding: 2rem;
   color: var(--muted); text-align: center;
@@ -657,6 +661,27 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
   .cr[data-stage="loading"] .deckview { grid-template-columns: minmax(0, 1fr); }
   .cr[data-stage="loading"] .deckview > :not(.workspace),
   .cr[data-stage="loading"] .stage { grid-column: 1; max-width: var(--card-w); margin-inline: auto; }
+}
+
+/* A screen wide enough for three columns: the deck, the card, and the sheet the
+   card came from, open beside it (placeSheetView in app.js) — the question and
+   the answer side by side, where a narrower screen keeps the sheet a tap away. */
+@media (min-width: 100rem) {
+  .deckview { grid-template-columns: 20rem minmax(0, 1fr); }
+  /* The bars above the card span both of the columns beside the panel; the card
+     keeps its own width and the sheet takes the rest. */
+  .sourcebar, .demo-note, .create .warnbar { max-width: none; }
+  .stage {
+    max-width: none;
+    display: grid; grid-template-columns: minmax(0, 46rem) minmax(0, 1fr);
+    column-gap: clamp(2rem, 3vw, 3.5rem); align-items: start;
+  }
+  .stage > * { grid-column: 1; }
+  .stage > #sheetview {
+    grid-column: 2; grid-row: 1 / span 12; margin: 0;
+    position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow: auto;
+  }
+  .stage > #sheetview .gridwrap { max-height: min(28rem, 50vh); }
 }
 
 /* ==== after the download ==================================================== */
