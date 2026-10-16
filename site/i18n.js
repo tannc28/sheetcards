@@ -69,16 +69,10 @@ const STRINGS = {
     vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
   },
   homeLead: {
-    en:
-      "Write your vocabulary in a sheet, one row per card. Paste the link into " +
-      "Sheet to Anki, check every card, then download an .apkg that opens straight in " +
-      "AnkiDroid or AnkiMobile.",
-    vi:
-      "Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Sheet to Anki, xem " +
-      "trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.",
+    en: "Write a sheet or paste a Google Sheets link, check every card, then download an .apkg for the Anki app.",
+    vi: "Soạn sheet hoặc dán link Google Sheets, xem từng card, rồi tải file .apkg cho app Anki.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
-  homeTry: { en: "Sheet to Anki", vi: "Sheet to Anki" },
   homeNeeds: {
     en: "The add-on is free and open source · Anki 25.x or later on a computer",
     vi: "Add-on miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
@@ -103,96 +97,100 @@ const STRINGS = {
   showAnswer: { en: "Show Answer", vi: "Show Answer" },
 
   featTitle: { en: "One sheet, many kinds of card", vi: "Một sheet, nhiều kiểu card" },
-  featColumnsTitle: { en: "Your columns, any language", vi: "Cột của bạn, tiếng gì cũng được" },
-  featColumns: {
-    en: "Name columns <code>Word</code>, <code>Nghĩa</code> or <code>汉字</code>. Each one becomes a field in Anki.",
-    vi: "Đặt tên cột là <code>Word</code>, <code>Nghĩa</code> hay <code>汉字</code>. Mỗi cột thành một field trong Anki.",
-  },
-  featSettingsTitle: { en: "One row of settings", vi: "Một settings row" },
-  featSettings: {
-    en: "Row 2 sets each column's side, size and colour — <code>size=48; color=muted</code>. No card template to edit in Anki.",
-    vi: "Dòng 2 quy định mặt, cỡ chữ và màu của từng cột — <code>size=48; color=muted</code>. Không cần đụng tới card template của Anki.",
-  },
   featSpeechTitle: { en: "Read aloud", vi: "Đọc thành tiếng" },
   featSpeech: {
-    en: "Add <code>tts=en_US</code> and Anki speaks the column with the voices on your device.",
-    vi: "Thêm <code>tts=en_US</code> là Anki đọc cột đó bằng giọng có sẵn trên máy.",
+    en: "Anki reads the column you choose aloud, with the voices on your device.",
+    vi: "Anki đọc to cột bạn chọn bằng giọng có sẵn trên máy.",
   },
-  featTypeTitle: { en: "Type the answer", vi: "Gõ đáp án" },
-  featType: {
-    en: "<code>type=nc</code> puts a box on the card and checks your spelling — tone marks optional.",
-    vi: "<code>type=nc</code> đặt một ô nhập trên card và kiểm tra chính tả — không cần gõ dấu.",
+  featTplTitle: {
+    en: "8 ready-made templates",
+    vi: "8 template có sẵn",
   },
-  featDrawTitle: { en: "Cloze and handwriting", vi: "Cloze và viết tay" },
-  featDraw: {
-    en: "Hide words with <code>{{c1::…}}</code>, or write Chinese characters stroke by stroke with <code>draw</code>.",
-    vi: "Che từ bằng <code>{{c1::…}}</code>, hoặc viết chữ Hán từng nét với <code>draw</code>.",
+  featTpl: {
+    en: "Or save and upload templates of your own.",
+    vi: "Hoặc lưu, upload template của riêng bạn.",
+  },
+  featKeepTitle: {
+    en: "Re-importing keeps your progress",
+    vi: "Import lại vẫn giữ tiến độ",
+  },
+  featKeep: {
+    en: "Add or fix words and import the new file: cards are updated, not doubled.",
+    vi: "Thêm hay sửa từ rồi import file mới: card được cập nhật, không nhân đôi.",
+  },
+  featDevicesTitle: {
+    en: "Phone or computer",
+    vi: "Điện thoại hay máy tính",
+  },
+  featDevices: {
+    en: "Every step works on both.",
+    vi: "Mọi bước đều làm được trên cả hai.",
+  },
+  featFreeTitle: {
+    en: "Free, no account",
+    vi: "Miễn phí, không cần tài khoản",
+  },
+  featFree: {
+    en: "Your sheet is read right in your browser and sent to no server.",
+    vi: "Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.",
+  },
+  featFreeChip: {
+    en: "No ads",
+    vi: "Không quảng cáo",
+  },
+  soonTitle: {
+    en: "Coming soon",
+    vi: "Sắp có",
+  },
+  soonBadge: {
+    en: "Coming soon",
+    vi: "Sắp có",
+  },
+  soonTplTitle: {
+    en: "Template library",
+    vi: "Thư viện template",
+  },
+  soonTpl: {
+    en: "Browse and use templates other people share.",
+    vi: "Xem và dùng template người khác chia sẻ.",
+  },
+  soonThemeTitle: {
+    en: "Theme library",
+    vi: "Thư viện Theme",
+  },
+  soonTheme: {
+    en: "More themes to dress your cards in.",
+    vi: "Thêm nhiều theme để khoác lên card của bạn.",
+  },
+  soonAsk: {
+    en: "Want these sooner? Tell us →",
+    vi: "Muốn có sớm? Góp ý →",
   },
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
-  homeHow1Title: { en: "Make a template (columns & card)", vi: "Tạo template (cột & card)" },
+  homeHow1Title: {
+    en: "Create sheet",
+    vi: "Tạo Sheet",
+  },
   homeHow1: {
-    en:
-      "In <b>Create sheet</b>, pick a ready-made template: each column is a field, and the " +
-      "settings row (row 2) decides how the card looks. Or name the columns yourself in " +
-      "Google Sheets or Excel: <code>ID</code>, then any columns you like.",
-    vi:
-      "Trong <b>Tạo Sheet</b>, chọn một template có sẵn: mỗi cột là một field, và settings " +
-      "row (dòng 2) quyết định card trông thế nào. Hoặc tự đặt tên cột trong Google Sheets " +
-      "hay Excel: <code>ID</code>, rồi cột nào bạn muốn.",
+    en: "Pick a template, set the columns &amp; card, then add cards. Or use your own Google Sheets or Excel.",
+    vi: "Chọn template, đặt cột &amp; card, rồi thêm thẻ. Hoặc dùng Google Sheets, Excel của bạn.",
   },
-  homeHow2Title: { en: "Add cards", vi: "Thêm thẻ" },
+  homeHow2Title: {
+    en: "Sheet to Anki",
+    vi: "Sheet to Anki",
+  },
   homeHow2: {
-    en:
-      "Each row is one word, and becomes a card. Type them right on the web in Create sheet and " +
-      "press <b>Make flashcards</b>. Writing in Google Sheets instead? Press " +
-      "<b>Share → General access → Anyone with the link → Viewer</b> and paste the link " +
-      "into Sheet to Anki.",
-    vi:
-      "Mỗi dòng là một từ, thành một card. Gõ ngay trên web trong Tạo Sheet rồi bấm " +
-      "<b>Tạo flashcard</b>. Soạn trong Google Sheets thì bấm " +
-      "<b>Share → General access → Anyone with the link → Viewer</b> rồi dán link vào " +
-      "Sheet to Anki.",
+    en: "Paste a link or open a file, check every real card, then press Download .apkg.",
+    vi: "Dán link hoặc mở file, xem từng card thật, rồi bấm Download .apkg.",
   },
-  homeHow3Title: { en: "Download the .apkg, open it in Anki", vi: "Tải .apkg, mở bằng app Anki" },
+  homeHow3Title: {
+    en: "Open it in the Anki app",
+    vi: "Mở bằng app Anki",
+  },
   homeHow3: {
-    en:
-      "Press <b>Download .apkg</b> and open the file in <b>AnkiDroid</b>, " +
-      "<b>AnkiMobile</b> or Anki on a computer. Adding words later: open the sheet again, " +
-      "add them, download a new file and import it over the old one — the cards you have " +
-      "are updated, not doubled.",
-    vi:
-      "Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> " +
-      "hoặc Anki trên máy tính. Lần sau thêm từ: mở lại sheet, thêm từ, tải file mới và " +
-      "import đè — card cũ được cập nhật, không nhân đôi.",
-  },
-  homeInstall1: {
-    en: "Download <code>sheetcards.ankiaddon</code>.",
-    vi: "Tải file <code>sheetcards.ankiaddon</code>.",
-  },
-  homeInstall2: {
-    en: "In Anki, open <b>Tools → Add-ons</b>, press <b>Install from file…</b> and pick that file.",
-    vi: "Trong Anki, mở <b>Tools → Add-ons</b>, bấm <b>Install from file…</b> rồi chọn file vừa tải.",
-  },
-  homeInstall3: {
-    en: "Restart Anki. A <b>SheetCards</b> menu appears under <b>Tools</b>.",
-    vi: "Khởi động lại Anki. Menu <b>SheetCards</b> sẽ xuất hiện trong <b>Tools</b>.",
-  },
-  homePreviewText: {
-    en: "Make Anki flashcards from Google Sheets on your phone or computer, no add-on needed.",
-    vi: "Tạo flashcard Anki từ Google Sheets trên điện thoại hoặc máy tính, không cần cài add-on.",
-  },
-  homeSheetText: {
-    en: "No Google Sheet? Write the whole sheet right on the web, and watch each card as you type.",
-    vi: "Không có Google Sheet? Soạn cả sheet ngay trên web và xem từng card khi gõ.",
-  },
-  homeDocsText: {
-    en: "Columns, settings, sound, pictures and syncing, explained.",
-    vi: "Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.",
-  },
-  homeGithubText: {
-    en: "Source code, releases and bug reports.",
-    vi: "Mã nguồn, các bản phát hành và báo lỗi.",
+    en: "Open the .apkg in the Anki app (AnkiDroid, AnkiMobile or Anki on a computer). Added words? Import again: cards are updated, progress kept.",
+    vi: "Mở file .apkg bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên máy tính). Thêm từ rồi import lại: card được cập nhật, giữ tiến độ.",
   },
   homeFootNote: {
     en: "MIT licence. SheetCards is not made by or affiliated with Anki or Ankitects.",
@@ -1235,15 +1233,6 @@ const STRINGS = {
   doneOk: { en: "Done", vi: "Xong" },
 
   // --- the Anki app, which studying needs ---------------------------------------
-  ankiTitle: { en: "You need the Anki app to study", vi: "Bạn cần app Anki để học" },
-  ankiLead: {
-    en: "SheetCards makes the .apkg file; studying and reviewing happen in the Anki app. Install the app for your device first, then open the .apkg with it.",
-    vi: "SheetCards làm ra file .apkg; học và ôn bài diễn ra trong app Anki. Cài app cho máy của bạn trước, rồi mở file .apkg bằng app đó.",
-  },
-  ankiPaidNote: {
-    en: "SheetCards is free. AnkiDroid and Anki on a computer are free too; only AnkiMobile on iPhone/iPad is a paid app, from the people who make Anki — the price varies by country, see the App Store.",
-    vi: "SheetCards miễn phí. AnkiDroid và Anki trên máy tính cũng miễn phí; riêng AnkiMobile trên iPhone/iPad là app trả phí của nhóm làm ra Anki — giá có thể khác theo quốc gia, xem trong App Store.",
-  },
   ankiFree: { en: "Free", vi: "Miễn phí" },
   ankiPaidIos: {
     en: "Paid, one-time: 799,000₫ in Vietnam, US$24.99 in the US",
@@ -1268,16 +1257,15 @@ const STRINGS = {
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
   doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
-  doorNewTitle: { en: "Not yet — write one on the web", vi: "Chưa có — soạn ngay trên web" },
+  doorNewTitle: {
+    en: "No sheet yet? Write one on the web",
+    vi: "Chưa có sheet? Soạn trên web",
+  },
   doorNewText: {
-    en: "Pick a template, type your words right on the web, on a phone or a computer, then press Make flashcards. No Google Sheets needed.",
-    vi: "Chọn một template, gõ từ ngay trên web, trên điện thoại hoặc máy tính, rồi bấm Tạo flashcard. Không cần Google Sheets.",
+    en: "Pick a template and a theme, type your words, then press Make flashcards. No Google Sheets needed.",
+    vi: "Chọn template và theme, gõ từ, rồi bấm Tạo flashcard. Không cần Google Sheets.",
   },
   doorNewGo: { en: "Open Create sheet", vi: "Mở Tạo Sheet" },
-  homeNeedAnki: {
-    en: 'To study, you need the Anki app: AnkiDroid (Android, free), AnkiMobile (iPhone, paid) or Anki on a computer (free). <a href="#anki">Get Anki</a>',
-    vi: 'Để học, bạn cần app Anki: AnkiDroid (Android, miễn phí), AnkiMobile (iPhone, trả phí) hoặc Anki trên máy tính (miễn phí). <a href="#anki">Cài app Anki</a>',
-  },
   homeTemplate: { en: "starter file (.xlsx)", vi: "file mẫu (.xlsx)" },
   homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
   homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
@@ -1330,55 +1318,26 @@ const STRINGS = {
     vi: "Không đọc được chữ trong file này: không phải UTF-8 và không khớp bảng mã Windows nào. Trong Excel, chọn Save As → “CSV UTF-8” rồi mở file đó.",
   },
   demoImported: { en: "Imported into AnkiDroid", vi: "Đã import vào AnkiDroid" },
-  whyTitle: { en: "Why Sheet to Anki", vi: "Vì sao dùng Sheet to Anki" },
-  whyPhoneTitle: { en: "Phone or computer", vi: "Điện thoại hay máy tính đều được" },
-  whyPhone: {
-    en: "Write the sheet, check the cards, download the file and open it in Anki — every step works on a phone or a computer.",
-    vi: "Soạn sheet, xem card, tải file và mở bằng Anki — mọi bước đều làm được trên điện thoại hoặc máy tính.",
+  featThemeTitle: {
+    en: "A theme for the whole set",
+    vi: "Theme cho cả bộ flashcard",
   },
-  whyFreeTitle: { en: "SheetCards is free, no account", vi: "SheetCards miễn phí, không cần tài khoản" },
-  whyFree: {
-    en: "No sign-up, no ads. Your sheet is read right in your browser and sent to no server.",
-    vi: "Không đăng ký, không quảng cáo. Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.",
-  },
-  whySourceTitle: { en: "Your sheet stays the original", vi: "Sheet vẫn là bản gốc" },
-  whySource: {
-    en: "Edit and add words in Google Sheets, write them with classmates or a teacher. The deck is always made again from the sheet.",
-    vi: "Sửa và thêm từ ngay trong Google Sheets, soạn chung với bạn học hay giáo viên. Deck luôn được tạo lại từ sheet.",
-  },
-  whyKeepTitle: { en: "Re-importing keeps your progress", vi: "Import lại vẫn giữ tiến độ" },
-  whyKeep: {
-    en: "Every note is tied to its ID column, so a new file updates the old cards instead of doubling them — your review schedule stays.",
-    vi: "Mỗi note gắn với cột ID, nên file mới cập nhật card cũ thay vì nhân đôi — lịch ôn tập không mất.",
-  },
-  featThemeTitle: { en: "A theme for the whole deck", vi: "Theme cho cả deck" },
   featTheme: {
-    en: "Add <code>theme=sakura</code> to the settings row and every card changes colour, in light and dark.",
-    vi: "Thêm <code>theme=sakura</code> vào settings row là mọi card đổi màu, cả nền sáng lẫn nền tối.",
+    en: "Picked when you make the sheet, made for light and dark.",
+    vi: "Chọn ngay khi tạo sheet, đẹp cả nền sáng lẫn nền tối.",
   },
-  featEditorLink: { en: "Try a settings row in Create sheet →", vi: "Thử settings row trong Tạo Sheet →" },
   addonEyebrow: { en: "The add-on for Anki on a computer", vi: "Add-on cho Anki trên máy tính" },
   addonTitle: {
     en: "Studying on a computer? Install the add-on and it syncs by itself.",
     vi: "Học trên máy tính? Cài add-on để sync tự động.",
   },
   addonLead: {
-    en:
-      "The SheetCards add-on connects Anki on your computer straight to your sheet. " +
-      "Each sync adds new rows, updates changed ones and removes deleted ones — then " +
-      "AnkiWeb carries it all to your phone.",
-    vi:
-      "Add-on SheetCards nối Anki trên máy tính thẳng với sheet của bạn. Mỗi lần sync, " +
-      "nó thêm dòng mới, sửa dòng đã đổi và xoá dòng đã bỏ — rồi AnkiWeb đưa tất cả " +
-      "sang điện thoại.",
+    en: "The add-on connects Anki on a computer to your Google Sheet: each sync adds, updates and removes cards to match the sheet.",
+    vi: "Add-on nối Anki trên máy tính với Google Sheet: mỗi lần sync, card được thêm, sửa và xoá theo sheet.",
   },
-  homeInstall4: {
-    en:
-      "Open <b>Tools → SheetCards → Connect a Google Sheet…</b> and paste the link. " +
-      "After that, <b>Ctrl+Shift+S</b> brings in whatever changed.",
-    vi:
-      "Mở <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán link. Từ đó, " +
-      "<b>Ctrl+Shift+S</b> sync những gì đã thay đổi.",
+  addonSteps: {
+    en: "Install it with <b>Tools → Add-ons → Install from file…</b>, then open <b>Tools → SheetCards → Connect a Google Sheet…</b>",
+    vi: "Cài bằng <b>Tools → Add-ons → Install from file…</b>, rồi mở <b>Tools → SheetCards → Connect a Google Sheet…</b>",
   },
 
   // --- Liên hệ & góp ý (contact.html) ------------------------------------

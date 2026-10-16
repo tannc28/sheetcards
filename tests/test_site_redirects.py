@@ -72,7 +72,7 @@ class TestTheLandingPage:
     def test_a_foreign_fragment_goes_to_create_deck(self):
         assert _run("index.html", "", "#example") == "./create.html#example"
 
-    @pytest.mark.parametrize("own", ["#main", "#why", "#how", "#features", "#addon"])
+    @pytest.mark.parametrize("own", ["#main", "#how", "#features", "#soon", "#addon"])
     def test_its_own_sections_stay(self, own):
         assert _run("index.html", "", own) is None
 

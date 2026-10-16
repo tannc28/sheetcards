@@ -28,9 +28,8 @@ import { cardDoc } from "./cardframe.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
-import { CARDS, HANZI_WRITER } from "./home-cards.js";
+import { CARDS, HANZI_WRITER, THEME_SWATCHES } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
-import { ankiAppsHtml, detectDevice } from "./devices.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -381,13 +380,23 @@ onRepaint((what) => {
   show(state.at, state.phase);
 });
 
-// --- the Anki app ---------------------------------------------------------------
+// --- the themes, as swatches ------------------------------------------------
 //
-// Studying needs one of three apps; the reader's own device goes first.
+// Each listed theme's own ground, ink and accent, taken from the palettes a card
+// is painted with (home-cards.js), in the page's light or dark.
 
-const paintApps = () => ($("#ankiapps").innerHTML = ankiAppsHtml(t, detectDevice(navigator)));
-paintApps();
-onRepaint((what) => what === "lang" && paintApps());
+function paintSwatches() {
+  const mode = dark() ? "night" : "light";
+  $("#swatches").innerHTML = THEME_SWATCHES.map(({ name, ...modes }) => {
+    const { bg, fg, accent } = modes[mode];
+    return (
+      `<li class="hchip sw"><span class="sw-dot" style="--sw-bg:${bg};--sw-fg:${fg};--sw-ac:${accent}">` +
+      `<span></span></span>${escapeHtml(name)}</li>`
+    );
+  }).join("");
+}
+paintSwatches();
+onRepaint((what) => what === "theme" && paintSwatches());
 
 // --- step 1, on the landing page ---------------------------------------------
 //

@@ -742,9 +742,30 @@ def build_home_cards(out):
         f"export const CARDS = {body};\n"
         # The writing box's library, from the one place a card gets it, so the
         # demo animates a character with the same pinned version a card loads.
-        f"export const HANZI_WRITER = {json.dumps(_hanzi_writer(out))};\n",
+        f"export const HANZI_WRITER = {json.dumps(_hanzi_writer(out))};\n"
+        # The feature grid's swatches, from the palettes a card is painted with,
+        # so the landing page cannot show a colour no card has.
+        f"export const THEME_SWATCHES = {json.dumps(theme_swatches(out))};\n",
         encoding="utf-8",
     )
+
+
+def theme_swatches(out):
+    """``[{name, light: {bg, fg, accent}, night: {...}}]`` for each listed theme."""
+    tm, _card_layout, _workbook = _pure_package(out)
+    themes = tm.parse_config_row.__globals__["THEMES"]
+    names = tm.parse_config_row.__globals__["listed_themes"]()
+    keep = ("bg", "fg", "accent")
+    return [
+        {
+            "name": name,
+            **{
+                mode: {k: themes[name][mode][k] for k in keep}
+                for mode in ("light", "night")
+            },
+        }
+        for name in names
+    ]
 
 
 # ---------------------------------------------------------------------------
