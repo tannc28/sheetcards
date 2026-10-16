@@ -29,6 +29,7 @@ import datetime
 import io
 import json
 import re
+import unicodedata
 import xml.etree.ElementTree as ET
 import zipfile
 from xml.sax.saxutils import escape as _escape
@@ -359,13 +360,102 @@ def read_upload(data, name, index=0):
             "and choose Save As → .xlsx, or upload it to Google Sheets."
         )
 
-    # utf-8-sig rather than utf-8: a spreadsheet exported on Windows leads with a
-    # byte order mark, and a BOM stuck to the first header would hide the ID
-    # column. The add-on's own `clean()` strips it too, but only from headers.
-    text = data.decode("utf-8-sig", errors="replace")
-    if lower.endswith(".csv"):
-        text = _tsv(list(csv.reader(io.StringIO(text))))
-    return json.dumps({"tabs": [], "tab": "", "tsv": text}, ensure_ascii=False)
+    text, encoding = decode_text(data)
+    delimiter = sniff_delimiter(text)
+    if delimiter != "\t":
+        text = _tsv(list(csv.reader(io.StringIO(text), delimiter=delimiter)))
+    out = {"tabs": [], "tab": "", "tsv": text}
+    if encoding not in ("utf-8", "utf-16"):
+        # Read, but not in the encoding the page assumes: the page says so,
+        # because a letter guessed wrong is a word learnt wrong.
+        out["encoding"] = encoding
+    return json.dumps(out, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Text files: which encoding, which separator
+# ---------------------------------------------------------------------------
+#
+# A .csv saved by Excel on a Vietnamese Windows is not the file the rest of the
+# world calls CSV. "CSV (Comma delimited)" writes the ANSI code page — cp1258,
+# where a tone mark is a separate combining character — and separates cells
+# with ";" whenever the region's list separator is ";". "Unicode Text" writes
+# UTF-16 with tabs. "CSV UTF-8" is the only one that is what it says. Each is
+# read as what it is, and a guess is reported rather than made silently.
+
+# Letters only Vietnamese writes, and the five combining tone marks cp1258
+# spells a toned vowel with. Seeing one means the cp1258 reading is the right one.
+_VIETNAMESE = re.compile("[ăâđơưĂÂĐƠƯ\u0300\u0301\u0303\u0309\u0323]")
+
+
+class _Undecodable(Exception):
+    pass
+
+
+def decode_text(data):
+    """(text, encoding) for the bytes of a text file.
+
+    UTF-16 by its byte order mark (or by the zero bytes every ASCII character
+    carries in it), UTF-8 with or without a BOM, and otherwise one of the two
+    Windows code pages a spreadsheet here is likely to have been saved in. A
+    file none of them reads raises rather than coming out full of "\ufffd".
+    """
+    data = bytes(data)
+    if data[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return data.decode("utf-16"), "utf-16"
+    sample = data[:400]
+    if len(sample) >= 4:
+        odd, even = sample[1::2].count(0), sample[0::2].count(0)
+        unmarked = (
+            "utf-16-le"
+            if odd > len(sample) // 4 and not even
+            else "utf-16-be" if even > len(sample) // 4 and not odd else None
+        )
+        if unmarked:
+            try:
+                return data.decode(unmarked), "utf-16"
+            except UnicodeDecodeError:
+                pass
+    try:
+        return data.decode("utf-8-sig"), "utf-8"
+    except UnicodeDecodeError:
+        pass
+    readings = {}
+    for encoding in ("cp1258", "cp1252"):
+        try:
+            readings[encoding] = data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    vietnamese = "cp1258" in readings and _VIETNAMESE.search(readings["cp1258"])
+    for encoding in ("cp1258", "cp1252") if vietnamese else ("cp1252", "cp1258"):
+        if encoding in readings:
+            # NFC: cp1258 writes "ạ" as "a" + a combining dot, and a field
+            # that looks the same but compares differently breaks type-in
+            # answers and duplicate checks alike.
+            return unicodedata.normalize("NFC", readings[encoding]), encoding
+    raise WorkbookError(
+        "This file is not UTF-8 text and no Windows code page reads it either. "
+        "Open it in Excel and choose Save As → CSV UTF-8, then upload that."
+    )
+
+
+def sniff_delimiter(text):
+    """Tab, ";" or "," — whichever splits the header row into the most cells.
+
+    Read from the first record only, quotes respected: the header row is where
+    a separator shows up with nothing else around it, while a meaning further
+    down is free to hold commas. A tie goes to tab, then ";", since a sheet
+    using ";" never writes one into a header by accident.
+    """
+    best, widest = "\t", 1
+    for delimiter in ("\t", ";", ","):
+        try:
+            first = next(csv.reader(io.StringIO(text), delimiter=delimiter), [])
+        except csv.Error:
+            continue
+        if len(first) > widest:
+            best, widest = delimiter, len(first)
+    return best
 
 
 # ---------------------------------------------------------------------------

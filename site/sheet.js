@@ -137,7 +137,13 @@ def open_file(data, name, index=0):
     out = json.loads(workbook.read_upload(data, name, int(index)))
     rows = list(csv.reader(io.StringIO(out["tsv"]), delimiter="\t"))
     return json.dumps(
-        {"tabs": out["tabs"], "tab": out["tab"], "rows": rows}, ensure_ascii=False
+        {
+            "tabs": out["tabs"],
+            "tab": out["tab"],
+            "rows": rows,
+            "encoding": out.get("encoding", ""),
+        },
+        ensure_ascii=False,
     )
 
 
@@ -2194,7 +2200,8 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   try {
     out = readFile(new Uint8Array(await file.arrayBuffer()), file.name, index);
   } catch (err) {
-    return toast(String(err?.message || err).trim().split("\n").pop(), "bad");
+    const last = String(err?.message || err).trim().split("\n").pop();
+    return toast(/not UTF-8 text/.test(last) ? t("badEncoding") : last, "bad");
   }
   toast("");
   // Without what a phone adds to a second download, so a legacy sheet keeps
@@ -2223,7 +2230,8 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   const opened = fromGrid(out.rows, name);
   if (markerGet(opened.marker, "name")) rememberName(opened.title);
   begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
-  toast(t("shOpened", name, wordCount()), "ok");
+  if (out.encoding) toast(t("readAsEncoding", out.encoding), "bad");
+  else toast(t("shOpened", name, wordCount()), "ok");
 }
 
 // ---------------------------------------------------------------------------

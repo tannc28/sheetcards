@@ -440,6 +440,7 @@ function pythonMessage(err) {
   // parser's sentence for it is English and names a "mandatory header". Said
   // as what to do about it instead.
   if (/Mandatory header missing: 'ID'/.test(last)) return t("noIdColumn");
+  if (/not UTF-8 text/.test(last)) return t("badEncoding");
   return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
 }
 
@@ -844,6 +845,9 @@ function showUpload(index, { keepRow = false } = {}) {
         : fileIdentity(upload.name, out.tabs.length ? out.tab : ""),
       { keepRow },
     );
+    // Read, but in a Windows code page rather than UTF-8: said, because a
+    // letter decoded wrong is a word learnt wrong.
+    if (out.encoding) status(t("readAsEncoding", out.encoding), "bad");
   } catch (err) {
     // The add-on's own sentence, not the twenty lines of traceback above it.
     failed(pythonMessage(err));

@@ -1232,6 +1232,16 @@ const STRINGS = {
     en: "This sheet has no ID column. Row 1 needs a column named ID, with a different value in each row below it.",
     vi: "Sheet này chưa có cột ID. Dòng 1 cần một cột tên ID, mỗi dòng bên dưới ghi một giá trị khác nhau.",
   },
+  readAsEncoding: {
+    en: (enc) =>
+      `This file is not UTF-8, so it was read as ${enc === "cp1258" ? "Vietnamese Windows text (cp1258)" : "Western Windows text (cp1252)"}. Check the accents look right — or save it again from Excel as “CSV UTF-8”.`,
+    vi: (enc) =>
+      `File này không phải UTF-8 nên đã được đọc theo ${enc === "cp1258" ? "bảng mã Windows tiếng Việt (cp1258)" : "bảng mã Windows phương Tây (cp1252)"}. Hãy kiểm tra dấu có đúng không — hoặc lưu lại từ Excel bằng “CSV UTF-8”.`,
+  },
+  badEncoding: {
+    en: "This file's text could not be read: it is not UTF-8 and no Windows code page fits. In Excel, choose Save As → “CSV UTF-8”, then open that file.",
+    vi: "Không đọc được chữ trong file này: không phải UTF-8 và không khớp bảng mã Windows nào. Trong Excel, chọn Save As → “CSV UTF-8” rồi mở file đó.",
+  },
   homeRuns: {
     en: "Runs in your browser · Android, iPhone, computer",
     vi: "Chạy ngay trong trình duyệt · Android, iPhone, máy tính",

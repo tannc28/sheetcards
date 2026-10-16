@@ -16,6 +16,7 @@ through the same assumptions that built the file.
 import csv
 import io
 import json
+import unicodedata
 import zipfile
 
 import pytest
@@ -341,6 +342,86 @@ class TestOtherFiles:
         zipfile.ZipFile(empty, "w").close()
         with pytest.raises(workbook.WorkbookError, match="not a workbook"):
             read(empty.getvalue(), "empty.xlsx")
+
+
+@pytest.mark.unit
+class TestExcelOnAVietnameseWindows:
+    """What Excel actually writes, byte for byte, rather than what CSV means.
+
+    The samples are the bytes Excel's Save As produces on a Windows set to
+    Vietnamese: cp1258 spells a toned vowel as a base letter plus a combining
+    mark (0xCC grave, 0xEC acute, 0xD2 hook, 0xDE tilde, 0xF2 dot below), "ư" is
+    0xFD, lines end in CRLF and the region's list separator is ";".
+    """
+
+    # ID;Từ;Nghĩa / 1;Tiếng Việt;Vietnamese, the language — "CSV (Comma delimited)"
+    CP1258 = (
+        b"ID;T\xfd\xcc;Ngh\x69\xdea\r\n"
+        b'1;Ti\xea\xecng Vi\xea\xf2t;"Vietnamese; the language"\r\n'
+    )
+
+    def test_a_semicolon_file_splits_on_semicolons(self):
+        data = "ID;Word;Meaning\r\n1;chào;hello, hi\r\n".encode()
+        assert read(data, "d.csv")["tsv"] == "ID\tWord\tMeaning\n1\tchào\thello, hi\n"
+
+    def test_a_comma_inside_a_meaning_does_not_win_the_vote(self):
+        data = b"ID;Meaning\n1;a, b, c, d\n"
+        assert grid_of(read(data, "d.csv")) == [["ID", "Meaning"], ["1", "a, b, c, d"]]
+
+    def test_the_ansi_code_page_is_read_as_vietnamese_and_said_so(self):
+        out = read(self.CP1258, "tu-vung.csv")
+        assert grid_of(out) == [
+            ["ID", "Từ", "Nghĩa"],
+            ["1", "Tiếng Việt", "Vietnamese; the language"],
+        ]
+        assert out["encoding"] == "cp1258"
+
+    def test_combining_marks_are_composed(self):
+        """'ế' as e+circumflex+acute would never equal the 'ế' a learner types."""
+        word = grid_of(read(self.CP1258, "d.csv"))[1][1]
+        assert word == unicodedata.normalize("NFC", word)
+        assert len(word) == len("Tiếng Việt")
+
+    def test_a_western_file_is_read_as_cp1252(self):
+        out = read(b"ID,Word\r\n1,caf\xe9 cr\xe8me\r\n", "d.csv")
+        assert grid_of(out)[1] == ["1", "café crème"]
+        assert out["encoding"] == "cp1252"
+
+    def test_utf8_with_a_bom_says_nothing(self):
+        out = read(b"\xef\xbb\xbfID,T\xe1\xbb\xab\r\n1,x\r\n", "d.csv")
+        assert grid_of(out) == [["ID", "Từ"], ["1", "x"]]
+        assert "encoding" not in out
+
+    def test_utf8_without_a_bom_says_nothing(self):
+        out = read("ID,Từ\n1,x\n".encode(), "d.csv")
+        assert "encoding" not in out and grid_of(out)[0] == ["ID", "Từ"]
+
+    def test_unicode_text_is_utf16_with_tabs(self):
+        """Excel's "Unicode Text": UTF-16LE with a BOM, tab-separated."""
+        data = b"\xff\xfe" + "ID\tTừ\r\n1\tTiếng Việt\r\n".encode("utf-16-le")
+        out = read(data, "d.txt")
+        assert grid_of(out) == [["ID", "Từ"], ["1", "Tiếng Việt"]]
+        assert "encoding" not in out
+
+    def test_utf16_without_a_bom_is_still_recognised(self):
+        data = "ID,Word\r\n1,x\r\n".encode("utf-16-le")
+        assert grid_of(read(data, "d.csv")) == [["ID", "Word"], ["1", "x"]]
+
+    def test_bytes_no_code_page_reads_are_refused_not_garbled(self):
+        with pytest.raises(workbook.WorkbookError, match="CSV UTF-8"):
+            read(b"ID,Word\r\n1,\x81\x90\r\n", "d.csv")
+
+    def test_nothing_comes_out_as_a_replacement_character(self):
+        for data in (
+            self.CP1258,
+            b"ID,W\n1,caf\xe9\n",
+            "ID\tW\n1\tx\n".encode("utf-16"),
+        ):
+            assert "\ufffd" not in read(data, "d.csv")["tsv"]
+
+
+def grid_of(out):
+    return list(csv.reader(io.StringIO(out["tsv"]), delimiter="\t"))
 
 
 @pytest.mark.unit
