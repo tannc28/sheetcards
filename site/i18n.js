@@ -1370,6 +1370,8 @@ const STRINGS = {
   // --- Liên hệ & góp ý (contact.html) ------------------------------------
   // The link at the foot of every page, where a signature used to stand.
   contactLink: { en: "Contact &amp; feedback", vi: "Liên hệ &amp; góp ý" },
+  // The masthead icon's label and tooltip: an attribute, so a plain ampersand.
+  contactIcon: { en: "Contact & feedback", vi: "Liên hệ & góp ý" },
   titleContact: { en: "Contact &amp; feedback — SheetCards", vi: "Liên hệ &amp; góp ý — SheetCards" },
   contactTitle: { en: "Contact &amp; feedback", vi: "Liên hệ &amp; góp ý" },
   contactLead: {

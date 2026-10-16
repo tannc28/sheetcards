@@ -244,6 +244,15 @@ body.page .masthead {
 }
 .ghlink .icon { width: 20px; height: 20px; }
 .ghlink:hover { color: var(--ink); background: var(--sunken); }
+.ghlink[aria-current="page"] { color: var(--accent); }
+/* Four controls beside the name — GitHub, contact, theme, language — are one row
+   down to 375px; below that the language glyph goes and the gaps close, so the
+   switch never drops onto a row of its own. */
+@media (max-width: 23.9rem) {
+  .masthead .langs-icon { display: none; }
+  body.page .masthead { gap: 4px; }
+  .masthead .ghlink { width: 32px; }
+}
 
 /* The way to reach the author, on every page: one quiet line, not a banner.
    It stands where a "by ctan" signature used to, and goes to contact.html. */
