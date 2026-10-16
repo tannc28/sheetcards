@@ -40,6 +40,19 @@ export function toTsv(rows) {
 }
 
 /**
+ * Rows of cells as the project's .csv: RFC 4180, CRLF, and a byte order mark —
+ * the only way to tell Excel the file is UTF-8. One writer for every .csv the
+ * site hands out, so a template's sample and an edited sheet are the same file.
+ */
+export function asCsv(rows) {
+  const cell = (value) => {
+    const text = String(value ?? "");
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  return `\ufeff${rows.map((row) => row.map(cell).join(",")).join("\r\n")}\r\n`;
+}
+
+/**
  * TSV — or a block copied out of Sheets or Excel, which is TSV — as rows.
  *
  * Walked a character at a time rather than split on tabs: a cell holding a line

@@ -138,3 +138,9 @@ def test_fifty_words_fit_well_inside_a_safe_link():
         "return [h.length, m.LONG_LINK];"
     )
     assert out[0] < out[1]
+
+
+def test_csv_is_rfc_4180_with_a_byte_order_mark():
+    rows = [["ID", "a,b", 'say "hi"'], ["w01", "two\nlines", "plain"]]
+    out = _run(f"return m.asCsv({json.dumps(rows)});")
+    assert out == '﻿ID,"a,b","say ""hi"""\r\nw01,"two\nlines",plain\r\n'

@@ -23,9 +23,7 @@ Usage:
 """
 
 import argparse
-import csv
 import html
-import io
 import json
 import re
 import shutil
@@ -118,39 +116,295 @@ HOME_EXAMPLES = [
 ]
 
 
-# Create sheet's starting points: (id, source). A source is either a sheet
-# of the example workbook, of which the header, the settings row and the first
-# few words are taken, or a grid written out here when no sheet in the workbook
-# is the right shape. The labels live in site/sheet.js beside the ids, so they
-# are translated with the rest of the page.
-SHEET_TEMPLATES = [
-    (
-        "blank",
-        [["ID", "Front", "Back"], ["#config", "size=40", "size=24"], ["w01", "", ""]],
-    ),
-    (
-        "english",
-        # Word / IPA / Meaning / Example, spoken — the words come from the
-        # workbook's card-layout sheet, the columns are the ones learners ask for.
-        (
-            "03 Card layout (bố cục thẻ)",
-            ["Word", "Phonetic", "Meaning", "Example"],
-            ["Word", "IPA", "Meaning", "Example"],
-            [
-                "#config",
-                "size=44; bold; tts=en_US",
-                "size=20; color=accent",
-                "side=back; size=26",
-                "side=back; size=16; color=muted; italic; tts=en_US",
-            ],
-        ),
-    ),
-    ("kanji", "13 Furigana (phiên âm kanji)"),
-    ("cloze", "06 Cloze (điền chỗ trống)"),
+# Create sheet's starting points. There are two, because everything else a
+# learner asked for was Basic with the columns renamed: a blank Front / Back,
+# and a vocabulary sheet whose settings row is made from two choices — the
+# language of the words and which of Word and Example are read aloud. The labels
+# live in site/sheet.js, so they are translated with the rest of the page.
+# Basic's two columns are named in the page's language when the sheet is made,
+# and keep that name after: by then they are field names. ID is reserved.
+BASIC_TEMPLATES = {
+    "vi": [
+        ["ID", "Mặt trước", "Mặt sau"],
+        ["#config", "size=40", "size=24"],
+        ["w01", "", ""],
+    ],
+    "en": [
+        ["ID", "Front", "Back"],
+        ["#config", "size=40", "size=24"],
+        ["w01", "", ""],
+    ],
+}
+
+# Custom: the whole editor, opened on a sheet that shows what a settings row
+# can do — a few keys per column, each one visible on the card. The pictures
+# and recordings are the example workbook's, already checked to load.
+_COMMONS = "https://upload.wikimedia.org/wikipedia/commons/thumb"
+CUSTOM_TEMPLATE = [
+    ["ID", "SUBDECK 1", "TAGS", "Picture", "Word", "IPA", "Meaning", "Example"],
+    [
+        "#config theme=sakura",
+        "",
+        "",
+        "image; size=200",
+        "side=back; size=44; bold; color=accent; type; tts=en_US; voices=Apple_Samantha",
+        "side=back; size=20; color=muted",
+        "side=back; size=24; label=Nghĩa",
+        "side=back; size=16; italic; hint; tts=en_US; voices=Apple_Samantha",
+    ],
+    [
+        "w01",
+        "Animals",
+        "animals, a1",
+        f"{_COMMONS}/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg",
+        "cat",
+        "/kæt/",
+        "con mèo",
+        "The cat is asleep on the chair.",
+    ],
+    [
+        "w02",
+        "Animals",
+        "animals, a1",
+        f"{_COMMONS}/1/17/Tiger_in_Ranthambhore.jpg/500px-Tiger_in_Ranthambhore.jpg",
+        "tiger",
+        "/ˈtaɪ.ɡɚ/",
+        "con hổ",
+        "A tiger hunts alone.",
+    ],
+    [
+        "w03",
+        "Food and drink",
+        "food, a1",
+        f"{_COMMONS}/1/15/Red_Apple.jpg/500px-Red_Apple.jpg",
+        "apple",
+        "/ˈæp.əl/",
+        "quả táo",
+        "An apple a day is an old English saying.",
+    ],
 ]
-# How many words of an example sheet a template keeps: enough to see the card,
-# few enough that clearing them is not a chore.
-TEMPLATE_ROWS = 3
+
+VOCAB_HEADERS = ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
+
+# One row per language the vocabulary template offers, in the order offered:
+# (tts code, the language named in itself, iPhone voice or None, font or None,
+# three words as Word / Phiên âm / Meaning / Example / Note).
+#
+# A voice is named only where tests/test_card_layout_voices.py's dump of a real
+# iPhone (iOS 26, AnkiMobile) has one that is not a download: Samantha, Daniel,
+# Tingting, Anna and Linh. voices= is a preference, so on Android and desktop
+# Anki falls back to any voice of the language. That iPhone had no ja_JP or
+# ko_KR voice at all, and fr_FR and es_ES are not in it either — naming one there
+# would be naming a voice that is not on the phone, so those name none and the
+# page says where to download one.
+VOCAB_LANGUAGES = [
+    (
+        "en_US",
+        "English (US)",
+        "Apple_Samantha",
+        None,
+        [
+            ["journey", "/ˈdʒɝː.ni/", "chuyến đi", "The journey took three hours.", ""],
+            [
+                "borrow",
+                "/ˈbɑːr.oʊ/",
+                "mượn",
+                "Can I borrow your pen?",
+                "borrow from: mượn của ai; lend to: cho ai mượn",
+            ],
+            [
+                "improve",
+                "/ɪmˈpruːv/",
+                "cải thiện",
+                "Reading every day will improve your English.",
+                "",
+            ],
+        ],
+    ),
+    (
+        "en_GB",
+        "English (UK)",
+        "Apple_Daniel",
+        None,
+        [
+            ["journey", "/ˈdʒɜː.ni/", "chuyến đi", "The journey took three hours.", ""],
+            [
+                "borrow",
+                "/ˈbɒr.əʊ/",
+                "mượn",
+                "Can I borrow your pen?",
+                "borrow from: mượn của ai; lend to: cho ai mượn",
+            ],
+            [
+                "queue",
+                "/kjuː/",
+                "hàng người xếp hàng",
+                "We waited in a queue for an hour.",
+                "Tiếng Mỹ: line",
+            ],
+        ],
+    ),
+    (
+        "zh_CN",
+        "中文 (简体)",
+        "Apple_Tingting",
+        "sc",
+        [
+            ["学习", "xuéxí", "học", "我每天学习中文。", ""],
+            ["朋友", "péngyou", "bạn bè", "他是我的好朋友。", ""],
+            ["喜欢", "xǐhuan", "thích", "我喜欢喝茶。", "喜欢 + động từ: thích làm gì"],
+        ],
+    ),
+    (
+        "ja_JP",
+        "日本語",
+        None,
+        "jp",
+        [
+            [
+                "勉強",
+                "べんきょう (benkyō)",
+                "học",
+                "毎日日本語を勉強します。",
+                "勉強する: học",
+            ],
+            ["友達", "ともだち (tomodachi)", "bạn bè", "友達と映画を見ました。", ""],
+            [
+                "食べる",
+                "たべる (taberu)",
+                "ăn",
+                "朝ご飯を食べましたか。",
+                "Động từ nhóm 2",
+            ],
+        ],
+    ),
+    (
+        "ko_KR",
+        "한국어",
+        None,
+        "kr",
+        [
+            ["공부하다", "gongbuhada", "học", "저는 매일 한국어를 공부해요.", ""],
+            ["친구", "chingu", "bạn bè", "친구랑 영화를 봤어요.", ""],
+            [
+                "맛있다",
+                "masitda",
+                "ngon",
+                "이 김치는 정말 맛있어요.",
+                "Trái nghĩa: 맛없다",
+            ],
+        ],
+    ),
+    (
+        "fr_FR",
+        "Français",
+        None,
+        None,
+        [
+            ["bonjour", "/bɔ̃.ʒuʁ/", "xin chào", "Bonjour, comment allez-vous ?", ""],
+            ["merci", "/mɛʁ.si/", "cảm ơn", "Merci beaucoup pour votre aide.", ""],
+            [
+                "la maison",
+                "/la mɛ.zɔ̃/",
+                "ngôi nhà",
+                "La maison est très grande.",
+                "Danh từ giống cái",
+            ],
+        ],
+    ),
+    (
+        "de_DE",
+        "Deutsch",
+        "Apple_Anna",
+        None,
+        [
+            [
+                "das Haus",
+                "/haʊ̯s/",
+                "ngôi nhà",
+                "Das Haus ist sehr groß.",
+                "Số nhiều: die Häuser",
+            ],
+            ["danke", "/ˈdaŋ.kə/", "cảm ơn", "Danke für deine Hilfe.", ""],
+            ["lernen", "/ˈlɛʁ.nən/", "học", "Ich lerne jeden Tag Deutsch.", ""],
+        ],
+    ),
+    (
+        "es_ES",
+        "Español",
+        None,
+        None,
+        [
+            ["hola", "/ˈo.la/", "xin chào", "Hola, ¿cómo estás?", ""],
+            ["gracias", "/ˈɡɾa.θjas/", "cảm ơn", "Muchas gracias por tu ayuda.", ""],
+            [
+                "la casa",
+                "/ˈka.sa/",
+                "ngôi nhà",
+                "Mi casa es tu casa.",
+                "Danh từ giống cái",
+            ],
+        ],
+    ),
+    (
+        "vi_VN",
+        "Tiếng Việt",
+        "Apple_Linh",
+        None,
+        [
+            [
+                "kiên nhẫn",
+                "",
+                "chờ đợi, chịu đựng mà không nản",
+                "Học ngoại ngữ cần kiên nhẫn.",
+                "Hán Việt: 堅忍",
+            ],
+            [
+                "hạnh phúc",
+                "",
+                "vui sướng vì được như ý",
+                "Gia đình tôi sống rất hạnh phúc.",
+                "Hán Việt: 幸福",
+            ],
+            [
+                "thành công",
+                "",
+                "đạt được kết quả mong muốn",
+                "Chúc bạn thành công!",
+                "Hán Việt: 成功",
+            ],
+        ],
+    ),
+]
+
+
+def vocab_config(code, voice, font, speak_word, speak_example):
+    """The vocabulary template's settings row for one set of choices."""
+
+    def spoken(base, speak):
+        parts = [base]
+        if font:
+            parts.append(f"font={font}")
+        if speak:
+            parts.append(f"tts={code}" + (f"; voices={voice}" if voice else ""))
+        return "; ".join(parts)
+
+    return [
+        "#config",
+        spoken("size=44; bold", speak_word),
+        "size=20; color=accent",
+        "size=26",
+        spoken("size=18; color=muted; italic", speak_example),
+        "size=14; color=muted",
+    ]
+
+
+def vocab_rows(language, speak_word=True, speak_example=True):
+    code, _label, voice, font, words = language
+    config = vocab_config(code, voice, font, speak_word, speak_example)
+    rows = [VOCAB_HEADERS, config]
+    rows += [[f"w{n:02}", *word] for n, word in enumerate(words, start=1)]
+    return rows
 
 
 def modules_the_site_loads():
@@ -369,51 +623,93 @@ def build_home_cards(out):
 # ---------------------------------------------------------------------------
 
 
-def sheet_templates(out):
-    """Each template as rows of text, checked by the add-on's own parser.
+def _template_card(tm, card_layout, name, rows):
+    """Parses one template's rows and returns the card its first word becomes.
 
     A template is the first thing somebody writes into, so it must not open with
-    a warning: every one is parsed here, and the build stops on a warning or an
-    empty front rather than shipping a starting point that is already wrong.
+    a warning: the build stops on a warning or an empty front rather than
+    shipping a starting point that is already wrong. The card is what the picker
+    shows: the templates card_layout.py builds and the first word's values, so
+    anki.js can fill it without Pyodide. The voice list a spoken card carries is
+    left out — it lists the voices of the device reviewing the card, a picture
+    of a card is not one, and it is most of the template's weight.
     """
-    tm, card_layout, workbook = _pure_package(out)
-    data = EXAMPLES.read_bytes()
-    built = []
-    for template_id, source in SHEET_TEMPLATES:
-        if isinstance(source, list):
-            rows = [list(row) for row in source]
-        else:
-            if isinstance(source, str):
-                sheet, pick, rename, config = source, None, None, None
-            else:
-                sheet, pick, rename, config = source
-            grid = workbook.sheet_tsv(data, sheet)
-            table = list(csv.reader(io.StringIO(grid), delimiter="\t"))
-            if pick:
-                at = [table[0].index(name) for name in pick]
-                table = [[row[0]] + [row[i] for i in at] for row in table]
-                table[0] = ["ID"] + rename
-                table[1] = config
-                for n, row in enumerate(table[2:], start=1):
-                    row[0] = f"w{n:02}"
-            rows = table[: 2 + TEMPLATE_ROWS]
-        parsed = tm.parse_tsv_data("\n".join("\t".join(row) for row in rows), [])
-        deck = tm.build_remote_deck_from_tsv(parsed, "", [])
-        cfg = deck.sheet_config
-        if cfg.warnings:
-            sys.exit(f"template {template_id!r} warns: {cfg.warnings}")
-        front, _ = card_layout.split_sides(deck.plan, cfg)
-        if not front:
-            sys.exit(f"template {template_id!r} has nothing on the front")
-        built.append({"id": template_id, "rows": rows})
-    return built
+    parsed = tm.parse_tsv_data("\n".join("\t".join(row) for row in rows), [])
+    deck = tm.build_remote_deck_from_tsv(parsed, "", [])
+    plan, cfg = deck.plan, deck.sheet_config
+    if cfg.warnings:
+        sys.exit(f"template {name!r} warns: {cfg.warnings}")
+    front, _ = card_layout.split_sides(plan, cfg)
+    if not front:
+        sys.exit(f"template {name!r} has nothing on the front")
+    word = parsed["rows"][1] if len(parsed["rows"]) > 1 else []
+    values = tm.row_to_dict(word, parsed["headers"])
+    tm.apply_media_rewrites(values, plan, cfg)
+    if not any(values.get(h) for h in plan.content_headers):
+        # The blank template's word is empty; its card shows the column names,
+        # which is what a blank card is about to hold.
+        values = {h: h for h in plan.content_headers}
+    template = card_layout.build_templates(plan, cfg, bool(cfg.cloze_field))[0]
+
+    def picture(side):
+        side = re.sub(
+            r"<details class=\"[^\"]*sc-tts-debug[\s\S]*?</details>", "", side
+        )
+        return re.sub(r"<script>[\s\S]*?</script>", "", side)
+
+    return {
+        "template": {
+            "qfmt": picture(template["qfmt"]),
+            "afmt": picture(template["afmt"]),
+        },
+        "values": values,
+    }
+
+
+def sheet_templates(out):
+    """The three templates: Basic in both languages, every variant of the
+    vocabulary template, and the custom one.
+
+    Every language × read-Word × read-Example combination is parsed here, so a
+    choice on the page can never produce a sheet that warns.
+    """
+    tm, card_layout, _workbook = _pure_package(out)
+    basic = {
+        "id": "basic",
+        "variants": {
+            lang: {
+                "rows": rows,
+                "card": _template_card(tm, card_layout, f"basic {lang}", rows),
+            }
+            for lang, rows in BASIC_TEMPLATES.items()
+        },
+    }
+    languages, variants = [], {}
+    for language in VOCAB_LANGUAGES:
+        code, label, voice, _font, _words = language
+        languages.append({"code": code, "label": label, "voice": voice})
+        for word in (True, False):
+            for example in (True, False):
+                key = f"{code}|{int(word)}{int(example)}"
+                rows = vocab_rows(language, word, example)
+                variants[key] = {
+                    "rows": rows,
+                    "card": _template_card(tm, card_layout, f"vocab {key}", rows),
+                }
+    vocab = {"id": "vocab", "languages": languages, "variants": variants}
+    custom = {
+        "id": "custom",
+        "rows": CUSTOM_TEMPLATE,
+        "card": _template_card(tm, card_layout, "custom", CUSTOM_TEMPLATE),
+    }
+    return [basic, vocab, custom]
 
 
 def build_sheet_templates(out):
-    body = json.dumps(sheet_templates(out), ensure_ascii=False, indent=1)
+    body = json.dumps(sheet_templates(out), ensure_ascii=False, separators=(",", ":"))
     (out / "sheet-templates.js").write_text(
-        "// Generated by scripts/build_site.py from examples/sheetcards-examples.xlsx\n"
-        "// and SHEET_TEMPLATES. Do not edit.\n"
+        "// Generated by scripts/build_site.py from SHEET_TEMPLATES with the\n"
+        "// add-on's own card_layout.py. Do not edit.\n"
         f"export const TEMPLATES = {body};\n",
         encoding="utf-8",
     )

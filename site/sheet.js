@@ -22,11 +22,11 @@
 import { renderCard, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
-import { cardDoc, cardFrame } from "./cardframe.js";
+import { backOnly, cardDoc, cardFrame } from "./cardframe.js";
 import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { stashFile } from "./handoff.js";
-import { LONG_LINK, decodeShare, encodeShare, isShare, parseTsv, toTsv } from "./sharelink.js";
+import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, toTsv } from "./sharelink.js";
 import { TEMPLATES } from "./sheet-templates.js";
 
 /** What the page asks of the add-on's code. */
@@ -154,15 +154,21 @@ const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 // The same four views of a card Create deck offers, with the same names.
 const CARD_TABS = ["front", "both", "back", "template"];
 
-// The starting points, and what each is called. The grids are built from the
-// example workbook (scripts/build_site.py → sheet-templates.js); the words are
-// here so they are translated with the rest of the page.
+// The three starting points, and what each is called. The grids, and the card
+// each one's first word becomes, are written by scripts/build_site.py
+// (BASIC_TEMPLATES, VOCAB_LANGUAGES and CUSTOM_TEMPLATE → sheet-templates.js);
+// the words are here so they are translated with the rest of the page.
 const TEMPLATE_TEXT = {
-  blank: { title: "tplBlank", text: "tplBlankText", name: "tplBlankName" },
-  english: { title: "tplEnglish", text: "tplEnglishText", name: "tplEnglishName" },
-  kanji: { title: "tplKanji", text: "tplKanjiText", name: "tplKanjiName" },
-  cloze: { title: "tplCloze", text: "tplClozeText", name: "tplClozeName" },
+  basic: { title: "tplBasic", text: "tplBasicText", name: "tplBlankName" },
+  vocab: { title: "tplVocab", text: "tplVocabText", name: "tplVocabName" },
+  custom: { title: "tplCustom", text: "tplCustomText", name: "tplCustomName" },
 };
+const BASIC = TEMPLATES.find((tpl) => tpl.id === "basic");
+const VOCAB = TEMPLATES.find((tpl) => tpl.id === "vocab");
+const CUSTOM = TEMPLATES.find((tpl) => tpl.id === "custom");
+// Basic's columns are named in the page's language at the moment the sheet is
+// made; a draft keeps them, because by then they are its field names.
+const basicVariant = () => BASIC.variants[lang()] || BASIC.variants.en;
 
 /**
  * Values worth offering for each directive that takes one. Suggestions, not the
@@ -387,11 +393,11 @@ function fromGrid(grid, title) {
 }
 
 /** The sheet as rows of text — what every way out of this page writes. */
-function exportGrid() {
+function exportGrid(of = sheet) {
   return [
-    ["ID", ...sheet.columns.map((c) => c.name)],
-    [sheet.marker, ...sheet.columns.map((c) => c.cell)],
-    ...sheet.rows.filter((r) => !blankRow(r)).map((r) => [r.id, ...r.values]),
+    ["ID", ...of.columns.map((c) => c.name)],
+    [of.marker, ...of.columns.map((c) => c.cell)],
+    ...of.rows.filter((r) => !blankRow(r)).map((r) => [r.id, ...r.values]),
   ];
 }
 
@@ -580,6 +586,8 @@ function setTheme(on) {
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", on ? "#18151f" : "#ffffff");
   paintChrome();
+  if (ui.stage === "empty") paintTemplates();
+  if ($("#tplbox").open) paintStep();
   drawCard();
 }
 
@@ -641,44 +649,194 @@ function begin(next, { row = 0, col = 0, keepHistory = false } = {}) {
   saveSoon();
 }
 
-/** The template cards: each a scrap of the sheet it starts, ruled like one. */
+// The card a template's first word becomes: the templates and values came out
+// of card_layout.py at build time, so this is the card the sheet will make,
+// drawn by the same anki.js Create deck uses — no Pyodide.
+function templateCard(card) {
+  const { front, back } = renderCard(card.template, card.values, { ordinal: 1 });
+  // A small face shows what the answer adds, not the question again.
+  const answer = backOnly(back.html, front.html).replace(/^\s*<hr id="answer">/, "");
+  // The question carried the note type's stylesheet; the answer alone needs it.
+  const styles = (front.html.match(/<style\b[\s\S]*?<\/style>/gi) || []).join("");
+  return { front, back: { html: styles + answer } };
+}
+
+/**
+ * One face of a card, as a document for a frame nobody can click: no
+ * scrollbars, and drawn smaller so a whole card fits a tile.
+ */
+function faceDoc(card, tab, zoom = 0.6) {
+  const { front, back } = templateCard(card);
+  return cardDoc({ front, back, tab, dark: dark() }).replace(
+    '<meta charset="utf-8">',
+    `<meta charset="utf-8"><style>html { zoom: ${zoom}; } html, body { overflow: hidden; } ` +
+      "body { padding: 14px 12px; }</style>",
+  );
+}
+
+// The frames a face is waiting to be drawn into, and what goes in each.
+const pendingFaces = new WeakMap();
+// A frame is filled only when it is about to scroll into view, so a phone does
+// not build every card at once to show the first one.
+const facesSeen = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      facesSeen.unobserve(entry.target);
+      entry.target.srcdoc = pendingFaces.get(entry.target)();
+    }
+  },
+  { rootMargin: "200px 0px" },
+);
+
+/** A card's front and back side by side, as two frames filled when seen. */
+function facesHtml(key) {
+  const face = (tab) =>
+    `<figure class="tplface"><iframe sandbox="allow-scripts" tabindex="-1" aria-hidden="true"
+      data-face="${key}" data-tab="${tab}"></iframe>
+      <figcaption>${escapeHtml(t(tab === "front" ? "demoFront" : "demoBack"))}</figcaption></figure>`;
+  return `<div class="tplfaces" aria-hidden="true">${face("front")}${face("back")}</div>`;
+}
+
+function watchFaces(root, cardFor) {
+  for (const el of root.querySelectorAll("iframe[data-face]")) {
+    pendingFaces.set(el, () => faceDoc(cardFor(el.dataset.face), el.dataset.tab));
+    facesSeen.observe(el);
+  }
+}
+
+// The vocabulary template's choices: the words' language and which of Word and
+// Example are read aloud. Kept for the visit, so reopening the step resumes.
+const vocabChoice = { lang: VOCAB.languages[0].code, word: true, example: true };
+const VOCAB_DEFAULT = { lang: VOCAB.languages[0].code, word: true, example: true };
+
+function vocabVariant({ lang: code, word, example } = vocabChoice) {
+  return VOCAB.variants[`${code}|${Number(word)}${Number(example)}`];
+}
+
+/** What a template makes right now: its rows and its first word's card. */
+function templateNow(id, vocab = vocabChoice) {
+  if (id === "basic") return basicVariant();
+  if (id === "vocab") return vocabVariant(vocab);
+  return CUSTOM;
+}
+
+/**
+ * The sheet a template becomes, as Create sheet itself would write it out: the
+ * rows go through the same fromGrid → exportGrid every other way in and out of
+ * this page goes through, so the scrap on screen, the .csv beside it and the
+ * sheet that opens are one thing.
+ */
+function templateSheet(id, vocab) {
+  return fromGrid(templateNow(id, vocab).rows, t(TEMPLATE_TEXT[id].name));
+}
+
+/** Rows drawn as a small spreadsheet: letters, row numbers, the ruled cells. */
+function sheetScrap(rows, { mini = false } = {}) {
+  const width = Math.max(...rows.map((r) => r.length));
+  const shown = mini ? rows.slice(0, 3) : rows;
+  const head = `<tr><th></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
+  const body = shown
+    .map(
+      (row, r) =>
+        `<tr class="${r === 0 ? "names" : r === 1 ? "settings" : ""}"><th>${r + 1}</th>${Array.from(
+          { length: width },
+          (_, c) => `<td>${escapeHtml(row[c] ?? "")}</td>`,
+        ).join("")}</tr>`,
+    )
+    .join("");
+  return `<table class="scrap${mini ? " mini" : ""}">${head}${body}</table>`;
+}
+
+/**
+ * The template cards: the card each makes, front and back side by side, the
+ * first rows of the sheet behind it, and what it is called. The whole tile is
+ * the button (its ::after covers it); the frames stay pictures, since a frame
+ * is interactive content and cannot go inside a <button>. The vocabulary tile
+ * shows its default: English (US), both read aloud.
+ */
 function paintTemplates() {
-  $("#templates").innerHTML = TEMPLATES.map((tpl) => {
-    const text = TEMPLATE_TEXT[tpl.id];
-    const shown = tpl.rows.slice(0, 4).map((row) => row.slice(0, 4));
-    while (shown.length < 4) shown.push([]);
-    const width = Math.max(...shown.map((r) => r.length));
-    const letters = Array.from({ length: width }, (_, i) => `<i>${String.fromCharCode(65 + i)}</i>`).join("");
-    const cells = shown
+  facesSeen.disconnect();
+  $("#templates").innerHTML = ["basic", "vocab", "custom"]
+    .map((id) => {
+      const text = TEMPLATE_TEXT[id];
+      const rows = exportGrid(templateSheet(id, VOCAB_DEFAULT));
+      return `<div class="tplcard">
+        ${facesHtml(id)}
+        <button type="button" class="tpl-go" data-template="${id}">
+          <strong>${escapeHtml(t(text.title))}</strong>
+          <span class="tpl-desc">${escapeHtml(t(text.text))}</span>
+        </button>
+        <div class="tpl-sheet" aria-hidden="true">${sheetScrap(rows, { mini: true })}</div>
+      </div>`;
+    })
+    .join("");
+  watchFaces($("#templates"), (id) => templateNow(id, VOCAB_DEFAULT).card);
+}
+
+// Which template the step is open on.
+let stepId = "basic";
+
+/**
+ * The step between a tile and the editor: the card, the sheet that makes it,
+ * and — for vocabulary — the language and the two voices. The sheet is there
+ * because it is the thing being made: the card comes out of those rows, and the
+ * rows open just as well in Google Sheets or Excel as here.
+ */
+function paintStep() {
+  const box = $("#tplbox");
+  const text = TEMPLATE_TEXT[stepId];
+  $("#tpl-title").textContent = t(text.title);
+  $("#tpl-desc").textContent = t(text.text);
+  const vocab = stepId === "vocab";
+  $("#vocab-opts").hidden = !vocab;
+  if (vocab) {
+    $("#vocab-lang").innerHTML = VOCAB.languages
       .map(
-        (row, r) =>
-          `<span class="tm-row tm-r${Math.min(r, 2)}">${Array.from({ length: width }, (_, c) => {
-            const v = row[c] ?? "";
-            return `<span>${escapeHtml(v) || "&nbsp;"}</span>`;
-          }).join("")}</span>`,
+        (l) =>
+          `<option value="${l.code}" ${l.code === vocabChoice.lang ? "selected" : ""}>${escapeHtml(l.label)}</option>`,
       )
       .join("");
-    return `<button type="button" class="tplcard" data-template="${tpl.id}">
-      <span class="tpl-mini" aria-hidden="true" style="--w:${width}">
-        <span class="tm-row tm-letters">${letters}</span>${cells}
-      </span>
-      <span class="tpl-text"><strong>${escapeHtml(t(text.title))}</strong>
-        <span>${escapeHtml(t(text.text))}</span></span>
-    </button>`;
-  }).join("");
+    $("#vocab-word").checked = vocabChoice.word;
+    $("#vocab-example").checked = vocabChoice.example;
+    const language = VOCAB.languages.find((l) => l.code === vocabChoice.lang);
+    // Only a language with a voice every iPhone has is spoken there as written;
+    // for the rest, the voice is a download, and silence is the first sign of it.
+    $("#vocab-ios").hidden = Boolean(language.voice) || !(vocabChoice.word || vocabChoice.example);
+  }
+  $("#tpl-card").innerHTML = facesHtml(stepId);
+  // The step is open, so its frames are in view: no need to wait for them.
+  const card = templateNow(stepId).card;
+  for (const el of box.querySelectorAll("iframe[data-face]")) {
+    el.srcdoc = faceDoc(card, el.dataset.tab, 0.72);
+  }
+  $("#tpl-sheet").innerHTML = sheetScrap(exportGrid(templateSheet(stepId)));
 }
 
 function pickTemplate(id) {
-  const tpl = TEMPLATES.find((x) => x.id === id);
-  if (!tpl) return;
-  begin(fromGrid(tpl.rows, t(TEMPLATE_TEXT[id].name)), { row: 0, col: 0 });
+  stepId = id;
+  paintStep();
+  $("#tplbox").showModal();
+  $("#tpl-go").focus();
+}
+
+/** The step's sheet as a .csv — the same writer as Download .csv in the editor. */
+function stepCsv() {
+  const made = templateSheet(stepId);
+  const name = `${made.title}.csv`;
+  download(new Blob([asCsv(exportGrid(made))], { type: "text/csv" }), name);
+  toast(t("shDownloaded", name), "ok");
+}
+
+function createFromStep() {
+  $("#tplbox").close();
+  begin(templateSheet(stepId), { row: 0, col: 0 });
   // The blank one has nothing to look at yet, so it opens on its first word.
-  if (id === "blank") {
-    if (WIDE.matches) {
-      select(firstWordRow, 0);
-      startEditing(firstWordRow, 0);
-    } else openForm(0, { field: 0 });
-  }
+  if (stepId !== "basic") return;
+  if (WIDE.matches) {
+    select(firstWordRow, 0);
+    startEditing(firstWordRow, 0);
+  } else openForm(0, { field: 0 });
 }
 
 // ---------------------------------------------------------------------------
@@ -1361,12 +1519,6 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** RFC 4180, with a byte order mark: the only way to tell Excel it is UTF-8. */
-function asCsv(rows) {
-  const quote = (value) => (/[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
-  return `﻿${rows.map((row) => row.map(quote).join(",")).join("\r\n")}\r\n`;
-}
-
 function saveCsv() {
   download(new Blob([asCsv(exportGrid())], { type: "text/csv" }), `${fileBase()}.csv`);
   $("#savebox").close();
@@ -1573,12 +1725,15 @@ document.addEventListener("click", (e) => {
     paintChrome();
     if (ui.stage === "empty") paintTemplates();
     else paintAll();
+    if ($("#tplbox").open) paintStep();
     if (!run) bootStatus();
     return;
   }
 
   const tpl = e.target.closest("[data-template]");
   if (tpl) return pickTemplate(tpl.dataset.template);
+  if (e.target.closest("#tpl-go")) return createFromStep();
+  if (e.target.closest("#tpl-csv")) return stepCsv();
 
   if (e.target.closest("[data-close]")) return e.target.closest("dialog").close();
 
@@ -1835,6 +1990,16 @@ $("#save-csv").addEventListener("click", saveCsv);
 $("#save-xlsx").addEventListener("click", saveXlsx);
 $("#share").addEventListener("click", openShare);
 $("#share-deck").addEventListener("change", paintShare);
+$("#vocab-lang").addEventListener("change", (e) => {
+  vocabChoice.lang = e.target.value;
+  paintStep();
+});
+for (const [id, key] of [["#vocab-word", "word"], ["#vocab-example", "example"]]) {
+  $(id).addEventListener("change", (e) => {
+    vocabChoice[key] = e.target.checked;
+    paintStep();
+  });
+}
 $("#share-copy").addEventListener("click", copyShare);
 $("#share-native").addEventListener("click", async () => {
   try {

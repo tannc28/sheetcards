@@ -175,7 +175,11 @@
         </div>
 
         <div class="colpanel">
-          <h3 class="pane-h" data-i18n="shColumns">Cột & settings row</h3>
+          <div class="pane-hrow">
+            <h3 class="pane-h" data-i18n="shColumns">Cột & settings row</h3>
+            <a class="docslink" href="./docs/settings-row.html" data-doc="settings-row.html" target="_blank" rel="noopener"
+               data-i18n="shSettingsDocs">Mọi key của settings row</a>
+          </div>
           <div class="colstrip" id="colstrip" role="group" aria-label="Cột" data-i18n-attr="aria-label:shColumnsLabel"></div>
           <div class="colhead" id="colhead"></div>
           <div class="stack">
@@ -291,6 +295,41 @@
     <div class="askacts">
       <button class="toolbtn" id="ask-no" type="button"></button>
       <button class="btn" id="ask-yes" type="button"></button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Between a template and the editor: the card, the sheet that makes it, and
+     for vocabulary the language and the voices. -->
+<dialog id="tplbox" class="donebox pickbox tplbox" aria-labelledby="tpl-title">
+  <div class="done-head">
+    <strong id="tpl-title"></strong>
+    <button class="iconbtn" data-close type="button"
+            title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+  </div>
+  <div class="tplbody">
+    <p id="tpl-desc" class="tpl-desc"></p>
+    <div id="vocab-opts" class="vocab-opts" hidden>
+      <label class="vocab-field"><span data-i18n="vocabLang">Từ của bạn bằng tiếng</span>
+        <select id="vocab-lang"></select></label>
+      <div class="vocab-toggles">
+        <label class="sharechoice"><input type="checkbox" id="vocab-word" checked>
+          <span data-i18n="vocabSpeakWord">Đọc to Word</span></label>
+        <label class="sharechoice"><input type="checkbox" id="vocab-example" checked>
+          <span data-i18n="vocabSpeakExample">Đọc to Example</span></label>
+      </div>
+      <p id="vocab-ios" class="tpl-note" hidden><span data-icon="smartphone"></span><span data-i18n="tplIosVoice">Trên iPhone có thể phải tải giọng đọc: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói</span></p>
+    </div>
+    <div class="tpl-made">
+      <div id="tpl-card" class="tpl-card"></div>
+      <div class="tpl-file">
+        <div id="tpl-sheet" class="tpl-sheet scrapwrap"></div>
+        <p class="tpl-caption" data-i18n="tplSheetCaption">Đây là sheet của bạn — card được tạo từ chính những dòng này. Mở bằng Google Sheets hay Excel cũng được.</p>
+      </div>
+    </div>
+    <div class="askacts tpl-acts">
+      <button class="toolbtn" id="tpl-csv" type="button"><span data-icon="download"></span><span data-i18n="tplCsv">Tải file .csv mẫu</span></button>
+      <button class="btn" id="tpl-go" type="button" data-i18n="vocabCreate">Tạo sheet</button>
     </div>
   </div>
 </dialog>
