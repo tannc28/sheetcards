@@ -18,7 +18,7 @@
 import { mountInAppBanner } from "./inapp.js";
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
-import { startPython } from "./pyodide.js";
+import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { takeHandoff } from "./handoff.js";
@@ -377,7 +377,7 @@ function status(text, kind = "", busy = false) {
 // because a spinner that has turned for that long reads as broken. The form is
 // never disabled for it: a link pasted while it loads is taken, said so, and run
 // the moment Python is ready.
-const booting = { step: "boot", slow: false, queued: false, done: false, failed: false };
+const booting = { step: "boot", slow: false, queued: false, done: false, failed: false, bytes: 0 };
 let pending = null;
 
 function bootStatus() {
@@ -386,10 +386,17 @@ function bootStatus() {
     if (state.stage === "empty") status(t("readyNow"), "ok");
     return;
   }
+  const loading =
+    booting.step !== "boot"
+      ? t("loadingCode")
+      : booting.bytes
+        ? t("bootingMB", mb(booting.bytes), mb(FIRST_LOAD_BYTES))
+        : t("booting");
   status(
     [
-      booting.queued && t("queued"),
-      t(booting.step === "boot" ? "booting" : "loadingCode"),
+      booting.queued && t(booting.queued === "file" ? "queuedFile" : "queued"),
+      loading,
+      onMobileData() && t("bootData", mb(FIRST_LOAD_BYTES)),
       booting.slow && t("slowBoot"),
     ]
       .filter(Boolean)
@@ -400,10 +407,10 @@ function bootStatus() {
 }
 
 /** Runs `job` now, or once Python has loaded if it has not yet. */
-function whenReady(job) {
+function whenReady(job, what = "link") {
   if (booting.done) return job();
   pending = job;
-  booting.queued = true;
+  booting.queued = what;
   bootStatus();
 }
 
@@ -412,10 +419,23 @@ async function boot() {
     booting.slow = true;
     bootStatus();
   }, 10_000);
-  const py = await startPython(ANALYZER, (step) => {
-    booting.step = step;
-    bootStatus();
-  });
+  let painted = 0;
+  const py = await startPython(
+    ANALYZER,
+    (step) => {
+      booting.step = step;
+      bootStatus();
+    },
+    (done) => {
+      booting.bytes = done;
+      // Half a megabyte at a time: the line is a live region, and one redrawn per chunk is
+      // a screen reader saying nothing else.
+      if (done - painted >= 5e5 || done === FIRST_LOAD_BYTES) {
+        painted = done;
+        bootStatus();
+      }
+    },
+  );
   clearTimeout(slow);
 
   const fn = py.globals.get("analyze");
@@ -876,7 +896,7 @@ function openFile(file) {
   // wrong place. A deck already on screen stays there under the toast.
   if (!FILE_TYPES.test(file.name)) return status(t("badFileType", file.name), "bad");
   fromPage = true;
-  whenReady(() => previewFile(file));
+  whenReady(() => previewFile(file), "file");
 }
 
 /**
@@ -2366,7 +2386,7 @@ if (loadFromAddress()) {
   history.replaceState(null, "", location.pathname);
   setStage("loading");
   takeHandoff().then(({ file, from }) => {
-    if (file) whenReady(() => previewFile(file, { edit: from === "sheet" ? "./sheet.html" : "" }));
+    if (file) whenReady(() => previewFile(file, { edit: from === "sheet" ? "./sheet.html" : "" }), "file");
     else {
       setStage("empty");
       bootStatus();
@@ -2383,7 +2403,7 @@ if (loadFromAddress()) {
       const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
         type: "text/tab-separated-values",
       });
-      whenReady(() => previewFile(file, { hash, edit: `./sheet.html${hash}` }));
+      whenReady(() => previewFile(file, { hash, edit: `./sheet.html${hash}` }), "file");
     },
     (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
   );

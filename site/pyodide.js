@@ -9,6 +9,85 @@
  */
 
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+const BASE = PYODIDE.replace("pyodide.mjs", "");
+
+// What a first visit downloads, per file: [bytes over the wire (brotli), bytes
+// once decoded]. Measured off the CDN for this exact version; a stream can only
+// count decoded bytes, so each is scaled by its own ratio to say how much data
+// has actually come in. Change these with the version above.
+const FILES = {
+  "pyodide.asm.wasm": [2667808, 8645967],
+  "python_stdlib.zip": [2379766, 2416866],
+  "sqlite3-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl": [566360, 566355],
+  "pyodide.asm.js": [226208, 1073033],
+  "pyodide-lock.json": [23865, 109732],
+  "pyodide.mjs": [6711, 6711],
+};
+
+/** The first visit's download, in bytes over the wire (~5.9 MB). */
+export const FIRST_LOAD_BYTES = Object.values(FILES).reduce((sum, [wire]) => sum + wire, 0);
+
+/** Megabytes the way a status line says them: one decimal, at least 0.1. */
+export const mb = (bytes) => Math.max(0.1, bytes / 1e6).toFixed(1);
+
+/**
+ * True where the browser says the page is on mobile data or saving it. Only
+ * Chrome on Android answers (navigator.connection); Safari says nothing, and
+ * then nothing is said.
+ */
+export function onMobileData(nav = globalThis.navigator) {
+  const c = nav?.connection;
+  if (!c) return false;
+  return c.saveData === true || c.type === "cellular" || /(^|-)(2g|3g)$/.test(c.effectiveType || "");
+}
+
+/**
+ * Counts what Pyodide downloads while it boots, by wrapping fetch for its own
+ * files only. Every response is passed on with its status and headers intact
+ * (instantiateStreaming needs application/wasm), and anything that goes wrong
+ * here hands back the untouched response: a progress line must not stop a boot.
+ * Returns a function that puts fetch back.
+ */
+function countDownloads(onBytes) {
+  const real = globalThis.fetch;
+  const seen = {};
+  const tell = () => {
+    const done = Object.values(seen).reduce((a, b) => a + b, 0);
+    onBytes(Math.min(done, FIRST_LOAD_BYTES), FIRST_LOAD_BYTES);
+  };
+  globalThis.fetch = async function (input, init) {
+    const res = await real.call(this, input, init);
+    try {
+      const url = typeof input === "string" ? input : input?.url || String(input);
+      if (!url.startsWith(BASE) || !res.body || typeof TransformStream !== "function") return res;
+      const name = url.slice(BASE.length).split("?")[0];
+      const [wire, raw] = FILES[name] || [0, 0];
+      const ratio = raw ? wire / raw : 1;
+      let got = 0;
+      const counted = res.body.pipeThrough(
+        new TransformStream({
+          transform(chunk, out) {
+            got += chunk.byteLength;
+            seen[name] = wire ? Math.min(got * ratio, wire) : got;
+            tell();
+            out.enqueue(chunk);
+          },
+        }),
+      );
+      return new Response(counted, { status: res.status, statusText: res.statusText, headers: res.headers });
+    } catch {
+      return res;
+    }
+  };
+  return (finished = false) => {
+    globalThis.fetch = real;
+    if (finished) {
+      // The two files loaded as scripts rather than fetched are in by now.
+      for (const name of ["pyodide.mjs", "pyodide.asm.js"]) seen[name] = FILES[name][0];
+      tell();
+    }
+  };
+}
 
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
@@ -28,11 +107,21 @@ export const PURE_MODULES = [
  *
  * @param {string} source Python to run once the package is in place.
  * @param {(step: "boot"|"code") => void} [onStep] progress, for a status line.
+ * @param {(done: number, total: number) => void} [onBytes] bytes downloaded so
+ *   far out of FIRST_LOAD_BYTES; from the HTTP cache it races to the total.
  */
-export async function startPython(source, onStep = () => {}) {
+export async function startPython(source, onStep = () => {}, onBytes = () => {}) {
   onStep("boot");
-  const { loadPyodide } = await import(PYODIDE);
-  const py = await loadPyodide({ indexURL: PYODIDE.replace("pyodide.mjs", "") });
+  const restore = countDownloads(onBytes);
+  let py;
+  try {
+    const { loadPyodide } = await import(PYODIDE);
+    py = await loadPyodide({ indexURL: BASE });
+    // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
+    await py.loadPackage("sqlite3");
+  } finally {
+    restore(Boolean(py));
+  }
 
   onStep("code");
   py.FS.mkdir("/sc");
@@ -53,8 +142,6 @@ export async function startPython(source, onStep = () => {}) {
     }),
   );
   py.runPython('import sys; sys.path.insert(0, "/")');
-  // apkg builds a SQLite file, and Pyodide keeps sqlite3 out of the base image.
-  await py.loadPackage("sqlite3");
   py.runPython(source);
   return py;
 }

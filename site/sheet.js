@@ -24,7 +24,7 @@
 import { mountInAppBanner } from "./inapp.js";
 import { renderCard, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
-import { startPython } from "./pyodide.js";
+import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { backOnly, cardDoc, cardFrame } from "./cardframe.js";
 import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
@@ -3145,9 +3145,18 @@ addEventListener("drop", (e) => {
 
 let bootStep = "boot";
 let bootSlow = false;
+let bootBytes = 0;
 const bootStatus = () =>
   status(
-    [t(bootStep === "boot" ? "booting" : "loadingCode"), bootSlow && t("slowBoot")]
+    [
+      bootStep !== "boot"
+        ? t("loadingCode")
+        : bootBytes
+          ? t("bootingMB", mb(bootBytes), mb(FIRST_LOAD_BYTES))
+          : t("booting"),
+      onMobileData() && t("bootData", mb(FIRST_LOAD_BYTES)),
+      bootSlow && t("slowBoot"),
+    ]
       .filter(Boolean)
       .join("\n"),
     "",
@@ -3209,11 +3218,22 @@ const slowTimer = setTimeout(() => {
 }, 10_000);
 
 // Started before anything is asked, so a question about a shared link does not
-// hold up the ~5 MB download behind it.
-const python = startPython(SHEETPY, (step) => {
-  bootStep = step;
-  if (!run) bootStatus();
-})
+// hold up the ~6 MB download behind it.
+let bootPainted = 0;
+const python = startPython(
+  SHEETPY,
+  (step) => {
+    bootStep = step;
+    if (!run) bootStatus();
+  },
+  (done) => {
+    bootBytes = done;
+    if (!run && (done - bootPainted >= 5e5 || done === FIRST_LOAD_BYTES)) {
+      bootPainted = done;
+      bootStatus();
+    }
+  },
+)
   .then((py) => {
     clearTimeout(slowTimer);
     keys = JSON.parse(py.globals.get("keys")());

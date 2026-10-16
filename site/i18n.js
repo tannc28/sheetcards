@@ -794,8 +794,8 @@ const STRINGS = {
   // its own. Said in the words of somebody waiting for a page, with the two facts
   // that make the wait bearable: how big, and that it happens once.
   booting: {
-    en: "Getting Sheet to Anki ready (~5 MB, first time only)…",
-    vi: "Đang chuẩn bị Sheet to Anki (~5 MB, chỉ lần đầu)…",
+    en: "Getting Sheet to Anki ready (~6 MB, first time only)…",
+    vi: "Đang chuẩn bị Sheet to Anki (~6 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -805,6 +805,20 @@ const STRINGS = {
   queued: {
     en: "Got your link — the cards appear as soon as this finishes.",
     vi: "Đã nhận link — card sẽ hiện ngay khi tải xong.",
+  },
+  // The first load, counted (pyodide.js): what has come in, of how much, and on
+  // mobile data a line about the data it costs.
+  queuedFile: {
+    en: "Got your file — the cards appear as soon as this finishes.",
+    vi: "Đã nhận file — card sẽ hiện ngay khi tải xong.",
+  },
+  bootingMB: {
+    en: (done, total) => `Getting Sheet to Anki ready: ${done} of ${total} MB (first time only)…`,
+    vi: (done, total) => `Đang chuẩn bị Sheet to Anki: ${done} / ${total} MB (chỉ lần đầu)…`,
+  },
+  bootData: {
+    en: (total) => `You seem to be on mobile data: the first visit downloads about ${total} MB, once.`,
+    vi: (total) => `Bạn có vẻ đang dùng dữ liệu di động: lần đầu sẽ tải khoảng ${total} MB, chỉ một lần.`,
   },
   downloading: { en: "Downloading the sheet…", vi: "Đang tải sheet về…" },
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
