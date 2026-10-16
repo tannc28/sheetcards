@@ -33,14 +33,15 @@ Mọi cột khác thành một field của note, đặt tên đúng như tên c�
 
 ## Subdeck
 
-Mỗi sheet là một deck tên `sc_<file>::<sheet>`. Các cột `SUBDECK` thêm tầng bên
-dưới nó:
+Mỗi sheet là một deck. Trong Sheet to Anki, deck mang tên của `name=` trong
+[settings row](settings-row.md#key-cho-ca-sheet) (không có thì lấy tên file);
+add-on đặt tên `sc_<file>::<sheet>`. Các cột `SUBDECK` thêm tầng bên dưới nó:
 
 | ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | Japanese | Kanji | 水 | water |
 
-xếp card vào `sc_<file>::<sheet>::Japanese::Kanji`.
+xếp card vào `<deck>::Japanese::Kanji`.
 
 - Sheet không có cột `SUBDECK` thì giữ mọi thứ ngay trong deck đó.
 - Trên sheet có chia tầng, **dòng nào không ghi tầng nào sẽ nằm trong một subdeck
@@ -79,7 +80,7 @@ Kết quả:
 
 - **Field:** `ID`, `Word`, `Reading`, `Meaning`, `Example`. `ID` luôn đứng đầu.
 - **Card:** mặt trước `Word`; mặt sau `Reading`, `Meaning` và `Example`.
-- **Deck:** `sc_<file>::<sheet>::Japanese::Kanji`.
+- **Deck:** `<deck>::Japanese::Kanji`.
 - **Tag:** `sheetcards`, `sheetcards::japanese::kanji`, `jlpt-n5`, `nature`.
 
 ## Cloze là do sheet chọn

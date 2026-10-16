@@ -78,11 +78,14 @@ Written after `#config` in the marker cell.
 | `align` | `left`, `center`, `right` | Alignment for the whole card. A column's own `align` still wins. |
 | `speed` | a number from 0.5 to 2.0 | Speaking rate for every spoken column that does not set its own. |
 | `reverse` | switch | Adds a second card that asks the back and answers with the front. See [Card types](card-types.md#reverse-cards). |
-| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. See [Themes and text](text.md#themes). |
-| `name` | a deck name; spaces and any script are fine | The deck's name in Anki, and the sheet's identity. Sheet to Anki recognises the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
+| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. In Create sheet you pick it in the template step. See [Themes and text](text.md#themes). |
+| `name` | a deck name; spaces and any script are fine, up to 100 characters | The deck's name in Anki, and the sheet's identity. Sheet to Anki recognises the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
 | `next` | an ID ending in a number, like `w15` | The next ID Create sheet will hand out. It is why a deleted word's ID is never given to a new word, which would inherit the old word's review history in Anki. |
 
-Create sheet writes both for you, e.g. `#config name=Từ vựng tiếng Anh; next=w15`.
+Create sheet writes both for you, e.g. `#config name=Từ vựng tiếng Anh; next=w15`:
+`name` is the **Flashcard set name** you fill in when you pick a template, and
+Create sheet asks before changing it, since a new name is a new deck in Anki.
+`next` is not shown in the grid; Create sheet keeps it for you.
 A sheet without `name` is recognised by its Google Sheets link, or by its
 file name (the `.csv`/`.tsv`/`.xlsx` extension and a ` (1)`, `-2` suffix left
 out). The add-on reads both keys without a warning and does not use them yet: it
@@ -100,7 +103,7 @@ w01      HSK 1        写       to write
 w02      HSK 2        山       mountain
 ```
 
-This files `w01` in `sc_<file>::<sheet>::HSK 1`, and `Level` is not drawn on the
+This files `w01` in the deck's `HSK 1` subdeck, and `Level` is not drawn on the
 card. Where a note is filed is shown by the deck it sits in, so it is not
 repeated on the card; the card settings (`size`, `color`, `side`, `tts` and the
 rest) are refused on such a column with a warning. `sort` is the one exception,

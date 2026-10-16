@@ -33,14 +33,16 @@ Every other column becomes a field of the note, named exactly like the column.
 
 ## Subdecks
 
-Each sheet is a deck named `sc_<file>::<sheet>`. The `SUBDECK` columns add
+Each sheet is a deck. In Sheet to Anki the deck takes its name from `name=` in
+the [settings row](settings-row.md#sheet-wide-keys) (or from the file name
+without one); the add-on names it `sc_<file>::<sheet>`. The `SUBDECK` columns add
 levels under it:
 
 | ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | Japanese | Kanji | 水 | water |
 
-files the card in `sc_<file>::<sheet>::Japanese::Kanji`.
+files the card in `<deck>::Japanese::Kanji`.
 
 - A sheet with no `SUBDECK` columns keeps everything in the deck itself.
 - On a sheet that does sort its rows, **a row that names no level lands in a
@@ -80,7 +82,7 @@ This makes:
 - **Fields:** `ID`, `Word`, `Reading`, `Meaning`, `Example`. `ID` always comes
   first.
 - **Card:** front `Word`; back `Reading`, `Meaning` and `Example`.
-- **Deck:** `sc_<file>::<sheet>::Japanese::Kanji`.
+- **Deck:** `<deck>::Japanese::Kanji`.
 - **Tags:** `sheetcards`, `sheetcards::japanese::kanji`, `jlpt-n5`, `nature`.
 
 ## Cloze is a choice the sheet makes

@@ -3,6 +3,10 @@
 Một sheet bình thường tạo một card cho mỗi dòng: mặt trước hỏi, mặt sau trả lời.
 [Settings row](settings-row.md) có thể biến nó thành các loại card khác.
 
+Trong [Tạo Sheet](../sheet.html), các template đã dựng sẵn settings row cho
+những loại card dưới đây: *Hai chiều* (reverse card), *Gõ đáp án*, *Viết chữ
+Hán* (viết tay) và *Tiếng Nhật (furigana)*.
+
 ## Reverse card
 
 `reverse` trong ô `#config` thêm, cho mỗi dòng, một card thứ hai hỏi mặt sau và
@@ -79,4 +83,6 @@ trên Anki cho máy tính; trên AnkiDroid và AnkiMobile thì tuỳ app có cho
 nó hay không. Chỉ chữ Hán mới có dữ liệu nét; thứ khác thì được in vào ô.
 
 Sheet `12 Chinese drawing (viết tay)` trong file ví dụ là một deck dùng được
-ngay.
+ngay, và template *Viết chữ Hán* trong Tạo Sheet bắt đầu từ đúng bố cục đó:
+nghĩa và pinyin ở mặt hỏi, ô viết `draw`, rồi chữ to và câu ví dụ được đọc to ở
+mặt sau.

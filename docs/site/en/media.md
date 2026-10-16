@@ -8,21 +8,22 @@ thing the link points to instead of the address.
 | :--- | :--- |
 | `image; size=320` | The picture, at most 320 px wide |
 | `audio` | A sound player you can replay |
-| `video; size=480` | The site's own video player, 480 px wide |
+| `video; size=480` | The site's own video player, at most 480 px wide |
 
 The cells in your data rows hold **only the link**, nothing else. A column holds
 one kind of media; `image; video` keeps `image` and warns.
 
 ## Video: paste the link from the address bar
 
-Write `video` and paste whatever your browser shows. The add-on turns it into the
-address of that site's player while it syncs:
+Write `video` and paste whatever your browser shows. When the card is made (as the
+add-on syncs, or in Sheet to Anki), it is turned into the address of that site's
+player:
 
 | You paste | It becomes |
 | :--- | :--- |
-| `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID` | `youtube.com/embed/ID` |
+| `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID`, `youtube.com/live/ID` | `youtube.com/embed/ID` |
 | `youtu.be/ID?t=1m30s` | `youtube.com/embed/ID?start=90` (the start time is kept) |
-| `drive.google.com/file/d/ID/view?usp=sharing` | `drive.google.com/file/d/ID/preview` |
+| `drive.google.com/file/d/ID/view?usp=sharing`, `drive.google.com/open?id=ID` | `drive.google.com/file/d/ID/preview` |
 | `vimeo.com/123456789` | `player.vimeo.com/video/123456789` |
 | `example.com/lesson.mp4` | unchanged; a direct file plays too |
 

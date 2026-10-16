@@ -8,21 +8,22 @@ và card sẽ hiện thứ mà link trỏ tới thay vì hiện địa chỉ.
 | :--- | :--- |
 | `image; size=320` | Hình ảnh, rộng tối đa 320 px |
 | `audio` | Một trình phát âm thanh, nghe lại được |
-| `video; size=480` | Trình phát video của chính trang đó, rộng 480 px |
+| `video; size=480` | Trình phát video của chính trang đó, rộng tối đa 480 px |
 
 Các ô ở những dòng dữ liệu **chỉ chứa link**, không gì khác. Mỗi cột chỉ chứa
 một loại media; `image; video` sẽ giữ `image` và báo cảnh báo.
 
 ## Video: dán link từ thanh địa chỉ
 
-Ghi `video` rồi dán đúng cái trình duyệt đang hiện. Lúc sync, add-on đổi nó
-thành địa chỉ trình phát của trang đó:
+Ghi `video` rồi dán đúng cái trình duyệt đang hiện. Khi card được tạo (lúc sync
+bằng add-on, hoặc trong Sheet to Anki), địa chỉ được đổi thành địa chỉ trình phát
+của trang đó:
 
 | Bạn dán | Nó thành |
 | :--- | :--- |
-| `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID` | `youtube.com/embed/ID` |
+| `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID`, `youtube.com/live/ID` | `youtube.com/embed/ID` |
 | `youtu.be/ID?t=1m30s` | `youtube.com/embed/ID?start=90` (giữ thời điểm bắt đầu) |
-| `drive.google.com/file/d/ID/view?usp=sharing` | `drive.google.com/file/d/ID/preview` |
+| `drive.google.com/file/d/ID/view?usp=sharing`, `drive.google.com/open?id=ID` | `drive.google.com/file/d/ID/preview` |
 | `vimeo.com/123456789` | `player.vimeo.com/video/123456789` |
 | `example.com/lesson.mp4` | giữ nguyên; file trực tiếp cũng phát được |
 

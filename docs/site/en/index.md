@@ -1,17 +1,18 @@
 # Getting started
 
-SheetCards turns a spreadsheet into Anki flashcards. You write your cards in
-Google Sheets, one row per card, and SheetCards makes them into a deck. The
-spreadsheet is always the place you edit; Anki holds a copy.
+SheetCards turns a spreadsheet into Anki flashcards. You write your cards in a
+sheet, one row per card, and SheetCards makes them into a deck. The spreadsheet
+is always the place you edit; Anki holds a copy. Every step works on a phone or
+a computer.
 
 No Google Sheet? [Create sheet](../../sheet.html) lets you write the whole sheet
-right on the web, on a phone too, and hands it straight to Sheet to Anki.
+on the web, and hands it straight to Sheet to Anki.
 
-There are two ways to get the deck into Anki:
+There are two ways to get the flashcards into Anki:
 
-- **Sheet to Anki**, on this website: paste the sheet's link, check the cards,
-  download an `.apkg` and open it in Anki. It works on a phone or a computer,
-  with no add-on to install — only the Anki app to study with.
+- **Sheet to Anki**, on this website: paste the sheet's link or open a file,
+  check the cards, download an `.apkg` and open it in the Anki app (AnkiDroid,
+  AnkiMobile or Anki on a computer). No add-on to install.
 - **The add-on**, on a computer: connect the sheet once, and from then on one
   shortcut syncs whatever changed.
 
@@ -19,14 +20,8 @@ This page takes you from an empty sheet to cards you can study.
 
 ## What you need
 
-- **The Anki app, to study.** SheetCards makes the `.apkg` file; studying happens
-  in Anki. Install one of three:
-  [AnkiDroid](https://play.google.com/store/apps/details?id=com.ichi2.anki) on
-  Android (free),
-  [AnkiMobile](https://apps.apple.com/app/ankimobile-flashcards/id373493387) on
-  iPhone/iPad (**paid**, one-time, US$24.99 in the US in October 2026), or
-  [Anki](https://apps.ankiweb.net/) on a computer (free). SheetCards itself is
-  free.
+- **The Anki app** you already use: the `.apkg` opens in AnkiDroid, AnkiMobile
+  or Anki on a computer. SheetCards is free and needs no account.
 - **A Google account**, only if you write in Google Sheets. Writing in
   [Create sheet](../../sheet.html) needs nothing. SheetCards reads a sheet without
   signing in.
@@ -72,15 +67,29 @@ ID,Word,Meaning
 It opens in Google Sheets, Excel or Create sheet; every template in Create sheet
 has a button that downloads exactly this file.
 
-### Writing it in Create sheet: two steps
+### Writing it in Create sheet
 
-Create sheet splits a sheet into two steps. **① Columns & card**: the column
-names and the settings row (row 2 of the sheet, where each cell says how that
-column shows on the card), with the card previewed beside them. **② Cards**: add, edit and delete words. Picking a ready template
-(Vocabulary, Vocabulary + picture, Both ways, Type the answer, one per theme…)
-goes straight to step 2; *Custom* starts at step 1. A sheet you already have
-(`.xlsx` or `.csv`) can be kept as a template too, under *Your templates*, in
-this browser only.
+1. **Pick a template and a theme.** There are 8 templates: *Front / Back*,
+   *Vocabulary*, *Write Chinese characters* (stroke by stroke with `draw`),
+   *Japanese with furigana*, *Custom*, *Vocabulary + picture*, *Both ways
+   (reverse)* and *Type the answer*. In the same step pick a
+   [theme](text.md#themes) for the cards (paper, contrast, matcha, momiji, sakura,
+   yuki, or Anki's own colours); a theme is not a template, so any template can
+   wear any theme.
+2. **Name the flashcard set.** The name is written as `name=` in the settings
+   row: it is both the deck's name in Anki and what lets Anki recognise the old
+   deck when you import again. A new name is a new deck, so Create sheet asks
+   before a rename.
+3. **① Columns & card**: the column names and the settings row (row 2 of the
+   sheet, where each cell says how that column shows on the card), with the card
+   previewed beside them. **② Cards**: add, edit and delete words; IDs (`w01`,
+   `w02`…) are given automatically. *Custom* opens on step ①, every other
+   template goes straight to step ②.
+
+**Your templates**: a sheet you already have (upload an `.xlsx` or `.csv`), or
+the one you are writing (**Save as template**), kept as a template of your own:
+its column names, settings row and one sample word. It lives in this browser
+only.
 
 The draft lives only in the browser (and Safari on an iPhone deletes it after 7
 days without a visit), so save the sheet:
@@ -109,9 +118,21 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
    own code in your browser, so what you see is what the add-on would make.
 2. Check the cards: the decks, every row, and each finished card, which you can
    turn over, listen to and type into.
-3. Press **Download for Anki** to get an `.apkg` file.
-4. Open it in Anki. On a phone, open the file with **AnkiDroid** or
+3. Press **Download .apkg** to get the file.
+4. Open it in the Anki app. On a phone, open the file with **AnkiDroid** or
    **AnkiMobile**; on a computer, double-click it or use **File → Import…**.
+
+Instead of a link you can open an `.xlsx` or `.csv` file, including a CSV saved
+by Excel in Vietnamese (see [Upload a file](sources.md#upload-a-file)), or a
+sheet link from Create sheet.
+
+Opened the page from Messenger, Telegram, Facebook…? Those apps' built-in
+browsers cannot download files, so the page shows a banner with **Copy link**
+(and **Open in Chrome** on Android) to open it again in a real browser.
+
+Added or renamed a column, or turned on `reverse`? The note type changed, so
+when you import, turn on **Merge note types** and set **Update notes** to
+**Always**. Sheet to Anki reminds you right before the download.
 
 Importing the same sheet again later updates those notes instead of duplicating
 them, but it cannot delete one: a row you remove from the sheet stays in Anki
@@ -173,4 +194,12 @@ deleted rows are removed. [Syncing](syncing.md) has the details.
   clicking.
 - **Start from an example.** The [example workbook](examples.md) has 31 small
   decks, each showing one feature.
-- **Something not working?** See [FAQ and troubleshooting](faq.md).
+- **Something not working?** See [FAQ and troubleshooting](faq.md), or
+  [Contact & feedback](../../contact.html?from=docs/en/index).
+
+## Coming soon
+
+- **Template library**: browse and use templates other people share.
+- **Theme library**: more themes to dress your cards in.
+
+Want them sooner, or something else? [Tell us](../../contact.html?from=docs/en/index).

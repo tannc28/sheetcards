@@ -51,10 +51,10 @@ collection, và sheet vẫn còn đó để sync lại. Riêng lịch sử revie
 Một cửa sổ chỉ để xem, cho biết với từng deck, add-on đã hiểu gì từ
 [settings row](settings-row.md) của sheet:
 
-- **Front** và **Back**: cột nào ở mặt nào, và cột nào bị ẩn.
-- **Settings**: setting của từng cột, đúng như add-on đọc được.
+- **What the add-on understood**: cột nào ở mặt trước, cột nào ở mặt sau, cột
+  nào bị ẩn, và setting của từng cột đúng như add-on đọc được.
 - **Warnings**: mọi thứ nó không hiểu, theo từng cột.
-- **Preview**: thiết kế card mà nó dựng ra.
+- **Preview**: thiết kế card mà nó dựng ra, với nội dung mẫu.
 
 Cửa sổ hiện kết quả của **lần sync gần nhất**, nên sau khi sửa sheet hãy bấm
 `Ctrl+Shift+S` trước. Nó cố ý không có nút chỉnh sửa: giao diện card được đổi
@@ -64,13 +64,14 @@ trong sheet, nên chỉ có đúng một chỗ để đổi.
 
 Cũng mở được bằng nút **Config** của SheetCards trong **Tools → Add-ons**.
 
-- **Upload to AnkiWeb after a sync.** Bật sẵn. Sau khi sync xong, Anki tự chạy
+- **Upload to AnkiWeb** (mục *After a sync*). Bật sẵn. Sau khi sync xong, Anki tự chạy
   sync của chính nó, nên card mới lên điện thoại mà không cần bấm thêm. Bạn cần
   đăng nhập AnkiWeb một lần qua **Tools → Sync**.
 - **Write a debug log.** Tắt sẵn. Ghi lại từng bước của một lần sync vào
   `debug_sheetcards.log` trong thư mục của add-on; cửa sổ hiện đường dẫn và mở
-  thư mục đó cho bạn. Một ô thứ hai chọn giữa log mới cho mỗi lần sync và một
-  log cứ dài thêm. Hãy bật nó trước khi làm lại một lỗi. Log có chứa nội dung
+  thư mục đó cho bạn. Ô thứ hai, **Keep the logs from earlier syncs** (bật
+  sẵn), giữ log của các lần sync trước; bỏ tick thì mỗi lần sync bắt đầu một log
+  mới. Hãy bật nó trước khi làm lại một lỗi. Log có chứa nội dung
   sheet của bạn, nên đọc qua trước khi chia sẻ công khai.
 
 Thay đổi được lưu khi bạn bấm **Save**.

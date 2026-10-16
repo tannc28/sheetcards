@@ -50,10 +50,10 @@ from. Review history of deleted cards cannot come back from the sheet.
 A read-only window showing, for each deck, what the add-on understood from the
 sheet's [settings row](settings-row.md):
 
-- **Front** and **Back**: which columns go on each side, and which are hidden.
-- **Settings**: each column's settings as the add-on read them.
+- **What the add-on understood**: which columns go on the front, which on the
+  back, which are hidden, and each column's settings as the add-on read them.
 - **Warnings**: everything it could not understand, by column.
-- **Preview**: the card design it built.
+- **Preview**: the card design it built, with sample content.
 
 It shows the result of the **last sync**, so after editing the sheet press
 `Ctrl+Shift+S` first. It has no editing controls on purpose: a card's look is
@@ -63,13 +63,14 @@ changed in the sheet, so there is only one place it can be changed.
 
 Also opened by the **Config** button for SheetCards in **Tools → Add-ons**.
 
-- **Upload to AnkiWeb after a sync.** On by default. After a sync, Anki's own
+- **Upload to AnkiWeb** (under *After a sync*). On by default. After a sync, Anki's own
   sync runs, so new cards reach your phone without a second click. You need to
   have signed in to AnkiWeb once through **Tools → Sync**.
 - **Write a debug log.** Off by default. Records every step of a sync in
   `debug_sheetcards.log` in the add-on's folder; the window shows the path and
-  opens the folder. A second box chooses between a fresh log per sync and one
-  that keeps growing. Turn it on before reproducing a problem. The log contains
+  opens the folder. A second box, **Keep the logs from earlier syncs** (on by
+  default), keeps earlier syncs' logs; untick it and each sync starts a fresh
+  log. Turn it on before reproducing a problem. The log contains
   your sheet's content, so read it before sharing it publicly.
 
 Changes are saved when you press **Save**.

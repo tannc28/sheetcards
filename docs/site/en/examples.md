@@ -34,7 +34,7 @@ it in Sheet to Anki and copy its settings row.
 | `13 Furigana (phiên âm kanji)` | `furigana` over kanji |
 | `14 Any headers (mọi ngôn ngữ)` | headers written as `汉字`, `拼音`, `释义`, `例句` |
 | `15 Theme + subdeck (màu, tầng)` | English vocabulary filed three `SUBDECK` levels deep — `English::B1::Verbs` — in `theme=sakura`, spoken, and sorted by the word |
-| `16 Picture words (từ vựng ảnh)` | a picture on the front and a native recording on the back — `image` and `audio` on one card, filed by `Group` |
+| `16 Picture words (từ vựng ảnh)` | a picture on the front and a native recording on the back — `image` and `audio` on one card, filed by `Group`; its `#config` cell carries `name=` (the set's name, which is also the deck's identity) and `next=` |
 | `17 Draw & type (viết và gõ)` | write the character stroke by stroke *and* type its pinyin: `draw` and `type=nc` asking the same thing two ways |
 | `18 Grammar cloze (ngữ pháp)` | the word carrying the grammar point deleted, and typed rather than recalled — `cloze` plus `type` |
 | `19 Dictation (nghe rồi gõ)` | the sentence is spoken and drawn nowhere: `side=hide` + `tts` + `type`, so the only way through is to listen |

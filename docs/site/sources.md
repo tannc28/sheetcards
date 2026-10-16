@@ -43,18 +43,23 @@ giữ nguyên chỗ bạn đang xem.
 
 ### Upload một file
 
-Bấm **Tải lên một file**, hoặc kéo một file vào trang, để mở một file `.xlsx`,
-`.xlsm`, `.csv` hoặc `.tsv` trên máy bạn. Mỗi tab của workbook thành một deck
-riêng. File không bao giờ rời khỏi trình duyệt của bạn.
+Bấm **Chọn file .xlsx hoặc .csv**, hoặc kéo một file vào trang, để mở một file
+`.xlsx`, `.xlsm`, `.csv` hoặc `.tsv` trên máy bạn. Mỗi tab của workbook thành một
+deck riêng. File không bao giờ rời khỏi trình duyệt của bạn.
 
 - **Bản thân add-on vẫn cần một link.** File đã upload đến được Anki qua bản tải
   `.apkg` bên dưới.
 - **Ô được đọc đúng như sheet hiện.** Ngày ra dạng `2025-01-21`, số nguyên ra
   `1` chứ không phải `1.0`.
+- **File CSV lưu từ Excel cũng đọc được.** Dấu phân cách (phẩy, chấm phẩy hay
+  tab) được tự nhận ra, file UTF-16 ("Unicode Text") cũng vậy. File không phải
+  UTF-8, như "CSV (Comma delimited)" của Excel tiếng Việt, được đọc theo bảng mã
+  Windows tiếng Việt (cp1258) hoặc phương Tây (cp1252), và trang báo cho bạn biết
+  để kiểm tra dấu. Chắc nhất là lưu bằng **CSV UTF-8** trong Excel.
 
 ### Tải về một file .apkg
 
-Nút **Tải về cho Anki** dựng deck thành một file `.apkg`. **AnkiDroid và AnkiMobile
+Nút **Download .apkg** dựng deck thành một file `.apkg`. **AnkiDroid và AnkiMobile
 import thẳng được file này**, nên sheet có thể lên điện thoại mà không cần Anki
 trên máy tính. File được dựng bằng chính code của add-on, với cùng field và
 thiết kế card, và danh tính của note lấy từ cột `ID` của bạn, nên **import lại sẽ
@@ -67,12 +72,16 @@ nó ở đó. Đó chính là khác biệt thật sự giữa import và sync.
 Deck nào là deck nào được quyết định theo thứ tự này:
 
 1. **`name=` trong [settings row](settings-row.md#key-cho-ca-sheet)**, nếu có.
-   Create sheet luôn ghi nó, nên file bị đổi tên (`Từ vựng (1).csv`), bản `.xlsx`,
+   Tạo Sheet luôn ghi nó (đó là **Tên bộ flashcard**), nên file bị đổi tên (`Từ vựng (1).csv`), bản `.xlsx`,
    link chia sẻ hay cùng sheet đó trên Google Sheets đều cập nhật cùng một deck.
-   Hai sheet cùng `name` là một deck và sẽ ghi đè note của nhau.
+   Hai sheet cùng `name` là một deck và sẽ ghi đè note của nhau; một sheet
+   copy ra vẫn là deck cũ cho tới khi bạn đổi tên nó.
 2. Không có thì theo link Google Sheets và tên tab.
 3. Không có link thì theo tên file, bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố
    ` (1)`, `(1)`, `-2` mà điện thoại thêm vào bản tải thứ hai.
+
+Tạo Sheet còn ghi `next=` vào cùng ô: số ID tiếp theo sẽ cấp. Nhờ đó ID của một
+từ đã xoá không bao giờ được dùng lại cho từ khác, vì Anki sẽ coi đó là từ cũ.
 
 **Đổi cột thì phải bật Merge note types một lần.** Thêm, đổi tên một cột, bật
 `reverse`… là đổi note type; với tuỳ chọn mặc định Anki sẽ không cập nhật note nào.
@@ -83,17 +92,20 @@ cách giữ tiến độ.
 
 ## Tạo Sheet
 
-[Tạo Sheet](../sheet.html) là chỗ soạn cả một sheet ngay trên web, không cần
+[Tạo Sheet](../sheet.html) là chỗ soạn cả một sheet trên web, không cần
 Google Sheets: tên cột, [settings row](settings-row.md) và từng từ. Bắt đầu từ
-một template (Mặt trước / Mặt sau, Học từ vựng, Tùy chỉnh, và các template khác) hoặc mở một file `.xlsx`/`.csv`
-có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google
+một trong 8 template (xem [Soạn trong Tạo Sheet](index.md#soan-trong-tao-sheet)),
+một template của bạn, hoặc mở một file `.xlsx`/`.csv` có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google
 Sheets là thêm từ. Trên điện thoại mỗi từ mở ra thành một form, mỗi cột một ô.
 Setting được chọn từ danh sách, và card của từ đang sửa hiện ngay bên cạnh.
 
-Bản nháp được lưu trong trình duyệt sau mỗi thay đổi. Từ đó có ba lối ra:
+Bản nháp được lưu trong trình duyệt sau mỗi thay đổi, nhưng chỉ trong trình
+duyệt này, nên hãy lưu sheet ra ngoài: **trên điện thoại bấm Lưu link sheet,
+trên máy tính bấm Lưu file .csv**. Trang ghi *Chưa lưu… mới là nháp trong trình duyệt* cho tới khi bạn lưu. Từ
+đó có ba lối ra:
 
 - **Tạo flashcard**: chuyển thẳng sheet sang Sheet to Anki để xem card và tải `.apkg`.
-- **Download** `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
+- **Tải sheet về máy** dạng `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
   tiếp, hoặc upload lên Google Drive thành Google Sheets.
 - **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
   máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link

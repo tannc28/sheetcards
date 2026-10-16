@@ -120,8 +120,7 @@ pick AnkiDroid. Or, in AnkiDroid: menu → **Import** → choose the file.
 **On an iPhone, AnkiMobile is not in the Share sheet.**
 Open AnkiMobile once first (it has to be installed and opened at least once). In
 the **Files** app, tap the `.apkg` → **Share**, scroll the row of apps to
-**More** and turn AnkiMobile on. AnkiMobile is Anki's paid app; if you have not
-bought it, it is not on the phone.
+**More** and turn AnkiMobile on.
 
 **My cards doubled after importing again.**
 Anki updates the old notes only when the new file is recognised as the same deck.
@@ -148,6 +147,13 @@ AnkiDroid accepts CSV files too and turns every row into a note, the settings
 row included. Delete those notes in AnkiDroid, and next time open the `.csv` with
 **Open a file to add words** in Create sheet. On a phone, **Save sheet link** is
 easier than a file.
+
+**A CSV saved from Excel has broken Vietnamese accents.**
+Sheet to Anki and Create sheet detect the separator and the code page of a CSV
+from Excel (including "CSV (Comma delimited)" on a Vietnamese Windows) and say
+so when they had to guess the code page. If the accents are still wrong, choose
+**Save As → CSV UTF-8** in Excel and open that file. See
+[Upload a file](sources.md#upload-a-file).
 
 **My draft in Create sheet disappeared.**
 The draft lives only in the browser, and Safari on an iPhone deletes a site's

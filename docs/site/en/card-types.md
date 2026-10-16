@@ -3,6 +3,10 @@
 A plain sheet makes one card per row: the front asks, the back answers. The
 [settings row](settings-row.md) can turn that into other kinds of card.
 
+In [Create sheet](../../sheet.html), templates come with the settings row for
+the kinds below already written: *Both ways (reverse)*, *Type the answer*,
+*Write Chinese characters* (handwriting) and *Japanese with furigana*.
+
 ## Reverse cards
 
 `reverse` in the `#config` cell adds a second card for every row that asks the
@@ -80,4 +84,6 @@ AnkiMobile it depends on whether the app allows the card to load it. Only Chines
 characters have stroke data; anything else is printed in the box.
 
 The example workbook's `12 Chinese drawing (viết tay)` sheet is a ready-made
-deck.
+deck, and Create sheet's *Write Chinese characters* template starts from the same
+layout: meaning and pinyin on the question, a `draw` box, then the character
+large and an example read aloud on the answer.

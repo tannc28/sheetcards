@@ -1,17 +1,17 @@
 # Bắt đầu
 
-SheetCards biến bảng tính thành flashcard cho Anki. Bạn soạn card trong Google
-Sheets, mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa trên
-sheet; Anki chỉ giữ một bản sao.
+SheetCards biến bảng tính thành flashcard Anki. Bạn soạn card trong một sheet,
+mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa trên sheet;
+Anki chỉ giữ một bản sao. Mọi bước đều làm được trên điện thoại hay máy tính.
 
-Chưa có Google Sheet? [Tạo Sheet](../sheet.html) cho bạn soạn cả sheet ngay
-trên web, kể cả trên điện thoại, rồi chuyển thẳng sang Sheet to Anki.
+Chưa có Google Sheet? [Tạo Sheet](../sheet.html) cho bạn soạn cả sheet trên
+web, rồi chuyển thẳng sang Sheet to Anki.
 
-Có hai cách đưa deck vào Anki:
+Có hai cách đưa flashcard vào Anki:
 
-- **Sheet to Anki**, ngay trên website này: dán link sheet, kiểm tra các card, tải
-  file `.apkg` về rồi mở bằng Anki. Dùng được trên điện thoại hoặc máy tính,
-  không cần cài add-on — chỉ cần app Anki để học.
+- **Sheet to Anki**, ngay trên website này: dán link sheet hoặc mở file, kiểm tra
+  các card, tải file `.apkg` về rồi mở bằng app Anki (AnkiDroid, AnkiMobile hoặc
+  Anki trên máy tính). Không cần cài add-on.
 - **Add-on**, trên máy tính: kết nối sheet một lần, từ đó về sau chỉ một phím tắt
   là sync mọi thay đổi.
 
@@ -19,14 +19,8 @@ Trang này đưa bạn từ một sheet trống tới những card có thể h�
 
 ## Bạn cần gì
 
-- **App Anki, để học.** SheetCards làm ra file `.apkg`; học và ôn bài diễn ra
-  trong Anki. Cài một trong ba app:
-  [AnkiDroid](https://play.google.com/store/apps/details?id=com.ichi2.anki)
-  trên Android (miễn phí),
-  [AnkiMobile](https://apps.apple.com/app/ankimobile-flashcards/id373493387)
-  trên iPhone/iPad (**trả phí** một lần, 799.000đ ở Việt Nam vào tháng 10/2026), hoặc
-  [Anki](https://apps.ankiweb.net/) trên máy tính (miễn phí). SheetCards thì
-  miễn phí.
+- **App Anki** bạn đang dùng: file `.apkg` mở bằng AnkiDroid, AnkiMobile hoặc
+  Anki trên máy tính. SheetCards miễn phí và không cần tài khoản.
 - **Một tài khoản Google**, chỉ khi bạn soạn trong Google Sheets. Soạn bằng
   [Tạo Sheet](../sheet.html) thì không cần gì cả. SheetCards đọc sheet mà không
   cần đăng nhập.
@@ -69,15 +63,25 @@ ID,Word,Nghĩa
 Mở được bằng Google Sheets, Excel hay Tạo Sheet; mẫu nào trong Tạo Sheet
 cũng có nút tải đúng file này về.
 
-### Soạn trong Tạo Sheet: hai bước
+### Soạn trong Tạo Sheet
 
-Tạo Sheet chia sheet làm hai bước. **① Cột & card**: tên cột và settings row
-(dòng 2 của sheet, mỗi ô ghi cột đó hiện thế nào trên card), có card xem trước
-ngay bên cạnh. **② Thẻ**: thêm, sửa,
-xoá từ. Chọn một template có sẵn (Học từ vựng, Từ vựng + ảnh, Hai chiều, Gõ đáp
-án, mỗi theme một kiểu…) là vào thẳng bước 2; *Tùy chỉnh* bắt đầu từ bước 1.
-Một sheet bạn đã có (`.xlsx` hoặc `.csv`) cũng lưu được làm template, ở mục
-*Template của bạn*, chỉ trong trình duyệt này.
+1. **Chọn template và theme.** Có 8 template: *Mặt trước / Mặt sau*, *Học từ
+   vựng*, *Viết chữ Hán* (viết từng nét bằng `draw`), *Tiếng Nhật (furigana)*,
+   *Tùy chỉnh*, *Từ vựng + ảnh*, *Hai chiều (reverse)* và *Gõ đáp án*. Cùng bước
+   đó chọn một [theme](text.md#theme) cho card (paper, contrast, matcha, momiji,
+   sakura, yuki, hoặc màu mặc định của Anki); theme không phải là template, nên
+   template nào cũng mặc được theme nào.
+2. **Đặt Tên bộ flashcard.** Tên này được ghi thành `name=` trong settings row:
+   vừa là tên deck trong Anki, vừa là thứ giúp Anki nhận ra deck cũ khi import
+   lại. Đổi tên là thành deck mới, nên Tạo Sheet hỏi lại trước khi đổi.
+3. **① Cột & card**: tên cột và settings row (dòng 2 của sheet, mỗi ô ghi cột
+   đó hiện thế nào trên card), có card xem trước ngay bên cạnh.
+   **② Thẻ**: thêm, sửa, xoá từ; ID (`w01`, `w02`…) được đánh tự động.
+   *Tùy chỉnh* mở ở bước ①, các template khác vào thẳng bước ②.
+
+**Template của bạn**: một sheet bạn đã có (upload file `.xlsx` hoặc `.csv`),
+hoặc sheet đang soạn (**Lưu làm template**), được giữ làm template riêng, gồm tên
+cột, settings row và một từ mẫu. Template này chỉ nằm trong trình duyệt này.
 
 Bản nháp chỉ nằm trong trình duyệt (và Safari trên iPhone xoá nó sau 7 ngày
 không mở trang), nên hãy lưu sheet:
@@ -106,9 +110,21 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
    sẽ làm ra.
 2. Kiểm tra các card: các deck, từng dòng, và từng card hoàn chỉnh mà bạn có thể
    lật, nghe và gõ đáp án vào.
-3. Bấm **Tải về cho Anki** để lấy file `.apkg`.
-4. Mở file bằng Anki. Trên điện thoại, mở file bằng **AnkiDroid** hoặc
+3. Bấm **Download .apkg** để lấy file.
+4. Mở file bằng app Anki. Trên điện thoại, mở file bằng **AnkiDroid** hoặc
    **AnkiMobile**; trên máy tính, bấm đúp vào file hoặc dùng **File → Import…**.
+
+Thay vì link, bạn cũng có thể mở một file `.xlsx` hoặc `.csv`, kể cả file CSV
+lưu từ Excel tiếng Việt (xem [Upload một file](sources.md#upload-mot-file)),
+hay mở một link sheet từ Tạo Sheet.
+
+Mở trang từ Messenger, Telegram, Facebook…? Trình duyệt bên trong các app đó
+không tải được file, nên trang hiện một thanh báo với nút **Copy link** (và
+**Mở bằng Chrome** trên Android) để mở lại bằng trình duyệt thật.
+
+Đã thêm, đổi tên cột hay bật `reverse`? Note type đã đổi, nên khi import hãy bật
+**Merge note types** và đặt **Update notes** thành **Always**. Sheet to Anki nhắc
+việc này ngay trước khi tải.
 
 Sau này import lại cùng sheet đó sẽ cập nhật các note chứ không nhân đôi, nhưng
 không xoá được: dòng bạn bỏ khỏi sheet vẫn nằm trong Anki cho tới khi bạn tự xoá
@@ -168,4 +184,12 @@ thì card bị xoá theo. Xem chi tiết ở [Sync](syncing.md).
   bấm chọn.
 - **Bắt đầu từ ví dụ.** [File ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
   hoạ một tính năng.
-- **Có gì không chạy?** Xem [FAQ và xử lý lỗi](faq.md).
+- **Có gì không chạy?** Xem [FAQ và xử lý lỗi](faq.md), hoặc
+  [Liên hệ & góp ý](../contact.html?from=docs/index).
+
+## Sắp có
+
+- **Thư viện template**: xem và dùng template người khác chia sẻ.
+- **Thư viện Theme**: thêm nhiều theme để khoác lên card của bạn.
+
+Muốn có sớm, hay cần thứ gì khác? [Góp ý](../contact.html?from=docs/index).

@@ -43,7 +43,7 @@ Sheet to Anki fetches it again and keeps your place.
 
 ### Upload a file
 
-**Upload a file**, or drag one onto the page, to open an `.xlsx`, `.xlsm`,
+**Choose an .xlsx or .csv file**, or drag one onto the page, to open an `.xlsx`, `.xlsm`,
 `.csv` or `.tsv` from your computer. Each tab of a workbook becomes its own deck.
 The file never leaves your browser.
 
@@ -51,10 +51,15 @@ The file never leaves your browser.
   through the `.apkg` download below.
 - **A cell is read as the sheet shows it.** A date comes out as `2025-01-21`, a
   whole number as `1` rather than `1.0`.
+- **A CSV saved by Excel reads too.** The separator (comma, semicolon or tab) is
+  detected, and so is UTF-16 ("Unicode Text"). A file that is not UTF-8, like
+  Excel's "CSV (Comma delimited)" on a Vietnamese Windows, is read with the
+  Windows Vietnamese (cp1258) or Western (cp1252) code page, and the page tells
+  you so you can check the accents. Safest is Excel's **CSV UTF-8**.
 
 ### Download an .apkg
 
-**Download for Anki** builds the deck as an `.apkg` file. **AnkiDroid and AnkiMobile
+**Download .apkg** builds the deck as an `.apkg` file. **AnkiDroid and AnkiMobile
 import it directly**, so a sheet can reach your phone without Anki on a computer
 at all. It is built by the add-on's own code, with the same fields and card
 design, and the note identity comes from your `ID` column, so **importing again
@@ -67,13 +72,18 @@ delete it there. That is the real difference between importing and syncing.
 Which deck a file is, in this order:
 
 1. **`name=` in the [settings row](settings-row.md#sheet-wide-keys)**, when
-   it is there. Create sheet always writes it, so a renamed file
+   it is there. Create sheet always writes it (it is the **Flashcard set name**), so a renamed file
    (`Từ vựng (1).csv`), an `.xlsx` copy, a share link or the same sheet in Google
    Sheets all update one deck. Two sheets with one `name` are one deck and
-   overwrite each other's notes.
+   overwrite each other's notes; a copied sheet stays the old deck until you
+   rename it.
 2. Otherwise the Google Sheets link and the tab.
 3. Otherwise the file name, without its `.csv`/`.tsv`/`.xlsx` extension and the
    ` (1)`, `(1)` or `-2` a phone adds to a second download.
+
+Create sheet also writes `next=` in the same cell: the next ID it will hand out.
+That way a deleted word's ID is never reused for another word, which Anki would
+take for the old one.
 
 **Changing the columns needs Merge note types once.** Adding or renaming a
 column, turning on `reverse`… changes the note type, and with the default
@@ -85,19 +95,23 @@ your progress.
 
 ## Create sheet
 
-[Create sheet](../../sheet.html) writes a whole sheet right on the web, no
-Google Sheets needed: the column names, the [settings row](settings-row.md) and
-every word. Start from a template (Front / Back, Vocabulary, Custom, and more) or open an
-`.xlsx`/`.csv` you already have. On a computer it is a spreadsheet: pasting rows
+[Create sheet](../../sheet.html) writes a whole sheet on the web, no Google
+Sheets needed: the column names, the [settings row](settings-row.md) and every
+word. Start from one of 8 templates (see
+[Writing it in Create sheet](index.md#writing-it-in-create-sheet)), one of your
+own templates, or open an `.xlsx`/`.csv` you already have. On a computer it is a spreadsheet: pasting rows
 from Excel or Google Sheets adds words. On a phone each word opens as a form, one
 field per column. Settings are picked from a list, and the card for the word you
 are editing is drawn beside it.
 
-The draft is saved in the browser after every change. There are three ways out:
+The draft is saved in the browser after every change, but only in this
+browser, so save the sheet outside it: **on a phone press Save sheet link, on a
+computer press Save .csv**. The page says *Not saved — only a draft in this
+browser* until you do. There are three ways out:
 
 - **Make flashcards**: hands the sheet straight to Sheet to Anki, to check the cards
   and download an `.apkg`.
-- **Download** `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
+- **Save the sheet as a file**, `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
   keep editing, or upload it to Google Drive to make it a Google Sheet.
 - **Share link**: the whole sheet is compressed into the link itself (after the
   `#`) and sent to no server. Whoever opens it sees that sheet and edits their

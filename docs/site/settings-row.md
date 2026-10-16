@@ -79,11 +79,14 @@ Ghi sau `#config` trong ô dấu hiệu.
 | `align` | `left`, `center`, `right` | Căn lề cho cả card. `align` riêng của một cột vẫn được ưu tiên. |
 | `speed` | một con số từ 0.5 đến 2.0 | Tốc độ đọc cho mọi cột có đọc mà không tự đặt tốc độ. |
 | `reverse` | switch | Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Xem [Các loại card](card-types.md#reverse-card). |
-| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Xem [Theme và chữ](text.md#theme). |
-| `name` | tên bộ flashcard, có thể có dấu cách và tiếng Việt | Tên bộ flashcard — cũng là tên deck Anki hiện — đồng thời là danh tính của sheet. Sheet to Anki nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một bộ. Hai sheet cùng `name` là **một** bộ: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `name` là tạo bộ mới (một deck mới trong Anki); tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
-| `next` | một ID kết thúc bằng số, như `w15` | ID tiếp theo Create sheet sẽ cấp. Nhờ nó, ID của một từ đã xoá không bao giờ được cấp lại cho từ mới, vì từ mới sẽ thừa hưởng lịch sử ôn tập của từ cũ trong Anki. |
+| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Trong Tạo Sheet bạn chọn theme ngay ở bước chọn template. Xem [Theme và chữ](text.md#theme). |
+| `name` | tên bộ flashcard, có dấu cách và tiếng Việt cũng được, tối đa 100 ký tự | Tên bộ flashcard — cũng là tên deck Anki hiện — đồng thời là danh tính của sheet. Sheet to Anki nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một bộ. Hai sheet cùng `name` là **một** bộ: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `name` là tạo bộ mới (một deck mới trong Anki); tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
+| `next` | một ID kết thúc bằng số, như `w15` | ID tiếp theo Tạo Sheet sẽ cấp. Nhờ nó, ID của một từ đã xoá không bao giờ được cấp lại cho từ mới, vì từ mới sẽ thừa hưởng lịch sử ôn tập của từ cũ trong Anki. |
 
-Create sheet tự viết hai key cuối, ví dụ `#config name=Từ vựng tiếng Anh; next=w15`.
+Tạo Sheet tự viết hai key cuối, ví dụ `#config name=Từ vựng tiếng Anh; next=w15`:
+`name` là ô **Tên bộ flashcard** bạn điền khi chọn template, và Tạo Sheet hỏi lại
+trước khi đổi nó, vì tên mới là một deck mới trong Anki. `next` không hiện trong
+bảng; Tạo Sheet tự giữ nó.
 Sheet không có `name` thì được nhận ra theo link Google Sheets, hoặc theo tên
 file (bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố ` (1)`, `-2`). Add-on đọc hai key này
 mà không cảnh báo nhưng chưa dùng tới: add-on nhận ra note theo deck và cột `ID`.
@@ -100,7 +103,7 @@ w01      HSK 1        写       to write
 w02      HSK 2        山       mountain
 ```
 
-Sheet này xếp `w01` vào `sc_<file>::<sheet>::HSK 1`, và `Level` không hiện trên
+Sheet này xếp `w01` vào subdeck `HSK 1` của deck, và `Level` không hiện trên
 card. Note nằm ở đâu thì deck chứa nó đã cho thấy, nên không cần lặp lại trên
 card; các setting của card (`size`, `color`, `side`, `tts` và những cái khác) bị
 từ chối trên cột như vậy, kèm cảnh báo. `sort` là ngoại lệ duy nhất, vì nó cũng

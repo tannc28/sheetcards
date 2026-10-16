@@ -42,7 +42,9 @@ mypy src/
 
 ## Website
 
-Trang web này là trang tĩnh, nằm trong `site/`, còn docs là Markdown trong
+Trang web này là trang tĩnh, nằm trong `site/`: trang chủ (`index.html`), Sheet
+to Anki (`create.html`), Tạo Sheet (`sheet.html`) và Liên hệ & góp ý
+(`contact.html`). Docs là Markdown trong
 `docs/site/` (tiếng Việt, ở `/docs/`) và `docs/site/en/` (tiếng Anh, ở `/docs/en/`). `scripts/build_site.py` gom tất cả vào `build/site/`: nó copy
 `site/`, copy các module Python thuần của add-on (những module không import Anki)
 để Sheet to Anki chạy qua Pyodide, dùng chính các module đó để render các card demo của
@@ -53,13 +55,13 @@ python scripts/build_site.py            # build into build/site
 python scripts/build_site.py --serve    # build, then serve on :8000
 ```
 
-Một lần push lên `main` có đụng tới site, `src/` hay docs sẽ deploy lại lên GitHub
-Pages.
+Một lần push lên `main` có đụng tới site, `src/`, docs hay file ví dụ sẽ deploy
+lại lên GitHub Pages.
 
 ## Build và release
 
 ```bash
-python scripts/build_packages.py           # build .ankiaddon packages
+python scripts/build_packages.py           # interactive menu: AnkiWeb, standalone or both
 python scripts/validate_packages.py build/sheetcards.ankiaddon
 ```
 

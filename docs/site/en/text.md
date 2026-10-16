@@ -13,6 +13,11 @@ Name it in the settings row's marker cell:
 #config theme=paper
 ```
 
+In [Create sheet](../../sheet.html) the theme is chosen in the template step, in
+the **Theme** row under the card preview: press **Default** (Anki's colours) or a
+theme, the card changes at once, and Create sheet writes `theme=` into the
+`#config` cell for you. A theme is not a template: any template takes any theme.
+
 | Theme | What it looks like |
 | :--- | :--- |
 | `paper` | Warm paper and ink; the calmest for long sessions. |

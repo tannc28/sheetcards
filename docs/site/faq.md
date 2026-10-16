@@ -121,8 +121,7 @@ chọn AnkiDroid. Hoặc trong AnkiDroid: menu → **Import** → chọn file đ
 **Trên iPhone, AnkiMobile không có trong danh sách Share.**
 Mở AnkiMobile một lần trước (app phải được cài và mở ít nhất một lần). Trong app
 **Files**, chạm vào file `.apkg` → **Share**, kéo dãy app sang phải tới
-**More** (Thêm) và bật AnkiMobile. AnkiMobile là app trả phí của Anki; nếu chưa
-mua thì nó không có trên máy.
+**More** (Thêm) và bật AnkiMobile.
 
 **Card của tôi bị nhân đôi sau khi import lại.**
 Anki chỉ cập nhật note cũ khi file mới được nhận ra là cùng một deck. Deck được
@@ -148,6 +147,12 @@ xoá.
 AnkiDroid nhận cả file CSV và import từng dòng thành note, kể cả settings row.
 Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file để thêm
 từ** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
+
+**File CSV lưu từ Excel bị lỗi dấu tiếng Việt.**
+Sheet to Anki và Tạo Sheet tự nhận ra dấu phân cách và bảng mã của file CSV từ
+Excel (kể cả "CSV (Comma delimited)" trên Windows tiếng Việt) và báo khi phải
+đoán bảng mã. Nếu dấu vẫn sai, trong Excel chọn **Save As → CSV UTF-8** rồi mở
+file đó. Xem [Upload một file](sources.md#upload-mot-file).
 
 **Bản nháp trong Tạo Sheet biến mất.**
 Bản nháp chỉ nằm trong trình duyệt, và Safari trên iPhone xoá dữ liệu của trang

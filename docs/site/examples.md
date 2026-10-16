@@ -34,7 +34,7 @@ trong Sheet to Anki và copy settings row của nó.
 | `13 Furigana (phiên âm kanji)` | `furigana` trên chữ kanji |
 | `14 Any headers (mọi ngôn ngữ)` | tên cột viết là `汉字`, `拼音`, `释义`, `例句` |
 | `15 Theme + subdeck (màu, tầng)` | từ vựng tiếng Anh xếp sâu ba tầng `SUBDECK` — `English::B1::Verbs` — với `theme=sakura`, có đọc to, và sắp xếp theo từ |
-| `16 Picture words (từ vựng ảnh)` | ảnh ở mặt trước và giọng người bản xứ ở mặt sau — `image` và `audio` trên một card, xếp theo `Group` |
+| `16 Picture words (từ vựng ảnh)` | ảnh ở mặt trước và giọng người bản xứ ở mặt sau — `image` và `audio` trên một card, xếp theo `Group`; ô `#config` có `name=` (tên bộ flashcard, cũng là danh tính của deck) và `next=` |
 | `17 Draw & type (viết và gõ)` | viết chữ từng nét *và* gõ pinyin của nó: `draw` và `type=nc` hỏi cùng một thứ theo hai cách |
 | `18 Grammar cloze (ngữ pháp)` | giấu từ mang điểm ngữ pháp, và gõ ra chứ không chỉ nhớ — `cloze` cộng `type` |
 | `19 Dictation (nghe rồi gõ)` | câu được đọc lên mà không hiện ở đâu: `side=hide` + `tts` + `type`, nên cách duy nhất là nghe |

@@ -50,6 +50,10 @@ Deck được đặt theo tên file spreadsheet và tên sheet: `sc_<file>::<she
 note type là `SheetCards - <deck> - Basic` và `- Cloze`. Khi bạn đổi tên file
 spreadsheet, lần sync sau sẽ đổi tên deck và note type cho khớp.
 
+`name=` và `next=` trong [settings row](settings-row.md) chỉ dành cho file
+`.apkg` của Sheet to Anki và Tạo Sheet. Add-on chấp nhận chúng nhưng bỏ qua: deck
+của add-on luôn mang tên `sc_<file>::<sheet>`, và note vẫn được nhận ra nhờ `ID`.
+
 **Đổi tên deck hay note type của SheetCards ngay trong Anki sẽ không giữ được**:
 lần sync sau sẽ đổi lại. Hãy đổi tên spreadsheet thay vào đó.
 

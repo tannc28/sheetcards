@@ -42,7 +42,9 @@ mypy src/
 
 ## The website
 
-This site is static and lives in `site/`, with the documentation as Markdown in
+This site is static and lives in `site/`: the landing page (`index.html`),
+Sheet to Anki (`create.html`), Create sheet (`sheet.html`) and Contact &
+feedback (`contact.html`), with the documentation as Markdown in
 `docs/site/` (Vietnamese, served at `/docs/`) and `docs/site/en/` (English, at
 `/docs/en/`). `scripts/build_site.py` assembles it into `build/site/`: it copies
 `site/`, copies the add-on's pure Python modules (the ones with no Anki import)
@@ -54,13 +56,13 @@ python scripts/build_site.py            # build into build/site
 python scripts/build_site.py --serve    # build, then serve on :8000
 ```
 
-A push to `main` that touches the site, `src/` or the docs redeploys it to GitHub
-Pages.
+A push to `main` that touches the site, `src/`, the docs or the example workbook
+redeploys it to GitHub Pages.
 
 ## Build and release
 
 ```bash
-python scripts/build_packages.py           # build .ankiaddon packages
+python scripts/build_packages.py           # interactive menu: AnkiWeb, standalone or both
 python scripts/validate_packages.py build/sheetcards.ankiaddon
 ```
 
