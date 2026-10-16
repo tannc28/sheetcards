@@ -155,7 +155,7 @@
          wide screen shows both and hides this switch. -->
     <div class="seg viewseg stepseg" role="group" aria-label="Các bước" data-i18n-attr="aria-label:shViewLabel">
       <button type="button" data-view="look" aria-pressed="false"><span class="stepn" aria-hidden="true">1</span><span
-              class="steptext"><span data-i18n="shStepTemplate">Template</span><small data-i18n="shStepTemplateSub">cột & card</small></span></button>
+              class="steptext"><span data-i18n="shStepTemplate">Cột & card</span><small data-i18n="shStepTemplateSub">tên cột, settings row</small></span></button>
       <button type="button" data-view="rows" aria-pressed="true"><span class="stepn" aria-hidden="true">2</span><span
               class="steptext"><span data-i18n="shStepCards">Thẻ</span><small><span class="count" id="rowcount-seg"></span> <span data-i18n="shStepCardsSub">từ</span></small></span></button>
     </div>
@@ -215,12 +215,13 @@
 
         <div class="colpanel">
           <div class="pane-hrow">
-            <h3 class="pane-h stephead"><span class="stepn" aria-hidden="true">1</span><span data-i18n="shColumns">Template: cột & settings row</span></h3>
+            <h3 class="pane-h stephead"><span class="stepn" aria-hidden="true">1</span><span data-i18n="shColumns">Cột & settings row</span></h3>
             <button class="toolbtn tplfold" id="tplfold" type="button"><span data-icon="sliders-horizontal"></span><span
-                    id="tplfold-text">Sửa template</span></button>
+                    id="tplfold-text">Sửa cột & card</span></button>
             <a class="docslink" href="./docs/settings-row.html" data-doc="settings-row.html" target="_blank" rel="noopener"
                data-i18n="shSettingsDocs">Mọi key của settings row</a>
           </div>
+          <p class="settingsline" data-i18n="shSettingsLine">Settings row là dòng 2 của sheet, ngay dưới tên cột: mỗi ô ghi cột đó hiện thế nào trên card — mặt trước hay sau, cỡ chữ, có đọc to không. Chọn một cột rồi thêm directive bên dưới.</p>
           <div class="colstrip" id="colstrip" role="group" aria-label="Cột" data-i18n-attr="aria-label:shColumnsLabel"></div>
           <div class="colhead" id="colhead"></div>
           <div class="stack">

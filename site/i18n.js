@@ -232,6 +232,10 @@ const STRINGS = {
     vi: "Trên iPhone có thể phải tải giọng đọc: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói",
   },
   shSettingsDocs: { en: "Every settings-row key", vi: "Mọi key của settings row" },
+  shSettingsLine: {
+    en: "The settings row is row 2 of the sheet, right under the column names: each cell says how that column shows on the card — front or back, text size, read aloud or not. Pick a column and add directives below.",
+    vi: "Settings row là dòng 2 của sheet, ngay dưới tên cột: mỗi ô ghi cột đó hiện thế nào trên card — mặt trước hay sau, cỡ chữ, có đọc to không. Chọn một cột rồi thêm directive bên dưới.",
+  },
   vocabLang: { en: "Your words are in", vi: "Từ của bạn bằng tiếng" },
   vocabSpeakWord: { en: "Read Word aloud", vi: "Đọc to Word" },
   vocabSpeakExample: { en: "Read Example aloud", vi: "Đọc to Example" },
@@ -411,11 +415,11 @@ const STRINGS = {
   shViewLabel: { en: "Steps", vi: "Các bước" },
   shViewLook: { en: "Columns & card", vi: "Cột & card" },
   shRows: { en: "Cards (the words)", vi: "Thẻ (các từ)" },
-  shStepTemplate: { en: "Template", vi: "Template" },
-  shStepTemplateSub: { en: "columns & card", vi: "cột & card" },
+  shStepTemplate: { en: "Columns & card", vi: "Cột & card" },
+  shStepTemplateSub: { en: "names, settings row", vi: "tên cột, settings row" },
   shStepCards: { en: "Cards", vi: "Thẻ" },
   shStepCardsSub: { en: "words", vi: "từ" },
-  shEditTemplate: { en: "Edit template", vi: "Sửa template" },
+  shEditTemplate: { en: "Edit columns & card", vi: "Sửa cột & card" },
   shFoldTemplate: { en: "Done", vi: "Xong" },
   shFileLine: {
     en: "The draft lives only in this browser. Save the .csv to keep it for good and carry on from any device, in Google Sheets or in Excel.",
@@ -440,7 +444,7 @@ const STRINGS = {
   shWordN: { en: (n, total) => `Word ${n} / ${total}`, vi: (n, total) => `Từ ${n} / ${total}` },
   shWords: { en: (n) => `${n} word${n === 1 ? "" : "s"}`, vi: (n) => `${n} từ` },
   shColumnsN: { en: (n) => `${n} column${n === 1 ? "" : "s"}`, vi: (n) => `${n} cột` },
-  shColumns: { en: "Template: columns & settings row", vi: "Template: cột & settings row" },
+  shColumns: { en: "Columns & settings row", vi: "Cột & settings row" },
   shColumnsLabel: { en: "Columns", vi: "Cột" },
   shDeckCellNote: {
     en: "The #config cell holds settings for the whole sheet: align, speed, reverse, theme.",
@@ -903,7 +907,7 @@ const STRINGS = {
   tabFront: { en: "front", vi: "trước" },
   tabBoth: { en: "both", vi: "cả hai" },
   tabBack: { en: "back", vi: "sau" },
-  tabTemplate: { en: "template", vi: "template" },
+  tabTemplate: { en: "card template", vi: "card template" },
   prevRow: { en: "Previous card", vi: "Card trước" },
   clozeCard: { en: "Cloze card", vi: "Card cloze" },
   clozeCardN: { en: (n) => `card c${n}`, vi: (n) => `card c${n}` },
@@ -930,8 +934,8 @@ const STRINGS = {
       `hiện đúng như vậy.`,
   },
   missingFields: {
-    en: (f) => `Template references a field the row has no column for: <code>${f}</code>`,
-    vi: (f) => `Template gọi field mà dòng này không có cột: <code>${f}</code>`,
+    en: (f) => `The card template references a field the row has no column for: <code>${f}</code>`,
+    vi: (f) => `Card template gọi field mà dòng này không có cột: <code>${f}</code>`,
   },
   unknownFilters: {
     en: (f) => `Filter not reproduced here: <code>${f}</code>`,
@@ -1116,7 +1120,7 @@ const STRINGS = {
     vi: (n) => `${n} điều cần xem lại trong sheet`,
   },
   viewGrid: { en: "Grid", vi: "Bảng" },
-  viewTemplate: { en: "Template", vi: "Template" },
+  viewTemplate: { en: "Card template", vi: "Card template" },
   dlCards: {
     en: (n) => `${n} card${n === 1 ? "" : "s"}`,
     vi: (n) => `${n} cards`,
