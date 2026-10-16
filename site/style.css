@@ -196,6 +196,10 @@ body.page .masthead {
   border-bottom: 1px solid var(--line);
 }
 .brand { flex: 1 1 14rem; min-width: 0; }
+/* The name is the way home on every page, as on nearly every site there is;
+   people click it without looking for anything else. */
+.brand a.name { display: inline-block; color: var(--ink); text-decoration: none; border-radius: 6px; }
+.brand a.name:hover { color: var(--accent); }
 .brand h1, .brand .name {
   margin: 0;
   font-size: var(--t-xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.15;

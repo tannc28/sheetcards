@@ -115,8 +115,11 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
           speechSynthesis.cancel();
           speechSynthesis.speak(u);
         });
-        const post = () => parent.postMessage(
-          { h: document.documentElement.scrollHeight }, "*");
+        const post = () => {
+          const b = document.body, s = getComputedStyle(b);
+          parent.postMessage({ h: Math.ceil(b.getBoundingClientRect().height
+            + parseFloat(s.marginTop) + parseFloat(s.marginBottom)) }, "*");
+        };
         addEventListener("load", post); new ResizeObserver(post).observe(document.body);
       <\/script>
       ${typeansRuntime()}`;

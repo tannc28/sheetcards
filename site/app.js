@@ -2118,7 +2118,7 @@ document.addEventListener("change", (e) => {
 addEventListener("message", (e) => {
   const frame = $("#card");
   if (!frame || e.source !== frame.contentWindow || !e.data?.h) return;
-  frame.style.height = `${e.data.h + 8}px`;
+  frame.style.height = `${e.data.h}px`;
 });
 
 // ---------------------------------------------------------------------------
