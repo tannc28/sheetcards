@@ -184,6 +184,55 @@ CUSTOM_TEMPLATE = [
     ],
 ]
 
+# Writing Chinese: the meaning and pinyin ask, the learner writes the character
+# stroke by stroke in the box (draw, on the question), and the answer animates
+# the strokes, shows the character large and reads it and an example aloud. The
+# same layout as the example workbook's "12 Chinese drawing", minus its deck and
+# tag columns, with the Chinese font and the iPhone's own Mandarin voice.
+HANZI_TEMPLATE = [
+    ["ID", "Meaning", "Pinyin", "Draw", "Character", "Example"],
+    [
+        "#config",
+        "size=24; color=muted; label=Viết chữ có nghĩa",
+        "side=front; size=40; color=accent",
+        "side=front; draw; size=260",
+        "side=back; size=72; font=sc; tts=zh_CN; voices=Apple_Tingting",
+        "side=back; size=20; font=sc; tts=zh_CN; voices=Apple_Tingting; speed=0.8",
+    ],
+    ["d01", "tôi", "wǒ", "我", "我", "我是学生。"],
+    ["d02", "bạn", "nǐ", "你", "你", "你好吗？"],
+    ["d03", "tốt; khỏe", "hǎo", "好", "好", "今天天气很好。"],
+]
+
+# Japanese with furigana: the reading written in brackets after the kanji and
+# drawn as ruby over it, as in the example workbook's "13 Furigana". No voice is
+# named — the iPhone this was checked against has no ja_JP voice built in.
+KANJI_TEMPLATE = [
+    ["ID", "Japanese", "Meaning", "Example", "Note"],
+    [
+        "#config",
+        "size=40; furigana; font=jp; tts=ja_JP",
+        "side=back; size=24",
+        "side=back; size=20; furigana; font=jp; tts=ja_JP",
+        "side=back; size=14; color=muted; hint",
+    ],
+    [
+        "j01",
+        "日本語[にほんご]",
+        "tiếng Nhật",
+        " 私[わたし]は 日本語[にほんご]を 勉強[べんきょう]しています。",
+        "Viết cách đọc trong ngoặc vuông ngay sau chữ kanji.",
+    ],
+    [
+        "j02",
+        "図書館[としょかん]",
+        "thư viện",
+        " 図書館[としょかん]で 本[ほん]を 読[よ]みます。",
+        "Một dấu cách trước chữ kanji tách nó khỏi chữ đứng trước.",
+    ],
+    ["j03", "先生[せんせい]", "giáo viên", " 先生[せんせい]は 優[やさ]しいです。", ""],
+]
+
 VOCAB_HEADERS = ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
 
 # One row per language the vocabulary template offers, in the order offered:
@@ -758,18 +807,16 @@ def _language_template(tm, card_layout, tid, rows_for, toggles, theme=None):
 
 
 def sheet_templates(out):
-    """Every template: the three main ones — Basic in both languages, every
-    variant of the vocabulary template, and the custom one — then the others:
-    picture words, reverse, typed answer, and the vocabulary card in each listed
-    theme.
+    """Every template: the main ones — Basic in both languages, every variant of
+    the vocabulary template, Chinese writing, Japanese furigana and the custom
+    one — then the others: picture words, reverse and typed answer. A theme is
+    not a template of its own: the step offers every listed theme over any of
+    them (theme_palettes()).
 
     Every language × read-Word × read-Example combination is parsed here, so a
     choice on the page can never produce a sheet that warns.
     """
     tm, card_layout, _workbook = _pure_package(out)
-    # The themes a sheet is told about, never the unlisted ones: asked of the
-    # copy just loaded, through a function of the module that defines them.
-    themes = tm.parse_config_row.__globals__["listed_themes"]()
     basic = {
         "id": "basic",
         "variants": {
@@ -786,11 +833,14 @@ def sheet_templates(out):
         {"code": code, "label": label, "voice": voice}
         for code, label, voice, _font, _words in VOCAB_LANGUAGES
     ]
-    custom = {
-        "id": "custom",
-        "rows": CUSTOM_TEMPLATE,
-        "card": _template_card(tm, card_layout, "custom", CUSTOM_TEMPLATE),
-    }
+    fixed = [
+        {"id": tid, "rows": rows, "card": _template_card(tm, card_layout, tid, rows)}
+        for tid, rows in (
+            ("hanzi", HANZI_TEMPLATE),
+            ("kanji", KANJI_TEMPLATE),
+            ("custom", CUSTOM_TEMPLATE),
+        )
+    ]
     more = [
         _language_template(tm, card_layout, "picture", picture_rows, ["word"]),
         _language_template(tm, card_layout, "reverse", reverse_rows, ["word"]),
@@ -802,20 +852,30 @@ def sheet_templates(out):
             both,
         ),
     ]
-    for theme in themes:
-        more.append(
-            _language_template(
-                tm,
-                card_layout,
-                f"theme-{theme}",
-                lambda lang, w, e, theme=theme: vocab_rows(lang, w, e, theme=theme),
-                both,
-                theme=theme,
-            )
-        )
     for tpl in more:
         tpl["more"] = True
-    return [basic, vocab, custom, *more]
+    return [basic, vocab, *fixed, *more]
+
+
+def theme_palettes(out):
+    """The colour block card_layout puts at the top of a card's stylesheet, for
+    no theme ("") and for each listed theme — never an unlisted one.
+
+    The template step lets any template be dressed in any theme, and its cards
+    are drawn without Python: sheet.js swaps the block a card was built with for
+    the chosen one. That only works because this is the exact text _palette()
+    writes, so it is taken from it rather than written twice.
+    """
+    from types import SimpleNamespace
+
+    tm, card_layout, _workbook = _pure_package(out)
+    # The themes a sheet is told about, never the unlisted ones: asked of the
+    # copy just loaded, through a function of the module that defines them.
+    names = tm.parse_config_row.__globals__["listed_themes"]()
+    return {
+        name: card_layout._palette(SimpleNamespace(theme=name or None))
+        for name in ["", *names]
+    }
 
 
 def _interned(templates):
@@ -855,6 +915,9 @@ def _interned(templates):
 
 def build_sheet_templates(out):
     templates, pieces = _interned(sheet_templates(out))
+    palettes = json.dumps(
+        theme_palettes(out), ensure_ascii=False, separators=(",", ":")
+    )
     body = json.dumps(templates, ensure_ascii=False, separators=(",", ":"))
     table = json.dumps(pieces, ensure_ascii=False, separators=(",", ":"))
     (out / "sheet-templates.js").write_text(
@@ -862,7 +925,8 @@ def build_sheet_templates(out):
         "// add-on's own card_layout.py. Do not edit. Each qfmt/afmt is a list of\n"
         "// indices into PIECES, joined back by site/sheet.js.\n"
         f"export const PIECES = {table};\n"
-        f"export const TEMPLATES = {body};\n",
+        f"export const TEMPLATES = {body};\n"
+        f"export const PALETTES = {palettes};\n",
         encoding="utf-8",
     )
 

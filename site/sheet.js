@@ -27,7 +27,7 @@ import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { stashFile } from "./handoff.js";
 import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, toTsv } from "./sharelink.js";
-import { PIECES, TEMPLATES } from "./sheet-templates.js";
+import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
 
 /** What the page asks of the add-on's code. */
@@ -163,6 +163,8 @@ const CARD_TABS = ["front", "both", "back", "template"];
 const TEMPLATE_TEXT = {
   basic: { title: "tplBasic", text: "tplBasicText", name: "tplBlankName" },
   vocab: { title: "tplVocab", text: "tplVocabText", name: "tplVocabName" },
+  hanzi: { title: "tplHanzi", text: "tplHanziText", name: "tplHanziName" },
+  kanji: { title: "tplKanji", text: "tplKanjiText", name: "tplKanjiName" },
   custom: { title: "tplCustom", text: "tplCustomText", name: "tplCustomName" },
   picture: { title: "tplPicture", text: "tplPictureText", name: "tplPictureName" },
   reverse: { title: "tplReverse", text: "tplReverseText", name: "tplReverseName" },
@@ -195,8 +197,7 @@ const THEME_TEXT = {
 const byId = (id) => TEMPLATES.find((tpl) => tpl.id === id);
 const BASIC = byId("basic");
 const VOCAB = byId("vocab");
-const CUSTOM = byId("custom");
-const MAIN = ["basic", "vocab", "custom"];
+const MAIN = ["basic", "vocab", "hanzi", "kanji", "custom"];
 const MORE = TEMPLATES.filter((tpl) => tpl.more);
 // Basic's columns are named in the page's language at the moment the sheet is
 // made; a draft keeps them, because by then they are its field names.
@@ -216,14 +217,6 @@ function textOf(id) {
       title: tpl?.title ?? "",
       text: made ? t("tplMineText", made.columns.length, made.rows.filter((r) => !blankRow(r)).length) : "",
       name: tpl?.title ?? "",
-    };
-  }
-  const theme = byId(id)?.theme;
-  if (theme) {
-    return {
-      title: t("tplThemeTitle", theme),
-      text: t(THEME_TEXT[theme] || "tplThemeText"),
-      name: t("tplVocabName"),
     };
   }
   const text = TEMPLATE_TEXT[id];
@@ -879,7 +872,7 @@ function mineCard(tpl) {
 /** What a template makes right now: its rows and its first word's card. */
 function templateNow(id, choice = vocabChoice) {
   if (id === "basic") return basicVariant();
-  if (id === "custom") return CUSTOM;
+  if (byId(id)?.rows) return byId(id);
   if (isMine(id)) {
     const tpl = mineOf(id);
     return tpl ? { rows: tpl.rows, card: mineCard(tpl) } : null;
@@ -893,8 +886,73 @@ function templateNow(id, choice = vocabChoice) {
  * this page goes through, so the scrap on screen, the .csv beside it and the
  * sheet that opens are one thing.
  */
-function templateSheet(id, choice) {
-  return fromGrid(templateNow(id, choice).rows, textOf(id).name);
+function templateSheet(id, choice, theme = stepTheme) {
+  return fromGrid(withTheme(templateNow(id, choice).rows, theme), textOf(id).name);
+}
+
+// ---- the theme a template is dressed in ------------------------------------
+//
+// A theme is a choice in the step, over any template — never a template of its
+// own. null means "the template's own", which for most of them is none.
+let stepTheme = null;
+
+/** The theme a sheet's settings row names, or "" for none. */
+function themeOf(rows) {
+  const marker = String(rows?.[1]?.[0] ?? "");
+  if (!/^#config\b/i.test(marker)) return "";
+  return (marker.match(/(?:^|[\s;])theme\s*=\s*([\w-]+)/i)?.[1] ?? "").toLowerCase();
+}
+
+/** The rows with their settings row naming `theme` ("" for none, null to keep). */
+function withTheme(rows, theme) {
+  if (theme === null || theme === undefined || theme === themeOf(rows)) return rows;
+  const out = rows.map((row) => [...row]);
+  const width = out[0]?.length ?? 1;
+  if (!/^#config\b/i.test(String(out[1]?.[0] ?? ""))) {
+    out.splice(1, 0, ["#config", ...Array(Math.max(0, width - 1)).fill("")]);
+  }
+  const rest = String(out[1][0])
+    .replace(/^#config/i, "")
+    .split(";")
+    .map((pair) => pair.trim())
+    .filter((pair) => pair && !/^theme\s*=/i.test(pair));
+  if (theme) rest.push(`theme=${theme}`);
+  out[1][0] = "#config" + (rest.length ? " " + rest.join("; ") : "");
+  return out;
+}
+
+/** A pictured card redrawn in another theme: its colour block swapped. */
+function themedCard(card, theme) {
+  if (!card || theme === null || !(theme in PALETTES)) return card;
+  const swap = (html) => {
+    for (const block of Object.values(PALETTES)) {
+      if (html.includes(block)) return html.replace(block, PALETTES[theme]);
+    }
+    return html;
+  };
+  const faces = (side) => side && { qfmt: swap(side.qfmt), afmt: swap(side.afmt) };
+  return { ...card, template: faces(card.template), reverse: faces(card.reverse) };
+}
+
+/** A theme's ground and accent, read out of its own colour block. */
+function swatchOf(name) {
+  const block = PALETTES[name] ?? "";
+  const bg = block.match(/\.card \{[^}]*background-color:\s*([^;}\s]+)/)?.[1] ?? "#ffffff";
+  const accent = block.match(/--sc-accent:\s*([^;}\s]+)/)?.[1] ?? "#1a73e8";
+  return `--sw-bg: ${bg}; --sw-ac: ${accent}`;
+}
+
+/** The theme row of the step: none, then every listed theme. */
+function paintThemes(own) {
+  const chosen = stepTheme ?? own;
+  $("#tpl-theme").innerHTML = Object.keys(PALETTES)
+    .map((name) => {
+      const label = name || t("tplThemeNone");
+      const hint = name ? t(THEME_TEXT[name] || "tplThemeLabel") : t("tplThemeNoneText");
+      return `<button type="button" class="themechip${name === chosen ? " on" : ""}" data-theme-pick="${name}"
+          aria-pressed="${name === chosen}" title="${escapeHtml(hint)}"><span class="swatch" style="${swatchOf(name)}"></span>${escapeHtml(label)}</button>`;
+    })
+    .join("");
 }
 
 /** Rows drawn as a small spreadsheet: letters, row numbers, the ruled cells. */
@@ -1066,7 +1124,9 @@ function paintStep() {
     const spoken = vocabChoice.word || (example && vocabChoice.example);
     $("#vocab-ios").hidden = Boolean(language.voice) || !spoken;
   }
-  const card = templateNow(stepId).card;
+  const own = themeOf(templateNow(stepId)?.rows);
+  paintThemes(own);
+  const card = themedCard(templateNow(stepId).card, stepTheme ?? own);
   const faces = card?.reverse ? ["front", "back", "front2", "back2"] : ["front", "back"];
   $("#tpl-card").innerHTML = facesHtml(stepId, faces, { waiting: !card });
   // The step is open, so its frames are in view: no need to wait for them.
@@ -1079,6 +1139,7 @@ function paintStep() {
 function pickTemplate(id) {
   if (isMine(id) && !mineOf(id)) return paintMine();
   stepId = id;
+  stepTheme = null;
   paintStep();
   $("#tplbox").showModal();
   $("#tpl-go").focus();
@@ -2029,6 +2090,11 @@ document.addEventListener("click", (e) => {
 
   const tpl = e.target.closest("[data-template]");
   if (tpl) return pickTemplate(tpl.dataset.template);
+  const pick = e.target.closest("[data-theme-pick]");
+  if (pick) {
+    stepTheme = pick.dataset.themePick;
+    return paintStep();
+  }
   if (e.target.closest("#tpl-go")) return createFromStep();
   if (e.target.closest("#tpl-csv")) return stepCsv();
   if (e.target.closest("#tpl-upload")) return $("#tplfile").click();

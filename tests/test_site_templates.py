@@ -94,27 +94,40 @@ def _sheet_config():
     return module
 
 
-def test_three_main_templates_then_the_others(built):
+def test_the_main_templates_then_the_others(built):
     _, _, templates = built
-    assert list(templates)[:3] == ["basic", "vocab", "custom"]
+    main = [tid for tid, tpl in templates.items() if not tpl.get("more")]
+    assert main == ["basic", "vocab", "hanzi", "kanji", "custom"]
     more = [tid for tid, tpl in templates.items() if tpl.get("more")]
-    themes = _sheet_config().listed_themes()
-    assert more == ["picture", "reverse", "typed"] + [f"theme-{t}" for t in themes]
+    # A theme is a choice in the step, never a template of its own.
+    assert more == ["picture", "reverse", "typed"]
 
 
-def test_the_themed_templates_are_the_listed_themes_only(built):
-    _, _, templates = built
+def test_every_listed_theme_can_dress_a_template_and_no_other(built):
+    """The step swaps a card's colour block for the chosen theme's, so each block
+    must be exactly what card_layout writes — present, verbatim, in the cards."""
+    build, out, _ = built
+    palettes = build.theme_palettes(out)
     themes = _sheet_config().listed_themes()
     assert "ptrang" not in themes
-    themed = [tpl["theme"] for tpl in templates.values() if tpl.get("theme")]
-    assert themed == themes
-    for theme in themed:
-        for key, variant in templates[f"theme-{theme}"]["variants"].items():
-            assert variant["rows"][1][0] == f"#config theme={theme}", key
-            # The same sheet as the vocabulary template, dressed differently.
-            plain = templates["vocab"]["variants"][key]["rows"]
-            assert variant["rows"][1][1:] == plain[1][1:]
-            assert variant["rows"][2:] == plain[2:]
+    assert list(palettes) == ["", *themes]
+    assert len(set(palettes.values())) == len(palettes)
+    # Each block is, verbatim, the one a template in that theme was built with:
+    # the unthemed vocabulary card holds the default, the custom one sakura's.
+    _, _, templates = built
+    vocab = next(iter(templates["vocab"]["variants"].values()))["card"]
+    assert palettes[""] in vocab["template"]["qfmt"]
+    assert palettes["sakura"] in templates["custom"]["card"]["template"]["qfmt"]
+
+
+def test_chinese_writing_and_japanese_furigana_are_offered(built):
+    _, _, templates = built
+    hanzi = templates["hanzi"]["rows"]
+    assert any("draw" in cell for cell in hanzi[1])
+    assert any("zh_CN" in cell for cell in hanzi[1])
+    kanji = templates["kanji"]["rows"]
+    assert any("furigana" in cell for cell in kanji[1])
+    assert all("[" in row[1] for row in kanji[2:])
 
 
 def test_ptrang_is_never_offered(built):
