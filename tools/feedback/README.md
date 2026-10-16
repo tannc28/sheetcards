@@ -64,10 +64,24 @@ Bạn làm hai việc, rồi gửi lại **hai giá trị**: `Client ID` và `li
 "Anyone" nghĩa là ai cũng *gọi* được địa chỉ này, nhưng script từ chối mọi yêu
 cầu không mang theo lần đăng nhập Google hợp lệ của chính web SheetCards.
 
-## Gửi lại cho mình
+## Gửi lại cho mình — hoặc tự dán vào web
 
 - `Client ID`
 - `Web app URL`
+
+Hai giá trị này đều công khai. Nếu muốn tự làm: mở `site/feedback-config.js`
+và điền vào
+
+```js
+export const FEEDBACK = {
+  clientId: "1234…-abc….apps.googleusercontent.com",
+  endpoint: "https://script.google.com/macros/s/…/exec",
+};
+```
+
+rồi đổi `test_the_shipped_config_shows_the_notice` trong
+`tests/test_site_contact.py` thành `"open"`. Khi còn trống, trang **Liên hệ &
+góp ý** hiện thông báo "Form góp ý sắp mở" và chỉ tới GitHub, Facebook.
 
 ## Về sau
 
