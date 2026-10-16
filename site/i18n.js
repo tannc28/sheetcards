@@ -407,8 +407,8 @@ const STRINGS = {
   shUnsavedFile: { en: "Not saved — only a draft in this browser", vi: "Chưa lưu file — mới là nháp trong trình duyệt" },
   shSaveLink: { en: "Save sheet link", vi: "Lưu link sheet" },
   shSaveLinkLead: {
-    en: "Keep this link (send it to yourself in Zalo or Notes). Next time: open the link → add words → Make flashcards. Added words? Save a new link — the old one opens the old sheet.",
-    vi: "Giữ link này (gửi cho chính bạn qua Zalo/Ghi chú). Lần sau mở link → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới — link cũ mở bản cũ.",
+    en: "Keep this link (send it to yourself in Messenger, Telegram or Notes). Next time: open the link → add words → Make flashcards. Added words? Save a new link — the old one opens the old sheet.",
+    vi: "Giữ link này (gửi cho chính bạn qua Messenger/Telegram hoặc Ghi chú). Lần sau mở link → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới — link cũ mở bản cũ.",
   },
   shLinkKept: { en: "Link sent — your sheet is in it", vi: "Đã gửi link — sheet nằm trong link đó" },
   shFileLineLink: {
@@ -422,8 +422,8 @@ const STRINGS = {
     vi: "Thay đổi mới chỉ nằm trong trình duyệt này. Lưu link sheet để tuần sau mở lại và thêm từ.",
   },
   shComeBack: {
-    en: "Back to add words? Open the sheet link you saved (in Zalo, Notes…) and the sheet appears here; saved a .csv instead? Press Open a file. Then press Make flashcards and import the new .apkg.",
-    vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Zalo, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
+    en: "Back to add words? Open the sheet link you saved (in Messenger, Telegram, Notes…) and the sheet appears here; saved a .csv instead? Press Open a file. Then press Make flashcards and import the new .apkg.",
+    vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
   },
   shIosNote: {
     en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Save sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",

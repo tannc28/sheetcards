@@ -107,7 +107,7 @@ Delete the row to delete the card.
 ## On a phone
 
 **Download gives no file, or the page says "Open this page in Chrome/Safari".**
-You are in an app's built-in browser (Zalo, Messenger, Facebook, Instagram,
+You are in an app's built-in browser (Messenger, Telegram, Facebook, Instagram,
 TikTok, Line…), which cannot save files. Press **Copy link** on the banner and
 paste it into Chrome or Safari; on Android press **Open in Chrome**. Or open the
 app's menu (the three dots) and choose to open in a browser.

@@ -83,8 +83,8 @@ Bản nháp chỉ nằm trong trình duyệt (và Safari trên iPhone xoá nó s
 không mở trang), nên hãy lưu sheet:
 
 - **Trên điện thoại: bấm Lưu link sheet.** Cả sheet nằm trong link đó. Giữ link
-  này (gửi cho chính bạn qua Zalo/Ghi chú). Lần sau mở link → thêm từ → Tạo
-  flashcard. Thêm từ rồi thì lưu link mới, vì link cũ mở bản cũ.
+  này (gửi cho chính bạn qua Messenger/Telegram hoặc Ghi chú). Lần sau mở link
+  → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới, vì link cũ mở bản cũ.
 - **Trên máy tính: bấm Lưu file .csv.** Lần sau bấm **Mở file để thêm từ**.
 
 ID của từ cũ giữ nguyên, nên import lại file `.apkg` sẽ cập nhật note và giữ

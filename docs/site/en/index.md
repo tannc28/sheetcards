@@ -86,7 +86,7 @@ The draft lives only in the browser (and Safari on an iPhone deletes it after 7
 days without a visit), so save the sheet:
 
 - **On a phone: press Save sheet link.** The whole sheet is in that link. Keep
-  it (send it to yourself in Zalo or Notes). Next time: open the link → add words
+  it (send it to yourself in Messenger, Telegram or Notes). Next time: open the link → add words
   → Make flashcards. Added words? Save a new link; the old one opens the old
   sheet.
 - **On a computer: press Save .csv.** Next time, **Open a file to add words**.

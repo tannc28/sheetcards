@@ -107,7 +107,7 @@ card thì xoá dòng.
 
 **Bấm Download mà không có file nào, hoặc trang hiện báo "Mở trang này bằng
 Chrome/Safari".**
-Bạn đang mở trang trong trình duyệt riêng của một app (Zalo, Messenger,
+Bạn đang mở trang trong trình duyệt riêng của một app (Messenger, Telegram,
 Facebook, Instagram, TikTok, Line…). Trình duyệt đó không lưu được file. Bấm
 **Copy link** trên thanh báo rồi dán vào Chrome hoặc Safari; trên Android bấm
 **Mở bằng Chrome**. Hoặc mở menu của app (dấu ba chấm) và chọn mở bằng trình
