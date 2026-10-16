@@ -10,7 +10,9 @@ add-on's parser already expects. From there nothing is special-cased — the col
 roles, the settings row, the warnings, the deck paths and the cards all come from
 the same code that reads a single-sheet download.
 
-It also reads a file someone uploads to the preview site, which is the same job.
+It also reads a file someone uploads to the preview site, which is the same job,
+and writes one (``build_xlsx``): the example workbook is built with it, and so is
+the .xlsx that Create sheet saves in the browser.
 
 The reader is written against the standard library rather than openpyxl. Pyodide
 does not ship openpyxl, so using it would mean the preview site fetching a wheel
@@ -29,6 +31,8 @@ import json
 import re
 import xml.etree.ElementTree as ET
 import zipfile
+from xml.sax.saxutils import escape as _escape
+from xml.sax.saxutils import quoteattr as _quoteattr
 
 # A workbook mixes three namespaces, and two of them are called "relationships".
 # The one on a `r:id` attribute is not the one on a `.rels` file's elements.
@@ -362,3 +366,183 @@ def read_upload(data, name, index=0):
     if lower.endswith(".csv"):
         text = _tsv(list(csv.reader(io.StringIO(text))))
     return json.dumps({"tabs": [], "tab": "", "tsv": text}, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Writing
+# ---------------------------------------------------------------------------
+
+# Every entry gets the same timestamp so an unchanged grid rebuilds to a
+# byte-identical file. A workbook that churned on every build would show up as a
+# binary diff in every commit that touched anything nearby.
+_STAMP = (2020, 1, 1, 0, 0, 0)
+
+_CONTENT_TYPES = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    '<Default Extension="rels" '
+    'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    '<Default Extension="xml" ContentType="application/xml"/>'
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.'
+    'openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.'
+    'openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+    "{sheets}"
+    "</Types>"
+)
+
+# Nothing here is styled, but Excel treats a workbook with no styles part as
+# damaged and offers to repair it — and the point of this file is that someone
+# can open it, look at the settings row, and copy it. The reader
+# above does not need it: it already treats a missing styles.xml as "no cell
+# is a date".
+_STYLES = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
+    '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
+    '<borders count="1"><border/></borders>'
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
+    "</cellStyleXfs>"
+    '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" '
+    'xfId="0"/></cellXfs>'
+    "</styleSheet>"
+)
+
+_ROOT_RELS = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/'
+    'relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.'
+    'org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"'
+    "/></Relationships>"
+)
+
+
+def _column_ref(index):
+    """0 → "A", 26 → "AA" — the letters Excel addresses a cell by."""
+    letters = ""
+    index += 1
+    while index:
+        index, rest = divmod(index - 1, 26)
+        letters = chr(65 + rest) + letters
+    return letters
+
+
+def _clean(text):
+    """XML 1.0 forbids most control characters outright, even escaped."""
+    return "".join(ch for ch in text if ch >= " " or ch in "\t\n\r")
+
+
+def _sheet_xml(rows):
+    """A grid as a worksheet part.
+
+    Every cell is written as an inline string. A shared-string table would make
+    the file smaller, but a sheet of flashcards is small and an inline string is
+    the one cell type that cannot be misread: no number formatting, no date
+    serial, no locale — what was written is what the reader gets back.
+    """
+    out = [
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/'
+        'main"><sheetData>'
+    ]
+    for r, row in enumerate(rows, start=1):
+        cells = []
+        for c, value in enumerate(row):
+            if not value:
+                continue  # an empty cell is an absent cell
+            ref = f"{_column_ref(c)}{r}"
+            cells.append(
+                f'<c r="{ref}" t="inlineStr"><is><t xml:space="preserve">'
+                f"{_escape(_clean(value))}</t></is></c>"
+            )
+        if cells:
+            out.append(f'<row r="{r}">' + "".join(cells) + "</row>")
+    out.append("</sheetData></worksheet>")
+    return "".join(out)
+
+
+def _workbook_xml(names):
+    sheets = "".join(
+        f'<sheet name={_quoteattr(name)} sheetId="{i}" r:id="rId{i}"/>'
+        for i, name in enumerate(names, start=1)
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+        ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/'
+        f'relationships"><sheets>{sheets}</sheets></workbook>'
+    )
+
+
+def _workbook_rels(count):
+    rels = "".join(
+        f'<Relationship Id="rId{i}" Type="http://schemas.openxmlformats.org/'
+        f'officeDocument/2006/relationships/worksheet" '
+        f'Target="worksheets/sheet{i}.xml"/>'
+        for i in range(1, count + 1)
+    )
+    # The styles part is reached through a relationship like any other, and it is
+    # numbered past the sheets so a sheet's rId stays equal to its position.
+    rels += (
+        f'<Relationship Id="rId{count + 1}" Type="http://schemas.openxmlformats.'
+        'org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/'
+        f'relationships">{rels}</Relationships>'
+    )
+
+
+def build_xlsx(sheets):
+    """``{sheet name: rows of text}`` as the bytes of an .xlsx file.
+
+    The writing half of this module, used to build the example workbook and by
+    Create sheet to save what was written in the browser. Every cell is text, so
+    the file reads back through ``sheet_tsv`` exactly as it went in.
+
+    Raises:
+        ValueError: for a sheet name Excel would refuse — longer than 31
+            characters, empty, or holding one of ``[]:*?/\\``.
+    """
+    names = list(sheets)
+    bad = [n for n in names if not n or len(n) > 31 or set(n) & set("[]:*?/\\")]
+    if bad:
+        raise ValueError(
+            "a sheet name must be 1-31 characters with none of []:*?/\\ — "
+            + ", ".join(repr(n) for n in bad)
+        )
+
+    parts = {
+        "[Content_Types].xml": _CONTENT_TYPES.format(
+            sheets="".join(
+                f'<Override PartName="/xl/worksheets/sheet{i}.xml" '
+                'ContentType="application/vnd.openxmlformats-officedocument.'
+                'spreadsheetml.worksheet+xml"/>'
+                for i in range(1, len(names) + 1)
+            )
+        ),
+        "_rels/.rels": _ROOT_RELS,
+        "xl/workbook.xml": _workbook_xml(names),
+        "xl/_rels/workbook.xml.rels": _workbook_rels(len(names)),
+        "xl/styles.xml": _STYLES,
+    }
+    for i, name in enumerate(names, start=1):
+        parts[f"xl/worksheets/sheet{i}.xml"] = _sheet_xml(sheets[name])
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as book:
+        for name, text in parts.items():
+            info = zipfile.ZipInfo(name, date_time=_STAMP)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o600 << 16
+            book.writestr(info, text.encode("utf-8"))
+    return buffer.getvalue()
+
+
+def safe_sheet_name(name, fallback="Sheet1"):
+    """A title turned into a name Excel accepts for a sheet: the forbidden
+    characters dropped, cut to 31 characters, never empty."""
+    cleaned = "".join(ch for ch in str(name) if ch not in "[]:*?/\\").strip()
+    return cleaned[:31].strip() or fallback

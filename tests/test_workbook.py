@@ -403,3 +403,52 @@ class TestAgainstTheAddon:
 
         assert from_file.notes == from_link.notes
         assert from_file.get_statistics() == from_link.get_statistics()
+
+
+# ---------------------------------------------------------------------------
+# Writing — what Create sheet saves as .xlsx
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestWriting:
+    """``build_xlsx`` writes what Create sheet downloads; the reader must agree."""
+
+    ROWS = [
+        ["ID", "Từ", "Nghĩa"],
+        ["#config", "size=44; tts=en_US", "side=back"],
+        ["w01", "hello", "xin chào"],
+        ["w02", "two\nlines", 'a "quoted"\ttab'],
+        ["w03", "", "trống phía trước"],
+    ]
+
+    def test_a_sheet_reads_back_as_it_was_written(self):
+        data = workbook.build_xlsx({"Từ vựng": self.ROWS})
+        assert workbook.sheet_names(data) == ["Từ vựng"]
+        rows = list(
+            csv.reader(io.StringIO(workbook.sheet_tsv(data, "Từ vựng")), delimiter="\t")
+        )
+        assert rows == self.ROWS
+
+    def test_the_same_grid_writes_the_same_bytes(self):
+        assert workbook.build_xlsx({"A": self.ROWS}) == workbook.build_xlsx(
+            {"A": self.ROWS}
+        )
+
+    @pytest.mark.parametrize("name", ["", "x" * 32, "a/b", "what?", "[draft]"])
+    def test_a_name_excel_refuses_is_refused(self, name):
+        with pytest.raises(ValueError):
+            workbook.build_xlsx({name: self.ROWS})
+
+    @pytest.mark.parametrize(
+        "title, name",
+        [
+            ("Từ vựng: bài 1/2", "Từ vựng bài 12"),
+            ("   ", "Sheet1"),
+            ("x" * 40, "x" * 31),
+            ("[]", "Sheet1"),
+        ],
+    )
+    def test_a_title_becomes_a_sheet_name_excel_accepts(self, title, name):
+        assert workbook.safe_sheet_name(title) == name
+        workbook.build_xlsx({workbook.safe_sheet_name(title): self.ROWS})

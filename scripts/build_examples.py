@@ -26,10 +26,7 @@ Usage:
 
 import argparse
 import sys
-import zipfile
 from pathlib import Path
-from xml.sax.saxutils import escape
-from xml.sax.saxutils import quoteattr
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLES = REPO / "examples"
@@ -474,169 +471,34 @@ SHEETS = {
 }
 # fmt: on
 
-# Every entry gets the same timestamp so an unchanged SHEETS rebuilds to a
-# byte-identical file. A workbook that churned on every build would show up as a
-# binary diff in every commit that touched anything nearby.
-_STAMP = (2020, 1, 1, 0, 0, 0)
-
-_CONTENT_TYPES = (
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-    '<Default Extension="rels" '
-    'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-    '<Default Extension="xml" ContentType="application/xml"/>'
-    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.'
-    'openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.'
-    'openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
-    "{sheets}"
-    "</Types>"
-)
-
-# Nothing here is styled, but Excel treats a workbook with no styles part as
-# damaged and offers to repair it — and the point of this file is that someone
-# can open it, look at the settings row, and copy it. The reader in
-# src/workbook.py does not need it: it already treats a missing styles.xml as
-# "no cell is a date".
-_STYLES = (
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-    '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
-    '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
-    '<borders count="1"><border/></borders>'
-    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
-    "</cellStyleXfs>"
-    '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" '
-    'xfId="0"/></cellXfs>'
-    "</styleSheet>"
-)
-
-_ROOT_RELS = (
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/'
-    'relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.'
-    'org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"'
-    "/></Relationships>"
-)
-
-
-def column_ref(index):
-    """0 → "A", 26 → "AA" — the letters Excel addresses a cell by."""
-    letters = ""
-    index += 1
-    while index:
-        index, rest = divmod(index - 1, 26)
-        letters = chr(65 + rest) + letters
-    return letters
-
-
-def _clean(text):
-    """XML 1.0 forbids most control characters outright, even escaped."""
-    return "".join(ch for ch in text if ch >= " " or ch in "\t\n\r")
-
-
-def sheet_xml(rows):
-    """A grid as a worksheet part.
-
-    Every cell is written as an inline string. A shared-string table would make
-    the file smaller, but these sheets are small and an inline string is the one
-    cell type that cannot be misread: no number formatting, no date serial, no
-    locale — what ``SHEETS`` says is what the reader gets back.
-    """
-    out = [
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/'
-        'main"><sheetData>'
-    ]
-    for r, row in enumerate(rows, start=1):
-        cells = []
-        for c, value in enumerate(row):
-            if not value:
-                continue  # an empty cell is an absent cell
-            ref = f"{column_ref(c)}{r}"
-            cells.append(
-                f'<c r="{ref}" t="inlineStr"><is><t xml:space="preserve">'
-                f"{escape(_clean(value))}</t></is></c>"
-            )
-        if cells:
-            out.append(f'<row r="{r}">' + "".join(cells) + "</row>")
-    out.append("</sheetData></worksheet>")
-    return "".join(out)
-
-
-def workbook_xml(names):
-    sheets = "".join(
-        f'<sheet name={quoteattr(name)} sheetId="{i}" r:id="rId{i}"/>'
-        for i, name in enumerate(names, start=1)
-    )
-    return (
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
-        ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/'
-        f'relationships"><sheets>{sheets}</sheets></workbook>'
-    )
-
-
-def workbook_rels(count):
-    rels = "".join(
-        f'<Relationship Id="rId{i}" Type="http://schemas.openxmlformats.org/'
-        f'officeDocument/2006/relationships/worksheet" '
-        f'Target="worksheets/sheet{i}.xml"/>'
-        for i in range(1, count + 1)
-    )
-    # The styles part is reached through a relationship like any other, and it is
-    # numbered past the sheets so a sheet's rId stays equal to its position.
-    rels += (
-        f'<Relationship Id="rId{count + 1}" Type="http://schemas.openxmlformats.'
-        'org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
-    )
-    return (
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/'
-        f'relationships">{rels}</Relationships>'
-    )
-
 
 def build_bytes(sheets=None):
     """The workbook as bytes, plus the sheet names it holds.
 
     ``sheets`` defaults to the example workbook; the website builds its small
-    starter file through the same writer.
+    starter file through the same writer. The writer itself is
+    ``src/workbook.py``'s, which is also what Create sheet runs in the browser
+    to save an .xlsx — one writer, so the two files cannot come out different.
     """
     sheets = SHEETS if sheets is None else sheets
-    names = list(sheets)
+    try:
+        return _workbook().build_xlsx(sheets), list(sheets)
+    except ValueError as err:
+        sys.exit(str(err))
 
-    too_long = [name for name in names if len(name) > 31]
-    if too_long:
-        sys.exit("a sheet name may be at most 31 characters: " + ", ".join(too_long))
 
-    parts = {
-        "[Content_Types].xml": _CONTENT_TYPES.format(
-            sheets="".join(
-                f'<Override PartName="/xl/worksheets/sheet{i}.xml" '
-                'ContentType="application/vnd.openxmlformats-officedocument.'
-                'spreadsheetml.worksheet+xml"/>'
-                for i in range(1, len(names) + 1)
-            )
-        ),
-        "_rels/.rels": _ROOT_RELS,
-        "xl/workbook.xml": workbook_xml(names),
-        "xl/_rels/workbook.xml.rels": workbook_rels(len(names)),
-        "xl/styles.xml": _STYLES,
-    }
-    for i, name in enumerate(names, start=1):
-        parts[f"xl/worksheets/sheet{i}.xml"] = sheet_xml(sheets[name])
+def _workbook():
+    """``src/workbook.py``, imported as a package module so its relative imports
+    (it has none today) would resolve the way they do inside Anki."""
+    import importlib.machinery
+    import importlib.util
 
-    import io
-
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as book:
-        for name, text in parts.items():
-            info = zipfile.ZipInfo(name, date_time=_STAMP)
-            info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o600 << 16
-            book.writestr(info, text.encode("utf-8"))
-    return buffer.getvalue(), names
+    if "sc_examples" not in sys.modules:
+        spec = importlib.machinery.ModuleSpec("sc_examples", None, is_package=True)
+        package = importlib.util.module_from_spec(spec)
+        package.__path__ = [str(REPO / "src")]
+        sys.modules["sc_examples"] = package
+    return importlib.import_module("sc_examples.workbook")
 
 
 def verify(data, names):
@@ -646,15 +508,7 @@ def verify(data, names):
     show up until someone pasted the link, so the check is part of the build
     rather than a separate step nobody runs.
     """
-    sys.path.insert(0, str(REPO / "src"))
-    import importlib.machinery
-    import importlib.util
-
-    spec = importlib.machinery.ModuleSpec("sc_examples", None, is_package=True)
-    package = importlib.util.module_from_spec(spec)
-    package.__path__ = [str(REPO / "src")]
-    sys.modules["sc_examples"] = package
-    workbook = importlib.import_module("sc_examples.workbook")
+    workbook = _workbook()
 
     read = workbook.sheet_names(data)
     if read != names:
