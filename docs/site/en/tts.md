@@ -56,6 +56,26 @@ fine, the device is missing the voice.
 - **Android:** the text-to-speech settings of your phone, under Accessibility or
   Languages.
 
+### Voices an iPhone already has
+
+Apple publishes no list of the voices it ships. On a real iPhone (iOS 26,
+AnkiMobile) these were there without downloading anything:
+
+| Language | Write in the sheet |
+| :--- | :--- |
+| English (US) | `tts=en_US; voices=Apple_Samantha` |
+| English (UK) | `tts=en_GB; voices=Apple_Daniel` |
+| English (Australia) | `tts=en_AU; voices=Apple_Karen` |
+| Chinese | `tts=zh_CN; voices=Apple_Tingting` |
+| German | `tts=de_DE; voices=Apple_Anna` |
+| Vietnamese | `tts=vi_VN; voices=Apple_Linh` |
+
+That iPhone had **no Japanese or Korean voice at all**: for `ja_JP` and `ko_KR`
+a voice usually has to be downloaded in Settings → Accessibility → Spoken
+Content → Voices. Since `voices=` is only a preference, naming an iPhone voice
+does no harm on Android or a computer: Anki uses another voice of the language
+there.
+
 ## Things to know
 
 - **One cell, one language.** Anki reads the whole field with one voice, so a

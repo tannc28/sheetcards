@@ -44,6 +44,23 @@ Mở một Google Sheet mới và gõ bảng sau, bắt đầu từ ô A1:
 Mặc định cột đầu tiên của bạn nằm ở mặt trước card, các cột còn lại ở mặt sau.
 Vậy sheet này tạo ra card hỏi `library` và trả lời `thư viện`.
 
+### Sheet là bản gốc
+
+Mọi thứ nằm trong sheet: card, cách trình bày, deck. SheetCards chỉ đọc nó. Một
+file `.csv` cũng là một sheet, và đây là toàn bộ định dạng: dòng 1 là tên cột,
+dòng 2 (không bắt buộc) là [settings row](settings-row.md) bắt đầu bằng
+`#config`, mỗi dòng sau là một card.
+
+```
+ID,Word,Nghĩa
+#config,size=40; tts=en_US,size=24
+1,library,thư viện
+2,airport,sân bay
+```
+
+Mở được bằng Google Sheets, Excel hay Create sheet; mẫu nào trong Create sheet
+cũng có nút tải đúng file này về.
+
 ## 2. Chia sẻ sheet
 
 Trong Google Sheets bấm **Share**, ở mục *General access* chọn **Anyone with the

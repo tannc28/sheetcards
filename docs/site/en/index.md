@@ -46,6 +46,23 @@ By default the first of your columns goes on the front of the card and the rest
 go on the back. So this sheet makes cards that ask `library` and answer
 `thư viện`.
 
+### The sheet is the original
+
+Everything lives in the sheet: the cards, how they look, the deck. SheetCards
+only reads it. A `.csv` file is a sheet too, and this is the whole format: row 1
+names the columns, row 2 (optional) is the [settings row](settings-row.md)
+starting with `#config`, and every row after it is a card.
+
+```
+ID,Word,Meaning
+#config,size=40; tts=en_US,size=24
+1,library,thư viện
+2,airport,sân bay
+```
+
+It opens in Google Sheets, Excel or Create sheet; every template in Create sheet
+has a button that downloads exactly this file.
+
 ## 2. Share it
 
 In Google Sheets press **Share**, and under *General access* choose **Anyone with

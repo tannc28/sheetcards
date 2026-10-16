@@ -53,9 +53,29 @@ chỉ là thiết bị thiếu giọng.
 
 - **Windows:** Settings → Time & Language → Speech.
 - **macOS:** System Settings → Accessibility → Spoken Content.
-- **iPhone và iPad:** Settings → Accessibility → Spoken Content → Voices.
+- **iPhone và iPad:** Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói
+  (Settings → Accessibility → Spoken Content → Voices).
 - **Android:** phần cài đặt text-to-speech của điện thoại, nằm trong
   Accessibility hoặc Languages.
+
+### Giọng có sẵn trên iPhone
+
+Apple không công bố danh sách giọng có sẵn. Trên một iPhone thật (iOS 26,
+AnkiMobile), các giọng sau có sẵn, không phải tải:
+
+| Ngôn ngữ | Ghi vào sheet |
+| :--- | :--- |
+| Tiếng Anh (Mỹ) | `tts=en_US; voices=Apple_Samantha` |
+| Tiếng Anh (Anh) | `tts=en_GB; voices=Apple_Daniel` |
+| Tiếng Anh (Úc) | `tts=en_AU; voices=Apple_Karen` |
+| Tiếng Trung | `tts=zh_CN; voices=Apple_Tingting` |
+| Tiếng Đức | `tts=de_DE; voices=Apple_Anna` |
+| Tiếng Việt | `tts=vi_VN; voices=Apple_Linh` |
+
+Chiếc iPhone đó **không có giọng tiếng Nhật hay tiếng Hàn nào**: với `ja_JP` và
+`ko_KR`, thường phải tải giọng trong Cài đặt → Trợ năng → Nội dung được đọc →
+Giọng nói. Vì `voices=` chỉ là ưu tiên, ghi giọng iPhone không làm hỏng gì trên
+Android hay máy tính: ở đó Anki dùng giọng khác cùng ngôn ngữ.
 
 ## Cần biết
 
