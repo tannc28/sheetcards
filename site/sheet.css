@@ -89,6 +89,69 @@
 a.altcard { color: inherit; text-decoration: none; }
 #pick .altcard-icon { background: var(--ok-soft); color: var(--ok); }
 
+/* Coming back with a saved file: the first thing on the screen, since it is the
+   commonest visit after the first. */
+.reopen { max-width: 40rem; margin: 0 auto 28px; }
+.reopen-go { width: 100%; border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.reopen-go strong { font-size: var(--t-md); }
+.reopen-arrow { margin-left: auto; flex: none; color: var(--ok); font-size: 20px; }
+.reopen-ids {
+  display: flex; gap: 8px; align-items: flex-start; margin: 8px 4px 0;
+  font-size: var(--t-xs); color: var(--muted); line-height: 1.45;
+}
+.reopen-ids .icon { flex: none; margin-top: 2px; }
+
+/* The other starting points: smaller tiles, one face each — the card as it
+   comes out, its theme visibly applied — and a name. */
+.tplgroup { margin: 30px 0 0; }
+.tplgroup-hint { margin: -4px auto 12px; max-width: 40rem; text-align: center; font-size: var(--t-xs); color: var(--muted); }
+.moretpl {
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+}
+@media (min-width: 64rem) {
+  .moretpl { max-width: 78rem; margin-inline: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+}
+.tplmini {
+  position: relative; display: flex; flex-direction: column; min-width: 0; text-align: left;
+  background: var(--panel); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden;
+  transition: border-color .15s ease, transform .18s cubic-bezier(.2, .9, .3, 1.2);
+}
+.tplmini:hover { border-color: var(--accent); transform: translateY(-2px); }
+.tplmini:has(.tpl-go:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+.tplmini .tplfaces { padding: 8px; gap: 6px; }
+.tplmini .tplfaces.one { grid-template-columns: minmax(0, 1fr); }
+.tplmini .tplface iframe, .tplmini .facewait { height: 7.5rem; }
+@media (min-width: 64rem) { .tplmini .tplface iframe, .tplmini .facewait { height: 9rem; } }
+.tplmini .tpl-go { padding: 9px 12px 11px; }
+.tplmini .tpl-go strong { font-size: var(--t-sm); }
+.tplmini .tpl-desc { font-size: var(--t-xs); line-height: 1.35; }
+.tplmini:hover .tpl-go strong { color: var(--accent); }
+.tplmini > .tpl-sheet { overflow: hidden; margin: -4px 12px 12px; border: 1px solid var(--line); border-radius: 8px; }
+/* Above the tile's own button, which covers the rest of it. */
+.tpl-del {
+  position: absolute; top: 4px; right: 4px; z-index: 1; width: 40px; height: 40px;
+  background: var(--panel); box-shadow: 0 0 0 1px var(--line); color: var(--muted);
+}
+.tpl-del:hover { color: var(--bad); }
+.facewait {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  height: 9rem; border-radius: 10px; background: var(--panel); box-shadow: 0 0 0 1px var(--line);
+}
+.facewait .sk-line { display: block; height: 10px; border-radius: 5px; background: var(--line); animation: pulse 1.4s ease-in-out infinite; }
+.facewait .w60 { width: 60%; } .facewait .w30 { width: 30%; }
+@keyframes pulse { 50% { opacity: .45; } }
+.tpl-add {
+  align-items: center; justify-content: center; gap: 4px; min-height: 11rem; padding: 16px;
+  text-align: center; border-style: dashed; color: inherit;
+}
+.tpl-add strong { font-size: var(--t-sm); }
+.tpl-add .tpl-desc { font-size: var(--t-xs); }
+.tpl-add-icon {
+  display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 4px;
+  border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 20px;
+}
+
 /* ==== the sheet being written ============================================== */
 
 .work { padding: 6px 0 0; }
@@ -123,11 +186,33 @@ a.altcard { color: inherit; text-decoration: none; }
   .sheetbar #new { margin-left: auto; }
 }
 
-/* The phone's switch between the words and the columns. */
+/* The draft is in this browser; the file is the save. */
+.fileline {
+  display: flex; gap: 8px; align-items: flex-start; margin: 8px 6px 0;
+  font-size: var(--t-xs); color: var(--muted); line-height: 1.45;
+}
+.fileline .icon { flex: none; margin-top: 2px; }
+
+/* The two steps of a sheet, as a phone switches between them. */
 .viewseg { display: flex; width: 100%; margin: 12px 0 0; }
-.viewseg button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: var(--tap); }
+.viewseg button {
+  flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 56px; text-align: left;
+}
 .viewseg .count { font-weight: 700; }
-.viewseg [data-icon] { font-size: 16px; }
+.steptext { display: flex; flex-direction: column; line-height: 1.2; }
+.steptext > span { font-weight: 750; }
+.steptext small { font-size: var(--t-xs); font-weight: 500; color: var(--muted); }
+.stepn {
+  flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px;
+  border-radius: 50%; border: 1.5px solid currentColor;
+  font-size: 12px; font-weight: 800; letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.viewseg [aria-pressed="true"] .stepn { background: var(--accent); border-color: var(--accent); color: #fff; }
+.stephead { align-items: center; }
+.stephead .stepn { width: 20px; height: 20px; font-size: 11px; color: var(--accent); }
+/* Only a wide screen folds step 1; a phone switches steps with the control above. */
+.tplfold { display: none; }
 
 .panes { display: block; margin-top: 14px; }
 .pane { min-width: 0; }
@@ -295,6 +380,19 @@ a.altcard { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--line);
 }
 .outbar .dl-meta { flex: 1 1 auto; min-width: 0; }
+.linkbtn { padding: 0; font-size: var(--t-xs); font-weight: 600; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+/* Saving the file is the save: labelled even where the other buttons are not,
+   and marked while the sheet has changes no file holds. */
+.savecsv { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; }
+.savecsv-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.savecsv-text small { font-size: 11px; font-weight: 600; color: var(--muted); }
+.savecsv-text small:empty { display: none; }
+.savecsv.unsaved { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+.savecsv.unsaved small { color: var(--warn); }
+.savecsv.unsaved small::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px;
+  border-radius: 50%; background: currentColor; vertical-align: 1px;
+}
 .outbtn { flex: none; min-height: 52px; border-radius: 14px; }
 .outbar .btn.go {
   flex: none; min-height: 52px; padding: 0 18px; gap: 8px;
@@ -303,9 +401,11 @@ a.altcard { color: inherit; text-decoration: none; }
 /* On a narrow phone the two secondary buttons give up their words — the icon
    stays, the label is still what a screen reader hears. */
 @media (max-width: 33.99rem) {
-  .outbar .dl-meta span { display: none; }
-  .outbtn { width: 48px; padding: 0; }
-  .outbtn [data-i18n] {
+  /* The count is on the step switch already; the buttons need the width. */
+  .outbar .dl-meta { display: none; }
+  .outbar .savecsv { flex: 1 1 auto; justify-content: center; }
+  .outbtn:not(.savecsv) { width: 48px; padding: 0; }
+  .outbtn:not(.savecsv) [data-i18n] {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
   .outbar .btn.go { padding: 0 16px; }
@@ -323,17 +423,23 @@ a.altcard { color: inherit; text-decoration: none; }
 
 @media (min-width: 60rem) {
   .viewseg { display: none; }
+  /* Step 1 folds to its heading while the words are written (data-view
+     "rows"), and opens above the sheet when it is being made ("look"). */
+  .tplfold { display: inline-flex; flex: none; align-items: center; gap: 7px; margin-left: auto; min-height: 38px; padding: 0 14px; }
+  .sh[data-view="rows"] .colpanel > :not(.pane-hrow) { display: none; }
+  .sh[data-view="rows"] .colpanel .pane-hrow { margin-bottom: 0; }
+  .sh[data-view="rows"] .colpanel .docslink { display: none; }
   /* The sheet and what is set about it on the left, the card on the right and
      held in view while the sheet scrolls — clear of the bar at the bottom. */
   .panes {
     display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w);
-    grid-template-areas: "rows side" "cols side" "deck side";
+    grid-template-areas: "cols side" "rows side" "deck side";
     grid-template-rows: auto auto 1fr;
     column-gap: clamp(1.25rem, 2.5vw, 2.5rem); align-items: start;
   }
   .sh[data-view] .pane-rows { display: block; grid-area: rows; }
   .sh[data-view] .pane-look { display: contents; }
-  .colpanel { grid-area: cols; margin-top: 18px; }
+  .colpanel { grid-area: cols; margin-bottom: 18px; }
   .deckline { grid-area: deck; }
   .lookside {
     grid-area: side; position: sticky; top: 14px;

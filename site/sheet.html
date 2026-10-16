@@ -69,17 +69,37 @@
     <h1 id="entry-title" class="entry-title" data-i18n="shTitle">Soạn sheet flashcard <mark>ngay trên web</mark></h1>
     <p class="entry-lead" data-i18n="shLead">Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Create deck để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.</p>
 
-    <h2 class="sh-pickhead" data-i18n="shPickTemplate">Bắt đầu từ một mẫu</h2>
+    <!-- Coming back is the commonest visit: the sheet was saved as a file, and
+         opening it is step 2 straight away. -->
+    <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+           aria-label="Mở file để thêm từ" data-i18n-attr="aria-label:shOpenFile">
+    <input id="tplfile" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+           aria-label="Tải lên template" data-i18n-attr="aria-label:tplUpload">
+    <div class="reopen">
+      <button id="pick" class="altcard reopen-go" type="button">
+        <span class="altcard-icon" data-icon="folder-open"></span>
+        <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file để thêm từ</strong>
+          <span data-i18n="shOpenFileHint">File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay</span></span>
+        <span class="reopen-arrow" data-icon="arrow-right"></span>
+      </button>
+      <p class="reopen-ids"><span data-icon="history"></span><span data-i18n="shIdsKept">ID của từng từ giữ nguyên, nên import lại file .apkg sẽ cập nhật note và giữ tiến độ ôn.</span></p>
+    </div>
+
+    <h2 class="sh-pickhead" data-i18n="shPickTemplate">Hoặc bắt đầu từ một template</h2>
     <div class="templates" id="templates"></div>
 
+    <section class="tplgroup" aria-labelledby="mine-title">
+      <h2 class="sh-pickhead" id="mine-title" data-i18n="shMyTemplates">Template của bạn</h2>
+      <p class="tplgroup-hint" data-i18n="shMyTemplatesHint">Chỉ lưu trong trình duyệt này, không gửi đi đâu. Muốn gửi cho người khác: chọn template, Tạo sheet, rồi bấm Share link.</p>
+      <div class="moretpl" id="mytemplates"></div>
+    </section>
+
+    <section class="tplgroup" aria-labelledby="more-title">
+      <h2 class="sh-pickhead" id="more-title" data-i18n="shMoreTemplates">Các template khác</h2>
+      <div class="moretpl" id="moretemplates"></div>
+    </section>
+
     <div class="alt">
-      <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
-             aria-label="Mở file .xlsx hoặc .csv" data-i18n-attr="aria-label:shOpenFile">
-      <button id="pick" class="altcard" type="button">
-        <span class="altcard-icon" data-icon="folder-open"></span>
-        <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file .xlsx hoặc .csv</strong>
-          <span data-i18n="shOpenFileHint">để sửa tiếp một sheet bạn đã có</span></span>
-      </button>
       <a class="altcard" href="./create.html">
         <span class="altcard-icon" data-icon="link"></span>
         <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
@@ -105,27 +125,34 @@
                 title="Hoàn tác" aria-label="Hoàn tác" data-i18n-attr="title:shUndo,aria-label:shUndo"><span data-icon="undo-2"></span></button>
         <button class="iconbtn" id="redo" type="button" disabled
                 title="Làm lại" aria-label="Làm lại" data-i18n-attr="title:shRedo,aria-label:shRedo"><span data-icon="redo-2"></span></button>
+        <button class="iconbtn" id="keep" type="button"
+                title="Lưu làm template" aria-label="Lưu làm template" data-i18n-attr="title:tplSaveMine,aria-label:tplSaveMine"><span data-icon="bookmark-plus"></span></button>
         <button class="iconbtn" id="open" type="button"
-                title="Mở file .xlsx hoặc .csv" aria-label="Mở file .xlsx hoặc .csv" data-i18n-attr="title:shOpenFile,aria-label:shOpenFile"><span data-icon="folder-open"></span></button>
+                title="Mở file để thêm từ" aria-label="Mở file để thêm từ" data-i18n-attr="title:shOpenFile,aria-label:shOpenFile"><span data-icon="folder-open"></span></button>
         <button class="chgbtn" id="new" type="button"><span data-icon="file-plus"></span><span
                 data-i18n="shNew">Tạo sheet mới</span></button>
       </span>
     </div>
 
-    <!-- A phone has room for one of the two halves at a time; a wide screen
-         shows them side by side and hides this switch. -->
-    <div class="seg viewseg" role="group" aria-label="Phần đang xem" data-i18n-attr="aria-label:shViewLabel">
-      <button type="button" data-view="rows" aria-pressed="true"><span data-icon="sheet"></span><span
-              data-i18n="shViewRows">Các từ</span> <span class="count" id="rowcount-seg"></span></button>
-      <button type="button" data-view="look" aria-pressed="false"><span data-icon="sliders-horizontal"></span><span
-              data-i18n="shViewLook">Cột & card</span></button>
+    <!-- The file is the save: the draft is only in this browser. -->
+    <p class="fileline"><span data-icon="file-text"></span><span><span data-i18n="shFileLine">Bản nháp chỉ nằm trong trình duyệt này. Lưu file .csv để giữ mãi và làm tiếp trên máy khác, trong Google Sheets hay Excel.</span>
+      <button class="linkbtn" id="savemore" type="button" data-i18n="shOtherFormats">Cần file .xlsx?</button></span></p>
+
+    <!-- The two steps of a sheet: ① the template — columns, settings row, the
+         card they make — and ② the words. A phone has room for one at a time; a
+         wide screen shows both and hides this switch. -->
+    <div class="seg viewseg stepseg" role="group" aria-label="Các bước" data-i18n-attr="aria-label:shViewLabel">
+      <button type="button" data-view="look" aria-pressed="false"><span class="stepn" aria-hidden="true">1</span><span
+              class="steptext"><span data-i18n="shStepTemplate">Template</span><small data-i18n="shStepTemplateSub">cột & card</small></span></button>
+      <button type="button" data-view="rows" aria-pressed="true"><span class="stepn" aria-hidden="true">2</span><span
+              class="steptext"><span data-i18n="shStepCards">Thẻ</span><small><span class="count" id="rowcount-seg"></span> <span data-i18n="shStepCardsSub">từ</span></small></span></button>
     </div>
 
     <div class="panes">
 
       <!-- ---- the words ----------------------------------------------------- -->
       <section class="pane pane-rows" aria-labelledby="rows-title">
-        <h2 class="pane-h" id="rows-title"><span data-i18n="shRows">Các từ</span> <span class="count" id="rowcount"></span></h2>
+        <h2 class="pane-h stephead" id="rows-title"><span class="stepn" aria-hidden="true">2</span><span data-i18n="shRows">Thẻ (các từ)</span> <span class="count" id="rowcount"></span></h2>
 
         <!-- On a wide screen: the sheet as a spreadsheet. Row 1 the column names,
              row 2 the settings row, every row under it a word. -->
@@ -176,7 +203,9 @@
 
         <div class="colpanel">
           <div class="pane-hrow">
-            <h3 class="pane-h" data-i18n="shColumns">Cột & settings row</h3>
+            <h3 class="pane-h stephead"><span class="stepn" aria-hidden="true">1</span><span data-i18n="shColumns">Template: cột & settings row</span></h3>
+            <button class="toolbtn tplfold" id="tplfold" type="button"><span data-icon="sliders-horizontal"></span><span
+                    id="tplfold-text">Sửa template</span></button>
             <a class="docslink" href="./docs/settings-row.html" data-doc="settings-row.html" target="_blank" rel="noopener"
                data-i18n="shSettingsDocs">Mọi key của settings row</a>
           </div>
@@ -205,8 +234,8 @@
       </div>
       <button class="toolbtn outbtn" id="share" type="button"><span data-icon="share-2"></span><span
               data-i18n="shShare">Share link</span></button>
-      <button class="toolbtn outbtn" id="save" type="button"><span data-icon="download"></span><span
-              data-i18n="shDownload">Download</span></button>
+      <button class="toolbtn outbtn savecsv" id="savecsv" type="button"><span data-icon="download"></span><span
+              class="savecsv-text"><span data-i18n="shSaveCsv">Lưu file .csv</span><small id="filed" class="filed"></small></span></button>
       <button class="btn big go" id="todeck" type="button"><span data-i18n="shToDeck">Create deck</span><span
               data-icon="arrow-right"></span></button>
     </div>
@@ -327,6 +356,7 @@
         <p class="tpl-caption" data-i18n="tplSheetCaption">Đây là sheet của bạn — card được tạo từ chính những dòng này. Mở bằng Google Sheets hay Excel cũng được.</p>
       </div>
     </div>
+    <p id="tpl-mine" class="tpl-note" hidden><span data-icon="share-2"></span><span data-i18n="tplMineShare">Chọn Tạo sheet để thêm từ. Muốn gửi template này cho người khác: Tạo sheet rồi bấm Share link.</span></p>
     <div class="askacts tpl-acts">
       <button class="toolbtn" id="tpl-csv" type="button"><span data-icon="download"></span><span data-i18n="tplCsv">Tải file .csv mẫu</span></button>
       <button class="btn" id="tpl-go" type="button" data-i18n="vocabCreate">Tạo sheet</button>
