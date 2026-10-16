@@ -20,7 +20,7 @@ Trang này đưa bạn từ một sheet trống tới những card có thể h�
 ## Bạn cần gì
 
 - **App Anki** bạn đang dùng: file `.apkg` mở bằng AnkiDroid, AnkiMobile hoặc
-  Anki trên máy tính. SheetCards miễn phí và không cần tài khoản.
+  Anki trên máy tính.
 - **Một tài khoản Google**, chỉ khi bạn soạn trong Google Sheets. Soạn bằng
   [Tạo Sheet](../sheet.html) thì không cần gì cả. SheetCards đọc sheet mà không
   cần đăng nhập.

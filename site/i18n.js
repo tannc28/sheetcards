@@ -61,7 +61,6 @@ const STRINGS = {
   // --- the landing page ---------------------------------------------------
   // Written for somebody who has never used an add-on: what it does, the one
   // file to download, the three steps that get it into Anki, and nothing else.
-  homeEyebrow: { en: "SheetCards is free · No account", vi: "SheetCards miễn phí · Không cần tài khoản" },
   homeTitle: {
     en: "Anki flashcards from <mark>Google Sheets</mark>",
     vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
@@ -72,8 +71,8 @@ const STRINGS = {
   },
   homeDownload: { en: "Download", vi: "Tải về" },
   homeNeeds: {
-    en: "The add-on is free and open source · Anki 25.x or later on a computer",
-    vi: "Add-on miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
+    en: "Needs Anki 25.x or later on a computer",
+    vi: "Cần Anki 25.x trở lên trên máy tính",
   },
 
   // The demo: a row of the example workbook and the card it becomes.
@@ -124,17 +123,13 @@ const STRINGS = {
     en: "Every step works on both.",
     vi: "Mọi bước đều làm được trên cả hai.",
   },
-  featFreeTitle: {
-    en: "Free, no account",
-    vi: "Miễn phí, không cần tài khoản",
+  featPreviewTitle: {
+    en: "See every card before you download",
+    vi: "Xem từng card trước khi tải",
   },
-  featFree: {
-    en: "Your sheet is read right in your browser and sent to no server.",
-    vi: "Sheet được đọc ngay trong trình duyệt, không gửi lên máy chủ nào.",
-  },
-  featFreeChip: {
-    en: "No ads",
-    vi: "Không quảng cáo",
+  featPreview: {
+    en: "Cards look just as they will in Anki, with Show Answer, before you download the .apkg.",
+    vi: "Card hiện đúng như trong Anki, có Show Answer, trước khi bạn tải file .apkg.",
   },
   soonTitle: {
     en: "Coming soon",

@@ -21,7 +21,7 @@ This page takes you from an empty sheet to cards you can study.
 ## What you need
 
 - **The Anki app** you already use: the `.apkg` opens in AnkiDroid, AnkiMobile
-  or Anki on a computer. SheetCards is free and needs no account.
+  or Anki on a computer.
 - **A Google account**, only if you write in Google Sheets. Writing in
   [Create sheet](../../sheet.html) needs nothing. SheetCards reads a sheet without
   signing in.

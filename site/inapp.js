@@ -1,5 +1,5 @@
 /**
- * Opened inside Zalo, Messenger, Facebook, Instagram, TikTok…: say so first.
+ * Opened inside Messenger, Telegram, Facebook, Instagram, TikTok…: say so first.
  *
  * A link to this site is most often met inside a chat app, and a chat app opens
  * it in its own browser — a WebView that cannot save a file. The .apkg (and the
@@ -12,7 +12,8 @@
  * `FBAN`/`FBAV` (iOS) or `FB_IAB`/`FBAV` (Android) and Messenger adds its name;
  * Instagram, Line (`Line/`), TikTok (`musical_ly`, `BytedanceWebview`, `trill`),
  * WeChat (`MicroMessenger`), Snapchat, LinkedIn (`LinkedInApp`) and Twitter
- * name themselves; Zalo writes `Zalo` (`ZaloTheme/`, `ZaloLanguage/` on Android).
+ * name themselves; Telegram's own browser writes `Telegram` (`Telegram-Android/`),
+ * and Zalo writes `Zalo` (`ZaloTheme/`, `ZaloLanguage/` on Android).
  * An app that names nothing is still caught by the shape every WebView has: an
  * Android user agent carrying `; wv)`, or an iPhone one without `Safari/` —
  * except a page saved to the Home Screen, which is a real browser that drops
@@ -22,6 +23,7 @@
  */
 
 const APPS = [
+  ["Telegram", /\bTelegram/i],
   ["Zalo", /\bZalo/i],
   ["Messenger", /\bFB[\w_]+\/(Messenger|MESSENGER)|FB_IAB\/MESSENGER|MessengerForiOS|\bOrca-Android/i],
   ["Instagram", /\bInstagram/i],

@@ -1,6 +1,6 @@
 """Opened inside a chat app: the page has to notice before Download does nothing.
 
-A link to the site is usually tapped in Zalo or Messenger, whose built-in
+A link to the site is usually tapped in Messenger or Telegram, whose built-in
 browser cannot save a file. ``site/inapp.js`` recognises one from its user agent
 and builds the Chrome intent link; both are run here in node.
 """
@@ -40,6 +40,12 @@ DESKTOP = (
 )
 
 IN_APP = {
+    "Telegram": [
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A.240905.003; wv) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.6668.81 "
+        "Mobile Safari/537.36 Telegram-Android/11.2.2 (Google Pixel 8; Android 14; "
+        "SDK 34; AVERAGE)",
+    ],
     "Zalo": [
         "Mozilla/5.0 (Linux; Android 13; SM-A325F Build/TP1A.220624.014; wv) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/128.0.6613.146 "
