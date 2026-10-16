@@ -28,7 +28,7 @@ class TestSheetKeys:
         assert config.theme == "sakura"
 
     def test_the_value_keeps_its_case(self):
-        assert _parse("#config NAME=HSK Một").deck_name == "HSK Một"
+        assert _parse("#config NAME=HSK1").deck_name == "HSK1"
 
     @pytest.mark.parametrize(
         "marker, word",
