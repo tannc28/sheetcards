@@ -361,8 +361,6 @@ a.btn, a.btn-quiet { text-decoration: none; }
   display: grid; place-items: center; height: 2.8rem; border-radius: 12px;
   background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700;
 }
-.demo[data-phase="link"] .scr-go { animation: press .3s ease 1.6s; }
-@keyframes press { 50% { transform: scale(.95); filter: brightness(1.15); } }
 .scr-ghost { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .scr-ghost span { height: 2.6rem; border-radius: 12px; border: 1.5px dashed var(--line); }
 
@@ -423,6 +421,35 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .scr-bar img { border-radius: 3px; background: #fff; }
 .demo[data-phase="apkg"] .scr-bar { box-shadow: 0 0 0 4px var(--accent-soft); }
+
+/* The demo's own finger: a fingertip landing on the button it is about to
+   press, a ripple as the button goes down, and gone with the screen. */
+.tapdot {
+  position: absolute; z-index: 6; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%; pointer-events: none;
+  /* Pale with a dark rim, so it shows on the violet buttons and the black one. */
+  background: rgb(255 255 255 / .42);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / .9), 0 0 0 3.5px rgb(22 19 31 / .3), 0 6px 14px rgb(22 19 31 / .35);
+  animation: tap-land .76s cubic-bezier(.2, .8, .3, 1) both;
+}
+.tapdot::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / .9);
+  animation: tap-ripple .46s ease-out .3s both;
+}
+@keyframes tap-land {
+  0% { opacity: 0; transform: translate(14px, 22px) scale(1.5); }
+  35% { opacity: 1; transform: none; }
+  50% { transform: scale(.82); }
+  75% { opacity: 1; transform: scale(.95); }
+  100% { opacity: 0; transform: scale(.95); }
+}
+@keyframes tap-ripple {
+  from { opacity: .9; transform: scale(.8); }
+  to { opacity: 0; transform: scale(2.6); }
+}
+.scr-go, .scr-show { transition: transform .12s ease, filter .12s ease; }
+.scr-go.pressed, .scr-show.pressed, .scr-bar.pressed { transform: scale(.95); filter: brightness(.88); }
 
 .demo-controls {
   min-height: 2.4rem;
@@ -586,4 +613,5 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   .flip, .cells .dcell, .btn-quiet, .scr, .demo-sheet, .btn.big .icon { transition: none; }
   .typed, .scr-go, .scr-file, .scr-done { animation: none !important; }
+  .tapdot { display: none; }
 }

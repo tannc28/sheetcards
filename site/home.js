@@ -3,14 +3,19 @@
  *
  * The demo is the page's one claim — this row becomes this card, on a phone, in
  * a file Anki opens — so it is made of the real thing. `home-cards.js` is written
- * by scripts/build_site.py, which runs the add-on's own card_layout.py over three
+ * by scripts/build_site.py, which runs the add-on's own card_layout.py over four
  * rows of the example workbook; here those templates are filled by the same
  * `renderCard` and framed by the same `cardDoc` Sheet to Anki uses. No Pyodide: the
  * Python already ran at build time.
  *
  * It tells Sheet to Anki's three steps in order — the link goes in, the card is
  * checked front then back, the .apkg lands in Anki — and then does it again with
- * the next example, each in a different theme. It plays by itself, which an
+ * the next example, each in a different theme. Each step ends in a tap on the
+ * button that leads to the next (Tạo flashcard, Show Answer, Download .apkg), a
+ * fingertip pressing it, so the story reads as what a learner would do rather
+ * than as cuts. A writing card is written: the question's square fills in stroke
+ * by stroke, as a hand would, and the answer's loops the order the way the card
+ * itself does. It plays by itself, which an
  * animation that changes on its own must let you stop (WCAG 2.2.2): the button
  * beside the examples pauses it, and anything you do to the demo — a step, an
  * example, Show Answer — stops it too, since by then you are the one driving.
@@ -23,7 +28,7 @@ import { cardDoc } from "./cardframe.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
-import { CARDS } from "./home-cards.js";
+import { CARDS, HANZI_WRITER } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -33,6 +38,12 @@ const still = matchMedia("(prefers-reduced-motion: reduce)");
 // The story, one phase at a time, and how long each stays up (ms).
 const PHASES = ["link", "front", "back", "apkg"];
 const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
+// A character takes longer to write than a word takes to read.
+const DRAW_HOLD = { front: 7200, back: 5600 };
+// The phases that end in a tap, and the button tapped; the tap takes this long,
+// out of the end of the phase's hold.
+const TAPS = { link: ".scr-go", front: "#show-answer", back: ".scr-bar" };
+const TAP_MS = 760;
 // Which of Sheet to Anki's three steps each phase is.
 const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
@@ -42,6 +53,7 @@ const state = {
   playing: !still.matches,
   visible: true,
   timer: 0,
+  taps: [],
 };
 
 // The rendered faces of every example, built once: switching examples then
@@ -49,6 +61,75 @@ const state = {
 const rendered = CARDS.map((card) =>
   renderCard(card.template, card.values, { ordinal: 1 }),
 );
+const draws = rendered.map((r) => r.front.html.includes('class="sc-draw"'));
+
+/**
+ * What a writing box does on the demo, in place of the card's own script.
+ *
+ * The card's script quizzes on the question — an empty square waiting for a
+ * finger — which on a phone nobody is holding is just an empty square. Here the
+ * question's character is written out once, without its outline, as a hand
+ * would write it; the answer loops the stroke order over the outline, as the
+ * card does. Each starts when the page says that face is showing (a message,
+ * since the frame shares no origin with the page), and the frame says when it is
+ * ready, in case the word came before the library did. With less motion asked
+ * for, both show the finished character. The square is sized to the room the
+ * rest of the card leaves, since the sheet's 260px is a desktop's, and an answer
+ * still too tall for the phone is drawn smaller rather than cut off.
+ */
+function drawScript(tab) {
+  return (
+    "<script>(function () {\n" +
+    `var face = ${JSON.stringify(tab)};\n` +
+    'var still = matchMedia("(prefers-reduced-motion: reduce)").matches;\n' +
+    "var writers = [], ready = false, wanted = false;\n" +
+    "function play() {\n" +
+    "  wanted = true; if (!ready) return;\n" +
+    "  writers.forEach(function (w) {\n" +
+    "    if (still) { w.showCharacter(); return; }\n" +
+    '    if (face === "front") { w.hideCharacter(); w.animateCharacter(); }\n' +
+    "    else { w.loopCharacterAnimation(); }\n" +
+    "  });\n" +
+    "}\n" +
+    "function build() {\n" +
+    '  document.querySelectorAll(".sc-draw").forEach(function (box) {\n' +
+    '    box.style.minWidth = "0"; box.style.height = "0";\n' +
+    "    var rest = document.body.getBoundingClientRect().bottom;\n" +
+    "    var size = Math.max(96, Math.min(parseInt(box.dataset.scSize, 10) || 200,\n" +
+    "      innerWidth - 48, innerHeight - rest - 12));\n" +
+    '    box.style.minWidth = box.style.height = size + "px";\n' +
+    "    var style = getComputedStyle(box);\n" +
+    '    var faint = style.getPropertyValue("--sc-muted").trim() || "#888";\n' +
+    '    Array.from((box.dataset.scChar || "").trim()).forEach(function (ch) {\n' +
+    "      if (!ch.trim()) return;\n" +
+    '      var cell = document.createElement("div");\n' +
+    "      box.appendChild(cell);\n" +
+    "      writers.push(HanziWriter.create(cell, ch, {\n" +
+    "        width: size, height: size, padding: 6,\n" +
+    '        showCharacter: still || face !== "front",\n' +
+    '        showOutline: face !== "front",\n' +
+    "        strokeColor: style.color, outlineColor: faint,\n" +
+    "        strokeAnimationSpeed: 1.1, delayBetweenStrokes: 220,\n" +
+    "        onLoadCharDataError: function () { cell.textContent = ch; }\n" +
+    "      }));\n" +
+    "    });\n" +
+    "  });\n" +
+    "  var bottom = document.body.getBoundingClientRect().bottom;\n" +
+    '  if (bottom > innerHeight) document.body.style.zoom = String(innerHeight / bottom);\n' +
+    "  ready = true;\n" +
+    "  if (wanted) play();\n" +
+    '  parent.postMessage({ sc: "draw-ready" }, "*");\n' +
+    "}\n" +
+    'addEventListener("message", function (e) {\n' +
+    '  if (e.data && e.data.sc === "draw-play") play();\n' +
+    "});\n" +
+    'var tag = document.createElement("script");\n' +
+    `tag.src = ${JSON.stringify(HANZI_WRITER)};\n` +
+    'tag.addEventListener("load", build);\n' +
+    "document.head.appendChild(tag);\n" +
+    "})();<\/script>"
+  );
+}
 
 /**
  * The card's own document, as Sheet to Anki builds it, adjusted for a card that
@@ -60,14 +141,31 @@ const rendered = CARDS.map((card) =>
  */
 function faceDoc(index, tab) {
   const { front, back } = rendered[index];
-  return cardDoc({ front, back, tab, dark: dark() })
+  const doc = cardDoc({ front, back, tab, dark: dark() })
     .replace(/<script\b[\s\S]*?<\/script>/gi, "")
     .replace(
       '<meta charset="utf-8">',
       '<meta charset="utf-8"><style>html, body { overflow: hidden; } ' +
         "body { padding: 14px; font-size: 16px; } .sc-tts-debug { display: none; }</style>",
     );
+  return draws[index] ? doc.replace(/<\/body>|$/, (end) => drawScript(tab) + end) : doc;
 }
+
+/** Tells the showing face of a writing card to start writing. */
+function playDrawing() {
+  if (!draws[state.at] || (state.phase !== "front" && state.phase !== "back")) return;
+  const face = state.phase === "front" ? "front" : "both";
+  const el = document.querySelector(`.flip[data-card="${state.at}"] .face.${face}`);
+  el?.contentWindow?.postMessage({ sc: "draw-play" }, "*");
+}
+
+// A frame whose library arrived after the word to start did: say it again.
+addEventListener("message", (e) => {
+  if (e.data?.sc !== "draw-ready") return;
+  const face = state.phase === "front" ? "front" : "both";
+  const el = document.querySelector(`.flip[data-card="${state.at}"] .face.${face}`);
+  if (el && e.source === el.contentWindow) playDrawing();
+});
 
 function frame(index, tab) {
   // Scripts allowed only so a card's inline handlers (a hint's onclick) do not
@@ -171,19 +269,66 @@ function show(index, phase) {
   }
   $("#show-answer").textContent = t(phase === "back" ? "flipBack" : "showAnswer");
   paintSheet();
+  playDrawing();
 }
 
 // --- the clock -------------------------------------------------------------
 
 function schedule() {
   clearTimeout(state.timer);
+  untap();
   if (!state.playing || !state.visible || document.hidden) return;
-  state.timer = setTimeout(() => {
-    const next = PHASES.indexOf(state.phase) + 1;
-    if (next < PHASES.length) show(state.at, PHASES[next]);
-    else show((state.at + 1) % CARDS.length, PHASES[0]);
-    schedule();
-  }, HOLD[state.phase]);
+  const hold = (draws[state.at] && DRAW_HOLD[state.phase]) || HOLD[state.phase];
+  const target = TAPS[state.phase];
+  state.timer = setTimeout(
+    () => {
+      if (!target) return advance();
+      tap(target);
+      state.timer = setTimeout(advance, TAP_MS);
+    },
+    hold - (target ? TAP_MS : 0),
+  );
+}
+
+function advance() {
+  const next = PHASES.indexOf(state.phase) + 1;
+  if (next < PHASES.length) show(state.at, PHASES[next]);
+  else show((state.at + 1) % CARDS.length, PHASES[0]);
+  schedule();
+}
+
+/**
+ * A fingertip on `sel`: it lands, the button goes down under it with a ripple,
+ * and comes back up just before the screen changes. A fresh dot each time,
+ * since Show Answer rewrites its own text and would take a child with it.
+ */
+function tap(sel) {
+  const button = document.querySelector(`#demo ${sel}`);
+  if (!button) return;
+  const dot = document.createElement("span");
+  dot.className = "tapdot";
+  dot.setAttribute("aria-hidden", "true");
+  button.closest(".phone-screen").append(dot);
+  // Placed in the screen's own pixels, which stay true under the demo's zoom.
+  let x = button.offsetWidth / 2;
+  let y = button.offsetHeight / 2;
+  for (let el = button; el && el !== dot.offsetParent; el = el.offsetParent) {
+    x += el.offsetLeft;
+    y += el.offsetTop;
+  }
+  dot.style.left = `${x}px`;
+  dot.style.top = `${y}px`;
+  state.taps.push(
+    setTimeout(() => button.classList.add("pressed"), 300),
+    setTimeout(() => button.classList.remove("pressed"), 560),
+  );
+}
+
+function untap() {
+  for (const id of state.taps) clearTimeout(id);
+  state.taps = [];
+  for (const el of document.querySelectorAll("#demo .tapdot")) el.remove();
+  for (const el of document.querySelectorAll("#demo .pressed")) el.classList.remove("pressed");
 }
 
 function setPlaying(on) {

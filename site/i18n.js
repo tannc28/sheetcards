@@ -92,6 +92,7 @@ const STRINGS = {
   demoEnglish: { en: "English · paper", vi: "English · paper" },
   demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
   demoCloze: { en: "Cloze · matcha", vi: "Cloze · matcha" },
+  demoWriting: { en: "Chinese writing · momiji", vi: "Viết chữ Hán · momiji" },
   demoFront: { en: "Card front", vi: "Mặt trước card" },
   demoBack: { en: "Card back", vi: "Mặt sau card" },
   demoPause: { en: "Pause the example", vi: "Tạm dừng ví dụ" },
