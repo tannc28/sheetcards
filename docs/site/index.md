@@ -4,12 +4,12 @@ SheetCards biến bảng tính thành flashcard cho Anki. Bạn soạn card tron
 Sheets, mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa trên
 sheet; Anki chỉ giữ một bản sao.
 
-Chưa có Google Sheet? [Create sheet](../sheet.html) cho bạn soạn cả sheet ngay
-trên web, kể cả trên điện thoại, rồi chuyển thẳng sang Create deck.
+Chưa có Google Sheet? [Tạo Sheet](../sheet.html) cho bạn soạn cả sheet ngay
+trên web, kể cả trên điện thoại, rồi chuyển thẳng sang Sheet to Anki.
 
 Có hai cách đưa deck vào Anki:
 
-- **Create deck**, ngay trên website này: dán link sheet, kiểm tra các card, tải
+- **Sheet to Anki**, ngay trên website này: dán link sheet, kiểm tra các card, tải
   file `.apkg` về rồi mở bằng Anki. Dùng được trên điện thoại hoặc máy tính,
   không cần cài gì.
 - **Add-on**, trên máy tính: kết nối sheet một lần, từ đó về sau chỉ một phím tắt
@@ -58,12 +58,12 @@ ID,Word,Nghĩa
 2,airport,sân bay
 ```
 
-Mở được bằng Google Sheets, Excel hay Create sheet; mẫu nào trong Create sheet
+Mở được bằng Google Sheets, Excel hay Tạo Sheet; mẫu nào trong Tạo Sheet
 cũng có nút tải đúng file này về.
 
-### Soạn trong Create sheet: hai bước
+### Soạn trong Tạo Sheet: hai bước
 
-Create sheet chia sheet làm hai bước. **① Template**: tên cột và settings row,
+Tạo Sheet chia sheet làm hai bước. **① Template**: tên cột và settings row,
 tức là card trông ra sao, có card xem trước ngay bên cạnh. **② Thẻ**: thêm, sửa,
 xoá từ. Chọn một template có sẵn (Học từ vựng, Từ vựng + ảnh, Hai chiều, Gõ đáp
 án, mỗi theme một kiểu…) là vào thẳng bước 2; *Tùy chỉnh* bắt đầu từ bước 1.
@@ -85,7 +85,7 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 
 ## 3. Tạo deck
 
-1. Dán link vào [Create deck](../create.html). Trang này chạy chính code của
+1. Dán link vào [Sheet to Anki](../create.html). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
    sẽ làm ra.
 2. Kiểm tra các card: các deck, từng dòng, và từng card hoàn chỉnh mà bạn có thể
@@ -137,7 +137,7 @@ thì card bị xoá theo. Xem chi tiết ở [Sync](syncing.md).
 
 - **Đổi giao diện card.** Thêm một [settings row](settings-row.md) ngay dưới
   dòng tên cột để chỉnh cỡ chữ, màu, cột nào ở mặt nào, âm thanh, hình ảnh và
-  nhiều thứ khác. [Create sheet](../sheet.html) giúp bạn viết dòng này bằng cách
+  nhiều thứ khác. [Tạo Sheet](../sheet.html) giúp bạn viết dòng này bằng cách
   bấm chọn.
 - **Bắt đầu từ ví dụ.** [File ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
   hoạ một tính năng.

@@ -28,9 +28,9 @@ address your browser shows and the add-on fetches the file behind it.
 - **The address must be public and start with `https`.** The add-on refuses
   other kinds of address, and any address inside a private network.
 
-## Create deck
+## Sheet to Anki
 
-[Create deck](../../create.html) makes an Anki deck from a sheet on a phone or a
+[Sheet to Anki](../../create.html) makes an Anki deck from a sheet on a phone or a
 computer, without the add-on. It shows what SheetCards makes of the sheet first: every row and whether it syncs, the deck tree, the tags, the
 warnings from the settings row, and each finished card, which you can turn over,
 listen to and type into. It runs the add-on's own code in your browser, so what
@@ -39,7 +39,7 @@ the card, is the page's own approximation of Anki; the template text it shows is
 exact.
 
 Press the reload button beside the sheet name after editing your sheet, and
-Create deck fetches it again and keeps your place.
+Sheet to Anki fetches it again and keeps your place.
 
 ### Upload a file
 
@@ -76,11 +76,11 @@ are editing is drawn beside it.
 
 The draft is saved in the browser after every change. There are three ways out:
 
-- **Create deck**: hands the sheet straight to Create deck, to check the cards
+- **Make flashcards**: hands the sheet straight to Sheet to Anki, to check the cards
   and download an `.apkg`.
 - **Download** `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
   keep editing, or upload it to Google Drive to make it a Google Sheet.
 - **Share link**: the whole sheet is compressed into the link itself (after the
   `#`) and sent to no server. Whoever opens it sees that sheet and edits their
-  own copy; the link can also open straight as cards in Create deck. Some chat
+  own copy; the link can also open straight as cards in Sheet to Anki. Some chat
   apps cut very long links short; send the file instead.

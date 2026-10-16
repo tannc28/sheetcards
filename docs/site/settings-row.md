@@ -8,7 +8,7 @@ thành tiếng không, link trong ô có thành ảnh hay video không, và nhi�
 Đây là một dòng không bắt buộc, nằm ngay dưới dòng tên cột. Bạn không sửa gì
 trong Anki cả: đổi dòng này, sync lại, và card đổi theo.
 
-[Create sheet](../sheet.html) cho bạn tạo settings row bằng cách bấm chọn, và
+[Tạo Sheet](../sheet.html) cho bạn tạo settings row bằng cách bấm chọn, và
 hiện card ngay khi bạn soạn.
 
 ## Cách viết
@@ -38,7 +38,7 @@ thường, nên sheet không cần settings thì không bị ảnh hưởng gì.
 **Lỗi được báo ra, không bao giờ bị đoán.** Một key lạ (`siz=48`), một giá trị
 sai (`color=notacolour`) hay một số ngoài khoảng cho phép (`size=400`) sẽ tạo ra
 một cảnh báo nêu tên cột, và chỉ setting đó bị bỏ đi. Phần còn lại của dòng vẫn
-áp dụng. Bạn thấy các cảnh báo trong [Create deck](../create.html), trong Create sheet, và
+áp dụng. Bạn thấy các cảnh báo trong [Sheet to Anki](../create.html), trong Tạo Sheet, và
 trong Anki ở **Tools → SheetCards → Card Layout…**.
 
 ## Key cho từng cột

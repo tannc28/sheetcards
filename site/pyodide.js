@@ -1,7 +1,7 @@
 /**
  * Putting the add-on's own Python in the browser.
  *
- * Two pages need this — Create deck and Create sheet — and the point of
+ * Two pages need this — Sheet to Anki and Create sheet — and the point of
  * both is that they run the code the add-on runs rather than a copy of it. So
  * the module list lives here, once: scripts/build_site.py copies exactly these
  * files into build/site/sc/, and tests/test_pure_modules.py proves exactly

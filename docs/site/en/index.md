@@ -5,11 +5,11 @@ Google Sheets, one row per card, and SheetCards makes them into a deck. The
 spreadsheet is always the place you edit; Anki holds a copy.
 
 No Google Sheet? [Create sheet](../../sheet.html) lets you write the whole sheet
-right on the web, on a phone too, and hands it straight to Create deck.
+right on the web, on a phone too, and hands it straight to Sheet to Anki.
 
 There are two ways to get the deck into Anki:
 
-- **Create deck**, on this website: paste the sheet's link, check the cards,
+- **Sheet to Anki**, on this website: paste the sheet's link, check the cards,
   download an `.apkg` and open it in Anki. It works on a phone or a computer,
   with nothing to install.
 - **The add-on**, on a computer: connect the sheet once, and from then on one
@@ -88,7 +88,7 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
 
 ## 3. Create the deck
 
-1. Paste the link into [Create deck](../../create.html). It runs the add-on's
+1. Paste the link into [Sheet to Anki](../../create.html). It runs the add-on's
    own code in your browser, so what you see is what the add-on would make.
 2. Check the cards: the decks, every row, and each finished card, which you can
    turn over, listen to and type into.

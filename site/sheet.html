@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title data-i18n="titleSheet">SheetCards — Create sheet: soạn sheet flashcard ngay trên web</title>
-<meta name="description" content="Create sheet: soạn cả một sheet flashcard ngay trong trình duyệt — tên cột, settings row và từng từ — rồi chuyển thẳng sang Create deck, tải .xlsx/.csv hoặc chia sẻ bằng một link.">
+<title data-i18n="titleSheet">SheetCards — Tạo Sheet: soạn sheet flashcard ngay trên web</title>
+<meta name="description" content="Tạo Sheet: soạn cả một sheet flashcard ngay trong trình duyệt — tên cột, settings row và từng từ — rồi chuyển thẳng sang Sheet to Anki, tải .xlsx/.csv hoặc chia sẻ bằng một link.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -32,7 +32,7 @@
 </head>
 <body class="page create sheetpage">
 
-<a class="skip" href="#app" data-i18n="skipSheet">Tới phần Create sheet</a>
+<a class="skip" href="#app" data-i18n="skipSheet">Tới phần Tạo Sheet</a>
 
 <header class="masthead">
   <div class="brand">
@@ -40,26 +40,26 @@
   </div>
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./" data-i18n="navHome">Home</a>
-    <a href="./sheet.html" aria-current="page" data-i18n="navSheet">Create sheet</a>
-    <a href="./create.html" data-i18n="navPreview">Create deck</a>
+    <a href="./" data-i18n="navHome">Trang chủ</a>
+    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet.html" aria-current="page" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
-    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
+  <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
 
 <main id="app" class="cr sh" tabindex="-1" data-stage="empty" data-view="rows">
 
-  <!-- The same three steps Create deck shows, seen from one step earlier: the
+  <!-- The same three steps Sheet to Anki shows, seen from one step earlier: the
        sheet is written here, and steps 2 and 3 happen there. Step 2 is a button,
        because pressing it is how you get to step 2. -->
   <ol class="rail" id="rail" aria-label="Các bước" data-i18n-attr="aria-label:railLabel">
     <li data-step="1" class="now" aria-current="step"><span class="rail-n" aria-hidden="true"><span>1</span></span><span
         class="rail-t" data-i18n="shStep1">Viết sheet</span></li>
     <li data-step="2"><button type="button" class="rail-go" id="rail-deck"><span class="rail-n" aria-hidden="true"><span>2</span></span><span
-        class="rail-t" data-i18n="navPreview">Create deck</span></button></li>
+        class="rail-t" data-i18n="navPreview">Sheet to Anki</span></button></li>
     <li data-step="3"><span class="rail-n" aria-hidden="true"><span>3</span></span><span
         class="rail-t" data-i18n="crStep3">Download .apkg</span></li>
   </ol>
@@ -67,7 +67,7 @@
   <!-- ==== no sheet yet: where to start ===================================== -->
   <section id="entry" class="entry sh-entry" aria-labelledby="entry-title">
     <h1 id="entry-title" class="entry-title" data-i18n="shTitle">Soạn sheet flashcard <mark>ngay trên web</mark></h1>
-    <p class="entry-lead" data-i18n="shLead">Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Create deck để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.</p>
+    <p class="entry-lead" data-i18n="shLead">Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Tạo flashcard để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.</p>
 
     <!-- Coming back is the commonest visit: the sheet was saved as a file, and
          opening it is step 2 straight away. -->
@@ -103,11 +103,12 @@
       <a class="altcard" href="./create.html">
         <span class="altcard-icon" data-icon="link"></span>
         <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
-          <span data-i18n="shHaveSheetHint">Dán link thẳng vào Create deck</span></span>
+          <span data-i18n="shHaveSheetHint">Dán link thẳng vào Sheet to Anki</span></span>
       </a>
     </div>
 
     <p class="privacy"><span data-icon="lock"></span><span data-i18n="shPrivacy">Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
+    <p class="byline"><a href="https://github.com/tannc28" rel="author" translate="no">by ctan</a></p>
   </section>
 
   <!-- ==== the sheet being written =========================================== -->
@@ -225,7 +226,7 @@
       </section>
     </div>
 
-    <!-- The three ways out, always in reach. Create deck is the one that carries
+    <!-- The three ways out, always in reach. Sheet to Anki is the one that carries
          on; the file and the link are for keeping or sending the sheet. -->
     <div class="outbar" id="outbar">
       <div class="dl-meta">
@@ -236,7 +237,7 @@
               data-i18n="shShare">Share link</span></button>
       <button class="toolbtn outbtn savecsv" id="savecsv" type="button"><span data-icon="download"></span><span
               class="savecsv-text"><span data-i18n="shSaveCsv">Lưu file .csv</span><small id="filed" class="filed"></small></span></button>
-      <button class="btn big go" id="todeck" type="button"><span data-i18n="shToDeck">Create deck</span><span
+      <button class="btn big go" id="todeck" type="button"><span data-i18n="shToDeck">Tạo flashcard</span><span
               data-icon="arrow-right"></span></button>
     </div>
   </section>
@@ -301,7 +302,7 @@
   <div class="sharebody">
     <p class="small" data-i18n="shShareLead">Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.</p>
     <label class="sharechoice"><input type="checkbox" id="share-deck">
-      <span data-i18n="shShareToDeck">Mở thẳng thành cards trong Create deck</span></label>
+      <span data-i18n="shShareToDeck">Mở thẳng thành cards trong Sheet to Anki</span></label>
     <div class="linkbox sharelink">
       <span class="linkbox-icon" data-icon="link"></span>
       <input id="share-url" readonly spellcheck="false" aria-label="Share link" data-i18n-attr="aria-label:shShare">

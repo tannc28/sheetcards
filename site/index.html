@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <script>
-  // Create deck used to live at this address, and links to it are out there —
+  // Sheet to Anki used to live at this address, and links to it are out there —
   // in the add-on, in posts, in bookmarks — carrying ?url=… or a #fragment. Those
-  // were always asking for Create deck, so they are sent on to it before anything
+  // were always asking for Sheet to Anki, so they are sent on to it before anything
   // is drawn. The fragments this page has of its own stay here.
   (function () {
     var own = ["#main", "#why", "#how", "#features", "#addon"];
@@ -53,12 +53,12 @@
     <a class="name" href="./" aria-current="page" translate="no">SheetCards</a>
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./" aria-current="page" data-i18n="navHome">Home</a>
-    <a href="./sheet.html" data-i18n="navSheet">Create sheet</a>
-    <a href="./create.html" data-i18n="navPreview">Create deck</a>
+    <a href="./" aria-current="page" data-i18n="navHome">Trang chủ</a>
+    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
-    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
+  <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
@@ -70,8 +70,8 @@
     <div class="hero-text">
       <p class="eyebrow"><span data-icon="sparkles"></span><span data-i18n="homeEyebrow">Miễn phí · Không cần cài đặt</span></p>
       <h1 class="display" data-i18n="homeTitle">Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.</h1>
-      <p class="lead" data-i18n="homeLead">Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Create deck, xem trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.</p>
-      <!-- Create deck's first step, right here: a link goes over in ?url=, a file
+      <p class="lead" data-i18n="homeLead">Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Sheet to Anki, xem trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.</p>
+      <!-- Sheet to Anki's first step, right here: a link goes over in ?url=, a file
            through IndexedDB (handoff.js), so nothing is loaded on this page and
            the learner never meets an empty form twice. -->
       <form class="quick" id="quick" novalidate>
@@ -82,7 +82,7 @@
                  aria-describedby="q-err"
                  placeholder="https://docs.google.com/spreadsheets/d/…"
                  data-i18n-attr="placeholder:homeLinkPlaceholder">
-          <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo deck</span><span data-icon="arrow-right"></span></button>
+          <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo flashcard</span><span data-icon="arrow-right"></span></button>
         </div>
         <p class="quick-err" id="q-err" role="alert" hidden></p>
         <div class="quick-alt">
@@ -94,7 +94,7 @@
         <input id="q-file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden>
       </form>
       <p class="quick-template"><span data-icon="pen-line"></span><span data-i18n="homeTemplateLead">Chưa có Google Sheet?</span>
-        <a href="./sheet.html" data-i18n="homeWriteHere">Soạn ngay trên web → Create sheet</a>
+        <a href="./sheet.html" data-i18n="homeWriteHere">Soạn ngay trên web → Tạo Sheet</a>
         <span aria-hidden="true">·</span>
         <a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">file mẫu (.xlsx)</a>
         <span aria-hidden="true">·</span>
@@ -128,17 +128,17 @@
             <span class="phone-notch" aria-hidden="true"></span>
 
             <!-- 1: the link going in. It looks like a field and a button, so a tap
-                 on it does what they promise: Create deck, with the example.
+                 on it does what they promise: Sheet to Anki, with the example.
                  Out of the tab order and hidden from screen readers — the
                  hero's own "Xem ví dụ" link is that same action, labelled. -->
             <a class="scr scr-link" href="./create.html#example" tabindex="-1" aria-hidden="true">
-              <p class="scr-title" translate="no">Create deck</p>
+              <p class="scr-title" translate="no">Sheet to Anki</p>
               <div class="scr-input"><span data-icon="link"></span><span class="typed">docs.google.com/spreadsheets/d/1Xk…</span></div>
-              <span class="scr-go" data-i18n="go">Tạo deck</span>
+              <span class="scr-go" data-i18n="go">Tạo flashcard</span>
               <div class="scr-ghost"><span></span><span></span><span></span></div>
             </a>
 
-            <!-- 2: the card, as Create deck shows it -->
+            <!-- 2: the card, as Sheet to Anki shows it -->
             <div class="scr scr-card">
               <div class="demo-card" id="demo-card"></div>
               <button type="button" class="scr-show" id="show-answer" data-i18n="showAnswer">Show Answer</button>
@@ -168,7 +168,7 @@
   </section>
 
   <section class="band" id="why" aria-labelledby="why-title">
-    <h2 class="section-title reveal" id="why-title" data-i18n="whyTitle">Vì sao dùng Create deck</h2>
+    <h2 class="section-title reveal" id="why-title" data-i18n="whyTitle">Vì sao dùng Sheet to Anki</h2>
     <ul class="whys">
       <li class="why reveal"><span class="why-icon" data-icon="smartphone"></span>
         <h3 data-i18n="whyPhoneTitle">Không cần máy tính</h3><p data-i18n="whyPhone">Dán link, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.</p></li>
@@ -184,11 +184,11 @@
   <section class="band how" id="how" aria-labelledby="how-title">
     <h2 class="section-title reveal" id="how-title" data-i18n="homeHow">Cách hoạt động</h2>
     <ol class="steps">
-      <li class="reveal"><h3 data-i18n="homeHow1Title">Soạn sheet</h3><p data-i18n="homeHow1">Trong Google Sheets, Excel, hoặc ngay trên web với <b>Create sheet</b>. Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.</p></li>
-      <li class="reveal"><h3 data-i18n="homeHow2Title">Mở trong Create deck</h3><p data-i18n="homeHow2">Từ Create sheet, bấm <b>Create deck</b> là xong. Từ Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. Xem lại từng card.</p></li>
+      <li class="reveal"><h3 data-i18n="homeHow1Title">Soạn sheet</h3><p data-i18n="homeHow1">Trong Google Sheets, Excel, hoặc ngay trên web với <b>Tạo Sheet</b>. Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.</p></li>
+      <li class="reveal"><h3 data-i18n="homeHow2Title">Mở trong Sheet to Anki</h3><p data-i18n="homeHow2">Từ Tạo Sheet, bấm <b>Tạo flashcard</b> là xong. Từ Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. Xem lại từng card.</p></li>
       <li class="reveal"><h3 data-i18n="homeHow3Title">Download .apkg</h3><p data-i18n="homeHow3">Bấm <b>Download .apkg</b> rồi mở file bằng <b>AnkiDroid</b>, <b>AnkiMobile</b> hoặc Anki trên máy tính. Sửa sheet thì tải lại và import đè.</p></li>
     </ol>
-    <p class="how-cta reveal"><a class="btn big" href="./create.html"><span data-i18n="homeTry">Create deck</span><span data-icon="arrow-right"></span></a></p>
+    <p class="how-cta reveal"><a class="btn big" href="./create.html"><span data-i18n="homeTry">Sheet to Anki</span><span data-icon="arrow-right"></span></a></p>
   </section>
 
   <section class="band" id="features" aria-labelledby="features-title">
@@ -207,7 +207,7 @@
       <li class="feature reveal"><span class="feat-icon" data-icon="sparkles"></span>
         <h3 data-i18n="featThemeTitle">Theme cho cả deck</h3><p data-i18n="featTheme">Thêm <code>theme=sakura</code> vào settings row là mọi card đổi màu, cả nền sáng lẫn nền tối.</p></li>
     </ul>
-    <p class="fine reveal"><a href="./sheet.html" data-i18n="featEditorLink">Thử settings row trong Create sheet →</a></p>
+    <p class="fine reveal"><a href="./sheet.html" data-i18n="featEditorLink">Thử settings row trong Tạo Sheet →</a></p>
   </section>
 
   <!-- The companion: the same sheet, synced by itself, for whoever studies at a
@@ -240,13 +240,14 @@
 
 <footer class="sitefoot">
   <ul class="footlinks">
-    <li><a href="./sheet.html" data-i18n="navSheet">Create sheet</a><p data-i18n="homeSheetText">Không có Google Sheet? Soạn cả sheet ngay trên web và xem từng card khi gõ.</p></li>
-    <li><a href="./create.html" data-i18n="navPreview">Create deck</a><p data-i18n="homePreviewText">Tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.</p></li>
+    <li><a href="./create.html" data-i18n="navPreview">Sheet to Anki</a><p data-i18n="homePreviewText">Tạo flashcard Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.</p></li>
+    <li><a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a><p data-i18n="homeSheetText">Không có Google Sheet? Soạn cả sheet ngay trên web và xem từng card khi gõ.</p></li>
     <li><a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a><p data-i18n="homeDocsText">Cột, settings row, âm thanh, hình ảnh và sync, giải thích từng phần.</p></li>
     <li><a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a><p
         data-i18n="homeGithubText">Mã nguồn, các bản phát hành và báo lỗi.</p></li>
   </ul>
   <p class="fine" data-i18n="homeFootNote">Giấy phép MIT. SheetCards không do Anki hay Ankitects làm ra và không liên kết với họ.</p>
+  <p class="byline"><a href="https://github.com/tannc28" rel="author" translate="no">by ctan</a></p>
 </footer>
 
 <script type="module" src="./home.js"></script>

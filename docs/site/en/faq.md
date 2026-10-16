@@ -84,7 +84,7 @@ needs the internet to show it. See [Media](media.md).
 
 **A video shows an error.**
 The link names a channel, playlist or folder rather than one video, or the video
-does not allow embedding. The warnings in Create deck say which.
+does not allow embedding. The warnings in Sheet to Anki say which.
 
 ## Decks
 
@@ -97,7 +97,7 @@ A deck remembers its sheet by name. Connect the file again to pick up the new
 name.
 
 **I deleted a row but the card is still in Anki.**
-If you imported an `.apkg` from Create deck, that is how imports work: they
+If you imported an `.apkg` from Sheet to Anki, that is how imports work: they
 update and add but never delete. Syncing with the add-on does delete.
 
 **I set `SYNC` to no, but the card was not deleted.**

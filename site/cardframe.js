@@ -21,7 +21,7 @@ import { typeansRuntime } from "./typeans.js";
  * `front` and `back` are what `renderCard` returned. `tab` is which of them to
  * show — "front", "back", or "both" with the answer under a rule, the way Anki
  * shows a card once it is answered. `ring` names a column to draw a ring around
- * (the open column in Create deck's Sheet view), and `flash` makes that ring arrive
+ * (the open column in Sheet to Anki's Sheet view), and `flash` makes that ring arrive
  * with a hop.
  */
 export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) {

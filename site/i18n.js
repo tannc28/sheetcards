@@ -10,9 +10,11 @@
  *
  * Vietnamese is the default: the site is made for Vietnamese learners first.
  * The Vietnamese keeps every technical word in English — deck, note, field,
- * card, cloze, sync, settings row, Create sheet, Create deck, every Anki and Google Sheets
- * label — and only the explanation around it is translated. The learners run
- * Anki in English, so a translated term is a word they will never see again.
+ * card, cloze, sync, settings row, every Anki and Google Sheets label — and only
+ * the explanation around it is translated. The learners run Anki in English, so
+ * a translated term is a word they will never see again. Our own page and button
+ * names are ours to translate (Trang chủ, Tạo Sheet), except the product name
+ * Sheet to Anki, which stays English in both languages.
  *
  * Each `data-i18n` element in the HTML carries its `vi` string as static text
  * (what shows before any script runs); tests/test_site_i18n.py keeps the two equal.
@@ -20,22 +22,22 @@
 
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
-  skip: { en: "Skip to Create deck", vi: "Tới phần Create deck" },
+  skip: { en: "Skip to Sheet to Anki", vi: "Tới phần Sheet to Anki" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
   close: { en: "Close", vi: "Đóng" },
 
   // --- the site's own navigation, on every page ---------------------------
   navLabel: { en: "Site", vi: "Các trang" },
-  navHome: { en: "Home", vi: "Home" },
-  navPreview: { en: "Create deck", vi: "Create deck" },
-  navSheet: { en: "Create sheet", vi: "Create sheet" },
+  navHome: { en: "Home", vi: "Trang chủ" },
+  navPreview: { en: "Sheet to Anki", vi: "Sheet to Anki" },
+  navSheet: { en: "Create sheet", vi: "Tạo Sheet" },
   navDocs: { en: "Docs", vi: "Docs" },
   docsTag: { en: "docs", vi: "docs" },
   skipMain: { en: "Skip to the content", vi: "Tới nội dung chính" },
 
   // --- what the browser tab says ------------------------------------------
-  // In the reader's language like the rest of the page, and on Create deck the
+  // In the reader's language like the rest of the page, and on Sheet to Anki the
   // loaded sheet's name first: that is what tells two open tabs, or two entries
   // in the history, apart.
   titleHome: {
@@ -43,13 +45,13 @@ const STRINGS = {
     vi: "SheetCards — tạo deck Anki từ Google Sheets ngay trên điện thoại",
   },
   titleCreate: {
-    en: "SheetCards — Create deck: Anki decks from Google Sheets",
-    vi: "SheetCards — Create deck: deck Anki từ Google Sheets",
+    en: "SheetCards — Sheet to Anki: Anki flashcards from Google Sheets",
+    vi: "SheetCards — Sheet to Anki: tạo flashcard Anki từ Google Sheets",
   },
-  titleDeck: { en: (name) => `${name} — Create deck · SheetCards`, vi: (name) => `${name} — Create deck · SheetCards` },
+  titleDeck: { en: (name) => `${name} — Sheet to Anki · SheetCards`, vi: (name) => `${name} — Sheet to Anki · SheetCards` },
   titleSheet: {
     en: "SheetCards — Create sheet: write a flashcard sheet on the web",
-    vi: "SheetCards — Create sheet: soạn sheet flashcard ngay trên web",
+    vi: "SheetCards — Tạo Sheet: soạn sheet flashcard ngay trên web",
   },
   title404: { en: "Page not found — SheetCards", vi: "Không tìm thấy trang — SheetCards" },
   notFoundTitle: { en: "This page doesn't exist", vi: "Không có trang này" },
@@ -69,14 +71,14 @@ const STRINGS = {
   homeLead: {
     en:
       "Write your vocabulary in a sheet, one row per card. Paste the link into " +
-      "Create deck, check every card, then download an .apkg that opens straight in " +
+      "Sheet to Anki, check every card, then download an .apkg that opens straight in " +
       "AnkiDroid or AnkiMobile.",
     vi:
-      "Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Create deck, xem " +
+      "Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Sheet to Anki, xem " +
       "trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
-  homeTry: { en: "Create deck", vi: "Create deck" },
+  homeTry: { en: "Sheet to Anki", vi: "Sheet to Anki" },
   homeNeeds: {
     en: "Free and open source · Anki 25.x or later on a computer",
     vi: "Miễn phí, mã nguồn mở · Cần Anki 25.x trở lên trên máy tính",
@@ -133,17 +135,17 @@ const STRINGS = {
       "In Google Sheets, in Excel, or right here with <b>Create sheet</b>. Row 1 holds " +
       "the column names: <code>ID</code>, then any columns you like. Each row below is a card.",
     vi:
-      "Trong Google Sheets, Excel, hoặc ngay trên web với <b>Create sheet</b>. Dòng 1 là " +
+      "Trong Google Sheets, Excel, hoặc ngay trên web với <b>Tạo Sheet</b>. Dòng 1 là " +
       "tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.",
   },
-  homeHow2Title: { en: "Open it in Create deck", vi: "Mở trong Create deck" },
+  homeHow2Title: { en: "Open it in Sheet to Anki", vi: "Mở trong Sheet to Anki" },
   homeHow2: {
     en:
-      "From Create sheet, one tap on <b>Create deck</b>. From Google Sheets: " +
+      "From Create sheet, one tap on <b>Make flashcards</b>. From Google Sheets: " +
       "<b>Share → General access → Anyone with the link → Viewer</b>, then paste the link. " +
       "Look through the cards one by one.",
     vi:
-      "Từ Create sheet, bấm <b>Create deck</b> là xong. Từ Google Sheets: " +
+      "Từ Tạo Sheet, bấm <b>Tạo flashcard</b> là xong. Từ Google Sheets: " +
       "<b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. " +
       "Xem lại từng card.",
   },
@@ -170,8 +172,8 @@ const STRINGS = {
     vi: "Khởi động lại Anki. Menu <b>SheetCards</b> sẽ xuất hiện trong <b>Tools</b>.",
   },
   homePreviewText: {
-    en: "Make an Anki deck from Google Sheets on your phone or computer, no add-on needed.",
-    vi: "Tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.",
+    en: "Make Anki flashcards from Google Sheets on your phone or computer, no add-on needed.",
+    vi: "Tạo flashcard Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.",
   },
   homeSheetText: {
     en: "No Google Sheet? Write the whole sheet right on the web, and watch each card as you type.",
@@ -192,18 +194,18 @@ const STRINGS = {
 
 
   // --- Create sheet ---------------------------------------------------------
-  // The step before Create deck: a whole sheet written in the browser. Its
+  // The step before Sheet to Anki: a whole sheet written in the browser. Its
   // reader is usually on a phone and may never have opened a spreadsheet, so
   // the words are a learner's — "từ", a word — rather than a spreadsheet's.
-  skipSheet: { en: "Skip to Create sheet", vi: "Tới phần Create sheet" },
+  skipSheet: { en: "Skip to Create sheet", vi: "Tới phần Tạo Sheet" },
   shStep1: { en: "Write the sheet", vi: "Viết sheet" },
   shTitle: {
     en: "Write a flashcard sheet <mark>right on the web</mark>",
     vi: "Soạn sheet flashcard <mark>ngay trên web</mark>",
   },
   shLead: {
-    en: "No Google Sheets needed. Pick a template, type your words, then press Create deck for an .apkg that AnkiDroid, AnkiMobile or Anki opens.",
-    vi: "Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Create deck để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.",
+    en: "No Google Sheets needed. Pick a template, type your words, then press Make flashcards for an .apkg that AnkiDroid, AnkiMobile or Anki opens.",
+    vi: "Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Tạo flashcard để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.",
   },
   shPickTemplate: { en: "Or start from a template", vi: "Hoặc bắt đầu từ một template" },
   tplBasic: { en: "Front / Back", vi: "Mặt trước / Mặt sau" },
@@ -329,7 +331,7 @@ const STRINGS = {
   tplRevFront: { en: "Card 2 (reverse) · front", vi: "Card 2 (reverse) · mặt trước" },
   tplRevBack: { en: "Card 2 (reverse) · back", vi: "Card 2 (reverse) · mặt sau" },
   shHaveSheet: { en: "Already have a Google Sheet?", vi: "Đã có Google Sheet?" },
-  shHaveSheetHint: { en: "Paste its link straight into Create deck", vi: "Dán link thẳng vào Create deck" },
+  shHaveSheetHint: { en: "Paste its link straight into Sheet to Anki", vi: "Dán link thẳng vào Sheet to Anki" },
   shPrivacy: {
     en: "The sheet is kept in this browser. Nothing is sent to SheetCards' servers.",
     vi: "Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.",
@@ -428,11 +430,11 @@ const STRINGS = {
   },
   shPickTab: { en: "Which sheet to open?", vi: "Mở sheet nào?" },
   shShare: { en: "Share link", vi: "Share link" },
-  shToDeck: { en: "Create deck", vi: "Create deck" },
+  shToDeck: { en: "Make flashcards", vi: "Tạo flashcard" },
   shNeedWord: { en: "Add at least one word first", vi: "Thêm ít nhất một từ trước đã" },
   shHandoffFailed: {
-    en: "This browser would not pass the sheet on. Download it and open the file in Create deck.",
-    vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong Create deck.",
+    en: "This browser would not pass the sheet on. Download it and open the file in Sheet to Anki.",
+    vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong Sheet to Anki.",
   },
   shDownloadTitle: { en: "Save the sheet as a file", vi: "Tải sheet về máy" },
   shXlsxHint: {
@@ -450,7 +452,7 @@ const STRINGS = {
     en: "Whoever opens this link sees exactly your sheet, and can keep editing their own copy.",
     vi: "Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.",
   },
-  shShareToDeck: { en: "Open straight as cards in Create deck", vi: "Mở thẳng thành cards trong Create deck" },
+  shShareToDeck: { en: "Open straight as cards in Sheet to Anki", vi: "Mở thẳng thành cards trong Sheet to Anki" },
   shLinkSize: {
     en: (size, n) => `${size} for ${n} word${n === 1 ? "" : "s"}`,
     vi: (size, n) => `Link dài ${size} cho ${n} từ`,
@@ -636,7 +638,7 @@ const STRINGS = {
     vi: "Dán link Google Sheets hoặc link file .xlsx",
   },
   urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
-  go: { en: "Create deck", vi: "Tạo deck" },
+  go: { en: "Make flashcards", vi: "Tạo flashcard" },
   pick: { en: "Choose an .xlsx or .csv file", vi: "Chọn file .xlsx hoặc .csv" },
   orDrop: { en: "or drop one anywhere on this page", vi: "hoặc kéo thả file vào trang này" },
   tabLabel: { en: "Sheet", vi: "Sheet" },
@@ -707,8 +709,8 @@ const STRINGS = {
   // its own. Said in the words of somebody waiting for a page, with the two facts
   // that make the wait bearable: how big, and that it happens once.
   booting: {
-    en: "Getting Create deck ready (~5 MB, first time only)…",
-    vi: "Đang chuẩn bị Create deck (~5 MB, chỉ lần đầu)…",
+    en: "Getting Sheet to Anki ready (~5 MB, first time only)…",
+    vi: "Đang chuẩn bị Sheet to Anki (~5 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -727,8 +729,8 @@ const STRINGS = {
     vi: (n, s) => `${n} dòng · ${s} sẽ sync`,
   },
   bootFailed: {
-    en: (m) => `Create deck could not load (${m}). Reload the page to try again.`,
-    vi: (m) => `Không tải được Create deck (${m}). Tải lại trang để thử lại.`,
+    en: (m) => `Sheet to Anki could not load (${m}). Reload the page to try again.`,
+    vi: (m) => `Không tải được Sheet to Anki (${m}). Tải lại trang để thử lại.`,
   },
 
   // --- errors -------------------------------------------------------------
@@ -951,14 +953,14 @@ const STRINGS = {
     vi: "Dòng trống bị bỏ qua hoàn toàn.",
   },
 
-  // --- Create deck: the three steps ------------------------------------------
+  // --- Sheet to Anki: the three steps ----------------------------------------
   railLabel: { en: "Steps", vi: "Các bước" },
   crStep1: { en: "Add your sheet", vi: "Dán link sheet" },
   crStep2: { en: "Check the cards", vi: "Kiểm tra cards" },
   crStep3: { en: "Download .apkg", vi: "Download .apkg" },
   crTitle: {
-    en: "Make an Anki deck from <mark>Google Sheets</mark>",
-    vi: "Tạo deck Anki từ <mark>Google Sheets</mark>",
+    en: "Anki flashcards from <mark>Google Sheets</mark>",
+    vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
   },
   crLead: {
     en:
@@ -1097,10 +1099,10 @@ const STRINGS = {
     en: "https://docs.google.com/spreadsheets/d/…",
     vi: "https://docs.google.com/spreadsheets/d/…",
   },
-  homeGo: { en: "Create deck", vi: "Tạo deck" },
+  homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
   homeTemplateLead: { en: "No Google Sheet?", vi: "Chưa có Google Sheet?" },
-  homeWriteHere: { en: "Write one on the web → Create sheet", vi: "Soạn ngay trên web → Create sheet" },
+  homeWriteHere: { en: "Write one on the web → Create sheet", vi: "Soạn ngay trên web → Tạo Sheet" },
   homeTemplate: { en: "starter file (.xlsx)", vi: "file mẫu (.xlsx)" },
   homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
   homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
@@ -1117,8 +1119,8 @@ const STRINGS = {
     vi: "SheetCards đọc được file .xlsx, .xlsm, .csv và .tsv.",
   },
   homeStashFailed: {
-    en: "This browser would not keep the file for the next page. Open Create deck and upload it there.",
-    vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở Create deck và upload ở đó.",
+    en: "This browser would not keep the file for the next page. Open Sheet to Anki and upload it there.",
+    vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở Sheet to Anki và upload ở đó.",
   },
   badFileType: {
     en: (name) => `“${name}” is not a spreadsheet. SheetCards reads .xlsx, .xlsm, .csv and .tsv files.`,
@@ -1133,7 +1135,7 @@ const STRINGS = {
     vi: "Chạy ngay trong trình duyệt · Android, iPhone, máy tính",
   },
   demoImported: { en: "Imported into AnkiDroid", vi: "Đã import vào AnkiDroid" },
-  whyTitle: { en: "Why Create deck", vi: "Vì sao dùng Create deck" },
+  whyTitle: { en: "Why Sheet to Anki", vi: "Vì sao dùng Sheet to Anki" },
   whyPhoneTitle: { en: "No computer needed", vi: "Không cần máy tính" },
   whyPhone: {
     en: "Paste the link, check the cards, download the file and open it in AnkiDroid or AnkiMobile — every step works on a phone.",
@@ -1159,7 +1161,7 @@ const STRINGS = {
     en: "Add <code>theme=sakura</code> to the settings row and every card changes colour, in light and dark.",
     vi: "Thêm <code>theme=sakura</code> vào settings row là mọi card đổi màu, cả nền sáng lẫn nền tối.",
   },
-  featEditorLink: { en: "Try a settings row in Create sheet →", vi: "Thử settings row trong Create sheet →" },
+  featEditorLink: { en: "Try a settings row in Create sheet →", vi: "Thử settings row trong Tạo Sheet →" },
   addonEyebrow: { en: "The add-on for Anki on a computer", vi: "Add-on cho Anki trên máy tính" },
   addonTitle: {
     en: "Studying on a computer? Install the add-on and it syncs by itself.",

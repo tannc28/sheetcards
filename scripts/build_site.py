@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assembles the website into build/site/.
 
-Four kinds of page: the landing page (``site/index.html``), Create deck
+Four kinds of page: the landing page (``site/index.html``), Sheet to Anki
 (``site/create.html``; ``site/preview.html`` is its old address, kept as a
 redirect), the settings-row editor (``site/editor.html``) and the
 documentation, written as Markdown under ``docs/site/`` (Vietnamese, served at

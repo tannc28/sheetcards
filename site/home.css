@@ -1,6 +1,6 @@
 /* SheetCards — the landing page.
 
-   One job: send a learner to Create deck. The hero says what it does in one
+   One job: send a learner to Sheet to Anki. The hero says what it does in one
    sentence and shows it on a phone — a row of a sheet, the card it becomes, the
    file Anki opens — because the phone is where most of them will use it. The
    sections under it answer the questions in the order they come up: why, how,
@@ -184,7 +184,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 
 .demo { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
 
-/* Create deck's own three steps, lighting up as the story reaches them — and
+/* Sheet to Anki's own three steps, lighting up as the story reaches them — and
    buttons, so a reader can go straight to the one they care about. */
 .demo-rail {
   list-style: none; margin: 0 auto; padding: 4px;
@@ -413,7 +413,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @keyframes drop { from { transform: translateY(-24px) scale(.9); opacity: 0; } }
 @keyframes rise-in { from { transform: translateY(8px); opacity: 0; } }
 
-/* Create deck's download bar, always there at the bottom of the screen. */
+/* Sheet to Anki's download bar, always there at the bottom of the screen. */
 .scr-bar {
   position: absolute; left: 12px; right: 12px; bottom: 1.2rem;
   display: flex; align-items: center; justify-content: center; gap: 8px;

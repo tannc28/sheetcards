@@ -10,7 +10,7 @@ the source and Anki holds the copy.
 
 **Website and documentation: <https://tannc28.github.io/sheetcards/>**
 
-**On a phone, or without the add-on?** [Create deck](https://tannc28.github.io/sheetcards/create.html)
+**On a phone, or without the add-on?** [Sheet to Anki](https://tannc28.github.io/sheetcards/create.html)
 makes the same deck in your browser: paste the sheet's link, check the cards and
 download an `.apkg` that AnkiDroid, AnkiMobile or desktop Anki imports.
 Re-importing a newer file updates the notes and keeps your review progress. The
@@ -52,12 +52,12 @@ Requires Anki 25.x or later on Windows, macOS or Linux.
   troubleshooting.
 - **Create sheet:** <https://tannc28.github.io/sheetcards/sheet.html>: no Google
   Sheet? Write the whole sheet in the browser, phone included, then hand it to
-  Create deck, download it as `.xlsx`/`.csv`, or share it as a link.
-- **Create deck:** <https://tannc28.github.io/sheetcards/create.html>: paste a
+  Sheet to Anki, download it as `.xlsx`/`.csv`, or share it as a link.
+- **Sheet to Anki:** <https://tannc28.github.io/sheetcards/create.html>: paste a
   sheet link, check the decks and cards it makes, and download an `.apkg` for
   AnkiDroid, AnkiMobile or desktop Anki, with nothing installed.
 - **Example workbook:** thirty-one small decks, each showing one feature. Paste
-  this link into Create deck or into *Connect a Google Sheet…*:
+  this link into Sheet to Anki or into *Connect a Google Sheet…*:
 
   ```text
   https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx

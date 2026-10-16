@@ -1,7 +1,7 @@
 # The example workbook
 
 Every feature has a working example, and they all live in one file. Paste this
-link into [Create deck](../../create.html), or into **Tools → SheetCards → Connect
+link into [Sheet to Anki](../../create.html), or into **Tools → SheetCards → Connect
 a Google Sheet…**, and look at the result:
 
 ```text
@@ -15,7 +15,7 @@ speakers; Chinese, Japanese and Korean appear where a feature belongs to them
 specific to languages: a deck of anatomy works the same way.
 
 The quickest way to learn a feature is to find the sheet below that uses it, open
-it in Create deck and copy its settings row.
+it in Sheet to Anki and copy its settings row.
 
 | Sheet | What it shows |
 | :--- | :--- |

@@ -1,4 +1,4 @@
-/* SheetCards — Create deck.
+/* SheetCards — Sheet to Anki.
 
    Three steps in order: a sheet, its cards, the file. The page is laid out as
    that sequence rather than as a dashboard of everything at once, because the
@@ -69,7 +69,7 @@
 .rail li.done { color: var(--ink); }
 .rail li.done .rail-n { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .rail-t { max-width: 12ch; }
-/* A step that can be gone back to is a button: Create deck's first step once a
+/* A step that can be gone back to is a button: Sheet to Anki's first step once a
    deck is up (it does what "Đổi link" does), Create sheet's second always. */
 .rail-go {
   display: flex; flex-direction: inherit; align-items: center; gap: inherit;

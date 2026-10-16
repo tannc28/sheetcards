@@ -41,7 +41,7 @@ câu hỏi "cột nào là cloze" phải được trả lời một lần. Anki 
 không có chỗ trống nào thành trống trơn, nên đoán sai sẽ lặng lẽ làm mất một cột.
 
 Dòng có `{{c1::…}}` trên một sheet không khai báo cột cloze nào sẽ bị báo cảnh
-báo, trong Create deck và trong cửa sổ Card Layout của Anki.
+báo, trong Sheet to Anki và trong cửa sổ Card Layout của Anki.
 
 ## Gõ đáp án
 

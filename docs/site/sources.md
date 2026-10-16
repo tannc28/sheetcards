@@ -28,9 +28,9 @@ mỗi sheet một deck. File nằm trong một repository GitHub cũng được:
 - **Địa chỉ phải công khai và bắt đầu bằng `https`.** Add-on từ chối các loại
   địa chỉ khác, và mọi địa chỉ trong mạng nội bộ.
 
-## Create deck
+## Sheet to Anki
 
-[Create deck](../create.html) tạo deck Anki từ sheet ngay trên điện thoại hoặc
+[Sheet to Anki](../create.html) tạo deck Anki từ sheet ngay trên điện thoại hoặc
 máy tính, không cần cài add-on. Trước khi tải về, nó cho bạn thấy SheetCards làm
 ra gì từ sheet: từng dòng và việc nó có được sync hay không, cây deck, tag, cảnh
 báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật, nghe và gõ đáp
@@ -38,7 +38,7 @@ báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật
 được làm đúng như cách sync làm. Chỉ có bước cuối cùng, vẽ card, là trang tự mô
 phỏng lại Anki; còn nội dung template nó hiện ra là chính xác.
 
-Sau khi sửa sheet, bấm nút tải lại cạnh tên sheet, Create deck sẽ tải sheet lại và
+Sau khi sửa sheet, bấm nút tải lại cạnh tên sheet, Sheet to Anki sẽ tải sheet lại và
 giữ nguyên chỗ bạn đang xem.
 
 ### Upload một file
@@ -64,9 +64,9 @@ cập nhật các note đó chứ không nhân đôi**.
 trong file. Dòng bạn xoá khỏi sheet vẫn nằm trong collection cho tới khi bạn xoá
 nó ở đó. Đó chính là khác biệt thật sự giữa import và sync.
 
-## Create sheet
+## Tạo Sheet
 
-[Create sheet](../sheet.html) là chỗ soạn cả một sheet ngay trên web, không cần
+[Tạo Sheet](../sheet.html) là chỗ soạn cả một sheet ngay trên web, không cần
 Google Sheets: tên cột, [settings row](settings-row.md) và từng từ. Bắt đầu từ
 một mẫu (trống, từ vựng tiếng Anh, Kanji, Cloze) hoặc mở một file `.xlsx`/`.csv`
 có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google
@@ -75,10 +75,10 @@ Setting được chọn từ danh sách, và card của từ đang sửa hiện 
 
 Bản nháp được lưu trong trình duyệt sau mỗi thay đổi. Từ đó có ba lối ra:
 
-- **Create deck**: chuyển thẳng sheet sang Create deck để xem card và tải `.apkg`.
+- **Tạo flashcard**: chuyển thẳng sheet sang Sheet to Anki để xem card và tải `.apkg`.
 - **Download** `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
   tiếp, hoặc upload lên Google Drive thành Google Sheets.
 - **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
   máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
-  cũng mở thẳng được thành card trong Create deck. Link rất dài có thể bị vài app
+  cũng mở thẳng được thành card trong Sheet to Anki. Link rất dài có thể bị vài app
   chat cắt bớt, khi đó hãy gửi file.

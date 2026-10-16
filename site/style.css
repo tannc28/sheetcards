@@ -2,7 +2,7 @@
 
    The tokens (colour, type, spacing), the masthead and site navigation, the
    controls, the deck tree, the row list, the sheet grid and the column detail,
-   Create sheet's grid and chips, and the docs. Create deck adds create.css (which
+   Create sheet's grid and chips, and the docs. Sheet to Anki adds create.css (which
    Create sheet builds on too, with sheet.css) and the landing
    page home.css on top of this.
 
@@ -179,7 +179,7 @@ button.linky { gap: 5px; }
 
 /* ---- masthead ------------------------------------------------------------ */
 
-/* The landing page, Create deck and the docs run to the screen's width; their
+/* The landing page, Sheet to Anki and the docs run to the screen's width; their
    gutter is the masthead's too, so the name sits over the content's left edge
    and the switches over its right one, at every width. */
 body.page { --pad: var(--gutter); }
@@ -211,8 +211,8 @@ body.page .masthead {
   vertical-align: .35em; margin-left: 2px;
 }
 /* On a phone the masthead has one row for the name, the theme and the language
-   switch; "create deck" beside the name pushes the switch onto a row of its own,
-   and the nav underneath already says which page this is. */
+   switch; a tag beside the name pushes the switch onto a row of its own, and
+   the nav underneath already says which page this is. */
 @media (max-width: 25rem) {
   .brand-tag { display: none; }
 }
@@ -235,6 +235,20 @@ body.page .masthead {
   background: transparent; border: 1px solid var(--line); border-radius: var(--r-sm);
 }
 .themebtn:hover { border-color: var(--accent); background: var(--accent-soft); }
+/* GitHub as its mark alone, beside the switches rather than among the pages:
+   it is the one link that leaves the site. Unboxed, so it reads as a link. */
+.ghlink {
+  flex: none; display: inline-grid; place-items: center;
+  width: 34px; height: 34px; border-radius: var(--r-sm);
+  color: var(--muted); text-decoration: none;
+}
+.ghlink .icon { width: 20px; height: 20px; }
+.ghlink:hover { color: var(--ink); background: var(--sunken); }
+
+/* The author's signature, on every page: one quiet line, not a brand. */
+.byline { margin: 1.5rem 0 0; font-size: var(--t-xs); color: var(--muted); }
+.byline a { color: inherit; text-decoration: none; }
+.byline a:hover { color: var(--accent); text-decoration: underline; }
 
 a.ghost {
   flex: none;
@@ -1108,8 +1122,9 @@ iframe#card {
 
 /* ==== the site's own navigation ============================================
 
-   On every page: Home, Create deck, Editor, Docs, GitHub. Words rather than
-   buttons, because five bordered boxes beside the theme and language switches
+   On every page: Trang chủ / Home, Sheet to Anki, Tạo Sheet / Create sheet,
+   Docs — in the reader's language, with GitHub as an icon beside the switches.
+   Words rather than buttons, because five bordered boxes beside the theme and language switches
    made the masthead louder than the page under it. The page you are on is
    marked with the accent underline — the only colour in the row. No `flex`
    here: the narrow rule above gives the row a line of its own, and this rule,
@@ -1131,14 +1146,15 @@ iframe#card {
   .sitenav { flex: none; margin-right: 8px; }
 }
 /* A thumb, not a pointer: every masthead control gets a 44px target (Apple's
-   minimum, and what keeps "Editor" from opening when "Create deck" was meant).
+   minimum, and what keeps "Tạo Sheet" from opening when "Sheet to Anki" was meant).
    The nav row's links bring their own height, so the masthead gives up its
    bottom padding and the row costs two pixels more than it did; the switches
    on the first row take the theme button's 34px and reach 44 invisibly. */
 @media (pointer: coarse) {
   .masthead .sitenav a { min-height: 44px; display: inline-flex; align-items: center; }
   .themebtn { position: relative; }
-  .themebtn::after { content: ""; position: absolute; inset: -5px; }
+  .themebtn::after, .ghlink::after { content: ""; position: absolute; inset: -5px; }
+  .ghlink { position: relative; }
   .langs button { min-height: 34px; }
   .brand a.name { padding: 11px 0; margin: -11px 0; }
 }
@@ -1157,7 +1173,7 @@ iframe#card {
 }
 .page main:focus { outline: none; }
 
-/* The landing page's own styles are in home.css, Create deck's in create.css. */
+/* The landing page's own styles are in home.css, Sheet to Anki's in create.css. */
 
 /* ==== the docs ============================================================= */
 

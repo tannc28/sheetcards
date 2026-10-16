@@ -1,7 +1,7 @@
 # File ví dụ
 
 Mỗi tính năng đều có một ví dụ chạy được, và tất cả nằm trong một file. Dán link
-này vào [Create deck](../create.html), hoặc vào **Tools → SheetCards → Connect a
+này vào [Sheet to Anki](../create.html), hoặc vào **Tools → SheetCards → Connect a
 Google Sheet…**, rồi xem kết quả:
 
 ```text
@@ -15,7 +15,7 @@ người Việt; tiếng Trung, Nhật và Hàn xuất hiện ở những tính 
 riêng ngôn ngữ: một deck giải phẫu học cũng chạy y như vậy.
 
 Cách nhanh nhất để học một tính năng là tìm sheet dùng nó trong bảng dưới, mở
-trong Create deck và copy settings row của nó.
+trong Sheet to Anki và copy settings row của nó.
 
 | Sheet | Nội dung minh hoạ |
 | :--- | :--- |

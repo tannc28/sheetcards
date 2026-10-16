@@ -84,7 +84,7 @@ nào có link, đặt link vào ô và đánh dấu cột là `image`. Khi đó 
 
 **Video hiện lỗi.**
 Link trỏ tới một channel, playlist hoặc thư mục thay vì một video, hoặc video
-không cho phép nhúng. Phần cảnh báo trong Create deck sẽ cho biết là trường hợp nào.
+không cho phép nhúng. Phần cảnh báo trong Sheet to Anki sẽ cho biết là trường hợp nào.
 
 ## Deck
 
@@ -96,7 +96,7 @@ tên deck. Xem [Sync](syncing.md#ten-lay-tu-sheet).
 Deck nhớ sheet của nó theo tên. Hãy kết nối lại file để add-on nhận tên mới.
 
 **Tôi đã xoá một dòng mà card vẫn còn trong Anki.**
-Nếu bạn import file `.apkg` từ Create deck thì import vốn hoạt động như vậy: nó cập
+Nếu bạn import file `.apkg` từ Sheet to Anki thì import vốn hoạt động như vậy: nó cập
 nhật và thêm mới nhưng không bao giờ xoá. Sync bằng add-on thì có xoá.
 
 **Tôi đặt `SYNC` là no mà card không bị xoá.**

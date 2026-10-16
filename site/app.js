@@ -1,5 +1,5 @@
 /**
- * SheetCards Create deck — runs the add-on's own Python in the browser.
+ * SheetCards Sheet to Anki — runs the add-on's own Python in the browser.
  *
  * The point of this page is that it does not reimplement anything. Pyodide loads
  * the very files under src/ that the add-on runs inside Anki, so the column
@@ -342,7 +342,7 @@ function status(text, kind = "", busy = false) {
 
 // ---- the first load --------------------------------------------------------
 //
-// Create deck is the add-on's own Python, and on a first visit that is about
+// Sheet to Anki is the add-on's own Python, and on a first visit that is about
 // 5 MB from a CDN. The wait is said in a learner's words, with its size and the
 // fact that it happens once; after ten seconds it says the network is slow,
 // because a spinner that has turned for that long reads as broken. The form is

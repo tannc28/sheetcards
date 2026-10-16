@@ -1,9 +1,9 @@
 /**
- * Carries a file picked on the landing page over to Create deck.
+ * Carries a file picked on the landing page over to Sheet to Anki.
  *
  * A link can travel in the address (?url=), a File cannot, and the landing page
  * must not load Pyodide just to read one. So the File is put in this browser's
- * IndexedDB, the page moves to create.html#file, and Create deck takes it out
+ * IndexedDB, the page moves to create.html#file, and Sheet to Anki takes it out
  * again — once: it is deleted on the way out, so a reload or a shared address
  * never finds someone else's file. Nothing leaves the device.
  */
@@ -43,7 +43,7 @@ function run(mode, work) {
 /**
  * Keeps the file for the next page. Resolves once it is safely stored.
  *
- * `from` names the page that left it ("sheet" for Create sheet), so Create deck
+ * `from` names the page that left it ("sheet" for Create sheet), so Sheet to Anki
  * can offer the way back to where the sheet is being written.
  */
 export function stashFile(file, from = "") {

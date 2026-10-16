@@ -1,10 +1,10 @@
 /**
  * Create sheet: a whole flashcard sheet, written in the browser.
  *
- * The step before Create deck, for whoever has no Google Sheet or does not want
+ * The step before Sheet to Anki, for whoever has no Google Sheet or does not want
  * one — mostly on a phone. It writes exactly what a sheet holds: the column
  * names in row 1, the settings row in row 2 and a word on every row under it,
- * and it hands that straight to Create deck (handoff.js), to a file, or to a
+ * and it hands that straight to Sheet to Anki (handoff.js), to a file, or to a
  * link (sharelink.js). Nothing here is a second copy of the add-on: the card
  * beside the sheet is drawn by the add-on's own Python, running in Pyodide, and
  * every warning is the add-on's own sentence.
@@ -152,7 +152,7 @@ const $ = (sel) => document.querySelector(sel);
 const WIDE = matchMedia("(min-width: 60rem)");
 const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 
-// The same four views of a card Create deck offers, with the same names.
+// The same four views of a card Sheet to Anki offers, with the same names.
 const CARD_TABS = ["front", "both", "back", "template"];
 
 // The starting points, and what each is called. The grids, and the card each
@@ -752,7 +752,7 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
 
 // The card a template's first word becomes: the templates and values came out
 // of card_layout.py at build time, so this is the card the sheet will make,
-// drawn by the same anki.js Create deck uses — no Pyodide. `reverse` draws the
+// drawn by the same anki.js Sheet to Anki uses — no Pyodide. `reverse` draws the
 // second card of a sheet that asks for one.
 function templateCard(card, reverse = false) {
   const template = reverse ? card.reverse : card.template;
@@ -1827,7 +1827,7 @@ function paintOut() {
   paintFiled();
 }
 
-/** Straight on to Create deck, with the sheet as a file it opens like any other. */
+/** Straight on to Sheet to Anki, with the sheet as a file it opens like any other. */
 async function toDeck() {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
   if (!isFiled()) {
@@ -2029,7 +2029,7 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   toast("");
   const title = file.name.replace(/\.[^.]+$/, "").trim();
   if (choose && out.tabs.length > 1) {
-    // A workbook of several sheets: ask which, the way Create deck's picker does.
+    // A workbook of several sheets: ask which, the way Sheet to Anki's picker does.
     $("#tablist").innerHTML = out.tabs
       .map(
         (name, i) =>
@@ -2383,7 +2383,7 @@ $("#share-native").addEventListener("click", async () => {
 });
 $("#share-url").addEventListener("focus", (e) => e.target.select());
 
-// A tap on a dialog's backdrop puts it away, as it does on Create deck.
+// A tap on a dialog's backdrop puts it away, as it does on Sheet to Anki.
 for (const box of document.querySelectorAll(".pickbox")) {
   box.addEventListener("click", (e) => {
     if (e.target === box && box.id !== "askbox") box.close();

@@ -5,10 +5,10 @@
  * a file Anki opens — so it is made of the real thing. `home-cards.js` is written
  * by scripts/build_site.py, which runs the add-on's own card_layout.py over three
  * rows of the example workbook; here those templates are filled by the same
- * `renderCard` and framed by the same `cardDoc` Create deck uses. No Pyodide: the
+ * `renderCard` and framed by the same `cardDoc` Sheet to Anki uses. No Pyodide: the
  * Python already ran at build time.
  *
- * It tells Create deck's three steps in order — the link goes in, the card is
+ * It tells Sheet to Anki's three steps in order — the link goes in, the card is
  * checked front then back, the .apkg lands in Anki — and then does it again with
  * the next example, each in a different theme. It plays by itself, which an
  * animation that changes on its own must let you stop (WCAG 2.2.2): the button
@@ -33,7 +33,7 @@ const still = matchMedia("(prefers-reduced-motion: reduce)");
 // The story, one phase at a time, and how long each stays up (ms).
 const PHASES = ["link", "front", "back", "apkg"];
 const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
-// Which of Create deck's three steps each phase is.
+// Which of Sheet to Anki's three steps each phase is.
 const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
 const state = {
@@ -51,7 +51,7 @@ const rendered = CARDS.map((card) =>
 );
 
 /**
- * The card's own document, as Create deck builds it, adjusted for a card that
+ * The card's own document, as Sheet to Anki builds it, adjusted for a card that
  * is looked at rather than studied: no scrollbars (the frame is sized to fit),
  * no "TTS voices" list (it lists the voices of the device reviewing the card,
  * and this page is not one), and no scripts — the ones a card carries are for
@@ -86,7 +86,7 @@ function buildCards() {
       `<div class="flip${i === state.at ? " active" : ""}${
         i === state.at && state.phase === "back" ? " turned" : ""
       }" data-card="${i}" ${i === state.at ? "" : "inert"}>` +
-      // "both" on the back, as Anki and Create deck show an answered card.
+      // "both" on the back, as Anki and Sheet to Anki show an answered card.
       frame(i, "front") +
       frame(i, "both") +
       "</div>",
@@ -237,7 +237,7 @@ onRepaint((what) => {
 
 // --- step 1, on the landing page ---------------------------------------------
 //
-// The same first step Create deck asks for, so a learner who arrives with a
+// The same first step Sheet to Anki asks for, so a learner who arrives with a
 // sheet in hand starts from here. Nothing is read on this page: a link goes over
 // in ?url=, a file through IndexedDB (handoff.js) to create.html#file.
 

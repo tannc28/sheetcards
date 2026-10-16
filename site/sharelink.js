@@ -12,7 +12,7 @@
  * cannot occur in base64url, so the version ends where it says it does.
  *
  * The sheet travels as TSV because that is what both pages already speak: Create
- * sheet writes it, and Create deck reads it with the add-on's own parser — which
+ * sheet writes it, and Sheet to Anki reads it with the add-on's own parser — which
  * runs csv.reader with a tab, so a cell holding a tab, a newline or a quote is
  * quoted the way csv.writer would quote it.
  */

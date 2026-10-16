@@ -40,7 +40,7 @@ column is the cloze" has to be answered once. Anki shows a cloze field that hold
 no deletion as nothing at all, so guessing wrong would silently blank a column.
 
 A row with `{{c1::…}}` on a sheet that declares no cloze column is reported as a
-warning, in Create deck and in Anki's Card Layout window.
+warning, in Sheet to Anki and in Anki's Card Layout window.
 
 ## Typing the answer
 

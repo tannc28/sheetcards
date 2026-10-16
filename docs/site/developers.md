@@ -45,7 +45,7 @@ mypy src/
 Trang web này là trang tĩnh, nằm trong `site/`, còn docs là Markdown trong
 `docs/site/` (tiếng Việt, ở `/docs/`) và `docs/site/en/` (tiếng Anh, ở `/docs/en/`). `scripts/build_site.py` gom tất cả vào `build/site/`: nó copy
 `site/`, copy các module Python thuần của add-on (những module không import Anki)
-để Create deck chạy qua Pyodide, dùng chính các module đó để render các card demo của
+để Sheet to Anki chạy qua Pyodide, dùng chính các module đó để render các card demo của
 trang chủ, và chuyển Markdown thành các trang này.
 
 ```bash

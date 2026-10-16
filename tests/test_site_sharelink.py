@@ -1,7 +1,7 @@
 """A sheet carried inside a link: ``site/sharelink.js``, run in node.
 
 Create sheet's *Share link* compresses the whole sheet into the address
-(``#s=1.…``) and both Create sheet and Create deck open it. Nothing else holds a
+(``#s=1.…``) and both Create sheet and Sheet to Anki open it. Nothing else holds a
 copy of what was shared, so a codec that loses a tab inside a cell, a line break,
 a quote or a Vietnamese tone mark loses it for good — and the person who opens
 the link has no way to know.

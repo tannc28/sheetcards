@@ -46,7 +46,7 @@ This site is static and lives in `site/`, with the documentation as Markdown in
 `docs/site/` (Vietnamese, served at `/docs/`) and `docs/site/en/` (English, at
 `/docs/en/`). `scripts/build_site.py` assembles it into `build/site/`: it copies
 `site/`, copies the add-on's pure Python modules (the ones with no Anki import)
-for Create deck to run through Pyodide, renders the landing page's demo cards with
+for Sheet to Anki to run through Pyodide, renders the landing page's demo cards with
 those same modules, and converts the Markdown into these pages.
 
 ```bash

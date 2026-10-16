@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title data-i18n="titleCreate">SheetCards — Create deck: deck Anki từ Google Sheets</title>
-<meta name="description" content="Create deck: tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on. Dán link, xem từng card, rồi Download .apkg.">
+<title data-i18n="titleCreate">SheetCards — Sheet to Anki: tạo flashcard Anki từ Google Sheets</title>
+<meta name="description" content="Sheet to Anki: tạo flashcard Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on. Dán link, xem từng card, rồi Download .apkg.">
 <!-- Two cards, the front one ruled like a sheet. Inline, so the icon costs no
      request and cannot go missing from a deploy. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -31,7 +31,7 @@
 
 <!-- To the working area: it holds the link field before a sheet is loaded and the
      card after, so it is the right place to land either way. -->
-<a class="skip" href="#app" data-i18n="skip">Tới phần Create deck</a>
+<a class="skip" href="#app" data-i18n="skip">Tới phần Sheet to Anki</a>
 
 <header class="masthead">
   <div class="brand">
@@ -39,12 +39,12 @@
   </div>
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./" data-i18n="navHome">Home</a>
-    <a href="./sheet.html" data-i18n="navSheet">Create sheet</a>
-    <a href="./create.html" aria-current="page" data-i18n="navPreview">Create deck</a>
+    <a href="./" data-i18n="navHome">Trang chủ</a>
+    <a href="./create.html" aria-current="page" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
-    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
+  <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
@@ -65,7 +65,7 @@
 
   <!-- ==== step 1: where the sheet comes from ============================== -->
   <section id="entry" class="entry" aria-labelledby="entry-title">
-    <h1 id="entry-title" class="entry-title" data-i18n="crTitle">Tạo deck Anki từ <mark>Google Sheets</mark></h1>
+    <h1 id="entry-title" class="entry-title" data-i18n="crTitle">Tạo flashcard Anki từ <mark>Google Sheets</mark></h1>
     <p class="entry-lead" data-i18n="crLead">Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Không cần cài gì.</p>
 
     <form id="entry-form" class="linkform" novalidate>
@@ -86,7 +86,7 @@
           <button id="paste" class="paste" type="button" hidden><span data-icon="clipboard"></span><span
                   data-i18n="paste">Dán</span></button>
         </div>
-        <button id="go" class="btn big go" type="submit"><span data-i18n="go">Tạo deck</span><span
+        <button id="go" class="btn big go" type="submit"><span data-i18n="go">Tạo flashcard</span><span
                 data-icon="arrow-right"></span></button>
       </div>
     </form>
@@ -131,6 +131,7 @@
     </details>
 
     <p class="privacy"><span data-icon="lock"></span><span data-i18n="privacy">Sheet được đọc ngay trong trình duyệt của bạn. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
+    <p class="byline"><a href="https://github.com/tannc28" rel="author" translate="no">by ctan</a></p>
   </section>
 
   <!-- ==== steps 2 and 3: the deck =========================================== -->

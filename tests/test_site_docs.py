@@ -152,7 +152,7 @@ def test_the_landing_demo_is_rendered_from_the_workbook(site):
 
 @pytest.mark.unit
 def test_old_preview_links_are_sent_to_create_deck(site):
-    """/?url=… and /preview.html were Create deck's addresses; both forward it.
+    """/?url=… and /preview.html were Sheet to Anki's addresses; both forward it.
 
     What the forwarding scripts *do* is checked in tests/test_site_redirects.py;
     this only proves the built pages still carry them.

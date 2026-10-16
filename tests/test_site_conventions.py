@@ -1,7 +1,7 @@
 """The things every website does that nobody notices until one is missing.
 
 Each of these shipped missing once and was found by a reader, not by a test: the
-name in the masthead that did not go home, a sideways scroll on Create deck, a
+name in the masthead that did not go home, a sideways scroll on Sheet to Anki, a
 Back button that left the site with the sheet, a missing address answered by
 GitHub's own 404 page. They are cheap to check and silent when they break, so
 they are checked here.
@@ -45,25 +45,49 @@ def test_the_title_follows_the_language(page):
     assert re.search(r'<title data-i18n="\w+">', _text(page)), page
 
 
-# The site's flow, in the order a learner walks it: write a sheet, make the deck,
-# read about it. Every page's masthead says it the same way, in both languages
-# (the names are product names and stay English).
-NAV = ["Home", "Create sheet", "Create deck", "Docs", "GitHub"]
+# The site's pages, most used first: Sheet to Anki is the product, Create sheet
+# the step some people need before it, then the docs. Every masthead says it the same way, in the reader's language:
+# our own page names are translated, the product name Sheet to Anki is not. The
+# static text is the Vietnamese (the default); i18n.js carries both.
+NAV_KEYS = ["navHome", "navPreview", "navSheet", "navDocs"]
+NAV = {
+    "vi": ["Trang chủ", "Sheet to Anki", "Tạo Sheet", "Docs"],
+    "en": ["Home", "Sheet to Anki", "Create sheet", "Docs"],
+}
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("page", PAGES)
-def test_every_masthead_lists_the_pages_in_the_flows_order(page):
+def test_every_masthead_lists_the_pages_in_order(page):
     nav = re.search(r'<nav class="sitenav"[^>]*>(.*?)</nav>', _text(page), re.S)
     assert nav, f"{page} has no site navigation"
     links = re.findall(r'<a href="([^"]*)"[^>]*>(.*?)</a>', nav.group(1), re.S)
-    assert [name.strip() for _, name in links] == NAV, f"{page}: {links}"
+    assert [name.strip() for _, name in links] == NAV["vi"], f"{page}: {links}"
     pages = [href.rsplit("/", 1)[-1].replace("%%ROOT%%", "") for href, _ in links[1:3]]
-    assert pages == ["sheet.html", "create.html"], f"{page}: {pages}"
+    assert pages == ["create.html", "sheet.html"], f"{page}: {pages}"
 
 
 @pytest.mark.unit
-def test_the_nav_names_are_the_same_in_both_languages():
+@pytest.mark.parametrize("page", PAGES)
+def test_github_is_an_icon_beside_the_switches(page):
+    """Outside the page list, since it leaves the site, and named for a reader
+    who cannot see the mark."""
+    head = re.search(r'<header class="masthead">(.*?)</header>', _text(page), re.S)
+    found = re.search(r'</nav>\s*<a class="ghlink"([^>]*)>', head.group(1))
+    assert found, f"{page}: no GitHub icon after the site navigation"
+    attrs = found.group(1)
+    for want in ('aria-label="GitHub"', 'title="GitHub"', 'data-icon="github"'):
+        assert want in attrs, f"{page}: GitHub link lacks {want}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("page", PAGES)
+def test_every_page_is_signed(page):
+    assert 'class="byline"><a href="https://github.com/tannc28"' in _text(page), page
+
+
+@pytest.mark.unit
+def test_the_nav_names_follow_the_language():
     import json
     import shutil
     import subprocess
@@ -71,10 +95,9 @@ def test_the_nav_names_are_the_same_in_both_languages():
     node = shutil.which("node")
     if not node:
         pytest.skip("node is not installed")
-    keys = ["navHome", "navSheet", "navPreview", "navDocs"]
     script = (
         f"import({json.dumps((SITE / 'i18n.js').as_uri())}).then((m) => "
-        f"process.stdout.write(JSON.stringify({json.dumps(keys)}"
+        f"process.stdout.write(JSON.stringify({json.dumps(NAV_KEYS)}"
         ".map((k) => [m.STRINGS[k].en, m.STRINGS[k].vi]))))"
     )
     out = subprocess.run(
@@ -83,7 +106,9 @@ def test_the_nav_names_are_the_same_in_both_languages():
         text=True,
         check=True,
     )
-    assert json.loads(out.stdout) == [[name, name] for name in NAV[:4]]
+    assert json.loads(out.stdout) == [
+        list(p) for p in zip(NAV["en"], NAV["vi"], strict=True)
+    ]
 
 
 @pytest.mark.unit

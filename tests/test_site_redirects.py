@@ -1,6 +1,6 @@
-"""Create deck's old addresses still reach it, query and fragment intact.
+"""Sheet to Anki's old addresses still reach it, query and fragment intact.
 
-Create deck was the site's front page (``/?url=…``), then ``/preview.html``, and
+Sheet to Anki was the site's front page (``/?url=…``), then ``/preview.html``, and
 is now ``/create.html``. Links to both old addresses are out there — in older
 copies of the add-on, in posts, in bookmarks — and they carry the sheet's link in
 ``?url=`` or ask for the example with ``#example``. Each old page forwards with

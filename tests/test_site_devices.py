@@ -1,7 +1,7 @@
 """After the download: which device the page guesses, and what it tells it.
 
 The .apkg is the whole product on a phone, and opening it is where people get
-stuck, so Create deck opens on the instructions for the device in hand. The
+stuck, so Sheet to Anki opens on the instructions for the device in hand. The
 guess lives in ``site/devices.js`` with no DOM, so it is run here in node.
 """
 
