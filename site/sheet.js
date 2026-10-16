@@ -33,6 +33,7 @@ import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, toTsv } 
 import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
 import { fileStem, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
+import { detectDevice } from "./devices.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -535,25 +536,86 @@ function fileBase() {
 const DRAFT = "sc-sheet-draft";
 let saveTimer = 0;
 
-// The sheet as it was when last written to a file or opened from one. The draft
-// lives only in this browser; the file is what lasts, opens on any device and
-// in any spreadsheet — so the page says when the sheet has moved on from it.
+// The sheet as it was when last written to a file or a link, or opened from
+// one. The draft lives only in this browser; the file or the link is what
+// lasts and opens anywhere — so the page says when the sheet has moved on.
+//
+// Which of the two is *the* save depends on the device. On a computer it is the
+// .csv: it opens in any spreadsheet and is easy to find again. On a phone a
+// file lands in Downloads and opening it again is the hard part, while a link
+// sent to oneself in Zalo or Notes is one tap — and Safari on an iPhone deletes
+// a site's storage after seven days without a visit, draft included.
+const DEVICE = detectDevice(navigator);
+const SAVE_LINK = DEVICE !== "desktop";
 let lastFiled = null;
+let filedHow = "";
+let draftKept = true;
 const filedText = () => toTsv(exportGrid());
 const isFiled = () => lastFiled === filedText();
-function markFiled() {
+function markFiled(how) {
   lastFiled = filedText();
+  filedHow = how;
   paintFiled();
   saveSoon();
 }
 
+/** The one line that says whether the sheet is kept, and where. */
 function paintFiled() {
   if (ui.stage !== "edit") return;
+  const n = wordCount();
   const filed = isFiled();
-  const button = $("#savecsv");
-  button.classList.toggle("unsaved", !filed && wordCount() > 0);
-  $("#filed").textContent = t(filed ? "shFiled" : "shNotFiled");
-  $("#filed").className = `filed ${filed ? "ok" : wordCount() ? "bad" : ""}`;
+  for (const button of document.querySelectorAll("#share, #savecsv")) {
+    button.classList.toggle("unsaved", button.classList.contains("savebtn") && !filed && n > 0);
+  }
+  const [key, kind] = !n
+    ? ["", ""]
+    : filed
+      ? [filedHow === "link" ? "shSavedLink" : "shSavedFile", "ok"]
+      : !draftKept
+        ? ["shNotSaved", "bad"]
+        : [SAVE_LINK ? "shUnsavedLink" : "shUnsavedFile", "warn"];
+  $("#saved").textContent = key ? t(key) : "";
+  $("#saved").className = `saved ${kind}`;
+}
+
+/** The device's save, in the out bar's words. Set before the first paint. */
+function wireSave() {
+  if (!SAVE_LINK) return;
+  $("#share-label").dataset.i18n = "shSaveLink";
+  $("#share").classList.add("savebtn");
+  $("#savecsv").classList.remove("savebtn");
+  $("#savecsv").hidden = true;
+  $("#fileline").dataset.i18n = "shFileLineLink";
+  $("#savemore").dataset.i18n = "shOtherFormatsAll";
+}
+
+// Said once per device, the first time it matters: what an iPhone does to a
+// draft, and what an Android phone does to a .csv tapped in Files.
+const NOTES = { ios: ["sc-note-ios", "shIosNote"], android: ["sc-note-android", "shAndroidCsvNote"] };
+function showNote(device) {
+  const [flag, key] = NOTES[device] || [];
+  if (!flag || DEVICE !== device) return;
+  try {
+    if (localStorage.getItem(flag)) return;
+    localStorage.setItem(flag, "1");
+  } catch {
+    // Without storage it would show every time; better not at all.
+    return;
+  }
+  $("#devnote-text").dataset.i18n = key;
+  $("#devnote-text").innerHTML = t(key);
+  $("#devnote").hidden = false;
+}
+
+// Asked once: a browser may then keep this site's storage through a clean-up.
+let persistAsked = false;
+function askPersist() {
+  if (persistAsked || !navigator.storage?.persist) return;
+  persistAsked = true;
+  navigator.storage
+    .persisted()
+    .then((kept) => kept || navigator.storage.persist())
+    .catch(() => {});
 }
 
 function loadDraft() {
@@ -575,18 +637,17 @@ function saveSoon() {
 function saveNow() {
   clearTimeout(saveTimer);
   if (ui.stage !== "edit") return;
-  paintFiled();
   try {
     localStorage.setItem(
       DRAFT,
-      JSON.stringify({ v: 1, sheet, row: ui.row, col: ui.col, view: ui.view, filed: lastFiled }),
+      JSON.stringify({ v: 1, sheet, row: ui.row, col: ui.col, view: ui.view, filed: lastFiled, how: filedHow }),
     );
-    $("#saved").textContent = t("shSaved");
-    $("#saved").className = "saved";
+    draftKept = true;
+    askPersist();
   } catch {
-    $("#saved").textContent = t("shNotSaved");
-    $("#saved").className = "saved bad";
+    draftKept = false;
   }
+  paintFiled();
 }
 
 function dropDraft() {
@@ -773,6 +834,7 @@ function setStage(stage) {
   $("#rail-deck").disabled = stage !== "edit";
   delete document.documentElement.dataset.draft;
   if (stage === "empty") paintTemplates();
+  if (stage === "edit") showNote("ios");
 }
 
 /**
@@ -797,7 +859,7 @@ function setView(view) {
  * `view` is the step it opens on; `filed` is the sheet as last written to a
  * file (see isFiled), or null for a sheet no file holds yet.
  */
-function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", filed = null } = {}) {
+function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", filed = null, how = "file" } = {}) {
   if (keepHistory && ui.stage === "edit") mark();
   else {
     steps.past.length = 0;
@@ -807,6 +869,7 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
   sheet.next ??= null;
   if (!Array.isArray(sheet.retired)) sheet.retired = [];
   lastFiled = filed;
+  filedHow = how;
   setView(view);
   ui.row = row;
   ui.col = col;
@@ -2008,11 +2071,14 @@ async function toDeck() {
   if (idsBlock()) return;
   if (!isFiled()) {
     const save = await ask({
-      title: t("shUnfiledTitle"),
-      text: t("shUnfiledText"),
-      yes: t("shSaveCsv"),
+      title: t(SAVE_LINK ? "shUnlinkedTitle" : "shUnfiledTitle"),
+      text: t(SAVE_LINK ? "shUnlinkedText" : "shUnfiledText"),
+      yes: t(SAVE_LINK ? "shSaveLink" : "shSaveCsv"),
       no: t("shUnfiledGo"),
     });
+    // The link is saved by sending or copying it, which happens in the share
+    // box; Tạo flashcard is pressed again from there.
+    if (save && SAVE_LINK) return openShare("save");
     if (save) saveCsv();
   }
   saveNow();
@@ -2052,8 +2118,9 @@ function saveCsv() {
   if (idsBlock()) return $("#savebox").close();
   download(new Blob([asCsv(exportGrid())], { type: "text/csv" }), `${fileBase()}.csv`);
   $("#savebox").close();
-  markFiled();
+  markFiled("file");
   toast(t("shDownloaded", `${fileBase()}.csv`), "ok");
+  showNote("android");
 }
 
 function saveXlsx() {
@@ -2066,7 +2133,7 @@ function saveXlsx() {
         new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
         `${fileBase()}.xlsx`,
       );
-      markFiled();
+      markFiled("file");
       toast(t("shDownloaded", `${fileBase()}.xlsx`), "ok");
     } catch (err) {
       toast(String(err?.message || err).split("\n").pop(), "bad");
@@ -2094,13 +2161,34 @@ async function paintShare() {
   $("#share-long").textContent = long ? t("shLinkLong") : "";
 }
 
-async function openShare() {
+/**
+ * The link box, as a way to share ("share") or as the phone's save ("save"):
+ * the same link either way, said as what it is for. Saving always opens in
+ * Create sheet, where the words can be added to.
+ */
+async function openShare(mode = SAVE_LINK ? "save" : "share") {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
   if (idsBlock()) return;
-  $("#share-native").hidden = !navigator.share;
+  const save = mode === "save";
+  for (const [el, key] of [
+    [$("#share-title"), save ? "shSaveLink" : "shShare"],
+    [$("#share-lead"), save ? "shSaveLinkLead" : "shShareLead"],
+  ]) {
+    el.dataset.i18n = key;
+    el.innerHTML = t(key);
+  }
+  $("#share-choice").hidden = save;
+  if (save) $("#share-deck").checked = false;
+  const native = Boolean(navigator.share);
+  $("#share-native").hidden = !native;
+  // Where the phone can send it, sending it is the save: first and filled.
+  const sendFirst = save && native;
+  $("#share-native").className = sendFirst ? "btn big" : "toolbtn";
+  $("#share-copy").className = sendFirst ? "toolbtn" : "btn big";
+  $("#share-native").style.order = sendFirst ? "-1" : "";
   await paintShare();
   $("#sharebox").showModal();
-  $("#share-copy").focus();
+  (sendFirst ? $("#share-native") : $("#share-copy")).focus();
 }
 
 async function copyShare() {
@@ -2111,6 +2199,7 @@ async function copyShare() {
     $("#share-url").select();
     if (!document.execCommand?.("copy")) return toast(t("edCopyFailed"), "bad");
   }
+  markFiled("link");
   $("#share-copy").querySelector("[data-i18n]").textContent = t("shCopied");
   setTimeout(() => {
     const label = $("#share-copy [data-i18n]");
@@ -2621,7 +2710,8 @@ $("#savemore").addEventListener("click", () => {
 $("#rail-deck").addEventListener("click", toDeck);
 $("#save-csv").addEventListener("click", saveCsv);
 $("#save-xlsx").addEventListener("click", saveXlsx);
-$("#share").addEventListener("click", openShare);
+$("#share").addEventListener("click", () => openShare());
+$("#devnote-close").addEventListener("click", () => ($("#devnote").hidden = true));
 $("#share-deck").addEventListener("change", paintShare);
 $("#vocab-lang").addEventListener("change", (e) => {
   vocabChoice.lang = e.target.value;
@@ -2637,6 +2727,8 @@ $("#share-copy").addEventListener("click", copyShare);
 $("#share-native").addEventListener("click", async () => {
   try {
     await navigator.share({ title: sheet.title || "SheetCards", url: $("#share-url").value });
+    markFiled("link");
+    toast(t("shLinkKept"), "ok");
   } catch {
     // Dismissed: nothing to say.
   }
@@ -3083,7 +3175,8 @@ async function arrive() {
           no: t("shKeep"),
         }));
       if (replace) {
-        begin(shared);
+        // Opened from the link it was saved in: kept, until it changes.
+        begin(shared, { filed: toTsv(exportGrid(shared)), how: "link" });
         toast(t("shOpened", shared.title || fileBase(), wordCount()), "ok");
         return;
       }
@@ -3095,11 +3188,13 @@ async function arrive() {
       col: draft.col ?? 0,
       view: draft.view === "look" ? "look" : "rows",
       filed: typeof draft.filed === "string" ? draft.filed : null,
+      how: draft.how === "link" ? "link" : "file",
     });
   }
   else setStage("empty");
 }
 
+wireSave();
 paintIcons();
 paintChrome();
 mountInAppBanner({ t, icon });
