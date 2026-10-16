@@ -91,6 +91,10 @@
 
 .cr {
   max-width: var(--site-wrap); margin: 0 auto;
+  /* The ruling behind step 1 reaches 50vw past its column on either side;
+     without this it widens the page, and a trackpad scrolls it sideways. Clip,
+     not hidden: hidden would make this a scroll box and unstick the sticky bars. */
+  overflow-x: clip;
   padding: 0 var(--pad) 0;
   padding-left: max(var(--pad), env(safe-area-inset-left));
   padding-right: max(var(--pad), env(safe-area-inset-right));

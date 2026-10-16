@@ -34,6 +34,27 @@ const STRINGS = {
   docsTag: { en: "docs", vi: "docs" },
   skipMain: { en: "Skip to the content", vi: "Tới nội dung chính" },
 
+  // --- what the browser tab says ------------------------------------------
+  // In the reader's language like the rest of the page, and on Create deck the
+  // loaded sheet's name first: that is what tells two open tabs, or two entries
+  // in the history, apart.
+  titleHome: {
+    en: "SheetCards — Anki decks from Google Sheets, right on your phone",
+    vi: "SheetCards — tạo deck Anki từ Google Sheets ngay trên điện thoại",
+  },
+  titleCreate: {
+    en: "SheetCards — Create deck: Anki decks from Google Sheets",
+    vi: "SheetCards — Create deck: deck Anki từ Google Sheets",
+  },
+  titleDeck: { en: (name) => `${name} — Create deck · SheetCards`, vi: (name) => `${name} — Create deck · SheetCards` },
+  titleEditor: { en: "SheetCards — settings row editor", vi: "SheetCards — editor cho settings row" },
+  title404: { en: "Page not found — SheetCards", vi: "Không tìm thấy trang — SheetCards" },
+  notFoundTitle: { en: "This page doesn't exist", vi: "Không có trang này" },
+  notFoundBody: {
+    en: "The link may be old or mistyped. Everything SheetCards has is one of the pages below.",
+    vi: "Có thể link đã cũ hoặc gõ nhầm. Mọi thứ của SheetCards đều nằm ở các trang dưới đây.",
+  },
+
   // --- the landing page ---------------------------------------------------
   // Written for somebody who has never used an add-on: what it does, the one
   // file to download, the three steps that get it into Anki, and nothing else.
@@ -842,6 +863,14 @@ const STRINGS = {
   homeStashFailed: {
     en: "This browser would not keep the file for the next page. Open Create deck and upload it there.",
     vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở Create deck và upload ở đó.",
+  },
+  badFileType: {
+    en: (name) => `“${name}” is not a spreadsheet. SheetCards reads .xlsx, .xlsm, .csv and .tsv files.`,
+    vi: (name) => `“${name}” không phải file bảng tính. SheetCards đọc được file .xlsx, .xlsm, .csv và .tsv.`,
+  },
+  noIdColumn: {
+    en: "This sheet has no ID column. Row 1 needs a column named ID, with a different value in each row below it.",
+    vi: "Sheet này chưa có cột ID. Dòng 1 cần một cột tên ID, mỗi dòng bên dưới ghi một giá trị khác nhau.",
   },
   homeRuns: {
     en: "Runs in your browser · Android, iPhone, computer",

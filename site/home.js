@@ -264,8 +264,11 @@ async function sendFile(file) {
 
 $("#quick").addEventListener("submit", (e) => {
   e.preventDefault();
-  const link = $("#q-url").value.trim();
+  let link = $("#q-url").value.trim();
   if (!link) return quickError("homeNoLink");
+  // Typed or copied without its https:// — "docs.google.com/spreadsheets/…" is
+  // a link to anybody reading it, so it is one here too.
+  if (/^[\w-]+(\.[\w-]+)+\/\S*$/.test(link)) link = "https://" + link;
   if (!/^https?:\/\/\S+$/i.test(link)) return quickError("homeNotLink");
   location.href = "./create.html?url=" + encodeURIComponent(link);
 });

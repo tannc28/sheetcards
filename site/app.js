@@ -263,9 +263,19 @@ function setStage(stage) {
   $("#skeleton").hidden = stage !== "loading";
   $("#loadline").hidden = stage !== "loading";
   if (stage === "empty") $("#toast").hidden = true;
+  paintTitle();
   paintRail();
   placeDeckPanel();
   placeSheetView();
+}
+
+/** The browser tab: the sheet's name once there is one, so two open tabs — or
+ *  two entries in the history — can be told apart. */
+function paintTitle() {
+  document.title =
+    state.stage === "review" && state.deckName
+      ? t("titleDeck", state.deckName.split("::").pop())
+      : t("titleCreate");
 }
 
 /** The step rail: what is done, what is now, what is next. */
@@ -397,6 +407,10 @@ async function boot() {
 function pythonMessage(err) {
   const lines = String(err?.message || err).trimEnd().split("\n");
   const last = lines[lines.length - 1].trim();
+  // A sheet with no ID column is the commonest first mistake there is, and the
+  // parser's sentence for it is English and names a "mandatory header". Said
+  // as what to do about it instead.
+  if (/Mandatory header missing: 'ID'/.test(last)) return t("noIdColumn");
   return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
 }
 
@@ -513,6 +527,15 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   state.column = null;
   setStage("review");
   render();
+  // The button that started this is gone with the form (and a side panel shown
+  // beside the card takes focus for itself), so focus would otherwise fall back
+  // to the top of the page; the card is where the next key press belongs. Not
+  // on arrival from an address: nobody pressed anything, and a ring round Show
+  // Answer would be the first thing on screen.
+  const at = document.activeElement;
+  if (fromPage && !keepRow && (!at || at === document.body || at.closest("#entry, #deckpanel"))) {
+    $("#flip").focus({ preventScroll: true });
+  }
 
   const s = state.analysis.stats;
   status(
@@ -585,7 +608,10 @@ function noteSource(name) {
 }
 
 async function preview({ again = false } = {}) {
-  const input = $("#url").value.trim();
+  let input = $("#url").value.trim();
+  // A link without its https:// is still a link (and fetched without one, it
+  // would be read as a path on this site).
+  if (/^[\w-]+(\.[\w-]+)+\/\S*$/.test(input)) input = "https://" + input;
   if (!input) {
     fieldError(t("emptyLink"));
     $("#url").focus();
@@ -649,12 +675,14 @@ async function preview({ again = false } = {}) {
     const isDemo = input === DEMO_SHEET;
     $("#demo-note").hidden = !isDemo;
     const url = new URL(location.href);
-    if (isDemo) url.searchParams.delete("url");
-    else {
+    if (isDemo) {
+      url.searchParams.delete("url");
+      url.hash = "#example";
+    } else {
       url.searchParams.set("url", input);
       url.hash = "";
     }
-    history.replaceState(null, "", url);
+    rememberDeck(url);
 
     showUpload(at ?? (isDemo ? demoTab(upload.bytes) : 0), { keepRow: again });
   } catch (err) {
@@ -778,6 +806,19 @@ function showUpload(index, { keepRow = false } = {}) {
   }
 }
 
+// What the file picker offers; a file dropped on the page is held to the same.
+const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
+
+/** A file picked or dropped here: read once Python is ready, if it is one. */
+function openFile(file) {
+  // Said before anything is read or queued: the parser's answer for a PDF is a
+  // complaint about a missing ID column, which sends the reader looking in the
+  // wrong place. A deck already on screen stays there under the toast.
+  if (!FILE_TYPES.test(file.name)) return status(t("badFileType", file.name), "bad");
+  fromPage = true;
+  whenReady(() => previewFile(file));
+}
+
 async function previewFile(file) {
   setStage("loading");
   $("#source").textContent = file.name;
@@ -803,7 +844,7 @@ async function previewFile(file) {
   const url = new URL(location.href);
   url.searchParams.delete("url");
   url.hash = "";
-  history.replaceState(null, "", url);
+  rememberDeck(url);
   $("#demo-note").hidden = true;
   $("#url").value = "";
   // The link it complained about is gone, so the complaint goes with it.
@@ -811,6 +852,69 @@ async function previewFile(file) {
 
   showUpload(0);
 }
+
+// ---- the browser's Back button ---------------------------------------------
+//
+// The form and the deck are two screens to whoever is looking at them, so Back
+// from a deck loaded on this page goes back to the form it was loaded from —
+// with the link still in it — rather than off the site, and Forward brings the
+// same deck back. A deck that arrived in the address (from the landing page, a
+// bookmark, a shared link) replaces the entry instead: Back from there goes
+// where the reader came from, not to an empty form they never saw.
+
+/** True while a load was started by something done on this page. */
+let fromPage = false;
+/** Which history entry the deck in memory belongs to. */
+let shownKey = 0;
+
+function rememberDeck(url) {
+  const was = history.state?.deck ? history.state : null;
+  if (fromPage && !was) {
+    shownKey = Date.now();
+    history.pushState({ deck: "pushed", key: shownKey }, "", url);
+  } else {
+    shownKey = was?.key || Date.now();
+    history.replaceState({ deck: was?.deck || "replaced", key: shownKey }, "", url);
+  }
+}
+
+/** The link form, with whatever link was last in it. */
+function showForm({ focus = true } = {}) {
+  // Whatever was waiting for Python is no longer what is wanted.
+  pending = null;
+  booting.queued = false;
+  setStage("empty");
+  bootStatus();
+  if (focus) {
+    $("#url").focus();
+    $("#url").select();
+  }
+}
+
+/** Starts the load the address asks for, if it asks for one. */
+function loadFromAddress() {
+  const asked = new URLSearchParams(location.search).get("url");
+  if (asked) $("#url").value = asked;
+  else if (location.hash === "#example") $("#url").value = DEMO_SHEET;
+  else return false;
+  fromPage = false;
+  submit();
+  return true;
+}
+
+addEventListener("popstate", (e) => {
+  // A same-page anchor (the skip link) is an entry too, and not a screen.
+  if (!e.state && location.hash && location.hash !== "#example") return;
+  if (e.state?.deck) {
+    if (e.state.key === shownKey && state.analysis) {
+      setStage("review");
+      render();
+    } else if (!loadFromAddress()) showForm({ focus: false });
+    return;
+  }
+  for (const dlg of document.querySelectorAll("dialog[open]:modal")) dlg.close();
+  showForm({ focus: false });
+});
 
 /** Starts a load from whatever the form says, now or once Python is ready. */
 function submit() {
@@ -1473,6 +1577,7 @@ function paintStatic() {
       `<button data-lang="${l.code}" class="${lang() === l.code ? "on" : ""}"` +
       ` aria-pressed="${lang() === l.code}">${l.label}</button>`,
   ).join("");
+  paintTitle();
   paintRail();
 }
 
@@ -1934,6 +2039,7 @@ document.addEventListener("click", (e) => {
 // key on a phone.
 $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
+  fromPage = true;
   submit();
 });
 
@@ -1962,18 +2068,22 @@ if (navigator.clipboard?.readText) {
 $("#example").addEventListener("click", () => {
   $("#url").value = DEMO_SHEET;
   fieldError("");
+  fromPage = true;
   submit();
 });
 
 $("#reload").addEventListener("click", reload);
 $("#change").addEventListener("click", () => {
-  // Whatever was waiting for Python is no longer what is wanted.
-  pending = null;
-  booting.queued = false;
-  setStage("empty");
-  bootStatus();
-  $("#url").focus();
-  $("#url").select();
+  // The form is the screen before this one when the deck was loaded from it, so
+  // this is Back; otherwise the form becomes a screen of its own, and Back from
+  // it returns to the deck.
+  if (history.state?.deck === "pushed") {
+    history.back();
+    showForm();
+    return;
+  }
+  history.pushState(null, "", location.pathname);
+  showForm();
 });
 
 $("#open-deck").addEventListener("click", openDeckPanel);
@@ -2027,7 +2137,7 @@ $("#file").addEventListener("change", (e) => {
   // Cleared so that choosing the same file twice fires a change event again —
   // the obvious thing to do after editing it and wanting the new version.
   e.target.value = "";
-  if (file) whenReady(() => previewFile(file));
+  if (file) openFile(file);
 });
 
 document.addEventListener("keydown", (e) => {
@@ -2062,7 +2172,7 @@ addEventListener("drop", (e) => {
   dragDepth = 0;
   $("#drop").hidden = true;
   const file = e.dataTransfer.files[0];
-  if (file && !$("#pick").disabled) whenReady(() => previewFile(file));
+  if (file && !$("#pick").disabled) openFile(file);
 });
 
 document.addEventListener("click", (e) => {
@@ -2090,13 +2200,15 @@ document.addEventListener("click", (e) => {
   }
   const rowEl = e.target.closest("[data-row]");
   if (rowEl) {
+    // Asked before render(), which replaces the list and leaves rowEl detached.
+    const inPanel = Boolean(rowEl.closest("#deckpanel"));
     state.row = Number(rowEl.dataset.row);
     state.template = 0;
     state.answered = false;
     render();
     // Picking a row is the moment you stop browsing and start reading: the
     // sheet goes away and the card comes to you.
-    if (rowEl.closest("#deckpanel") && !WIDE.matches) {
+    if (inPanel && !WIDE.matches) {
       closeDeckPanel();
       $("#stage").scrollIntoView({ block: "start" });
     }
@@ -2130,12 +2242,10 @@ paintStatic();
 
 // What the address asked for: a link (?url=, which the landing page and old
 // preview links forward here), the example (#example), or nothing — the form.
-const asked = new URLSearchParams(location.search).get("url");
-if (asked) $("#url").value = asked;
-else if (location.hash === "#example") $("#url").value = DEMO_SHEET;
 setStage("empty");
-if ($("#url").value) submit();
-else if (location.hash === "#file") {
+if (loadFromAddress()) {
+  // On its way; the queue in whenReady() runs it once Python is up.
+} else if (location.hash === "#file") {
   // A file picked on the landing page, handed over through IndexedDB. The hash
   // goes at once: it names a one-off delivery, not something to come back to.
   history.replaceState(null, "", location.pathname);
