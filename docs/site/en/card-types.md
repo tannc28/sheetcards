@@ -19,8 +19,10 @@ r01      đọc          to read
 ```
 
 gives one card asking `đọc` and one asking `to read`. Both are scheduled
-separately, from the same row. Remove `reverse` later and those second cards go
-away without touching your content. Cloze sheets cannot have reverse cards, and a
+separately, from the same row. Remove `reverse` later: with the add-on, those second cards go away on the next
+sync; with an `.apkg`, import it as usual (no Merge note types needed), then in
+desktop Anki run **Tools → Empty Cards** to delete the old reverse cards. Your
+content is not touched. Cloze sheets cannot have reverse cards, and a
 card with nothing on one of its sides gets none either.
 
 ## Cloze

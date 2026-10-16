@@ -19,8 +19,10 @@ r01      đọc          to read
 ```
 
 cho một card hỏi `đọc` và một card hỏi `to read`. Hai card được lên lịch review
-riêng, từ cùng một dòng. Sau này bỏ `reverse` đi thì các card thứ hai đó biến mất
-mà không đụng tới nội dung của bạn. Sheet cloze không có reverse card, và card nào
+riêng, từ cùng một dòng. Sau này bỏ `reverse` đi: với add-on, các card thứ hai tự biến mất khi sync; với
+file `.apkg`, import bình thường (không cần Merge note types) rồi trong Anki trên
+máy tính chọn **Tools → Empty Cards** để xoá các card ngược cũ. Nội dung của bạn
+không bị đụng tới. Sheet cloze không có reverse card, và card nào
 có một mặt trống cũng không có.
 
 ## Cloze

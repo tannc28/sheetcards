@@ -51,9 +51,12 @@ A deck is named after the spreadsheet file and the sheet: `sc_<file>::<sheet>`,
 and its note types `SheetCards - <deck> - Basic` and `- Cloze`. When you rename
 the spreadsheet file, the next sync renames the deck and note types to match.
 
-`name=` and `next=` in the [settings row](settings-row.md) are for the `.apkg`
-that Sheet to Anki and Create sheet make. The add-on accepts and ignores them:
-its deck is always named `sc_<file>::<sheet>`, and notes are still matched by `ID`.
+When a sheet has `name=` in its [settings row](settings-row.md), the add-on uses
+exactly that as the deck name, as Sheet to Anki's `.apkg` does. **To make the
+add-on and the `.apkg` one deck (say, the `.apkg` on a phone and the add-on on a
+computer), set `name=` in the settings row.** Both then recognise the same notes,
+with no duplicates. A sheet without `name=` that is its file's only sheet is named
+after the file; decks the add-on connected earlier keep `sc_<file>::<sheet>`.
 
 **Renaming a SheetCards deck or note type inside Anki does not last**: the next
 sync renames it back. Rename the spreadsheet instead.
