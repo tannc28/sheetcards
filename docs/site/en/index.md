@@ -11,7 +11,7 @@ There are two ways to get the deck into Anki:
 
 - **Sheet to Anki**, on this website: paste the sheet's link, check the cards,
   download an `.apkg` and open it in Anki. It works on a phone or a computer,
-  with nothing to install.
+  with no add-on to install — only the Anki app to study with.
 - **The add-on**, on a computer: connect the sheet once, and from then on one
   shortcut syncs whatever changed.
 
@@ -19,10 +19,19 @@ This page takes you from an empty sheet to cards you can study.
 
 ## What you need
 
-- **A Google account**, only to write the sheet. SheetCards reads it without
+- **The Anki app, to study.** SheetCards makes the `.apkg` file; studying happens
+  in Anki. Install one of three:
+  [AnkiDroid](https://play.google.com/store/apps/details?id=com.ichi2.anki) on
+  Android (free),
+  [AnkiMobile](https://apps.apple.com/app/ankimobile-flashcards/id373493387) on
+  iPhone/iPad (**paid**, one-time, US$24.99 in the US in October 2026), or
+  [Anki](https://apps.ankiweb.net/) on a computer (free). SheetCards itself is
+  free.
+- **A Google account**, only if you write in Google Sheets. Writing in
+  [Create sheet](../../sheet.html) needs nothing. SheetCards reads a sheet without
   signing in.
-- **Anki** anywhere: AnkiDroid, AnkiMobile, or Anki 25.x or later on a computer.
-  The add-on is only for the second way, and needs the computer.
+- The add-on is only for the second way, and needs Anki 25.x or later on a
+  computer.
 
 ## 1. Make a sheet
 
@@ -65,17 +74,25 @@ has a button that downloads exactly this file.
 
 ### Writing it in Create sheet: two steps
 
-Create sheet splits a sheet into two steps. **① Template**: the column names and
-the settings row, which is how the cards look, with the card previewed beside
-them. **② Cards**: add, edit and delete words. Picking a ready template
+Create sheet splits a sheet into two steps. **① Columns & card**: the column
+names and the settings row (row 2 of the sheet, where each cell says how that
+column shows on the card), with the card previewed beside them. **② Cards**: add, edit and delete words. Picking a ready template
 (Vocabulary, Vocabulary + picture, Both ways, Type the answer, one per theme…)
 goes straight to step 2; *Custom* starts at step 1. A sheet you already have
 (`.xlsx` or `.csv`) can be kept as a template too, under *Your templates*, in
 this browser only.
 
-The draft lives only in the browser, so press **Save .csv**. Next time, **Open a
-file to add words**, on a phone too, and carry on; the old words keep their IDs,
-so re-importing the `.apkg` updates the notes and keeps your review progress.
+The draft lives only in the browser (and Safari on an iPhone deletes it after 7
+days without a visit), so save the sheet:
+
+- **On a phone: press Save sheet link.** The whole sheet is in that link. Keep
+  it (send it to yourself in Zalo or Notes). Next time: open the link → add words
+  → Make flashcards. Added words? Save a new link; the old one opens the old
+  sheet.
+- **On a computer: press Save .csv.** Next time, **Open a file to add words**.
+
+The old words keep their IDs, so re-importing the `.apkg` updates the notes and
+keeps your review progress.
 
 ## 2. Share it
 
@@ -100,6 +117,18 @@ Importing the same sheet again later updates those notes instead of duplicating
 them, but it cannot delete one: a row you remove from the sheet stays in Anki
 until you delete it there. [Sheets, files and .apkg](sources.md) has the
 details.
+
+## Next week: adding words
+
+1. Open the sheet again: the sheet link you saved, the `.csv` (with **Open a file
+   to add words** in Create sheet — on Android, not from the Files app, where
+   AnkiDroid would import the CSV straight into junk notes), or your Google Sheet.
+2. Add the words. Leave the **flashcard set's name** alone: it is how Anki
+   recognises the deck.
+3. Press **Make flashcards**, download the new `.apkg` and import it. Your old
+   cards are updated, their progress kept, nothing doubled.
+
+Something off? See [FAQ: on a phone](faq.md#on-a-phone).
 
 ## Or: sync automatically from a computer
 

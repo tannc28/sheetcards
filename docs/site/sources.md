@@ -85,7 +85,7 @@ cách giữ tiến độ.
 
 [Tạo Sheet](../sheet.html) là chỗ soạn cả một sheet ngay trên web, không cần
 Google Sheets: tên cột, [settings row](settings-row.md) và từng từ. Bắt đầu từ
-một mẫu (trống, từ vựng tiếng Anh, Kanji, Cloze) hoặc mở một file `.xlsx`/`.csv`
+một template (Mặt trước / Mặt sau, Học từ vựng, Tùy chỉnh, và các template khác) hoặc mở một file `.xlsx`/`.csv`
 có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google
 Sheets là thêm từ. Trên điện thoại mỗi từ mở ra thành một form, mỗi cột một ô.
 Setting được chọn từ danh sách, và card của từ đang sửa hiện ngay bên cạnh.
@@ -98,4 +98,6 @@ Bản nháp được lưu trong trình duyệt sau mỗi thay đổi. Từ đó 
 - **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
   máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
   cũng mở thẳng được thành card trong Sheet to Anki. Link rất dài có thể bị vài app
-  chat cắt bớt, khi đó hãy gửi file.
+  chat cắt bớt, khi đó hãy gửi file. **Trên điện thoại, nút này là Lưu link
+  sheet và là cách lưu chính**: giữ link (gửi cho chính bạn), lần sau mở link là
+  thêm từ tiếp được. Trên máy tính, cách lưu chính là file `.csv`.

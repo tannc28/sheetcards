@@ -104,6 +104,57 @@ update and add but never delete. Syncing with the add-on does delete.
 That is on purpose: an unticked row is left as it is and stops being updated.
 Delete the row to delete the card.
 
+## On a phone
+
+**Download gives no file, or the page says "Open this page in Chrome/Safari".**
+You are in an app's built-in browser (Zalo, Messenger, Facebook, Instagram,
+TikTok, Line…), which cannot save files. Press **Copy link** on the banner and
+paste it into Chrome or Safari; on Android press **Open in Chrome**. Or open the
+app's menu (the three dots) and choose to open in a browser.
+
+**Chrome on Android saves the file as `….apkg.zip` and AnkiDroid won't open it.**
+The file is fine; it only gained a `.zip`. Open the **Files** app, long-press the
+file → **Rename**, delete the `.zip` so the name ends in `.apkg`, then tap it and
+pick AnkiDroid. Or, in AnkiDroid: menu → **Import** → choose the file.
+
+**On an iPhone, AnkiMobile is not in the Share sheet.**
+Open AnkiMobile once first (it has to be installed and opened at least once). In
+the **Files** app, tap the `.apkg` → **Share**, scroll the row of apps to
+**More** and turn AnkiMobile on. AnkiMobile is Anki's paid app; if you have not
+bought it, it is not on the phone.
+
+**My cards doubled after importing again.**
+Anki updates the old notes only when the new file is recognised as the same deck.
+A deck is recognised by the **flashcard set's name** (`name=` in the settings
+row's `#config` cell); a sheet without one goes by its Google Sheets link, then
+by its file name. Renaming the set, or an old unnamed sheet whose file was
+renamed, makes a new deck. To fix it, delete the extra deck in Anki (keep the one
+with your review history), and keep the set's name the same from then on. Create
+sheet always asks for the name, and offers to write it into an old sheet that has
+none. See [Sheets, files and .apkg](sources.md#download-an-apkg).
+
+**The import changed nothing.**
+You added or renamed a column or turned on `reverse`, so the note type changed,
+and with the default options Anki skips every note. Import the same file again
+with **Merge note types** on and **Update notes** set to **Always**. Sheet to
+Anki says so just before the download too.
+
+**Words I deleted from the sheet are still in Anki.**
+Importing an `.apkg` adds and updates; it never deletes. Delete them in Anki:
+**Browse**, find the word, **Delete**. The add-on on a computer syncs deletions.
+
+**I saved a `.csv` on Android, tapped it, and AnkiDroid imported strange notes.**
+AnkiDroid accepts CSV files too and turns every row into a note, the settings
+row included. Delete those notes in AnkiDroid, and next time open the `.csv` with
+**Open a file to add words** in Create sheet. On a phone, **Save sheet link** is
+easier than a file.
+
+**My draft in Create sheet disappeared.**
+The draft lives only in the browser, and Safari on an iPhone deletes a site's
+data after 7 days without a visit. Save the sheet with **Save sheet link** (on a
+phone) or **Save .csv** (on a computer); adding the page to the Home Screen
+(**Share → Add to Home Screen**) makes it one tap away.
+
 ## Anything else
 
 Turn on **Write a debug log** in **Settings…** (`Ctrl+Shift+O`), do whatever went

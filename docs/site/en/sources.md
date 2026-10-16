@@ -87,7 +87,7 @@ your progress.
 
 [Create sheet](../../sheet.html) writes a whole sheet right on the web, no
 Google Sheets needed: the column names, the [settings row](settings-row.md) and
-every word. Start from a template (blank, English vocab, Kanji, Cloze) or open an
+every word. Start from a template (Front / Back, Vocabulary, Custom, and more) or open an
 `.xlsx`/`.csv` you already have. On a computer it is a spreadsheet: pasting rows
 from Excel or Google Sheets adds words. On a phone each word opens as a form, one
 field per column. Settings are picked from a list, and the card for the word you
@@ -102,4 +102,7 @@ The draft is saved in the browser after every change. There are three ways out:
 - **Share link**: the whole sheet is compressed into the link itself (after the
   `#`) and sent to no server. Whoever opens it sees that sheet and edits their
   own copy; the link can also open straight as cards in Sheet to Anki. Some chat
-  apps cut very long links short; send the file instead.
+  apps cut very long links short; send the file instead. **On a phone this
+  button is Save sheet link, and it is the main save**: keep the link (send it to
+  yourself) and open it next time to add words. On a computer the main save is
+  the `.csv`.

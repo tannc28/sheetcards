@@ -11,7 +11,7 @@ Có hai cách đưa deck vào Anki:
 
 - **Sheet to Anki**, ngay trên website này: dán link sheet, kiểm tra các card, tải
   file `.apkg` về rồi mở bằng Anki. Dùng được trên điện thoại hoặc máy tính,
-  không cần cài gì.
+  không cần cài add-on — chỉ cần app Anki để học.
 - **Add-on**, trên máy tính: kết nối sheet một lần, từ đó về sau chỉ một phím tắt
   là sync mọi thay đổi.
 
@@ -19,10 +19,18 @@ Trang này đưa bạn từ một sheet trống tới những card có thể h�
 
 ## Bạn cần gì
 
-- **Một tài khoản Google**, chỉ để soạn sheet. SheetCards đọc sheet mà không cần
-  đăng nhập.
-- **Anki** ở đâu cũng được: AnkiDroid, AnkiMobile, hoặc Anki 25.x trở lên trên
-  máy tính. Add-on chỉ dùng cho cách thứ hai và cần máy tính.
+- **App Anki, để học.** SheetCards làm ra file `.apkg`; học và ôn bài diễn ra
+  trong Anki. Cài một trong ba app:
+  [AnkiDroid](https://play.google.com/store/apps/details?id=com.ichi2.anki)
+  trên Android (miễn phí),
+  [AnkiMobile](https://apps.apple.com/app/ankimobile-flashcards/id373493387)
+  trên iPhone/iPad (**trả phí** một lần, 799.000đ ở Việt Nam vào tháng 10/2026), hoặc
+  [Anki](https://apps.ankiweb.net/) trên máy tính (miễn phí). SheetCards thì
+  miễn phí.
+- **Một tài khoản Google**, chỉ khi bạn soạn trong Google Sheets. Soạn bằng
+  [Tạo Sheet](../sheet.html) thì không cần gì cả. SheetCards đọc sheet mà không
+  cần đăng nhập.
+- Add-on chỉ dùng cho cách thứ hai và cần Anki 25.x trở lên trên máy tính.
 
 ## 1. Tạo sheet
 
@@ -63,16 +71,24 @@ cũng có nút tải đúng file này về.
 
 ### Soạn trong Tạo Sheet: hai bước
 
-Tạo Sheet chia sheet làm hai bước. **① Template**: tên cột và settings row,
-tức là card trông ra sao, có card xem trước ngay bên cạnh. **② Thẻ**: thêm, sửa,
+Tạo Sheet chia sheet làm hai bước. **① Cột & card**: tên cột và settings row
+(dòng 2 của sheet, mỗi ô ghi cột đó hiện thế nào trên card), có card xem trước
+ngay bên cạnh. **② Thẻ**: thêm, sửa,
 xoá từ. Chọn một template có sẵn (Học từ vựng, Từ vựng + ảnh, Hai chiều, Gõ đáp
 án, mỗi theme một kiểu…) là vào thẳng bước 2; *Tùy chỉnh* bắt đầu từ bước 1.
 Một sheet bạn đã có (`.xlsx` hoặc `.csv`) cũng lưu được làm template, ở mục
 *Template của bạn*, chỉ trong trình duyệt này.
 
-Bản nháp chỉ nằm trong trình duyệt, nên hãy bấm **Lưu file .csv**. Lần sau bấm
-**Mở file để thêm từ**, kể cả trên điện thoại, là thêm từ tiếp; ID của từ cũ giữ
-nguyên, nên import lại file `.apkg` sẽ cập nhật note và giữ tiến độ ôn.
+Bản nháp chỉ nằm trong trình duyệt (và Safari trên iPhone xoá nó sau 7 ngày
+không mở trang), nên hãy lưu sheet:
+
+- **Trên điện thoại: bấm Lưu link sheet.** Cả sheet nằm trong link đó. Giữ link
+  này (gửi cho chính bạn qua Zalo/Ghi chú). Lần sau mở link → thêm từ → Tạo
+  flashcard. Thêm từ rồi thì lưu link mới, vì link cũ mở bản cũ.
+- **Trên máy tính: bấm Lưu file .csv.** Lần sau bấm **Mở file để thêm từ**.
+
+ID của từ cũ giữ nguyên, nên import lại file `.apkg` sẽ cập nhật note và giữ
+tiến độ ôn.
 
 ## 2. Chia sẻ sheet
 
@@ -97,6 +113,17 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 Sau này import lại cùng sheet đó sẽ cập nhật các note chứ không nhân đôi, nhưng
 không xoá được: dòng bạn bỏ khỏi sheet vẫn nằm trong Anki cho tới khi bạn tự xoá
 nó ở đó. Xem chi tiết ở [Sheet, file và .apkg](sources.md).
+
+## Tuần sau: thêm từ
+
+1. Mở lại sheet: link sheet bạn đã lưu, file `.csv` (bằng **Mở file để thêm từ**
+   trong Tạo Sheet — trên Android đừng chạm vào nó trong app Files, kẻo AnkiDroid
+   import thẳng file CSV thành note rác), hoặc Google Sheet của bạn.
+2. Thêm từ. Đừng đổi **Tên bộ flashcard**: đó là thứ giúp Anki nhận ra deck cũ.
+3. Bấm **Tạo flashcard**, tải file `.apkg` mới và import. Card cũ được cập nhật,
+   tiến độ ôn giữ nguyên, không nhân đôi.
+
+Có trục trặc? Xem [FAQ: trên điện thoại](faq.md#tren-dien-thoai).
 
 ## Hoặc: sync tự động từ máy tính
 

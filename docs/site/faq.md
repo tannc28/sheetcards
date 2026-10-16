@@ -103,6 +103,58 @@ nhật và thêm mới nhưng không bao giờ xoá. Sync bằng add-on thì có
 Đó là cố ý: dòng không được tick sẽ được giữ nguyên và ngừng cập nhật. Muốn xoá
 card thì xoá dòng.
 
+## Trên điện thoại
+
+**Bấm Download mà không có file nào, hoặc trang hiện báo "Mở trang này bằng
+Chrome/Safari".**
+Bạn đang mở trang trong trình duyệt riêng của một app (Zalo, Messenger,
+Facebook, Instagram, TikTok, Line…). Trình duyệt đó không lưu được file. Bấm
+**Copy link** trên thanh báo rồi dán vào Chrome hoặc Safari; trên Android bấm
+**Mở bằng Chrome**. Hoặc mở menu của app (dấu ba chấm) và chọn mở bằng trình
+duyệt.
+
+**Chrome trên Android lưu file thành `….apkg.zip` và AnkiDroid không mở được.**
+File vẫn nguyên vẹn, chỉ bị thêm đuôi `.zip`. Mở app **Files**, nhấn giữ file →
+**Rename**, xoá `.zip` ở cuối để tên kết thúc bằng `.apkg`, rồi chạm vào file và
+chọn AnkiDroid. Hoặc trong AnkiDroid: menu → **Import** → chọn file đó.
+
+**Trên iPhone, AnkiMobile không có trong danh sách Share.**
+Mở AnkiMobile một lần trước (app phải được cài và mở ít nhất một lần). Trong app
+**Files**, chạm vào file `.apkg` → **Share**, kéo dãy app sang phải tới
+**More** (Thêm) và bật AnkiMobile. AnkiMobile là app trả phí của Anki; nếu chưa
+mua thì nó không có trên máy.
+
+**Card của tôi bị nhân đôi sau khi import lại.**
+Anki chỉ cập nhật note cũ khi file mới được nhận ra là cùng một deck. Deck được
+nhận ra theo **Tên bộ flashcard** (`name=` ở ô `#config` của settings row); sheet
+không có tên thì theo link Google Sheets, rồi theo tên file. Đổi tên bộ, hay một
+sheet cũ không có tên mà file bị đổi tên, sẽ thành deck mới. Cách sửa: trong Anki
+xoá deck thừa (giữ deck có lịch sử ôn), rồi giữ nguyên tên bộ ở mọi lần sau.
+Tạo Sheet luôn hỏi tên này và đề nghị ghi nó vào một sheet cũ chưa có. Xem
+[Sheet, file và .apkg](sources.md#tai-ve-mot-file-apkg).
+
+**Import xong mà không có gì thay đổi.**
+Bạn đã thêm, đổi tên cột hay bật `reverse` nên note type đã đổi, và với tuỳ chọn
+mặc định Anki bỏ qua mọi note. Import lại file đó, lần này bật **Merge note
+types** và đặt **Update notes** thành **Always**. Sheet to Anki cũng nhắc việc này
+ngay trước khi tải.
+
+**Từ đã xoá khỏi sheet vẫn còn trong Anki.**
+Import `.apkg` chỉ thêm và cập nhật, không bao giờ xoá. Muốn bỏ thì xoá trong
+Anki: **Browse**, tìm từ đó, **Delete**. Add-on trên máy tính thì sync cả việc
+xoá.
+
+**Tôi lưu file `.csv` trên Android, chạm vào nó và AnkiDroid import một mớ note lạ.**
+AnkiDroid nhận cả file CSV và import từng dòng thành note, kể cả settings row.
+Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file để thêm
+từ** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
+
+**Bản nháp trong Tạo Sheet biến mất.**
+Bản nháp chỉ nằm trong trình duyệt, và Safari trên iPhone xoá dữ liệu của trang
+sau 7 ngày không mở. Lưu sheet bằng **Lưu link sheet** (điện thoại) hoặc **Lưu
+file .csv** (máy tính); thêm trang vào màn hình chính (**Share → Add to Home
+Screen**) để mở lại nhanh.
+
 ## Những vấn đề khác
 
 Bật **Write a debug log** trong **Settings…** (`Ctrl+Shift+O`), làm lại thao tác
