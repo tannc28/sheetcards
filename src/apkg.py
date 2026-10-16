@@ -121,11 +121,24 @@ def _stable_id(*parts):
 
     The *timestamps* deliberately do not follow suit: Anki only overwrites an
     existing note when the incoming one is newer, so ``mod`` comes from the clock.
-    Identity stable, modification time moving — exporting twice inside the same
-    second is the one case where the second import will find nothing to do.
+    Identity stable, modification time moving — and strictly moving (``_clock``),
+    so a second download in the same second still imports as newer.
     """
     digest = hashlib.sha1("::".join(str(p) for p in parts).encode("utf-8")).digest()
     return int.from_bytes(digest[:8], "big") & 0x7FFFFFFFFFFFFFFF
+
+
+# The last ``mod`` a package was stamped with in this process. Anki overwrites a
+# note only when the incoming one is *newer*, so two downloads inside one second
+# would leave the second import with nothing to do; each package is therefore at
+# least a second after the one before it.
+_LAST_NOW = [0]
+
+
+def _clock():
+    now = max(int(time.time()), _LAST_NOW[0] + 1)
+    _LAST_NOW[0] = now
+    return now
 
 
 def note_guid(sheet_id, row_id):
@@ -289,14 +302,24 @@ def _requirements(templates, fields):
     return req
 
 
-def _model(mid, name, fields, templates, is_cloze, now):
+def sort_index(fields, sheet_config):
+    """The field Anki lists and sorts notes by: the column marked ``sort``, else 0.
+
+    The same rule the add-on applies (templates_and_definitions.apply_sort_field),
+    so a package lists ``apple, book`` in the browser rather than ``w01, w02``.
+    """
+    header = getattr(sheet_config, "sort_field", None)
+    return fields.index(header) if header and header in fields else 0
+
+
+def _model(mid, name, fields, templates, is_cloze, now, sortf=0):
     return {
         "id": mid,
         "name": name,
         "type": MODEL_CLOZE if is_cloze else MODEL_STANDARD,
         "mod": now,
         "usn": -1,
-        "sortf": 0,
+        "sortf": sortf,
         "did": 1,
         "tmpls": [_template_entry(spec, i) for i, spec in enumerate(templates)],
         "flds": [_field_entry(name, i) for i, name in enumerate(fields)],
@@ -425,11 +448,12 @@ def build_package(
     """
     import sqlite3
 
-    now = int(now if now is not None else time.time())
+    now = int(now) if now is not None else _clock()
     is_cloze = bool(sheet_config.cloze_field)
     sheet_id, deck_name, keyed = resolve_identity(sheet_id, deck_name, sheet_config)
 
     fields = kept_fields(plan.note_type_fields(), previous_fields)
+    sortf = sort_index(fields, sheet_config)
     content = set(plan.content_headers)
     templates = build_templates(plan, sheet_config, is_cloze=is_cloze)
     model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
@@ -479,7 +503,7 @@ def build_package(
                 -1,
                 " " + " ".join(tags) + " " if tags else "",
                 FIELD_SEPARATOR.join(values),
-                _strip_html(values[0]),
+                _strip_html(values[sortf]),
                 _checksum(values[0]),
                 0,
                 "",
@@ -531,7 +555,11 @@ def build_package(
             11,
             json.dumps(_collection_config(mid)),
             json.dumps(
-                {str(mid): _model(mid, model_name, fields, templates, is_cloze, now)}
+                {
+                    str(mid): _model(
+                        mid, model_name, fields, templates, is_cloze, now, sortf
+                    )
+                }
             ),
             json.dumps(decks),
             json.dumps(_deck_config()),

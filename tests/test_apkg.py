@@ -529,3 +529,23 @@ col.close()
     assert out["next"]["updated"] == 1 and out["next"]["conflicting"] == 0
     assert out["note"]["Nghia"] == "N2"
     assert out["notes"] == 1
+
+
+@pytest.mark.unit
+class TestSortAndClock:
+    def test_the_sort_column_is_what_anki_lists_notes_by(self):
+        data = _package("ID\tWord\tMeaning\n#config\tsort\t\n1\tapple\tquả táo\n")
+        col, notes, _ = _collection(data)
+        model = next(iter(json.loads(col[1]).values()))
+        assert [f["name"] for f in model["flds"]][model["sortf"]] == "Word"
+        assert notes[0][3] == "apple"
+
+    def test_without_sort_it_is_the_first_field(self):
+        col, notes, _ = _collection(_package(BASIC))
+        assert next(iter(json.loads(col[1]).values()))["sortf"] == 0
+
+    def test_two_downloads_in_one_second_are_still_newer(self):
+        from src import apkg
+
+        stamps = [apkg._clock() for _ in range(3)]
+        assert stamps == sorted(set(stamps))
