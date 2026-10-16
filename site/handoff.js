@@ -11,6 +11,7 @@
 const DB = "sheetcards";
 const STORE = "handoff";
 const KEY = "file";
+const FROM = "from";
 
 function open() {
   return new Promise((resolve, reject) => {
@@ -39,18 +40,30 @@ function run(mode, work) {
   );
 }
 
-/** Keeps the file for the next page. Resolves once it is safely stored. */
-export function stashFile(file) {
-  return run("readwrite", (store) => store.put(file, KEY));
+/**
+ * Keeps the file for the next page. Resolves once it is safely stored.
+ *
+ * `from` names the page that left it ("sheet" for Create sheet), so Create deck
+ * can offer the way back to where the sheet is being written.
+ */
+export function stashFile(file, from = "") {
+  return run("readwrite", (store) => {
+    store.put(from, FROM);
+    return store.put(file, KEY);
+  });
 }
 
-/** The file the landing page left, or null; either way the slot is emptied. */
-export async function takeFile() {
+/** `{file, from}` as the last page left them, or a null file; the slot is emptied. */
+export async function takeHandoff() {
   try {
     const file = await run("readonly", (store) => store.get(KEY));
-    await run("readwrite", (store) => store.delete(KEY));
-    return file instanceof Blob ? file : null;
+    const from = await run("readonly", (store) => store.get(FROM));
+    await run("readwrite", (store) => {
+      store.delete(FROM);
+      return store.delete(KEY);
+    });
+    return { file: file instanceof Blob ? file : null, from: from || "" };
   } catch {
-    return null;
+    return { file: null, from: "" };
   }
 }

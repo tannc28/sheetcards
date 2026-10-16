@@ -69,6 +69,17 @@
 .rail li.done { color: var(--ink); }
 .rail li.done .rail-n { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .rail-t { max-width: 12ch; }
+/* A step that can be gone back to is a button: Create deck's first step once a
+   deck is up (it does what "Đổi link" does), Create sheet's second always. */
+.rail-go {
+  display: flex; flex-direction: inherit; align-items: center; gap: inherit;
+  color: inherit; font: inherit; border-radius: 10px; padding: 0 4px;
+}
+.rail-go:not(:disabled) { cursor: pointer; }
+.rail-go:not(:disabled):hover .rail-t { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.rail-go:not(:disabled):hover .rail-n { transform: scale(1.08); }
+.rail-go:disabled { opacity: 1; cursor: default; }
+.rail-go:focus-visible { outline-offset: 3px; }
 
 @media (min-width: 40rem) {
   .rail { padding-top: 22px; }
@@ -316,6 +327,7 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
   font-size: var(--t-sm); font-weight: 650; color: var(--accent);
 }
 .chgbtn:hover { background: var(--accent-soft); }
+a.chgbtn { text-decoration: none; }
 
 @media (min-width: 40rem) {
   .tabpick { order: 0; flex: 0 1 18rem; }
@@ -485,6 +497,12 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
    that has to scroll beats controls that cannot be reached. */
 .create { --chrome-h: 33rem; --card-fit: max(14rem, calc(100dvh - var(--chrome-h))); }
 @media (min-width: 40rem) { .create { --chrome-h: 29.5rem; } }
+/* Beside the deck panel the bars above the card include the example's note and
+   the bar below rides 14px up from the edge, so the counter under Show Answer
+   needs that much more room or the sticky download bar sits on top of it. */
+@media (min-width: 60rem) { .create { --chrome-h: 33rem; } }
+.create:has(#demo-note:not([hidden])) { --chrome-h: 36rem; }
+@media (max-width: 39.99rem) { .create:has(#demo-note:not([hidden])) { --chrome-h: 33rem; } }
 .nocard {
   display: grid; place-items: center; min-height: var(--card-min); padding: 2rem;
   color: var(--muted); text-align: center;

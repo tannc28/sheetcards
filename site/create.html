@@ -40,8 +40,8 @@
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" data-i18n="navHome">Home</a>
+    <a href="./sheet.html" data-i18n="navSheet">Create sheet</a>
     <a href="./create.html" aria-current="page" data-i18n="navPreview">Create deck</a>
-    <a href="./editor.html" data-i18n="navEditor">Editor</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
@@ -55,8 +55,8 @@
        cards, the cards before the file. Each says whether it is done, which is
        what a learner glancing at a phone needs from it. -->
   <ol class="rail" id="rail" aria-label="Các bước" data-i18n-attr="aria-label:railLabel">
-    <li data-step="1"><span class="rail-n" aria-hidden="true"><span>1</span></span><span
-        class="rail-t" data-i18n="crStep1">Dán link sheet</span></li>
+    <li data-step="1"><button type="button" class="rail-go" id="rail-back" disabled><span class="rail-n" aria-hidden="true"><span>1</span></span><span
+        class="rail-t" data-i18n="crStep1">Dán link sheet</span></button></li>
     <li data-step="2"><span class="rail-n" aria-hidden="true"><span>2</span></span><span
         class="rail-t" data-i18n="crStep2">Kiểm tra cards</span></li>
     <li data-step="3"><span class="rail-n" aria-hidden="true"><span>3</span></span><span
@@ -149,6 +149,8 @@
         <button class="iconbtn" id="reload" type="button" hidden
                 title="Tải lại sheet này" aria-label="Tải lại sheet này" data-i18n-attr="title:reloadLabel,aria-label:reloadLabel"><span
                 data-icon="rotate-cw"></span></button>
+        <a class="chgbtn" id="editsheet" href="./sheet.html" hidden><span
+                data-icon="pen-line"></span><span data-i18n="crEditSheet">Sửa sheet</span></a>
         <button class="chgbtn" id="change" type="button"><span
                 data-icon="link"></span><span data-i18n="changeSource">Đổi link</span></button>
       </span>

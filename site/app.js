@@ -18,7 +18,8 @@ import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
-import { takeFile } from "./handoff.js";
+import { takeHandoff } from "./handoff.js";
+import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 
@@ -287,6 +288,8 @@ function paintRail() {
     li.className = done ? "done" : n === now ? "now" : "";
     if (n === now && !done) li.setAttribute("aria-current", "step");
     else li.removeAttribute("aria-current");
+    const back = li.querySelector(".rail-go");
+    if (back) back.disabled = !(done && state.stage === "review");
     const mark = li.querySelector(".rail-n");
     mark.innerHTML = done ? icon("check") : `<span>${n}</span>`;
   }
@@ -574,7 +577,9 @@ function failed(message, { field = false, share = false } = {}) {
   fieldError(field ? message : "");
   // A private sheet is the commonest failure by far, and the fix is four clicks
   // in Google Sheets: show them, rather than describe them.
-  if (share) $("#sharehint").open = true;
+  // And put away again when the next failure is about something else: left open,
+  // it reads as the reason for a problem it has nothing to do with.
+  $("#sharehint").open = share;
   if (field) $("#url").focus();
 }
 
@@ -674,6 +679,7 @@ async function preview({ again = false } = {}) {
     // link into the address bar would only make that longer for no gain.
     const isDemo = input === DEMO_SHEET;
     $("#demo-note").hidden = !isDemo;
+    $("#editsheet").hidden = true;
     const url = new URL(location.href);
     if (isDemo) {
       url.searchParams.delete("url");
@@ -819,7 +825,13 @@ function openFile(file) {
   whenReady(() => previewFile(file));
 }
 
-async function previewFile(file) {
+/**
+ * @param {File} file
+ * @param {{hash?: string, edit?: string}} [from] where the file came from: a
+ *   shared link keeps its `#s=` in the address so a reload opens it again, and a
+ *   sheet written in Create sheet gets a way back to it (`edit`, an address).
+ */
+async function previewFile(file, { hash = "", edit = "" } = {}) {
   setStage("loading");
   $("#source").textContent = file.name;
   status(t("reading"), "", true);
@@ -843,9 +855,11 @@ async function previewFile(file) {
   // from a link would send the next person who opens it somewhere else entirely.
   const url = new URL(location.href);
   url.searchParams.delete("url");
-  url.hash = "";
+  url.hash = hash;
   rememberDeck(url);
   $("#demo-note").hidden = true;
+  $("#editsheet").hidden = !edit;
+  if (edit) $("#editsheet").href = edit;
   $("#url").value = "";
   // The link it complained about is gone, so the complaint goes with it.
   fieldError("");
@@ -2073,7 +2087,12 @@ $("#example").addEventListener("click", () => {
 });
 
 $("#reload").addEventListener("click", reload);
-$("#change").addEventListener("click", () => {
+$("#change").addEventListener("click", changeSource);
+// The rail's first step, once done, is the same way back: it is where a learner
+// looks for "start again with another sheet".
+$("#rail-back").addEventListener("click", changeSource);
+
+function changeSource() {
   // The form is the screen before this one when the deck was loaded from it, so
   // this is Back; otherwise the form becomes a screen of its own, and Back from
   // it returns to the deck.
@@ -2084,7 +2103,7 @@ $("#change").addEventListener("click", () => {
   }
   history.pushState(null, "", location.pathname);
   showForm();
-});
+}
 
 $("#open-deck").addEventListener("click", openDeckPanel);
 $("#dp-close").addEventListener("click", closeDeckPanel);
@@ -2246,17 +2265,33 @@ setStage("empty");
 if (loadFromAddress()) {
   // On its way; the queue in whenReady() runs it once Python is up.
 } else if (location.hash === "#file") {
-  // A file picked on the landing page, handed over through IndexedDB. The hash
-  // goes at once: it names a one-off delivery, not something to come back to.
+  // A file picked on the landing page, or a sheet written in Create sheet,
+  // handed over through IndexedDB. The hash goes at once: it names a one-off
+  // delivery, not something to come back to.
   history.replaceState(null, "", location.pathname);
   setStage("loading");
-  takeFile().then((file) => {
-    if (file) whenReady(() => previewFile(file));
+  takeHandoff().then(({ file, from }) => {
+    if (file) whenReady(() => previewFile(file, { edit: from === "sheet" ? "./sheet.html" : "" }));
     else {
       setStage("empty");
       bootStatus();
     }
   });
+} else if (isShare(location.hash)) {
+  // A sheet shared from Create sheet, carried whole in the fragment
+  // (sharelink.js). It stays in the address, so a reload opens it again, and
+  // "edit" takes the same sheet back to Create sheet.
+  const hash = location.hash;
+  setStage("loading");
+  decodeShare(hash).then(
+    ({ name, tsv }) => {
+      const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
+        type: "text/tab-separated-values",
+      });
+      whenReady(() => previewFile(file, { hash, edit: `./sheet.html${hash}` }));
+    },
+    (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
+  );
 } else bootStatus();
 
 boot()
