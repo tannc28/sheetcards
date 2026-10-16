@@ -63,6 +63,20 @@ ID,Word,Meaning
 It opens in Google Sheets, Excel or Create sheet; every template in Create sheet
 has a button that downloads exactly this file.
 
+### Writing it in Create sheet: two steps
+
+Create sheet splits a sheet into two steps. **① Template**: the column names and
+the settings row, which is how the cards look, with the card previewed beside
+them. **② Cards**: add, edit and delete words. Picking a ready template
+(Vocabulary, Vocabulary + picture, Both ways, Type the answer, one per theme…)
+goes straight to step 2; *Custom* starts at step 1. A sheet you already have
+(`.xlsx` or `.csv`) can be kept as a template too, under *Your templates*, in
+this browser only.
+
+The draft lives only in the browser, so press **Save .csv**. Next time, **Open a
+file to add words**, on a phone too, and carry on; the old words keep their IDs,
+so re-importing the `.apkg` updates the notes and keeps your review progress.
+
 ## 2. Share it
 
 In Google Sheets press **Share**, and under *General access* choose **Anyone with

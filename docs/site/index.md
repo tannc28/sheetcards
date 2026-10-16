@@ -61,6 +61,19 @@ ID,Word,Nghĩa
 Mở được bằng Google Sheets, Excel hay Create sheet; mẫu nào trong Create sheet
 cũng có nút tải đúng file này về.
 
+### Soạn trong Create sheet: hai bước
+
+Create sheet chia sheet làm hai bước. **① Template**: tên cột và settings row,
+tức là card trông ra sao, có card xem trước ngay bên cạnh. **② Thẻ**: thêm, sửa,
+xoá từ. Chọn một template có sẵn (Học từ vựng, Từ vựng + ảnh, Hai chiều, Gõ đáp
+án, mỗi theme một kiểu…) là vào thẳng bước 2; *Tùy chỉnh* bắt đầu từ bước 1.
+Một sheet bạn đã có (`.xlsx` hoặc `.csv`) cũng lưu được làm template, ở mục
+*Template của bạn*, chỉ trong trình duyệt này.
+
+Bản nháp chỉ nằm trong trình duyệt, nên hãy bấm **Lưu file .csv**. Lần sau bấm
+**Mở file để thêm từ**, kể cả trên điện thoại, là thêm từ tiếp; ID của từ cũ giữ
+nguyên, nên import lại file `.apkg` sẽ cập nhật note và giữ tiến độ ôn.
+
 ## 2. Chia sẻ sheet
 
 Trong Google Sheets bấm **Share**, ở mục *General access* chọn **Anyone with the
