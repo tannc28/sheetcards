@@ -64,9 +64,21 @@ cập nhật các note đó chứ không nhân đôi**.
 trong file. Dòng bạn xoá khỏi sheet vẫn nằm trong collection cho tới khi bạn xoá
 nó ở đó. Đó chính là khác biệt thật sự giữa import và sync.
 
-## Editor
+## Create sheet
 
-[Editor](../editor.html) là một spreadsheet nhỏ để viết
-[settings row](settings-row.md). Bạn chọn setting từ một danh sách thay vì phải
-nhớ, và deck cùng card cập nhật ngay bên cạnh khi bạn gõ. Khi đã ưng ý, copy dòng
-1 và 2 rồi dán vào ô A1 của sheet.
+[Create sheet](../sheet.html) là chỗ soạn cả một sheet ngay trên web, không cần
+Google Sheets: tên cột, [settings row](settings-row.md) và từng từ. Bắt đầu từ
+một mẫu (trống, từ vựng tiếng Anh, Kanji, Cloze) hoặc mở một file `.xlsx`/`.csv`
+có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google
+Sheets là thêm từ. Trên điện thoại mỗi từ mở ra thành một form, mỗi cột một ô.
+Setting được chọn từ danh sách, và card của từ đang sửa hiện ngay bên cạnh.
+
+Bản nháp được lưu trong trình duyệt sau mỗi thay đổi. Từ đó có ba lối ra:
+
+- **Create deck**: chuyển thẳng sheet sang Create deck để xem card và tải `.apkg`.
+- **Download** `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
+  tiếp, hoặc upload lên Google Drive thành Google Sheets.
+- **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
+  máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
+  cũng mở thẳng được thành card trong Create deck. Link rất dài có thể bị vài app
+  chat cắt bớt, khi đó hãy gửi file.

@@ -8,7 +8,7 @@ a link in it becomes a picture or a video, and more.
 It is one optional row, directly under the column names. Nothing about it is
 edited inside Anki: change the row, sync again, and the cards follow.
 
-The [editor](../../editor.html) lets you build one by clicking, and shows the card
+[Create sheet](../../sheet.html) lets you build one by clicking, and shows the card
 as you go.
 
 ## How to write it
@@ -37,8 +37,8 @@ sheet that never asks for settings is not affected.
 **Mistakes are reported, never guessed at.** An unknown key (`siz=48`), a bad
 value (`color=notacolour`) or a number out of range (`size=400`) produces a
 warning naming the column, and that one setting is left out. The rest of the row
-still applies. You see the warnings in the [Create deck](../../create.html), in the
-editor, and in Anki under **Tools → SheetCards → Card Layout…**.
+still applies. You see the warnings in the [Create deck](../../create.html), in
+Create sheet, and in Anki under **Tools → SheetCards → Card Layout…**.
 
 ## Per-column keys
 

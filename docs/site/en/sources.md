@@ -64,9 +64,23 @@ What an import cannot do is **delete**: Anki never removes a note that is missin
 from the file. A row you delete from the sheet stays in your collection until you
 delete it there. That is the real difference between importing and syncing.
 
-## The editor
+## Create sheet
 
-The [editor](../../editor.html) is a small spreadsheet for writing a
-[settings row](settings-row.md). Pick settings from a list instead of
-remembering them, and the deck and the card update beside you as you type. Copy
-rows 1 and 2 when it looks right and paste them into cell A1 of your sheet.
+[Create sheet](../../sheet.html) writes a whole sheet right on the web, no
+Google Sheets needed: the column names, the [settings row](settings-row.md) and
+every word. Start from a template (blank, English vocab, Kanji, Cloze) or open an
+`.xlsx`/`.csv` you already have. On a computer it is a spreadsheet: pasting rows
+from Excel or Google Sheets adds words. On a phone each word opens as a form, one
+field per column. Settings are picked from a list, and the card for the word you
+are editing is drawn beside it.
+
+The draft is saved in the browser after every change. There are three ways out:
+
+- **Create deck**: hands the sheet straight to Create deck, to check the cards
+  and download an `.apkg`.
+- **Download** `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
+  keep editing, or upload it to Google Drive to make it a Google Sheet.
+- **Share link**: the whole sheet is compressed into the link itself (after the
+  `#`) and sent to no server. Whoever opens it sees that sheet and edits their
+  own copy; the link can also open straight as cards in Create deck. Some chat
+  apps cut very long links short; send the file instead.

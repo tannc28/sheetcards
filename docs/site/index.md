@@ -4,6 +4,9 @@ SheetCards biến bảng tính thành flashcard cho Anki. Bạn soạn card tron
 Sheets, mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa trên
 sheet; Anki chỉ giữ một bản sao.
 
+Chưa có Google Sheet? [Create sheet](../sheet.html) cho bạn soạn cả sheet ngay
+trên web, kể cả trên điện thoại, rồi chuyển thẳng sang Create deck.
+
 Có hai cách đưa deck vào Anki:
 
 - **Create deck**, ngay trên website này: dán link sheet, kiểm tra các card, tải
@@ -104,7 +107,8 @@ thì card bị xoá theo. Xem chi tiết ở [Sync](syncing.md).
 
 - **Đổi giao diện card.** Thêm một [settings row](settings-row.md) ngay dưới
   dòng tên cột để chỉnh cỡ chữ, màu, cột nào ở mặt nào, âm thanh, hình ảnh và
-  nhiều thứ khác. [Editor](../editor.html) giúp bạn viết dòng này.
+  nhiều thứ khác. [Create sheet](../sheet.html) giúp bạn viết dòng này bằng cách
+  bấm chọn.
 - **Bắt đầu từ ví dụ.** [File ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
   hoạ một tính năng.
 - **Có gì không chạy?** Xem [FAQ và xử lý lỗi](faq.md).

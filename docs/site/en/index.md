@@ -4,6 +4,9 @@ SheetCards turns a spreadsheet into Anki flashcards. You write your cards in
 Google Sheets, one row per card, and SheetCards makes them into a deck. The
 spreadsheet is always the place you edit; Anki holds a copy.
 
+No Google Sheet? [Create sheet](../../sheet.html) lets you write the whole sheet
+right on the web, on a phone too, and hands it straight to Create deck.
+
 There are two ways to get the deck into Anki:
 
 - **Create deck**, on this website: paste the sheet's link, check the cards,
@@ -106,7 +109,8 @@ deleted rows are removed. [Syncing](syncing.md) has the details.
 
 - **Change how the cards look.** Add a [settings row](settings-row.md) under the
   column names to set sizes, colours, which side a column goes on, sound,
-  pictures and more. The [editor](../../editor.html) helps you write one.
+  pictures and more. [Create sheet](../../sheet.html) helps you write one by
+  clicking.
 - **Start from an example.** The [example workbook](examples.md) has 31 small
   decks, each showing one feature.
 - **Something not working?** See [FAQ and troubleshooting](faq.md).

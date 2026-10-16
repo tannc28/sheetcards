@@ -50,6 +50,9 @@ Requires Anki 25.x or later on Windows, macOS or Linux.
   <https://tannc28.github.io/sheetcards/docs/>): columns, the
   settings row, themes, pictures and video, text to speech, syncing, and
   troubleshooting.
+- **Create sheet:** <https://tannc28.github.io/sheetcards/sheet.html>: no Google
+  Sheet? Write the whole sheet in the browser, phone included, then hand it to
+  Create deck, download it as `.xlsx`/`.csv`, or share it as a link.
 - **Create deck:** <https://tannc28.github.io/sheetcards/create.html>: paste a
   sheet link, check the decks and cards it makes, and download an `.apkg` for
   AnkiDroid, AnkiMobile or desktop Anki, with nothing installed.

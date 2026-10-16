@@ -12,7 +12,7 @@ It is not a mock-up of the add-on: the page downloads this add-on's own parsing 
 
 It will even **build the deck for you as an `.apkg`** and hand it over — importable on any device, phone included, with no desktop anywhere in the story. Re-import later and it updates the same notes instead of duplicating them.
 
-There is also a **settings-row editor** on that site: a small spreadsheet with the directives as chips you click, drawing the deck and the card beside you as you type.
+There is also **Create sheet** on that site: write a whole flashcard sheet in the browser — columns, settings row and words, with the directives as chips you click and the card drawn beside you — then hand it to Create deck, download it as .xlsx/.csv, or share it as a link.
 
 ## 🔁 What the add-on adds
 
