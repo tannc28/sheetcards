@@ -1033,15 +1033,11 @@ function paintMine() {
           title="${escapeHtml(t("tplDelete"))}" aria-label="${escapeHtml(`${t("tplDelete")}: ${tpl.title}`)}">${icon("trash-2")}</button>
       </div>`;
   });
-  const add =
-    list.length < MAX_TEMPLATES
-      ? `<button type="button" class="tplmini tpl-add" id="tpl-upload">
-          <span class="tpl-add-icon">${icon("upload")}</span>
-          <strong>${escapeHtml(t("tplUpload"))}</strong>
-          <span class="tpl-desc">${escapeHtml(t("tplUploadHint"))}</span>
-        </button>`
-      : "";
-  $("#mytemplates").innerHTML = tiles.join("") + add;
+  // Uploading one lives at the top of the page, beside the other ways in; this
+  // section only appears once there is something kept to show.
+  $("#tpl-upload").disabled = list.length >= MAX_TEMPLATES;
+  $("#minegroup").hidden = !list.length;
+  $("#mytemplates").innerHTML = tiles.join("");
   watchFaces($("#mytemplates"), (id) => templateNow(id).card);
 }
 
