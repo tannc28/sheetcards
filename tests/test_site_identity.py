@@ -1,0 +1,120 @@
+"""Which deck a sheet is: ``site/identity.js``, run in node.
+
+A sheet's ``deckname=`` is its deck and its identity; without one, a file is
+keyed by its name with what a phone adds to a second download taken off. The
+note guids follow from this (``apkg.resolve_identity``), so a mistake here is a
+deck that doubles on the next import — or two decks that overwrite each other.
+"""
+
+import json
+import shutil
+import subprocess
+import unicodedata
+from pathlib import Path
+
+import pytest
+
+from src.apkg import deck_identity
+
+SITE = Path(__file__).resolve().parent.parent / "site"
+NODE = shutil.which("node")
+
+pytestmark = pytest.mark.skipif(NODE is None, reason="node is not installed")
+
+# A plain object standing in for localStorage.
+STORE = (
+    "const mem = {}; const s = { getItem: (k) => (k in mem ? mem[k] : null),"
+    " setItem: (k, v) => { mem[k] = String(v); } };"
+)
+
+
+def _run(expr):
+    script = (
+        f"import({json.dumps((SITE / 'identity.js').as_uri())}).then((m) => {{"
+        f"{STORE} process.stdout.write(JSON.stringify({expr})); }})"
+    )
+    out = subprocess.run(
+        [NODE, "--no-warnings", "-e", script],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    )
+    return json.loads(out.stdout)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Từ vựng.csv",
+        "Từ vựng (1).csv",
+        "Từ vựng(2).tsv",
+        "Từ vựng-2.csv",
+        "Từ vựng.xlsx",
+    ],
+)
+def test_a_second_download_is_the_same_file(name):
+    assert _run(f"m.fileIdentity({json.dumps(name)})") == "file:Từ vựng.tsv#"
+
+
+def test_the_create_sheet_handoff_keeps_the_identity_it_always_had():
+    assert _run('m.fileIdentity("Từ vựng.tsv")') == "file:Từ vựng.tsv#"
+
+
+def test_a_number_that_is_part_of_the_name_is_kept():
+    assert _run('[m.fileStem("HSK 1.csv"), m.fileStem("HSK 2.csv")]') == [
+        "HSK 1",
+        "HSK 2",
+    ]
+
+
+def test_the_deck_key_is_the_python_one():
+    for name in ["  Từ   VỰNG ", unicodedata.normalize("NFD", "Tiếng Việt")]:
+        assert _run(f"m.deckKey({json.dumps(name)})") == deck_identity(name)
+
+
+def test_the_marker_cell_is_edited_pair_by_pair():
+    out = _run(
+        '[m.markerSet("#config theme=sakura", "deckname", "Từ; vựng"),'
+        ' m.markerSet("#config deckname=A; theme=sakura", "deckname", "B"),'
+        ' m.markerSet("#config deckname=A; next=w03", "deckname", ""),'
+        ' m.markerGet("#config theme=sakura; deckname=Từ vựng", "deckname"),'
+        ' m.markerGet("#config", "next")]'
+    )
+    assert out == [
+        "#config theme=sakura; deckname=Từ, vựng",
+        "#config deckname=B; theme=sakura",
+        "#config next=w03",
+        "Từ vựng",
+        None,
+    ]
+
+
+def test_used_names_are_matched_as_identities():
+    out = _run(
+        '(m.rememberName("Từ vựng", s), '
+        '[m.nameUsed(" từ  VỰNG", s), m.nameUsed("Tiếng Anh", s)])'
+    )
+    assert out == [True, False]
+
+
+def test_a_changed_note_type_is_told_apart():
+    out = _run(
+        "[m.shapeChange(null, {kind: 'basic', fields: ['ID']}),"
+        " m.shapeChange({kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1']},"
+        "               {kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1']}),"
+        " m.shapeChange({kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1']},"
+        "               {kind: 'basic', fields: ['ID', 'A', 'B'], templates: ['Card 1']}),"
+        " m.shapeChange({kind: 'basic', fields: ['ID'], templates: ['Card 1']},"
+        "               {kind: 'basic', fields: ['ID'], templates: ['Card 1', 'Card 2']}),"
+        " m.shapeChange({kind: 'basic', fields: ['ID']}, {kind: 'cloze', fields: ['ID']})]"
+    )
+    assert out == [None, None, "schema", "schema", "cloze"]
+
+
+def test_storage_that_throws_costs_the_feature_not_the_page():
+    broken = "{ getItem() { throw 1; }, setItem() { throw 1; } }"
+    assert _run(
+        f"[m.usedNames({broken}), m.rememberName('x', {broken}),"
+        f" m.lastShape('k', {broken}), m.keepShape('k', {{}}, {broken})]"
+    ) == [[], False, None, False]

@@ -183,6 +183,48 @@ class TestTheAnalyzer:
         assert out["grid"]["cols"] == [0, None, 1]
         assert out["plan"]["headers"] == ["ID", "Word"]
 
+    def test_a_deckname_is_the_deck_and_the_identity(self):
+        tsv = self.TSV.replace("#config\t", "#config deckname=Từ vựng  HSK\t")
+        out = self._analysis(tsv)
+        assert out["identity"] == {
+            "id": "deckname:từ vựng hsk",
+            "deck": "Từ vựng HSK",
+            "named": True,
+        }
+        assert {r["deck"] for r in out["rows"]} >= {"sc_Từ vựng HSK::Greetings"}
+
+    def test_without_one_the_source_is_kept(self):
+        app = _loaded("app.js")
+        out = json.loads(app["analyze"](self.TSV, "Demo", "file:Demo.tsv#"))
+        assert out["identity"] == {
+            "id": "file:Demo.tsv#",
+            "deck": "Demo",
+            "named": False,
+        }
+
+    def test_the_shape_keeps_the_last_fields_of_the_same_kind(self):
+        app = _loaded("app.js")
+        app["analyze"](self.TSV, "Demo", "file:Demo.tsv#")
+        last = {"kind": "basic", "fields": ["ID", "Word", "Old"]}
+        assert json.loads(app["shape"](json.dumps(last)))["fields"] == [
+            "ID",
+            "Word",
+            "Old",
+            "Meaning",
+        ]
+        cloze = {"kind": "cloze", "fields": ["ID", "Old"]}
+        assert json.loads(app["shape"](json.dumps(cloze)))["fields"] == [
+            "ID",
+            "Word",
+            "Meaning",
+        ]
+        assert app["package_bytes"]("null")[:2] == b"PK"
+
+    def test_a_repeated_id_packs_instead_of_crashing(self):
+        app = _loaded("app.js")
+        app["analyze"](self.TSV + "\nr1\tyes\t\tagain\tlần nữa", "Demo", "x")
+        assert app["package_bytes"]("null")[:2] == b"PK"
+
     def test_a_ragged_row_is_squared_off(self):
         """A row longer than the header row still has to be a row of the table."""
         tsv = "\n".join(["ID\tWord", "r1\thello\tstray"])

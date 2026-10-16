@@ -255,6 +255,9 @@
 
         <!-- Step 3, always in reach: on a phone it rides the bottom of the screen
              where the thumb is, because it is the one thing everyone came to press. -->
+        <!-- The note type changed since this deck's last download: said before the
+             download as well as after, because the import is where it matters. -->
+        <div class="schemanote" id="schemanote" role="note" hidden></div>
         <div class="dlbar" id="dlbar">
           <div class="dl-meta">
             <strong id="dl-count"></strong>
@@ -287,10 +290,11 @@
   </div>
   <div class="devtabs" id="devtabs" role="tablist" aria-label="Thiết bị" data-i18n-attr="aria-label:deviceLabel"></div>
   <div class="devpanel" id="devpanel" role="tabpanel"></div>
+  <div class="schemanote" id="done-schema" role="note" hidden></div>
   <div class="assure">
     <span class="assure-icon" data-icon="history"></span>
     <div><strong data-i18n="assureTitle">Sửa sheet rồi tải lại? Cứ import đè.</strong>
-      <p data-i18n="assureBody">Mỗi note được nhận ra nhờ cột ID, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card. Chỉ cần dùng lại cùng link (hoặc cùng tên file). Dòng đã xoá khỏi sheet thì không tự mất trong Anki.</p></div>
+      <p data-i18n="assureBody">Mỗi note được nhận ra nhờ cột ID và tên deck ghi ngay trong sheet (deckname), nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.</p></div>
   </div>
   <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
   <div class="done-foot">

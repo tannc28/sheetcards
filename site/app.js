@@ -22,6 +22,7 @@ import { takeHandoff } from "./handoff.js";
 import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
+import { fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
 
 // The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
@@ -44,17 +45,34 @@ from sc import tsv_model as tm
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import clean, deck_path
 from sc.sheet_config import is_config_row
-from sc.apkg import build_package
+from sc.apkg import build_package, note_type_shape, resolve_identity
 
 # The last analysis, so the package can be built from exactly the rows the page
 # drew rather than by parsing the sheet a second time.
 _STATE = {}
 
 
-def package_bytes(sheet_id):
+def _previous(last):
+    """The fields of the last package of this deck, when it was the same kind."""
+    last = json.loads(last or "null") or {}
+    kind = "cloze" if _STATE["deck"].sheet_config.cloze_field else "basic"
+    return last.get("fields") or [] if last.get("kind") == kind else []
+
+
+def shape(last):
+    """The note type the next package will carry, given the last one's."""
+    deck = _STATE["deck"]
+    return json.dumps(
+        note_type_shape(deck.plan, deck.sheet_config, _previous(last)),
+        ensure_ascii=False,
+    )
+
+
+def package_bytes(last):
     deck = _STATE["deck"]
     return build_package(
-        sheet_id, _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"]
+        _STATE["id"], _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"],
+        previous_fields=_previous(last),
     )
 
 
@@ -109,7 +127,7 @@ def _headers(headers):
     return out
 
 
-def analyze(tsv, deck_name):
+def analyze(tsv, deck_name, sheet_id=""):
     log = []
     parsed = tm.parse_tsv_data(tsv, log)
     headers, plan = parsed["headers"], parsed["plan"]
@@ -117,6 +135,9 @@ def analyze(tsv, deck_name):
     # The authoritative numbers: the same object the sync builds and reports from.
     deck = tm.build_remote_deck_from_tsv(parsed, "", log)
     cfg = deck.sheet_config
+
+    # A sheet that names its deck is that deck, whatever file or link it came in.
+    sheet_id, deck_name, named = resolve_identity(sheet_id, deck_name, cfg)
 
     # determine_target_deck builds exactly this name, so the tree below is the
     # tree Anki will show.
@@ -161,9 +182,11 @@ def analyze(tsv, deck_name):
     _STATE["deck"] = deck
     _STATE["rows"] = kept
     _STATE["name"] = deck_name
+    _STATE["id"] = sheet_id
 
     front, back = split_sides(plan, cfg)
     return json.dumps({
+        "identity": {"id": sheet_id, "deck": deck_name, "named": named},
         # What each column became, and what the settings row said about it. This
         # was dropped once, along with a reference table nobody read. It is back
         # because the Sheet view answers a question with it — "what did this column
@@ -237,6 +260,7 @@ const TOUCH = matchMedia("(hover: none)");
 
 let analyze = null;
 let buildPackage = null;
+let nextShape = null;
 let readUpload = null;
 let sheetNames = null;
 
@@ -390,9 +414,11 @@ async function boot() {
   clearTimeout(slow);
 
   const fn = py.globals.get("analyze");
-  analyze = (tsv, deckName) => JSON.parse(fn(tsv, deckName));
+  analyze = (tsv, deckName, sheetId) => JSON.parse(fn(tsv, deckName, sheetId));
   const pack = py.globals.get("package_bytes");
-  buildPackage = (sheetId) => pack(sheetId).toJs();
+  buildPackage = (last) => pack(JSON.stringify(last)).toJs();
+  const shapeOf = py.globals.get("shape");
+  nextShape = (last) => JSON.parse(shapeOf(JSON.stringify(last)));
   const wb = py.pyimport("sc.workbook");
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
@@ -509,14 +535,23 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   // Where the reader was. A reload is for looking at the row just edited, so
   // landing back on the deck's first row would answer the wrong question.
   const was = state.row;
-  state.deckName = deckName;
-  // Kept rather than recovered from the URL field at download time: a file has
-  // no link to recover it from, and the id is what makes a second import of the
-  // same sheet update its notes instead of duplicating them.
-  state.sheetId = sheetId;
-
   status(t("analysing"), "", true);
-  state.analysis = analyze(tsv, deckName);
+  state.analysis = analyze(tsv, deckName, sheetId);
+  // What the sheet itself says wins: a deckname= is the deck and its identity.
+  // Kept rather than recovered at download time: a file has no link to recover
+  // it from, and the id is what makes a second import of the same sheet update
+  // its notes instead of duplicating them.
+  state.deckName = state.analysis.identity.deck;
+  state.sheetId = state.analysis.identity.id;
+  state.shape = null;
+  state.change = null;
+  try {
+    const last = lastShape(state.sheetId);
+    state.shape = nextShape(last);
+    state.change = shapeChange(last, state.shape);
+  } catch {
+    // Without a remembered package there is nothing to compare with.
+  }
   state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
   if (state.row < 0) state.row = 0;
   // Only if the row is still there: a sheet can come back shorter than it went.
@@ -671,6 +706,7 @@ async function preview({ again = false } = {}) {
       // The key the add-on stores this deck under, so a package downloaded here
       // and a sync from the add-on agree about which notes are which.
       idBase: await sourceId(input),
+      google: true,
       tabs: [],
       index: 0,
     };
@@ -796,12 +832,16 @@ function showUpload(index, { keepRow = false } = {}) {
     upload.index = index;
     paintTabs();
 
-    const base = upload.name.replace(/\.[^.]+$/, "").trim();
-    noteSource(base);
+    // A Google link keeps the name and the id it has always had; a file is
+    // named and keyed without what a phone adds to a second download of it.
+    const base = upload.google ? upload.name.replace(/\.[^.]+$/, "").trim() : fileStem(upload.name);
+    noteSource(upload.name.replace(/\.[^.]+$/, "").trim());
     analyse(
       out.tsv,
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
-      `${upload.idBase}#${out.tab}`,
+      upload.google
+        ? `${upload.idBase}#${out.tab}`
+        : fileIdentity(upload.name, out.tabs.length ? out.tab : ""),
       { keepRow },
     );
   } catch (err) {
@@ -839,7 +879,6 @@ async function previewFile(file, { hash = "", edit = "" } = {}) {
     upload = {
       bytes: new Uint8Array(await file.arrayBuffer()),
       name: file.name,
-      idBase: `file:${file.name}`,
       tabs: [],
       index: 0,
       // Kept so the reload button has something to re-open. The bytes are read
@@ -1473,13 +1512,18 @@ const fileName = () => `${state.deckName || "deck"}.apkg`.replace(/[\\/:*?"<>|]+
 /** Hands the built package to the browser as a download. */
 function downloadPackage() {
   const button = $("#apkg");
-  const sheetId = state.sheetId || "sheet";
   button.disabled = true;
   status(t("packing"), "", true);
   try {
+    // What Anki has now, as far as this browser knows: the last package of the
+    // deck. Its fields go in front of this one's (apkg.kept_fields), and the
+    // change between the two is what the done dialog warns about.
+    const last = lastShape(state.sheetId);
+    state.change = shapeChange(last, state.shape);
     // A copy, because the array Pyodide hands over is a view onto its heap and
     // the next Python call is free to reuse that memory.
-    const bytes = new Uint8Array(buildPackage(sheetId));
+    const bytes = new Uint8Array(buildPackage(last));
+    if (state.shape) keepShape(state.sheetId, { ...state.shape, deck: state.deckName });
     const url = URL.createObjectURL(
       new Blob([bytes], { type: "application/octet-stream" }),
     );
@@ -1493,7 +1537,8 @@ function downloadPackage() {
     paintRail();
     openDone();
   } catch (err) {
-    status(t("packFailed", err.message), "bad");
+    // The sentence, never the traceback above it.
+    status(t("packFailed", pythonMessage(err)), "bad");
   } finally {
     button.disabled = false;
   }
@@ -1516,6 +1561,7 @@ function paintDone() {
   $("#devpanel").innerHTML = `<ol class="inst">${DEVICE_STEPS[state.device]
     .map((key) => `<li>${t(key, escapeHtml(name))}</li>`)
     .join("")}</ol>`;
+  paintSchema($("#done-schema"), state.device);
 }
 
 function openDone() {
@@ -1625,7 +1671,33 @@ function render() {
   $("#warntitle").textContent = t("warnTitle", warnings.length);
   $("#warnlist").innerHTML = warnings.join("");
 
+  paintSchema($("#schemanote"));
   if ($("#done").open) paintDone();
+}
+
+// Which app's merge step goes with which device tab.
+const MERGE_STEP = { desktop: "mergeDesktop", android: "mergeAndroid", ios: "mergeIos" };
+
+/**
+ * The notice for a note type that changed since this deck's last download, or
+ * nothing. `device` narrows the steps to one app (the done dialog has tabs for
+ * the device); without it all three are listed.
+ */
+function paintSchema(el, device = null) {
+  const change = state.change;
+  el.hidden = !change;
+  if (!change) return (el.innerHTML = "");
+  const apps = device ? [device] : ["android", "ios", "desktop"];
+  if (change === "cloze") {
+    const type = state.analysis?.noteTypes?.[state.shape?.kind === "cloze" ? "cloze" : "basic"] ?? "";
+    el.innerHTML = `<strong>${escapeHtml(t("clozeTitle"))}</strong><p>${t("clozeBody", escapeHtml(type))}</p>`;
+    return;
+  }
+  const fields = escapeHtml((state.shape?.fields || []).join(", "));
+  el.innerHTML =
+    `<strong>${escapeHtml(t("schemaTitle"))}</strong><p>${t("schemaBody", fields)}</p>` +
+    `<ul>${apps.map((d) => `<li>${t(MERGE_STEP[d])}</li>`).join("")}</ul>` +
+    `<p class="muted small">${escapeHtml(t("mergeAfter"))}</p>`;
 }
 
 // ---------------------------------------------------------------------------

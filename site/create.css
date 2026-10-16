@@ -824,3 +824,17 @@ a.chgbtn { text-decoration: none; }
   .entry > *, .cr[data-stage="review"] .deckstack, .sheetview, .donebox[open],
   .deckpanel:modal[open], .sk-line, .loadline .spinner, .iconbtn:disabled .icon { animation: none; }
 }
+
+/* A note type that changed since the deck's last download: the one import
+   option that has to be changed, said before the download and after it. */
+.schemanote {
+  margin: 14px 0 0; padding: 14px 16px;
+  border-radius: 16px; border: 1px solid var(--warn-line);
+  background: var(--warn-soft);
+  font-size: var(--t-sm);
+}
+.donebox .schemanote { margin: 14px 20px 0; }
+.schemanote strong { display: block; font-size: var(--t-md); font-weight: 750; }
+.schemanote p { margin: 6px 0 0; }
+.schemanote ul { margin: 8px 0 0; padding-left: 20px; }
+.schemanote li + li { margin-top: 6px; }

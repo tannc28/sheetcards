@@ -64,6 +64,25 @@ What an import cannot do is **delete**: Anki never removes a note that is missin
 from the file. A row you delete from the sheet stays in your collection until you
 delete it there. That is the real difference between importing and syncing.
 
+Which deck a file is, in this order:
+
+1. **`deckname=` in the [settings row](settings-row.md#sheet-wide-keys)**, when
+   it is there. Create sheet always writes it, so a renamed file
+   (`Từ vựng (1).csv`), an `.xlsx` copy, a share link or the same sheet in Google
+   Sheets all update one deck. Two sheets with one `deckname` are one deck and
+   overwrite each other's notes.
+2. Otherwise the Google Sheets link and the tab.
+3. Otherwise the file name, without its `.csv`/`.tsv`/`.xlsx` extension and the
+   ` (1)`, `(1)` or `-2` a phone adds to a second download.
+
+**Changing the columns needs Merge note types once.** Adding or renaming a
+column, turning on `reverse`… changes the note type, and with the default
+options Anki then updates no note at all. Sheet to Anki remembers each deck's
+last download and tells you: when you import, turn on **Merge note types** and
+set **Update notes** to **Always**. Removing or moving a column needs nothing.
+Switching to or from `cloze` cannot be merged by Anki; the page says how to keep
+your progress.
+
 ## Create sheet
 
 [Create sheet](../../sheet.html) writes a whole sheet right on the web, no

@@ -908,9 +908,60 @@ const STRINGS = {
   warnDuplicateTitle: { en: "Duplicate IDs", vi: "ID trùng" },
   warnDuplicateBody: {
     en: (ids) =>
-      `${ids}. Notes are keyed by ID, so only one row of each survives the sync.`,
+      `${ids}. Notes are keyed by ID, so only the first row of each becomes a card; ` +
+      `the rows after it are left out. Give each row its own ID.`,
     vi: (ids) =>
-      `${ids}. Note được khoá theo ID, nên mỗi ID chỉ một dòng sống sót sau sync.`,
+      `${ids}. Note được khoá theo ID, nên chỉ dòng đầu tiên của mỗi ID thành card; ` +
+      `các dòng sau bị bỏ qua. Hãy cho mỗi dòng một ID riêng.`,
+  },
+  // A changed note type, before and after the download. Verified against Anki
+  // 25.07: with the default import options a changed field list or card list
+  // makes every note "conflicting" and none is updated. Merging re-stamps the
+  // notes already there with the import time, so "If newer" would then skip
+  // them too — hence Update notes: Always, once.
+  schemaTitle: {
+    en: "You changed the columns → turn on Merge note types when you import",
+    vi: "Bạn đã đổi cột → khi import hãy bật Merge note types",
+  },
+  schemaBody: {
+    en: (fields) =>
+      `Since the last download of this deck its fields or cards changed (now: ${fields}). ` +
+      "With Anki's default options no note would be updated. Once, for this import:",
+    vi: (fields) =>
+      `Từ lần tải trước, field hoặc card của deck này đã đổi (giờ là: ${fields}). ` +
+      "Với tuỳ chọn mặc định, Anki sẽ không cập nhật note nào. Chỉ cần một lần, ở lần import này:",
+  },
+  mergeDesktop: {
+    en: "<b>Anki on a computer</b>: File → Import…, pick the file, then tick <b>Merge note types</b> and set <b>Update notes</b> to <b>Always</b> before pressing Import.",
+    vi: "<b>Anki trên máy tính</b>: File → Import…, chọn file, rồi tick <b>Merge note types</b> và đặt <b>Update notes</b> thành <b>Always</b> trước khi bấm Import.",
+  },
+  mergeAndroid: {
+    en: "<b>AnkiDroid</b>: open the file with AnkiDroid; its import screen has the same options — turn on <b>Merge note types</b>, set <b>Update notes</b> to <b>Always</b>.",
+    vi: "<b>AnkiDroid</b>: mở file bằng AnkiDroid; màn hình import có cùng các tuỳ chọn — bật <b>Merge note types</b>, đặt <b>Update notes</b> thành <b>Always</b>.",
+  },
+  mergeIos: {
+    en: "<b>AnkiMobile</b>: we could not confirm these options on its Import screen. If you see <b>Merge note types</b> and <b>Update notes</b>, set them as above; if not, import this file in Anki on a computer and sync.",
+    vi: "<b>AnkiMobile</b>: chúng tôi chưa xác nhận được màn hình Import của app có các tuỳ chọn này. Nếu thấy <b>Merge note types</b> và <b>Update notes</b>, chỉnh như trên; nếu không, hãy import file này bằng Anki trên máy tính rồi sync.",
+  },
+  mergeAfter: {
+    en: "After that, normal imports update again. Anki will ask for a one-way sync once.",
+    vi: "Sau lần đó, import bình thường sẽ lại cập nhật. Anki sẽ hỏi sync một chiều một lần.",
+  },
+  clozeTitle: {
+    en: "You switched this deck to or from cloze",
+    vi: "Bạn đã chuyển deck này sang hoặc ra khỏi cloze",
+  },
+  clozeBody: {
+    en: (type) =>
+      "Anki cannot merge a cloze note type with a regular one, so the notes you already have " +
+      "will not be updated (and Merge note types would refuse — leave it off). New words still " +
+      "arrive. To move the old notes over and keep their progress: import, then in Anki on a " +
+      `computer open Browse, select them, Notes → Change Note Type… to <b>${type}</b>, and import again.`,
+    vi: (type) =>
+      "Anki không gộp được note type cloze với note type thường, nên các note đã có sẽ không " +
+      "được cập nhật (và Merge note types sẽ báo lỗi — để tắt). Từ mới vẫn vào. Muốn chuyển note " +
+      "cũ sang và giữ tiến độ: import, rồi trong Anki trên máy tính mở Browse, chọn các note đó, " +
+      `Notes → Change Note Type… sang <b>${type}</b>, rồi import lại.`,
   },
   // One sentence, and the reasoning behind a disclosure for whoever wonders.
   warningsFrom: {
@@ -1072,14 +1123,16 @@ const STRINGS = {
   },
   assureBody: {
     en:
-      "Each note is matched by its ID column, so importing a new file updates the notes " +
-      "you already have and keeps your review progress — no duplicate cards. Use the same " +
-      "link (or the same file name) each time. A row deleted from the sheet is not removed " +
-      "from Anki.",
+      "Each note is matched by its ID and by the deck name written in the sheet itself " +
+      "(deckname), so importing a new file updates the notes you already have and keeps " +
+      "your review progress — no duplicate cards, even if the file was renamed, saved as " +
+      ".xlsx or moved to Google Sheets. A word deleted from the sheet stays in Anki; " +
+      "delete it there if you want it gone.",
     vi:
-      "Mỗi note được nhận ra nhờ cột ID, nên import file mới sẽ cập nhật đúng các note cũ " +
-      "và giữ nguyên tiến độ ôn tập, không nhân đôi card. Chỉ cần dùng lại cùng link " +
-      "(hoặc cùng tên file). Dòng đã xoá khỏi sheet thì không tự mất trong Anki.",
+      "Mỗi note được nhận ra nhờ cột ID và tên deck ghi ngay trong sheet (deckname), nên " +
+      "import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không " +
+      "nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã " +
+      "xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.",
   },
   addonTip: {
     en:
