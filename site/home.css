@@ -334,6 +334,14 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .demo[data-phase="apkg"] .scr-apkg {
   opacity: 1; visibility: visible; transform: none; transition-delay: 0s;
 }
+/* A screen that is not up takes no taps, even where a child of it (the active
+   card) is visible on its own account — or the link screen's button could not
+   be pressed through the card stacked over it. */
+.scr { pointer-events: none; }
+.demo[data-phase="link"] .scr-link,
+.demo[data-phase="front"] .scr-card,
+.demo[data-phase="back"] .scr-card,
+.demo[data-phase="apkg"] .scr-apkg { pointer-events: auto; }
 
 .scr-link { gap: 12px; padding-top: .6rem; color: inherit; text-decoration: none; cursor: pointer; }
 .scr-link:hover .scr-go { filter: brightness(1.12); }

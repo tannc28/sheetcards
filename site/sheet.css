@@ -268,8 +268,10 @@ a.altcard { color: inherit; text-decoration: none; }
 /* Chips are taps on a phone: tall enough for a thumb, the way every other
    control on this page is. */
 .colpanel .col { min-height: 36px; padding: 0 12px; }
-@media (max-width: 59.99rem) and (pointer: coarse) {
-  .colpanel .col { min-height: 44px; padding: 0 14px; }
+@media (pointer: coarse) {
+  .colpanel .col, .colchip, .cardtabs button, .rf-id input, .tplpick { min-height: 44px; }
+  .colpanel .col { padding: 0 14px; }
+  .colchip.add { width: 44px; }
 }
 .deckline {
   margin: 14px 0 0; padding: 14px;
