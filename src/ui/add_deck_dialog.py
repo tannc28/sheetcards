@@ -562,16 +562,11 @@ class AddDeckDialog(QDialog):
 
         # One deck per sheet, so the preview lists them rather than showing one
         # name that is not what any of the decks will be called.
-        from ..utils import url_for_sheet
-
         usable = [o for o in self.offers if o.usable]
         if usable:
             names = [
-                deck_root_name(
-                    DeckNameManager.resolve_remote_name_conflict(
-                        url_for_sheet(current_url, o.name),
-                        f"{final_remote_name}::{DeckNameManager.clean_name(o.name)}",
-                    )
+                DeckNameManager.generate_local_name(
+                    self._sheet_remote_name(current_url, final_remote_name, o)
                 )
                 for o in usable
             ]
@@ -660,17 +655,42 @@ class AddDeckDialog(QDialog):
 
         self.added_urls = [u for u, _ in added]
 
+    def _sheet_url(self, url, offer):
+        """The sheet's own URL, marked when it is the file's only sheet."""
+        from ..utils import url_for_sheet
+
+        return url_for_sheet(url, offer.name, only=len(self.offers) == 1)
+
+    def _sheet_remote_name(self, url, file_name, offer):
+        """What one sheet's deck is called: its own ``name=``, else the file's.
+
+        ``sc_{file}::{sheet}``, or ``sc_{file}`` for a file's only sheet — the
+        names Sheet to Anki gives the same sheet, so its .apkg and this add-on
+        agree on the deck (see DeckNameManager.sheet_remote_name).
+        """
+        from ..deck_manager import DeckNameManager
+        from ..deck_manager import remember_declared_name
+
+        sheet_url = self._sheet_url(url, offer)
+        declared = None
+        if offer.deck is not None:
+            declared = remember_declared_name(
+                sheet_url, getattr(offer.deck, "sheet_config", None)
+            )
+        name = declared or DeckNameManager.sheet_remote_name(
+            file_name, offer.name, len(self.offers) == 1
+        )
+        return DeckNameManager.resolve_remote_name_conflict(sheet_url, name)
+
     def _add_one_sheet(self, url, file_name, offer):
         """Connects one sheet of the file as its own deck: ``sc_{file}::{sheet}``."""
         from ..config_manager import create_deck_info
         from ..deck_manager import DeckNameManager
-        from ..utils import url_for_sheet
+        from ..deck_manager import declared_name_for
 
-        sheet_url = url_for_sheet(url, offer.name)
-        remote_name = DeckNameManager.resolve_remote_name_conflict(
-            sheet_url, f"{file_name}::{DeckNameManager.clean_name(offer.name)}"
-        )
-        full_name = deck_root_name(remote_name)
+        sheet_url = self._sheet_url(url, offer)
+        remote_name = self._sheet_remote_name(url, file_name, offer)
+        full_name = DeckNameManager.generate_local_name(remote_name)
 
         deck_id, actual_name = get_or_create_deck(mw.col, full_name)
 
@@ -681,6 +701,7 @@ class AddDeckDialog(QDialog):
                 local_deck_id=deck_id,
                 local_deck_name=actual_name,
                 remote_deck_name=remote_name,
+                declared_name=declared_name_for(sheet_url),
             ),
         )
 
@@ -763,7 +784,7 @@ def _read_link(url):
         if offer.usable:
             try:
                 DeckNameManager.extract_remote_name_from_url(
-                    url_for_sheet(url, offer.name)
+                    url_for_sheet(url, offer.name, only=len(offers) == 1)
                 )
             except Exception:
                 pass

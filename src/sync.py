@@ -788,8 +788,12 @@ def _fetch_deck(remote_deck_url):
     one's columns, note type and rows. getRemoteDeck converts the URL itself.
     """
     from .deck_manager import DeckNameManager
+    from .deck_manager import remember_declared_name
 
     remoteDeck = getRemoteDeck(remote_deck_url)
+    # Before the title: a sheet that names itself (name=) is called that, here
+    # as in Sheet to Anki, and needs no page fetched to find out.
+    remember_declared_name(remote_deck_url, getattr(remoteDeck, "sheet_config", None))
     DeckNameManager.extract_remote_name_from_url(remote_deck_url)
     return remoteDeck
 
@@ -1463,6 +1467,20 @@ def _sync_single_deck(
     if remote_deck is None:
         remote_deck = _fetch_deck(remote_deck_url)
     remoteDeck = remote_deck
+
+    # What the sheet calls itself, kept in meta.json so the first name pass after
+    # a restart agrees with this one instead of renaming the deck back and forth.
+    from .deck_manager import remember_declared_name
+
+    declared = (
+        remember_declared_name(
+            remote_deck_url, getattr(remoteDeck, "sheet_config", None)
+        )
+        or ""
+    )
+    if currentRemoteInfo.get("declared_name", "") != declared:
+        currentRemoteInfo["declared_name"] = declared
+        save_remote_decks(remote_decks)
 
     notes_count = len(remoteDeck.notes) if getattr(remoteDeck, "notes", None) else 0
     add_debug_message(f"Notes loaded from remote deck: {notes_count}", "REMOTE_DECK")

@@ -570,6 +570,55 @@ def clear_remote_name_cache():
     _REMOTE_NAMES.clear()
 
 
+# The `name=` each sheet's settings row gave, by deck key: the name the sheet calls
+# itself wins over its file's title, exactly as it does in Sheet to Anki
+# (apkg.resolve_identity), so a phone's .apkg and this add-on file a named sheet
+# under one deck. "" records "this sheet names no deck". Learnt from every
+# download (possibly on a background thread) and kept across runs — a sheet only
+# stops naming itself when a download says so — and persisted in meta.json as
+# `declared_name` so the first name pass after a restart already knows it.
+_DECLARED_NAMES: dict = {}
+
+
+def _deck_key(url):
+    try:
+        from .config_manager import get_deck_id
+
+        return get_deck_id(url)
+    except Exception:
+        return None
+
+
+def remember_declared_name(url, sheet_config):
+    """Records what a freshly downloaded sheet's ``name=`` says. Thread-safe."""
+    from .apkg import declared_name
+
+    key = _deck_key(url)
+    if key is None:
+        return None
+    named = declared_name(sheet_config) or ""
+    _DECLARED_NAMES[key] = named
+    return named or None
+
+
+def declared_name_for(url):
+    """The sheet's own ``name=``, from the last download or meta.json, or None."""
+    key = _deck_key(url)
+    if key is None:
+        return None
+    if key in _DECLARED_NAMES:
+        return _DECLARED_NAMES[key] or None
+    try:
+        return get_remote_decks().get(key, {}).get("declared_name") or None
+    except Exception:
+        return None
+
+
+def is_declared_name(remote_name):
+    """Whether a remote name is one a sheet chose itself (and so is used as written)."""
+    return bool(remote_name) and remote_name in _DECLARED_NAMES.values()
+
+
 class DeckNameManager:
     """
     Centralized class to manage all aspects of deck naming.
@@ -604,6 +653,9 @@ class DeckNameManager:
         Returns:
             Extracted remote name or fallback
         """
+        declared = declared_name_for(url)
+        if declared:
+            return declared
         cached = _REMOTE_NAMES.get(url)
         if cached is not None:
             return cached
@@ -659,11 +711,26 @@ class DeckNameManager:
         pass, so it has to tell the decks of one file apart — leaving the sheet out
         renamed them all onto each other, every run.
         """
+        from .utils import sheet_is_only
         from .utils import sheet_name_from_url
 
         name = DeckNameManager.clean_name(_without_file_extension(file_name))
         sheet = sheet_name_from_url(url)
-        return f"{name}::{DeckNameManager.clean_name(sheet)}" if sheet else name
+        return DeckNameManager.sheet_remote_name(name, sheet, sheet_is_only(url))
+
+    @staticmethod
+    def sheet_remote_name(file_name: str, sheet, only=False) -> str:
+        """``{file}::{sheet}``, or ``{file}`` for a file's only sheet.
+
+        The one-sheet case is named the way Sheet to Anki names a one-sheet
+        workbook, so the two agree on the deck and — for a sheet with no
+        ``name=`` — on the note type, whose id Anki matches an import by. Only
+        sheets connected as the file's only one carry ``&only=1``; a deck
+        connected before keeps its ``{file}::{sheet}`` name.
+        """
+        if sheet and not only:
+            return f"{file_name}::{DeckNameManager.clean_name(sheet)}"
+        return file_name
 
     @staticmethod
     def generate_local_name(remote_name: str) -> str:
@@ -676,6 +743,11 @@ class DeckNameManager:
         if not remote_name:
             return deck_root_name("UnknownDeck")
 
+        # A sheet's own name= is used as written, as the .apkg uses it — cleaning
+        # "Bài 1: chào hỏi" to "Bài 1_ chào hỏi" would file the same notes under
+        # two decks depending on which way they arrived.
+        if is_declared_name(remote_name):
+            return deck_root_name(remote_name)
         return deck_root_name(DeckNameManager.clean_name(remote_name))
 
     @staticmethod

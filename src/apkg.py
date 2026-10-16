@@ -152,6 +152,19 @@ def deck_identity(name):
     return " ".join(text.split()).casefold()
 
 
+def declared_name(sheet_config):
+    """The deck name a sheet gives itself with ``name=``, as it is shown, or None.
+
+    Whitespace collapsed and nothing else: the add-on names its deck with this
+    exact string too (deck_manager), so the two never disagree about where a
+    named sheet's cards live.
+    """
+    named = getattr(sheet_config, "deck_name", None)
+    if named and deck_identity(named):
+        return " ".join(str(named).split())
+    return None
+
+
 def resolve_identity(sheet_id, deck_name, sheet_config):
     """What a package is keyed by and what its deck is called.
 
@@ -163,9 +176,9 @@ def resolve_identity(sheet_id, deck_name, sheet_config):
         tuple: ``(sheet_id, deck_name, keyed)``, ``keyed`` true when the
         identity came from the sheet itself
     """
-    named = getattr(sheet_config, "deck_name", None)
-    if named and deck_identity(named):
-        return f"name:{deck_identity(named)}", " ".join(named.split()), True
+    named = declared_name(sheet_config)
+    if named:
+        return f"name:{deck_identity(named)}", named, True
     return sheet_id, deck_name, False
 
 

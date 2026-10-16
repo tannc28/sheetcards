@@ -157,6 +157,69 @@ def apply_sort_field(col, model, fields, sheet_config):
     return True
 
 
+def sheet_identity(url, sheet_config):
+    """``(sheet_id, deck_name, keyed)`` — what Sheet to Anki keys this sheet by.
+
+    The same answer apkg.resolve_identity gives the site: the sheet's ``name=``,
+    else the deck key (``{spreadsheet id}#{sheet}``, which is also the site's key
+    for a Google link). Note guids and the note type's id derive from it, so a
+    note synced here and the same row imported from a phone's .apkg are one
+    note to Anki. None when the URL has no usable key.
+    """
+    from .apkg import resolve_identity
+    from .config_manager import get_deck_id
+    from .config_manager import get_deck_remote_name
+
+    try:
+        sheet_id = get_deck_id(url)
+    except Exception:
+        return None
+    return resolve_identity(sheet_id, get_deck_remote_name(url) or "", sheet_config)
+
+
+def derived_model_id(identity, is_cloze):
+    """The id an .apkg of this sheet gives its note type (apkg.model_id), or None."""
+    if not identity:
+        return None
+    from .apkg import model_id
+
+    sheet_id, deck_name, keyed = identity
+    return model_id(sheet_id, deck_name, is_cloze, keyed)
+
+
+def _add_with_id(col, model, wanted_id):
+    """Adds a new note type under the id an .apkg of the same sheet would carry.
+
+    Anki matches an imported note type by id, so a note type this add-on made
+    with a random id makes every note of a later .apkg import *conflict* rather
+    than update. Anki's public add refuses a preset id; the legacy add-or-update
+    with preserved usn/mtime is what its own importers used, so the usn is set
+    to -1 (needs syncing) and mod to now by hand. Returns the saved model, or
+    None when this Anki will not take it — the caller then adds it normally.
+    """
+    import json
+    import time
+
+    try:
+        if col.models.get(wanted_id):
+            return None
+        model["id"] = wanted_id
+        model["usn"] = -1
+        model["mod"] = int(time.time())
+        col._backend.add_or_update_notetype(
+            json=json.dumps(model).encode("utf-8"),
+            preserve_usn_and_mtime=True,
+            skip_checks=False,
+        )
+        saved = col.models.get(wanted_id)
+        if saved:
+            return saved
+    except Exception:
+        pass
+    model["id"] = 0
+    return None
+
+
 def create_model(
     col,
     model_name,
@@ -166,6 +229,7 @@ def create_model(
     url=None,
     debug_messages=None,
     sheet_config=None,
+    model_id=None,
 ):
     """
     Creates a new Anki note model.
@@ -200,7 +264,15 @@ def create_model(
     if sheet_config is not None:
         apply_sort_field(col, model, list(fields), sheet_config)
 
-    col.models.save(model)
+    saved = _add_with_id(col, model, model_id) if model_id else None
+    if saved is not None:
+        model = saved
+        if debug_messages is not None:
+            debug_messages.append(
+                f"[ENSURE_MODELS] '{model_name}' created with the .apkg's id {model_id}"
+            )
+    else:
+        col.models.save(model)
 
     # Automatically register note type if URL was provided
     if url and model.get("id"):
@@ -242,6 +314,7 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
 
     remote_deck_name = get_deck_remote_name(url) or "RemoteDeck"
     existing_note_types = get_deck_note_type_ids(url) or {}
+    identity = sheet_identity(url, sheet_config)
     fields = plan.note_type_fields()
 
     add_debug_msg(f"Searching note types for remote_deck_name='{remote_deck_name}'")
@@ -288,6 +361,13 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
 
         model = find_registered_note_type(f" - {label}")
         registered = model is not None
+        wanted_id = derived_model_id(identity, is_cloze)
+
+        if model is None and wanted_id:
+            # The note type a phone's .apkg of this same sheet already brought in.
+            model = col.models.get(wanted_id)
+            if model:
+                add_debug_msg(f"Found the .apkg's ({label}) note type: {wanted_id}")
 
         if model is None:
             # Registration can be lost (meta.json edited or restored) while the note
@@ -305,6 +385,7 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
                 url=url,
                 debug_messages=debug_messages,
                 sheet_config=sheet_config,
+                model_id=wanted_id,
             )
             continue
 

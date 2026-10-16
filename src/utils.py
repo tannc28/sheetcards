@@ -857,6 +857,14 @@ def convert_edit_url_to_tsv(url):
 
 SHEET_FRAGMENT = "sheet="
 
+# Added after the sheet when it was the file's only sheet at the time it was
+# connected: `#sheet=Sheet1&only=1`. The deck is then named after the file alone,
+# the way Sheet to Anki names a one-sheet workbook, so a phone's .apkg and a
+# desktop sync of the same sheet land in one deck. The identity (get_deck_id) is
+# unchanged — it reads only `sheet=` — and a URL stored before this existed keeps
+# the `{file}::{sheet}` name it has always had.
+ONLY_SHEET_FRAGMENT = "only=1"
+
 # =============================================================================
 # A SPREADSHEET FILE AT A PLAIN URL
 # =============================================================================
@@ -943,7 +951,14 @@ def sheet_name_from_url(url):
     return None
 
 
-def url_for_sheet(url, sheet_name):
+def sheet_is_only(url):
+    """Whether the URL says its sheet was the file's only one (see ONLY_SHEET_FRAGMENT)."""
+    if not url or not isinstance(url, str) or "#" not in url:
+        return False
+    return ONLY_SHEET_FRAGMENT in url.split("#", 1)[1].split("&")
+
+
+def url_for_sheet(url, sheet_name, only=False):
     """The same file's URL, pointed at one named sheet.
 
     Every `gid` already on the URL comes off first — the browser puts one in the
@@ -966,7 +981,8 @@ def url_for_sheet(url, sheet_name):
     base = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ""))
     if not sheet_name:
         return base
-    return f"{base}#{SHEET_FRAGMENT}{quote(str(sheet_name), safe='')}"
+    tail = f"&{ONLY_SHEET_FRAGMENT}" if only else ""
+    return f"{base}#{SHEET_FRAGMENT}{quote(str(sheet_name), safe='')}{tail}"
 
 
 def convert_edit_url_to_xlsx(url):

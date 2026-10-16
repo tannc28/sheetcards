@@ -34,6 +34,7 @@ from .errors import describe_download_failure
 from .errors import looks_like_login_page
 from .sheet_config import SheetConfig
 from .templates_and_definitions import ensure_custom_models
+from .templates_and_definitions import sheet_identity
 from .tsv_model import TAG_ROOT  # noqa: F401  (facade)
 from .tsv_model import RemoteDeck  # noqa: F401  (facade)
 from .tsv_model import build_remote_deck_from_tsv  # noqa: F401  (facade)
@@ -581,13 +582,33 @@ def create_or_update_notes(
         # or outside one — renders exactly what the sheet just asked for.
         sheet_config = remoteDeck.sheet_config
         cache_deck_sheet_config(deck_url, plan, sheet_config)
-        ensure_custom_models(
+        models = ensure_custom_models(
             col, deck_url, plan, sheet_config, debug_messages=debug_messages
         )
 
         # 3. Get existing notes by note key
-        existing_notes = get_existing_notes_by_id(col, deck_id)
+        existing_notes = get_existing_notes_by_id(
+            col, deck_id, exclude_models=other_decks_models(deck_url)
+        )
         add_debug_msg(f"Found {len(existing_notes)} existing notes in deck")
+
+        # 3.1 The same rows as Sheet to Anki keys them (see sheet_identity), so a
+        # phone's .apkg of this sheet and this sync are one set of notes.
+        identity = sheet_identity(deck_url, sheet_config)
+        foreign = adopt_imported_notes(
+            col,
+            existing_notes,
+            expected_note_ids,
+            identity,
+            own_models(deck_url, models),
+        )
+        restamp_guids(col, existing_notes, identity)
+        for note_id, where in sorted(foreign.items())[:10]:
+            stats.warnings.append(
+                f"Row '{note_id}' is already in Anki from an .apkg import ({where}) "
+                f"on a different note type, so it was not added a second time. "
+                f"Add name= to the settings row so both ways in share one deck."
+            )
 
         def process_note(note_data, note_id):
             """Creates or updates a single note and records it in stats."""
@@ -629,6 +650,7 @@ def create_or_update_notes(
                     deck_url,
                     sheet_config=sheet_config,
                     debug_messages=debug_messages,
+                    guid=guid_for(identity, note_id),
                 ):
                     stats.created += 1
                     preview = str(note_data.get(preview_header, ""))
@@ -661,6 +683,10 @@ def create_or_update_notes(
 
             # Check if it should sync
             if not row_is_marked_for_sync(note_data, plan):
+                stats.skipped += 1
+                continue
+
+            if note_id in foreign:
                 stats.skipped += 1
                 continue
 
@@ -784,7 +810,136 @@ def create_or_update_notes(
         return stats
 
 
-def get_existing_notes_by_id(col, deck_id):
+def guid_for(identity, row_id):
+    """The guid Sheet to Anki's .apkg gives this row (apkg.note_guid), or None."""
+    if not identity or not row_id:
+        return None
+    from .apkg import note_guid
+
+    return note_guid(identity[0], row_id)
+
+
+def _note_with_guid(col, guid):
+    """The id of the note holding ``guid``, or None."""
+    if not guid:
+        return None
+    try:
+        found = col.db.scalar("select id from notes where guid = ?", guid)
+    except Exception:
+        return None
+    return found if isinstance(found, int) else None
+
+
+def own_models(deck_url, models=None):
+    """This deck's note type ids, as strings: registered, plus just provisioned."""
+    from .config_manager import get_deck_note_type_ids
+
+    ids = {str(k) for k in (get_deck_note_type_ids(deck_url) or {})}
+    for model in (models or {}).values():
+        try:
+            ids.add(str(model["id"]))
+        except Exception:
+            continue
+    return ids
+
+
+def other_decks_models(deck_url):
+    """Note type ids registered to every *other* connected deck.
+
+    A file's only sheet is named ``sc_{file}``, and a sheet connected from the
+    same file later is ``sc_{file}::{sheet}`` — inside it. The deck search below
+    includes subdecks (for SUBDECK levels), so without this the first deck
+    would count the second one's notes as its own and delete them as rows its
+    sheet does not have.
+    """
+    from .config_manager import get_deck_id
+    from .config_manager import get_remote_decks
+
+    try:
+        key = get_deck_id(deck_url)
+        return {
+            str(model_id)
+            for other, info in get_remote_decks().items()
+            if other != key
+            for model_id in (info.get("note_types") or {})
+        }
+    except Exception:
+        return set()
+
+
+def adopt_imported_notes(col, existing_notes, expected_ids, identity, own_model_ids):
+    """Finds rows a phone's .apkg already put in Anki, wherever they were filed.
+
+    A note carrying this row's guid on one of this deck's note types is this
+    deck's note and joins ``existing_notes`` (the update then moves its cards
+    into place). One on any other note type is left exactly as it is — retyping
+    it would reset its review history — and is returned as ``{row id: where}``
+    so the row is neither added twice nor silently dropped.
+    """
+    foreign = {}
+    if not identity:
+        return foreign
+    for row_id in expected_ids:
+        if row_id in existing_notes:
+            continue
+        nid = _note_with_guid(col, guid_for(identity, row_id))
+        if not nid:
+            continue
+        try:
+            note = col.get_note(nid)
+        except Exception:
+            continue
+        if str(note.mid) in own_model_ids:
+            existing_notes[row_id] = note
+            add_debug_msg(f"Found row {row_id} by its .apkg guid", "NOTE_PROCESSOR")
+            continue
+        try:
+            where = note.note_type()["name"]
+        except Exception:
+            where = "another note type"
+        foreign[row_id] = where
+    return foreign
+
+
+def restamp_guids(col, existing_notes, identity):
+    """Gives each of this deck's notes the guid Sheet to Anki would give its row.
+
+    Notes this add-on made before it stamped guids carry random ones, so an
+    .apkg of the same sheet would come in beside them as new notes. Anki keeps
+    a note's guid in the note itself and syncs a change to it like any edit, so
+    the fix is one write per note, once: a note whose guid is already right is
+    not touched, and one whose guid another note holds is left alone (that is a
+    duplicate made earlier, which is the user's to resolve). Returns the count.
+    """
+    if not identity:
+        return 0
+    changed = held = 0
+    for row_id, note in existing_notes.items():
+        want = guid_for(identity, row_id)
+        if not want or not isinstance(getattr(note, "guid", None), str):
+            continue
+        if note.guid == want:
+            continue
+        owner = _note_with_guid(col, want)
+        if owner and owner != note.id:
+            held += 1
+            continue
+        try:
+            note.guid = want
+            col.update_note(note)
+            changed += 1
+        except Exception as e:
+            add_debug_msg(f"Could not restamp {row_id}: {e}", "NOTE_PROCESSOR")
+    if changed or held:
+        add_debug_msg(
+            f"Guids matched to Sheet to Anki's: {changed} restamped, "
+            f"{held} left (another note holds the guid)",
+            "NOTE_PROCESSOR",
+        )
+    return changed
+
+
+def get_existing_notes_by_id(col, deck_id, exclude_models=()):
     """
     Obtains mapping of existing notes in the deck by note key.
 
@@ -829,6 +984,8 @@ def get_existing_notes_by_id(col, deck_id):
             try:
                 card = col.get_card(card_id)
                 note = card.note()
+                if exclude_models and str(note.mid) in exclude_models:
+                    continue
 
                 # Get note key from ID field
                 if column_model.IDENTIFIER in note.keys():
@@ -849,7 +1006,14 @@ def get_existing_notes_by_id(col, deck_id):
 
 
 def create_new_note(
-    col, note_data, plan, deck_id, deck_url, sheet_config=None, debug_messages=None
+    col,
+    note_data,
+    plan,
+    deck_id,
+    deck_url,
+    sheet_config=None,
+    debug_messages=None,
+    guid=None,
 ):
     """
     Creates a new Anki note from a spreadsheet row.
@@ -898,6 +1062,10 @@ def create_new_note(
 
         # Create note
         note = col.new_note(model)
+        # The guid Sheet to Anki gives this row, unless a note already holds it
+        # (then this one keeps Anki's random guid rather than sharing one).
+        if guid and not _note_with_guid(col, guid):
+            note.guid = guid
 
         # Fill fields (the ID field receives the note's unique key)
         fill_note_fields(note, note_data, plan)
