@@ -616,7 +616,18 @@ def declared_name_for(url):
 
 def is_declared_name(remote_name):
     """Whether a remote name is one a sheet chose itself (and so is used as written)."""
-    return bool(remote_name) and remote_name in _DECLARED_NAMES.values()
+    if not remote_name:
+        return False
+    if remote_name in _DECLARED_NAMES.values():
+        return True
+    # After a restart, before the first download: what meta.json remembers.
+    try:
+        return any(
+            info.get("declared_name") == remote_name
+            for info in get_remote_decks().values()
+        )
+    except Exception:
+        return False
 
 
 class DeckNameManager:
