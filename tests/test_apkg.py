@@ -549,3 +549,55 @@ class TestSortAndClock:
 
         stamps = [apkg._clock() for _ in range(3)]
         assert stamps == sorted(set(stamps))
+
+
+@pytest.mark.unit
+def test_a_template_taken_out_is_kept_as_a_stub():
+    from src.apkg import kept_templates
+    from src.apkg import note_type_shape
+
+    on = build_remote_deck_from_tsv(
+        parse_tsv_data("ID\tWord\tMeaning\n#config reverse\t\t\n1\ta\tb\n"), "u"
+    )
+    off = build_remote_deck_from_tsv(
+        parse_tsv_data("ID\tWord\tMeaning\n#config\t\t\n1\ta\tb\n"), "u"
+    )
+    was = note_type_shape(on.plan, on.sheet_config)
+    now = note_type_shape(off.plan, off.sheet_config, (), was["templates"])
+    assert now["templates"] == was["templates"]
+    assert now["stubs"] == [was["templates"][1]]
+    # turned back on, the real template takes the stub's place
+    again = note_type_shape(on.plan, on.sheet_config, (), now["templates"])
+    assert again["templates"] == was["templates"] and again["stubs"] == []
+    # nothing remembered: just what the sheet makes
+    assert kept_templates([{"name": "Card 1"}], ()) == [{"name": "Card 1"}]
+
+
+@pytest.mark.slow
+@needs_anki
+def test_reverse_turned_off_updates_and_leaves_empty_cards():
+    """Default import options: no conflict, and Empty Cards finds the old ones."""
+    result = _real_anki(_HARNESS + """
+from sc.apkg import note_type_shape
+ON = "ID\\tWord\\tMeaning\\n#config reverse\\t\\t\\nw1\\tapple\\tt\\nw2\\tbook\\ts\\n"
+OFF = ("ID\\tWord\\tMeaning\\n#config\\t\\t\\nw1\\tapple\\tt2\\nw2\\tbook\\ts\\n"
+       "w3\\tcat\\tm\\n")
+on = build_remote_deck_from_tsv(parse_tsv_data(ON), "u")
+names = note_type_shape(on.plan, on.sheet_config)["templates"]
+first = load_default(col, package(ON, 1786000000))
+off = build_remote_deck_from_tsv(parse_tsv_data(OFF), "u")
+data = build_package("SHEET", "HSK4", off.plan, off.sheet_config, off.notes,
+                     now=1786000100, previous_templates=names)
+path = os.path.join(tempfile.mkdtemp(), "p.apkg"); open(path, "wb").write(data)
+second = load_default(col, path)
+empty = sum(len(n.card_ids) for n in col.get_empty_cards().notes)
+print(json.dumps({"first": first, "second": second, "cards": col.card_count(),
+                  "empty": empty, "notes": col.note_count()}))
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert out["second"]["conflicting"] == 0
+    assert out["second"]["updated"] == 2 and out["second"]["new"] == 1
+    assert out["notes"] == 3
+    assert out["cards"] == 5  # 2 forward + 2 old reverse + w3's forward only
+    assert out["empty"] == 2  # the old reverse cards, for Tools → Empty Cards

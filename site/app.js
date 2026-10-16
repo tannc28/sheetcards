@@ -21,12 +21,12 @@ import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
-import { takeHandoff } from "./handoff.js";
+import { dropHandoff, takeHandoff } from "./handoff.js";
 import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 import { warningText } from "./sheetwarnings.js";
-import { fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
+import { droppedTemplates, fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
 
 // The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
@@ -56,18 +56,23 @@ from sc.apkg import build_package, note_type_shape, resolve_identity
 _STATE = {}
 
 
-def _previous(last):
-    """The fields of the last package of this deck, when it was the same kind."""
+def _previous(last, key="fields"):
+    """The fields (or template names) of this deck's last package, same kind only."""
     last = json.loads(last or "null") or {}
     kind = "cloze" if _STATE["deck"].sheet_config.cloze_field else "basic"
-    return last.get("fields") or [] if last.get("kind") == kind else []
+    return last.get(key) or [] if last.get("kind") == kind else []
 
 
 def shape(last):
     """The note type the next package will carry, given the last one's."""
     deck = _STATE["deck"]
     return json.dumps(
-        note_type_shape(deck.plan, deck.sheet_config, _previous(last)),
+        note_type_shape(
+            deck.plan,
+            deck.sheet_config,
+            _previous(last),
+            _previous(last, "templates"),
+        ),
         ensure_ascii=False,
     )
 
@@ -77,6 +82,7 @@ def package_bytes(last):
     return build_package(
         _STATE["id"], _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"],
         previous_fields=_previous(last),
+        previous_templates=_previous(last, "templates"),
     )
 
 
@@ -576,10 +582,12 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   state.sheetId = state.analysis.identity.id;
   state.shape = null;
   state.change = null;
+  state.dropped = [];
   try {
     const last = lastShape(state.sheetId);
     state.shape = nextShape(last);
     state.change = shapeChange(last, state.shape);
+    state.dropped = droppedTemplates(last, state.shape);
   } catch {
     // Without a remembered package there is nothing to compare with.
   }
@@ -756,6 +764,7 @@ async function preview({ again = false } = {}) {
       url.hash = "";
     }
     rememberDeck(url);
+    dropHandoff();
 
     showUpload(at ?? (isDemo ? demoTab(upload.bytes) : 0), { keepRow: again });
   } catch (err) {
@@ -930,6 +939,8 @@ async function previewFile(file, { hash = "", edit = "" } = {}) {
   url.searchParams.delete("url");
   url.hash = hash;
   rememberDeck(url);
+  // A handed-over file is only kept for as long as it is what is open.
+  if (hash !== "#file") dropHandoff();
   $("#demo-note").hidden = true;
   $("#editsheet").hidden = !edit;
   if (edit) $("#editsheet").href = edit;
@@ -1560,6 +1571,7 @@ function downloadPackage() {
     // change between the two is what the done dialog warns about.
     const last = lastShape(state.sheetId);
     state.change = shapeChange(last, state.shape);
+    state.dropped = droppedTemplates(last, state.shape);
     // A copy, because the array Pyodide hands over is a view onto its heap and
     // the next Python call is free to reuse that memory.
     const bytes = new Uint8Array(buildPackage(last));
@@ -1725,18 +1737,27 @@ const MERGE_STEP = { desktop: "mergeDesktop", android: "mergeAndroid", ios: "mer
  */
 function paintSchema(el, device = null) {
   const change = state.change;
-  el.hidden = !change;
-  if (!change) return (el.innerHTML = "");
+  const shown = change || state.dropped?.length;
+  el.hidden = !shown;
+  if (!shown) return (el.innerHTML = "");
   const apps = device ? [device] : ["android", "ios", "desktop"];
   if (change === "cloze") {
     const type = state.analysis?.noteTypes?.[state.shape?.kind === "cloze" ? "cloze" : "basic"] ?? "";
     el.innerHTML = `<strong>${escapeHtml(t("clozeTitle"))}</strong><p>${t("clozeBody", escapeHtml(type))}</p>`;
     return;
   }
+  const empty = state.dropped?.length ? `<p>${t("emptyCards")}</p>` : "";
+  if (!change) {
+    // Only a template taken out: the note type is the same to Anki (it is kept
+    // as a stub), so there is nothing to merge — just cards to empty.
+    el.innerHTML = `<strong>${escapeHtml(t("emptyCardsTitle"))}</strong>${empty}`;
+    return;
+  }
   const fields = escapeHtml((state.shape?.fields || []).join(", "));
   el.innerHTML =
     `<strong>${escapeHtml(t("schemaTitle"))}</strong><p>${t("schemaBody", fields)}</p>` +
     `<ul>${apps.map((d) => `<li>${t(MERGE_STEP[d])}</li>`).join("")}</ul>` +
+    empty +
     `<p class="muted small">${escapeHtml(t("mergeAfter"))}</p>`;
 }
 
@@ -2381,13 +2402,15 @@ if (loadFromAddress()) {
   // On its way; the queue in whenReady() runs it once Python is up.
 } else if (location.hash === "#file") {
   // A file picked on the landing page, or a sheet written in Create sheet,
-  // handed over through IndexedDB. The hash goes at once: it names a one-off
-  // delivery, not something to come back to.
-  history.replaceState(null, "", location.pathname);
+  // handed over through IndexedDB. #file stays in the address and the file in
+  // the slot until something else is opened, so a reload brings the deck back.
   setStage("loading");
   takeHandoff().then(({ file, from }) => {
-    if (file) whenReady(() => previewFile(file, { edit: from === "sheet" ? "./sheet.html" : "" }), "file");
-    else {
+    if (file) {
+      const edit = from === "sheet" ? "./sheet.html" : "";
+      whenReady(() => previewFile(file, { hash: "#file", edit }), "file");
+    } else {
+      history.replaceState(null, "", location.pathname);
       setStage("empty");
       bootStatus();
     }

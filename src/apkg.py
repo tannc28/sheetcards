@@ -227,16 +227,60 @@ def kept_fields(current, previous=()):
     return previous + [f for f in current if f not in previous]
 
 
-def note_type_shape(plan, sheet_config, previous_fields=()):
-    """What Anki compares a note type by: its kind, fields and template names."""
+def stub_template(name, key_field="ID"):
+    """A card template that renders nothing: kept by name, makes no card.
+
+    ``{{^ID}}`` is "only when ID is empty", and ID never is. Anki accepts it as a
+    template (it references a field), makes no card from it for a new note, and
+    lists the cards it already made as empty, so Tools → Empty Cards removes
+    them — checked in real Anki with its default import options.
+    """
+    body = f"{{{{^{key_field}}}}}{{{{{key_field}}}}}{{{{/{key_field}}}}}"
+    return {"name": name, "qfmt": body, "afmt": body, "stub": True}
+
+
+def kept_templates(current, previous=(), key_field="ID"):
+    """The card templates, given the names the last package of this sheet had.
+
+    A template the sheet no longer makes — ``reverse`` taken out — would be a
+    new schema to Anki, so every note would *conflict*; and even merged, Anki
+    keeps the old template and goes on showing its cards. Kept as a stub under
+    the same name at the same place instead, the note type is unchanged to
+    Anki, the import updates, and the cards it made become empty cards for
+    Tools → Empty Cards. A template the sheet adds is appended (that one is a
+    schema change, and the merge notice says so).
+    """
+    previous = [n for n in previous or [] if isinstance(n, str)]
+    if not previous or not current or previous[0] != current[0]["name"]:
+        return list(current)
+    by_name = {spec["name"]: spec for spec in current}
+    out = [
+        by_name.pop(name, None) or stub_template(name, key_field) for name in previous
+    ]
+    return out + [spec for spec in current if spec["name"] in by_name]
+
+
+def _templates(plan, sheet_config, previous_templates=()):
     is_cloze = bool(sheet_config.cloze_field)
+    current = build_templates(plan, sheet_config, is_cloze=is_cloze)
+    if is_cloze:
+        # One template, and extra templates on a cloze note type make no cards.
+        return current
+    return kept_templates(current, previous_templates, plan.note_type_fields()[0])
+
+
+def note_type_shape(plan, sheet_config, previous_fields=(), previous_templates=()):
+    """What Anki compares a note type by: its kind, fields and template names.
+
+    ``stubs`` names the kept templates that make no card (kept_templates).
+    """
+    is_cloze = bool(sheet_config.cloze_field)
+    templates = _templates(plan, sheet_config, previous_templates)
     return {
         "kind": "cloze" if is_cloze else "basic",
         "fields": kept_fields(plan.note_type_fields(), previous_fields),
-        "templates": [
-            spec["name"]
-            for spec in build_templates(plan, sheet_config, is_cloze=is_cloze)
-        ],
+        "templates": [spec["name"] for spec in templates],
+        "stubs": [spec["name"] for spec in templates if spec.get("stub")],
     }
 
 
@@ -426,7 +470,14 @@ def _collection_config(mid):
 
 
 def build_package(
-    sheet_id, deck_name, plan, sheet_config, rows, now=None, previous_fields=()
+    sheet_id,
+    deck_name,
+    plan,
+    sheet_config,
+    rows,
+    now=None,
+    previous_fields=(),
+    previous_templates=(),
 ):
     """Builds an ``.apkg`` from the rows of one sheet.
 
@@ -442,6 +493,8 @@ def build_package(
         previous_fields (list, optional): the fields of the last package built
             for this sheet, kept in front so a removed or moved column is not a
             new schema to Anki (see kept_fields)
+        previous_templates (list, optional): that package's template names, so a
+            template taken out stays as a stub (see kept_templates)
 
     Returns:
         bytes: the package, ready to be written to a file or handed to a browser
@@ -455,7 +508,7 @@ def build_package(
     fields = kept_fields(plan.note_type_fields(), previous_fields)
     sortf = sort_index(fields, sheet_config)
     content = set(plan.content_headers)
-    templates = build_templates(plan, sheet_config, is_cloze=is_cloze)
+    templates = _templates(plan, sheet_config, previous_templates)
     model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
     mid = model_id(sheet_id, deck_name, is_cloze, keyed)
 
@@ -518,7 +571,7 @@ def build_package(
             # sheet's own warning tells the user why it looks empty.
             ordinals = ordinals or [0]
         else:
-            ordinals = list(range(len(templates)))
+            ordinals = [i for i, spec in enumerate(templates) if not spec.get("stub")]
 
         for ord_ in ordinals:
             card_rows.append(

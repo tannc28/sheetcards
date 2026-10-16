@@ -370,6 +370,12 @@ const STRINGS = {
       `Sheet này chưa ghi tên bộ flashcard bên trong, nên được nhận ra theo tên file “${file}”: giữ nguyên tên thì import vẫn cập nhật deck đang có.`,
   },
   nameOfferGo: { en: "Write the name into the sheet", vi: "Ghi tên vào sheet" },
+  // The same draft open in two tabs (sheet.js, the storage event).
+  otherTab: {
+    en: "This sheet is being edited in another tab. Whichever tab saves last overwrites the other.",
+    vi: "Sheet này đang được sửa ở một tab khác. Tab nào lưu sau sẽ ghi đè tab kia.",
+  },
+  otherTabGo: { en: "Open the latest version", vi: "Mở bản mới nhất" },
   nameAddTitle: { en: "Write the name into the sheet?", vi: "Ghi tên vào sheet?" },
   nameAddText: {
     en: (_old, name) =>
@@ -1045,6 +1051,12 @@ const STRINGS = {
   mergeAfter: {
     en: "After that, normal imports update again. Anki will ask for a one-way sync once.",
     vi: "Sau lần đó, import bình thường sẽ lại cập nhật. Anki sẽ hỏi sync một chiều một lần.",
+  },
+  // reverse taken out of the settings row: Anki keeps the cards it already made.
+  emptyCardsTitle: { en: "Reverse cards turned off", vi: "Đã tắt card ngược" },
+  emptyCards: {
+    en: "The sheet no longer makes reverse cards (<b>reverse</b>), and this file makes none — but Anki keeps the ones it already made. After importing, remove them with <b>Tools → Empty Cards</b> in Anki on a computer.",
+    vi: "Sheet không còn tạo card ngược (<b>reverse</b>) và file này không tạo thêm — nhưng Anki vẫn giữ các card ngược đã có. Sau khi import, xoá chúng bằng <b>Tools → Empty Cards</b> trong Anki trên máy tính.",
   },
   clozeTitle: {
     en: "You switched this deck to or from cloze",

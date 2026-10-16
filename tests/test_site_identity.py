@@ -112,6 +112,16 @@ def test_a_changed_note_type_is_told_apart():
     assert out == [None, None, "schema", "schema", "cloze"]
 
 
+def test_a_newly_stubbed_template_is_said_once():
+    out = _run(
+        "[m.droppedTemplates({kind: 'basic', stubs: []}, {kind: 'basic', stubs: ['R']}),"
+        " m.droppedTemplates({kind: 'basic', stubs: ['R']}, {kind: 'basic', stubs: ['R']}),"
+        " m.droppedTemplates(null, {kind: 'basic', stubs: ['R']}),"
+        " m.droppedTemplates({kind: 'basic'}, {kind: 'cloze', stubs: ['R']})]"
+    )
+    assert out == [["R"], [], [], []]
+
+
 def test_storage_that_throws_costs_the_feature_not_the_page():
     broken = "{ getItem() { throw 1; }, setItem() { throw 1; } }"
     assert _run(

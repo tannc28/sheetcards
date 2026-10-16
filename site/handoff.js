@@ -4,8 +4,10 @@
  * A link can travel in the address (?url=), a File cannot, and the landing page
  * must not load Pyodide just to read one. So the File is put in this browser's
  * IndexedDB, the page moves to create.html#file, and Sheet to Anki takes it out
- * again — once: it is deleted on the way out, so a reload or a shared address
- * never finds someone else's file. Nothing leaves the device.
+ * again. It stays there while create.html#file is what is open, so a reload
+ * opens the same deck; the next sheet or link opened there drops it
+ * (dropHandoff). IndexedDB is this browser's own, so a shared #file address
+ * finds nothing on anyone else's device. Nothing leaves the device.
  */
 
 const DB = "sheetcards";
@@ -53,17 +55,25 @@ export function stashFile(file, from = "") {
   });
 }
 
-/** `{file, from}` as the last page left them, or a null file; the slot is emptied. */
+/** `{file, from}` as the last page left them, or a null file. Kept for a reload. */
 export async function takeHandoff() {
   try {
     const file = await run("readonly", (store) => store.get(KEY));
     const from = await run("readonly", (store) => store.get(FROM));
+    return { file: file instanceof Blob ? file : null, from: from || "" };
+  } catch {
+    return { file: null, from: "" };
+  }
+}
+
+/** Empties the slot, once something else has been opened in its place. */
+export async function dropHandoff() {
+  try {
     await run("readwrite", (store) => {
       store.delete(FROM);
       return store.delete(KEY);
     });
-    return { file: file instanceof Blob ? file : null, from: from || "" };
   } catch {
-    return { file: null, from: "" };
+    // Nothing kept, or storage refused: either way nothing is left to open.
   }
 }

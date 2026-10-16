@@ -160,3 +160,15 @@ export function shapeChange(before, now) {
   const same = (a, b) => JSON.stringify(a ?? []) === JSON.stringify(b ?? []);
   return same(before.fields, now.fields) && same(before.templates, now.templates) ? null : "schema";
 }
+
+/**
+ * The card templates this package newly keeps as stubs (apkg.kept_templates) —
+ * `reverse` taken out of the settings row. The note type stays the same to
+ * Anki, but the cards the template already made stay too, until Tools → Empty
+ * Cards removes them; the page says so, once.
+ */
+export function droppedTemplates(before, now) {
+  if (!before || !now || before.kind !== now.kind) return [];
+  const had = new Set(before.stubs || []);
+  return (now.stubs || []).filter((name) => !had.has(name));
+}

@@ -422,6 +422,26 @@ function nextId() {
   return id;
 }
 
+/**
+ * The deleted-word list, recovered from `next=` when a sheet comes back from a
+ * file or a link: every ID of the mark's shape below it that the sheet does not
+ * hold was handed out once and has gone, so typing it again is warned about as
+ * in the draft it was deleted from. Nothing extra travels in the file. A gap
+ * the user made by numbering by hand is warned about too — a soft warning,
+ * and the right one, since nextId would never hand that ID out either. Capped
+ * so a mark of w99999 over ten words is not a list of a hundred thousand.
+ */
+function retireGaps() {
+  const mark = splitId(sheet.next);
+  if (!mark || mark.n > 5000) return;
+  const held = new Set(sheet.rows.map((r) => String(r.id ?? "").trim()));
+  const retired = new Set(sheet.retired);
+  for (let n = 1; n < mark.n; n++) {
+    const id = mark.prefix + String(n).padStart(mark.width, "0");
+    if (!held.has(id) && !retired.has(id)) sheet.retired.push(id);
+  }
+}
+
 /** `w07` as `{prefix: "w", n: 7, width: 2}`, or null for an ID with no number. */
 function splitId(id) {
   const m = String(id ?? "").trim().match(/^(.*?)(\d+)$/);
@@ -638,7 +658,7 @@ function saveSoon() {
 
 function saveNow() {
   clearTimeout(saveTimer);
-  if (ui.stage !== "edit") return;
+  if (saveBlocked || ui.stage !== "edit") return;
   try {
     localStorage.setItem(
       DRAFT,
@@ -662,6 +682,21 @@ function dropDraft() {
 }
 
 addEventListener("pagehide", saveNow);
+
+// One draft per browser, so two tabs editing it silently overwrite each other.
+// The storage event fires only in the *other* tabs, which is exactly the one
+// that needs telling. Opening the latest version reloads without saving first,
+// or this tab's save on the way out would undo what it was asked to keep.
+let saveBlocked = false;
+addEventListener("storage", (e) => {
+  if (e.key !== DRAFT || e.newValue === null || ui.stage !== "edit") return;
+  $("#othertab").hidden = false;
+});
+$("#othertab-go").addEventListener("click", () => {
+  saveBlocked = true;
+  clearTimeout(saveTimer);
+  location.reload();
+});
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") saveNow();
 });
@@ -870,6 +905,7 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
   sheet = next;
   sheet.next ??= null;
   if (!Array.isArray(sheet.retired)) sheet.retired = [];
+  retireGaps();
   lastFiled = filed;
   filedHow = how;
   setView(view);

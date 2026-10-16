@@ -154,6 +154,11 @@
     <p class="nameoffer" id="nameoffer" hidden><span data-icon="circle-alert"></span><span><span id="nameoffer-text"></span>
       <button class="linkbtn" id="nameoffer-go" type="button" data-i18n="nameOfferGo">Ghi tên vào sheet</button></span></p>
 
+    <!-- The draft is one per browser: a second tab editing it would be
+         overwritten by whichever saves last, so the other tab's save is said. -->
+    <p class="nameoffer" id="othertab" role="alert" hidden><span data-icon="circle-alert"></span><span><span data-i18n="otherTab">Sheet này đang được sửa ở một tab khác. Tab nào lưu sau sẽ ghi đè tab kia.</span>
+      <button class="linkbtn" id="othertab-go" type="button" data-i18n="otherTabGo">Mở bản mới nhất</button></span></p>
+
     <!-- IDs written twice or left empty stop the sheet leaving the page. -->
     <p class="idwarn" id="idwarn" role="alert" hidden></p>
 
