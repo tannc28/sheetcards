@@ -1334,3 +1334,28 @@ iframe#card {
   gap: 12px 20px; margin-top: 2rem;
 }
 .notfound-links a:not(.btn) { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* ---- opened in a chat app's own browser (inapp.js) ------------------------
+   Above everything, because nothing below it can be saved from where it is. */
+.inapp {
+  position: sticky; top: 0; z-index: 60;
+  padding: 12px var(--pad);
+  background: var(--warn-soft); color: var(--ink);
+  border-bottom: 1px solid var(--warn-line);
+  font-size: var(--t-sm); line-height: 1.5;
+}
+.inapp p { margin: 0; max-width: 60rem; }
+.inapp-text { display: flex; gap: 10px; align-items: flex-start; }
+.inapp-text > .icon { flex: none; color: var(--warn); font-size: 20px; margin-top: 1px; }
+.inapp-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px !important; padding-left: 30px; }
+.inapp-acts .btn, .inapp-acts .inapp-copy {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border-radius: 12px; font-weight: 650; text-decoration: none;
+}
+.inapp-acts button.toolbtn {
+  flex: none; background: var(--panel); border: 1px solid var(--warn-line); color: var(--ink);
+}
+.inapp-url {
+  margin-top: 8px !important; padding: 8px 10px 8px 30px;
+  font-family: var(--mono); font-size: var(--t-xs); word-break: break-all; user-select: all;
+}

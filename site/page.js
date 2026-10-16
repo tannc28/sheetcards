@@ -9,6 +9,9 @@
  * to redraw, it registers with `onRepaint`.
  */
 
+// First, so a fragment carried through Chrome's intent link is back before
+// anything reads it.
+import { mountInAppBanner } from "./inapp.js";
 import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { icon, paintIcons } from "./icons.js";
 
@@ -105,5 +108,6 @@ if (contents) {
   });
 }
 
+mountInAppBanner({ t, icon });
 paintIcons();
 paint();

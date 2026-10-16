@@ -13,6 +13,9 @@
  * that sequence (see create.html and the CLAUDE.md section on the website).
  */
 
+// First, so a fragment carried through Chrome's intent link is back before
+// anything reads it.
+import { mountInAppBanner } from "./inapp.js";
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
 import { startPython } from "./pyodide.js";
@@ -2334,6 +2337,7 @@ addEventListener("message", (e) => {
 
 paintIcons();
 paintStatic();
+mountInAppBanner({ t, icon });
 
 // What the address asked for: a link (?url=, which the landing page and old
 // preview links forward here), the example (#example), or nothing — the form.

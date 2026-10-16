@@ -1232,6 +1232,20 @@ const STRINGS = {
     en: "This sheet has no ID column. Row 1 needs a column named ID, with a different value in each row below it.",
     vi: "Sheet này chưa có cột ID. Dòng 1 cần một cột tên ID, mỗi dòng bên dưới ghi một giá trị khác nhau.",
   },
+  // --- opened inside a chat app's own browser ---------------------------------
+  inappTitle: { en: "You're in an app's built-in browser.", vi: "Bạn đang mở trang trong trình duyệt của một app." },
+  inappTitleIn: { en: "You're inside", vi: "Bạn đang mở trang trong" },
+  inappAndroid: {
+    en: "Open this page in Chrome to download files — an app's built-in browser cannot save them.",
+    vi: "Mở trang này bằng Chrome để tải file — trình duyệt trong app không lưu được file.",
+  },
+  inappIos: {
+    en: "Open this page in Safari or Chrome to download files: copy the link and paste it there — or open the app's menu (the three dots) and choose to open in a browser.",
+    vi: "Mở trang này bằng Safari hoặc Chrome để tải file: copy link rồi dán vào đó — hoặc mở menu của app (dấu ba chấm) và chọn mở bằng trình duyệt.",
+  },
+  inappOpenChrome: { en: "Open in Chrome", vi: "Mở bằng Chrome" },
+  inappCopy: { en: "Copy link", vi: "Copy link" },
+  inappCopied: { en: "Copied — paste it into your browser", vi: "Đã copy — dán vào trình duyệt" },
   readAsEncoding: {
     en: (enc) =>
       `This file is not UTF-8, so it was read as ${enc === "cp1258" ? "Vietnamese Windows text (cp1258)" : "Western Windows text (cp1252)"}. Check the accents look right — or save it again from Excel as “CSV UTF-8”.`,

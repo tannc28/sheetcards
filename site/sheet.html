@@ -18,7 +18,7 @@
   // Which screen to draw first, decided before the first paint so a returning
   // writer never sees the templates flash up in front of their own sheet.
   try {
-    if (localStorage.getItem("sc-sheet-draft") || /^#s=/.test(location.hash)) {
+    if (localStorage.getItem("sc-sheet-draft") || /^#s=/.test(location.hash) || /[?&]sc_hash=s/.test(location.search)) {
       document.documentElement.dataset.draft = "";
     }
   } catch (e) {}
