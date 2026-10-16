@@ -255,7 +255,6 @@ const STRINGS = {
     en: "Kept in this browser only, never sent anywhere. To give one to someone: pick it, Create sheet, then Share link.",
     vi: "Chỉ lưu trong trình duyệt này, không gửi đi đâu. Muốn gửi cho người khác: chọn template, Tạo sheet, rồi bấm Share link.",
   },
-  shMoreTemplates: { en: "More templates", vi: "Các template khác" },
   tplUpload: { en: "Upload a template", vi: "Tải lên template" },
   tplUploadHint: {
     en: ".xlsx or .csv — its columns and settings row are kept, ready for new words",

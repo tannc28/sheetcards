@@ -91,7 +91,10 @@ a.altcard { color: inherit; text-decoration: none; }
 
 /* Coming back with a saved file: the first thing on the screen, since it is the
    commonest visit after the first. */
-.reopen { max-width: 40rem; margin: 0 auto 28px; }
+.reopen { max-width: 56rem; margin: 0 auto 28px; }
+.reopen-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 40rem) { .reopen-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.reopen-sheet .reopen-arrow { color: var(--accent); }
 .reopen-go { width: 100%; border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
 .reopen-go strong { font-size: var(--t-md); }
 .reopen-arrow { margin-left: auto; flex: none; color: var(--ok); font-size: 20px; }

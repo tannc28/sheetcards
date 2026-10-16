@@ -75,13 +75,23 @@
            aria-label="Mở file để thêm từ" data-i18n-attr="aria-label:shOpenFile">
     <input id="tplfile" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
            aria-label="Tải lên template" data-i18n-attr="aria-label:tplUpload">
+    <!-- The two ways in that need no template: a file saved earlier, and a
+         Google Sheet that already exists — side by side, before the templates. -->
     <div class="reopen">
-      <button id="pick" class="altcard reopen-go" type="button">
-        <span class="altcard-icon" data-icon="folder-open"></span>
-        <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file để thêm từ</strong>
-          <span data-i18n="shOpenFileHint">File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay</span></span>
-        <span class="reopen-arrow" data-icon="arrow-right"></span>
-      </button>
+      <div class="reopen-row">
+        <button id="pick" class="altcard reopen-go" type="button">
+          <span class="altcard-icon" data-icon="folder-open"></span>
+          <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file để thêm từ</strong>
+            <span data-i18n="shOpenFileHint">File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay</span></span>
+          <span class="reopen-arrow" data-icon="arrow-right"></span>
+        </button>
+        <a class="altcard reopen-sheet" href="./create.html">
+          <span class="altcard-icon" data-icon="link"></span>
+          <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
+            <span data-i18n="shHaveSheetHint">Dán link thẳng vào Sheet to Anki</span></span>
+          <span class="reopen-arrow" data-icon="arrow-right"></span>
+        </a>
+      </div>
       <p class="reopen-ids"><span data-icon="history"></span><span data-i18n="shIdsKept">ID của từng từ giữ nguyên, nên import lại file .apkg sẽ cập nhật note và giữ tiến độ ôn.</span></p>
     </div>
 
@@ -93,19 +103,6 @@
       <p class="tplgroup-hint" data-i18n="shMyTemplatesHint">Chỉ lưu trong trình duyệt này, không gửi đi đâu. Muốn gửi cho người khác: chọn template, Tạo sheet, rồi bấm Share link.</p>
       <div class="moretpl" id="mytemplates"></div>
     </section>
-
-    <section class="tplgroup" aria-labelledby="more-title">
-      <h2 class="sh-pickhead" id="more-title" data-i18n="shMoreTemplates">Các template khác</h2>
-      <div class="moretpl" id="moretemplates"></div>
-    </section>
-
-    <div class="alt">
-      <a class="altcard" href="./create.html">
-        <span class="altcard-icon" data-icon="link"></span>
-        <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
-          <span data-i18n="shHaveSheetHint">Dán link thẳng vào Sheet to Anki</span></span>
-      </a>
-    </div>
 
     <p class="privacy"><span data-icon="lock"></span><span data-i18n="shPrivacy">Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
     <p class="byline"><a href="https://github.com/tannc28" rel="author" translate="no">by ctan</a></p>

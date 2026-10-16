@@ -197,8 +197,16 @@ const THEME_TEXT = {
 const byId = (id) => TEMPLATES.find((tpl) => tpl.id === id);
 const BASIC = byId("basic");
 const VOCAB = byId("vocab");
-const MAIN = ["basic", "vocab", "hanzi", "kanji", "custom"];
-const MORE = TEMPLATES.filter((tpl) => tpl.more);
+// Every built-in template, in one grid: the main ones, then picture, reverse
+// and typed, which used to sit in a smaller row of their own further down.
+const MAIN = [
+  "basic",
+  "vocab",
+  "hanzi",
+  "kanji",
+  "custom",
+  ...TEMPLATES.filter((tpl) => tpl.more).map((tpl) => tpl.id),
+];
 // Basic's columns are named in the page's language at the moment the sheet is
 // made; a draft keeps them, because by then they are its field names.
 const basicVariant = () => BASIC.variants[lang()] || BASIC.variants.en;
@@ -999,20 +1007,6 @@ function paintTemplates() {
       </div>`;
   }).join("");
   watchFaces($("#templates"), (id) => templateNow(id, VOCAB_DEFAULT).card);
-
-  // The others, smaller: one face each — the card as it comes out, its theme
-  // and all — and a name.
-  $("#moretemplates").innerHTML = MORE.map((tpl) => {
-    const text = textOf(tpl.id);
-    return `<div class="tplmini">
-        ${facesHtml(tpl.id, tileFaces(variantOf(tpl, VOCAB_DEFAULT).card), { compact: true })}
-        <button type="button" class="tpl-go" data-template="${tpl.id}">
-          <strong>${escapeHtml(text.title)}</strong>
-          <span class="tpl-desc">${escapeHtml(text.text)}</span>
-        </button>
-      </div>`;
-  }).join("");
-  watchFaces($("#moretemplates"), (id) => variantOf(byId(id), VOCAB_DEFAULT).card);
   paintMine();
 }
 
