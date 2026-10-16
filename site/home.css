@@ -335,7 +335,9 @@ a.btn, a.btn-quiet { text-decoration: none; }
   opacity: 1; visibility: visible; transform: none; transition-delay: 0s;
 }
 
-.scr-link { gap: 12px; padding-top: .6rem; }
+.scr-link { gap: 12px; padding-top: .6rem; color: inherit; text-decoration: none; cursor: pointer; }
+.scr-link:hover .scr-go { filter: brightness(1.12); }
+.scr-link:hover .scr-input { border-color: color-mix(in srgb, var(--accent) 70%, var(--ink)); }
 .scr-title { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; text-align: center; }
 .scr-input {
   display: flex; align-items: center; gap: 8px; height: 2.8rem; padding: 0 12px;
