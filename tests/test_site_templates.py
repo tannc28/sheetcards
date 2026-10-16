@@ -70,11 +70,90 @@ def _all_rows(templates):
         (f"vocab {key}", v["rows"]) for key, v in templates["vocab"]["variants"].items()
     )
     yield "custom", templates["custom"]["rows"]
+    for tid, tpl in templates.items():
+        if tpl.get("more"):
+            yield from (
+                (f"{tid} {key}", v["rows"]) for key, v in tpl["variants"].items()
+            )
 
 
-def test_there_are_three_templates(built):
+def _all_cards(templates):
+    yield from (v["card"] for v in templates["basic"]["variants"].values())
+    yield templates["custom"]["card"]
+    for tpl in templates.values():
+        if "toggles" in tpl:
+            yield from (v["card"] for v in tpl["variants"].values())
+
+
+def _sheet_config():
+    spec = importlib.util.spec_from_file_location(
+        "sheet_config_for_templates", REPO / "src" / "sheet_config.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_three_main_templates_then_the_others(built):
     _, _, templates = built
-    assert list(templates) == ["basic", "vocab", "custom"]
+    assert list(templates)[:3] == ["basic", "vocab", "custom"]
+    more = [tid for tid, tpl in templates.items() if tpl.get("more")]
+    themes = _sheet_config().listed_themes()
+    assert more == ["picture", "reverse", "typed"] + [f"theme-{t}" for t in themes]
+
+
+def test_the_themed_templates_are_the_listed_themes_only(built):
+    _, _, templates = built
+    themes = _sheet_config().listed_themes()
+    assert "ptrang" not in themes
+    themed = [tpl["theme"] for tpl in templates.values() if tpl.get("theme")]
+    assert themed == themes
+    for theme in themed:
+        for key, variant in templates[f"theme-{theme}"]["variants"].items():
+            assert variant["rows"][1][0] == f"#config theme={theme}", key
+            # The same sheet as the vocabulary template, dressed differently.
+            plain = templates["vocab"]["variants"][key]["rows"]
+            assert variant["rows"][1][1:] == plain[1][1:]
+            assert variant["rows"][2:] == plain[2:]
+
+
+def test_ptrang_is_never_offered(built):
+    build, out, _ = built
+    site = build.build(out / "whole")
+    offenders = [
+        str(path.relative_to(site))
+        for path in site.rglob("*")
+        if path.is_file()
+        and path.suffix in {".js", ".html", ".css", ".json", ".py"}
+        and "ptrang" in path.read_text(encoding="utf-8", errors="ignore")
+    ]
+    # The add-on's own module has to define it: a sheet naming it still works.
+    assert offenders == ["sc/sheet_config.py"], offenders
+
+
+def test_the_other_templates_keep_the_main_column_names(built):
+    _, _, templates = built
+    vocab = ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
+    for key, v in templates["typed"]["variants"].items():
+        assert v["rows"][0] == vocab, key
+        assert "type=nc" in v["rows"][1][1] and "side=front" in v["rows"][1][3]
+    for key, v in templates["reverse"]["variants"].items():
+        assert v["rows"][0] == vocab[:4], key
+        assert v["rows"][1][0] == "#config reverse"
+        assert "reverse" in v["card"], key
+    for key, v in templates["picture"]["variants"].items():
+        assert v["rows"][0] == ["ID", "Word", "Picture", "Meaning"], key
+        assert "image" in v["rows"][1][2]
+        assert all(
+            row[2].startswith("https://upload.wikimedia.org/") for row in v["rows"][2:]
+        )
+
+
+def test_the_pictures_are_the_example_workbooks(built):
+    build, _, _ = built
+    examples = (REPO / "scripts" / "build_examples.py").read_text(encoding="utf-8")
+    for url in build.PICTURES:
+        assert url.split("/thumb/", 1)[1] in examples, url
 
 
 def test_basic_is_named_in_the_page_language(built):
@@ -125,10 +204,7 @@ def test_a_spoken_column_names_only_a_verified_voice(built):
 
 def test_every_template_card_has_a_front(built):
     _, _, templates = built
-    cards = [v["card"] for v in templates["basic"]["variants"].values()]
-    cards += [v["card"] for v in templates["vocab"]["variants"].values()]
-    cards.append(templates["custom"]["card"])
-    for card in cards:
+    for card in _all_cards(templates):
         assert card["template"]["qfmt"].strip()
         # The picture of a card leaves out the device's voice list.
         assert "sc-tts-debug" not in card["template"]["afmt"]

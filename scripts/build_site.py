@@ -378,32 +378,101 @@ VOCAB_LANGUAGES = [
 ]
 
 
-def vocab_config(code, voice, font, speak_word, speak_example):
-    """The vocabulary template's settings row for one set of choices."""
+def _spoken(base, code, voice, font, speak):
+    """One column's cell, with the language's font and, if asked, its voice."""
+    parts = [base]
+    if font:
+        parts.append(f"font={font}")
+    if speak:
+        parts.append(f"tts={code}" + (f"; voices={voice}" if voice else ""))
+    return "; ".join(parts)
 
-    def spoken(base, speak):
-        parts = [base]
-        if font:
-            parts.append(f"font={font}")
-        if speak:
-            parts.append(f"tts={code}" + (f"; voices={voice}" if voice else ""))
-        return "; ".join(parts)
 
+def vocab_config(
+    code, voice, font, speak_word, speak_example, *, theme=None, typed=False
+):
+    """The vocabulary template's settings row for one set of choices.
+
+    ``theme`` dresses the same card in one of the listed themes; ``typed`` turns
+    it round — Meaning asks, and the Word is typed in (accents forgiven) before
+    it is shown and heard.
+    """
+    word = "side=back; size=44; bold; type=nc" if typed else "size=44; bold"
+    meaning = "side=front; size=32" if typed else "size=26"
     return [
-        "#config",
-        spoken("size=44; bold", speak_word),
+        "#config" + (f" theme={theme}" if theme else ""),
+        _spoken(word, code, voice, font, speak_word),
         "size=20; color=accent",
-        "size=26",
-        spoken("size=18; color=muted; italic", speak_example),
+        meaning,
+        _spoken("size=18; color=muted; italic", code, voice, font, speak_example),
         "size=14; color=muted",
     ]
 
 
-def vocab_rows(language, speak_word=True, speak_example=True):
+def vocab_rows(language, speak_word=True, speak_example=True, **shape):
     code, _label, voice, font, words = language
-    config = vocab_config(code, voice, font, speak_word, speak_example)
+    config = vocab_config(code, voice, font, speak_word, speak_example, **shape)
     rows = [VOCAB_HEADERS, config]
     rows += [[f"w{n:02}", *word] for n, word in enumerate(words, start=1)]
+    return rows
+
+
+def reverse_rows(language, speak_word=True, _speak_example=False):
+    """The vocabulary card and its reverse: Word asks on card 1, and Phiên âm +
+    Meaning ask on card 2. Example and Note are left out, because whatever is on
+    the back of card 1 is the *question* of card 2, and an example sentence
+    holding the word gives the answer away."""
+    rows = vocab_rows(language, speak_word, False)
+    rows = [row[:4] for row in rows]
+    rows[1][0] = "#config reverse"
+    return rows
+
+
+# The pictures are the example workbook's (16 Picture words), already checked to
+# load; the words are the same three in each language the vocabulary template
+# offers, so the language step works here too.
+PICTURES = [
+    f"{_COMMONS}/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg",
+    f"{_COMMONS}/1/17/Tiger_in_Ranthambhore.jpg/500px-Tiger_in_Ranthambhore.jpg",
+    f"{_COMMONS}/1/15/Red_Apple.jpg/500px-Red_Apple.jpg",
+]
+_PICTURE_MEANINGS = ["con mèo", "con hổ", "quả táo"]
+PICTURE_WORDS = {
+    "en_US": (["cat", "tiger", "apple"], _PICTURE_MEANINGS),
+    "en_GB": (["cat", "tiger", "apple"], _PICTURE_MEANINGS),
+    "zh_CN": (["猫", "老虎", "苹果"], _PICTURE_MEANINGS),
+    "ja_JP": (["猫", "虎", "りんご"], _PICTURE_MEANINGS),
+    "ko_KR": (["고양이", "호랑이", "사과"], _PICTURE_MEANINGS),
+    "fr_FR": (["le chat", "le tigre", "la pomme"], _PICTURE_MEANINGS),
+    "de_DE": (["die Katze", "der Tiger", "der Apfel"], _PICTURE_MEANINGS),
+    "es_ES": (["el gato", "el tigre", "la manzana"], _PICTURE_MEANINGS),
+    "vi_VN": (
+        ["con mèo", "con hổ", "quả táo"],
+        [
+            "thú nhỏ nuôi trong nhà, hay bắt chuột",
+            "thú dữ lớn, lông vằn",
+            "quả tròn, vỏ đỏ hoặc xanh, vị ngọt",
+        ],
+    ),
+}
+PICTURE_HEADERS = ["ID", "Word", "Picture", "Meaning"]
+
+
+def picture_rows(language, speak_word=True, _speak_example=False):
+    """Word / Picture / Meaning: the picture asks, the word answers, aloud."""
+    code, _label, voice, font, _words = language
+    words, meanings = PICTURE_WORDS[code]
+    config = [
+        "#config",
+        _spoken("side=back; size=44; bold", code, voice, font, speak_word),
+        "side=front; image; size=300",
+        "side=back; size=24",
+    ]
+    rows = [PICTURE_HEADERS, config]
+    for n, (word, picture, meaning) in enumerate(
+        zip(words, PICTURES, meanings, strict=True), 1
+    ):
+        rows.append([f"w{n:02}", word, picture, meaning])
     return rows
 
 
@@ -649,7 +718,7 @@ def _template_card(tm, card_layout, name, rows):
         # The blank template's word is empty; its card shows the column names,
         # which is what a blank card is about to hold.
         values = {h: h for h in plan.content_headers}
-    template = card_layout.build_templates(plan, cfg, bool(cfg.cloze_field))[0]
+    templates = card_layout.build_templates(plan, cfg, bool(cfg.cloze_field))
 
     def picture(side):
         side = re.sub(
@@ -657,23 +726,50 @@ def _template_card(tm, card_layout, name, rows):
         )
         return re.sub(r"<script>[\s\S]*?</script>", "", side)
 
-    return {
-        "template": {
-            "qfmt": picture(template["qfmt"]),
-            "afmt": picture(template["afmt"]),
-        },
-        "values": values,
-    }
+    def faces(template):
+        return {"qfmt": picture(template["qfmt"]), "afmt": picture(template["afmt"])}
+
+    card = {"template": faces(templates[0]), "values": values}
+    if len(templates) > 1:
+        # The reverse card: the picker shows both, since that is the point.
+        card["reverse"] = faces(templates[1])
+    return card
+
+
+def _language_template(tm, card_layout, tid, rows_for, toggles, theme=None):
+    """A template made from the vocabulary template's language step: one variant
+    per language × read-aloud choice it offers, each parsed and refused on a
+    warning or an empty front like the rest."""
+    variants = {}
+    for language in VOCAB_LANGUAGES:
+        code = language[0]
+        for word in (True, False):
+            for example in (True, False) if "example" in toggles else (False,):
+                key = f"{code}|{int(word)}{int(example)}"
+                rows = rows_for(language, word, example)
+                variants[key] = {
+                    "rows": rows,
+                    "card": _template_card(tm, card_layout, f"{tid} {key}", rows),
+                }
+    out = {"id": tid, "toggles": toggles, "variants": variants}
+    if theme:
+        out["theme"] = theme
+    return out
 
 
 def sheet_templates(out):
-    """The three templates: Basic in both languages, every variant of the
-    vocabulary template, and the custom one.
+    """Every template: the three main ones — Basic in both languages, every
+    variant of the vocabulary template, and the custom one — then the others:
+    picture words, reverse, typed answer, and the vocabulary card in each listed
+    theme.
 
     Every language × read-Word × read-Example combination is parsed here, so a
     choice on the page can never produce a sheet that warns.
     """
     tm, card_layout, _workbook = _pure_package(out)
+    # The themes a sheet is told about, never the unlisted ones: asked of the
+    # copy just loaded, through a function of the module that defines them.
+    themes = tm.parse_config_row.__globals__["listed_themes"]()
     basic = {
         "id": "basic",
         "variants": {
@@ -684,32 +780,88 @@ def sheet_templates(out):
             for lang, rows in BASIC_TEMPLATES.items()
         },
     }
-    languages, variants = [], {}
-    for language in VOCAB_LANGUAGES:
-        code, label, voice, _font, _words = language
-        languages.append({"code": code, "label": label, "voice": voice})
-        for word in (True, False):
-            for example in (True, False):
-                key = f"{code}|{int(word)}{int(example)}"
-                rows = vocab_rows(language, word, example)
-                variants[key] = {
-                    "rows": rows,
-                    "card": _template_card(tm, card_layout, f"vocab {key}", rows),
-                }
-    vocab = {"id": "vocab", "languages": languages, "variants": variants}
+    both = ["word", "example"]
+    vocab = _language_template(tm, card_layout, "vocab", vocab_rows, both)
+    vocab["languages"] = [
+        {"code": code, "label": label, "voice": voice}
+        for code, label, voice, _font, _words in VOCAB_LANGUAGES
+    ]
     custom = {
         "id": "custom",
         "rows": CUSTOM_TEMPLATE,
         "card": _template_card(tm, card_layout, "custom", CUSTOM_TEMPLATE),
     }
-    return [basic, vocab, custom]
+    more = [
+        _language_template(tm, card_layout, "picture", picture_rows, ["word"]),
+        _language_template(tm, card_layout, "reverse", reverse_rows, ["word"]),
+        _language_template(
+            tm,
+            card_layout,
+            "typed",
+            lambda lang, w, e: vocab_rows(lang, w, e, typed=True),
+            both,
+        ),
+    ]
+    for theme in themes:
+        more.append(
+            _language_template(
+                tm,
+                card_layout,
+                f"theme-{theme}",
+                lambda lang, w, e, theme=theme: vocab_rows(lang, w, e, theme=theme),
+                both,
+                theme=theme,
+            )
+        )
+    for tpl in more:
+        tpl["more"] = True
+    return [basic, vocab, custom, *more]
+
+
+def _interned(templates):
+    """The templates with each card's HTML cut into pieces held once.
+
+    Two hundred variants share a handful of stylesheets and a few dozen
+    template bodies — a theme changes only the stylesheet — so each side is
+    written as a list of indices into one table, and site/sheet.js joins them
+    back on load. What is shipped is still exactly what card_layout made.
+    """
+    table, index = [], {}
+
+    def ref(text):
+        pieces = [p for p in re.split(r"(<style>[\s\S]*?</style>)", text) if p]
+        out = []
+        for piece in pieces:
+            if piece not in index:
+                index[piece] = len(table)
+                table.append(piece)
+            out.append(index[piece])
+        return out
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ("qfmt", "afmt") and isinstance(value, str):
+                    node[key] = ref(value)
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(templates)
+    return templates, table
 
 
 def build_sheet_templates(out):
-    body = json.dumps(sheet_templates(out), ensure_ascii=False, separators=(",", ":"))
+    templates, pieces = _interned(sheet_templates(out))
+    body = json.dumps(templates, ensure_ascii=False, separators=(",", ":"))
+    table = json.dumps(pieces, ensure_ascii=False, separators=(",", ":"))
     (out / "sheet-templates.js").write_text(
         "// Generated by scripts/build_site.py from SHEET_TEMPLATES with the\n"
-        "// add-on's own card_layout.py. Do not edit.\n"
+        "// add-on's own card_layout.py. Do not edit. Each qfmt/afmt is a list of\n"
+        "// indices into PIECES, joined back by site/sheet.js.\n"
+        f"export const PIECES = {table};\n"
         f"export const TEMPLATES = {body};\n",
         encoding="utf-8",
     )
