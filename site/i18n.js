@@ -41,8 +41,8 @@ const STRINGS = {
   // loaded sheet's name first: that is what tells two open tabs, or two entries
   // in the history, apart.
   titleHome: {
-    en: "SheetCards — Anki decks from Google Sheets, right on your phone",
-    vi: "SheetCards — tạo deck Anki từ Google Sheets ngay trên điện thoại",
+    en: "SheetCards — Anki flashcards from Google Sheets",
+    vi: "SheetCards — tạo flashcard Anki từ Google Sheets",
   },
   titleCreate: {
     en: "SheetCards — Sheet to Anki: Anki flashcards from Google Sheets",
@@ -65,8 +65,8 @@ const STRINGS = {
   // file to download, the three steps that get it into Anki, and nothing else.
   homeEyebrow: { en: "SheetCards is free · No account", vi: "SheetCards miễn phí · Không cần tài khoản" },
   homeTitle: {
-    en: "Turn a Google Sheet into an Anki deck — <mark>right on your phone</mark>.",
-    vi: "Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.",
+    en: "Anki flashcards from <mark>Google Sheets</mark>",
+    vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
   },
   homeLead: {
     en:
@@ -144,12 +144,12 @@ const STRINGS = {
   homeHow2Title: { en: "Add cards", vi: "Thêm thẻ" },
   homeHow2: {
     en:
-      "Each row is one word, and becomes a card. Type them on your phone in Create sheet and " +
+      "Each row is one word, and becomes a card. Type them right on the web in Create sheet and " +
       "press <b>Make flashcards</b>. Writing in Google Sheets instead? Press " +
       "<b>Share → General access → Anyone with the link → Viewer</b> and paste the link " +
       "into Sheet to Anki.",
     vi:
-      "Mỗi dòng là một từ, thành một card. Gõ ngay trên điện thoại trong Tạo Sheet rồi bấm " +
+      "Mỗi dòng là một từ, thành một card. Gõ ngay trên web trong Tạo Sheet rồi bấm " +
       "<b>Tạo flashcard</b>. Soạn trong Google Sheets thì bấm " +
       "<b>Share → General access → Anyone with the link → Viewer</b> rồi dán link vào " +
       "Sheet to Anki.",
@@ -180,7 +180,7 @@ const STRINGS = {
   },
   homePreviewText: {
     en: "Make Anki flashcards from Google Sheets on your phone or computer, no add-on needed.",
-    vi: "Tạo flashcard Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.",
+    vi: "Tạo flashcard Anki từ Google Sheets trên điện thoại hoặc máy tính, không cần cài add-on.",
   },
   homeSheetText: {
     en: "No Google Sheet? Write the whole sheet right on the web, and watch each card as you type.",
@@ -1270,8 +1270,8 @@ const STRINGS = {
   doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
   doorNewTitle: { en: "Not yet — write one on the web", vi: "Chưa có — soạn ngay trên web" },
   doorNewText: {
-    en: "Pick a template, type your words right on your phone, then press Make flashcards. No Google Sheets, no computer.",
-    vi: "Chọn một template, gõ từ ngay trên điện thoại, rồi bấm Tạo flashcard. Không cần Google Sheets, không cần máy tính.",
+    en: "Pick a template, type your words right on the web, on a phone or a computer, then press Make flashcards. No Google Sheets needed.",
+    vi: "Chọn một template, gõ từ ngay trên web, trên điện thoại hoặc máy tính, rồi bấm Tạo flashcard. Không cần Google Sheets.",
   },
   doorNewGo: { en: "Open Create sheet", vi: "Mở Tạo Sheet" },
   homeNeedAnki: {
@@ -1331,10 +1331,10 @@ const STRINGS = {
   },
   demoImported: { en: "Imported into AnkiDroid", vi: "Đã import vào AnkiDroid" },
   whyTitle: { en: "Why Sheet to Anki", vi: "Vì sao dùng Sheet to Anki" },
-  whyPhoneTitle: { en: "No computer needed", vi: "Không cần máy tính" },
+  whyPhoneTitle: { en: "Phone or computer", vi: "Điện thoại hay máy tính đều được" },
   whyPhone: {
-    en: "Write the sheet, check the cards, download the file and open it in AnkiDroid or AnkiMobile — every step works on a phone.",
-    vi: "Soạn sheet, xem card, tải file và mở bằng AnkiDroid hoặc AnkiMobile — mọi bước đều làm được trên điện thoại.",
+    en: "Write the sheet, check the cards, download the file and open it in Anki — every step works on a phone or a computer.",
+    vi: "Soạn sheet, xem card, tải file và mở bằng Anki — mọi bước đều làm được trên điện thoại hoặc máy tính.",
   },
   whyFreeTitle: { en: "SheetCards is free, no account", vi: "SheetCards miễn phí, không cần tài khoản" },
   whyFree: {

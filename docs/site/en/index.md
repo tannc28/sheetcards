@@ -103,7 +103,7 @@ normal link ending in `/edit…`).
 SheetCards downloads the sheet without signing in, so a private sheet cannot be
 read. Viewer access is enough: nothing is ever written back to your sheet.
 
-## 3. Create the deck
+## 3. Make the flashcards
 
 1. Paste the link into [Sheet to Anki](../../create.html). It runs the add-on's
    own code in your browser, so what you see is what the add-on would make.

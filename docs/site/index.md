@@ -99,7 +99,7 @@ bình thường kết thúc bằng `/edit…`).
 SheetCards tải sheet mà không đăng nhập, nên sheet riêng tư sẽ không đọc được.
 Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của bạn.
 
-## 3. Tạo deck
+## 3. Tạo flashcard
 
 1. Dán link vào [Sheet to Anki](../create.html). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
