@@ -240,13 +240,20 @@ def test_the_csv_reads_back_as_the_same_deck(built):
         (name, rows[:2] + [row for row in rows[2:] if any(c.strip() for c in row[1:])])
         for name, rows in _all_rows(templates)
     ]
+    # The grids go in on stdin, not in the script: every variant of every
+    # template is well over Linux's 128 KB limit on one command-line argument,
+    # which macOS does not have, so the suite passed locally and failed on CI.
     script = (
+        "let input = '';"
+        "process.stdin.on('data', (c) => (input += c));"
+        "process.stdin.on('end', () => "
         f"import({json.dumps((REPO / 'site' / 'sharelink.js').as_uri())}).then((m) => "
-        f"process.stdout.write(JSON.stringify({json.dumps([g for _, g in grids])}"
-        ".map((rows) => m.asCsv(rows)))))"
+        "process.stdout.write(JSON.stringify(JSON.parse(input)"
+        ".map((rows) => m.asCsv(rows))))));"
     )
     done = subprocess.run(
         [NODE, "--no-warnings", "-e", script],
+        input=json.dumps([g for _, g in grids]),
         capture_output=True,
         text=True,
         check=True,
