@@ -157,6 +157,9 @@ phone) or **Save .csv** (on a computer); adding the page to the Home Screen
 
 ## Anything else
 
+Found a bug? → [Contact & feedback](../../contact.html?from=docs/en/faq): send
+feedback right on the web, or reach me on GitHub or Facebook.
+
 Turn on **Write a debug log** in **Settings…** (`Ctrl+Shift+O`), do whatever went
 wrong again, and look at `debug_sheetcards.log` (the **Open folder** button takes
 you there). Please report problems at

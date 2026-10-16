@@ -157,6 +157,9 @@ Screen**) để mở lại nhanh.
 
 ## Những vấn đề khác
 
+Gặp lỗi? → [Liên hệ & góp ý](../contact.html?from=docs/faq): gửi góp ý ngay trên
+web, hoặc nhắn qua GitHub hay Facebook.
+
 Bật **Write a debug log** trong **Settings…** (`Ctrl+Shift+O`), làm lại thao tác
 bị lỗi, rồi xem file `debug_sheetcards.log` (nút **Open folder** sẽ đưa bạn tới
 đó). Hãy báo lỗi tại
