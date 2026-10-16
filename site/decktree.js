@@ -2,8 +2,8 @@
  * The deck hierarchy, drawn the same way wherever it is drawn.
  *
  * Both pages show one: the preview builds it from every synced row of a sheet and
- * lets you filter the row list by clicking a level; the editor builds it from its
- * single row of data and has nothing to filter. That is the only difference, so it
+ * lets you filter the row list by clicking a level; Create sheet builds it from its
+ * words and has nothing to filter. That is the only difference, so it
  * is an argument (`pick`) rather than a second copy of the tree — a deck shown two
  * ways on two pages of the same site is two things to learn about one thing.
  */

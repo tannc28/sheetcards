@@ -82,3 +82,21 @@ class TestTheLandingPage:
         listed = re.search(r"var own = \[(.*?)\]", text).group(1)
         for name in re.findall(r'"#([\w-]+)"', listed):
             assert f'id="{name}"' in text, name
+
+
+@pytest.mark.unit
+class TestEditorHtml:
+    """The settings-row editor grew into Create sheet; its address forwards."""
+
+    def test_the_query_and_fragment_are_carried_over(self):
+        assert _run("editor.html", "?x", "#y") == "./sheet.html?x#y"
+
+    def test_a_shared_sheet_survives_the_forward(self):
+        assert _run("editor.html", "", "#s=1.abc") == "./sheet.html#s=1.abc"
+
+    def test_a_bare_visit_still_arrives(self):
+        assert _run("editor.html") == "./sheet.html"
+
+    def test_it_works_without_script_too(self):
+        text = (SITE / "editor.html").read_text(encoding="utf-8")
+        assert 'http-equiv="refresh" content="0; url=./sheet.html"' in text

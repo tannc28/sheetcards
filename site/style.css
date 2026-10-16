@@ -2,7 +2,8 @@
 
    The tokens (colour, type, spacing), the masthead and site navigation, the
    controls, the deck tree, the row list, the sheet grid and the column detail,
-   the editor's panels, and the docs. Create deck adds create.css and the landing
+   Create sheet's grid and chips, and the docs. Create deck adds create.css (which
+   Create sheet builds on too, with sheet.css) and the landing
    page home.css on top of this.
 
    The people who use the site are learning a language, not debugging a parser,
@@ -66,7 +67,7 @@
   --shadow: 0 1px 2px rgb(22 19 31 / .05), 0 6px 20px -8px rgb(22 19 31 / .14);
   --shadow-lg: 0 2px 4px rgb(22 19 31 / .04), 0 24px 48px -18px rgb(40 24 110 / .28);
 
-  /* The editor's two widths: its deck column, and the card — a flashcard is a
+  /* Two widths: a deck column, and the card — a flashcard is a
      small thing that stays small however much room it is given, so a wide
      window spends its extra on margins rather than on a newspaper-sized card. */
   --deck-w: clamp(15rem, 22vw, 26rem);
@@ -162,11 +163,11 @@ a { color: var(--accent); }
 .icon { flex: none; width: 1em; height: 1em; vertical-align: -0.14em; }
 [data-icon] { display: inline-flex; }
 /* A button with an icon and a label keeps them on one line, centred together. */
-.btn, button.linky, .copyline .btn {
+.btn, button.linky {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
 }
 button.linky { gap: 5px; }
-.themebtn, .panel-act, .tool, .stepper, .tabs .nav button, .intro-close {
+.themebtn, .panel-act, .stepper, .tabs .nav button {
   display: inline-grid; place-items: center;
 }
 .themebtn .icon { width: 16px; height: 16px; }
@@ -550,55 +551,7 @@ h3.spaced { margin-top: 18px; }
 }
 .coldetail.flash { animation: sc-colflash .6s ease-out; }
 
-/* ---- the editor page ----------------------------------------------------- */
-
-/* Two panels rather than three, and neither folds: there is nothing here to put
-   away, and a form that hides itself is a form you have to open twice. */
-.editor { grid-template-columns: 1fr; }
-@media (min-width: 56rem) {
-  /* The sheet across the top and the two results under it. A sheet grows sideways
-     — every column added is another column across — so it gets the whole width,
-     while a deck tree and a card are both narrow things. Reading order stays 1, 2,
-     3 as the numbers say.
-
-     `.app.editor`, not `.editor`: the generic `.app` rule further down this file
-     is written for the preview page's three columns and, at equal specificity and
-     later in the source, was winning — which left this page one column wide, the
-     cells stretched across the whole window and the card pushed off the bottom. */
-  .app.editor {
-    grid-template-columns: minmax(0, var(--deck-w)) minmax(0, 1fr);
-    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
-  }
-  /* As tall as the sheet needs and no taller: the panel scrolls inside itself, so
-     a sheet with twenty columns of directives cannot push the card off the page. */
-  .app.editor > .panel:first-child {
-    grid-column: 1 / -1; max-height: 58vh;
-    border-bottom: 1px solid var(--line);
-  }
-  /* The generic rule draws the line between columns on the left of every panel
-     after the first; here the first one is a row of its own and the line belongs
-     between the two under it. */
-  .app.editor > .panel + .panel { border-left: 0; }
-  .app.editor > .panel:last-child { border-left: 1px solid var(--line); }
-}
-/* Panel 1 is a form, and a form needs a margin. The preview page pads its panels
-   from the inside, section by section, because each of those scrolls on its own —
-   this one is a single column of controls that were sitting flush against the
-   window, with the first letter of every line touching the edge. Panel 2 keeps
-   padding its own parts, since the card and the tabs want different amounts. */
-/* Tight at the top: the panel header already says "Sheet", and `--pad` under it
-   put most of a line of blank between that word and the sheet it names. */
-.editor .ed-form {
-  padding: 8px var(--pad) var(--pad);
-  overflow: auto; overscroll-behavior: contain;
-}
-/* The form scrolls as a whole; its parts keep their own height. Left to shrink,
-   the sheet — whose sideways scroll makes it a box that may — gave up its rows
-   first and showed only the header once the intro and the copy line arrived. */
-.editor .ed-form > * { flex: none; }
-.editor .panel-toggle { cursor: default; }
-.editor .panel-toggle:hover { background: transparent; }
-.editor .chev { display: none; }
+/* ---- Create sheet's grid and chips ---------------------------------------- */
 
 /* The directive chips. These styles were the column list's until that list
    merged into the row viewer; they come back here because this is now the only
@@ -612,7 +565,7 @@ h3.spaced { margin-top: 18px; }
 }
 .col:hover { border-color: var(--accent); color: var(--accent); }
 
-/* The sheet the editor writes into, drawn as one grid: the lines are the borders
+/* The sheet Create sheet writes into, drawn as one grid: the lines are the borders
    of the cells themselves, so there is no table and nothing to lay out twice.
 
    A wide sheet scrolls inside this box and nowhere else — the page must never
@@ -623,46 +576,16 @@ h3.spaced { margin-top: 18px; }
 /* All three act on the whole grid, so they sit together in its corner rather
    than trailing off the right-hand edge of a strip that scrolls — where, on a
    phone with two columns, "add a column" was already out of sight. */
-/* Under the sheet: the button that takes it away, and where to put it. */
-.copyline {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px;
-  margin: 0 0 12px;
-}
-.copyline .small { min-width: 0; }
-
-/* The first-run sentence: a note on the page, not a dialog in front of it. */
-.intro {
-  position: relative; margin: 0 0 10px; padding: 9px 40px 9px 12px;
-  font-size: var(--t-sm); line-height: 1.5;
-  background: var(--accent-soft); color: var(--ink);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-  border-radius: var(--r-md);
-}
-.intro a { font-weight: 600; white-space: nowrap; }
-.intro-close {
-  position: absolute; top: 5px; right: 5px;
-  width: 28px; height: 28px; line-height: 1; font-size: 16px; color: var(--muted);
-}
-.intro-close:hover { color: var(--ink); background: var(--panel); }
-
+/* Nobody tries pasting a block into a page unless the page says it can take one,
+   so the line over the grid says so. */
 .sheettools {
   display: flex; align-items: center; justify-content: flex-end; gap: 4px 8px;
   flex-wrap: wrap; margin: 0 0 6px;
 }
-/* Nobody tries pasting a block into a page unless the page says it can take one,
-   so the first thing on the toolbar is that sentence. It gives up its line first
-   when the room runs out, because the buttons still work unlabelled. */
 .sheettools .hint {
   flex: 1 1 auto; min-width: 0; margin-right: auto;
   font-size: var(--t-xs); color: var(--muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.tool {
-  width: 30px; height: 26px; padding: 0; line-height: 1; font-size: 14px;
-  background: var(--panel); color: var(--muted);
-  border: 1px solid var(--line); border-radius: var(--r-sm);
-}
-.tool:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 
 .sheetwrap { overflow-x: auto; margin-bottom: 12px; }
 .sheet {
@@ -952,13 +875,12 @@ h3.spaced { margin-top: 18px; }
 .cellrow .v { min-width: 0; overflow-wrap: anywhere; }
 .cellrow .v.none { color: var(--muted); font-style: italic; }
 
-/* ---- the editor: where row 3 is filed ------------------------------------ */
+/* ---- the deck tree's static form, and tags --------------------------------- */
 
 /* The result is two things, and they are the two the preview page shows in two
    panels: the deck, then the card. Headed rather than run together, because a
    settings row that files a note somewhere and a settings row that draws it are
    two different answers and only one of them is visible on a card. */
-.ed-deck { padding: var(--pad); overflow: auto; overscroll-behavior: contain; }
 /* The same tree the preview page draws, minus the clicking: one row makes one
    branch, and there is nothing here to filter down to. */
 .tree .node {
@@ -984,7 +906,7 @@ h3.spaced { margin-top: 18px; }
   background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-sm);
 }
 
-/* ---- the card (the editor) --------------------------------------------------- */
+/* ---- the card and its tabs --------------------------------------------------- */
 
 /* Tighter than the panel's own padding, and the buttons tighter than they were:
    this is a toolbar with six controls in it, and in Vietnamese every label is a
@@ -1017,11 +939,6 @@ h3.spaced { margin-top: 18px; }
   min-width: 6ch; text-align: center;
 }
 
-#view {
-  padding: var(--pad);
-  padding-bottom: max(var(--pad), env(safe-area-inset-bottom));
-}
-.stagebox { max-width: var(--card-w); margin: 0 auto; }
 
 .cardbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .cardbar select { width: auto; font-size: var(--t-sm); padding: 5px 9px; }
@@ -1151,8 +1068,7 @@ iframe#card {
   .app .panel-body > .tabs { flex: none; }
 
 
-  #view { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
-}
+  }
 
 /* ---- narrow: three stacked, foldable sections ---------------------------- */
 

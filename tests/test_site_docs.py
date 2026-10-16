@@ -96,6 +96,7 @@ def test_the_four_kinds_of_page_exist(site):
         "index.html",
         "create.html",
         "preview.html",
+        "sheet.html",
         "editor.html",
         "player.html",
     ):

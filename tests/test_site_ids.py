@@ -15,7 +15,7 @@ SITE = Path(__file__).resolve().parent.parent / "site"
 
 PAGES = {
     "app.js": "create.html",
-    "editor.js": "editor.html",
+    "sheet.js": "sheet.html",
     "home.js": "index.html",
     # The chrome of the pages that are read: the landing page, and the docs
     # template every documentation page is built from.

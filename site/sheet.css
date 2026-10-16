@@ -1,0 +1,498 @@
+/* SheetCards — Create sheet.
+
+   Built on style.css (tokens, the grid, the chips) and create.css (the step
+   rail, the entry, the cards and bars Create deck draws), because the two pages
+   are two steps of one journey and should look like it. What is here is what
+   only this page has: the templates drawn as scraps of a ruled sheet, the
+   sheet bar, the list of words a phone gets instead of a grid, the form one
+   word opens as, and the bar of the three ways out.
+
+   Mobile-first: the base rules are a phone, where the words and the columns are
+   two views behind a switch; from --wide (60rem) they sit side by side, the words
+   as a spreadsheet. */
+
+.sheetpage { --side-w: clamp(22rem, 30vw, 29rem); }
+
+/* A returning writer goes straight to their sheet; the templates must not flash
+   up first while the draft is read. */
+:root[data-draft] #entry { display: none; }
+
+/* ==== the rail: step 2 is a button here (.rail-go lives in create.css) ==== */
+
+.rail-go:not(:disabled) { color: var(--ink); }
+.rail-go:not(:disabled) .rail-n { border-color: var(--accent); color: var(--accent); }
+
+/* ==== no sheet yet ========================================================== */
+
+.sh-entry { max-width: 64rem; padding-bottom: 3rem; }
+.sh-entry .entry-lead { max-width: 34rem; }
+.sh-pickhead {
+  margin: 0 0 12px; text-align: center;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.templates {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 60rem) { .templates { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } }
+
+/* A template is a scrap torn off the sheet it starts: the column letters, the
+   header row in violet, the settings row in italic, two words — ruled with the
+   faint violet of a vở ô li, which is what every learner here first wrote
+   vocabulary into. */
+.tplcard {
+  display: flex; flex-direction: column; gap: 0; min-width: 0; text-align: left;
+  background: var(--panel); border: 1.5px solid var(--line); border-radius: 18px;
+  overflow: hidden;
+  transition: border-color .15s ease, transform .18s cubic-bezier(.2, .9, .3, 1.2), box-shadow .15s ease;
+}
+.tplcard:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.tplcard:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.tpl-mini {
+  display: flex; flex-direction: column;
+  padding: 12px 12px 10px;
+  background:
+    linear-gradient(to bottom, transparent calc(100% - 1px), var(--rule) 0) 0 0 / 100% 1.35rem,
+    color-mix(in srgb, var(--accent-soft) 35%, var(--panel));
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono); font-size: 10.5px; line-height: 1.35rem;
+}
+.tm-row {
+  display: grid; grid-template-columns: minmax(0, .7fr) repeat(calc(var(--w) - 1), minmax(0, 1fr));
+  column-gap: 0;
+}
+.tm-row > * {
+  overflow: hidden; white-space: nowrap; text-overflow: clip;
+  padding: 0 5px; border-left: 1px solid var(--rule);
+}
+.tm-row > :first-child { border-left: 0; }
+/* Two columns of words is what a phone's half-width card can show legibly. */
+@media (max-width: 40rem) {
+  .tm-row { grid-template-columns: minmax(0, .7fr) repeat(calc(min(var(--w), 3) - 1), minmax(0, 1fr)); }
+  .tm-row > :nth-child(n + 4) { display: none; }
+}
+.tm-letters i { font-style: normal; text-align: center; color: var(--muted); font-size: 9.5px; }
+.tm-r0 span { font-weight: 700; color: var(--accent); }
+.tm-r1 span { font-style: italic; color: var(--muted); }
+.tm-r1 span:first-child { color: var(--accent); }
+.tm-r2 span { color: var(--ink); }
+.tplcard:hover .tm-r2 span { color: var(--accent); }
+.tpl-text { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px; line-height: 1.35; }
+.tpl-text strong { font-size: var(--t-md); font-weight: 750; letter-spacing: -.01em; }
+.tpl-text span { font-size: var(--t-sm); color: var(--muted); }
+
+.sh-entry .alt { max-width: 40rem; margin-inline: auto; }
+a.altcard { color: inherit; text-decoration: none; }
+#pick .altcard-icon { background: var(--ok-soft); color: var(--ok); }
+
+/* ==== the sheet being written ============================================== */
+
+.work { padding: 6px 0 0; }
+
+.sheetbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 10px 0 0; padding: 4px 4px 4px 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+}
+.sheetbar .src-icon { flex: none; color: var(--ok); font-size: 18px; }
+/* The title reads as a heading until it is touched: it is the sheet's name, and
+   the file, the link and the deck are all called by it. */
+.titlebox {
+  flex: 1 1 10rem; min-width: 0; height: var(--tap); padding: 0 8px; margin-left: -8px;
+  font-size: var(--t-base); font-weight: 750; letter-spacing: -.01em;
+  border: 1.5px solid transparent; border-radius: 10px; background: transparent;
+}
+.titlebox:hover { border-color: var(--line); }
+.titlebox:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--panel); }
+.saved { flex: none; font-size: var(--t-xs); color: var(--muted); }
+.saved::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px;
+  border-radius: 50%; background: var(--ok); vertical-align: 1px;
+}
+.saved:empty { display: none; }
+.saved.bad { color: var(--bad); }
+.saved.bad::before { background: var(--bad); }
+.sheetbar .src-acts { margin-left: auto; }
+@media (max-width: 39.99rem) {
+  .saved { order: 3; flex-basis: 100%; margin: -6px 0 4px; }
+  .sheetbar .src-acts { order: 4; flex: 1 1 100%; justify-content: flex-start; gap: 2px; margin: 0 0 0 -10px; }
+  .sheetbar #new { margin-left: auto; }
+}
+
+/* The phone's switch between the words and the columns. */
+.viewseg { display: flex; width: 100%; margin: 12px 0 0; }
+.viewseg button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: var(--tap); }
+.viewseg .count { font-weight: 700; }
+.viewseg [data-icon] { font-size: 16px; }
+
+.panes { display: block; margin-top: 14px; }
+.pane { min-width: 0; }
+.sh[data-view="rows"] .pane-look, .sh[data-view="look"] .pane-rows { display: none; }
+
+.pane-h {
+  display: flex; align-items: baseline; gap: 8px; margin: 0 2px 10px;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.pane-h .count { font-size: var(--t-xs); font-weight: 700; color: var(--accent); }
+
+.gridpane { display: none; }
+
+/* ---- the phone's list of words ------------------------------------------- */
+
+.wordlist {
+  list-style: none; margin: 0; padding: 0;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  overflow: hidden;
+}
+.wordlist li + li { border-top: 1px solid var(--line-soft); }
+.worditem {
+  display: grid; width: 100%; min-height: 60px; text-align: left;
+  grid-template-columns: 3.4rem minmax(0, 1fr) 20px; grid-template-rows: auto auto;
+  column-gap: 10px; align-items: center; padding: 9px 12px 9px 14px;
+  content-visibility: auto; contain-intrinsic-size: auto 60px;
+}
+.worditem:hover { background: var(--sunken); }
+.worditem.cur { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.wi-id {
+  grid-row: 1 / span 2; align-self: center;
+  font-family: var(--mono); font-size: var(--t-xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wi-id.dup { color: var(--bad); font-weight: 700; }
+.wi-main {
+  font-weight: 650; font-size: var(--t-base); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wi-sub {
+  grid-column: 2; font-size: var(--t-sm); color: var(--muted); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wi-sub:empty { display: none; }
+.wi-go { grid-column: 3; grid-row: 1 / span 2; color: var(--muted); display: inline-flex; }
+.worditem.empty .wi-main { color: var(--muted); font-weight: 500; font-style: italic; }
+
+.addword {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 56px; margin: 12px 0 0;
+  border: 1.5px dashed var(--accent); border-radius: 16px;
+  color: var(--accent); font-weight: 700; font-size: var(--t-base);
+  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+}
+.addword:hover { background: var(--accent-soft); }
+
+/* ---- the card and the columns ------------------------------------------- */
+
+.lookcard {
+  padding: 12px; margin: 0 0 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+}
+.lookcard .cardmeta { margin: 0 2px 10px; }
+.lookcard .status { justify-content: flex-start; margin: 10px 2px 0; min-height: 0; text-align: left; }
+.lookcard .status:has(#status-text:empty) { display: none; }
+
+.cardbox { min-width: 0; }
+.cardtabs {
+  display: flex; padding: 3px; gap: 2px; margin: 0 0 10px;
+  background: var(--sunken); border: 0; border-radius: 11px;
+}
+.cardtabs .tabset { display: flex; flex: 1 1 auto; gap: 2px; }
+.cardtabs button {
+  flex: 1 1 0; min-height: 38px; padding: 0 6px; border: 0; border-radius: 9px;
+  font-size: var(--t-sm); font-weight: 650; color: var(--muted);
+}
+.cardtabs button:hover { color: var(--ink); background: transparent; }
+.cardtabs button.on { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); border: 0; }
+.tplpick { width: auto; margin: 0 0 10px; min-height: 38px; border-radius: 10px; font-size: var(--t-sm); }
+
+.shcard iframe#card {
+  display: block; width: 100%; min-height: 11rem; max-height: 62vh;
+  background: var(--card-bg); border: 1px solid var(--line);
+  border-radius: 16px; box-shadow: var(--shadow-lg);
+}
+.cardbox .sides { margin: 10px 2px 0; }
+.cardbox .source { font-size: var(--t-xs); max-height: 18rem; overflow: auto; }
+.cardbox .src-head { margin: 12px 0 6px; }
+.cardwait {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  min-height: 11rem; padding: 2.5rem 1.5rem;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--card-bg);
+}
+
+.sh .warnbar {
+  margin: 0 0 14px; padding: 0;
+  border: 1px solid var(--warn-line); border-radius: 16px;
+}
+.sh .warnbar summary {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
+  font-size: var(--t-md); font-weight: 650; color: var(--warn); cursor: pointer; list-style: none;
+}
+.sh .warnbar summary::-webkit-details-marker { display: none; }
+.sh .warnbar .warnings { padding: 0 16px 12px 34px; }
+
+.colpanel {
+  padding: 14px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 20px;
+}
+.colstrip {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
+}
+.colchip {
+  min-height: 40px; padding: 0 14px; border-radius: 999px;
+  font-size: var(--t-sm); font-weight: 650;
+  background: var(--sunken); border: 1px solid var(--line); color: var(--ink);
+  max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.colchip:hover { border-color: var(--accent); color: var(--accent); }
+.colchip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.colchip.deck .mono { font-size: var(--t-xs); }
+.colchip.add { display: inline-grid; place-items: center; width: 40px; padding: 0; color: var(--accent); font-size: 16px; }
+
+.colhead { display: flex; flex-direction: column; gap: 10px; margin: 0 0 14px; }
+.colrow { display: flex; align-items: flex-end; gap: 8px; }
+.colfield { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.colfield.grow { flex: 1 1 auto; }
+.colfield > span { font-size: var(--t-xs); font-weight: 650; color: var(--muted); }
+.colfield input { min-height: var(--tap); font-size: var(--t-base); border-radius: 11px; }
+.colfield input.mono { font-family: var(--mono); font-size: var(--t-sm); }
+.colnote { margin: 0; font-size: var(--t-sm); color: var(--muted); }
+.keyhead {
+  display: flex; align-items: baseline; gap: 8px; margin: 0;
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.colpanel .stack { margin: 0; gap: 8px; }
+.colpanel .collist { gap: 6px; }
+/* Chips are taps on a phone: tall enough for a thumb, the way every other
+   control on this page is. */
+.colpanel .col { min-height: 36px; padding: 0 12px; }
+@media (max-width: 59.99rem) and (pointer: coarse) {
+  .colpanel .col { min-height: 44px; padding: 0 14px; }
+}
+.deckline {
+  margin: 14px 0 0; padding: 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+}
+.deckline .tree { margin: 6px 0 0; }
+.deckline .keyhead { margin-bottom: 4px; }
+
+/* ---- the three ways out ------------------------------------------------- */
+
+.outbar {
+  position: sticky; bottom: 0; z-index: 20;
+  display: flex; align-items: center; gap: 8px;
+  margin: 18px calc(var(--pad) * -1) 0;
+  padding: 10px var(--pad);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: var(--panel);
+  box-shadow: 0 -8px 24px -16px rgb(22 19 31 / .3);
+  border-top: 1px solid var(--line);
+}
+.outbar .dl-meta { flex: 1 1 auto; min-width: 0; }
+.outbtn { flex: none; min-height: 52px; border-radius: 14px; }
+.outbar .btn.go {
+  flex: none; min-height: 52px; padding: 0 18px; gap: 8px;
+  box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+/* On a narrow phone the two secondary buttons give up their words — the icon
+   stays, the label is still what a screen reader hears. */
+@media (max-width: 33.99rem) {
+  .outbar .dl-meta span { display: none; }
+  .outbtn { width: 48px; padding: 0; }
+  .outbtn [data-i18n] {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .outbar .btn.go { padding: 0 16px; }
+}
+@media (min-width: 40rem) {
+  .outbar {
+    margin: 22px 0 18px; padding: 12px 12px 12px 20px;
+    border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    bottom: 14px;
+  }
+}
+
+/* ==== wide: the spreadsheet beside the card ================================ */
+
+@media (min-width: 60rem) {
+  .viewseg { display: none; }
+  /* The sheet and what is set about it on the left, the card on the right and
+     held in view while the sheet scrolls — clear of the bar at the bottom. */
+  .panes {
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w);
+    grid-template-areas: "rows side" "cols side" "deck side";
+    grid-template-rows: auto auto 1fr;
+    column-gap: clamp(1.25rem, 2.5vw, 2.5rem); align-items: start;
+  }
+  .sh[data-view] .pane-rows { display: block; grid-area: rows; }
+  .sh[data-view] .pane-look { display: contents; }
+  .colpanel { grid-area: cols; margin-top: 18px; }
+  .deckline { grid-area: deck; }
+  .lookside {
+    grid-area: side; position: sticky; top: 14px;
+    max-height: calc(100vh - 8.5rem); overflow: auto; overscroll-behavior: contain;
+    border-radius: 20px;
+  }
+  .lookcard { margin: 0; }
+  .sh .warnbar { margin: 14px 0 0; }
+  .gridpane { display: block; }
+  .listpane { display: none; }
+}
+
+.sh .sheettools { justify-content: flex-start; margin: 0 2px 8px; }
+.sh .sheettools .hint { white-space: normal; }
+/* The grid scrolls inside its own box both ways, with the column letters, the
+   names and the IDs held in place — a sheet of two hundred words whose header
+   has scrolled away is a sheet you have to count down by hand. */
+.sh .sheetwrap {
+  overflow: auto; overscroll-behavior: contain;
+  max-height: max(20rem, calc(100vh - 21rem));
+  margin: 0; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.sh .sheet {
+  grid-template-columns: 3.2ch minmax(4.5rem, 6rem) repeat(var(--cols, 1), minmax(10rem, 1fr));
+  border: 0; border-radius: 0; overflow: visible;
+}
+.sh .sheet .ref:not([data-r]) { position: sticky; top: 0; z-index: 4; height: 24px; }
+.sh .sheet [data-r="0"] { position: sticky; top: 24px; z-index: 3; }
+.sh .sheet .ref[data-r] { position: sticky; left: 0; z-index: 2; }
+.sh .sheet .ref.corner { left: 0; z-index: 5; }
+.sh .sheet .ref[data-r="0"] { z-index: 5; }
+.sh .sheet .cell[data-r="0"] { background: color-mix(in srgb, var(--accent-soft) 70%, var(--panel)); }
+.sh .sheet .cell[data-r="0"] input { font-weight: 700; }
+.sh .sheet .cell[data-r="1"] { background: var(--sunken); }
+.sh .sheet .cell[data-r="1"] textarea, .sh .sheet .cell[data-r="1"] input { font-style: italic; }
+.sh .sheet .cell.marker input { color: var(--accent); font-style: normal; }
+.sh .sheet .cell.on { box-shadow: inset 0 -3px 0 0 var(--accent); }
+.sh .sheet .cell textarea {
+  resize: none; font-family: var(--sans); font-size: var(--t-md);
+  /* As tall as what is in it, up to six lines: a cell clipped to one line hides
+     the very sentence somebody is checking. */
+  field-sizing: content; max-height: 9.5em; overflow: auto;
+}
+.sh .sheet .cell[data-r="1"] textarea { font-family: var(--mono); font-size: var(--t-sm); }
+.sh .sheet .idcell input { color: var(--muted); }
+.sh .sheet .idcell.dup input { color: var(--bad); font-weight: 700; }
+.sh .sheet .ref.cur { color: var(--accent); font-weight: 700; box-shadow: inset 2px 0 0 var(--accent); }
+.sh .sheet .cell.sel { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+.sh .sheet .cell.anchor { background: var(--panel); }
+
+.gridfoot { display: flex; gap: 8px; margin: 10px 0 0; }
+.gridfoot .toolbtn { flex: 0 0 auto; min-height: 42px; }
+
+.menu { padding: 5px; }
+.menu button { min-height: 34px; }
+.menusep { margin: 4px 6px; border: 0; border-top: 1px solid var(--line); }
+
+/* ==== the form one word opens as ============================================ */
+
+.rowform {
+  width: min(36rem, calc(100% - 24px)); max-height: calc(100dvh - 32px);
+  padding: 0; border: 0; border-radius: 24px;
+  background: var(--panel); color: var(--ink); box-shadow: var(--shadow-lg);
+}
+.rowform::backdrop { background: rgb(15 12 26 / .5); }
+.rf-inner { display: flex; flex-direction: column; max-height: inherit; margin: 0; }
+.rf-head {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 12px 8px 10px 18px; border-bottom: 1px solid var(--line-soft);
+}
+.rf-head h2 { flex: 1 1 auto; margin: 0; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
+.rf-id { display: flex; align-items: center; gap: 6px; font-size: var(--t-xs); font-weight: 700; color: var(--muted); }
+.rf-id input {
+  width: 6.5rem; min-height: 38px; padding: 0 10px; border-radius: 10px;
+  font-family: var(--mono); font-size: var(--t-base);
+}
+.rf-body { flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; padding: 14px 18px 4px; }
+.rf-fields { display: flex; flex-direction: column; gap: 14px; }
+.rf-field { display: flex; flex-direction: column; gap: 6px; }
+.rf-label { font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+.rf-field textarea {
+  display: block; width: 100%; min-height: 54px; padding: 13px 14px; margin: 0;
+  font: inherit; font-size: 1.125rem; line-height: 1.4; color: var(--ink);
+  background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: 14px;
+  resize: none; overflow: hidden;
+}
+.rf-field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.rf-hint { margin: 10px 0 14px; }
+.rf-body .cardbox { margin: 0 0 12px; }
+.rf-body .shcard iframe#card { max-height: 40vh; }
+.rf-foot {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-soft); background: var(--panel);
+}
+.rf-foot .navbtn { height: 48px; width: 48px; border-radius: 13px; }
+.rf-del { flex: 0 0 auto; min-height: 48px; color: var(--bad); }
+.rf-del [data-icon]:first-child { color: var(--bad); }
+.rf-del:hover { border-color: var(--bad); color: var(--bad); }
+.rf-done { margin-left: auto; min-height: 48px; padding: 0 24px; border-radius: 13px; font-size: var(--t-base); }
+
+@media (max-width: 39.99rem) {
+  /* On a phone the form is the screen: everything else is behind it, and the
+     keyboard takes the bottom half, so nothing may be in a corner it covers. */
+  .rowform {
+    width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0;
+    border-radius: 0;
+  }
+  .rf-inner { height: 100%; }
+  .rf-del span[data-i18n] {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .rf-del { width: 48px; padding: 0; justify-content: center; }
+}
+
+/* ==== the small dialogs ===================================================== */
+
+.pickbox .done-head { align-items: center; padding: 16px 10px 6px 20px; }
+.pickbox .done-head strong { flex: 1 1 auto; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
+.pickrows { display: flex; flex-direction: column; gap: 10px; padding: 8px 20px 0; }
+.pickfoot { margin: 12px 20px 20px; }
+
+.sharebody { padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+.sharebody > p { margin: 0; }
+.sharechoice {
+  display: flex; align-items: center; gap: 10px; min-height: var(--tap);
+  font-size: var(--t-md); font-weight: 600; cursor: pointer;
+}
+.sharechoice input { width: 20px; height: 20px; min-width: 0; accent-color: var(--accent); }
+.sharelink { min-height: 52px; box-shadow: none; }
+.sharelink input { height: 48px; font-family: var(--mono); font-size: var(--t-sm); color: var(--muted); }
+.sharesize { font-size: var(--t-sm); color: var(--muted); }
+.sharebody .note { margin: 0; }
+.shareacts { display: flex; flex-wrap: wrap; gap: 8px; }
+.shareacts .btn { flex: 1 1 12rem; }
+.shareacts .toolbtn { flex: 1 1 8rem; min-height: 54px; }
+.sharebody .privacy { margin: 0; justify-content: flex-start; text-align: left; }
+
+.askbody { padding: 22px 20px 20px; }
+.askbody strong { display: block; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
+.askbody p { margin: 6px 0 18px; color: var(--muted); }
+.askacts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.askacts .toolbtn { flex: 0 1 auto; min-height: 46px; }
+.askacts .btn { min-height: 46px; padding: 0 20px; border-radius: 13px; font-size: var(--t-md); }
+
+.tablist { display: flex; flex-direction: column; gap: 4px; padding: 6px 12px 16px; max-height: 60vh; overflow: auto; }
+.tabchoice {
+  display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 0 12px;
+  border-radius: 11px; text-align: left; font-weight: 600;
+}
+.tabchoice:hover { background: var(--accent-soft); color: var(--accent); }
+.tabchoice .icon { color: var(--ok); flex: none; }
+
+/* ==== arrival ================================================================ */
+
+.sh[data-stage="edit"] .panes { animation: rise .4s cubic-bezier(.2, .9, .3, 1); }
+.templates > * { animation: rise .5s cubic-bezier(.2, .9, .3, 1) backwards; }
+.templates > :nth-child(2) { animation-delay: 40ms; }
+.templates > :nth-child(3) { animation-delay: 80ms; }
+.templates > :nth-child(4) { animation-delay: 120ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tplcard, .rail-go { transition: none; }
+  .templates > *, .sh[data-stage="edit"] .panes, .rowform[open] { animation: none; }
+}

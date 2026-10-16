@@ -7,7 +7,7 @@
  * the whole reason it is built as a string of HTML here rather than as elements.
  *
  * It used to be built twice — once on the preview page and once, hand-copied and
- * already slightly different, in the editor. The copy had lost the referrer meta
+ * already slightly different, in the settings-row editor (now Create sheet). The copy had lost the referrer meta
  * that keeps YouTube from refusing to be framed, which is exactly the kind of
  * thing a second copy loses.
  */

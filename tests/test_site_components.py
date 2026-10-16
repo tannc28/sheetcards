@@ -2,7 +2,7 @@
 """The two pieces of the site both pages draw: the deck tree and the card frame.
 
 `site/decktree.js` and `site/cardframe.js` are imported by `app.js` (the preview)
-and by `editor.js` (the editor). They are plain string-building modules with no DOM
+and by `sheet.js` (Create sheet). They are plain string-building modules with no DOM
 in them, so they can be imported by node and checked here — which is the only thing
 standing between a change to either and two pages breaking at once, since neither
 page can be exercised without Pyodide.
@@ -81,7 +81,7 @@ class TestDeckTree:
         assert 'class="on"' in html
 
     def test_without_picking_there_is_nothing_to_click(self):
-        # The editor has one row and nothing to filter down to.
+        # Create sheet has nothing to filter down to.
         html = self._tree()["html"]
         assert "<button" not in html and 'class="node"' in html
 

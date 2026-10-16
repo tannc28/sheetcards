@@ -10,7 +10,7 @@
  *
  * Vietnamese is the default: the site is made for Vietnamese learners first.
  * The Vietnamese keeps every technical word in English — deck, note, field,
- * card, cloze, sync, settings row, preview, editor, every Anki and Google Sheets
+ * card, cloze, sync, settings row, Create sheet, Create deck, every Anki and Google Sheets
  * label — and only the explanation around it is translated. The learners run
  * Anki in English, so a translated term is a word they will never see again.
  *
@@ -29,7 +29,7 @@ const STRINGS = {
   navLabel: { en: "Site", vi: "Các trang" },
   navHome: { en: "Home", vi: "Home" },
   navPreview: { en: "Create deck", vi: "Create deck" },
-  navEditor: { en: "Editor", vi: "Editor" },
+  navSheet: { en: "Create sheet", vi: "Create sheet" },
   navDocs: { en: "Docs", vi: "Docs" },
   docsTag: { en: "docs", vi: "docs" },
   skipMain: { en: "Skip to the content", vi: "Tới nội dung chính" },
@@ -47,7 +47,10 @@ const STRINGS = {
     vi: "SheetCards — Create deck: deck Anki từ Google Sheets",
   },
   titleDeck: { en: (name) => `${name} — Create deck · SheetCards`, vi: (name) => `${name} — Create deck · SheetCards` },
-  titleEditor: { en: "SheetCards — settings row editor", vi: "SheetCards — editor cho settings row" },
+  titleSheet: {
+    en: "SheetCards — Create sheet: write a flashcard sheet on the web",
+    vi: "SheetCards — Create sheet: soạn sheet flashcard ngay trên web",
+  },
   title404: { en: "Page not found — SheetCards", vi: "Không tìm thấy trang — SheetCards" },
   notFoundTitle: { en: "This page doesn't exist", vi: "Không có trang này" },
   notFoundBody: {
@@ -127,20 +130,22 @@ const STRINGS = {
   homeHow1Title: { en: "Write a sheet", vi: "Soạn sheet" },
   homeHow1: {
     en:
-      "Row 1 holds the column names: <code>ID</code>, then any columns you like. " +
-      "Each row below is a card.",
+      "In Google Sheets, in Excel, or right here with <b>Create sheet</b>. Row 1 holds " +
+      "the column names: <code>ID</code>, then any columns you like. Each row below is a card.",
     vi:
-      "Dòng 1 là tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. " +
-      "Mỗi dòng bên dưới là một card.",
+      "Trong Google Sheets, Excel, hoặc ngay trên web với <b>Create sheet</b>. Dòng 1 là " +
+      "tên cột: <code>ID</code>, rồi bất kỳ cột nào bạn muốn. Mỗi dòng bên dưới là một card.",
   },
-  homeHow2Title: { en: "Share it, paste the link", vi: "Chia sẻ và dán link" },
+  homeHow2Title: { en: "Open it in Create deck", vi: "Mở trong Create deck" },
   homeHow2: {
     en:
-      "In Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>. " +
-      "Copy the link, paste it into <b>Create deck</b> and look through the cards.",
+      "From Create sheet, one tap on <b>Create deck</b>. From Google Sheets: " +
+      "<b>Share → General access → Anyone with the link → Viewer</b>, then paste the link. " +
+      "Look through the cards one by one.",
     vi:
-      "Trong Google Sheets: <b>Share → General access → Anyone with the link → Viewer</b>. " +
-      "Copy link, dán vào <b>Create deck</b> và xem từng card.",
+      "Từ Create sheet, bấm <b>Create deck</b> là xong. Từ Google Sheets: " +
+      "<b>Share → General access → Anyone with the link → Viewer</b>, rồi dán link. " +
+      "Xem lại từng card.",
   },
   homeHow3Title: { en: "Download .apkg", vi: "Download .apkg" },
   homeHow3: {
@@ -168,9 +173,9 @@ const STRINGS = {
     en: "Make an Anki deck from Google Sheets on your phone or computer, no add-on needed.",
     vi: "Tạo deck Anki từ Google Sheets ngay trên điện thoại hoặc máy tính, không cần cài add-on.",
   },
-  homeEditorText: {
-    en: "Write a settings row and watch the card change as you type.",
-    vi: "Soạn settings row và xem card thay đổi ngay khi gõ.",
+  homeSheetText: {
+    en: "No Google Sheet? Write the whole sheet right on the web, and watch each card as you type.",
+    vi: "Không có Google Sheet? Soạn cả sheet ngay trên web và xem từng card khi gõ.",
   },
   homeDocsText: {
     en: "Columns, settings, sound, pictures and syncing, explained.",
@@ -185,11 +190,174 @@ const STRINGS = {
     vi: "Giấy phép MIT. SheetCards không do Anki hay Ankitects làm ra và không liên kết với họ.",
   },
 
-  // --- the editor ---------------------------------------------------------
-  guideTag: { en: "editor", vi: "editor" },
-  edPanelSheet: { en: "Sheet", vi: "Sheet" },
+
+  // --- Create sheet ---------------------------------------------------------
+  // The step before Create deck: a whole sheet written in the browser. Its
+  // reader is usually on a phone and may never have opened a spreadsheet, so
+  // the words are a learner's — "từ", a word — rather than a spreadsheet's.
+  skipSheet: { en: "Skip to Create sheet", vi: "Tới phần Create sheet" },
+  shStep1: { en: "Write the sheet", vi: "Viết sheet" },
+  shTitle: {
+    en: "Write a flashcard sheet <mark>right on the web</mark>",
+    vi: "Soạn sheet flashcard <mark>ngay trên web</mark>",
+  },
+  shLead: {
+    en: "No Google Sheets needed. Pick a template, type your words, then press Create deck for an .apkg that AnkiDroid, AnkiMobile or Anki opens.",
+    vi: "Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Create deck để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.",
+  },
+  shPickTemplate: { en: "Start from a template", vi: "Bắt đầu từ một mẫu" },
+  tplBlank: { en: "Blank", vi: "Trống" },
+  tplBlankText: { en: "Front and Back — name the columns yourself", vi: "Front và Back — tự đặt tên cột" },
+  tplBlankName: { en: "New sheet", vi: "Sheet mới" },
+  tplEnglish: { en: "English vocab", vi: "Từ vựng tiếng Anh" },
+  tplEnglishText: { en: "Word, IPA, Meaning, Example — read aloud", vi: "Word, IPA, Meaning, Example — có đọc to" },
+  tplEnglishName: { en: "English vocab", vi: "Từ vựng tiếng Anh" },
+  tplKanji: { en: "Kanji", vi: "Kanji" },
+  tplKanjiText: { en: "Japanese with furigana over the kanji", vi: "Tiếng Nhật, có furigana trên kanji" },
+  tplKanjiName: { en: "Kanji", vi: "Kanji" },
+  tplCloze: { en: "Cloze", vi: "Cloze" },
+  tplClozeText: { en: "Sentences with a word hidden: {{c1::…}}", vi: "Câu có từ bị che: {{c1::…}}" },
+  tplClozeName: { en: "Cloze", vi: "Cloze" },
+  shOpenFile: { en: "Open an .xlsx or .csv file", vi: "Mở file .xlsx hoặc .csv" },
+  shOpenFileHint: { en: "to keep editing a sheet you already have", vi: "để sửa tiếp một sheet bạn đã có" },
+  shHaveSheet: { en: "Already have a Google Sheet?", vi: "Đã có Google Sheet?" },
+  shHaveSheetHint: { en: "Paste its link straight into Create deck", vi: "Dán link thẳng vào Create deck" },
+  shPrivacy: {
+    en: "The sheet is kept in this browser. Nothing is sent to SheetCards' servers.",
+    vi: "Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.",
+  },
+  shWorkLabel: { en: "Your sheet", vi: "Sheet của bạn" },
+  shTitleLabel: { en: "Sheet name", vi: "Tên sheet" },
+  shSaved: { en: "Draft saved in this browser", vi: "Đã lưu nháp trong trình duyệt" },
+  shNotSaved: {
+    en: "This browser won't keep a draft — download the file to keep it",
+    vi: "Trình duyệt không cho lưu nháp — hãy tải file về để giữ",
+  },
+  shUndo: { en: "Undo", vi: "Hoàn tác" },
+  shRedo: { en: "Redo", vi: "Làm lại" },
+  shNew: { en: "New sheet", vi: "Tạo sheet mới" },
+  shNewTitle: { en: "Start a new sheet?", vi: "Tạo sheet mới?" },
+  shNewText: {
+    en: (n) => `The ${n} word${n === 1 ? "" : "s"} in this sheet will be cleared from this browser. Download it or copy its Share link first if you want to keep it.`,
+    vi: (n) => `${n} từ trong sheet này sẽ bị xoá khỏi trình duyệt. Muốn giữ thì Download hoặc copy Share link trước.`,
+  },
+  shNewYes: { en: "Clear and start over", vi: "Xoá và làm lại" },
+  shKeep: { en: "Keep my sheet", vi: "Giữ sheet hiện tại" },
+  shViewLabel: { en: "Showing", vi: "Phần đang xem" },
+  shViewRows: { en: "Words", vi: "Các từ" },
+  shViewLook: { en: "Columns & card", vi: "Cột & card" },
+  shRows: { en: "Words", vi: "Các từ" },
+  shGridHint: {
+    en: "Drag to select cells · Ctrl+V pastes many rows from Excel or Google Sheets · right-click to insert, move or delete rows",
+    vi: "Kéo để chọn ô · Ctrl+V dán nhiều dòng từ Excel hoặc Google Sheets · chuột phải để chèn, chuyển hoặc xoá dòng",
+  },
+  shAddWord: { en: "Add word", vi: "Thêm từ" },
+  shEmptyWord: { en: "(empty)", vi: "(trống)" },
+  shWordN: { en: (n, total) => `Word ${n} / ${total}`, vi: (n, total) => `Từ ${n} / ${total}` },
+  shWords: { en: (n) => `${n} word${n === 1 ? "" : "s"}`, vi: (n) => `${n} từ` },
+  shColumnsN: { en: (n) => `${n} column${n === 1 ? "" : "s"}`, vi: (n) => `${n} cột` },
+  shColumns: { en: "Columns & settings row", vi: "Cột & settings row" },
+  shColumnsLabel: { en: "Columns", vi: "Cột" },
+  shDeckCellNote: {
+    en: "The #config cell holds settings for the whole sheet: align, speed, reverse, theme.",
+    vi: "Ô #config chứa settings cho cả sheet: align, speed, reverse, theme.",
+  },
+  shIdLabel: { en: "This word's ID", vi: "ID của dòng này" },
+  shEnterHint: {
+    en: "Enter moves to the next field. On the last one, Enter starts a new word.",
+    vi: "Enter để sang ô tiếp theo. Ở ô cuối, Enter sang từ mới.",
+  },
+  shDeleteWord: { en: "Delete word", vi: "Xoá từ" },
+  shDeleted: {
+    en: (id) => `Deleted ${id} — Undo brings it back`,
+    vi: (id) => `Đã xoá ${id} — bấm Hoàn tác để lấy lại`,
+  },
+  shPrevWord: { en: "Previous word", vi: "Từ trước" },
+  shNextWord: { en: "Next word", vi: "Từ sau" },
+  shDone: { en: "Done", vi: "Xong" },
+  shInsertAbove: { en: "Insert row above", vi: "Chèn dòng phía trên" },
+  shInsertBelow: { en: "Insert row below", vi: "Chèn dòng phía dưới" },
+  shMoveUp: { en: "Move up", vi: "Chuyển lên" },
+  shMoveDown: { en: "Move down", vi: "Chuyển xuống" },
+  shDeleteRows: {
+    en: (n) => (n === 1 ? "Delete row" : `Delete ${n} rows`),
+    vi: (n) => (n === 1 ? "Xoá dòng" : `Xoá ${n} dòng`),
+  },
+  shPastedSheet: {
+    en: (n) => `Pasted a whole sheet — ${n} word${n === 1 ? "" : "s"}`,
+    vi: (n) => `Đã dán cả sheet — ${n} từ`,
+  },
+  shPastedRows: {
+    en: (n) => `Added ${n} word${n === 1 ? "" : "s"} from the clipboard`,
+    vi: (n) => `Đã thêm ${n} từ từ clipboard`,
+  },
+  shPastedCells: {
+    en: (n) => `Pasted ${n} row${n === 1 ? "" : "s"} of cells`,
+    vi: (n) => `Đã dán ${n} dòng ô`,
+  },
+  shOpened: {
+    en: (name, n) => `Opened ${name} — ${n} word${n === 1 ? "" : "s"}`,
+    vi: (name, n) => `Đã mở ${name} — ${n} từ`,
+  },
+  shPickTab: { en: "Which sheet to open?", vi: "Mở sheet nào?" },
+  shShare: { en: "Share link", vi: "Share link" },
+  shDownload: { en: "Download", vi: "Download" },
+  shToDeck: { en: "Create deck", vi: "Create deck" },
+  shNeedWord: { en: "Add at least one word first", vi: "Thêm ít nhất một từ trước đã" },
+  shHandoffFailed: {
+    en: "This browser would not pass the sheet on. Download it and open the file in Create deck.",
+    vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong Create deck.",
+  },
+  shDownloadTitle: { en: "Save the sheet as a file", vi: "Tải sheet về máy" },
+  shXlsxHint: {
+    en: "Opens in Excel, or upload it to Google Drive to make it a Google Sheet",
+    vi: "Mở bằng Excel, hoặc upload lên Google Drive thành Google Sheets",
+  },
+  shCsvHint: { en: "Plain text, opens anywhere", vi: "File chữ đơn giản, mở được ở mọi nơi" },
+  shReopenHint: {
+    en: "Open the file here again any time to keep editing.",
+    vi: "Mở lại file này ở đây bất cứ lúc nào để sửa tiếp.",
+  },
+  shPreparingXlsx: { en: "Preparing the .xlsx…", vi: "Đang tạo file .xlsx…" },
+  shDownloaded: { en: (name) => `Downloaded ${name}`, vi: (name) => `Đã tải ${name}` },
+  shShareLead: {
+    en: "Whoever opens this link sees exactly your sheet, and can keep editing their own copy.",
+    vi: "Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.",
+  },
+  shShareToDeck: { en: "Open straight as cards in Create deck", vi: "Mở thẳng thành cards trong Create deck" },
+  shLinkSize: {
+    en: (size, n) => `${size} for ${n} word${n === 1 ? "" : "s"}`,
+    vi: (size, n) => `Link dài ${size} cho ${n} từ`,
+  },
+  shLinkLong: {
+    en: "This link is long, and some chat apps cut long links short. If it doesn't open, send the downloaded file instead.",
+    vi: "Link này khá dài, và vài app chat cắt bớt link dài. Nếu link không mở được, hãy gửi file đã Download thay vào đó.",
+  },
+  shCopyLink: { en: "Copy link", vi: "Copy link" },
+  shCopied: { en: "Copied", vi: "Đã copy" },
+  shShareVia: { en: "Send via…", vi: "Gửi qua…" },
+  shSharePrivacy: {
+    en: "The sheet travels inside the link itself. Nothing is sent to any server.",
+    vi: "Sheet nằm ngay trong link. Không có gì được gửi lên máy chủ nào.",
+  },
+  shSharedTitle: { en: "Open the shared sheet?", vi: "Mở sheet được chia sẻ?" },
+  shSharedText: {
+    en: (shared, mine) => `This link holds “${shared}”. Opening it replaces your draft “${mine}” in this browser.`,
+    vi: (shared, mine) => `Link này chứa sheet “${shared}”. Mở nó sẽ thay bản nháp “${mine}” trong trình duyệt này.`,
+  },
+  shSharedYes: { en: "Open the shared sheet", vi: "Mở sheet trong link" },
+  crEditSheet: { en: "Edit sheet", vi: "Sửa sheet" },
+  shareBroken: {
+    en: "This share link is broken or was cut short. Ask for the file instead.",
+    vi: "Share link này bị hỏng hoặc bị cắt ngắn. Hãy xin file thay vào đó.",
+  },
+  shareTooNew: {
+    en: "This share link was made by a newer SheetCards. Reload the page and try again.",
+    vi: "Share link này được tạo bởi bản SheetCards mới hơn. Tải lại trang rồi thử lại.",
+  },
+
+  // --- the settings row's chips and panels ----------------------------------
   edName: { en: "Column name", vi: "Tên cột" },
-  edValue: { en: "What a cell holds", vi: "Nội dung một ô" },
   edCell: { en: "Settings row cell", vi: "Ô trong settings row" },
   edSheet: { en: "The sheet you are writing", vi: "Sheet bạn đang soạn" },
   edDeckCell: { en: "The #config cell — settings for the whole sheet", vi: "Ô #config — settings cho cả sheet" },
@@ -312,27 +480,6 @@ const STRINGS = {
     vi: "Bảng màu cho cả card, dùng được ở cả nền sáng và nền tối.",
   },
   edRemoveKey: { en: "Remove this directive", vi: "Bỏ directive này" },
-  edCopy: { en: "Copy rows 1–2", vi: "Copy dòng 1–2" },
-  edCopySel: { en: "Copy selected cells", vi: "Copy các ô đã chọn" },
-  // The step after copying, said beside the button: a settings row pasted anywhere
-  // but A1 is not row 2 of anything.
-  edCopyNext: {
-    en: "Then paste into cell A1 of your sheet.",
-    vi: "Rồi dán vào ô A1 của sheet.",
-  },
-  // Said once, to someone who has never heard of a settings row, and then put away.
-  edIntro: {
-    en:
-      "Row 2 of your sheet is the settings row: each cell says how the column " +
-      "above it looks on the card. Type in row 2 below and watch the card change.",
-    vi:
-      "Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên card " +
-      "ra sao. Gõ vào dòng 2 bên dưới và xem card đổi theo.",
-  },
-  edIntroMore: { en: "Read more", vi: "Đọc thêm" },
-  edExport: { en: "Download as .csv", vi: "Tải về dạng .csv" },
-  edExported: { en: "Downloaded — open it in Sheets or Excel", vi: "Đã tải về — mở bằng Sheets hoặc Excel" },
-  edCopied: { en: "Copied — paste it into cell A1 of your sheet", vi: "Đã copy — dán vào ô A1 của sheet" },
   edCopiedCells: { en: "Copied — paste it into your sheet", vi: "Đã copy — dán vào sheet của bạn" },
   edCopyFailed: { en: "The browser refused to copy", vi: "Trình duyệt không cho copy" },
   edOk: { en: "Every setting was understood", vi: "Mọi setting đều hợp lệ" },
@@ -346,32 +493,15 @@ const STRINGS = {
     vi: (front, back) =>
       `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
   },
-  edPasteHint: {
-    en: "Drag to select cells, then copy — or paste rows from a spreadsheet",
-    vi: "Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào",
-  },
   edSelectAll: { en: "Select every cell", vi: "Chọn tất cả các ô" },
   edInsertLeft: { en: "Insert column left", vi: "Chèn cột bên trái" },
   edInsertRight: { en: "Insert column right", vi: "Chèn cột bên phải" },
   edClearCells: { en: "Clear cells", vi: "Xoá nội dung ô" },
   edUndone: { en: "Undone — Ctrl+Y puts it back", vi: "Đã hoàn tác — Ctrl+Y để làm lại" },
   edRedone: { en: "Redone", vi: "Đã làm lại" },
-  edPasted: {
-    en: (n) => `Read ${n} column${n === 1 ? "" : "s"} from the clipboard`,
-    vi: (n) => `Đã đọc ${n} cột từ clipboard`,
-  },
-  // This page shows one row of data, so a whole sheet pasted in has to say that the
-  // rest of it was not lost, only not shown.
-  edPastedSome: {
-    en: (n, extra) =>
-      `Read ${n} column${n === 1 ? "" : "s"} — showing one row of data, ` +
-      `${extra} more not shown`,
-    vi: (n, extra) =>
-      `Đã đọc ${n} cột — chỉ hiện một dòng data, ${extra} dòng còn lại không hiện`,
-  },
   edTags: { en: "Tags", vi: "Tags" },
   // The real root is `sc_{file}::{sheet}` — the file and the sheet this row came
-  // from, which an editor with no sheet behind it does not have. Named for what it
+  // from, which a sheet still being written does not have yet. Named for what it
   // is instead of invented, so nothing on screen claims to be a deck name.
   edDeckRoot: { en: "your sheet's deck", vi: "deck của sheet bạn" },
   toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
@@ -394,9 +524,8 @@ const STRINGS = {
     vi: "File trên máy đã đổi. Kéo thả lại vào trang.",
   },
 
-  // --- the editor's panel headers ------------------------------------------
+  // --- Create sheet's deck heading -----------------------------------------
   panelDeck: { en: "Deck", vi: "Deck" },
-  panelCard: { en: "Card", vi: "Card" },
 
   // --- what each column turned into ---------------------------------------
   roleId: {
@@ -844,8 +973,9 @@ const STRINGS = {
   },
   homeGo: { en: "Create deck", vi: "Tạo deck" },
   homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
-  homeTemplateLead: { en: "No sheet yet?", vi: "Chưa có sheet?" },
-  homeTemplate: { en: "Download the starter file (.xlsx)", vi: "Tải file mẫu (.xlsx)" },
+  homeTemplateLead: { en: "No Google Sheet?", vi: "Chưa có Google Sheet?" },
+  homeWriteHere: { en: "Write one on the web → Create sheet", vi: "Soạn ngay trên web → Create sheet" },
+  homeTemplate: { en: "starter file (.xlsx)", vi: "file mẫu (.xlsx)" },
   homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
   homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
   homeNoLink: {
@@ -903,7 +1033,7 @@ const STRINGS = {
     en: "Add <code>theme=sakura</code> to the settings row and every card changes colour, in light and dark.",
     vi: "Thêm <code>theme=sakura</code> vào settings row là mọi card đổi màu, cả nền sáng lẫn nền tối.",
   },
-  featEditorLink: { en: "Try a settings row in the Editor →", vi: "Thử settings row trong Editor →" },
+  featEditorLink: { en: "Try a settings row in Create sheet →", vi: "Thử settings row trong Create sheet →" },
   addonEyebrow: { en: "The add-on for Anki on a computer", vi: "Add-on cho Anki trên máy tính" },
   addonTitle: {
     en: "Studying on a computer? Install the add-on and it syncs by itself.",

@@ -3,7 +3,7 @@
  * landing page and the documentation. The masthead's theme and language
  * switches, the translated text, the icons, and the docs' table of contents.
  *
- * The preview and the editor wire the same two switches inside their own
+ * Create deck and Create sheet wire the same two switches inside their own
  * modules, because a theme change there also has to redraw a card; this is the
  * same behaviour for pages with nothing else to redraw. Whatever a page does need
  * to redraw, it registers with `onRepaint`.

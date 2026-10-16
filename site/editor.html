@@ -2,148 +2,20 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<title data-i18n="titleEditor">SheetCards — editor cho settings row</title>
-<meta name="description" content="Soạn settings row cho từng cột và xem card thay đổi ngay, bằng chính code của add-on. Ưng ý thì copy vào sheet.">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SheetCards — Create sheet</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="./sheet.html">
 <script>
-  try {
-    var t = localStorage.getItem("sc-theme");
-    if (t === "dark") {
-      document.documentElement.dataset.theme = "dark";
-      document.querySelector('meta[name="theme-color"]').content = "#18151f";
-    }
-  } catch (e) {}
+  // The settings-row editor lived here until it grew into Create sheet, which
+  // writes the whole sheet. Links to it are out there — in the docs of older
+  // releases, in posts — so they are forwarded, query and fragment intact.
+  location.replace("./sheet.html" + location.search + location.hash);
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="./style.css">
+<!-- With scripts off the query is lost, but the reader still lands on the page. -->
+<meta http-equiv="refresh" content="0; url=./sheet.html">
 </head>
 <body>
-
-<header class="masthead">
-  <div class="brand">
-    <a class="name" href="./" translate="no">SheetCards</a> <span class="brand-tag" data-i18n="guideTag">editor</span>
-  </div>
-
-  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./" data-i18n="navHome">Home</a>
-    <a href="./create.html" data-i18n="navPreview">Create deck</a>
-    <a href="./editor.html" aria-current="page" data-i18n="navEditor">Editor</a>
-    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
-    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
-  </nav>
-  <button id="theme" class="themebtn" type="button"></button>
-  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
-</header>
-
-<!-- One column, not a whole settings row. A column is the unit people actually
-     get stuck on, and one column fits on a phone. -->
-<main id="app" class="app editor">
-
-  <section class="panel">
-    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
-      <span class="step" aria-hidden="true">1</span>
-      <span class="panel-name" data-i18n="edPanelSheet">Sheet</span>
-    </span></h2>
-
-    <div class="panel-body ed-form">
-      <!-- Said once to somebody who has never heard of a settings row, then put
-           away for good: on a second visit it is a sentence between them and the
-           sheet. -->
-      <p id="intro" class="intro" hidden>
-        <span data-i18n="edIntro">Dòng 2 của sheet là settings row: mỗi ô nói cột phía trên nó hiện trên card ra sao. Gõ vào dòng 2 bên dưới và xem card đổi theo.</span>
-        <a href="./docs/settings-row.html" data-doc="settings-row.html"
-           data-i18n="edIntroMore">Đọc thêm</a>
-        <button id="intro-close" class="intro-close" type="button"
-                title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
-      </p>
-
-      <!-- Above the sheet, not beside the card: a warning is about what was just
-           typed into row 2, and it is the sheet that has to change to clear it. -->
-      <div id="warn" class="warnbar" hidden>
-        <ul id="warnlist" class="warnings"></ul>
-      </div>
-
-      <!-- Shaped like the thing it writes into: a sheet. Row 1 the column
-           names, row 2 the settings row, row 3 one card's worth of data. The
-           grid scrolls inside itself so the page never scrolls sideways. -->
-      <!-- What you do *to the table* sits on the table, in the corner a
-           spreadsheet's own controls live in. Adding a column is the "+" at the
-           end of the header strip, and removing one is the "×" on the column
-           itself — both where the thing they act on is. -->
-      <p class="sheettools">
-        <span class="hint" data-i18n="edPasteHint">Kéo để chọn ô rồi copy — hoặc dán các dòng từ spreadsheet vào</span>
-        <button id="add" class="tool" type="button"
-                title="Thêm cột" aria-label="Thêm cột" data-i18n-attr="title:edAddColumn,aria-label:edAddColumn"><span data-icon="plus"></span></button>
-        <button id="export" class="tool" type="button"
-                title="Tải về dạng .csv" aria-label="Tải về dạng .csv" data-i18n-attr="title:edExport,aria-label:edExport"><span data-icon="file-down"></span></button>
-      </p>
-
-      <div class="sheetwrap">
-        <div class="sheet" id="sheet" role="group"
-             aria-label="Sheet bạn đang soạn" data-i18n-attr="aria-label:edSheet"></div>
-      </div>
-
-      <!-- The one thing this page is for, so it is a labelled button with the step
-           after it written beside it — an icon in the grid's corner was the most
-           important control on the page and the least findable. -->
-      <p class="copyline">
-        <button id="copy" class="btn" type="button"><span data-icon="copy"></span><span
-                id="copy-label">Copy rows 1–2</span></button>
-        <span class="muted small" data-i18n="edCopyNext">Rồi dán vào ô A1 của sheet.</span>
-      </p>
-
-      <p class="entry-alt">
-        <span id="status" class="status" role="status" aria-live="polite">
-          <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
-        </span>
-      </p>
-
-      <!-- Tapped, not dragged: a drag is the one gesture that does not survive a
-           phone, and most people are on one. -->
-      <div class="stack">
-        <h3><span data-i18n="edAdd">Thêm directive</span>
-          <span class="count" id="keyfor"></span></h3>
-        <div id="keys" class="collist"></div>
-        <!-- The values on offer for whichever directive is open. Inline, because
-             a popover on a phone covers the row you were choosing from. -->
-        <div id="opts" hidden></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- The two things a settings row decides, in the two panels the preview page
-       gives them and in the same order: where the note is filed, then what the
-       card looks like. A subdeck column only ever reaches the first of the two,
-       so with the card alone on screen it looked like it did nothing at all. -->
-  <section class="panel">
-    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
-      <span class="step" aria-hidden="true">2</span>
-      <span class="panel-name" data-i18n="panelDeck">Deck</span>
-    </span></h2>
-
-    <div class="panel-body ed-deck">
-      <div id="deck"></div>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h2 class="panel-head"><span class="panel-toggle" aria-disabled="true">
-      <span class="step" aria-hidden="true">3</span>
-      <span class="panel-name" data-i18n="panelCard">Card</span>
-    </span></h2>
-
-    <div class="panel-body">
-      <nav class="tabs" id="tabs"></nav>
-      <div id="view"></div>
-    </div>
-  </section>
-
-</main>
-
-<script type="module" src="./editor.js"></script>
+<p><a href="./sheet.html">Create sheet</a></p>
 </body>
 </html>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The Python the preview site runs in the browser, run here instead.
 
-`site/app.js` and `site/editor.js` each carry a block of Python in a `String.raw`
+`site/app.js` and `site/sheet.js` each carry a block of Python in a `String.raw`
 template literal, loaded into Pyodide against copies of the add-on's pure modules.
 Nothing else in the suite executes it, so until this file existed a rename in the
 pure layer — a function gone, an argument added — reached the deployed page as a
@@ -50,33 +50,38 @@ def _loaded(module):
 class TestItLoadsAtAll:
     """An import or a syntax error here is a page that renders and does nothing."""
 
-    @pytest.mark.parametrize("module", ["app.js", "editor.js"])
+    @pytest.mark.parametrize("module", ["app.js", "sheet.js"])
     def test_the_block_runs(self, module):
         assert _loaded(module)
 
 
 @pytest.mark.unit
-class TestTheEditor:
-    """`editor.js` — the settings row, the card it makes and where it files a note."""
+class TestCreateSheet:
+    """`sheet.js` — the settings row, the card a word makes, and the files."""
 
     PAYLOAD = {
         "marker": "#config",
         "columns": [
-            {"name": "Level", "cell": "subdeck=1", "value": ""},
-            {"name": "Word", "cell": "size=44; bold", "value": "hello"},
-            {"name": "Meaning", "cell": "size=20; color=muted", "value": "xin chào"},
+            {"name": "Level", "cell": "subdeck=1"},
+            {"name": "Word", "cell": "size=44; bold"},
+            {"name": "Meaning", "cell": "size=20; color=muted"},
         ],
+        "values": ["", "hello", "xin chào"],
+        "rows": [["", "hello", "xin chào"], ["A1", "goodbye", "tạm biệt"]],
     }
 
     def _preview(self, payload=None):
-        namespace = _loaded("editor.js")
+        namespace = _loaded("sheet.js")
         return json.loads(namespace["preview"](json.dumps(payload or self.PAYLOAD)))
+
+    def _copy(self):
+        return json.loads(json.dumps(self.PAYLOAD))
 
     def test_the_directive_names_come_from_sheet_config(self):
         from src.sheet_config import _DECK_KEYS
         from src.sheet_config import _FIELD_KEYS
 
-        keys = json.loads(_loaded("editor.js")["keys"]())
+        keys = json.loads(_loaded("sheet.js")["keys"]())
         assert keys["field"] == list(_FIELD_KEYS)
         assert keys["deck"] == list(_DECK_KEYS)
 
@@ -87,23 +92,47 @@ class TestTheEditor:
         assert out["front"] and out["back"]
         assert out["templates"][0]["qfmt"]
 
-    def test_it_says_where_the_row_is_filed(self):
-        # The card is only half of what a settings row decides: a deck level never
-        # touches the card, so the page has to show where the row went.
+    def test_it_says_where_the_word_is_filed(self):
         out = self._preview()
         assert out["deck"] == ["Unsorted"]
         assert "sheetcards::unsorted" in out["tags"]
 
-    def test_a_filled_level_is_not_the_unsorted_pile(self):
-        payload = json.loads(json.dumps(self.PAYLOAD))
-        payload["columns"][0]["value"] = "HSK 1"
-        assert self._preview(payload)["deck"] == ["HSK 1"]
+    def test_it_files_every_word_for_the_deck_tree(self):
+        assert self._preview()["decks"] == ["Unsorted", "A1"]
 
     def test_a_marker_typed_over_stops_being_a_settings_row(self):
-        payload = json.loads(json.dumps(self.PAYLOAD))
+        payload = self._copy()
         payload["marker"] = "hello"
-        out = self._preview(payload)
-        assert out["isConfig"] is False
+        assert self._preview(payload)["isConfig"] is False
+
+    def test_a_repeated_column_name_keeps_both_columns(self):
+        payload = self._copy()
+        payload["columns"][2]["name"] = "Word"
+        assert len(self._preview(payload)["names"]) == 3
+
+    def test_the_xlsx_reads_back_through_the_add_ons_reader(self):
+        import csv
+        import io
+
+        from src import workbook
+
+        rows = [
+            ["ID", "Word", "Meaning"],
+            ["#config", "tts=en_US", ""],
+            ["w01", "hello", "xin chào"],
+        ]
+        data = _loaded("sheet.js")["xlsx"](
+            json.dumps({"name": "Từ vựng: bài 1", "rows": rows})
+        )
+        assert workbook.sheet_names(data) == ["Từ vựng bài 1"]
+        tsv = workbook.sheet_tsv(data, "Từ vựng bài 1")
+        assert list(csv.reader(io.StringIO(tsv), delimiter="\t")) == rows
+
+    def test_an_opened_csv_comes_back_as_rows(self):
+        text = b'ID,Word\n#config,size=40\nw01,"a, b"\n'
+        out = json.loads(_loaded("sheet.js")["open_file"](text, "words.csv", 0))
+        assert out["rows"] == [["ID", "Word"], ["#config", "size=40"], ["w01", "a, b"]]
+        assert out["tabs"] == []
 
 
 @pytest.mark.unit

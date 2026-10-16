@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title data-i18n="titleSheet">SheetCards — Create sheet: soạn sheet flashcard ngay trên web</title>
+<meta name="description" content="Create sheet: soạn cả một sheet flashcard ngay trong trình duyệt — tên cột, settings row và từng từ — rồi chuyển thẳng sang Create deck, tải .xlsx/.csv hoặc chia sẻ bằng một link.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  try {
+    var t = localStorage.getItem("sc-theme");
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#18151f";
+    }
+  } catch (e) {}
+  // Which screen to draw first, decided before the first paint so a returning
+  // writer never sees the templates flash up in front of their own sheet.
+  try {
+    if (localStorage.getItem("sc-sheet-draft") || /^#s=/.test(location.hash)) {
+      document.documentElement.dataset.draft = "";
+    }
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./create.css">
+<link rel="stylesheet" href="./sheet.css">
+</head>
+<body class="page create sheetpage">
+
+<a class="skip" href="#app" data-i18n="skipSheet">Tới phần Create sheet</a>
+
+<header class="masthead">
+  <div class="brand">
+    <a class="name" href="./" translate="no">SheetCards</a>
+  </div>
+
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Home</a>
+    <a href="./sheet.html" aria-current="page" data-i18n="navSheet">Create sheet</a>
+    <a href="./create.html" data-i18n="navPreview">Create deck</a>
+    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
+    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
+  </nav>
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
+</header>
+
+<main id="app" class="cr sh" tabindex="-1" data-stage="empty" data-view="rows">
+
+  <!-- The same three steps Create deck shows, seen from one step earlier: the
+       sheet is written here, and steps 2 and 3 happen there. Step 2 is a button,
+       because pressing it is how you get to step 2. -->
+  <ol class="rail" id="rail" aria-label="Các bước" data-i18n-attr="aria-label:railLabel">
+    <li data-step="1" class="now" aria-current="step"><span class="rail-n" aria-hidden="true"><span>1</span></span><span
+        class="rail-t" data-i18n="shStep1">Viết sheet</span></li>
+    <li data-step="2"><button type="button" class="rail-go" id="rail-deck"><span class="rail-n" aria-hidden="true"><span>2</span></span><span
+        class="rail-t" data-i18n="navPreview">Create deck</span></button></li>
+    <li data-step="3"><span class="rail-n" aria-hidden="true"><span>3</span></span><span
+        class="rail-t" data-i18n="crStep3">Download .apkg</span></li>
+  </ol>
+
+  <!-- ==== no sheet yet: where to start ===================================== -->
+  <section id="entry" class="entry sh-entry" aria-labelledby="entry-title">
+    <h1 id="entry-title" class="entry-title" data-i18n="shTitle">Soạn sheet flashcard <mark>ngay trên web</mark></h1>
+    <p class="entry-lead" data-i18n="shLead">Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Create deck để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.</p>
+
+    <h2 class="sh-pickhead" data-i18n="shPickTemplate">Bắt đầu từ một mẫu</h2>
+    <div class="templates" id="templates"></div>
+
+    <div class="alt">
+      <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden
+             aria-label="Mở file .xlsx hoặc .csv" data-i18n-attr="aria-label:shOpenFile">
+      <button id="pick" class="altcard" type="button">
+        <span class="altcard-icon" data-icon="folder-open"></span>
+        <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file .xlsx hoặc .csv</strong>
+          <span data-i18n="shOpenFileHint">để sửa tiếp một sheet bạn đã có</span></span>
+      </button>
+      <a class="altcard" href="./create.html">
+        <span class="altcard-icon" data-icon="link"></span>
+        <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
+          <span data-i18n="shHaveSheetHint">Dán link thẳng vào Create deck</span></span>
+      </a>
+    </div>
+
+    <p class="privacy"><span data-icon="lock"></span><span data-i18n="shPrivacy">Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
+  </section>
+
+  <!-- ==== the sheet being written =========================================== -->
+  <section id="work" class="work" hidden aria-label="Sheet của bạn" data-i18n-attr="aria-label:shWorkLabel">
+
+    <!-- Which sheet this is, and what is done to the whole of it. -->
+    <div class="sheetbar">
+      <span class="src-icon" data-icon="sheet"></span>
+      <label class="sr-only" for="title" data-i18n="shTitleLabel">Tên sheet</label>
+      <input id="title" class="titlebox" spellcheck="false" autocomplete="off"
+             placeholder="Tên sheet" data-i18n-attr="placeholder:shTitleLabel">
+      <span class="saved" id="saved" aria-live="polite"></span>
+      <span class="src-acts">
+        <button class="iconbtn" id="undo" type="button" disabled
+                title="Hoàn tác" aria-label="Hoàn tác" data-i18n-attr="title:shUndo,aria-label:shUndo"><span data-icon="undo-2"></span></button>
+        <button class="iconbtn" id="redo" type="button" disabled
+                title="Làm lại" aria-label="Làm lại" data-i18n-attr="title:shRedo,aria-label:shRedo"><span data-icon="redo-2"></span></button>
+        <button class="iconbtn" id="open" type="button"
+                title="Mở file .xlsx hoặc .csv" aria-label="Mở file .xlsx hoặc .csv" data-i18n-attr="title:shOpenFile,aria-label:shOpenFile"><span data-icon="folder-open"></span></button>
+        <button class="chgbtn" id="new" type="button"><span data-icon="file-plus"></span><span
+                data-i18n="shNew">Tạo sheet mới</span></button>
+      </span>
+    </div>
+
+    <!-- A phone has room for one of the two halves at a time; a wide screen
+         shows them side by side and hides this switch. -->
+    <div class="seg viewseg" role="group" aria-label="Phần đang xem" data-i18n-attr="aria-label:shViewLabel">
+      <button type="button" data-view="rows" aria-pressed="true"><span data-icon="sheet"></span><span
+              data-i18n="shViewRows">Các từ</span> <span class="count" id="rowcount-seg"></span></button>
+      <button type="button" data-view="look" aria-pressed="false"><span data-icon="sliders-horizontal"></span><span
+              data-i18n="shViewLook">Cột & card</span></button>
+    </div>
+
+    <div class="panes">
+
+      <!-- ---- the words ----------------------------------------------------- -->
+      <section class="pane pane-rows" aria-labelledby="rows-title">
+        <h2 class="pane-h" id="rows-title"><span data-i18n="shRows">Các từ</span> <span class="count" id="rowcount"></span></h2>
+
+        <!-- On a wide screen: the sheet as a spreadsheet. Row 1 the column names,
+             row 2 the settings row, every row under it a word. -->
+        <div class="gridpane" id="gridpane">
+          <p class="sheettools">
+            <span class="hint" data-i18n="shGridHint">Kéo để chọn ô · Ctrl+V dán nhiều dòng từ Excel hoặc Google Sheets · chuột phải để chèn, chuyển hoặc xoá dòng</span>
+          </p>
+          <div class="sheetwrap" id="sheetwrap">
+            <div class="sheet" id="sheet" role="group"
+                 aria-label="Sheet bạn đang soạn" data-i18n-attr="aria-label:edSheet"></div>
+          </div>
+          <p class="gridfoot">
+            <button class="toolbtn" id="addrow" type="button"><span data-icon="plus"></span><span data-i18n="shAddWord">Thêm từ</span></button>
+            <button class="toolbtn" id="addcol" type="button"><span data-icon="plus"></span><span data-i18n="edAddColumn">Thêm cột</span></button>
+          </p>
+        </div>
+
+        <!-- On a phone: one line per word. A tap opens it as a form. -->
+        <div class="listpane" id="listpane">
+          <ol class="wordlist" id="wordlist"></ol>
+          <button class="addword" id="addword" type="button"><span data-icon="plus"></span><span data-i18n="shAddWord">Thêm từ</span></button>
+        </div>
+      </section>
+
+      <!-- ---- the columns, and the card they make ---------------------------- -->
+      <section class="pane pane-look" aria-labelledby="look-title">
+        <h2 class="sr-only" id="look-title" data-i18n="shViewLook">Cột & card</h2>
+
+        <!-- The card the chosen word makes, and whether the settings row was
+             understood. Beside the sheet on a wide screen, held in view. -->
+        <div class="lookside">
+          <div class="lookcard">
+            <p class="cardmeta" id="cardmeta"></p>
+            <div id="cardbox" class="cardbox"></div>
+            <p id="status" class="status" role="status" aria-live="polite">
+              <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
+            </p>
+          </div>
+
+          <!-- A warning is about what was typed into row 2, and row 2 is what has
+               to change to clear it. -->
+          <details id="warn" class="warnbar" hidden>
+            <summary><span class="warn-icon" data-icon="triangle-alert"></span><span id="warntitle"></span><span
+                     class="caret" data-icon="chevron-down"></span></summary>
+            <ul id="warnlist" class="warnings"></ul>
+          </details>
+        </div>
+
+        <div class="colpanel">
+          <h3 class="pane-h" data-i18n="shColumns">Cột & settings row</h3>
+          <div class="colstrip" id="colstrip" role="group" aria-label="Cột" data-i18n-attr="aria-label:shColumnsLabel"></div>
+          <div class="colhead" id="colhead"></div>
+          <div class="stack">
+            <h4 class="keyhead"><span data-i18n="edAdd">Thêm directive</span>
+              <span class="count" id="keyfor"></span></h4>
+            <div id="keys" class="collist"></div>
+            <div id="opts" hidden></div>
+          </div>
+        </div>
+
+        <!-- Where the words are filed: a subdeck column reaches the deck and
+             never the card, so with only the card on screen it looked inert. -->
+        <div class="deckline" id="deckline"></div>
+      </section>
+    </div>
+
+    <!-- The three ways out, always in reach. Create deck is the one that carries
+         on; the file and the link are for keeping or sending the sheet. -->
+    <div class="outbar" id="outbar">
+      <div class="dl-meta">
+        <strong id="out-count"></strong>
+        <span id="out-sub"></span>
+      </div>
+      <button class="toolbtn outbtn" id="share" type="button"><span data-icon="share-2"></span><span
+              data-i18n="shShare">Share link</span></button>
+      <button class="toolbtn outbtn" id="save" type="button"><span data-icon="download"></span><span
+              data-i18n="shDownload">Download</span></button>
+      <button class="btn big go" id="todeck" type="button"><span data-i18n="shToDeck">Create deck</span><span
+              data-icon="arrow-right"></span></button>
+    </div>
+  </section>
+</main>
+
+<!-- One word, as a form: a field per column, large enough to type into on a
+     phone, and the card it makes underneath. -->
+<dialog id="rowform" class="rowform" aria-labelledby="rf-title">
+  <form method="dialog" class="rf-inner" id="rf-form">
+    <div class="rf-head">
+      <h2 id="rf-title"></h2>
+      <label class="rf-id"><span>ID</span><input id="rf-id" spellcheck="false" autocomplete="off" autocapitalize="off"
+             aria-label="ID của dòng này" data-i18n-attr="aria-label:shIdLabel"></label>
+      <button class="iconbtn" id="rf-close" type="button"
+              title="Xong" aria-label="Xong" data-i18n-attr="title:shDone,aria-label:shDone"><span data-icon="x"></span></button>
+    </div>
+    <div class="rf-body">
+      <div id="rf-fields" class="rf-fields"></div>
+      <p class="rf-hint muted small" data-i18n="shEnterHint">Enter để sang ô tiếp theo. Ở ô cuối, Enter sang từ mới.</p>
+      <div id="formcard" class="cardbox"></div>
+    </div>
+    <div class="rf-foot">
+      <button class="toolbtn rf-del" id="rf-del" type="button"><span data-icon="trash-2"></span><span data-i18n="shDeleteWord">Xoá từ</span></button>
+      <button class="navbtn" id="rf-prev" type="button"
+              title="Từ trước" aria-label="Từ trước" data-i18n-attr="title:shPrevWord,aria-label:shPrevWord"><span data-icon="arrow-up"></span></button>
+      <button class="navbtn" id="rf-next" type="button"
+              title="Từ sau" aria-label="Từ sau" data-i18n-attr="title:shNextWord,aria-label:shNextWord"><span data-icon="arrow-down"></span></button>
+      <button class="btn rf-done" id="rf-done" type="button" data-i18n="shDone">Xong</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Download: the sheet as a file, in the two shapes every spreadsheet opens. -->
+<dialog id="savebox" class="donebox pickbox" aria-labelledby="save-title">
+  <div class="done-head">
+    <strong id="save-title" data-i18n="shDownloadTitle">Tải sheet về máy</strong>
+    <button class="iconbtn" data-close type="button"
+            title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+  </div>
+  <div class="pickrows">
+    <button class="altcard" id="save-xlsx" type="button">
+      <span class="altcard-icon" data-icon="file-spreadsheet"></span>
+      <span class="altcard-text"><strong translate="no">Download .xlsx</strong>
+        <span data-i18n="shXlsxHint">Mở bằng Excel, hoặc upload lên Google Drive thành Google Sheets</span></span>
+    </button>
+    <button class="altcard" id="save-csv" type="button">
+      <span class="altcard-icon" data-icon="file-text"></span>
+      <span class="altcard-text"><strong translate="no">Download .csv</strong>
+        <span data-i18n="shCsvHint">File chữ đơn giản, mở được ở mọi nơi</span></span>
+    </button>
+  </div>
+  <p class="pickfoot muted small" data-i18n="shReopenHint">Mở lại file này ở đây bất cứ lúc nào để sửa tiếp.</p>
+</dialog>
+
+<!-- Share link: the whole sheet, packed into the address itself. -->
+<dialog id="sharebox" class="donebox pickbox" aria-labelledby="share-title">
+  <div class="done-head">
+    <strong id="share-title" data-i18n="shShare">Share link</strong>
+    <button class="iconbtn" data-close type="button"
+            title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+  </div>
+  <div class="sharebody">
+    <p class="small" data-i18n="shShareLead">Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.</p>
+    <label class="sharechoice"><input type="checkbox" id="share-deck">
+      <span data-i18n="shShareToDeck">Mở thẳng thành cards trong Create deck</span></label>
+    <div class="linkbox sharelink">
+      <span class="linkbox-icon" data-icon="link"></span>
+      <input id="share-url" readonly spellcheck="false" aria-label="Share link" data-i18n-attr="aria-label:shShare">
+    </div>
+    <p class="sharesize" id="share-size"></p>
+    <p class="note" id="share-long" hidden></p>
+    <div class="shareacts">
+      <button class="btn big" id="share-copy" type="button"><span data-icon="copy"></span><span data-i18n="shCopyLink">Copy link</span></button>
+      <button class="toolbtn" id="share-native" type="button" hidden><span data-icon="share-2"></span><span data-i18n="shShareVia">Gửi qua…</span></button>
+    </div>
+    <p class="privacy"><span data-icon="lock"></span><span data-i18n="shSharePrivacy">Sheet nằm ngay trong link. Không có gì được gửi lên máy chủ nào.</span></p>
+  </div>
+</dialog>
+
+<!-- A question that needs an answer before anything is lost. -->
+<dialog id="askbox" class="donebox pickbox" aria-labelledby="ask-title">
+  <div class="askbody">
+    <strong id="ask-title"></strong>
+    <p id="ask-text" class="small"></p>
+    <div class="askacts">
+      <button class="toolbtn" id="ask-no" type="button"></button>
+      <button class="btn" id="ask-yes" type="button"></button>
+    </div>
+  </div>
+</dialog>
+
+<!-- A workbook with more than one sheet: which one to open. -->
+<dialog id="tabbox" class="donebox pickbox" aria-labelledby="tab-title">
+  <div class="done-head">
+    <strong id="tab-title" data-i18n="shPickTab">Mở sheet nào?</strong>
+    <button class="iconbtn" data-close type="button"
+            title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+  </div>
+  <div class="tablist" id="tablist"></div>
+</dialog>
+
+<div id="drop" class="dropzone" hidden>
+  <div>
+    <span class="drop-icon" data-icon="upload"></span>
+    <strong data-i18n="dropHere">Thả file vào đây</strong>
+    <span data-i18n="dropTypes">.xlsx, .xlsm, .csv hoặc .tsv — file không rời khỏi trình duyệt</span>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="./sheet.js"></script>
+</body>
+</html>
