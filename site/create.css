@@ -469,7 +469,14 @@ details[open] > summary .caret, [aria-expanded="true"] > .caret { transform: rot
 .cardslot iframe#card {
   display: block; width: 100%; height: var(--card-min); min-height: var(--card-min);
   border: 0; background: transparent;
+  /* A card grows with what it holds, and a long answer pushed Show Answer and
+     the arrows under the download bar. Capped to what the window has left after
+     the chrome above and below it, the card scrolls inside itself instead, so
+     the controls stay on screen at every width. */
+  max-height: max(var(--card-min), calc(100dvh - var(--chrome-h)));
 }
+.create { --chrome-h: 33rem; }
+@media (min-width: 40rem) { .create { --chrome-h: 30rem; } }
 .nocard {
   display: grid; place-items: center; min-height: var(--card-min); padding: 2rem;
   color: var(--muted); text-align: center;
