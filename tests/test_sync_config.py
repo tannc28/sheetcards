@@ -40,7 +40,8 @@ def col(monkeypatch):
 def _parsed():
     plan = plan_columns(["ID", "SYNC"] + FIELDS)
     row = {
-        "ID": "#config reverse; align=left; speed=0.9; theme=sakura",
+        "ID": "#config reverse; align=left; speed=0.9; theme=sakura; "
+        "deckname=Từ vựng HSK; next=w15",
         "Word": "size=48; tts=zh_CN; voices=Ting-Ting; bold; label=Từ",
         "Reading": "side=hide",
         "Nghĩa": "color=muted; hint; size=bogus",
@@ -67,6 +68,8 @@ class TestCacheRoundTrip:
         # The theme has to ride along: a note type rebuilt from the cache outside a
         # sync would otherwise come back in the default colours.
         assert cached_config.theme == "sakura"
+        assert cached_config.deck_name == "Từ vựng HSK"
+        assert cached_config.next_id == "w15"
 
     def test_per_field_settings_survive(self, col):
         plan, config = _parsed()

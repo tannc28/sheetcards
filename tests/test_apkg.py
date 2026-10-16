@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import zipfile
 from pathlib import Path
 
@@ -20,7 +21,11 @@ import pytest
 
 from src.apkg import build_package
 from src.apkg import cloze_ordinals
+from src.apkg import deck_identity
+from src.apkg import kept_fields
+from src.apkg import model_id
 from src.apkg import note_guid
+from src.apkg import resolve_identity
 from src.column_model import plan_columns
 from src.sheet_config import SheetConfig
 from src.sheet_config import parse_config_row
@@ -132,6 +137,147 @@ class TestIdentity:
         assert {n[0] for n in early} == {n[0] for n in later}
 
 
+VOCAB = "ID\tWord\tMeaning\nw01\tapple\tquả táo\nw02\tbook\tquyển sách\n"
+
+
+def _ids(data):
+    """The note type ids, the (guid, note id) pairs and the deck ids of a package."""
+    (_, models, decks, _), _, _ = _collection(data)
+    import sqlite3
+
+    with tempfile.TemporaryDirectory() as folder:
+        inner = os.path.join(folder, "c.anki2")
+        with zipfile.ZipFile(io.BytesIO(data)) as package:
+            Path(inner).write_bytes(package.read("collection.anki2"))
+        db = sqlite3.connect(inner)
+        notes = db.execute("select guid, id from notes order by id").fetchall()
+        db.close()
+    return list(json.loads(models)), sorted(notes), sorted(json.loads(decks))
+
+
+@pytest.mark.unit
+class TestLegacyIdentity:
+    """A sheet with no ``sheet=`` key must keep the ids it has always had.
+
+    These numbers were produced by the code before sheets carried a key. A deck
+    imported from it is in somebody's Anki now, and a change here would make
+    the next import of that sheet a second copy of every note.
+    """
+
+    def test_a_file_handed_over_by_create_sheet(self):
+        models, notes, decks = _ids(_package(VOCAB, "file:Từ vựng.tsv#", "Từ vựng"))
+        assert models == ["8122527491559623266"]
+        assert notes == sorted(
+            [
+                ("dc2a6873dfac66e7a7f5", 3378217587377289391),
+                ("7fe708e34a23b441ac19", 7956096031239844025),
+            ]
+        )
+        assert decks == ["1", "4110335532568893414"]
+
+    def test_a_google_sheet(self):
+        models, notes, _ = _ids(_package(VOCAB, "1AbCdEfGh#Sheet1", "Vocab::Sheet1"))
+        assert models == ["5925728571391714922"]
+        assert notes == sorted(
+            [
+                ("463715b538f40d02e1b2", 1327077341866221173),
+                ("94eb6e564cf9d6605e89", 3674703627276847869),
+            ]
+        )
+
+
+@pytest.mark.unit
+class TestDeckname:
+    KEYED = (
+        "ID\tWord\tMeaning\n#config deckname=Từ vựng tiếng Anh\t\t\n"
+        "w01\tapple\tquả táo\nw02\tbook\tquyển sách\n"
+    )
+
+    def test_the_deckname_beats_the_source_as_identity_and_as_name(self):
+        config = parse_config_row(
+            {"ID": "#config deckname=Từ vựng tiếng Anh"}, plan_columns(["ID", "W"])
+        )
+        assert resolve_identity("file:x.tsv#", "x", config) == (
+            "deckname:từ vựng tiếng anh",
+            "Từ vựng tiếng Anh",
+            True,
+        )
+        assert resolve_identity("file:x.tsv#", "x", SheetConfig()) == (
+            "file:x.tsv#",
+            "x",
+            False,
+        )
+
+    def test_spacing_case_and_composition_do_not_make_another_deck(self):
+        decomposed = unicodedata.normalize("NFD", "Từ vựng")
+        assert deck_identity("  từ   VỰNG ") == deck_identity(decomposed)
+
+    def test_a_named_sheet_is_the_same_notes_from_any_source(self):
+        a = _ids(_package(self.KEYED, "file:Từ vựng.tsv#", "Từ vựng"))
+        b = _ids(_package(self.KEYED, "file:Từ vựng (1).xlsx#Sheet1", "Từ vựng (1)"))
+        c = _ids(_package(self.KEYED, "1AbCdEfGh#Sheet1", "Vocab"))
+        assert a == b == c
+
+    def test_the_deck_takes_the_name_as_written(self):
+        (_, models, decks, _), _, _ = _collection(_package(self.KEYED))
+        assert next(iter(json.loads(models).values()))["name"] == (
+            "SheetCards - Từ vựng tiếng Anh - Basic"
+        )
+        assert "sc_Từ vựng tiếng Anh" in {d["name"] for d in json.loads(decks).values()}
+
+    def test_two_decknames_do_not_share_notes(self):
+        other = self.KEYED.replace("tiếng Anh", "tiếng Trung")
+        assert set(_ids(_package(self.KEYED))[1]).isdisjoint(_ids(_package(other))[1])
+        assert _ids(_package(self.KEYED))[0] != _ids(_package(other))[0]
+
+    def test_the_model_id_ignores_the_deck_name_only_when_keyed(self):
+        assert model_id("k1", "A", False, keyed=True) == model_id(
+            "k1", "B", False, keyed=True
+        )
+        assert model_id("k1", "A", False, keyed=True) != model_id(
+            "k1", "A", True, keyed=True
+        )
+        assert model_id("s", "A", False) != model_id("s", "B", False)
+
+
+@pytest.mark.unit
+class TestKeptFields:
+    def test_a_first_package_is_the_sheet(self):
+        assert kept_fields(["ID", "Word", "Meaning"]) == ["ID", "Word", "Meaning"]
+
+    def test_removed_and_moved_columns_keep_the_old_order(self):
+        old = ["ID", "Word", "Meaning", "Example"]
+        assert kept_fields(["ID", "Example", "Word"], old) == old
+
+    def test_new_columns_are_appended_the_way_anki_merges_them(self):
+        old = ["ID", "Word", "Meaning"]
+        assert kept_fields(["ID", "Word", "Nghĩa"], old) == old + ["Nghĩa"]
+
+    def test_a_removed_column_is_written_empty(self):
+        tsv = "ID\tWord\nw01\tapple\n"
+        _, notes, _ = _collection(
+            build_package(
+                "S",
+                "D",
+                *(lambda r: (r.plan, r.sheet_config, r.notes))(
+                    build_remote_deck_from_tsv(parse_tsv_data(tsv), "u")
+                ),
+                previous_fields=["ID", "Word", "Meaning"],
+            )
+        )
+        assert notes[0][1].split("\x1f") == ["w01", "apple", ""]
+
+
+@pytest.mark.unit
+class TestDuplicateIds:
+    def test_the_first_row_of_an_id_is_the_note(self):
+        tsv = VOCAB + "w02\tbread\tbánh mì\n"
+        _, notes, cards = _collection(_package(tsv))
+        assert len(notes) == 2 and len(cards) == 2
+        book = [n for n in notes if n[1].startswith("w02")]
+        assert book[0][1].split("\x1f")[1] == "book"
+
+
 @pytest.mark.unit
 class TestCloze:
     def test_one_card_per_deletion_in_the_declared_column(self):
@@ -187,11 +333,12 @@ from sc.tsv_model import parse_tsv_data, build_remote_deck_from_tsv
 from sc.apkg import build_package
 
 ALWAYS = pb.ImportAnkiPackageUpdateCondition.IMPORT_ANKI_PACKAGE_UPDATE_CONDITION_ALWAYS
+IF_NEWER = pb.ImportAnkiPackageUpdateCondition.IMPORT_ANKI_PACKAGE_UPDATE_CONDITION_IF_NEWER
 
-def package(tsv, now):
+def package(tsv, now, sheet="SHEET", deck="HSK4", previous=()):
     remote = build_remote_deck_from_tsv(parse_tsv_data(tsv), "url")
-    data = build_package("SHEET", "HSK4", remote.plan, remote.sheet_config,
-                         remote.notes, now=now)
+    data = build_package(sheet, deck, remote.plan, remote.sheet_config,
+                         remote.notes, now=now, previous_fields=previous)
     path = os.path.join(tempfile.mkdtemp(), "p.apkg")
     open(path, "wb").write(data)
     return path
@@ -202,6 +349,17 @@ def load(col, path):
         options=pb.ImportAnkiPackageOptions(
             merge_notetypes=True, with_scheduling=False,
             update_notes=ALWAYS, update_notetypes=ALWAYS)))
+
+# What every Anki offers when nobody touches the import screen: merge off,
+# update notes and note types only when newer. The test above imports with
+# merge on, which is exactly what hid a schema change stopping all updates.
+def load_default(col, path, merge=False):
+    log = col.import_anki_package(anki.collection.ImportAnkiPackageRequest(
+        package_path=path,
+        options=pb.ImportAnkiPackageOptions(
+            merge_notetypes=merge, with_scheduling=False,
+            update_notes=IF_NEWER, update_notetypes=IF_NEWER))).log
+    return {k: len(getattr(log, k)) for k in ("new", "updated", "conflicting", "duplicate")}
 
 col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
 """
@@ -258,3 +416,116 @@ col.close()
         out["after"] == 1
     ), "a second import duplicated the note instead of updating it"
     assert out["meaning"] == "CHANGED", "the edit did not reach the existing note"
+
+
+@pytest.mark.slow
+@needs_anki
+def test_default_import_options():
+    """Anki's own defaults: what a schema change does, and what a key buys."""
+    result = _real_anki(_HARNESS + """
+H = "ID\\tWord\\tMeaning\\n"
+ROWS = "w01\\tapple\\tqua tao\\nw02\\tbook\\tquyen sach\\n"
+EDIT = ROWS.replace("quyen sach", "EDITED")
+out = {}
+# The clock, not a fixed stamp: merging a note type rewrites the notes already
+# there at the real time, and an import only wins when it is newer than that.
+import time
+T = int(time.time())
+col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
+load_default(col, package(H + ROWS, T + 0))
+out["unchanged"] = load_default(col, package(H + EDIT, T + 100))
+RENAMED = "ID\\tWord\\tNghia\\n"
+out["renamed_off"] = load_default(col, package(RENAMED + ROWS, T + 200))
+out["renamed_on"] = load_default(col, package(RENAMED + ROWS, T + 300), merge=True)
+ADDED = "ID\\tWord\\tNghia\\tNote\\n"
+MORE = "w01\\tapple\\tqua tao\\tx\\nw02\\tbook\\tquyen sach\\ty\\n"
+out["added_off"] = load_default(col, package(ADDED + MORE, T + 400))
+out["added_on"] = load_default(col, package(ADDED + MORE, T + 500), merge=True)
+out["notes"] = col.note_count()
+out["merged"] = sorted(col.get_note(n)["Note"] for n in col.find_notes(""))
+col.close()
+
+# A named sheet: another file name, another source, the same notes.
+KEYED = H + "#config deckname=Vocab\\t\\t\\n"
+col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
+load_default(col, package(KEYED + ROWS, T + 0, "file:Vocab.tsv#", "Vocab"))
+out["keyed_file"] = load_default(
+    col, package(KEYED + EDIT, T + 100, "file:Vocab (1).csv#", "Vocab (1)"))
+out["keyed_google"] = load_default(col, package(KEYED + EDIT, T + 200, "1AbC#Sheet1", "x"))
+out["keyed_notes"] = col.note_count()
+col.close()
+
+print(json.dumps(out))
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert out["unchanged"] == {
+        "new": 0,
+        "updated": 2,
+        "conflicting": 0,
+        "duplicate": 0,
+    }
+    # A renamed or added column is a new note type to Anki: with merge off,
+    # every note conflicts and nothing is updated. The page tells the user to
+    # turn merge on, and this is why.
+    assert out["renamed_off"]["conflicting"] == 2
+    assert out["renamed_off"]["updated"] == 0
+    assert out["renamed_on"]["updated"] == 2
+    assert out["added_off"]["conflicting"] == 2
+    assert out["added_on"]["updated"] == 2
+    assert out["notes"] == 2
+    assert out["merged"] == ["x", "y"]
+    assert out["keyed_file"] == {
+        "new": 0,
+        "updated": 2,
+        "conflicting": 0,
+        "duplicate": 0,
+    }
+    assert out["keyed_google"] == {
+        "new": 0,
+        "updated": 2,
+        "conflicting": 0,
+        "duplicate": 0,
+    }
+    assert out["keyed_notes"] == 2
+
+
+@pytest.mark.slow
+@needs_anki
+def test_kept_fields_make_one_merge_enough():
+    """After one merge the next import, with Anki's defaults, updates again."""
+    result = _real_anki(_HARNESS + """
+import time
+T = int(time.time())
+out = {}
+col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
+OLD = ["ID", "Word", "Meaning", "Example"]
+load_default(col, package("ID\\tWord\\tMeaning\\tExample\\nw01\\ta\\tb\\tc\\n", T - 900))
+# A column removed: no new schema, so no merge.
+out["removed"] = load_default(
+    col, package("ID\\tWord\\tMeaning\\nw01\\ta\\tB\\n", T - 800, previous=OLD))
+# A column renamed: one merge, with notes updated always (the merge stamps the
+# notes already there with the time of the import).
+NEW = "ID\\tWord\\tNghia\\nw01\\ta\\tN\\n"
+log = col.import_anki_package(anki.collection.ImportAnkiPackageRequest(
+    package_path=package(NEW, T - 700, previous=OLD),
+    options=pb.ImportAnkiPackageOptions(merge_notetypes=True, with_scheduling=False,
+        update_notes=ALWAYS, update_notetypes=IF_NEWER))).log
+out["merged"] = len(log.updated)
+out["next"] = load_default(col, package(NEW.replace("N\\n", "N2\\n"), int(time.time()) + 5,
+                           previous=OLD + ["Nghia"]))
+note = col.get_note(col.find_notes("")[0])
+out["note"] = dict(zip(note.keys(), note.values()))
+out["notes"] = col.note_count()
+print(json.dumps(out))
+col.close()
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert out["removed"]["updated"] == 1 and out["removed"]["conflicting"] == 0
+    assert out["merged"] == 1
+    assert out["next"]["updated"] == 1 and out["next"]["conflicting"] == 0
+    assert out["note"]["Nghia"] == "N2"
+    assert out["notes"] == 1

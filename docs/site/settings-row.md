@@ -77,9 +77,16 @@ Ghi sau `#config` trong ô dấu hiệu.
 | Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
 | `align` | `left`, `center`, `right` | Căn lề cho cả card. `align` riêng của một cột vẫn được ưu tiên. |
-| `speed` | một con số; nên giữ trong khoảng 0.5–2.0 | Tốc độ đọc cho mọi cột có đọc mà không tự đặt tốc độ. Khác với `speed` của từng cột, cái này không được kiểm tra, nên giá trị lạ sẽ tới Anki nguyên như vậy. |
+| `speed` | một con số từ 0.5 đến 2.0 | Tốc độ đọc cho mọi cột có đọc mà không tự đặt tốc độ. |
 | `reverse` | switch | Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Xem [Các loại card](card-types.md#reverse-card). |
 | `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Xem [Theme và chữ](text.md#theme). |
+| `deckname` | tên deck, có thể có dấu cách và tiếng Việt | Tên deck trong Anki, đồng thời là danh tính của sheet. Sheet to Anki nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một deck. Hai sheet cùng `deckname` là **một** deck: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `deckname` là tạo deck mới; tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
+| `next` | một ID kết thúc bằng số, như `w15` | ID tiếp theo Create sheet sẽ cấp. Nhờ nó, ID của một từ đã xoá không bao giờ được cấp lại cho từ mới, vì từ mới sẽ thừa hưởng lịch sử ôn tập của từ cũ trong Anki. |
+
+Create sheet tự viết hai key cuối, ví dụ `#config deckname=Từ vựng tiếng Anh; next=w15`.
+Sheet không có `deckname` thì được nhận ra theo link Google Sheets, hoặc theo tên
+file (bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố ` (1)`, `-2`). Add-on đọc hai key này
+mà không cảnh báo nhưng chưa dùng tới: add-on nhận ra note theo deck và cột `ID`.
 
 ## Xếp note vào deck bằng một cột (`subdeck`)
 

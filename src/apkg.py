@@ -33,6 +33,7 @@ import io
 import json
 import re
 import time
+import unicodedata
 import zipfile
 
 from .card_layout import build_templates
@@ -140,6 +141,79 @@ def note_guid(sheet_id, row_id):
     return digest[:10].hex()
 
 
+def deck_identity(name):
+    """What a ``deckname=`` is as an identity: the same deck however it is typed.
+
+    Trimmed, inner whitespace collapsed, NFC (a phone keyboard and a desktop one
+    can compose ``ệ`` differently) and case-folded, because Anki itself treats
+    deck names that differ only in case as one deck.
+    """
+    text = unicodedata.normalize("NFC", str(name or ""))
+    return " ".join(text.split()).casefold()
+
+
+def resolve_identity(sheet_id, deck_name, sheet_config):
+    """What a package is keyed by and what its deck is called.
+
+    The sheet's own ``deckname=`` wins over whatever the page derived from the
+    source (a spreadsheet id, a file name), as the identity and as the name —
+    so a sheet keeps one deck however it travels.
+
+    Returns:
+        tuple: ``(sheet_id, deck_name, keyed)``, ``keyed`` true when the
+        identity came from the sheet itself
+    """
+    named = getattr(sheet_config, "deck_name", None)
+    if named and deck_identity(named):
+        return f"deckname:{deck_identity(named)}", " ".join(named.split()), True
+    return sheet_id, deck_name, False
+
+
+def model_id(sheet_id, deck_name, is_cloze, keyed=False):
+    """The note type's id, which Anki matches an imported note type by.
+
+    A keyed sheet derives it from its identity and the kind alone. A sheet
+    without one keeps the formula it has always had — the deck name included —
+    because changing it would move every deck already imported onto a new note
+    type, and every note on it would conflict.
+    """
+    kind = "Cloze" if is_cloze else "Basic"
+    if keyed:
+        return _stable_id("model", sheet_id, kind)
+    return _stable_id("model", sheet_id, f"SheetCards - {deck_name} - {kind}")
+
+
+def kept_fields(current, previous=()):
+    """The note type's fields, given the ones the last package of this sheet had.
+
+    Anki treats any change to a note type's field list — one added, renamed,
+    removed or moved — as a new schema, and with its default import options
+    every note on it then *conflicts* instead of updating. After the user merges
+    once, Anki holds the old fields with the new ones appended, by name. So the
+    package carries exactly that: the previous fields in their order, then each
+    new one. A column removed or moved therefore changes nothing Anki can see,
+    and after one merge for an added or renamed column the next import matches
+    again — instead of conflicting on every import after it.
+    """
+    previous = [f for f in previous or [] if isinstance(f, str)]
+    if not previous or previous[0] != current[0]:
+        return list(current)
+    return previous + [f for f in current if f not in previous]
+
+
+def note_type_shape(plan, sheet_config, previous_fields=()):
+    """What Anki compares a note type by: its kind, fields and template names."""
+    is_cloze = bool(sheet_config.cloze_field)
+    return {
+        "kind": "cloze" if is_cloze else "basic",
+        "fields": kept_fields(plan.note_type_fields(), previous_fields),
+        "templates": [
+            spec["name"]
+            for spec in build_templates(plan, sheet_config, is_cloze=is_cloze)
+        ],
+    }
+
+
 def cloze_ordinals(note_data, plan, sheet_config):
     """Which cards a cloze row produces, as zero-based template ordinals.
 
@@ -202,9 +276,9 @@ def _requirements(templates, fields):
     return req
 
 
-def _model(model_id, name, fields, templates, is_cloze, now):
+def _model(mid, name, fields, templates, is_cloze, now):
     return {
-        "id": model_id,
+        "id": mid,
         "name": name,
         "type": MODEL_CLOZE if is_cloze else MODEL_STANDARD,
         "mod": now,
@@ -294,7 +368,7 @@ def _deck_config():
     }
 
 
-def _collection_config(model_id):
+def _collection_config(mid):
     return {
         "nextPos": 1,
         "estTimes": True,
@@ -307,7 +381,7 @@ def _collection_config(model_id):
         "newBury": True,
         "newSpread": 0,
         "dueCounts": True,
-        "curModel": model_id,
+        "curModel": mid,
         "collapseTime": 1200,
         "schedVer": 2,
         "dayLearnFirst": False,
@@ -315,16 +389,23 @@ def _collection_config(model_id):
     }
 
 
-def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
+def build_package(
+    sheet_id, deck_name, plan, sheet_config, rows, now=None, previous_fields=()
+):
     """Builds an ``.apkg`` from the rows of one sheet.
 
     Args:
-        sheet_id (str): the spreadsheet's id, so guids stay stable per sheet
-        deck_name (str): the deck's own name, without the ``SheetCards`` root
+        sheet_id (str): what the page keyed the source by (a spreadsheet id, a
+            file name); the sheet's own ``deckname=`` replaces it
+        deck_name (str): the deck's own name, without the ``SheetCards`` root;
+            the sheet's own ``deckname=`` replaces it
         plan (ColumnPlan): the sheet's column roles
         sheet_config (SheetConfig): the parsed settings row
         rows (list[dict]): rows keyed by header, already media-rewritten
         now (int, optional): the timestamp to stamp; defaults to the clock
+        previous_fields (list, optional): the fields of the last package built
+            for this sheet, kept in front so a removed or moved column is not a
+            new schema to Anki (see kept_fields)
 
     Returns:
         bytes: the package, ready to be written to a file or handed to a browser
@@ -333,11 +414,13 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
 
     now = int(now if now is not None else time.time())
     is_cloze = bool(sheet_config.cloze_field)
+    sheet_id, deck_name, keyed = resolve_identity(sheet_id, deck_name, sheet_config)
 
-    fields = plan.note_type_fields()
+    fields = kept_fields(plan.note_type_fields(), previous_fields)
+    content = set(plan.content_headers)
     templates = build_templates(plan, sheet_config, is_cloze=is_cloze)
     model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
-    model_id = _stable_id("model", sheet_id, model_name)
+    mid = model_id(sheet_id, deck_name, is_cloze, keyed)
 
     root = deck_root_name(deck_name)
     decks = {"1": _deck(1, "Default", now)}
@@ -353,13 +436,23 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
         return int(str(_stable_id("deck", sheet_id, full_name)))
 
     note_rows, card_rows, all_tags = [], [], set()
+    seen = set()
 
     for index, row in enumerate(rows):
         if classify_row(row, plan) != SYNCED:
             continue
 
         row_id = str(row.get(plan.id_header, "")).strip()
-        values = [row_id] + [str(row.get(h, "")) for h in plan.content_headers]
+        # Two rows with one ID would be two notes with one id, guid and card ids,
+        # and the database refuses the second. The first row is the note — the
+        # page's duplicate warning says so — and the rest are left out.
+        if row_id in seen:
+            continue
+        seen.add(row_id)
+        # A kept field the sheet no longer has is written empty.
+        values = [row_id] + [
+            str(row.get(h, "")) if h in content else "" for h in fields[1:]
+        ]
         tags = build_tags(row, plan, sheet_config)
         all_tags.update(tags)
 
@@ -368,7 +461,7 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
             (
                 note_id,
                 note_guid(sheet_id, row_id),
-                model_id,
+                mid,
                 now,
                 -1,
                 " " + " ".join(tags) + " " if tags else "",
@@ -423,13 +516,9 @@ def build_package(sheet_id, deck_name, plan, sheet_config, rows, now=None):
             now * 1000,
             now * 1000,
             11,
-            json.dumps(_collection_config(model_id)),
+            json.dumps(_collection_config(mid)),
             json.dumps(
-                {
-                    str(model_id): _model(
-                        model_id, model_name, fields, templates, is_cloze, now
-                    )
-                }
+                {str(mid): _model(mid, model_name, fields, templates, is_cloze, now)}
             ),
             json.dumps(decks),
             json.dumps(_deck_config()),
