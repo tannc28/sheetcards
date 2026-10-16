@@ -89,6 +89,7 @@ DOC_CHROME = {
         "permalink": "Link tới mục này",
         "edit": "Sửa trang này trên GitHub",
         "twin": "Read this page in English",
+        "contact": "Liên hệ &amp; góp ý",
     },
     "en": {
         "nav": "Documentation",
@@ -100,6 +101,7 @@ DOC_CHROME = {
         "permalink": "Link to this section",
         "edit": "Edit this page on GitHub",
         "twin": "Đọc trang này bằng tiếng Việt",
+        "contact": "Contact &amp; feedback",
     },
 }
 
@@ -1108,6 +1110,8 @@ def build_docs_in(out, lang, template):
             .replace("%%W_CONTENTS%%", words["contents"])
             .replace("%%W_PAGES%%", words["pages"])
             .replace("%%W_EDIT%%", words["edit"])
+            .replace("%%W_CONTACT%%", words["contact"])
+            .replace("%%FROM%%", "/".join(p for p in ("docs", folder, name) if p))
             .replace("%%NAV%%", _nav(name, titles, toc, lang))
             .replace("%%ONPAGE%%", _onpage(toc, words))
             .replace("%%PAGER%%", _pager(names, index, titles, words))

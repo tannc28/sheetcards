@@ -16,7 +16,14 @@ SITE = Path(__file__).resolve().parent.parent / "site"
 
 # Every page with the shared masthead. player.html is a frame inside a card,
 # and preview.html and editor.html are redirects; none of them has chrome.
-PAGES = ("index.html", "sheet.html", "create.html", "_docs.html", "404.html")
+PAGES = (
+    "index.html",
+    "sheet.html",
+    "create.html",
+    "contact.html",
+    "_docs.html",
+    "404.html",
+)
 
 # How each page spells the way back to the site's root.
 ROOTS = {"./", "%%ROOT%%"}
@@ -38,7 +45,7 @@ def test_the_name_in_the_masthead_goes_home(page):
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "page", ("index.html", "sheet.html", "create.html", "404.html")
+    "page", ("index.html", "sheet.html", "create.html", "contact.html", "404.html")
 )
 def test_the_title_follows_the_language(page):
     """A tab in English says English: the <title> is translated like the page."""
@@ -80,10 +87,32 @@ def test_github_is_an_icon_beside_the_switches(page):
         assert want in attrs, f"{page}: GitHub link lacks {want}"
 
 
+# The pages that link to the contact page, and how each says where it is. The
+# "by ctan" byline that stood in this spot was replaced by the link.
+CONTACT_FROM = {
+    "index.html": "./contact.html?from=home",
+    "sheet.html": "./contact.html?from=sheet",
+    "create.html": "./contact.html?from=create",
+    "404.html": "contact.html?from=404",
+    "_docs.html": "%%ROOT%%contact.html?from=%%FROM%%",
+}
+
+
 @pytest.mark.unit
-@pytest.mark.parametrize("page", PAGES)
-def test_every_page_is_signed(page):
-    assert 'class="byline"><a href="https://github.com/tannc28"' in _text(page), page
+@pytest.mark.parametrize("page", sorted(CONTACT_FROM))
+def test_every_page_links_contact_and_feedback(page):
+    """One quiet line on every page, saying which page it was followed from."""
+    text = _text(page)
+    href = CONTACT_FROM[page]
+    assert f'<p class="contactlink"><a href="{href}">' in text, page
+    assert "by ctan" not in text and 'class="byline"' not in text, page
+
+
+@pytest.mark.unit
+def test_the_byline_is_gone_everywhere():
+    for path in SITE.iterdir():
+        if path.suffix in (".html", ".js", ".css"):
+            assert "byline" not in path.read_text(encoding="utf-8"), path.name
 
 
 @pytest.mark.unit

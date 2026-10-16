@@ -1380,6 +1380,102 @@ const STRINGS = {
       "Mở <b>Tools → SheetCards → Connect a Google Sheet…</b> rồi dán link. Từ đó, " +
       "<b>Ctrl+Shift+S</b> sync những gì đã thay đổi.",
   },
+
+  // --- Liên hệ & góp ý (contact.html) ------------------------------------
+  // The link at the foot of every page, where a signature used to stand.
+  contactLink: { en: "Contact &amp; feedback", vi: "Liên hệ &amp; góp ý" },
+  titleContact: { en: "Contact &amp; feedback — SheetCards", vi: "Liên hệ &amp; góp ý — SheetCards" },
+  contactTitle: { en: "Contact &amp; feedback", vi: "Liên hệ &amp; góp ý" },
+  contactLead: {
+    en: "Found a bug, want a feature, or just have a question? Pick whichever way suits you.",
+    vi: "Gặp lỗi, muốn có thêm tính năng, hay chỉ muốn hỏi? Chọn cách nào tiện cho bạn.",
+  },
+  fbTitle: { en: "Send feedback", vi: "Gửi góp ý" },
+  fbClosed: {
+    en: "The feedback form opens soon — in the meantime, reach me on GitHub or Facebook.",
+    vi: "Form góp ý sắp mở — trong lúc chờ, bạn liên hệ qua GitHub hoặc Facebook.",
+  },
+  fbWhy: {
+    en: "Sign in with Google to keep out spam, and so I can reply to you.",
+    vi: "Cần đăng nhập Google để chống spam và để mình có thể trả lời bạn.",
+  },
+  fbSignedIn: {
+    en: (name, email) => `Signed in: <b>${name}</b> (${email})`,
+    vi: (name, email) => `Đã đăng nhập: <b>${name}</b> (${email})`,
+  },
+  fbSwitch: { en: "Switch account", vi: "Đổi tài khoản" },
+  fbKind: { en: "What are you sending?", vi: "Bạn muốn gửi gì?" },
+  fbKindBug: { en: "Bug report", vi: "Báo lỗi" },
+  fbKindFeature: { en: "Feature idea", vi: "Đề xuất tính năng" },
+  fbKindOther: { en: "Other", vi: "Khác" },
+  fbMessage: { en: "Message", vi: "Nội dung" },
+  fbImage: { en: "Screenshot (optional)", vi: "Ảnh chụp màn hình (không bắt buộc)" },
+  fbImageHint: {
+    en: "PNG, JPEG, WebP or GIF, up to 4 MB. Pick a file, or paste an image (Ctrl+V / ⌘V) anywhere on the page.",
+    vi: "PNG, JPEG, WebP hoặc GIF, tối đa 4 MB. Chọn file, hoặc dán ảnh (Ctrl+V / ⌘V) ở bất kỳ đâu trên trang.",
+  },
+  fbImagePick: { en: "Choose image", vi: "Chọn ảnh" },
+  fbImageRemove: { en: "Remove image", vi: "Bỏ ảnh" },
+  fbSheet: { en: "Link to the sheet involved (optional)", vi: "Link sheet liên quan (không bắt buộc)" },
+  fbExtra: { en: "Sent along with it", vi: "Thông tin gửi kèm" },
+  fbExtraHint: {
+    en: "So I can find the problem faster. Along with the email and name on your Google account.",
+    vi: "Để mình tìm ra lỗi nhanh hơn. Cùng với email và tên trong tài khoản Google của bạn.",
+  },
+  fbExtraDevice: { en: "Device", vi: "Thiết bị" },
+  fbExtraPage: { en: "Page", vi: "Trang" },
+  fbExtraLang: { en: "Language", vi: "Ngôn ngữ" },
+  fbExtraAgent: { en: "Browser", vi: "Trình duyệt" },
+  fbSend: { en: "Send feedback", vi: "Gửi góp ý" },
+  fbSending: { en: "Sending…", vi: "Đang gửi…" },
+  fbDoneTitle: { en: "Thank you!", vi: "Cảm ơn bạn!" },
+  fbDoneText: {
+    en: (email) => `Your feedback has arrived. If I need to reply, I'll write to ${email}.`,
+    vi: (email) => `Mình đã nhận được góp ý. Nếu cần trả lời, mình sẽ viết cho ${email}.`,
+  },
+  fbAgain: { en: "Send more feedback", vi: "Gửi thêm góp ý" },
+  fbErrSignIn: { en: "Sign in with Google before sending.", vi: "Hãy đăng nhập Google trước khi gửi." },
+  fbErrAuth: {
+    en: "Your sign-in has expired. Sign in with Google again, then press Send.",
+    vi: "Lần đăng nhập đã hết hạn. Hãy đăng nhập Google lại rồi bấm Gửi.",
+  },
+  fbErrRate: {
+    en: "You've sent several in a row. Wait a few minutes, then send again.",
+    vi: "Bạn vừa gửi khá nhiều góp ý. Hãy đợi vài phút rồi gửi lại.",
+  },
+  fbErrEmpty: { en: "Write your message first.", vi: "Hãy viết nội dung góp ý." },
+  fbErrImage: {
+    en: "The screenshot was refused: only PNG, JPEG, WebP or GIF, up to 4 MB. Remove it or pick another.",
+    vi: "Ảnh không gửi được: chỉ nhận PNG, JPEG, WebP hoặc GIF, tối đa 4 MB. Bỏ ảnh hoặc chọn ảnh khác.",
+  },
+  fbErrImageType: {
+    en: "This file is not a PNG, JPEG, WebP or GIF image.",
+    vi: "File này không phải ảnh PNG, JPEG, WebP hoặc GIF.",
+  },
+  fbErrImageSize: { en: "This image is over 4 MB.", vi: "Ảnh này lớn hơn 4 MB." },
+  fbErrImageRead: { en: "This image could not be read.", vi: "Không đọc được ảnh này." },
+  fbErrServer: {
+    en: "The feedback service ran into a problem. Try again later, or reach me on GitHub or Facebook.",
+    vi: "Máy chủ góp ý đang gặp lỗi. Hãy thử lại sau, hoặc liên hệ qua GitHub hoặc Facebook.",
+  },
+  fbErrNetwork: {
+    en: "Could not send: check your connection and try again.",
+    vi: "Không gửi được: kiểm tra kết nối mạng rồi thử lại.",
+  },
+  fbErrGsi: {
+    en: "The Google sign-in button did not load. An ad blocker may be blocking it — allow it on this page, or reach me on GitHub or Facebook.",
+    vi: "Không tải được nút đăng nhập Google. Có thể trình chặn quảng cáo đang chặn nó — hãy tắt cho trang này, hoặc liên hệ qua GitHub hoặc Facebook.",
+  },
+  fbErrInApp: {
+    en: "Google does not allow signing in inside a chat app's browser. Open this page in Chrome or Safari to send feedback.",
+    vi: "Google không cho đăng nhập trong trình duyệt của app chat. Mở trang này bằng Chrome hoặc Safari để gửi góp ý.",
+  },
+  ghText: {
+    en: "The source code and releases. Public bug reports go under Issues; you need a GitHub account.",
+    vi: "Mã nguồn và các bản phát hành. Báo lỗi công khai ở mục Issues, cần tài khoản GitHub.",
+  },
+  ghIssues: { en: "Issues: report a bug", vi: "Issues: báo lỗi" },
+  facebookText: { en: "Message me directly.", vi: "Nhắn tin trực tiếp cho mình." },
 };
 
 export const LANGUAGES = [

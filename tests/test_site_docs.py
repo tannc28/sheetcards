@@ -99,6 +99,7 @@ def test_the_four_kinds_of_page_exist(site):
         "sheet.html",
         "editor.html",
         "player.html",
+        "contact.html",
     ):
         assert (out / page).is_file(), page
     # A build input, not a page.

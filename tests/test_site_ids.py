@@ -17,6 +17,7 @@ PAGES = {
     "app.js": "create.html",
     "sheet.js": "sheet.html",
     "home.js": "index.html",
+    "contact.js": "contact.html",
     # The chrome of the pages that are read: the landing page, and the docs
     # template every documentation page is built from.
     "page.js": ("index.html", "_docs.html"),

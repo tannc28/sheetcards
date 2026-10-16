@@ -1,0 +1,147 @@
+/* Liên hệ & góp ý (contact.html), on top of style.css.
+
+   A page with one job, so it is a document rather than a workspace: a heading,
+   the form as the one big thing, and the two links that always work beside it
+   on a wide screen, under it on a phone. */
+
+.contact {
+  max-width: var(--site-wrap); margin: 0 auto;
+  padding: clamp(1.5rem, 5vh, 3rem) var(--pad) 4rem;
+}
+.contact h1 {
+  margin: 0 0 .3em; font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 750; letter-spacing: -.025em; line-height: 1.15;
+}
+.contact-lead { margin: 0 0 1.75rem; max-width: 40rem; color: var(--muted); }
+
+.contact-grid { display: grid; gap: 16px; align-items: start; }
+@media (min-width: 56rem) {
+  .contact-grid { grid-template-columns: minmax(0, 40rem) minmax(16rem, 24rem); gap: 24px; }
+}
+.contact-side { display: grid; gap: 16px; }
+
+.contact-card {
+  min-width: 0; padding: clamp(16px, 3vw, 24px);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+}
+.contact-card h2 {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 .6rem; font-size: var(--t-lg); font-weight: 700;
+}
+.contact-card h2 [data-icon] { color: var(--accent); font-size: 20px; }
+.contact-card > p { margin: 0 0 .9rem; color: var(--muted); font-size: var(--t-md); }
+.contact-links {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  margin: 0 !important; overflow-wrap: anywhere;
+}
+.contact-links a:not(.cbtn) { font-size: var(--t-sm); }
+
+/* A quiet, bordered action: the screenshot picker and the two links out. */
+.cbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 14px; border-radius: 12px;
+  font-size: var(--t-sm); font-weight: 650; color: var(--ink); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--line-strong); cursor: pointer;
+}
+.cbtn:hover { border-color: var(--accent); color: var(--accent); }
+.cbtn [data-icon] { color: var(--accent); font-size: 17px; }
+.cbtn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- the form ------------------------------------------------------------- */
+
+.fb-closed {
+  margin: 0; padding: 12px 14px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--ink) !important; font-size: var(--t-md);
+}
+
+.fb-who {
+  display: grid; gap: 10px; margin: 0 0 18px; padding: 0 0 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.fb-who p { margin: 0; }
+.fb-why { display: flex; gap: 8px; align-items: flex-start; font-size: var(--t-sm); color: var(--muted); }
+.fb-why [data-icon] { margin-top: .2em; color: var(--accent); }
+/* Google's button is an iframe 40px tall; held open so the page does not jump
+   when it arrives. */
+.fb-signin { min-height: 44px; }
+.fb-signin:empty { display: none; }
+/* One run of text, so the tick stays with the words when a long address wraps. */
+.fb-signed { font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fb-signed > [data-icon] { display: inline; margin-right: 6px; color: var(--ok); }
+.fb-signed .linky { display: inline; margin-left: 10px; }
+
+.fb-form { display: grid; gap: 18px; }
+.fb-form .field label, .fb-label, .fb-kinds legend {
+  font-size: var(--t-sm); font-weight: 650; color: var(--ink); letter-spacing: 0;
+}
+.fb-hint { margin: 0; font-size: var(--t-xs); color: var(--muted); }
+
+.fb-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.fb-kinds legend { padding: 0; margin-bottom: 6px; }
+.fb-kinds label {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--line-strong); font-size: var(--t-sm); font-weight: 550; cursor: pointer;
+}
+.fb-kinds input { width: auto; margin: 0; accent-color: var(--accent); }
+.fb-kinds label:has(input:checked) {
+  border-color: var(--accent); background: var(--accent-soft); color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.fb-kinds label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.fb-form textarea {
+  font: inherit; font-size: var(--t-base); line-height: 1.5;
+  width: 100%; min-height: 9rem; padding: 10px 12px; resize: vertical;
+  color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+}
+.fb-form textarea:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line-strong)); }
+.fb-form textarea[aria-invalid="true"] { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.fb-form input[type="url"] { font-size: var(--t-base); min-height: 44px; }
+.fb-count {
+  margin: 0; text-align: right; font-size: var(--t-xs); color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.fb-count.full { color: var(--warn); font-weight: 650; }
+
+.fb-shot { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; margin-top: 4px; }
+.fb-preview {
+  display: grid; gap: 6px; margin: 0; max-width: 100%;
+  padding: 8px; border-radius: 12px; background: var(--sunken); border: 1px solid var(--line);
+}
+.fb-preview img { display: block; max-width: min(100%, 16rem); max-height: 10rem; border-radius: 6px; object-fit: contain; }
+.fb-preview figcaption {
+  display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline;
+  font-size: var(--t-xs); color: var(--muted); overflow-wrap: anywhere;
+}
+
+.fb-extra {
+  padding: 10px 14px; border-radius: 12px;
+  background: var(--sunken); border: 1px solid var(--line-soft);
+}
+.fb-extra summary { cursor: pointer; font-size: var(--t-sm); font-weight: 650; }
+.fb-extra .fb-hint { margin: 6px 0 8px; }
+.fb-extra dl { display: grid; gap: 6px; margin: 0; }
+.fb-extra dl div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 8px; }
+.fb-extra dt { font-size: var(--t-xs); color: var(--muted); }
+.fb-extra dd {
+  margin: 0; font-family: var(--mono); font-size: var(--t-xs); overflow-wrap: anywhere;
+}
+
+.fb-status { margin: 0; min-height: 1.4em; font-size: var(--t-sm); color: var(--muted); }
+.fb-status:empty { min-height: 0; }
+.fb-status.bad { color: var(--bad); font-weight: 600; }
+.fb-sendbtn {
+  justify-self: start; min-height: 50px; padding: 0 24px; border-radius: 13px;
+  font-size: var(--t-base); font-weight: 700;
+}
+@media (max-width: 30rem) { .fb-sendbtn { justify-self: stretch; } }
+
+.fb-done { padding: 6px 0; }
+.fb-done:focus { outline: none; }
+.fb-done p { margin: 0 0 .6rem; }
+.fb-done-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--t-lg); font-weight: 700; color: var(--ok);
+}

@@ -1,7 +1,7 @@
 /**
  * The site's icons, as inline SVG — one set, one style, one place.
  *
- * Every path below but the GitHub mark is copied by hand from Lucide (https://lucide.dev), ISC
+ * Every path below but the GitHub and Facebook marks is copied by hand from Lucide (https://lucide.dev), ISC
  * licence, Copyright (c) Lucide Contributors 2022; portions derived from Feather,
  * MIT licence, Copyright (c) 2013-2022 Cole Bemis. Copied rather than loaded, so
  * nothing on the page depends on a CDN being up. All share Lucide's 24×24 box and
@@ -141,6 +141,18 @@ const PATHS = {
   pause:
     '<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
   play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  // The contact page: the link to it on every page, the screenshot, sending.
+  "message-square": '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  image:
+    '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>' +
+    '<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  send:
+    '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>' +
+    '<path d="m21.854 2.147-10.94 10.939"/>',
+  // Facebook's mark, for the contact page only: from Simple Icons
+  // (https://simpleicons.org), CC0 1.0, filled like the GitHub one below.
+  facebook:
+    '<path fill="currentColor" stroke="none" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/>',
   // The one brand mark, in the masthead beside the switches. Lucide ships no
   // brand marks, so this path is GitHub's from Simple Icons
   // (https://simpleicons.org), CC0 1.0. A solid shape, not a stroke: the path

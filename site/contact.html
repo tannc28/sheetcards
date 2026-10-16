@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title data-i18n="titleContact">Liên hệ &amp; góp ý — SheetCards</title>
+<meta name="description" content="Báo lỗi, đề xuất tính năng hoặc hỏi về SheetCards: gửi góp ý ngay trên web, hoặc liên hệ qua GitHub hay Facebook.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  try {
+    var t = localStorage.getItem("sc-theme");
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#18151f";
+    }
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./contact.css">
+</head>
+<body class="page">
+
+<a class="skip" href="#main" data-i18n="skipMain">Tới nội dung chính</a>
+
+<header class="masthead">
+  <div class="brand">
+    <a class="name" href="./" translate="no">SheetCards</a>
+  </div>
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Trang chủ</a>
+    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a>
+    <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
+  </nav>
+  <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
+</header>
+
+<main id="main" class="contact" tabindex="-1">
+  <h1 data-i18n="contactTitle">Liên hệ &amp; góp ý</h1>
+  <p class="contact-lead" data-i18n="contactLead">Gặp lỗi, muốn có thêm tính năng, hay chỉ muốn hỏi? Chọn cách nào tiện cho bạn.</p>
+
+  <div class="contact-grid">
+    <!-- The form. Signed in with Google, so a reply can reach a real address and
+         the inbox is not a spam target; contact.js draws its states. -->
+    <section class="contact-card fb" aria-labelledby="fb-title">
+      <h2 id="fb-title"><span data-icon="message-square"></span><span data-i18n="fbTitle">Gửi góp ý</span></h2>
+
+      <p class="fb-closed" id="fb-closed" data-i18n="fbClosed">Form góp ý sắp mở — trong lúc chờ, bạn liên hệ qua GitHub hoặc Facebook.</p>
+
+      <div id="fb-open" hidden>
+        <div class="fb-who" id="fb-who">
+          <p class="fb-why"><span data-icon="lock"></span><span data-i18n="fbWhy">Cần đăng nhập Google để chống spam và để mình có thể trả lời bạn.</span></p>
+          <div id="fb-signin" class="fb-signin"></div>
+          <p class="fb-signed" id="fb-signed" hidden><span data-icon="check"></span><span id="fb-signed-text"></span>
+            <button type="button" class="linky" id="fb-switch" data-i18n="fbSwitch">Đổi tài khoản</button></p>
+          <p class="field-error" id="fb-signin-error" hidden></p>
+        </div>
+
+        <form id="fb-form" class="fb-form" novalidate>
+          <fieldset class="fb-kinds">
+            <legend data-i18n="fbKind">Bạn muốn gửi gì?</legend>
+            <label><input type="radio" name="kind" value="bug" checked><span data-i18n="fbKindBug">Báo lỗi</span></label>
+            <label><input type="radio" name="kind" value="feature"><span data-i18n="fbKindFeature">Đề xuất tính năng</span></label>
+            <label><input type="radio" name="kind" value="other"><span data-i18n="fbKindOther">Khác</span></label>
+          </fieldset>
+
+          <div class="field">
+            <label for="fb-message" data-i18n="fbMessage">Nội dung</label>
+            <p class="field-error" id="fb-message-error" hidden></p>
+            <textarea id="fb-message" rows="7" maxlength="5000" required aria-describedby="fb-count"></textarea>
+            <p class="fb-count" id="fb-count" aria-live="polite">0 / 5000</p>
+          </div>
+
+          <div class="field">
+            <span class="fb-label" data-i18n="fbImage">Ảnh chụp màn hình (không bắt buộc)</span>
+            <p class="fb-hint" data-i18n="fbImageHint">PNG, JPEG, WebP hoặc GIF, tối đa 4 MB. Chọn file, hoặc dán ảnh (Ctrl+V / ⌘V) ở bất kỳ đâu trên trang.</p>
+            <p class="field-error" id="fb-image-error" hidden></p>
+            <div class="fb-shot">
+              <label class="cbtn fb-pick"><span data-icon="image"></span><span data-i18n="fbImagePick">Chọn ảnh</span>
+                <input type="file" id="fb-file" accept="image/png,image/jpeg,image/webp,image/gif" class="sr-only"></label>
+              <figure class="fb-preview" id="fb-preview" hidden>
+                <img id="fb-preview-img" alt="">
+                <figcaption><span id="fb-preview-name"></span>
+                  <button type="button" class="linky" id="fb-image-remove" data-i18n="fbImageRemove">Bỏ ảnh</button></figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fb-sheet" data-i18n="fbSheet">Link sheet liên quan (không bắt buộc)</label>
+            <input type="url" id="fb-sheet" inputmode="url" autocomplete="off" placeholder="https://docs.google.com/spreadsheets/…">
+          </div>
+
+          <details class="fb-extra" open>
+            <summary data-i18n="fbExtra">Thông tin gửi kèm</summary>
+            <p class="fb-hint" data-i18n="fbExtraHint">Để mình tìm ra lỗi nhanh hơn. Cùng với email và tên trong tài khoản Google của bạn.</p>
+            <dl id="fb-extra"></dl>
+          </details>
+
+          <p class="fb-status" id="fb-status" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn fb-sendbtn" id="fb-send"><span data-icon="send"></span><span data-i18n="fbSend">Gửi góp ý</span></button>
+        </form>
+
+        <div class="fb-done" id="fb-done" hidden tabindex="-1">
+          <p class="fb-done-title"><span data-icon="check"></span><span data-i18n="fbDoneTitle">Cảm ơn bạn!</span></p>
+          <p id="fb-done-text"></p>
+          <button type="button" class="linky" id="fb-again" data-i18n="fbAgain">Gửi thêm góp ý</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="contact-side">
+      <section class="contact-card" aria-labelledby="gh-title">
+        <h2 id="gh-title"><span data-icon="github"></span><span translate="no">GitHub</span></h2>
+        <p data-i18n="ghText">Mã nguồn và các bản phát hành. Báo lỗi công khai ở mục Issues, cần tài khoản GitHub.</p>
+        <p class="contact-links">
+          <a class="cbtn" href="https://github.com/tannc28/sheetcards/issues" rel="noopener"><span data-icon="circle-alert"></span><span data-i18n="ghIssues">Issues: báo lỗi</span></a>
+          <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">github.com/tannc28/sheetcards</a>
+        </p>
+      </section>
+      <section class="contact-card" aria-labelledby="facebook-title">
+        <h2 id="facebook-title"><span data-icon="facebook"></span><span translate="no">Facebook</span></h2>
+        <p data-i18n="facebookText">Nhắn tin trực tiếp cho mình.</p>
+        <p class="contact-links">
+          <a class="cbtn" href="https://facebook.com/tannc28" rel="noopener"><span data-icon="external-link"></span><span translate="no">facebook.com/tannc28</span></a>
+        </p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="./contact.js"></script>
+</body>
+</html>

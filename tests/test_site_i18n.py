@@ -173,7 +173,14 @@ def test_placeholder_arity_matches_between_languages():
 
 # The pages the static Vietnamese is baked into: what a reader sees before the
 # page's script runs, and all a crawler or a link preview ever sees.
-STATIC_PAGES = ("index.html", "sheet.html", "create.html", "_docs.html", "404.html")
+STATIC_PAGES = (
+    "index.html",
+    "sheet.html",
+    "create.html",
+    "contact.html",
+    "_docs.html",
+    "404.html",
+)
 
 _ELEMENT = re.compile(r'<(\w+)\b[^>]*\bdata-i18n="(\w+)"[^>]*>(.*?)</\1>', re.S)
 _ATTR_TAG = re.compile(r'<\w+\b[^>]*\bdata-i18n-attr="([^"]+)"[^>]*>', re.S)
