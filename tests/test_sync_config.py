@@ -41,7 +41,7 @@ def _parsed():
     plan = plan_columns(["ID", "SYNC"] + FIELDS)
     row = {
         "ID": "#config reverse; align=left; speed=0.9; theme=sakura; "
-        "deckname=Từ vựng HSK; next=w15",
+        "name=Từ vựng HSK; next=w15",
         "Word": "size=48; tts=zh_CN; voices=Ting-Ting; bold; label=Từ",
         "Reading": "side=hide",
         "Nghĩa": "color=muted; hint; size=bogus",

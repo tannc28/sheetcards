@@ -189,16 +189,16 @@ class TestLegacyIdentity:
 @pytest.mark.unit
 class TestDeckname:
     KEYED = (
-        "ID\tWord\tMeaning\n#config deckname=Từ vựng tiếng Anh\t\t\n"
+        "ID\tWord\tMeaning\n#config name=Từ vựng tiếng Anh\t\t\n"
         "w01\tapple\tquả táo\nw02\tbook\tquyển sách\n"
     )
 
-    def test_the_deckname_beats_the_source_as_identity_and_as_name(self):
+    def test_the_name_beats_the_source_as_identity_and_as_name(self):
         config = parse_config_row(
-            {"ID": "#config deckname=Từ vựng tiếng Anh"}, plan_columns(["ID", "W"])
+            {"ID": "#config name=Từ vựng tiếng Anh"}, plan_columns(["ID", "W"])
         )
         assert resolve_identity("file:x.tsv#", "x", config) == (
-            "deckname:từ vựng tiếng anh",
+            "name:từ vựng tiếng anh",
             "Từ vựng tiếng Anh",
             True,
         )
@@ -225,7 +225,7 @@ class TestDeckname:
         )
         assert "sc_Từ vựng tiếng Anh" in {d["name"] for d in json.loads(decks).values()}
 
-    def test_two_decknames_do_not_share_notes(self):
+    def test_two_names_do_not_share_notes(self):
         other = self.KEYED.replace("tiếng Anh", "tiếng Trung")
         assert set(_ids(_package(self.KEYED))[1]).isdisjoint(_ids(_package(other))[1])
         assert _ids(_package(self.KEYED))[0] != _ids(_package(other))[0]
@@ -446,7 +446,7 @@ out["merged"] = sorted(col.get_note(n)["Note"] for n in col.find_notes(""))
 col.close()
 
 # A named sheet: another file name, another source, the same notes.
-KEYED = H + "#config deckname=Vocab\\t\\t\\n"
+KEYED = H + "#config name=Vocab\\t\\t\\n"
 col = Collection(os.path.join(tempfile.mkdtemp(), "c.anki2"))
 load_default(col, package(KEYED + ROWS, T + 0, "file:Vocab.tsv#", "Vocab"))
 out["keyed_file"] = load_default(

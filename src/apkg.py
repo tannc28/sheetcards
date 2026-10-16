@@ -142,7 +142,7 @@ def note_guid(sheet_id, row_id):
 
 
 def deck_identity(name):
-    """What a ``deckname=`` is as an identity: the same deck however it is typed.
+    """What a ``name=`` is as an identity: the same deck however it is typed.
 
     Trimmed, inner whitespace collapsed, NFC (a phone keyboard and a desktop one
     can compose ``ệ`` differently) and case-folded, because Anki itself treats
@@ -155,7 +155,7 @@ def deck_identity(name):
 def resolve_identity(sheet_id, deck_name, sheet_config):
     """What a package is keyed by and what its deck is called.
 
-    The sheet's own ``deckname=`` wins over whatever the page derived from the
+    The sheet's own ``name=`` wins over whatever the page derived from the
     source (a spreadsheet id, a file name), as the identity and as the name —
     so a sheet keeps one deck however it travels.
 
@@ -165,7 +165,7 @@ def resolve_identity(sheet_id, deck_name, sheet_config):
     """
     named = getattr(sheet_config, "deck_name", None)
     if named and deck_identity(named):
-        return f"deckname:{deck_identity(named)}", " ".join(named.split()), True
+        return f"name:{deck_identity(named)}", " ".join(named.split()), True
     return sheet_id, deck_name, False
 
 
@@ -396,9 +396,9 @@ def build_package(
 
     Args:
         sheet_id (str): what the page keyed the source by (a spreadsheet id, a
-            file name); the sheet's own ``deckname=`` replaces it
+            file name); the sheet's own ``name=`` replaces it
         deck_name (str): the deck's own name, without the ``SheetCards`` root;
-            the sheet's own ``deckname=`` replaces it
+            the sheet's own ``name=`` replaces it
         plan (ColumnPlan): the sheet's column roles
         sheet_config (SheetConfig): the parsed settings row
         rows (list[dict]): rows keyed by header, already media-rewritten

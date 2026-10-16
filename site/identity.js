@@ -1,7 +1,7 @@
 /**
  * Which deck a sheet is, as both pages need to know it.
  *
- * A sheet names its own deck in the settings row — `#config deckname=Từ vựng` —
+ * A sheet names its own deck in the settings row — `#config name=Từ vựng` —
  * and that name is also its identity: the .apkg's note guids and note type id
  * derive from it (src/apkg.py, resolve_identity), so the same sheet updates the
  * same notes whichever file, copy or link it arrives as. A sheet that names no

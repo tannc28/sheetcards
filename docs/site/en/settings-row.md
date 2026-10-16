@@ -79,11 +79,11 @@ Written after `#config` in the marker cell.
 | `speed` | a number from 0.5 to 2.0 | Speaking rate for every spoken column that does not set its own. |
 | `reverse` | switch | Adds a second card that asks the back and answers with the front. See [Card types](card-types.md#reverse-cards). |
 | `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. See [Themes and text](text.md#themes). |
-| `deckname` | a deck name; spaces and any script are fine | The deck's name in Anki, and the sheet's identity. Sheet to Anki recognises the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `deckname` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `deckname` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
+| `name` | a deck name; spaces and any script are fine | The deck's name in Anki, and the sheet's identity. Sheet to Anki recognises the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
 | `next` | an ID ending in a number, like `w15` | The next ID Create sheet will hand out. It is why a deleted word's ID is never given to a new word, which would inherit the old word's review history in Anki. |
 
-Create sheet writes both for you, e.g. `#config deckname=Từ vựng tiếng Anh; next=w15`.
-A sheet without `deckname` is recognised by its Google Sheets link, or by its
+Create sheet writes both for you, e.g. `#config name=Từ vựng tiếng Anh; next=w15`.
+A sheet without `name` is recognised by its Google Sheets link, or by its
 file name (the `.csv`/`.tsv`/`.xlsx` extension and a ` (1)`, `-2` suffix left
 out). The add-on reads both keys without a warning and does not use them yet: it
 matches notes by deck and by the `ID` column.

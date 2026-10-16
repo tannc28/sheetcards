@@ -1,6 +1,6 @@
 """Which deck a sheet is: ``site/identity.js``, run in node.
 
-A sheet's ``deckname=`` is its deck and its identity; without one, a file is
+A sheet's ``name=`` is its deck and its identity; without one, a file is
 keyed by its name with what a phone adds to a second download taken off. The
 note guids follow from this (``apkg.resolve_identity``), so a mistake here is a
 deck that doubles on the next import — or two decks that overwrite each other.
@@ -75,15 +75,15 @@ def test_the_deck_key_is_the_python_one():
 
 def test_the_marker_cell_is_edited_pair_by_pair():
     out = _run(
-        '[m.markerSet("#config theme=sakura", "deckname", "Từ; vựng"),'
-        ' m.markerSet("#config deckname=A; theme=sakura", "deckname", "B"),'
-        ' m.markerSet("#config deckname=A; next=w03", "deckname", ""),'
-        ' m.markerGet("#config theme=sakura; deckname=Từ vựng", "deckname"),'
+        '[m.markerSet("#config theme=sakura", "name", "Từ; vựng"),'
+        ' m.markerSet("#config name=A; theme=sakura", "name", "B"),'
+        ' m.markerSet("#config name=A; next=w03", "name", ""),'
+        ' m.markerGet("#config theme=sakura; name=Từ vựng", "name"),'
         ' m.markerGet("#config", "next")]'
     )
     assert out == [
-        "#config theme=sakura; deckname=Từ, vựng",
-        "#config deckname=B; theme=sakura",
+        "#config theme=sakura; name=Từ, vựng",
+        "#config name=B; theme=sakura",
         "#config next=w03",
         "Từ vựng",
         None,

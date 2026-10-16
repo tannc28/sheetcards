@@ -1123,13 +1123,13 @@ const STRINGS = {
   },
   assureBody: {
     en:
-      "Each note is matched by its ID and by the deck name written in the sheet itself " +
-      "(deckname), so importing a new file updates the notes you already have and keeps " +
+      "Each note is matched by its ID and by the flashcard set name written in the sheet " +
+      "itself, so importing a new file updates the notes you already have and keeps " +
       "your review progress — no duplicate cards, even if the file was renamed, saved as " +
       ".xlsx or moved to Google Sheets. A word deleted from the sheet stays in Anki; " +
       "delete it there if you want it gone.",
     vi:
-      "Mỗi note được nhận ra nhờ cột ID và tên deck ghi ngay trong sheet (deckname), nên " +
+      "Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên " +
       "import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không " +
       "nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã " +
       "xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.",

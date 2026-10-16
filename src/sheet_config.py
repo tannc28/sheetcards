@@ -231,16 +231,16 @@ _FIELD_KEYS = (
     + _FLAGS
     + MEDIA_KINDS
 )
-_DECK_KEYS = ("align", "speed", "reverse", "theme", "deckname", "next")
+_DECK_KEYS = ("align", "speed", "reverse", "theme", "name", "next")
 
 # Two keys that are about the sheet rather than its cards, written by Create
-# sheet into the marker cell: `#config deckname=Từ vựng tiếng Anh; next=w15`.
+# sheet into the marker cell: `#config name=Từ vựng tiếng Anh; next=w15`.
 #
-# `deckname` is the deck's name in Anki *and* the sheet's identity. A file is
+# `name` is the deck's name in Anki *and* the sheet's identity. A file is
 # renamed by the phone that saves it (`Từ vựng (1).csv`), re-saved as .xlsx,
 # uploaded to Google Sheets — and each of those changed what the website keyed
 # notes by, so every re-import doubled the deck. A name written inside the sheet
-# travels with it through all of them. Two sheets with one deckname are
+# travels with it through all of them. Two sheets with one name are
 # therefore one deck, which is why Create sheet asks for a name and warns about
 # one already used. `next` is the next ID Create sheet will hand out, so a
 # deleted word's ID is never given to a new word that would then inherit its
@@ -413,7 +413,7 @@ class SheetConfig:
         self.speed = None
         self.reverse = False
         self.theme = None  # a key of THEMES; None leaves the card Anki's own colours
-        # `deckname=` (the deck's name and the sheet's identity) and `next=` (the
+        # `name=` (the deck's name and the sheet's identity) and `next=` (the
         # next ID to hand out) — see _DECK_KEYS. None when the sheet does not say.
         self.deck_name = None
         self.next_id = None
@@ -747,11 +747,11 @@ def parse_config_row(row, plan):
                     warn(f"'{MARKER}': speed {speed} is outside 0.5–2.0")
         elif not value:
             warn(f"'{MARKER}': '{key}' needs a value")
-        elif key == "deckname":
+        elif key == "name":
             if len(value) > _DECK_NAME_MAX:
-                warn(f"'{MARKER}': deckname is longer than {_DECK_NAME_MAX} characters")
+                warn(f"'{MARKER}': name is longer than {_DECK_NAME_MAX} characters")
             elif any(part.strip() == "" for part in value.split("::")):
-                warn(f"'{MARKER}': deckname '{value}' has an empty level")
+                warn(f"'{MARKER}': name '{value}' has an empty level")
             else:
                 config.deck_name = value
         elif key == "next":

@@ -183,11 +183,11 @@ class TestTheAnalyzer:
         assert out["grid"]["cols"] == [0, None, 1]
         assert out["plan"]["headers"] == ["ID", "Word"]
 
-    def test_a_deckname_is_the_deck_and_the_identity(self):
-        tsv = self.TSV.replace("#config\t", "#config deckname=Từ vựng  HSK\t")
+    def test_a_name_is_the_deck_and_the_identity(self):
+        tsv = self.TSV.replace("#config\t", "#config name=Từ vựng  HSK\t")
         out = self._analysis(tsv)
         assert out["identity"] == {
-            "id": "deckname:từ vựng hsk",
+            "id": "name:từ vựng hsk",
             "deck": "Từ vựng HSK",
             "named": True,
         }

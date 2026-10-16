@@ -160,7 +160,7 @@ def test_the_tour_covers_every_directive(sheets):
         if config.theme:
             used.add("deck theme")
         if config.deck_name:
-            used.add("deck deckname")
+            used.add("deck name")
         if config.next_id:
             used.add("deck next")
         if config.cloze_field:
@@ -188,7 +188,7 @@ def test_the_tour_covers_every_directive(sheets):
         "deck speed",
         "deck reverse",
         "deck theme",
-        "deck deckname",
+        "deck name",
         "deck next",
         "side",
         "size",

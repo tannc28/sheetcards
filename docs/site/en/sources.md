@@ -66,10 +66,10 @@ delete it there. That is the real difference between importing and syncing.
 
 Which deck a file is, in this order:
 
-1. **`deckname=` in the [settings row](settings-row.md#sheet-wide-keys)**, when
+1. **`name=` in the [settings row](settings-row.md#sheet-wide-keys)**, when
    it is there. Create sheet always writes it, so a renamed file
    (`Từ vựng (1).csv`), an `.xlsx` copy, a share link or the same sheet in Google
-   Sheets all update one deck. Two sheets with one `deckname` are one deck and
+   Sheets all update one deck. Two sheets with one `name` are one deck and
    overwrite each other's notes.
 2. Otherwise the Google Sheets link and the tab.
 3. Otherwise the file name, without its `.csv`/`.tsv`/`.xlsx` extension and the

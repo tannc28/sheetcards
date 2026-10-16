@@ -283,7 +283,7 @@ SHEETS = {
     # name, which is also the sheet's identity, and the next ID to hand out.
     "16 Picture words (từ vựng ảnh)": [
         ["ID", "Group", "Picture", "Word", "Sound", "Meaning", "Example"],
-        ["#config deckname=SheetCards examples: Picture words; next=i07", "subdeck=1", "side=front; image; size=300", "side=back; size=44; bold", "side=back; audio; label=Native recording", "side=back; size=20", "side=back; size=16; color=muted; italic; hint"],
+        ["#config name=SheetCards examples: Picture words; next=i07", "subdeck=1", "side=front; image; size=300", "side=back; size=44; bold", "side=back; audio; label=Native recording", "side=back; size=20", "side=back; size=16; color=muted; italic; hint"],
         ["i01", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg", "cat", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-cat.ogg", "con mèo", "The cat is asleep on the chair."],
         ["i02", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Tiger_in_Ranthambhore.jpg/500px-Tiger_in_Ranthambhore.jpg", "tiger", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-tiger.ogg", "con hổ", "A tiger hunts alone."],
         ["i03", "Animals", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Horse-and-pony.jpg/500px-Horse-and-pony.jpg", "horse", "https://commons.wikimedia.org/wiki/Special:FilePath/En-us-horse.ogg", "con ngựa", "She rides a horse every weekend."],

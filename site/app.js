@@ -537,7 +537,7 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   const was = state.row;
   status(t("analysing"), "", true);
   state.analysis = analyze(tsv, deckName, sheetId);
-  // What the sheet itself says wins: a deckname= is the deck and its identity.
+  // What the sheet itself says wins: a name= is the deck and its identity.
   // Kept rather than recovered at download time: a file has no link to recover
   // it from, and the id is what makes a second import of the same sheet update
   // its notes instead of duplicating them.

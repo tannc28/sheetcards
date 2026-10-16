@@ -66,10 +66,10 @@ nó ở đó. Đó chính là khác biệt thật sự giữa import và sync.
 
 Deck nào là deck nào được quyết định theo thứ tự này:
 
-1. **`deckname=` trong [settings row](settings-row.md#key-cho-ca-sheet)**, nếu có.
+1. **`name=` trong [settings row](settings-row.md#key-cho-ca-sheet)**, nếu có.
    Create sheet luôn ghi nó, nên file bị đổi tên (`Từ vựng (1).csv`), bản `.xlsx`,
    link chia sẻ hay cùng sheet đó trên Google Sheets đều cập nhật cùng một deck.
-   Hai sheet cùng `deckname` là một deck và sẽ ghi đè note của nhau.
+   Hai sheet cùng `name` là một deck và sẽ ghi đè note của nhau.
 2. Không có thì theo link Google Sheets và tên tab.
 3. Không có link thì theo tên file, bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố
    ` (1)`, `(1)`, `-2` mà điện thoại thêm vào bản tải thứ hai.
