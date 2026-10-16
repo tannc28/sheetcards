@@ -476,7 +476,9 @@ a.altcard { color: inherit; text-decoration: none; }
 .pane-hrow { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .pane-hrow .pane-h { margin-bottom: 0; }
 .docslink { font-size: var(--t-sm); font-weight: 600; color: var(--accent); margin-right: 2px; }
-.tplbox { width: min(60rem, calc(100% - 32px)); }
+/* Wide only: on a phone it is a bottom sheet edge to edge, like every other
+   dialog here (create.css), and a width set here would win over that. */
+@media (min-width: 40rem) { .tplbox { width: min(60rem, calc(100% - 32px)); } }
 .tplbody { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
 .tplbody > .tpl-desc { margin: 0; }
 .vocab-opts { display: flex; flex-direction: column; gap: 4px; }
