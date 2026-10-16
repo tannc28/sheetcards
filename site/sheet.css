@@ -677,3 +677,26 @@ a.altcard { color: inherit; text-decoration: none; }
   .tplcard, .rail-go { transition: none; }
   .templates > *, .sh[data-stage="edit"] .panes, .rowform[open] { animation: none; }
 }
+
+/* The set's name, asked in the template step above Tạo sheet. */
+.tpl-name { display: grid; gap: 6px; margin: 18px 0 0; }
+.tpl-name label { font-size: var(--t-sm); font-weight: 700; }
+.tpl-namebox {
+  font: inherit; font-size: var(--t-lg); font-weight: 650; min-height: 52px;
+  padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--line-strong);
+  background: var(--panel); color: var(--ink); width: 100%;
+}
+.tpl-namebox:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.tpl-namenote { margin: 0; min-height: 1.2em; font-size: var(--t-sm); color: var(--muted); }
+.tpl-namenote.bad { color: var(--bad); }
+
+/* A sheet with no name, and IDs that stop the sheet leaving the page. */
+.nameoffer, .idwarn {
+  display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; padding: 10px 14px;
+  border-radius: 12px; font-size: var(--t-sm); line-height: 1.45;
+  background: var(--warn-soft); border: 1px solid var(--warn-line);
+}
+.nameoffer .icon { flex: none; margin-top: 2px; color: var(--warn); }
+.idwarn { flex-direction: column; gap: 4px; }
+.idwarn.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.sh .sheet .idcell.reused input { color: var(--warn); font-weight: 700; text-decoration: underline wavy; }

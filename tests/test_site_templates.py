@@ -282,3 +282,12 @@ def test_the_csv_reads_back_as_the_same_deck(built):
         deck = tm.build_remote_deck_from_tsv(parsed, "", [])
         assert not deck.sheet_config.warnings, (name, deck.sheet_config.warnings)
         assert deck.sheet_config.present, name
+
+
+def test_no_template_names_a_flashcard_set(built):
+    """A template is not a set: each sheet made from one is asked for its own
+    name, since two sheets with one ``name=`` are one deck in Anki."""
+    _, _, templates = built
+    for label, rows in _all_rows(templates):
+        marker = rows[1][0].lower() if len(rows) > 1 else ""
+        assert "name=" not in marker and "next=" not in marker, label

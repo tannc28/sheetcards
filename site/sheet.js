@@ -29,6 +29,7 @@ import { stashFile } from "./handoff.js";
 import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, toTsv } from "./sharelink.js";
 import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
+import { fileStem, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -299,7 +300,18 @@ const HELP = {
 // ---------------------------------------------------------------------------
 
 /** The sheet itself: everything that is saved, shared and exported. */
-let sheet = { title: "", marker: "#config", columns: [], rows: [] };
+//
+// `title` is the flashcard set's name and is always the marker's `name=` when
+// the sheet has one (a legacy sheet, opened from a file written before names,
+// may not — see paintNameOffer). `next` is the high-water mark of the IDs: the
+// next one to hand out, written into the marker as `next=` on the way out and
+// never issued below, so a deleted word's ID is never a new word's. `retired`
+// are the IDs of words deleted in this draft, for warning about one typed again.
+let sheet = blankSheet();
+
+function blankSheet() {
+  return { title: "", marker: "#config", columns: [], rows: [], next: null, retired: [] };
+}
 
 const ui = {
   stage: "empty",
@@ -380,24 +392,54 @@ function writeCell(r, c, text) {
  * inserted in the middle never collides with one further down.
  */
 function nextId() {
+  raiseMark();
   const ids = new Set(sheet.rows.map((r) => r.id));
-  const shaped = [...sheet.rows].reverse().find((r) => /^(.*?)(\d+)$/.test(r.id));
-  let prefix = "w";
-  let width = 2;
-  if (shaped) {
-    const m = shaped.id.match(/^(.*?)(\d+)$/);
-    prefix = m[1];
-    width = m[2].length;
-  }
-  let n = 0;
+  const { prefix, width } = idShape();
+  // Past the high-water mark as well as past every ID in the sheet: an ID
+  // that was handed out once belongs to whatever word Anki has under it.
+  const mark = splitId(sheet.next);
+  let n = mark && mark.prefix === prefix ? mark.n - 1 : 0;
   for (const id of ids) {
-    const m = id.match(/^(.*?)(\d+)$/);
-    if (m && m[1] === prefix) n = Math.max(n, Number(m[2]));
+    const m = splitId(id);
+    if (m && m.prefix === prefix) n = Math.max(n, m.n);
   }
   let id;
   do id = prefix + String(++n).padStart(width, "0");
   while (ids.has(id));
+  sheet.next = prefix + String(n + 1).padStart(width, "0");
   return id;
+}
+
+/** `w07` as `{prefix: "w", n: 7, width: 2}`, or null for an ID with no number. */
+function splitId(id) {
+  const m = String(id ?? "").trim().match(/^(.*?)(\d+)$/);
+  return m ? { prefix: m[1], n: Number(m[2]), width: m[2].length } : null;
+}
+
+/** The shape new IDs take: the mark's, else the last numbered row's, else w01. */
+function idShape() {
+  const shaped = [...sheet.rows].reverse().map((r) => splitId(r.id)).find(Boolean);
+  return splitId(sheet.next) ?? shaped ?? { prefix: "w", width: 2 };
+}
+
+/**
+ * Moves the high-water mark past every ID the sheet holds. Called before a row
+ * goes away and before the sheet is written out, so an ID that existed — typed
+ * or handed out — is never handed out again, even after a round trip through
+ * a file (the mark travels as `next=` in the marker).
+ */
+function raiseMark(of = sheet) {
+  const mark = splitId(of.next);
+  const shaped = [...of.rows].reverse().map((r) => splitId(r.id)).find(Boolean);
+  const prefix = mark?.prefix ?? shaped?.prefix;
+  if (prefix === undefined) return;
+  const width = mark?.width ?? shaped?.width ?? 2;
+  let n = mark ? mark.n - 1 : 0;
+  for (const row of of.rows) {
+    const m = splitId(row.id);
+    if (m && m.prefix === prefix && !blankRow(row)) n = Math.max(n, m.n);
+  }
+  if (n > 0) of.next = prefix + String(n + 1).padStart(width, "0");
 }
 
 function newRow(values = []) {
@@ -429,9 +471,15 @@ function fromGrid(grid, title) {
   const used = content.filter(
     (i) => (header[i] || "").trim() || rows.slice(1).some((r) => (r[i] || "").trim()),
   );
+  const marker = marked ? rows[1][keyAt].trim() : "#config";
   const out = {
-    title: title ?? "",
-    marker: marked ? rows[1][keyAt].trim() : "#config",
+    // The sheet's own name, when it has one, over whatever the file was called.
+    title: markerGet(marker, "name") ?? title ?? "",
+    // `next=` is kept as the mark rather than in the cell, and written back on
+    // the way out (exportGrid), so the cell shows what a person wrote.
+    marker: markerSet(marker, "next", null),
+    next: markerGet(marker, "next") || null,
+    retired: [],
     columns: used.map((i, n) => ({
       name: (header[i] || "").trim() || `Column ${n + 1}`,
       cell: marked ? (rows[1][i] || "").trim() : "",
@@ -454,10 +502,12 @@ function fromGrid(grid, title) {
 }
 
 /** The sheet as rows of text — what every way out of this page writes. */
-function exportGrid(of = sheet) {
+function exportGrid(of = sheet, { mark = true } = {}) {
+  // A template's own words are samples, not IDs anybody was given.
+  if (mark) raiseMark(of);
   return [
     ["ID", ...of.columns.map((c) => c.name)],
-    [of.marker, ...of.columns.map((c) => c.cell)],
+    [mark && of.next ? markerSet(of.marker, "next", of.next) : of.marker, ...of.columns.map((c) => c.cell)],
     ...of.rows.filter((r) => !blankRow(r)).map((r) => [r.id, ...r.values]),
   ];
 }
@@ -745,6 +795,8 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
     steps.future.length = 0;
   }
   sheet = next;
+  sheet.next ??= null;
+  if (!Array.isArray(sheet.retired)) sheet.retired = [];
   lastFiled = filed;
   setView(view);
   ui.row = row;
@@ -895,7 +947,11 @@ function templateNow(id, choice = vocabChoice) {
  * sheet that opens are one thing.
  */
 function templateSheet(id, choice, theme = stepTheme) {
-  return fromGrid(withTheme(templateNow(id, choice).rows, theme), textOf(id).name);
+  const made = fromGrid(withTheme(templateNow(id, choice).rows, theme), textOf(id).name);
+  // A template names no set (saveTemplate takes it out); the step asks.
+  made.marker = markerSet(made.marker, "name", null);
+  made.next = null;
+  return made;
 }
 
 // ---- the theme a template is dressed in ------------------------------------
@@ -996,7 +1052,7 @@ function paintTemplates() {
   facesSeen.disconnect();
   $("#templates").innerHTML = MAIN.map((id) => {
     const text = textOf(id);
-    const rows = exportGrid(templateSheet(id, VOCAB_DEFAULT));
+    const rows = exportGrid(templateSheet(id, VOCAB_DEFAULT), { mark: false });
     return `<div class="tplcard">
         ${facesHtml(id)}
         <button type="button" class="tpl-go" data-template="${id}">
@@ -1021,7 +1077,7 @@ function paintMine() {
     const id = MINE + tpl.id;
     const card = mineCard(tpl);
     const text = textOf(id);
-    const rows = exportGrid(fromGrid(tpl.rows, tpl.title));
+    const rows = exportGrid(fromGrid(tpl.rows, tpl.title), { mark: false });
     return `<div class="tplmini mine">
         ${facesHtml(id, tileFaces(card), { compact: true, waiting: !card })}
         <button type="button" class="tpl-go" data-template="${escapeHtml(id)}">
@@ -1047,6 +1103,14 @@ function paintMine() {
  * the editor would have saved.
  */
 function saveTemplate(grid, title) {
+  // A template is the columns and the settings, never the set it was saved
+  // from: a sheet started from it names its own set, or two sets would share
+  // one deck in Anki.
+  grid = grid.map((row, i) =>
+    i === 1 && isMarkerCell(row[0])
+      ? [markerSet(markerSet(row[0], "name", null), "next", null), ...row.slice(1)]
+      : row,
+  );
   const kept = keepTemplate(grid, title);
   if (!kept.ok) {
     const why = { empty: "tplEmpty", full: "tplFull", big: "tplTooBig", storage: "tplNotStored" }[kept.reason];
@@ -1123,7 +1187,7 @@ function paintStep() {
   for (const el of box.querySelectorAll("iframe[data-face]")) {
     el.srcdoc = faceDoc(card, el.dataset.tab, 0.72);
   }
-  $("#tpl-sheet").innerHTML = sheetScrap(exportGrid(templateSheet(stepId)));
+  $("#tpl-sheet").innerHTML = sheetScrap(exportGrid(templateSheet(stepId), { mark: false }));
 }
 
 function pickTemplate(id) {
@@ -1131,21 +1195,66 @@ function pickTemplate(id) {
   stepId = id;
   stepTheme = null;
   paintStep();
+  // The set's name is asked here, where the sheet is made, rather than taken
+  // from the template: two sets with one name are one deck in Anki, and a
+  // name nobody chose is how that happens. Suggested, and selected so typing
+  // replaces it.
+  $("#tpl-name").value = textOf(id).name;
+  paintNameNote();
   $("#tplbox").showModal();
-  $("#tpl-go").focus();
+  $("#tpl-name").focus();
+  $("#tpl-name").select();
+}
+
+/** After an ID is typed: the warning line, and the cell's own mark. */
+let idToastFor = "";
+function idTyped(value) {
+  paintIdWarning();
+  const id = String(value).trim();
+  if (sheet.retired.includes(id) && idToastFor !== id) {
+    idToastFor = id;
+    toast(t("idReused", id), "bad");
+  }
+  for (const box of document.querySelectorAll('#sheet [data-edit="id"]')) {
+    const row = sheet.rows[Number(box.dataset.row)];
+    if (!row) continue;
+    const cell = box.closest(".cell");
+    const twice = duplicates().has(row.id) || (!row.id.trim() && !blankRow(row));
+    cell.classList.toggle("dup", twice);
+    cell.classList.toggle("reused", !twice && sheet.retired.includes(row.id.trim()));
+  }
+}
+
+/** Under the name field: why the sheet cannot be made yet, or a name in use. */
+function paintNameNote() {
+  const name = $("#tpl-name").value.trim();
+  const note = $("#tpl-name-note");
+  const used = Boolean(name) && nameUsed(name);
+  $("#tpl-go").disabled = !name;
+  note.textContent = !name ? t("setNameEmpty") : used ? t("setNameUsed") : "";
+  note.className = `tpl-namenote${!name || used ? " bad" : ""}`;
+  $("#tpl-name").setAttribute("aria-invalid", String(!name));
 }
 
 /** The step's sheet as a .csv — the same writer as Download .csv in the editor. */
 function stepCsv() {
   const made = templateSheet(stepId);
   const name = `${made.title}.csv`;
-  download(new Blob([asCsv(exportGrid(made))], { type: "text/csv" }), name);
+  download(new Blob([asCsv(exportGrid(made, { mark: false }))], { type: "text/csv" }), name);
   toast(t("shDownloaded", name), "ok");
 }
 
 function createFromStep() {
+  const name = $("#tpl-name").value.replace(/\s+/g, " ").trim().replace(/;/g, ",");
+  if (!name) {
+    paintNameNote();
+    return $("#tpl-name").focus();
+  }
   $("#tplbox").close();
   const made = templateSheet(stepId);
+  made.title = name;
+  made.marker = markerSet(made.marker, "name", name);
+  rememberName(name);
   // A kept template is step 1 done: its sample word is not one of the words.
   if (isMine(stepId)) made.rows = [{ id: "w01", values: made.columns.map(() => "") }];
   // Custom is a template to make, so it opens on step 1; every other one is a
@@ -1165,6 +1274,8 @@ function createFromStep() {
 
 function paintAll() {
   $("#title").value = sheet.title;
+  paintNameOffer();
+  paintIdWarning();
   setView(ui.view);
   paintRows();
   paintColumns();
@@ -1256,7 +1367,7 @@ function paintSheet() {
              spellcheck="false" autocomplete="off" aria-label="${label("shIdLabel")}">`,
           r,
           -1,
-          `idcell${dupes.has(row.id) || !row.id.trim() ? " dup" : ""}`,
+          `idcell${dupes.has(row.id) || !row.id.trim() ? " dup" : sheet.retired.includes(row.id.trim()) ? " reused" : ""}`,
         ) +
         cols
           .map((_, i) =>
@@ -1278,6 +1389,58 @@ function paintSheet() {
   grid.innerHTML = head + names + settings + words;
   if (!SIZES_ITSELF) for (const box of grid.querySelectorAll("textarea")) grow(box);
   paintSelection();
+}
+
+/**
+ * What is wrong with the IDs, if anything: written twice, left empty, or a
+ * deleted word's ID typed in again. The first two stop the sheet leaving the
+ * page — Anki keeps one note per ID, so the second word would be lost — and
+ * the third is a warning, since the new word would inherit the old one's
+ * review history.
+ */
+function idProblems() {
+  const dupes = duplicates();
+  const rowsOf = (pred) =>
+    sheet.rows.flatMap((r, k) => (!blankRow(r) && pred(r) ? [k + firstWordRow + 1] : []));
+  const dup = [...dupes].map((id) => ({ id, rows: rowsOf((r) => r.id === id) }));
+  const blank = rowsOf((r) => !r.id.trim());
+  const reused = sheet.rows
+    .filter((r) => !blankRow(r) && sheet.retired.includes(r.id.trim()))
+    .map((r) => r.id.trim());
+  return { dup, blank, reused, blocking: dup.length > 0 || blank.length > 0 };
+}
+
+function paintIdWarning() {
+  const box = $("#idwarn");
+  if (!box) return;
+  const { dup, blank, reused } = idProblems();
+  const lines = [
+    ...dup.map((d) => t("idDup", d.id, d.rows.join(", "))),
+    ...(blank.length ? [t("idBlank", blank.join(", "))] : []),
+    ...reused.map((id) => t("idReused", id)),
+  ];
+  box.hidden = !lines.length;
+  box.className = `idwarn${dup.length || blank.length ? " bad" : ""}`;
+  box.innerHTML = lines.map((line) => `<span>${escapeHtml(line)}</span>`).join("");
+}
+
+/** True — and said, at the first offending cell — when the IDs must be fixed first. */
+function idsBlock() {
+  const problems = idProblems();
+  paintIdWarning();
+  if (!problems.blocking) return false;
+  toast(t("idFixFirst"), "bad");
+  const k = sheet.rows.findIndex(
+    (r) => !blankRow(r) && (!r.id.trim() || problems.dup.some((d) => d.id === r.id)),
+  );
+  if (k >= 0) {
+    if (WIDE.matches) {
+      if (ui.view !== "rows") setView("rows");
+      select(k + firstWordRow, -1);
+      reveal(k + firstWordRow, -1);
+    } else openForm(k);
+  }
+  return true;
 }
 
 /** IDs written more than once: Anki keeps one note per ID, so the rest are lost. */
@@ -1471,6 +1634,10 @@ function addRow(at = sheet.rows.length, values = []) {
 }
 
 function removeRows(from, to) {
+  raiseMark();
+  for (const row of sheet.rows.slice(from, to + 1)) {
+    if (row.id.trim() && !sheet.retired.includes(row.id.trim())) sheet.retired.push(row.id.trim());
+  }
   sheet.rows.splice(from, to - from + 1);
   if (!sheet.rows.length) sheet.rows.push(newRow());
   fit();
@@ -1528,6 +1695,13 @@ function importBlock(block) {
   const whole = /^\s*id\s*$/i.test(rows[0][0] ?? "") || rows.slice(0, 3).some((r) => isMarkerCell(r[0]));
   if (whole) {
     const next = fromGrid(rows, sheet.title);
+    // A pasted sheet that names no set stays this set.
+    const had = markerGet(sheet.marker, "name");
+    if (had !== null && markerGet(next.marker, "name") === null) {
+      next.marker = markerSet(next.marker, "name", had);
+      next.title = had;
+    }
+    next.retired = sheet.retired;
     sheet = next;
     fit();
     return { replaced: true, rows: sheet.rows.length };
@@ -1638,7 +1812,9 @@ function paintColumns() {
 
 function paintKeys() {
   const on = new Set(parts(cellText()).map(nameOf));
-  const list = ui.col === -1 ? keys.deck : keys.field;
+  // The set's name and the ID mark are the page's to write (the title field,
+  // nextId), not settings to toggle.
+  const list = ui.col === -1 ? keys.deck.filter((k) => k !== "name" && k !== "next") : keys.field;
   if (ui.open && !list.includes(ui.open)) ui.open = null;
   $("#keys").innerHTML = list
     .map(
@@ -1820,6 +1996,7 @@ function paintOut() {
 /** Straight on to Sheet to Anki, with the sheet as a file it opens like any other. */
 async function toDeck() {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
+  if (idsBlock()) return;
   if (!isFiled()) {
     const save = await ask({
       title: t("shUnfiledTitle"),
@@ -1863,6 +2040,7 @@ function download(blob, name) {
 
 function saveCsv() {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
+  if (idsBlock()) return $("#savebox").close();
   download(new Blob([asCsv(exportGrid())], { type: "text/csv" }), `${fileBase()}.csv`);
   $("#savebox").close();
   markFiled();
@@ -1871,6 +2049,7 @@ function saveCsv() {
 
 function saveXlsx() {
   $("#savebox").close();
+  if (idsBlock()) return;
   whenReady(() => {
     try {
       const bytes = new Uint8Array(toXlsx(JSON.stringify({ name: sheet.title || fileBase(), rows: exportGrid() })));
@@ -1908,6 +2087,7 @@ async function paintShare() {
 
 async function openShare() {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
+  if (idsBlock()) return;
   $("#share-native").hidden = !navigator.share;
   await paintShare();
   $("#sharebox").showModal();
@@ -2017,7 +2197,9 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
     return toast(String(err?.message || err).trim().split("\n").pop(), "bad");
   }
   toast("");
-  const title = file.name.replace(/\.[^.]+$/, "").trim();
+  // Without what a phone adds to a second download, so a legacy sheet keeps
+  // the file identity Sheet to Anki has always keyed it by.
+  const title = fileStem(file.name);
   if (choose && out.tabs.length > 1) {
     // A workbook of several sheets: ask which, the way Sheet to Anki's picker does.
     $("#tablist").innerHTML = out.tabs
@@ -2037,8 +2219,9 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
     return;
   }
   const name = out.tabs.length > 1 ? out.tab : title;
-  if (asTemplate) return saveTemplate(exportGrid(fromGrid(out.rows, name)), name);
+  if (asTemplate) return saveTemplate(exportGrid(fromGrid(out.rows, name), { mark: false }), name);
   const opened = fromGrid(out.rows, name);
+  if (markerGet(opened.marker, "name")) rememberName(opened.title);
   begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
   toast(t("shOpened", name, wordCount()), "ok");
 }
@@ -2178,11 +2361,72 @@ function afterShape() {
   saveSoon();
 }
 
-$("#title").addEventListener("input", (e) => {
-  markRun("title");
-  sheet.title = e.target.value;
-  saveSoon();
+// The title is the set's name, which is its identity in Anki: renaming it is
+// making a new deck there. So it is typed freely and asked about once, when
+// the field is left — never changed one keystroke at a time.
+$("#title").addEventListener("keydown", (e) => {
+  // Left on the key's way up, not down: the rename question focuses a button,
+  // and the rest of the same Enter would otherwise press it.
+  if (e.key === "Enter" && !e.isComposing) e.preventDefault();
+  if (e.key === "Escape") {
+    e.target.value = sheet.title;
+    e.target.blur();
+  }
 });
+$("#title").addEventListener("keyup", (e) => {
+  if (e.key === "Enter" && !e.isComposing) e.target.blur();
+});
+$("#title").addEventListener("change", (e) => rename(e.target.value));
+
+async function rename(typed) {
+  const name = String(typed ?? "").replace(/\s+/g, " ").trim().replace(/;/g, ",");
+  const had = markerGet(sheet.marker, "name");
+  const back = () => ($("#title").value = sheet.title);
+  if (!name || (name === sheet.title && had !== null)) return back();
+  const same = had !== null && deckKeyOf(had) === deckKeyOf(name);
+  if (!same) {
+    const sure = await ask({
+      title: t(had === null ? "nameAddTitle" : "renameTitle"),
+      text:
+        t(had === null ? "nameAddText" : "renameText", sheet.title || "—", name) +
+        (nameUsed(name) ? " " + t("setNameUsed") : ""),
+      yes: t(had === null ? "nameAddYes" : "renameYes"),
+      no: t("renameNo"),
+    });
+    if (!sure) return back();
+  }
+  mark();
+  sheet.title = name;
+  sheet.marker = markerSet(sheet.marker, "name", name);
+  rememberName(name);
+  paintAll();
+  saveSoon();
+}
+
+const deckKeyOf = (name) => String(name).normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
+
+/** Keeps the title on the marker's `name=` when the marker is typed into. */
+function followMarker() {
+  const named = markerGet(sheet.marker, "name");
+  if (named !== null && named !== sheet.title) {
+    sheet.title = named;
+    $("#title").value = named;
+  }
+  paintNameOffer();
+}
+
+/**
+ * A sheet that names no set — opened from a file written before sheets did.
+ * Sheet to Anki then keys it by its file name, so leaving it as it is keeps
+ * updating the deck already in Anki. Writing a name in is offered, never done
+ * silently: it makes a new deck there, once.
+ */
+function paintNameOffer() {
+  const box = $("#nameoffer");
+  const legacy = ui.stage === "edit" && markerGet(sheet.marker, "name") === null;
+  box.hidden = !legacy;
+  if (legacy) $("#nameoffer-text").textContent = t("nameOffer", `${fileBase()}.tsv`);
+}
 
 $("#colhead").addEventListener("input", (e) => {
   if (e.target.id === "colname") {
@@ -2195,8 +2439,10 @@ $("#colhead").addEventListener("input", (e) => {
     $("#keyfor").textContent = t("edForColumn", e.target.value);
   } else if (e.target.id === "colcell") {
     markRun(`cell:${ui.col}`);
-    if (ui.col === -1) sheet.marker = e.target.value;
-    else sheet.columns[ui.col].cell = e.target.value;
+    if (ui.col === -1) {
+      sheet.marker = e.target.value;
+      followMarker();
+    } else sheet.columns[ui.col].cell = e.target.value;
     const box = $(`#sheet .cell[data-r="1"][data-c="${ui.col}"] [data-edit]`);
     if (box) box.value = e.target.value;
     paintKeys();
@@ -2224,9 +2470,13 @@ $("#sheet").addEventListener("input", (e) => {
   if (kind === "marker") sheet.marker = el.value;
   else if (kind === "name") sheet.columns[Number(el.dataset.col)].name = el.value;
   else if (kind === "cell") sheet.columns[Number(el.dataset.col)].cell = el.value;
-  else if (kind === "id") sheet.rows[Number(el.dataset.row)].id = el.value;
+  else if (kind === "id") {
+    sheet.rows[Number(el.dataset.row)].id = el.value;
+    idTyped(el.value);
+  }
   else sheet.rows[Number(el.dataset.row)].values[Number(el.dataset.col)] = el.value;
   if (el.tagName === "TEXTAREA") grow(el);
+  if (kind === "marker") followMarker();
   if (kind === "name" || kind === "cell" || kind === "marker") paintColumns();
   paintOut();
   drawSoon();
@@ -2257,6 +2507,7 @@ $("#rf-fields").addEventListener("keydown", (e) => {
 $("#rf-id").addEventListener("input", (e) => {
   markRun(`formid:${ui.row}`);
   sheet.rows[ui.row].id = e.target.value;
+  idTyped(e.target.value);
   saveSoon();
 });
 $("#rf-id").addEventListener("keydown", (e) => {
@@ -2336,11 +2587,19 @@ $("#new").addEventListener("click", async () => {
   });
   if (!sure) return;
   dropDraft();
-  sheet = { title: "", marker: "#config", columns: [], rows: [] };
+  sheet = blankSheet();
   steps.past.length = steps.future.length = 0;
   setStage("empty");
   scrollTo({ top: 0 });
 });
+
+$("#tpl-name").addEventListener("input", paintNameNote);
+$("#tpl-name").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  e.preventDefault();
+  createFromStep();
+});
+$("#nameoffer-go").addEventListener("click", () => rename(sheet.title || fileBase()));
 
 $("#todeck").addEventListener("click", toDeck);
 $("#savecsv").addEventListener("click", saveCsv);

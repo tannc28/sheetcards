@@ -121,9 +121,9 @@
     <!-- Which sheet this is, and what is done to the whole of it. -->
     <div class="sheetbar">
       <span class="src-icon" data-icon="sheet"></span>
-      <label class="sr-only" for="title" data-i18n="shTitleLabel">Tên sheet</label>
-      <input id="title" class="titlebox" spellcheck="false" autocomplete="off"
-             placeholder="Tên sheet" data-i18n-attr="placeholder:shTitleLabel">
+      <label class="sr-only" for="title" data-i18n="setName">Tên bộ flashcard</label>
+      <input id="title" class="titlebox" spellcheck="false" autocomplete="off" maxlength="100" enterkeyhint="done"
+             placeholder="Tên bộ flashcard" data-i18n-attr="placeholder:setName">
       <span class="saved" id="saved" aria-live="polite"></span>
       <span class="src-acts">
         <button class="iconbtn" id="undo" type="button" disabled
@@ -142,6 +142,13 @@
     <!-- The file is the save: the draft is only in this browser. -->
     <p class="fileline"><span data-icon="file-text"></span><span><span data-i18n="shFileLine">Bản nháp chỉ nằm trong trình duyệt này. Lưu file .csv để giữ mãi và làm tiếp trên máy khác, trong Google Sheets hay Excel.</span>
       <button class="linkbtn" id="savemore" type="button" data-i18n="shOtherFormats">Cần file .xlsx?</button></span></p>
+
+    <!-- A sheet from before sets had names: offered one, never given one. -->
+    <p class="nameoffer" id="nameoffer" hidden><span data-icon="circle-alert"></span><span><span id="nameoffer-text"></span>
+      <button class="linkbtn" id="nameoffer-go" type="button" data-i18n="nameOfferGo">Ghi tên vào sheet</button></span></p>
+
+    <!-- IDs written twice or left empty stop the sheet leaving the page. -->
+    <p class="idwarn" id="idwarn" role="alert" hidden></p>
 
     <!-- The two steps of a sheet: ① the template — columns, settings row, the
          card they make — and ② the words. A phone has room for one at a time; a
@@ -366,6 +373,14 @@
       </div>
     </div>
     <p id="tpl-mine" class="tpl-note" hidden><span data-icon="share-2"></span><span data-i18n="tplMineShare">Chọn Tạo sheet để thêm từ. Muốn gửi template này cho người khác: Tạo sheet rồi bấm Share link.</span></p>
+    <!-- The set's name is its deck in Anki, so it is asked here, where the sheet
+         is made: two sets with one name would overwrite each other. -->
+    <div class="tpl-name">
+      <label for="tpl-name" data-i18n="setName">Tên bộ flashcard</label>
+      <input id="tpl-name" class="tpl-namebox" type="text" required spellcheck="false" autocomplete="off"
+             enterkeyhint="go" maxlength="100" aria-describedby="tpl-name-note">
+      <p id="tpl-name-note" class="tpl-namenote" aria-live="polite"></p>
+    </div>
     <div class="askacts tpl-acts">
       <button class="toolbtn" id="tpl-csv" type="button"><span data-icon="download"></span><span data-i18n="tplCsv">Tải file .csv mẫu</span></button>
       <button class="btn" id="tpl-go" type="button" data-i18n="vocabCreate">Tạo sheet</button>

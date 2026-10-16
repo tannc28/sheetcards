@@ -337,7 +337,56 @@ const STRINGS = {
     vi: "Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.",
   },
   shWorkLabel: { en: "Your sheet", vi: "Sheet của bạn" },
-  shTitleLabel: { en: "Sheet name", vi: "Tên sheet" },
+  // The set's name — `name=` in the marker — is its deck and its identity in
+  // Anki, which is why it is asked for and why renaming it asks first.
+  setName: { en: "Flashcard set name", vi: "Tên bộ flashcard" },
+  setNameEmpty: {
+    en: "Give the flashcard set a name to create the sheet.",
+    vi: "Đặt tên cho bộ flashcard để tạo sheet.",
+  },
+  setNameUsed: {
+    en: "This name is already used for another flashcard set — the same name overwrites that deck in Anki.",
+    vi: "Tên này đã dùng cho một bộ flashcard khác — trùng tên sẽ ghi đè vào deck đó trong Anki.",
+  },
+  renameTitle: { en: "Rename the flashcard set?", vi: "Đổi tên bộ flashcard?" },
+  renameText: {
+    en: (old, name) =>
+      `A new name is a new deck in Anki; your progress stays in the deck “${old}”. Rename it to “${name}” anyway?`,
+    vi: (old, name) =>
+      `Đổi tên = deck mới trong Anki; tiến độ học ở deck cũ “${old}”. Vẫn đổi thành “${name}”?`,
+  },
+  renameYes: { en: "Rename", vi: "Vẫn đổi" },
+  renameNo: { en: "Keep the name", vi: "Giữ tên cũ" },
+  nameOffer: {
+    en: (file) =>
+      `This sheet does not carry its flashcard set's name yet, so it is recognised by the file name “${file}”: keep the name as it is and importing still updates the deck you have.`,
+    vi: (file) =>
+      `Sheet này chưa ghi tên bộ flashcard bên trong, nên được nhận ra theo tên file “${file}”: giữ nguyên tên thì import vẫn cập nhật deck đang có.`,
+  },
+  nameOfferGo: { en: "Write the name into the sheet", vi: "Ghi tên vào sheet" },
+  nameAddTitle: { en: "Write the name into the sheet?", vi: "Ghi tên vào sheet?" },
+  nameAddText: {
+    en: (_old, name) =>
+      `From now on the sheet is “${name}” whatever its file is called or saved as. The next import makes a new deck in Anki, this once: progress in the old deck does not move over.`,
+    vi: (_old, name) =>
+      `Từ nay sheet mang tên “${name}” dù file bị đổi tên hay lưu ra .xlsx. Lần import tới sẽ là một deck mới trong Anki, chỉ một lần này: tiến độ học ở deck cũ không chuyển sang.`,
+  },
+  nameAddYes: { en: "Write it in", vi: "Ghi tên" },
+  idDup: {
+    en: (id, rows) => `ID ${id} is used twice (rows ${rows}). Each word needs its own ID — fix it, then try again.`,
+    vi: (id, rows) => `ID ${id} bị trùng (dòng ${rows}). Mỗi từ cần một ID riêng — sửa rồi thử lại.`,
+  },
+  idBlank: {
+    en: (rows) => `Row ${rows} has no ID. Each word needs one.`,
+    vi: (rows) => `Dòng ${rows} chưa có ID. Mỗi từ cần một ID.`,
+  },
+  idReused: {
+    en: (id) =>
+      `ID ${id} belonged to a word you deleted. Anki keeps that word's review history, so a new word with this ID would inherit it — give it a new ID.`,
+    vi: (id) =>
+      `ID ${id} từng thuộc về một từ đã xoá. Anki vẫn giữ lịch sử ôn của từ đó, nên từ mới mang ID này sẽ thừa hưởng nó — hãy cho từ mới một ID khác.`,
+  },
+  idFixFirst: { en: "Fix the IDs first", vi: "Sửa ID trước đã" },
   shSaved: { en: "Draft saved in this browser", vi: "Đã lưu nháp trong trình duyệt" },
   shNotSaved: {
     en: "This browser won't keep a draft — download the file to keep it",
@@ -956,12 +1005,12 @@ const STRINGS = {
       "Anki cannot merge a cloze note type with a regular one, so the notes you already have " +
       "will not be updated (and Merge note types would refuse — leave it off). New words still " +
       "arrive. To move the old notes over and keep their progress: import, then in Anki on a " +
-      `computer open Browse, select them, Notes → Change Note Type… to <b>${type}</b>, and import again.`,
+      `computer open Browse, select them, Notes → Change Note Type… to <b>${type}</b>, and import again with <b>Update notes</b> set to <b>Always</b>.`,
     vi: (type) =>
       "Anki không gộp được note type cloze với note type thường, nên các note đã có sẽ không " +
       "được cập nhật (và Merge note types sẽ báo lỗi — để tắt). Từ mới vẫn vào. Muốn chuyển note " +
       "cũ sang và giữ tiến độ: import, rồi trong Anki trên máy tính mở Browse, chọn các note đó, " +
-      `Notes → Change Note Type… sang <b>${type}</b>, rồi import lại.`,
+      `Notes → Change Note Type… sang <b>${type}</b>, rồi import lại với <b>Update notes</b> là <b>Always</b>.`,
   },
   // One sentence, and the reasoning behind a disclosure for whoever wonders.
   warningsFrom: {
