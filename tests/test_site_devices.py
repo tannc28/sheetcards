@@ -137,25 +137,3 @@ class TestTheInstructions:
         vi = re.sub(r"<[^>]+>", "", _strings()[key]["vi"])
         for word in words:
             assert word in vi, (key, word)
-
-
-@pytest.mark.unit
-def test_only_ankimobile_is_said_to_cost_money():
-    """'Free' on this site means SheetCards; AnkiMobile is a paid app."""
-    apps = _module("m.ANKI_APPS")
-    assert set(apps) == {"android", "ios", "desktop"}
-    assert {d: a["price"] for d, a in apps.items()} == {
-        "android": "ankiFree",
-        "ios": "ankiPaidIos",
-        "desktop": "ankiFree",
-    }
-    assert all(a["url"].startswith("https://") for a in apps.values())
-
-
-@pytest.mark.unit
-def test_the_readers_own_app_comes_first():
-    html = _module("m.ankiAppsHtml((k, ...a) => k + a.join(''), 'ios')")
-    assert html.index("devIos") < html.index("devAndroid") < html.index("devDesktop")
-    assert html.count('class="mine"') == 1
-    only = _module("m.ankiAppsHtml((k) => k, 'android', { only: true })")
-    assert "devAndroid" in only and "devIos" not in only

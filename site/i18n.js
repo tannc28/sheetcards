@@ -1232,14 +1232,6 @@ const STRINGS = {
   downloadAgain: { en: "No file? Download again", vi: "Không thấy file? Tải lại" },
   doneOk: { en: "Done", vi: "Xong" },
 
-  // --- the Anki app, which studying needs ---------------------------------------
-  ankiFree: { en: "Free", vi: "Miễn phí" },
-  ankiPaidIos: {
-    en: "Paid, one-time: 799,000₫ in Vietnam, US$24.99 in the US",
-    vi: "Trả phí một lần: 799.000đ ở Việt Nam, 24,99 USD ở Mỹ",
-  },
-  ankiYours: { en: "Your device", vi: "Máy của bạn" },
-  ankiGetAt: { en: (store) => `Get it on ${store}`, vi: (store) => `Tải ở ${store}` },
   nextTimeTitle: { en: "Adding words next week", vi: "Tuần sau thêm từ" },
   nextTimeBody: {
     en: "Open the sheet again — the sheet link you saved, your .csv file or your Google Sheet — add the words, press Make flashcards, download the new .apkg and import it. Your old cards are updated, not doubled.",
