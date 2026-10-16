@@ -11,9 +11,9 @@
   /* The card's own ground, as cardframe.js paints it, so the frame and the box
      around it are one surface while a card loads or turns. */
   --card-bg: #ffffff;
-  --t-display: clamp(2.3rem, 1.3rem + 3.4vw, 3.9rem);
-  --t-section: clamp(1.6rem, 1.25rem + 1.3vw, 2.3rem);
-  --wrap: 76rem;
+  --t-display: clamp(2.3rem, 1.1rem + 3.3vw, 5.4rem);
+  --t-section: clamp(1.6rem, 1.15rem + 1.4vw, 3rem);
+  --wrap: var(--site-wrap);
 }
 :root[data-theme="dark"] .home { --card-bg: #1b1f25; }
 
@@ -48,6 +48,13 @@
 @media (min-width: 64rem) {
   .hero-inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); }
 }
+/* A big screen gets a big demo, not a small one in a sea of margin: the phone and
+   the sheet grow with the window, as one piece so their overlap stays drawn. */
+@media (min-width: 100rem) {
+  .hero-inner { min-height: calc(100vh - 4.5rem); padding-block: 3rem; }
+  .demo { zoom: 1.2; }
+}
+@media (min-width: 140rem) { .demo { zoom: 1.4; } }
 
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px; margin: 0;
@@ -75,6 +82,7 @@ mark {
   font-size: clamp(1.05rem, .98rem + .35vw, 1.25rem); line-height: 1.6;
   color: var(--muted);
 }
+@media (min-width: 100rem) { .lead { font-size: 1.4rem; max-width: 40rem; } }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin: 1.9rem 0 0; }
 .ctas > a { flex: 1 1 12rem; }
 @media (min-width: 40rem) { .ctas > a { flex: none; } }
@@ -100,6 +108,76 @@ a.btn, a.btn-quiet { text-decoration: none; }
   opacity: .85;
 }
 .fine { margin: 1rem 0 0; font-size: var(--t-sm); color: var(--muted); }
+
+/* ---- step 1, on the landing page ----------------------------------------- */
+
+/* The product's first step, as the hero's call to action: one big field that
+   takes the link, the button that makes the deck, and the two other ways in.
+   It reads as the thing to do on arrival, not as a form to fill in later. */
+.quick { margin: 1.9rem 0 0; max-width: 40rem; }
+.quick-label { display: block; margin: 0 0 .6rem; font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+.quick-field {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 6px 6px 16px; border-radius: 18px;
+  background: var(--panel); border: 1.5px solid var(--line-strong);
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.quick-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent),
+              0 18px 40px -22px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.quick-icon { flex: none; color: var(--muted); display: inline-flex; }
+.quick-field input {
+  flex: 1 1 auto; min-width: 0; height: 52px; padding: 0;
+  border: 0; outline: 0; background: transparent; box-shadow: none;
+  font-size: var(--t-md); color: var(--ink);
+}
+.quick-field input:focus-visible { outline: 0; }
+.quick-field .btn.big { flex: none; min-height: 52px; border-radius: 13px; }
+.quick-field [aria-invalid] { color: var(--bad); }
+.quick-err {
+  margin: .6rem 0 0; font-size: var(--t-sm); font-weight: 600; color: var(--bad);
+}
+.quick-alt { display: flex; flex-wrap: wrap; gap: 10px; margin: .9rem 0 0; }
+.quick-file {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 12px;
+  background: var(--panel); border: 1.5px dashed var(--line-strong);
+  font: inherit; font-size: var(--t-sm); font-weight: 650; color: var(--ink);
+  text-decoration: none; cursor: pointer;
+}
+.quick-file .icon { color: var(--accent); }
+.quick-file:hover { border-color: var(--accent); background: var(--accent-soft); }
+.quick-template {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 1.1rem 0 0; font-size: var(--t-sm); color: var(--muted);
+}
+.quick-template .icon { color: var(--accent); width: 16px; height: 16px; }
+.quick-template a { font-weight: 650; color: var(--accent); }
+/* A phone has the width for the field or the button, not both on one line. */
+@media (max-width: 30rem) {
+  .quick-field { flex-wrap: wrap; padding: 6px; }
+  .quick-icon { display: none; }
+  .quick-field input { flex-basis: 100%; padding: 0 10px; }
+  .quick-field .btn.big { flex: 1 1 100%; }
+  .quick-alt > * { flex: 1 1 100%; justify-content: center; }
+}
+@media (min-width: 100rem) { .quick { max-width: 46rem; } }
+
+/* A file dragged over the page: the whole window is the target. */
+.dropzone {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent) 14%, rgb(15 12 26 / .55));
+  backdrop-filter: blur(3px);
+}
+.dropzone p {
+  display: flex; align-items: center; gap: 12px; margin: 0;
+  padding: 1.6rem 2.2rem; border-radius: 22px;
+  border: 2.5px dashed #fff; color: #fff;
+  font-size: var(--t-lg); font-weight: 800;
+}
 .btn:focus-visible, .btn-quiet:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 /* ---- the demo -------------------------------------------------------------- */

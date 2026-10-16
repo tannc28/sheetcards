@@ -24,6 +24,7 @@ import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
 import { CARDS } from "./home-cards.js";
+import { stashFile } from "./handoff.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -232,6 +233,68 @@ onRepaint((what) => {
   if (what !== "theme") buildTabs();
   buildCards();
   show(state.at, state.phase);
+});
+
+// --- step 1, on the landing page ---------------------------------------------
+//
+// The same first step Create deck asks for, so a learner who arrives with a
+// sheet in hand starts from here. Nothing is read on this page: a link goes over
+// in ?url=, a file through IndexedDB (handoff.js) to create.html#file.
+
+const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
+
+function quickError(key) {
+  const box = $("#q-err");
+  box.hidden = !key;
+  box.textContent = key ? t(key) : "";
+  $("#q-url").toggleAttribute("aria-invalid", Boolean(key));
+  if (key) $("#q-url").focus();
+}
+
+async function sendFile(file) {
+  if (!file) return;
+  if (!FILE_TYPES.test(file.name)) return quickError("homeBadFile");
+  try {
+    await stashFile(file);
+  } catch {
+    return quickError("homeStashFailed");
+  }
+  location.href = "./create.html#file";
+}
+
+$("#quick").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const link = $("#q-url").value.trim();
+  if (!link) return quickError("homeNoLink");
+  if (!/^https?:\/\/\S+$/i.test(link)) return quickError("homeNotLink");
+  location.href = "./create.html?url=" + encodeURIComponent(link);
+});
+$("#q-url").addEventListener("input", () => quickError(""));
+$("#q-pick").addEventListener("click", () => $("#q-file").click());
+$("#q-file").addEventListener("change", (e) => sendFile(e.target.files[0]));
+
+// A file dragged anywhere over the page: the whole window becomes the target,
+// so a drop never lands inside a card frame or opens the file in the browser.
+let dragDepth = 0;
+const carriesFile = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
+addEventListener("dragenter", (e) => {
+  if (!carriesFile(e)) return;
+  dragDepth += 1;
+  $("#q-drop").hidden = false;
+});
+addEventListener("dragleave", () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) $("#q-drop").hidden = true;
+});
+addEventListener("dragover", (e) => {
+  if (carriesFile(e)) e.preventDefault();
+});
+addEventListener("drop", (e) => {
+  if (!carriesFile(e)) return;
+  e.preventDefault();
+  dragDepth = 0;
+  $("#q-drop").hidden = true;
+  sendFile(e.dataTransfer.files[0]);
 });
 
 // --- sections rising into view ----------------------------------------------

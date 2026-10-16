@@ -176,3 +176,29 @@ def test_an_unlisted_theme_is_never_published(site):
     assert any(p.parent.name == "site" for p in sources)
     for path in pages + sources + [REPO / "README.md"]:
         assert "ptrang" not in path.read_text(encoding="utf-8"), path
+
+
+@pytest.mark.unit
+def test_the_landing_page_downloads_are_built_and_the_starter_is_a_good_sheet(site):
+    """The two files the hero offers exist, and the starter makes a clean deck.
+
+    The starter is the first sheet a new learner ever opens, so it must parse with
+    no warnings and turn every row into a note — a template that warns teaches
+    the wrong lesson on day one.
+    """
+    build, out = site
+    starter = out / build.STARTER_NAME
+    assert starter.is_file() and (out / build.EXAMPLES.name).is_file()
+
+    tm, _card_layout, workbook = build._pure_package(out)
+    (sheet,) = build.STARTER
+    parsed = tm.parse_tsv_data(workbook.sheet_tsv(starter.read_bytes(), sheet), [])
+    deck = tm.build_remote_deck_from_tsv(parsed, "", [])
+    assert deck.sheet_config.present and not deck.sheet_config.warnings
+    assert len(build.STARTER[sheet]) - 2 == 3  # header + settings row + 3 words
+    rows = [r for r in parsed["rows"][1:] if r and r[0]]
+    assert len(rows) == 3
+
+    landing = (out / "index.html").read_text(encoding="utf-8")
+    assert f'href="./{build.STARTER_NAME}" download' in landing
+    assert f'href="./{build.EXAMPLES.name}" download' in landing

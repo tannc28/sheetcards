@@ -816,6 +816,33 @@ const STRINGS = {
 
   // --- the landing page, continued ------------------------------------------
   homeExample: { en: "See an example", vi: "Xem ví dụ" },
+  homeLinkLabel: { en: "Paste a Google Sheets link to start", vi: "Dán link Google Sheets để bắt đầu" },
+  homeLinkPlaceholder: {
+    en: "https://docs.google.com/spreadsheets/d/…",
+    vi: "https://docs.google.com/spreadsheets/d/…",
+  },
+  homeGo: { en: "Create deck", vi: "Tạo deck" },
+  homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
+  homeTemplateLead: { en: "No sheet yet?", vi: "Chưa có sheet?" },
+  homeTemplate: { en: "Download the starter file (.xlsx)", vi: "Tải file mẫu (.xlsx)" },
+  homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
+  homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
+  homeNoLink: {
+    en: "Paste the link of your Google Sheet first — or upload a file.",
+    vi: "Dán link Google Sheets trước — hoặc upload một file.",
+  },
+  homeNotLink: {
+    en: "That doesn't look like a link. Copy it from the address bar while the sheet is open.",
+    vi: "Đây chưa phải một link. Hãy copy từ thanh địa chỉ khi đang mở sheet.",
+  },
+  homeBadFile: {
+    en: "SheetCards reads .xlsx, .xlsm, .csv and .tsv files.",
+    vi: "SheetCards đọc được file .xlsx, .xlsm, .csv và .tsv.",
+  },
+  homeStashFailed: {
+    en: "This browser would not keep the file for the next page. Open Create deck and upload it there.",
+    vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở Create deck và upload ở đó.",
+  },
   homeRuns: {
     en: "Runs in your browser · Android, iPhone, computer",
     vi: "Chạy ngay trong trình duyệt · Android, iPhone, máy tính",

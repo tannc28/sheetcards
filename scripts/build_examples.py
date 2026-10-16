@@ -597,9 +597,14 @@ def workbook_rels(count):
     )
 
 
-def build_bytes():
-    """The workbook as bytes, plus the sheet names it holds."""
-    names = list(SHEETS)
+def build_bytes(sheets=None):
+    """The workbook as bytes, plus the sheet names it holds.
+
+    ``sheets`` defaults to the example workbook; the website builds its small
+    starter file through the same writer.
+    """
+    sheets = SHEETS if sheets is None else sheets
+    names = list(sheets)
 
     too_long = [name for name in names if len(name) > 31]
     if too_long:
@@ -620,7 +625,7 @@ def build_bytes():
         "xl/styles.xml": _STYLES,
     }
     for i, name in enumerate(names, start=1):
-        parts[f"xl/worksheets/sheet{i}.xml"] = sheet_xml(SHEETS[name])
+        parts[f"xl/worksheets/sheet{i}.xml"] = sheet_xml(sheets[name])
 
     import io
 

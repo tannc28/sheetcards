@@ -44,6 +44,7 @@
 <link rel="stylesheet" href="./home.css">
 </head>
 <body class="page home">
+<div class="dropzone" id="q-drop" hidden><p><span data-icon="upload"></span><span data-i18n="homeDrop">Thả file .xlsx hoặc .csv vào đây</span></p></div>
 
 <a class="skip" href="#main" data-i18n="skipMain">Tới nội dung chính</a>
 
@@ -70,11 +71,32 @@
       <p class="eyebrow"><span data-icon="sparkles"></span><span data-i18n="homeEyebrow">Miễn phí · Không cần cài đặt</span></p>
       <h1 class="display" data-i18n="homeTitle">Tạo deck Anki từ Google Sheets — <mark>ngay trên điện thoại</mark>.</h1>
       <p class="lead" data-i18n="homeLead">Soạn từ vựng trong sheet, mỗi dòng một card. Dán link vào Create deck, xem trước từng card, rồi tải file .apkg mở thẳng bằng AnkiDroid hoặc AnkiMobile.</p>
-      <p class="ctas">
-        <a class="btn big" href="./create.html"><span data-i18n="homeTry">Create deck</span><span data-icon="arrow-right"></span></a>
-        <a class="btn-quiet big" href="./create.html#example"><span data-icon="sparkles"></span><span
-           data-i18n="homeExample">Xem ví dụ</span></a>
-      </p>
+      <!-- Create deck's first step, right here: a link goes over in ?url=, a file
+           through IndexedDB (handoff.js), so nothing is loaded on this page and
+           the learner never meets an empty form twice. -->
+      <form class="quick" id="quick" novalidate>
+        <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán link Google Sheets để bắt đầu</label>
+        <div class="quick-field">
+          <span class="quick-icon" data-icon="link"></span>
+          <input id="q-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+                 aria-describedby="q-err"
+                 placeholder="https://docs.google.com/spreadsheets/d/…"
+                 data-i18n-attr="placeholder:homeLinkPlaceholder">
+          <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo deck</span><span data-icon="arrow-right"></span></button>
+        </div>
+        <p class="quick-err" id="q-err" role="alert" hidden></p>
+        <div class="quick-alt">
+          <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
+                  data-i18n="homeUpload">Upload file .xlsx / .csv</span></button>
+          <a class="quick-file" href="./create.html#example"><span data-icon="sparkles"></span><span
+             data-i18n="homeExample">Xem ví dụ</span></a>
+        </div>
+        <input id="q-file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden>
+      </form>
+      <p class="quick-template"><span data-icon="file-down"></span><span data-i18n="homeTemplateLead">Chưa có sheet?</span>
+        <a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">Tải file mẫu (.xlsx)</a>
+        <span aria-hidden="true">·</span>
+        <a href="./sheetcards-examples.xlsx" download data-i18n="homeExamplesFile">31 sheet ví dụ</a></p>
       <p class="fine" data-i18n="homeRuns">Chạy ngay trong trình duyệt · Android, iPhone, máy tính</p>
     </div>
 
