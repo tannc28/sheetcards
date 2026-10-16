@@ -1391,5 +1391,3 @@ iframe#card {
   font-style: normal; font-size: var(--t-xs); padding: 1px 8px; border-radius: 999px;
   background: var(--accent-soft); color: var(--accent);
 }
-.ankiapps.compact { grid-template-columns: 1fr; margin-top: 8px; }
-.ankiapps.compact .ankiapp { padding: 10px 12px; }

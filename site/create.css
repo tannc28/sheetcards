@@ -764,8 +764,6 @@ a.chgbtn { text-decoration: none; }
 .assure-icon { flex: none; color: var(--ok); font-size: 20px; margin-top: 1px; }
 .assure + .assure { margin-top: 8px; background: var(--accent-soft); }
 .assure + .assure .assure-icon { color: var(--accent); }
-.needapp { margin: 4px 20px 12px; font-size: var(--t-sm); }
-.needapp > strong { font-size: var(--t-md); font-weight: 750; }
 .assure strong { display: block; font-size: var(--t-md); font-weight: 750; }
 .assure p { margin: 4px 0 0; font-size: var(--t-sm); color: var(--muted); }
 .addon-tip {

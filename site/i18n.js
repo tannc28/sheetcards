@@ -1103,10 +1103,10 @@ const STRINGS = {
   crLead: {
     en:
       "Paste your sheet's link, look through the cards, then download an .apkg that " +
-      "AnkiDroid, AnkiMobile or Anki on a computer opens. No add-on to install — just the Anki app to study with.",
+      "AnkiDroid, AnkiMobile or Anki on a computer opens. No add-on to install.",
     vi:
       "Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, " +
-      "AnkiMobile hoặc Anki trên máy tính. Không cần cài add-on — chỉ cần app Anki để học.",
+      "AnkiMobile hoặc Anki trên máy tính. Không cần cài add-on.",
   },
   paste: { en: "Paste", vi: "Dán" },
   emptyLink: {
@@ -1240,7 +1240,6 @@ const STRINGS = {
   },
   ankiYours: { en: "Your device", vi: "Máy của bạn" },
   ankiGetAt: { en: (store) => `Get it on ${store}`, vi: (store) => `Tải ở ${store}` },
-  ankiNeedTitle: { en: "No Anki app yet? Install one first", vi: "Chưa có app Anki? Cài trước đã" },
   nextTimeTitle: { en: "Adding words next week", vi: "Tuần sau thêm từ" },
   nextTimeBody: {
     en: "Open the sheet again — the sheet link you saved, your .csv file or your Google Sheet — add the words, press Make flashcards, download the new .apkg and import it. Your old cards are updated, not doubled.",

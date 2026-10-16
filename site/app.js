@@ -23,7 +23,7 @@ import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { takeHandoff } from "./handoff.js";
 import { decodeShare, isShare } from "./sharelink.js";
-import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, ankiAppsHtml, detectDevice } from "./devices.js";
+import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 import { fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
 
@@ -1569,7 +1569,6 @@ function paintDone() {
     .map((key) => `<li>${t(key, escapeHtml(name))}</li>`)
     .join("")}</ol>`;
   paintSchema($("#done-schema"), state.device);
-  $("#done-apps").innerHTML = ankiAppsHtml(t, state.device, { only: true });
 }
 
 function openDone() {
