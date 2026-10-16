@@ -1214,6 +1214,21 @@ iframe#card {
 @media (min-width: 56rem) {
   .sitenav { flex: none; margin-right: 8px; }
 }
+/* A thumb, not a pointer: every masthead control gets a 44px target (Apple's
+   minimum, and what keeps "Editor" from opening when "Create deck" was meant).
+   The nav row's links bring their own height, so the masthead gives up its
+   bottom padding and the row costs two pixels more than it did; the switches
+   on the first row take the theme button's 34px and reach 44 invisibly. */
+@media (pointer: coarse) {
+  .masthead .sitenav a { min-height: 44px; display: inline-flex; align-items: center; }
+  .themebtn { position: relative; }
+  .themebtn::after { content: ""; position: absolute; inset: -5px; }
+  .langs button { min-height: 34px; }
+  .brand a.name { padding: 11px 0; margin: -11px 0; }
+}
+@media (pointer: coarse) and (max-width: 55.99rem) {
+  body .masthead { padding-bottom: 0; }
+}
 
 /* ==== pages that are read: the landing page and the docs ===================
 
@@ -1332,6 +1347,9 @@ iframe#card {
   border-bottom: 1px solid var(--line-soft);
 }
 .prose th { background: var(--sunken); font-weight: 650; white-space: nowrap; }
+/* In a table a short token like #config would otherwise break letter by letter
+   down a narrow column; the table scrolls sideways in .tablewrap instead. */
+.prose td code { overflow-wrap: normal; }
 .prose tr:last-child td { border-bottom: 0; }
 .headerlink {
   margin-left: .35em; color: var(--muted); text-decoration: none; opacity: 0;
@@ -1361,3 +1379,25 @@ iframe#card {
   font-size: var(--t-sm); color: var(--muted);
 }
 .doc-twin .icon { width: 15px; height: 15px; }
+
+/* ==== 404.html: an address that is not here =============================== */
+.notfound {
+  max-width: 34rem; margin: 0 auto;
+  padding: clamp(3rem, 12vh, 7rem) var(--pad) 4rem;
+  text-align: center;
+}
+.notfound-code {
+  margin: 0; font-size: clamp(4rem, 18vw, 7rem); font-weight: 800;
+  line-height: 1; letter-spacing: -.05em; color: var(--accent);
+}
+.notfound h1 { margin: .4em 0 .3em; font-size: 1.75rem; letter-spacing: -.02em; }
+.notfound > p:not(.notfound-code) { color: var(--muted); }
+.notfound a.btn {
+  min-height: 48px; padding: 0 22px; border-radius: 12px;
+  font-weight: 700; text-decoration: none;
+}
+.notfound-links {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 12px 20px; margin-top: 2rem;
+}
+.notfound-links a:not(.btn) { min-height: 44px; display: inline-flex; align-items: center; }

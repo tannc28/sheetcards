@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<!-- GitHub Pages answers every missing address with this file, served AT that
+     address — /sheetcards/docs/old-page.html, /sheetcards/a/b/c — so a path
+     relative to this file would be relative to wherever the reader mistyped.
+     Everything below is resolved from the site's root instead: /sheetcards/ on
+     GitHub Pages, / anywhere else (a local server, a custom domain). -->
+<script>
+  document.write('<base href="' + (/^\/sheetcards\//.test(location.pathname) ? "/sheetcards/" : "/") + '">');
+</script>
+<title data-i18n="title404">Không tìm thấy trang — SheetCards</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  try {
+    var t = localStorage.getItem("sc-theme");
+    if (t === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      document.querySelector('meta[name="theme-color"]').content = "#18151f";
+    }
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+
+<a class="skip" href="#main" data-i18n="skipMain">Tới nội dung chính</a>
+
+<header class="masthead">
+  <div class="brand">
+    <a class="name" href="./" translate="no">SheetCards</a>
+  </div>
+  <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
+    <a href="./" data-i18n="navHome">Home</a>
+    <a href="create.html" data-i18n="navPreview">Create deck</a>
+    <a href="editor.html" data-i18n="navEditor">Editor</a>
+    <a href="docs/" data-doc="" data-i18n="navDocs">Docs</a>
+    <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
+  </nav>
+  <button id="theme" class="themebtn" type="button"></button>
+  <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
+</header>
+
+<main id="main" class="notfound" tabindex="-1">
+  <p class="notfound-code" aria-hidden="true">404</p>
+  <h1 data-i18n="notFoundTitle">Không có trang này</h1>
+  <p data-i18n="notFoundBody">Có thể link đã cũ hoặc gõ nhầm. Mọi thứ của SheetCards đều nằm ở các trang dưới đây.</p>
+  <p class="notfound-links">
+    <a class="btn big" href="create.html"><span data-i18n="navPreview">Create deck</span><span data-icon="arrow-right"></span></a>
+    <a href="./" data-i18n="navHome">Home</a>
+    <a href="docs/" data-doc="" data-i18n="navDocs">Docs</a>
+  </p>
+</main>
+
+<script type="module" src="page.js"></script>
+</body>
+</html>

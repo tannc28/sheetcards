@@ -98,6 +98,11 @@ if (contents) {
   };
   fit();
   wide.addEventListener("change", fit);
+  // On a phone it is a menu, and a menu closes once something is picked from it.
+  // Left open, it sits above the text, and the next scroll up lands in it again.
+  contents.addEventListener("click", (e) => {
+    if (!wide.matches && e.target.closest("a[href]")) contents.open = false;
+  });
 }
 
 paintIcons();
