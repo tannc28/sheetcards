@@ -34,6 +34,7 @@ import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
 import { fileStem, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
 import { detectDevice } from "./devices.js";
+import { warningText } from "./sheetwarnings.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -43,7 +44,7 @@ import json
 from sc import workbook
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import deck_path, plan_columns
-from sc.sheet_config import SheetConfig, is_config_row, parse_config_row
+from sc.sheet_config import SheetConfig, is_config_row, parse_config_row, warning_codes
 from sc.tsv_model import build_tags
 
 
@@ -123,6 +124,7 @@ def preview(payload):
             "names": names,
             "isConfig": config.present,
             "warnings": config.warnings,
+            "warningCodes": warning_codes(config.warnings),
             "front": front,
             "back": back,
             "deck": deck_path(values, plan, config),
@@ -1985,7 +1987,9 @@ function drawCard() {
     return;
   }
 
-  const warnings = out.warnings || [];
+  const warnings = (out.warningCodes || (out.warnings || []).map((text) => ({ text }))).map((w) =>
+    warningText(w, lang()),
+  );
   $("#warn").hidden = !warnings.length;
   $("#warntitle").textContent = t("edRefused", warnings.length);
   $("#warnlist").innerHTML = warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("");

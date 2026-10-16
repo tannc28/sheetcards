@@ -398,6 +398,61 @@ class FieldConfig:
         return f"FieldConfig({set_keys})"
 
 
+class SheetWarning(str):
+    """One thing the settings row got wrong: the English sentence, plus a code.
+
+    It *is* the sentence — the add-on, the sync summary, the log and the cache all
+    treat warnings as text — and it also carries a stable ``code`` and the
+    ``params`` that filled the sentence, so Sheet to Anki can say the same thing
+    in Vietnamese (``site/i18n.js``, keys ``w:<code>``) and fall back to this
+    text for a code it does not know.
+    """
+
+    code = ""
+    params: dict = {}
+
+    def __new__(cls, text, code="", params=None):
+        self = super().__new__(cls, text)
+        self.code = code
+        self.params = {k: str(v) for k, v in (params or {}).items()}
+        return self
+
+
+# Every code a warning can carry. site/sheetwarnings.js says each of them in both
+# languages, and tests/test_site_warnings.py holds the two lists together.
+WARNING_CODES = (
+    "media-twice", "math-mode", "type-mode", "needs-value", "side-bad",
+    "font-empty", "align-bad", "size-nan", "color-bad", "tts-short",
+    "voices-empty", "speed-nan", "speed-range", "subdeck-nan", "subdeck-low",
+    "media-subdeck", "subdeck-inert", "only-one-cloze", "only-one-type",
+    "only-one-sort", "sort-media", "role-media", "level-twice",
+    "subdeck-headers-ignored", "deck-unknown", "deck-needs-value",
+    "deck-align-bad", "theme-unknown", "deck-speed-nan", "deck-speed-range",
+    "name-long", "name-empty-level", "next-bad", "unknown-setting",
+    "size-range-width", "size-range-box", "size-range-font", "media-tts",
+    "furigana-on", "inert-on", "media-drawn", "audio-size", "draw-media",
+    "draw-cloze", "math-and-code", "draw-drops", "cloze-drops", "rtl-vertical",
+    # raised by tsv_model while the rows are read
+    "embed-not-single", "cloze-unmarked",
+)  # fmt: skip
+
+
+def _w(code, text, **params):
+    return SheetWarning(text, code, params)
+
+
+def warning_codes(warnings):
+    """``[{"code", "params", "text"}]`` for a list of warnings, for the site."""
+    return [
+        {
+            "code": getattr(w, "code", ""),
+            "params": dict(getattr(w, "params", {}) or {}),
+            "text": str(w),
+        }
+        for w in warnings
+    ]
+
+
 class SheetConfig:
     """The parsed config row: per-field settings plus the deck-wide ones.
 
@@ -447,8 +502,14 @@ def _apply_field_pair(cfg, key, value, header, warn):
             return
         if cfg.media and cfg.media != key:
             warn(
-                f"'{header}': already set to {cfg.media}, ignoring '{key}' — "
-                f"a column holds one kind of media"
+                _w(
+                    "media-twice",
+                    f"'{header}': already set to {cfg.media}, ignoring '{key}' — "
+                    f"a column holds one kind of media",
+                    col=header,
+                    media=cfg.media,
+                    key=key,
+                )
             )
             return
         cfg.media = key
@@ -465,7 +526,14 @@ def _apply_field_pair(cfg, key, value, header, warn):
         if mode in ("inline", "block"):
             cfg.math = mode
         else:
-            warn(f"'{header}': math is written bare or as math=block — got '{value}'")
+            warn(
+                _w(
+                    "math-mode",
+                    f"'{header}': math is written bare or as math=block — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
         return
 
     if key == "code":
@@ -483,23 +551,50 @@ def _apply_field_pair(cfg, key, value, header, warn):
         if mode in ("plain", "nc"):
             cfg.type_answer = mode
         else:
-            warn(f"'{header}': type must be written bare or as type=nc — got '{value}'")
+            warn(
+                _w(
+                    "type-mode",
+                    f"'{header}': type must be written bare or as type=nc — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
         return
 
     if value is None:
-        warn(f"'{header}': '{key}' needs a value (write {key}=…)")
+        warn(
+            _w(
+                "needs-value",
+                f"'{header}': '{key}' needs a value (write {key}=…)",
+                col=header,
+                key=key,
+            )
+        )
         return
 
     if key == "side":
         if value.lower() in SIDES:
             cfg.side = value.lower()
         else:
-            warn(f"'{header}': side must be one of {', '.join(SIDES)} — got '{value}'")
+            warn(
+                _w(
+                    "side-bad",
+                    f"'{header}': side must be one of {', '.join(SIDES)} — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
     elif key == "font":
         name = value.strip().strip("\"'").strip()
         if not name:
             warn(
-                f"'{header}': font needs a name — {', '.join(sorted(FONTS))}, or a family"
+                _w(
+                    "font-empty",
+                    f"'{header}': font needs a name — {', '.join(sorted(FONTS))}, "
+                    f"or a family",
+                    col=header,
+                    fonts=", ".join(sorted(FONTS)),
+                )
             )
         else:
             # A key from FONTS is a stack this add-on knows how to load; anything
@@ -510,12 +605,26 @@ def _apply_field_pair(cfg, key, value, header, warn):
         if value.lower() in ALIGNMENTS:
             cfg.align = value.lower()
         else:
-            warn(f"'{header}': align must be left, center or right — got '{value}'")
+            warn(
+                _w(
+                    "align-bad",
+                    f"'{header}': align must be left, center or right — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
     elif key == "size":
         try:
             cfg.size = int(float(value.rstrip("px").strip()))
         except ValueError:
-            warn(f"'{header}': size must be a number of pixels — got '{value}'")
+            warn(
+                _w(
+                    "size-nan",
+                    f"'{header}': size must be a number of pixels — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
     elif key == "color":
         lowered = value.lower()
         if lowered in THEME_COLORS or lowered in _CSS_COLOR_NAMES:
@@ -523,30 +632,62 @@ def _apply_field_pair(cfg, key, value, header, warn):
         elif _HEX_RE.match(value):
             cfg.color = value
         else:
-            warn(f"'{header}': '{value}' is not a colour name or #hex value")
+            warn(
+                _w(
+                    "color-bad",
+                    f"'{header}': '{value}' is not a colour name or #hex value",
+                    col=header,
+                    value=value,
+                )
+            )
     elif key == "tts":
         if _LANG_RE.match(value):
             cfg.tts = normalize_tts_language(value)
         else:
             warn(
-                f"'{header}': tts needs a full language code such as zh_CN or "
-                f"en_US — got '{value}'. Anki matches the code against installed "
-                f"voices exactly, so a short code plays nothing."
+                _w(
+                    "tts-short",
+                    f"'{header}': tts needs a full language code such as zh_CN or "
+                    f"en_US — got '{value}'. Anki matches the code against installed "
+                    f"voices exactly, so a short code plays nothing.",
+                    col=header,
+                    value=value,
+                )
             )
     elif key == "voices":
         names = [v.strip() for v in value.split(",") if v.strip()]
         if names:
             cfg.voices = names
         else:
-            warn(f"'{header}': voices needs at least one voice name")
+            warn(
+                _w(
+                    "voices-empty",
+                    f"'{header}': voices needs at least one voice name",
+                    col=header,
+                )
+            )
     elif key == "speed":
         try:
             speed = float(value)
         except ValueError:
-            warn(f"'{header}': speed must be a number — got '{value}'")
+            warn(
+                _w(
+                    "speed-nan",
+                    f"'{header}': speed must be a number — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
             return
         if not 0.5 <= speed <= 2.0:
-            warn(f"'{header}': speed {speed} is outside 0.5–2.0")
+            warn(
+                _w(
+                    "speed-range",
+                    f"'{header}': speed {speed} is outside 0.5–2.0",
+                    col=header,
+                    value=speed,
+                )
+            )
             return
         cfg.speed = speed
     elif key == "label":
@@ -557,10 +698,24 @@ def _apply_field_pair(cfg, key, value, header, warn):
         try:
             level = int(float(value))
         except ValueError:
-            warn(f"'{header}': subdeck must be a level number — got '{value}'")
+            warn(
+                _w(
+                    "subdeck-nan",
+                    f"'{header}': subdeck must be a level number — got '{value}'",
+                    col=header,
+                    value=value,
+                )
+            )
             return
         if level < 1:
-            warn(f"'{header}': subdeck level {level} is below 1")
+            warn(
+                _w(
+                    "subdeck-low",
+                    f"'{header}': subdeck level {level} is below 1",
+                    col=header,
+                    value=level,
+                )
+            )
             return
         cfg.subdeck = level
 
@@ -595,7 +750,14 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     for header in content_headers:
         cfg = config.for_field(header)
         if cfg.subdeck and cfg.media:
-            warn(f"'{header}': a {cfg.media} column cannot be a deck level")
+            warn(
+                _w(
+                    "media-subdeck",
+                    f"'{header}': a {cfg.media} column cannot be a deck level",
+                    col=header,
+                    media=cfg.media,
+                )
+            )
             cfg.subdeck = None
 
     # A deck level is a deck level. Where a note is filed is a bigger thing than
@@ -612,11 +774,17 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
         inert = [key for key in _CARD_KEYS if getattr(cfg, key)]
         if not inert:
             continue
+        said = ", ".join(_SAID_AS.get(key, key) for key in inert)
         warn(
-            f"'{header}': a deck level is not part of the card, so "
-            + ", ".join(_SAID_AS.get(key, key) for key in inert)
-            + (" do" if len(inert) > 1 else " does")
-            + " nothing here"
+            _w(
+                "subdeck-inert",
+                f"'{header}': a deck level is not part of the card, so "
+                + said
+                + (" do" if len(inert) > 1 else " does")
+                + " nothing here",
+                col=header,
+                keys=said,
+            )
         )
         for key in inert:
             setattr(cfg, key, _EMPTY[key])
@@ -624,21 +792,27 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     # A note type has one template set, and Anki honours one {{type:…}} per card, so
     # each of these names exactly one column. Resolved after the whole row is read so
     # the warning can name every column that asked, not just the second one.
-    for key, attribute, what in (
-        ("cloze", "cloze_field", "carry the cloze deletions"),
-        ("type_answer", "type_field", "be typed in"),
+    for key, attribute, what, role in (
+        ("cloze", "cloze_field", "carry the cloze deletions", "cloze"),
+        ("type_answer", "type_field", "be typed in", "type"),
         # A note type has one sort field, which is also the column the browser
         # lists notes under.
-        ("sort", "sort_field", "be the one the browser sorts by"),
+        ("sort", "sort_field", "be the one the browser sorts by", "sort"),
     ):
         claimed = [h for h in content_headers if getattr(config.for_field(h), key)]
         if not claimed:
             continue
         setattr(config, attribute, claimed[0])
         if len(claimed) > 1:
+            others = ", ".join(f"'{h}'" for h in claimed[1:])
             warn(
-                f"only one column can {what} — keeping '{claimed[0]}', ignoring "
-                + ", ".join(f"'{h}'" for h in claimed[1:])
+                _w(
+                    f"only-one-{role}",
+                    f"only one column can {what} — keeping '{claimed[0]}', ignoring "
+                    + others,
+                    col=claimed[0],
+                    others=others,
+                )
             )
             for header in claimed[1:]:
                 setattr(
@@ -648,7 +822,13 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     # Sorting a deck by a column of URLs lists it by whatever the addresses happen
     # to start with, which is never what was meant.
     if config.sort_field and config.for_field(config.sort_field).media:
-        warn(f"'{config.sort_field}': a media column is no use to sort by")
+        warn(
+            _w(
+                "sort-media",
+                f"'{config.sort_field}': a media column is no use to sort by",
+                col=config.sort_field,
+            )
+        )
         config.fields[config.sort_field].sort = False
         config.sort_field = None
 
@@ -659,7 +839,14 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     ):
         header = getattr(config, attribute)
         if header and config.for_field(header).media:
-            warn(f"'{header}': {label} does nothing on a media column")
+            warn(
+                _w(
+                    "role-media",
+                    f"'{header}': {label} does nothing on a media column",
+                    col=header,
+                    key=label,
+                )
+            )
             setattr(config, attribute, None)
             setattr(config.fields[header], key, None if key == "type_answer" else False)
 
@@ -672,8 +859,14 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
             continue
         if level in levels:
             warn(
-                f"'{header}': level {level} is already '{levels[level]}' — "
-                f"two columns cannot be the same level of the deck"
+                _w(
+                    "level-twice",
+                    f"'{header}': level {level} is already '{levels[level]}' — "
+                    f"two columns cannot be the same level of the deck",
+                    col=header,
+                    value=level,
+                    other=levels[level],
+                )
             )
             config.fields[header].subdeck = None
             continue
@@ -685,12 +878,17 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     # it overrules are named, because a deck quietly not appearing is exactly the
     # kind of thing nobody thinks to look for.
     if config.subdeck_columns and subdeck_headers:
+        named = ", ".join(f"'{h}'" for h in subdeck_headers)
         warn(
-            "the settings row builds the deck path, so the reserved "
-            + ", ".join(f"'{h}'" for h in subdeck_headers)
-            + " column"
-            + ("s are" if len(subdeck_headers) > 1 else " is")
-            + " ignored"
+            _w(
+                "subdeck-headers-ignored",
+                "the settings row builds the deck path, so the reserved "
+                + named
+                + " column"
+                + ("s are" if len(subdeck_headers) > 1 else " is")
+                + " ignored",
+                others=named,
+            )
         )
 
     return config
@@ -717,41 +915,82 @@ def parse_config_row(row, plan):
     remainder = marker_cell[len(MARKER) :] if len(marker_cell) > len(MARKER) else ""
     for key, value in _parse_pairs(remainder):
         if key not in _DECK_KEYS:
-            warn(f"'{MARKER}': unknown deck setting '{key}'")
+            warn(
+                _w(
+                    "deck-unknown",
+                    f"'{MARKER}': unknown deck setting '{key}'",
+                    key=key,
+                )
+            )
         elif key == "reverse":
             config.reverse = value is None or value.strip().lower() not in _FALSEY
         elif value is None:
-            warn(f"'{MARKER}': '{key}' needs a value")
+            warn(_w("deck-needs-value", f"'{MARKER}': '{key}' needs a value", key=key))
         elif key == "align":
             if value.lower() in ALIGNMENTS:
                 config.align = value.lower()
             else:
-                warn(f"'{MARKER}': align must be left, center or right")
+                warn(
+                    _w(
+                        "deck-align-bad",
+                        f"'{MARKER}': align must be left, center or right",
+                        value=value,
+                    )
+                )
         elif key == "theme":
             if value.lower() in THEMES:
                 config.theme = value.lower()
             else:
                 warn(
-                    f"'{MARKER}': unknown theme '{value}' — "
-                    f"the themes are {', '.join(listed_themes())}"
+                    _w(
+                        "theme-unknown",
+                        f"'{MARKER}': unknown theme '{value}' — "
+                        f"the themes are {', '.join(listed_themes())}",
+                        value=value,
+                        themes=", ".join(listed_themes()),
+                    )
                 )
         elif key == "speed":
             try:
                 speed = float(value)
             except ValueError:
-                warn(f"'{MARKER}': speed must be a number — got '{value}'")
+                warn(
+                    _w(
+                        "deck-speed-nan",
+                        f"'{MARKER}': speed must be a number — got '{value}'",
+                        value=value,
+                    )
+                )
             else:
                 if 0.5 <= speed <= 2.0:
                     config.speed = speed
                 else:
-                    warn(f"'{MARKER}': speed {speed} is outside 0.5–2.0")
+                    warn(
+                        _w(
+                            "deck-speed-range",
+                            f"'{MARKER}': speed {speed} is outside 0.5–2.0",
+                            value=speed,
+                        )
+                    )
         elif not value:
-            warn(f"'{MARKER}': '{key}' needs a value")
+            warn(_w("deck-needs-value", f"'{MARKER}': '{key}' needs a value", key=key))
         elif key == "name":
             if len(value) > _DECK_NAME_MAX:
-                warn(f"'{MARKER}': name is longer than {_DECK_NAME_MAX} characters")
+                warn(
+                    _w(
+                        "name-long",
+                        f"'{MARKER}': name is longer than {_DECK_NAME_MAX} characters",
+                        value=_DECK_NAME_MAX,
+                    )
+                )
             elif any(part.strip() == "" for part in value.split("::")):
-                warn(f"'{MARKER}': name '{value}' has an empty level")
+                warn(
+                    _w(
+                        "name-empty-level",
+                        f"'{MARKER}': name '{value}' has an empty level",
+                        value=value,
+                    )
+                )
             else:
                 config.deck_name = value
         elif key == "next":
@@ -759,8 +998,12 @@ def parse_config_row(row, plan):
                 config.next_id = value
             else:
                 warn(
-                    f"'{MARKER}': next must be an ID ending in a number, "
-                    f"like w15 — got '{value}'"
+                    _w(
+                        "next-bad",
+                        f"'{MARKER}': next must be an ID ending in a number, "
+                        f"like w15 — got '{value}'",
+                        value=value,
+                    )
                 )
 
     for header in plan.content_headers:
@@ -771,7 +1014,14 @@ def parse_config_row(row, plan):
         cfg = FieldConfig()
         for key, value in _parse_pairs(cell):
             if key not in _FIELD_KEYS:
-                warn(f"'{header}': unknown setting '{key}'")
+                warn(
+                    _w(
+                        "unknown-setting",
+                        f"'{header}': unknown setting '{key}'",
+                        col=header,
+                        key=key,
+                    )
+                )
                 continue
             _apply_field_pair(cfg, key, value, header, warn)
 
@@ -784,7 +1034,16 @@ def parse_config_row(row, plan):
             low, high = (1, 2000) if box else (6, 200)
             if not low <= cfg.size <= high:
                 what = "width" if cfg.media else "box" if cfg.draw else "font size"
-                warn(f"'{header}': {what} {cfg.size}px is outside {low}–{high}px")
+                warn(
+                    _w(
+                        f"size-range-{'width' if cfg.media else 'box' if cfg.draw else 'font'}",
+                        f"'{header}': {what} {cfg.size}px is outside {low}–{high}px",
+                        col=header,
+                        value=cfg.size,
+                        low=low,
+                        high=high,
+                    )
+                )
                 cfg.size = None
 
         # A media column holds a URL, so these would act on the address itself:
@@ -792,13 +1051,25 @@ def parse_config_row(row, plan):
         if cfg.media:
             if cfg.tts:
                 warn(
-                    f"'{header}': tts on a {cfg.media} column would read the URL "
-                    f"aloud — removed"
+                    _w(
+                        "media-tts",
+                        f"'{header}': tts on a {cfg.media} column would read the URL "
+                        f"aloud — removed",
+                        col=header,
+                        media=cfg.media,
+                    )
                 )
                 cfg.tts = None
                 cfg.voices = []
             if cfg.furigana:
-                warn(f"'{header}': furigana does nothing on a {cfg.media} column")
+                warn(
+                    _w(
+                        "furigana-on",
+                        f"'{header}': furigana does nothing on a {cfg.media} column",
+                        col=header,
+                        media=cfg.media,
+                    )
+                )
                 cfg.furigana = False
 
             # Text styling has nothing to style: the cell renders as an element,
@@ -818,9 +1089,15 @@ def parse_config_row(row, plan):
             ]
             if inert:
                 warn(
-                    f"'{header}': {', '.join(inert)} "
-                    f"{'do' if len(inert) > 1 else 'does'} nothing on a "
-                    f"{cfg.media} column"
+                    _w(
+                        "inert-on",
+                        f"'{header}': {', '.join(inert)} "
+                        f"{'do' if len(inert) > 1 else 'does'} nothing on a "
+                        f"{cfg.media} column",
+                        col=header,
+                        keys=", ".join(inert),
+                        media=cfg.media,
+                    )
                 )
             for name in ("font", "rtl", "vertical"):
                 setattr(cfg, name, None if name == "font" else False)
@@ -829,13 +1106,25 @@ def parse_config_row(row, plan):
                     # These two do not decorate the text, they *are* how the cell
                     # is drawn — and a media cell is an address, not text.
                     warn(
-                        f"'{header}': a {cfg.media} column holds an address, "
-                        f"so {name} has nothing to draw — removed"
+                        _w(
+                            "media-drawn",
+                            f"'{header}': a {cfg.media} column holds an address, "
+                            f"so {name} has nothing to draw — removed",
+                            col=header,
+                            media=cfg.media,
+                            key=name,
+                        )
                     )
                     setattr(cfg, name, None)
 
             if cfg.media == "audio" and cfg.size is not None:
-                warn(f"'{header}': size does nothing on an audio column")
+                warn(
+                    _w(
+                        "audio-size",
+                        f"'{header}': size does nothing on an audio column",
+                        col=header,
+                    )
+                )
                 cfg.size = None
 
         # A writing box draws the character the cell names; it never prints the
@@ -845,18 +1134,37 @@ def parse_config_row(row, plan):
         if cfg.draw:
             if cfg.media:
                 warn(
-                    f"'{header}': a {cfg.media} column holds an address, not a "
-                    f"character — draw removed"
+                    _w(
+                        "draw-media",
+                        f"'{header}': a {cfg.media} column holds an address, not a "
+                        f"character — draw removed",
+                        col=header,
+                        media=cfg.media,
+                    )
                 )
                 cfg.draw = False
             elif cfg.cloze:
                 # The clozed column is the prompt and its deletion is the question.
                 # Drawing it would replace the very text the card asks about.
-                warn(f"'{header}': a cloze column cannot also be drawn — draw removed")
+                warn(
+                    _w(
+                        "draw-cloze",
+                        f"'{header}': a cloze column cannot also be drawn — "
+                        f"draw removed",
+                        col=header,
+                    )
+                )
                 cfg.draw = False
             else:
                 if cfg.furigana:
-                    warn(f"'{header}': furigana does nothing on a drawn column")
+                    warn(
+                        _w(
+                            "furigana-on",
+                            f"'{header}': furigana does nothing on a drawn column",
+                            col=header,
+                            media="drawn",
+                        )
+                    )
                     cfg.furigana = False
                 inert = [
                     name
@@ -865,36 +1173,74 @@ def parse_config_row(row, plan):
                 ]
                 if inert:
                     warn(
-                        f"'{header}': {', '.join(inert)} "
-                        f"{'do' if len(inert) > 1 else 'does'} nothing on a "
-                        f"drawn column"
+                        _w(
+                            "inert-on",
+                            f"'{header}': {', '.join(inert)} "
+                            f"{'do' if len(inert) > 1 else 'does'} nothing on a "
+                            f"drawn column",
+                            col=header,
+                            keys=", ".join(inert),
+                            media="drawn",
+                        )
                     )
 
         # Three ways of drawing one cell, and a cell is drawn once. Order matters
         # only in that the *earlier* one is kept, which is the same rule the media
         # kinds follow: the sheet's first answer stands.
         if cfg.math and cfg.code is not None:
-            warn(f"'{header}': a column is drawn as a formula or as code, not both")
+            warn(
+                _w(
+                    "math-and-code",
+                    f"'{header}': a column is drawn as a formula or as code, not both",
+                    col=header,
+                )
+            )
             cfg.code = None
         if cfg.draw and (cfg.math or cfg.code is not None):
             what = "math" if cfg.math else "code"
-            warn(f"'{header}': a writing box draws a character, so {what} is removed")
+            warn(
+                _w(
+                    "draw-drops",
+                    f"'{header}': a writing box draws a character, so {what} is "
+                    f"removed",
+                    col=header,
+                    key=what,
+                )
+            )
             cfg.math, cfg.code = None, None
         if cfg.cloze and (cfg.math or cfg.code is not None):
             what = "math" if cfg.math else "code"
             warn(
-                f"'{header}': the cloze column has to reach the card through "
-                f"{{{{cloze:}}}}, which {what} would replace — {what} removed"
+                _w(
+                    "cloze-drops",
+                    f"'{header}': the cloze column has to reach the card through "
+                    f"{{{{cloze:}}}}, which {what} would replace — {what} removed",
+                    col=header,
+                    key=what,
+                )
             )
             cfg.math, cfg.code = None, None
         if cfg.furigana and (cfg.math or cfg.code is not None):
             what = "math" if cfg.math else "code"
-            warn(f"'{header}': furigana does nothing on a {what} column")
+            warn(
+                _w(
+                    "furigana-on",
+                    f"'{header}': furigana does nothing on a {what} column",
+                    col=header,
+                    media=what,
+                )
+            )
             cfg.furigana = False
 
         # One direction of writing at a time.
         if cfg.rtl and cfg.vertical:
-            warn(f"'{header}': rtl and vertical are two directions — keeping rtl")
+            warn(
+                _w(
+                    "rtl-vertical",
+                    f"'{header}': rtl and vertical are two directions — keeping rtl",
+                    col=header,
+                )
+            )
             cfg.vertical = False
 
         config.fields[header] = cfg

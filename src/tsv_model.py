@@ -26,6 +26,7 @@ from .column_model import row_is_marked_for_sync
 from .column_model import tags_of
 from .errors import RemoteDeckError
 from .sheet_config import SheetConfig
+from .sheet_config import SheetWarning
 from .sheet_config import is_config_row
 from .sheet_config import parse_config_row
 
@@ -274,9 +275,11 @@ def normalize_embed_url(value):
     lowered = url.lower()
     for host in ("youtube.com", "youtu.be", "drive.google.com", "vimeo.com"):
         if host in lowered:
-            return url, (
+            return url, SheetWarning(
                 f"'{url}' is a {host} address with no video in it — a channel, a "
-                f"playlist or a folder cannot be embedded, only a single video or file"
+                f"playlist or a folder cannot be embedded, only a single video or file",
+                "embed-not-single",
+                {"url": url, "host": host},
             )
 
     # Anything else is passed through: a direct .mp4 shows in an iframe too, and
@@ -307,7 +310,13 @@ def apply_media_rewrites(note_data, plan, sheet_config):
         fixed, problem = normalize_embed_url(note_data.get(header, ""))
         note_data[header] = fixed
         if problem:
-            warnings.append(f"'{header}': {problem}")
+            warnings.append(
+                SheetWarning(
+                    f"'{header}': {problem}",
+                    getattr(problem, "code", ""),
+                    {**getattr(problem, "params", {}), "col": header},
+                )
+            )
     return warnings
 
 
@@ -614,7 +623,7 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     add_debug_msg(f"Content columns: {plan.content_headers}")
     add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
 
-    embed_warnings = set()
+    embed_warnings = {}
     cloze_rows = []
 
     # Process each row
@@ -629,7 +638,15 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
             # means the sync's change comparison sees the same value it stores, so a
             # row does not read as modified on every single sync.
             for problem in apply_media_rewrites(note_data, plan, sheet_config):
-                embed_warnings.add(f"row {sheet_row}: {problem}")
+                text = f"row {sheet_row}: {problem}"
+                embed_warnings.setdefault(
+                    text,
+                    SheetWarning(
+                        text,
+                        getattr(problem, "code", ""),
+                        {**getattr(problem, "params", {}), "row": sheet_row},
+                    ),
+                )
 
             # A sheet says once which column carries its deletions. A row that has
             # cloze markup anywhere else would print `{{c1::…}}` on the card as
@@ -661,10 +678,12 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     if cloze_rows:
         shown = ", ".join(str(r) for r in cloze_rows[:10])
         suffix = " …" if len(cloze_rows) > 10 else ""
-        message = (
+        message = SheetWarning(
             f"{len(cloze_rows)} row(s) contain {{{{c1::…}}}} but no column is marked "
             f"`cloze` in the settings row (rows {shown}{suffix}) — the markup will "
-            f"show as text. Add `cloze` to the column holding the sentences."
+            f"show as text. Add `cloze` to the column holding the sentences.",
+            "cloze-unmarked",
+            {"count": len(cloze_rows), "rows": shown + suffix},
         )
         add_debug_msg(f"⚠️ {message}")
         log_to_addon(message, "SHEET_CONFIG")
@@ -672,7 +691,7 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
 
     # An address that cannot be embedded frames an error message on the card, which
     # looks like the add-on broke rather than like a link that needs fixing.
-    for warning in sorted(embed_warnings):
+    for _, warning in sorted(embed_warnings.items()):
         message = f"⚠️ Embed: {warning}"
         add_debug_msg(message)
         log_to_addon(message, "SHEET_CONFIG")

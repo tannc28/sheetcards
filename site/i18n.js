@@ -2,11 +2,9 @@
  * The page's own text, in English and Vietnamese.
  *
  * What is *not* here: the warnings a sheet produces. Those come out of
- * `sheet_config.warnings` — the add-on's own code, running in the browser — and
- * they are word for word what Anki will tell you at sync time. Translating them
- * here would make the preview say something the add-on never says, which is the
- * one thing this page exists not to do. They stay in English, and the warning
- * banner says why.
+ * `sheet_config.warnings` — the add-on's own code, running in the browser — with
+ * a stable code each, and site/sheetwarnings.js says them in both languages
+ * (the add-on and its log keep the English sentence).
  *
  * Vietnamese is the default: the site is made for Vietnamese learners first.
  * The Vietnamese keeps every technical word in English — deck, note, field,
@@ -1053,19 +1051,15 @@ const STRINGS = {
   // One sentence, and the reasoning behind a disclosure for whoever wonders.
   warningsFrom: {
     en:
-      "Lines labelled “Settings row” are the add-on's own words, kept in English " +
-      "because that is exactly what Anki will show you at sync time." +
-      "<details><summary>Why?</summary>Translated, they would no longer match what " +
-      "Anki says. Nothing is silently ignored: a value the add-on does not " +
-      "understand is refused, never guessed at, and the column keeps its default " +
-      "until the sheet is fixed.</details>",
+      "Lines labelled “Settings row” are what the add-on reports for the same sheet." +
+      "<details><summary>Why?</summary>Nothing is silently ignored: a value the " +
+      "add-on does not understand is refused, never guessed at, and the column " +
+      "keeps its default until the sheet is fixed.</details>",
     vi:
-      "Các dòng gắn nhãn “Settings row” là nguyên văn add-on báo, được giữ tiếng " +
-      "Anh vì đó đúng là câu Anki sẽ hiện lúc sync." +
-      "<details><summary>Tại sao?</summary>Dịch ra thì nó sẽ không còn khớp với " +
-      "câu Anki báo. Không có gì bị bỏ qua âm thầm: giá trị add-on không hiểu thì " +
-      "bị từ chối chứ không bị đoán, và cột giữ mặc định cho tới khi sheet được " +
-      "sửa.</details>",
+      "Các dòng gắn nhãn “Settings row” là điều add-on cũng sẽ báo cho sheet này." +
+      "<details><summary>Tại sao?</summary>Không có gì bị bỏ qua âm thầm: giá trị " +
+      "add-on không hiểu thì bị từ chối chứ không bị đoán, và cột giữ mặc định cho " +
+      "tới khi sheet được sửa.</details>",
   },
 
   templateFrom: {
@@ -1283,6 +1277,27 @@ const STRINGS = {
   noIdColumn: {
     en: "This sheet has no ID column. Row 1 needs a column named ID, with a different value in each row below it.",
     vi: "Sheet này chưa có cột ID. Dòng 1 cần một cột tên ID, mỗi dòng bên dưới ghi một giá trị khác nhau.",
+  },
+  // The parser's other refusals (pythonMessage), said in the page's language.
+  emptySheet: {
+    en: "This sheet is empty. Row 1 needs the column names (ID and at least one more), with a word in each row below.",
+    vi: "Sheet này đang trống. Dòng 1 cần tên các cột (ID và ít nhất một cột nữa), mỗi dòng bên dưới là một từ.",
+  },
+  noContentColumns: {
+    en: "This sheet has only ID, SYNC, TAGS or SUBDECK columns. Add at least one column for what goes on the card, such as Word or Meaning.",
+    vi: "Sheet này chỉ có cột ID, SYNC, TAGS hoặc SUBDECK. Thêm ít nhất một cột cho nội dung card, ví dụ Word hay Meaning.",
+  },
+  notAWorkbook: {
+    en: "This file is named .xlsx but is not one. If it came out of an older Excel, open it and choose Save As → .xlsx.",
+    vi: "File này mang đuôi .xlsx nhưng không phải file .xlsx thật. Nếu nó từ Excel đời cũ, mở ra rồi chọn Save As → .xlsx.",
+  },
+  oldXls: {
+    en: "This is the old .xls format, which this page cannot read. Open it and choose Save As → .xlsx, or upload it to Google Sheets.",
+    vi: "Đây là định dạng .xls cũ, trang này không đọc được. Mở file rồi chọn Save As → .xlsx, hoặc đưa lên Google Sheets.",
+  },
+  noSheets: {
+    en: "This workbook has no visible sheet in it.",
+    vi: "File này không có sheet nào đang hiện.",
   },
   // --- opened inside a chat app's own browser ---------------------------------
   inappTitle: { en: "You're in an app's built-in browser.", vi: "Bạn đang mở trang trong trình duyệt của một app." },

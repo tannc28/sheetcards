@@ -25,6 +25,7 @@ import { takeHandoff } from "./handoff.js";
 import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
+import { warningText } from "./sheetwarnings.js";
 import { fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
 
 // The example workbook lives in this repository (examples/, built by
@@ -47,7 +48,7 @@ import json
 from sc import tsv_model as tm
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import clean, deck_path
-from sc.sheet_config import is_config_row
+from sc.sheet_config import is_config_row, warning_codes
 from sc.apkg import build_package, note_type_shape, resolve_identity
 
 # The last analysis, so the package can be built from exactly the rows the page
@@ -213,6 +214,7 @@ def analyze(tsv, deck_name, sheet_id=""):
         },
         "config": {
             "warnings": cfg.warnings,
+            "warningCodes": warning_codes(cfg.warnings),
             "subdecks": cfg.subdeck_columns,
             "fields": {h: _settings(c) for h, c in cfg.fields.items()},
         },
@@ -444,6 +446,11 @@ function pythonMessage(err) {
   // as what to do about it instead.
   if (/Mandatory header missing: 'ID'/.test(last)) return t("noIdColumn");
   if (/not UTF-8 text/.test(last)) return t("badEncoding");
+  if (/Empty TSV data|No rows found in TSV data/.test(last)) return t("emptySheet");
+  if (/has no content columns/.test(last)) return t("noContentColumns");
+  if (/This is not a workbook|is named \.xlsx but is not one/.test(last)) return t("notAWorkbook");
+  if (/old \.xls format/.test(last)) return t("oldXls");
+  if (/has no sheets in it/.test(last)) return t("noSheets");
   return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
 }
 
@@ -1134,9 +1141,15 @@ function clozeTrouble({ rows, sides }) {
   );
 }
 
+/** The settings row's warnings in the page's language (sheetwarnings.js). */
+function sheetWarnings(config) {
+  const coded = config.warningCodes || (config.warnings || []).map((text) => ({ text }));
+  return coded.map((w) => warningText(w, lang()));
+}
+
 function warningItems(analysis) {
   const { config, duplicateIds, sides } = analysis;
-  const items = config.warnings.map(
+  const items = sheetWarnings(config).map(
     (w) => `<li><strong>${escapeHtml(t("warnSettingsRow"))}</strong> — ${escapeHtml(w)}</li>`,
   );
 
@@ -2093,7 +2106,9 @@ function columnDetail(a) {
   const set = directives(name, a);
   // The warnings name their column in single quotes, which is also how a person
   // reading them finds the one they are looking at.
-  const said = (a.config.warnings || []).filter((w) => w.startsWith(`'${name}':`));
+  const said = (a.config.warningCodes || [])
+    .filter((w) => w.text.startsWith(`'${name}':`) || w.params?.col === name)
+    .map((w) => warningText(w, lang()));
 
   return `<div class="coldetail${state.columnFlash ? " flash" : ""}">
     <p class="colrole"><span class="mark ${role.kind}"></span>${escapeHtml(role.label)}</p>
