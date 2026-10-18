@@ -29,6 +29,9 @@ import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js
 import { icon, paintIcons } from "./icons.js";
 import { warningText } from "./sheetwarnings.js";
 import { fileIdentity, fileStem, judgeShape, keepShape, lastShape, renamedRoot } from "./identity.js";
+import { withHeaders } from "./importformats.js";
+import { mountTextImport } from "./textimport.js";
+import { parseTsv, toTsv } from "./sharelink.js";
 
 // The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
@@ -486,6 +489,9 @@ function pythonMessage(err) {
   if (/This is not a workbook|is named \.xlsx but is not one/.test(last)) return t("notAWorkbook");
   if (/old \.xls format/.test(last)) return t("oldXls");
   if (/has no sheets in it/.test(last)) return t("noSheets");
+  if (/NewFormatError|exported by a newer Anki/.test(last)) return t("apkgNewFormat");
+  if (/not an Anki package/.test(last)) return t("apkgBroken");
+  if (/has no notes in it/.test(last)) return t("apkgEmpty");
   return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
 }
 
@@ -597,6 +603,7 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   // Where the reader was. A reload is for looking at the row just edited, so
   // landing back on the deck's first row would answer the wrong question.
   const was = state.row;
+  $("#headnote").hidden = true;
   status(t("analysing"), "", true);
   state.analysis = analyze(tsv, deckName, sheetId);
   // What the sheet itself says wins: a name= is the deck and its identity.
@@ -912,13 +919,17 @@ function showUpload(index, { keepRow = false } = {}) {
     upload.tabs = out.tabs;
     upload.index = index;
     paintTabs();
+    // A text file with no header row (Noji, Brainscape) gets Mặt trước / Mặt
+    // sau, decided in importformats.js like every other way in; the note under
+    // the card says so and can undo it.
+    const headed = headerless(out, upload);
 
     // A Google link keeps the name and the id it has always had; a file is
     // named and keyed without what a phone adds to a second download of it.
     const base = upload.google ? upload.name.replace(/\.[^.]+$/, "").trim() : fileStem(upload.name);
     noteSource(upload.name.replace(/\.[^.]+$/, "").trim());
     analyse(
-      out.tsv,
+      headed.tsv,
       chooseDeckName(out.tabs.length ? `${base}::${out.tab}` : base),
       upload.google
         ? `${upload.idBase}#${out.tab}`
@@ -928,6 +939,8 @@ function showUpload(index, { keepRow = false } = {}) {
     // Read, but in a Windows code page rather than UTF-8: said, because a
     // letter decoded wrong is a word learnt wrong.
     if (out.encoding) status(t("readAsEncoding", out.encoding), "bad");
+    else if (out.package) packageNote(out.package);
+    paintHeaderNote(headed.synthesized);
   } catch (err) {
     // The add-on's own sentence, not the twenty lines of traceback above it.
     failed(pythonMessage(err));
@@ -937,7 +950,48 @@ function showUpload(index, { keepRow = false } = {}) {
 }
 
 // What the file picker offers; a file dropped on the page is held to the same.
-const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
+const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt|apkg|colpkg)$/i;
+
+/**
+ * The upload's TSV with a header row for sure. Only a text file is asked —
+ * a workbook and a package have their names — and `upload.header` is the
+ * reader's answer once they have overridden the guess.
+ */
+function headerless(out, from) {
+  if (!/\.(csv|tsv|txt)$/i.test(from.name)) return { tsv: out.tsv, synthesized: false };
+  const { rows, synthesized } = withHeaders(parseTsv(out.tsv), { header: from.header ?? "auto", language: lang() });
+  from.synthesized = synthesized;
+  return { tsv: synthesized ? toTsv(rows) + "\n" : out.tsv, synthesized };
+}
+
+/** The line under the source bar when the first row was read as a card. */
+function paintHeaderNote(synthesized) {
+  const note = $("#headnote");
+  if (!note) return;
+  note.hidden = !synthesized && upload?.header !== true;
+  $("#headnote-text").textContent = t(synthesized ? "hdSynth" : "hdKept");
+  $("#headnote-flip").textContent = t(synthesized ? "hdUseFirst" : "hdUseCard");
+}
+
+/** What a shared Anki deck could not bring along, said once it is open. */
+function packageNote({ media }) {
+  const lost = (media?.images || 0) + (media?.audio || 0);
+  if (lost) status(t("apkgMedia", lost), "bad");
+}
+
+/** Opens a `#s=…` sheet, from the address or from Dán văn bản. */
+function openShared(hash) {
+  setStage("loading");
+  decodeShare(hash).then(
+    ({ name, tsv }) => {
+      const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
+        type: "text/tab-separated-values",
+      });
+      whenReady(() => previewFile(file, { hash, edit: site(`sheet/${hash}`) }), "sheet");
+    },
+    (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
+  );
+}
 
 /** A file picked or dropped here: read once Python is ready, if it is one. */
 function openFile(file) {
@@ -2456,6 +2510,20 @@ $("#example").addEventListener("click", () => {
   submit();
 });
 
+const textImport = mountTextImport({
+  openShared(hash) {
+    fromPage = true;
+    wanted = null;
+    openShared(hash);
+  },
+});
+$("#pastetext").addEventListener("click", () => textImport.open());
+$("#headnote-flip").addEventListener("click", () => {
+  if (!upload) return;
+  upload.header = upload.synthesized ? true : false;
+  showUpload(upload.index);
+});
+
 $("#reload").addEventListener("click", reload);
 $("#sharecard").addEventListener("click", shareCard);
 $("#change").addEventListener("click", changeSource);
@@ -2676,17 +2744,7 @@ if (loadFromAddress()) {
   // A sheet shared from Create sheet, carried whole in the fragment
   // (sharelink.js). It stays in the address, so a reload opens it again, and
   // "edit" takes the same sheet back to Create sheet.
-  const hash = location.hash;
-  setStage("loading");
-  decodeShare(hash).then(
-    ({ name, tsv }) => {
-      const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
-        type: "text/tab-separated-values",
-      });
-      whenReady(() => previewFile(file, { hash, edit: site(`sheet/${hash}`) }), "sheet");
-    },
-    (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
-  );
+  openShared(location.hash);
 } else bootStatus();
 
 boot()

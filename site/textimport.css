@@ -1,0 +1,32 @@
+/* Sheet to Anki's "Dán văn bản" (textimport.js) and the three ways in on step 1.
+   The dialog is a .donebox/.wtbox like Create sheet's word paste (wordtools.css);
+   what is here is the name field and the entry's third card. */
+
+/* Three equal ways in: stacked on a phone, side by side once they fit. */
+@media (min-width: 40rem) {
+  .alt.alt3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .alt.alt3 .altcard { flex-direction: column; align-items: flex-start; gap: 10px; min-height: 0; padding: 14px; }
+}
+
+.tx-name { display: flex; flex-direction: column; gap: 6px; margin: 0 0 14px; }
+.tx-name input {
+  min-height: 48px; padding: 0 14px; border-radius: 13px;
+  border: 1.5px solid var(--line-strong); background: var(--panel); color: var(--ink);
+  font: inherit; font-size: 1rem;
+}
+.tx-name input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.tx-name input[aria-invalid="true"] { border-color: var(--bad, #b42318); }
+.tx-name .field-error { display: flex; align-items: center; gap: 6px; margin: 0; }
+.tx-name .field-error[hidden] { display: none; }
+#textbox .done-head { align-items: center; padding: 16px 10px 6px 20px; }
+#textbox .done-head strong { flex: 1 1 auto; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
+#textbox .wt-opts[hidden] { display: none; }
+#textbox .wt-foot .btn { display: inline-flex; align-items: center; gap: 8px; }
+
+/* The first row read as a card: said under the source bar, on every screen. */
+.cr #headnote:not([hidden]) { display: flex; align-items: flex-start; }
+#headnote [data-icon] { margin-top: .2em; }
+#headnote .linkbtn {
+  padding: 0; font: inherit; font-weight: 700; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 2px;
+}

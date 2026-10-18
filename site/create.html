@@ -26,6 +26,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./create.css">
+<link rel="stylesheet" href="./wordtools.css">
+<link rel="stylesheet" href="./textimport.css">
 </head>
 <body class="page create">
 
@@ -99,13 +101,18 @@
       <span class="spinner" aria-hidden="true"></span><span id="status-text"></span>
     </p>
 
-    <div class="alt">
-      <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" hidden
+    <div class="alt alt3">
+      <button id="pastetext" class="altcard" type="button">
+        <span class="altcard-icon" data-icon="clipboard"></span>
+        <span class="altcard-text"><strong data-i18n="txOpen">Dán văn bản</strong>
+          <span data-i18n="txOpenHint">Danh sách từ, Quizlet, CSV</span></span>
+      </button>
+      <input id="file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt,.apkg,.colpkg,text/csv,text/tab-separated-values,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" hidden
              aria-label="Mở file .xlsx/.csv" data-i18n-attr="aria-label:pick">
       <button id="pick" class="altcard" type="button">
         <span class="altcard-icon" data-icon="upload"></span>
         <span class="altcard-text"><strong data-i18n="pick">Mở file .xlsx/.csv</strong>
-          <span data-i18n="orDrop">hoặc kéo thả file vào trang này</span></span>
+          <span data-i18n="pickHint">.csv, .txt, .apkg hoặc kéo thả vào trang</span></span>
       </button>
       <button id="example" class="altcard" type="button">
         <span class="altcard-icon" data-icon="sparkles"></span>
@@ -164,6 +171,9 @@
 
     <p id="demo-note" class="demo-note" hidden><span data-icon="sparkles"></span><span
        data-i18n="demoNote">Đang xem file ví dụ. Chọn sheet khác ở ô phía trên, hoặc đổi sang link của bạn.</span></p>
+
+    <p id="headnote" class="demo-note" role="note" hidden><span data-icon="circle-alert"></span><span><span id="headnote-text"></span>
+       <button type="button" class="linkbtn" id="headnote-flip"></button></span></p>
 
     <p id="idnote" class="demo-note" role="note" hidden><span data-icon="circle-alert"></span><span id="idnote-text"></span></p>
 
