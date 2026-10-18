@@ -1,0 +1,125 @@
+/* Create sheet: "Dán danh sách từ" (wordpaste.js) and "Gợi ý" (suggestpanel.js).
+   Both are .donebox dialogs, so they take that look and its bottom-sheet shape on
+   a phone; what is here is their insides. */
+
+.wtbox { width: min(46rem, calc(100% - 24px)); display: flex; flex-direction: column; overflow: hidden; }
+.wtbox[open] { display: flex; }
+.wtbox .done-head { flex: none; gap: 10px; }
+.wt-body { flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; padding: 4px 20px 12px; }
+.wt-foot {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px;
+  padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-soft); background: var(--panel);
+}
+.wt-foot .btn, .wt-foot .toolbtn { min-height: 46px; border-radius: 13px; }
+.wt-foot .btn { padding: 0 20px; }
+.wt-lead { margin: 0 0 10px; }
+.wt-lead code { font-size: .9em; padding: 1px 5px; border-radius: 5px; background: var(--sunken); white-space: nowrap; }
+
+.wt-area { position: relative; }
+.wt-area textarea {
+  display: block; width: 100%; min-height: 9.5rem; padding: 12px 14px; margin: 0;
+  font: inherit; font-size: 1rem; line-height: 1.5; color: var(--ink);
+  background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: 14px; resize: vertical;
+}
+.wt-area textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.wt-pastebtn { position: absolute; right: 8px; bottom: 8px; min-height: 40px; }
+
+.wt-opts { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0 0; }
+.wt-sep > span, .wt-mapitem > span { white-space: nowrap; }
+.wt-sep, .wt-mapitem { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); font-weight: 600; }
+.wt-sep select, .wt-mapitem select, .sg-target select {
+  min-height: 40px; max-width: 14rem; padding: 0 8px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink); font: inherit; font-size: var(--t-sm);
+}
+.wt-map { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.wt-mapitem .icon { color: var(--muted); }
+.wt-check { display: flex; align-items: center; gap: 8px; font-size: var(--t-sm); min-height: 40px; }
+.wt-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.wt-opts > p { margin: 0; flex-basis: 100%; }
+
+.wt-sum { margin: 12px 0 6px; font-size: var(--t-sm); font-weight: 700; }
+.wt-preview { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+.wt-preview:empty { display: none; }
+.wt-preview > p { margin: 6px 10px; }
+.wt-table { width: 100%; border-collapse: collapse; font-size: var(--t-md); }
+.wt-table th {
+  position: sticky; top: 0; text-align: left; padding: 6px 10px; background: var(--sunken);
+  font-size: var(--t-xs); font-weight: 700; color: var(--muted); white-space: nowrap;
+}
+.wt-table td { padding: 6px 10px; border-top: 1px solid var(--line-soft); vertical-align: top; overflow-wrap: anywhere; }
+.wt-table .wt-tick { width: 36px; padding-right: 0; }
+.wt-table .wt-tick input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+.wt-table tr.off td:not(.wt-tick):not(.wt-why) { color: var(--muted); }
+.wt-table tr.dup td:not(.wt-tick):not(.wt-why) { text-decoration: line-through; }
+.wt-why { white-space: nowrap; width: 1%; }
+.wt-dup { font-size: var(--t-xs); font-weight: 600; color: var(--warn); }
+
+/* A value that came from a suggestion and is not the learner's yet. */
+.sgval { color: var(--accent); font-style: italic; }
+input.sgval { background: var(--accent-soft); border-style: dashed !important; border-color: var(--accent) !important; }
+
+/* ---- the suggestion panel ------------------------------------------------- */
+
+.sgbox .done-head #sg-progress { margin-left: auto; white-space: nowrap; }
+.sgbox .done-head strong { overflow-wrap: anywhere; }
+.sg-privacy { display: flex; gap: 10px; margin: 8px 0; line-height: 1.55; }
+.sg-privacy .icon { flex: none; margin-top: 3px; color: var(--accent); }
+.sg-loading { display: flex; align-items: center; gap: 10px; min-height: 6rem; color: var(--muted); }
+.sg-loading .spinner { display: inline-block; }
+.sg-sec { margin: 14px 0 0; padding: 0 0 14px; border-bottom: 1px solid var(--line-soft); }
+.sg-sec h3 { margin: 0 0 8px; font-size: var(--t-md); font-weight: 800; }
+.sg-choices { display: flex; flex-direction: column; gap: 6px; }
+.sg-choice {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; min-height: 44px;
+  border: 1px solid var(--line); border-radius: 12px; cursor: pointer; line-height: 1.45;
+}
+.sg-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.sg-choice input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); }
+.sg-choice > span { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; }
+.sg-pos { font-size: var(--t-xs); font-weight: 700; color: var(--muted); text-transform: lowercase; }
+.sg-vi { font-weight: 700; }
+.sg-en, .sg-vi2 { flex-basis: 100%; font-size: var(--t-sm); color: var(--muted); }
+.sg-ex { flex-basis: 100%; font-weight: 600; }
+.sg-src { font-size: 11px; color: var(--muted); opacity: .8; }
+.sg-audio audio { flex-basis: 100%; height: 34px; max-width: 100%; }
+.sg-accent { display: inline-flex; margin: 0 0 8px; }
+.sg-accent button { min-height: 40px; padding: 0 12px; }
+.sg-accent .mono { font-family: var(--mono); font-size: var(--t-sm); }
+.sg-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.sg-thumb {
+  aspect-ratio: 1; padding: 0; overflow: hidden; border-radius: 12px; border: 2px solid transparent;
+  background: var(--sunken);
+}
+.sg-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sg-thumb[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.sg-field { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--sunken); }
+.sg-fieldtop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: var(--t-sm); }
+.sg-target { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
+.sg-now { min-width: 0; overflow-wrap: anywhere; }
+.sg-fieldrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+.sg-input {
+  flex: 1 1 14rem; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 10px;
+  border: 1.5px solid var(--line-strong); font: inherit; font-size: 1rem; color: var(--ink); background: var(--panel);
+}
+.sg-fieldrow .btn, .sg-fieldrow .toolbtn { flex: none; width: auto; min-height: 44px; border-radius: 10px; }
+.sg-fieldrow .btn { padding: 0 18px; }
+.sg-pickhint { margin: 6px 0 0; }
+.sg-done { display: flex; align-items: center; gap: 8px; font-size: var(--t-sm); font-weight: 600; color: var(--ok); background: var(--ok-soft); }
+.sg-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; }
+.sg-credit { margin: 14px 0 4px; }
+
+/* Step 2's own buttons for these: beside "Thêm từ" on a phone, in the grid's foot. */
+.listpane .pasteword { margin-top: 8px; }
+.rf-suggest { flex: 0 0 auto; min-height: 48px; }
+
+@media (max-width: 39.99rem) {
+  .wtbox { max-height: 94dvh; }
+  .wt-foot { justify-content: stretch; }
+  .wt-foot > * { flex: 1 1 auto; justify-content: center; }
+  .rf-suggest span[data-i18n] {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .rf-suggest { width: 48px; padding: 0; justify-content: center; }
+}
