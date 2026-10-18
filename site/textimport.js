@@ -250,8 +250,8 @@ async function finish(edit) {
     grid = pasteGrid({ name, rows, header: state.parsed.header, language: lang() });
   }
   remember(name);
-  // The sheet's own name= is its name wherever it goes; the title only names a
-  // sheet that cannot carry one (no ID column).
+  // The grid carries name= and the deck is keyed by it; the link's title is the
+  // same name, which is what the page calls the file it makes of it.
   const hash = await encodeShare(state.sheet?.name || name, toTsv(grid));
   box.close();
   if (edit) location.assign(shareAddress(hash));
