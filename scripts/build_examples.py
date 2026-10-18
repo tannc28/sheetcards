@@ -2,8 +2,8 @@
 """Builds ``examples/sheetcards-examples.xlsx`` — the one example the docs link.
 
 Everything that points a person at an example points at that single file: the
-README, the AnkiWeb description, the add-on's dev-only *Import Test Deck*, and the
-preview site's landing page. It used to be a Google Sheet nobody working on the
+README, the AnkiWeb description, the add-on's dev-only *Import Test Deck*, and
+Sheet to Anki's example. It used to be a Google Sheet nobody working on the
 add-on could edit, which is how it came to describe a schema the add-on had
 outgrown with nothing in the repository able to notice.
 
@@ -124,7 +124,7 @@ SHEETS = {
         ["t04", "quickly", "nhanh chóng"],
         ["t05", "the bird", "con chim"],
         ["t06", "the moon", "mặt trăng"],
-        ["t07", "the mountain", "ngọn núi", "Marks are ignored, letters are not: đ is a letter and must be typed."],
+        ["t07", "the road", "con đường", "Marks are ignored, letters are not: đ is a letter and must be typed."],
         ["t08", "the river", "con sông"],
     ],
     # a declared cloze column, including a row with two deletions
@@ -204,7 +204,7 @@ SHEETS = {
         ["w15", "hanzi, hsk1", "HSK 1", "nước; quốc gia", "guó", "国", "https://upload.wikimedia.org/wikipedia/commons/8/80/%E5%9B%BD-order.gif", "你是哪国人？"],
         ["w16", "hanzi, hsk1", "HSK 1", "xe", "chē", "车", "https://upload.wikimedia.org/wikipedia/commons/b/b0/%E8%BD%A6-order.gif", "我的车坏了。"],
         ["w17", "hanzi, hsk2", "HSK 2", "núi", "shān", "山", "https://upload.wikimedia.org/wikipedia/commons/1/14/%E5%B1%B1-order.gif", "山上有雪。"],
-        ["w18", "hanzi, hsk2", "HSK 2", "mặt trời; ngày", "rì", "日", "https://upload.wikimedia.org/wikipedia/commons/f/f6/%E6%97%A5-order.gif", "今日很热。"],
+        ["w18", "hanzi, hsk2", "HSK 2", "mặt trời; ngày", "rì", "日", "https://upload.wikimedia.org/wikipedia/commons/f/f6/%E6%97%A5-order.gif", "明天是我的生日。"],
         ["w19", "hanzi, hsk2", "HSK 2", "lửa", "huǒ", "火", "https://upload.wikimedia.org/wikipedia/commons/c/c5/%E7%81%AB-order.gif", "火车快到了。"],
         ["w20", "hanzi, hsk2", "HSK 2", "miệng; cửa", "kǒu", "口", "https://upload.wikimedia.org/wikipedia/commons/3/3c/%E5%8F%A3-order.gif", "门口有人在等。"],
         ["w21", "hanzi, hsk2", "HSK 2", "tay", "shǒu", "手", "https://upload.wikimedia.org/wikipedia/commons/a/a1/%E6%89%8B-order.gif", "请举手。"],
@@ -255,8 +255,8 @@ SHEETS = {
     # a whole-card palette, and a deck filed three levels deep: English vocabulary
     # by CEFR level and word class, in the colours of the season the theme is named
     # after. Nothing here is the end of anything — it is the sheet that demonstrates
-    # `theme=` and a three-level `SUBDECK`, and the widest one, which is why the
-    # preview site opens on it.
+    # `theme=` and a three-level `SUBDECK`, and the widest one, which is why Sheet
+    # to Anki's example opens on it.
     "15 Theme + subdeck (màu, tầng)": [
         ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Word", "Phonetic", "Meaning", "Example"],
         ["#config theme=sakura", "", "", "", "", "size=44; bold; tts=en_US; sort", "side=back; size=20; color=accent", "side=back; size=22", "side=back; size=16; color=muted; italic; tts=en_US; speed=0.85"],
@@ -358,7 +358,7 @@ SHEETS = {
         ["#config", "rtl; size=44; font=serif; sort", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=14; color=muted; hint"],
         ["b01", "مرحبا", "marḥaban", "xin chào", "The everyday greeting, usable at any hour."],
         ["b02", "كتاب", "kitāb", "quyển sách", "Same root as maktaba, a library or bookshop."],
-        ["b03", "ماء", "māʼ", "nước", "The last letter is a hamza, written on a seat here."],
+        ["b03", "ماء", "māʼ", "nước", "The last letter is a hamza, standing alone on the line."],
         ["b04", "بيت", "bayt", "ngôi nhà", "Also a line of verse — a house of poetry."],
         ["b05", "مدرسة", "madrasa", "trường học", "Literally a place of study."],
         ["b06", "شكرا", "shukran", "cảm ơn", "Answered with ʿafwan, you are welcome."],
