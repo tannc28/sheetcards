@@ -37,6 +37,8 @@ import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./user
 import { deckKey, fileIdentity, fileStem, lastShape, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
 import { detectDevice } from "./devices.js";
 import { warningText } from "./sheetwarnings.js";
+import { mountWordPaste } from "./wordpaste.js";
+import { mountSuggest } from "./suggestpanel.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -3056,6 +3058,73 @@ $("#rf-del").addEventListener("click", () => {
 });
 
 $("#addword").addEventListener("click", addWord);
+
+// ---- a pasted word list, and suggestions (wordpaste.js, suggestpanel.js) ---
+//
+// Both dialogs are modules of their own; this is the whole of what they may do
+// to the sheet, each change one undo step and saved like any other.
+
+function showWord(k) {
+  ui.row = Math.max(0, Math.min(k, sheet.rows.length - 1));
+  if ($("#rowform").open) return openForm(ui.row);
+  if (WIDE.matches) {
+    select(ui.row + firstWordRow, 0);
+    reveal(ui.row + firstWordRow, 0);
+  } else {
+    paintList();
+    $(`#wordlist [data-row="${ui.row}"]`)?.scrollIntoView({ block: "center" });
+    drawCard();
+  }
+}
+
+function afterWordTool() {
+  afterShape();
+  if ($("#rowform").open) openForm(ui.row);
+}
+
+const wordTools = {
+  sheet: () => sheet,
+  toast,
+  canSuggest: () => suggestPanel.canSuggest(),
+  suggest: (rows) => suggestPanel.open(rows),
+  addWords(rows) {
+    mark();
+    // The blank word a new sheet starts with is filled, not left above the list.
+    while (sheet.rows.length && blankRow(sheet.rows[sheet.rows.length - 1])) sheet.rows.pop();
+    const first = sheet.rows.length;
+    for (const values of rows) sheet.rows.push(newRow(values));
+    ui.fresh = null;
+    afterShape();
+    showWord(first);
+    return first;
+  },
+  setCell(k, c, value) {
+    mark();
+    writeCell(k + firstWordRow, c, value);
+    afterWordTool();
+  },
+  addColumn(name, cell) {
+    addColumn(sheet.columns.length, name);
+    sheet.columns[sheet.columns.length - 1].cell = cell;
+    afterWordTool();
+    return sheet.columns.length - 1;
+  },
+  showRow: (k) => k >= 0 && showWord(k),
+};
+const wordPaste = mountWordPaste(wordTools);
+const suggestPanel = mountSuggest(wordTools);
+
+$("#pastelist").addEventListener("click", () => wordPaste.open());
+$("#pastelist-m").addEventListener("click", () => wordPaste.open());
+$("#rf-suggest").addEventListener("click", () => suggestPanel.open([ui.row]));
+$("#suggestrows").addEventListener("click", () => {
+  const box = bounds();
+  const rows = [];
+  if (box && box.r2 >= firstWordRow) {
+    for (let r = Math.max(box.r1, firstWordRow); r <= box.r2; r++) rows.push(r - firstWordRow);
+  }
+  suggestPanel.open(rows.length ? rows : [ui.row]);
+});
 
 // ---- the grid's own buttons ------------------------------------------------
 

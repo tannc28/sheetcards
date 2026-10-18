@@ -673,6 +673,9 @@ def build_pages(out):
         if item.name in redirects:
             sys.exit(f"site/{item.name} is a page and an old address at once")
         shutil.copy2(item, out / item.name)
+    # The one folder that ships: libraries a page imports on demand (pinyin-pro,
+    # es-hangul), each pinned by its file name, with its licence beside it.
+    shutil.copytree(SITE / "vendor", out / "vendor")
     for old, new in redirects.items():
         page = redirect_page(_relative(old, new), PAGE_TITLES.get(new, "SheetCards"))
         (out / old).write_text(page, encoding="utf-8")

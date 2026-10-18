@@ -118,3 +118,55 @@ trên máy tính bấm Lưu file .csv**. Trang ghi *Chưa lưu… mới là nhá
   chat cắt bớt, khi đó hãy gửi file. **Trên điện thoại, nút này là Lưu link
   sheet và là cách lưu chính**: giữ link (gửi cho chính bạn), lần sau mở link là
   thêm từ tiếp được. Trên máy tính, cách lưu chính là file `.csv`.
+
+### Dán danh sách từ
+
+Ở bước ② **Thêm thẻ** có nút **Dán danh sách từ** (trên điện thoại nằm trên danh
+sách từ, trên máy tính dưới spreadsheet). Dán vào mỗi dòng một từ, có thể kèm nghĩa:
+`apple - quả táo`, `apple ; quả táo`, `apple: quả táo`, `apple = quả táo`, hoặc
+hai cột copy từ Excel hay Google Sheets. Dấu tách được tự nhận (đổi được), dấu
+đầu dòng của app ghi chú như `- `, `• `, `1. ` được bỏ đi, và gạch nối trong
+một từ như `well-known` không bị tách.
+
+Bảng xem trước cho thấy từng dòng sẽ vào cột nào: phần đầu vào cột từ, phần sau
+vào cột nghĩa; đổi được cho từng phần. **Từ trùng** (lặp trong danh sách, hoặc
+đã có trong sheet, không phân biệt hoa thường) bị gạch đi và bỏ ra, trừ khi bạn
+tick lại. Với sheet tiếng Trung hoặc tiếng Hàn (đọc từ `tts=` của cột từ) có
+cột Phiên âm, pinyin hoặc romanization được điền vào ô còn trống. Đây là gợi ý
+tính trên máy bạn, nên xem lại; tiếng Nhật chưa được điền. **Thêm N từ** thêm
+các từ đó. Với sheet lấy cột đầu làm khoá, một từ trùng mà bạn vẫn tick lại được
+giữ thành `từ (2)`; với sheet có cột `ID`, các từ mới nhận ID nối tiếp.
+
+### Gợi ý
+
+Nút **Gợi ý** (trong form một từ trên điện thoại, dưới spreadsheet cho các dòng
+đang chọn trên máy tính, hoặc *Gợi ý cho N từ* khi dán danh sách) tra từ ở các
+nguồn mở rồi đưa ra lựa chọn cho từng cột có trong sheet:
+
+- **Nghĩa**: tối đa 5 nghĩa từ Wiktionary, mỗi nghĩa có từ loại, nghĩa tiếng Anh
+  và nghĩa tiếng Việt khi en.wiktionary hoặc vi.wiktionary có.
+- **IPA** giọng US hoặc UK, từ en.wiktionary.
+- **Câu ví dụ** từ Tatoeba kèm bản dịch tiếng Việt. Bản dịch do người dùng đóng
+  góp, nên đọc lại trước khi dùng.
+- **File phát âm** từ Wikimedia Commons, nếu sheet có cột `audio`.
+- **Ảnh** từ Wikimedia Commons, nếu sheet có cột `image`. Ô lưu địa chỉ
+  `Special:FilePath/…` giống file ví dụ.
+
+Không có gì được chọn sẵn. Bạn chọn một nghĩa, một câu, một ảnh; gợi ý hiện
+cạnh giá trị đang có của ô, được đánh dấu cho tới khi bạn bấm **Dùng**, sửa,
+hoặc **Bỏ**. Ô bạn đã tự gõ chỉ bị thay khi bạn bấm **Thay**. Với tiếng Trung,
+Nhật, Hàn chỉ có nghĩa tiếng Anh từ Wiktionary cùng pinyin hoặc romanization,
+chưa có nghĩa tiếng Việt.
+
+**Quyền riêng tư:** lần đầu dùng, trang hỏi trước khi gửi. Gợi ý gửi từng từ tới
+wikimedia.org (Wiktionary, Commons) và tatoeba.org, không gửi gì khác trong
+sheet. Kết quả được lưu trong trình duyệt để lần sau không phải tra lại.
+
+**Nguồn:** khi bạn dùng một gợi ý, nguồn của nó được ghi vào cột Note hoặc
+Nguồn của từ đó (nếu cột Note đã có chữ bạn viết, hoặc sheet không có hai cột
+này, trang thêm một cột *Nguồn* với `side=hide`, không hiện trên card, xoá được).
+Giấy phép: Wiktionary [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/),
+Tatoeba [CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/), mỗi
+file trên Commons theo tác giả và giấy phép riêng (ghi kèm tên file). Pinyin
+dùng thư viện pinyin-pro, romanization tiếng Hàn dùng es-hangul (cả hai MIT),
+tải về trình duyệt chỉ khi cần.

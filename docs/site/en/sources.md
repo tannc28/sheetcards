@@ -126,3 +126,63 @@ browser* until you do. There are three ways out:
   button is Save sheet link, and it is the main save**: keep the link (send it to
   yourself) and open it next time to add words. On a computer the main save is
   the `.csv`.
+
+### Paste a word list
+
+Step ② **Add cards** has a **Paste a word list** button (above the list of words on
+a phone, under the spreadsheet on a computer). Paste one word per line, with its meaning
+if you like: `apple - quả táo`, `apple ; quả táo`, `apple: quả táo`,
+`apple = quả táo`, or two columns copied from Excel or Google Sheets. The
+separator is detected (you can change it), a notes app's bullets such as `- `,
+`• `, `1. ` are dropped, and a hyphen inside a word such as `well-known` is not
+split.
+
+The preview shows which column each part goes to: the first part into the word
+column, the second into the meaning column; each can be changed. **Duplicates**
+(repeated in the list, or already in the sheet, ignoring case) are struck
+through and left out unless you tick them again. For a Chinese or Korean sheet
+(read from the word column's `tts=`) with a Phiên âm column, pinyin or the
+romanisation is filled into empty cells. It is a suggestion worked out on your
+device, so check it; Japanese is not filled in yet. **Add N words** adds them.
+On a sheet keyed by its first column, a word you tick back in despite being a
+duplicate is kept as `word (2)`; on a sheet with an `ID` column the new words
+get IDs that carry on from the last one.
+
+### Suggest
+
+The **Suggest** button (in a word's form on a phone, under the spreadsheet for
+the selected rows on a computer, or *Suggest for N words* when pasting a list)
+looks the word up in open sources and offers a choice for each column the sheet
+has:
+
+- **Meaning**: up to 5 senses from Wiktionary, each with its part of speech, an
+  English gloss and a Vietnamese one where en.wiktionary or vi.wiktionary has it.
+- **IPA** in a US or UK accent, from en.wiktionary.
+- **Example sentences** from Tatoeba with a Vietnamese translation. The
+  translations are written by volunteers, so read one before you use it.
+- **Pronunciation audio** from Wikimedia Commons, if the sheet has an `audio`
+  column.
+- **Pictures** from Wikimedia Commons, if the sheet has an `image` column. The
+  cell stores a `Special:FilePath/…` address, as the example workbook does.
+
+Nothing is picked for you. You choose a sense, a sentence, a picture; the
+suggestion appears beside the cell's current value and stays marked until you
+press **Use**, edit it, or press **Skip**. A cell you typed yourself is only
+replaced when you press **Replace**. For Chinese, Japanese and Korean there are
+only English meanings from Wiktionary plus pinyin or romanisation, no
+Vietnamese meanings yet.
+
+**Privacy:** the first time, the page asks before sending anything. Suggestions
+send each word to wikimedia.org (Wiktionary, Commons) and tatoeba.org, and
+nothing else from the sheet. Results are kept in the browser so a word is not
+looked up twice.
+
+**Sources:** when you use a suggestion, its source is written into the word's
+Note or Source column (if the Note column holds your own text, or the sheet has
+neither, the page adds a *Source* column with `side=hide`, which is not drawn on
+the card and can be deleted). Licences: Wiktionary
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), Tatoeba
+[CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/), each Commons
+file under its own author and licence (written next to the file name). Pinyin
+comes from the pinyin-pro library and Korean romanisation from es-hangul (both
+MIT), downloaded to the browser only when needed.
