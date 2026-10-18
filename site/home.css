@@ -473,9 +473,10 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .flip .face.both { transform: rotateY(180deg); }
 .scr-show {
   flex: none; height: 2.6rem; border-radius: var(--r-control);
-  background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 700;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong);
+  font-size: 13px; font-weight: 600;
 }
-.scr-show:hover { background: color-mix(in srgb, var(--ink) 85%, var(--accent)); }
+.scr-show:hover { background: var(--sunken); border-color: var(--ink); }
 
 .scr-apkg { align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .scr-file {
