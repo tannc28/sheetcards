@@ -175,6 +175,25 @@
    </div>
   </section>
 
+  <!-- Asking an AI assistant for the words. The prompt is written by home.js,
+       because it names the guide by the address this page was served from. -->
+  <section class="band" id="ai" aria-labelledby="ai-title">
+    <h2 class="section-title reveal" id="ai-title" data-i18n="aiTitle">Nhờ AI tạo bộ từ</h2>
+    <div class="aibox reveal">
+      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần trong ngoặc, rồi dán file nó trả về vào Sheet to Anki.</p>
+      <div class="ai-prompt" id="ai-prompt" contenteditable="plaintext-only" role="textbox" aria-multiline="true"
+           spellcheck="false" aria-label="Câu lệnh cho AI (sửa được ngay ở đây)" data-i18n-attr="aria-label:aiPromptLabel"></div>
+      <div class="ai-actions">
+        <button class="btn" id="ai-copy" type="button"><span data-icon="copy"></span><span data-i18n="aiCopy">Copy</span></button>
+        <a class="btn-quiet ai-open" id="ai-chatgpt" href="https://chatgpt.com/" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenChatgpt">Mở ChatGPT</span></a>
+        <a class="btn-quiet ai-open" id="ai-claude" href="https://claude.ai/new" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenClaude">Mở Claude</span></a>
+        <a class="btn-quiet ai-open" id="ai-gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenGemini">Mở Gemini</span></a>
+        <span class="ai-status small muted" id="ai-status" aria-live="polite"></span>
+      </div>
+      <p class="fine"><a href="./docs/ai/" data-doc="ai/" data-i18n="aiMore">Thêm câu lệnh mẫu, và cách làm khi AI không mở được link →</a></p>
+    </div>
+  </section>
+
   <!-- How it works, in three pictures. Drawn here in the site's own paper and
        violet ink (home.css, .ill), so they follow the theme like the text does. -->
   <section class="band" id="how" aria-labelledby="how-title">

@@ -1505,6 +1505,26 @@ const STRINGS = {
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
+  aiTitle: { en: "Ask AI to make your word set", vi: "Nhờ AI tạo bộ từ" },
+  aiLead: {
+    en: "Copy this into ChatGPT, Gemini or Claude, change the parts in brackets, then put the file it gives back into Sheet to Anki.",
+    vi: "Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần trong ngoặc, rồi dán file nó trả về vào Sheet to Anki.",
+  },
+  aiPrompt: {
+    en: (url) =>
+      `Read the guide at ${url}, then make me a CSV file: <span class="ai-slot">[30]</span> <span class="ai-slot">[English]</span> words about <span class="ai-slot">[travel]</span>, level <span class="ai-slot">[B1]</span>, meanings in <span class="ai-slot">[Vietnamese]</span>, with an example sentence. Set name: <span class="ai-slot">[Travel B1]</span>.`,
+    vi: (url) =>
+      `Đọc hướng dẫn tại ${url} rồi tạo cho tôi file CSV: <span class="ai-slot">[30]</span> từ <span class="ai-slot">[tiếng Anh]</span> chủ đề <span class="ai-slot">[du lịch]</span>, trình độ <span class="ai-slot">[B1]</span>, nghĩa tiếng Việt, có câu ví dụ. Tên bộ: <span class="ai-slot">[Du lịch B1]</span>.`,
+  },
+  aiPromptLabel: { en: "Prompt for the AI (you can edit it here)", vi: "Câu lệnh cho AI (sửa được ngay ở đây)" },
+  aiCopy: { en: "Copy", vi: "Copy" },
+  aiCopied: { en: "Copied.", vi: "Đã copy." },
+  aiCopiedPaste: { en: "Copied. Paste it into the chat.", vi: "Đã copy. Dán vào khung chat." },
+  aiCopyFailed: { en: "Could not copy: select the prompt and copy it by hand.", vi: "Không copy được: chọn câu lệnh và copy bằng tay." },
+  aiOpenChatgpt: { en: "Open ChatGPT", vi: "Mở ChatGPT" },
+  aiOpenClaude: { en: "Open Claude", vi: "Mở Claude" },
+  aiOpenGemini: { en: "Open Gemini", vi: "Mở Gemini" },
+  aiMore: { en: "More prompts, and what to do if the AI cannot open the link →", vi: "Thêm câu lệnh mẫu, và cách làm khi AI không mở được link →" },
   doorNewTitle: {
     en: "No sheet yet? Write one on the web",
     vi: "Chưa có sheet? Soạn trên web",

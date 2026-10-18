@@ -30,7 +30,8 @@ import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
 import { CARDS, HANZI_WRITER, THEME_SWATCHES } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
-import { site } from "./paths.js";
+import { ROOT, site } from "./paths.js";
+import { chatLinks, promptFor } from "./aiprompt.js";
 import { prefetchPython } from "./pyodide.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -464,6 +465,46 @@ addEventListener("drop", (e) => {
   $("#q-drop").hidden = true;
   sendFile(e.dataTransfer.files[0]);
 });
+
+// --- asking an AI for the words ---------------------------------------------
+
+// The prompt names the guide by this site's own address, so it is right on any
+// domain the site moves to. It is editable in place: ChatGPT sends a `?q=`
+// prompt as soon as it opens, so the slots are best filled in here first.
+const aiPrompt = $("#ai-prompt");
+
+function paintAiPrompt() {
+  aiPrompt.innerHTML = promptFor((url) => t("aiPrompt", url), ROOT).html;
+}
+
+const aiText = () => aiPrompt.textContent.replace(/\s+/g, " ").trim();
+
+async function copyAiPrompt(said) {
+  const status = $("#ai-status");
+  try {
+    await navigator.clipboard.writeText(aiText());
+    status.textContent = t(said);
+    return true;
+  } catch {
+    status.textContent = t("aiCopyFailed");
+    getSelection()?.selectAllChildren(aiPrompt);
+    return false;
+  }
+}
+
+$("#ai-copy").addEventListener("click", () => copyAiPrompt("aiCopied"));
+for (const id of ["chatgpt", "claude", "gemini"]) {
+  $(`#ai-${id}`).addEventListener("click", (e) => {
+    // Copied first, while this page still has the focus a clipboard write
+    // needs, for whichever assistant does not take the prompt; then opened from
+    // the click itself, so no popup blocker stands in the way.
+    e.preventDefault();
+    copyAiPrompt(id === "gemini" ? "aiCopiedPaste" : "aiCopied");
+    open(chatLinks(aiText())[id], "_blank", "noopener");
+  });
+}
+paintAiPrompt();
+onRepaint((what) => what === "lang" && paintAiPrompt());
 
 // --- sections rising into view ----------------------------------------------
 
