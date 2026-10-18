@@ -42,9 +42,13 @@ def _run(expr):
 def test_the_prompt_teaches_the_format_with_its_slots_marked(key, lang):
     got = _run(
         f"(i.setLang({json.dumps(lang)}, false),"
-        f" m.promptFor(() => i.t({json.dumps(key)}), 'https://x.example/'))"
+        f" m.promptFor((u) => i.t({json.dumps(key)}, u), 'https://x.example/deep/'))"
     )
     assert "<" not in got["text"] and "&amp;" not in got["text"]
+    # The full guide, built from the root it was given, as the prompt's last words,
+    # for an assistant that can open it; the rules above it are for one that cannot.
+    assert got["text"].rstrip(")").endswith("https://x.example/deep/ai.md")
+    assert got["text"].count("https://x.example/deep/ai.md") == 1
     assert "#config name=" in got["text"]
     # The slots the reader is asked to change are marked, and survive as text.
     slots = re.findall(r'<span class="ai-slot">([^<]+)</span>', got["html"])

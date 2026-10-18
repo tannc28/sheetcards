@@ -167,7 +167,9 @@ class TestTheLandingPage:
     def test_a_foreign_fragment_goes_to_sheet_to_anki(self):
         assert _run(self._text(), "", "", "#example") == "create/#example"
 
-    @pytest.mark.parametrize("own", ["#main", "#how", "#features", "#soon", "#addon"])
+    @pytest.mark.parametrize(
+        "own", ["#main", "#ai", "#how", "#features", "#soon", "#addon"]
+    )
     def test_its_own_sections_stay(self, own):
         assert _run(self._text(), "", "", own) is None
 
@@ -177,3 +179,41 @@ class TestTheLandingPage:
         listed = re.search(r"var own = \[(.*?)\]", text).group(1)
         for name in re.findall(r'"#([\w-]+)"', listed):
             assert f'id="{name}"' in text, name
+
+
+@pytest.mark.unit
+class TestRetiredDocsPages:
+    """A docs page that is gone forwards to what took its job: the AI guide's
+    page (*Tạo bộ từ bằng AI*) is now the landing page's small #ai block."""
+
+    RETIRED = BUILD.retired_doc_addresses()
+
+    def test_every_address_of_the_ai_page_is_kept(self):
+        for old in (
+            "docs/ai/index.html",
+            "docs/ai.html",
+            "docs/en/ai/index.html",
+            "docs/en/ai.html",
+        ):
+            assert self.RETIRED.get(old) == "#ai", old
+
+    @pytest.mark.parametrize("old", sorted(RETIRED))
+    def test_it_lands_on_the_landing_block(self, site, old):
+        text = (site / old).read_text(encoding="utf-8")
+        # Landing exactly there: a query would send the reader on to /create/,
+        # and the old page's own fragments mean nothing on the landing page.
+        assert _run(text, old) == "#ai"
+        assert _run(text, old, "?x=1", "#cac-buoc") == "#ai"
+        refresh = re.search(r'http-equiv="refresh" content="0; url=([^"]+)"', text)
+        assert refresh and refresh.group(1).endswith("#ai"), old
+
+    def test_the_landing_keeps_the_block(self):
+        text = (SITE / "index.html").read_text(encoding="utf-8")
+        assert 'id="ai"' in text
+        assert _run(text, "", "", "#ai") is None
+
+    def test_no_page_links_the_old_docs_page(self):
+        for page in SITE.glob("*.html"):
+            text = page.read_text(encoding="utf-8")
+            assert 'data-doc="ai/"' not in text, page.name
+            assert "docs/ai/" not in text, page.name

@@ -10,7 +10,7 @@
   // were always asking for Sheet to Anki, so they are sent on to it before anything
   // is drawn. The fragments this page has of its own stay here.
   (function () {
-    var own = ["#main", "#how", "#features", "#soon", "#addon"];
+    var own = ["#main", "#ai", "#how", "#features", "#soon", "#addon"];
     if (location.search || (location.hash && own.indexOf(location.hash) < 0)) {
       location.replace("./create/" + location.search + location.hash);
     }
@@ -116,6 +116,34 @@
       </div>
     </div>
 
+    <!-- Asking an AI assistant for the words, as text (one code block) or as a
+         table (or CSV): a small panel under the doors, not a section of its own.
+         It sits outside .hero-text so a wide screen can put it under the text
+         without moving the demo (home.css). home.js writes the prompt from the
+         switch; /ai.md, which the prompt names, is the long guide for the AI. -->
+    <section class="aiquick" id="ai" aria-labelledby="ai-title">
+      <div class="ai-head">
+        <h2 class="ai-title" id="ai-title"><span data-icon="sparkles"></span><span data-i18n="aiTitle">Nhờ AI tạo bộ từ</span></h2>
+        <div class="ai-forms" role="group" aria-label="Kiểu câu trả lời" data-i18n-attr="aria-label:aiFormLabel">
+          <button type="button" class="ai-form" data-form="text" aria-pressed="true" data-i18n="aiFormText">Văn bản</button>
+          <button type="button" class="ai-form" data-form="table" aria-pressed="false" data-i18n="aiFormTable">Bảng</button>
+        </div>
+      </div>
+      <p class="ai-lead" data-i18n="aiLead">Sửa phần tô màu, gửi cho AI, rồi dán câu trả lời vào Dán văn bản.</p>
+      <div class="ai-prompt" id="ai-prompt" contenteditable="plaintext-only" role="textbox" aria-multiline="true"
+           spellcheck="false" aria-label="Câu lệnh cho AI (sửa được ngay ở đây)" data-i18n-attr="aria-label:aiPromptLabel"></div>
+      <div class="ai-actions">
+        <button class="btn" id="ai-copy" type="button"><span data-icon="copy"></span><span data-i18n="aiCopy">Copy</span></button>
+        <a class="btn-quiet ai-open" id="ai-chatgpt" href="https://chatgpt.com/" target="_blank" rel="noopener"
+           title="Mở ChatGPT" data-i18n-attr="title:aiOpenChatgpt" translate="no">ChatGPT</a>
+        <a class="btn-quiet ai-open" id="ai-claude" href="https://claude.ai/new" target="_blank" rel="noopener"
+           title="Mở Claude" data-i18n-attr="title:aiOpenClaude" translate="no">Claude</a>
+        <a class="btn-quiet ai-open" id="ai-gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener"
+           title="Mở Gemini" data-i18n-attr="title:aiOpenGemini" translate="no">Gemini</a>
+        <span class="ai-status small muted" id="ai-status" aria-live="polite"></span>
+      </div>
+    </section>
+
     <!-- The page's one claim, shown rather than said: a row of the example
          workbook, the card it becomes on a phone, and the file Anki opens. The
          cards are the add-on's real templates, rendered at build time by
@@ -214,29 +242,6 @@
       </div>
     </figure>
    </div>
-  </section>
-
-  <!-- Asking an AI assistant for the words, as text (one code block) or as a
-       table (or CSV). The prompt is written by home.js from the switch. -->
-  <section class="band" id="ai" aria-labelledby="ai-title">
-    <h2 class="section-title reveal" id="ai-title" data-i18n="aiTitle">Nhờ AI tạo bộ từ</h2>
-    <div class="aibox reveal">
-      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào trang Tạo flashcard (hoặc mở file nó gửi).</p>
-      <div class="ai-forms" role="group" aria-label="Kiểu câu trả lời" data-i18n-attr="aria-label:aiFormLabel">
-        <button type="button" class="ai-form" data-form="text" aria-pressed="true" data-i18n="aiFormText">Văn bản</button>
-        <button type="button" class="ai-form" data-form="table" aria-pressed="false" data-i18n="aiFormTable">Bảng</button>
-      </div>
-      <div class="ai-prompt" id="ai-prompt" contenteditable="plaintext-only" role="textbox" aria-multiline="true"
-           spellcheck="false" aria-label="Câu lệnh cho AI (sửa được ngay ở đây)" data-i18n-attr="aria-label:aiPromptLabel"></div>
-      <div class="ai-actions">
-        <button class="btn" id="ai-copy" type="button"><span data-icon="copy"></span><span data-i18n="aiCopy">Copy</span></button>
-        <a class="btn-quiet ai-open" id="ai-chatgpt" href="https://chatgpt.com/" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenChatgpt">Mở ChatGPT</span></a>
-        <a class="btn-quiet ai-open" id="ai-claude" href="https://claude.ai/new" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenClaude">Mở Claude</span></a>
-        <a class="btn-quiet ai-open" id="ai-gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenGemini">Mở Gemini</span></a>
-        <span class="ai-status small muted" id="ai-status" aria-live="polite"></span>
-      </div>
-      <p class="fine"><a href="./docs/ai/" data-doc="ai/" data-i18n="aiMore">Thêm câu lệnh mẫu, và card cầu kỳ hơn (ảnh, gõ đáp án, cloze) →</a></p>
-    </div>
   </section>
 
   <!-- How it works, in three pictures. Drawn here in the site's own paper and

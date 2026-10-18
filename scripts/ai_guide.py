@@ -677,7 +677,6 @@ def llms_txt(site):
         "## Docs\n\n"
         f"- [Settings row]({site}docs/en/settings-row/)\n"
         f"- [Card types]({site}docs/en/card-types/)\n"
-        f"- [Make a word set with AI]({site}docs/en/ai/)\n"
     )
 
 

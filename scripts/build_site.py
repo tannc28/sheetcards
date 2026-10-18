@@ -118,7 +118,7 @@ STARTER = {
 # information — the build refuses a page missing from this list, or from either
 # language, and a name with no file.
 DOC_GROUPS = [
-    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples", "import", "ai"]),
+    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples", "import"]),
     (
         {"vi": "Viết sheet", "en": "Write a sheet"},
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
@@ -134,6 +134,13 @@ PAGES = {"create.html": "create", "sheet.html": "sheet", "contact.html": "contac
 # Addresses that were pages once and forward to one now, as {old: new}, each
 # relative to the site's root. A moved page's own old address is added to these.
 REDIRECTS = {"preview.html": "create/", "editor.html": "sheet/"}
+
+# Docs pages that are gone, and the place on the site that took their job. Each
+# keeps its two old addresses (docs/<name>/ and docs/<name>.html, in every
+# language), forwarding there. The target carries a fragment of its own, so the
+# visitor's query and fragment are dropped: on the landing page a query would
+# send them on to Sheet to Anki.
+RETIRED_DOCS = {"ai": "#ai"}
 
 # What each forwarding page calls the page it forwards to.
 PAGE_TITLES = {
@@ -731,11 +738,19 @@ def relocate(text, depth):
     return _RELATIVE.sub(swap, text)
 
 
-def redirect_page(to, title):
-    """The page left at an old address, forwarding to ``to`` (relative to it)."""
+def redirect_page(to, title, carry=True):
+    """The page left at an old address, forwarding to ``to`` (relative to it).
+
+    ``carry`` sends the visitor's query and fragment along; off, they land on
+    ``to`` exactly, which is what a target with a fragment of its own wants.
+    """
     template = (SITE / "_redirect.html").read_text(encoding="utf-8")
     # The template's opening comment is about the template, not the page.
     template = re.sub(r"<!--.*?-->\n", "", template, count=1, flags=re.S)
+    if not carry:
+        template = template.replace(
+            '"%%TO%%" + location.search + location.hash', '"%%TO%%"'
+        )
     return template.replace("%%TO%%", html.escape(to, quote=True)).replace(
         "%%TITLE%%", html.escape(title)
     )
@@ -1446,7 +1461,32 @@ def _pager(names, index, titles, words):
 def build_docs(out):
     """docs/site/**.md → out/docs/**.html, one tree per language."""
     template = (SITE / "_docs.html").read_text(encoding="utf-8")
-    return sum(build_docs_in(out, lang, template) for lang in DOC_LANGS)
+    pages = sum(build_docs_in(out, lang, template) for lang in DOC_LANGS)
+    build_retired_docs(out)
+    return pages
+
+
+def retired_doc_addresses():
+    """{old address: where it now goes, from the site's root}, for RETIRED_DOCS."""
+    found = {}
+    for folder in DOC_LANGS.values():
+        base = f"docs/{folder}/" if folder else "docs/"
+        for name, to in RETIRED_DOCS.items():
+            found[f"{base}{name}/index.html"] = to
+            found[f"{base}{name}.html"] = to
+    return found
+
+
+def build_retired_docs(out):
+    """The old addresses of the docs pages in RETIRED_DOCS, forwarding on."""
+    for name in RETIRED_DOCS:
+        if any(name in names for _, names in DOC_GROUPS):
+            sys.exit(f"docs/{name} is a page and a retired one at once")
+    for old, to in retired_doc_addresses().items():
+        path = out / old
+        path.parent.mkdir(parents=True, exist_ok=True)
+        page = redirect_page(_relative(old, to), "SheetCards", carry=False)
+        path.write_text(page, encoding="utf-8")
 
 
 def build_docs_in(out, lang, template):

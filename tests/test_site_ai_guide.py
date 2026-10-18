@@ -278,11 +278,14 @@ def test_the_site_url_comes_from_one_setting(monkeypatch, tmp_path):
     assert "tannc28" not in guide
 
 
-def test_the_docs_page_exists_in_both_languages_and_names_the_guide():
+def test_there_is_no_docs_page_for_it():
+    """The reader's side is the landing page's #ai block; /ai.md is for the AI."""
     build = _builder()
-    assert any("ai" in names for _, names in build.DOC_GROUPS)
+    assert not any("ai" in names for _, names in build.DOC_GROUPS)
     for folder in ("", "en"):
-        page = (REPO / "docs" / "site" / folder / "ai.md").read_text(encoding="utf-8")
-        # Never the domain itself: the build writes it, page.js repaints it.
-        assert "%%SITE%%ai.md" in page
-        assert "tannc28.github.io" not in page
+        assert not (REPO / "docs" / "site" / folder / "ai.md").exists()
+
+
+def test_llms_txt_does_not_link_the_removed_docs_page(built):
+    text = (built.out / "llms.txt").read_text(encoding="utf-8")
+    assert "docs/en/ai/" not in text and "docs/ai/" not in text

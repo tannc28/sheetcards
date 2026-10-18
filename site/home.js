@@ -534,7 +534,7 @@ const aiPrompt = $("#ai-prompt");
 let aiForm = "text";
 
 function paintAiPrompt() {
-  aiPrompt.innerHTML = promptFor(() => t(aiForm === "table" ? "aiPromptTable" : "aiPrompt"), ROOT).html;
+  aiPrompt.innerHTML = promptFor((url) => t(aiForm === "table" ? "aiPromptTable" : "aiPrompt", url), ROOT).html;
   for (const b of document.querySelectorAll(".ai-form")) b.setAttribute("aria-pressed", String(b.dataset.form === aiForm));
 }
 
