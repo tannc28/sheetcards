@@ -37,7 +37,7 @@ when it publishes the whole sheet, but the **Share → Anyone with the link →
 Viewer** link is the one to use: it is always current and keeps each tab apart.
 
 **"The sheet has no content columns"**
-The sheet only has `ID`, `SYNC`, `TAGS` or `SUBDECK` columns. Add at least one
+The sheet only has `ID`, `SYNC` or `TAGS` columns. Add at least one
 column of your own.
 
 **"Duplicate IDs in the spreadsheet"**

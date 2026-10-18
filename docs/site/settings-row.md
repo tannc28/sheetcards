@@ -27,11 +27,11 @@ thường, nên sheet không cần settings thì không bị ảnh hưởng gì.
   Ghi `bold=false` (hoặc `no`, `0`, `off`) nếu muốn nói rõ là tắt.
 - **Ô trống nghĩa là "dùng mặc định"**, nên bạn chỉ cần ghi những gì muốn đổi.
 - **Settings cho cả sheet nằm ngay trong ô `#config`**, sau dấu hiệu và một dấu
-  cách: `#config align=left; speed=0.9; reverse`.
+  cách: `#config name=Từ vựng HSK 1; theme=paper; reverse`.
 - `#CONFIG` cũng được. `#config;align=left` cũng được, nhưng một giá trị như
   `#configuration` thì không phải dấu hiệu, nên dòng đó sẽ là một card.
-- Chỉ các cột của bạn mới đọc ô của mình. Mọi thứ trong ô `SYNC`, `TAGS` hay
-  `SUBDECK` của settings row đều bị bỏ qua.
+- Chỉ các cột của bạn mới đọc ô của mình. Mọi thứ trong ô `SYNC` hay `TAGS` của
+  settings row đều bị bỏ qua.
 - Settings row không bao giờ là một card và không được tính vào tổng số dòng khi
   sync.
 
@@ -41,34 +41,21 @@ một cảnh báo nêu tên cột, và chỉ setting đó bị bỏ đi. Phần 
 áp dụng. Bạn thấy các cảnh báo trong [Sheet to Anki](../create/), trong Tạo Sheet, và
 trong Anki ở **Tools → SheetCards → Card Layout…**.
 
-## Key cho từng cột
+## Key cơ bản
 
-Ghi trong ô của chính cột đó.
+Chừng này là đủ cho hầu hết các bộ flashcard. Ghi trong ô của chính cột đó.
 
 | Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
 | `side` | `front`, `back`, `hide` | Cột hiện ở mặt nào. `hide` giữ field trong Anki nhưng không hiện ở mặt nào cả. Mặc định: cột đầu tiên ở mặt trước, các cột còn lại ở mặt sau. |
 | `size` | số pixel: **6–200** cho chữ, **1–2000** cho ảnh, video hoặc ô viết chữ (`size=48` hoặc `size=48px`) | Cỡ chữ với chữ; chiều rộng tối đa với `image` hoặc `video`; cạnh của ô với `draw`. Mặc định: 40 px ở mặt trước (nhỏ hơn trên điện thoại), 18 px ở mặt sau. |
-| `color` | `muted`, `accent`, tên màu CSS (`crimson`), hoặc `#hex` | Màu chữ. `muted` và `accent` đổi theo chế độ sáng/tối của Anki và [theme](text.md#theme) của sheet. Màu cố định như `black` thì không, và sẽ biến mất ở night mode. |
-| `bold`, `italic` | switch | Chữ đậm hoặc nghiêng. |
-| `align` | `left`, `center`, `right` | Căn lề, chỉ cho cột này. |
-| `label` | chữ bất kỳ | Một nhãn nhỏ phía trên giá trị. |
-| `hint` | switch | Giấu giá trị sau một link, bấm vào mới hiện. |
-| `furigana` | switch | In cách đọc phía trên chữ. Ô phải viết dạng `日本語[にほんご]`: chữ, rồi cách đọc trong ngoặc vuông. |
-| `font` | `sc`, `tc`, `jp`, `kr`, `serif`, `sans`, `mono`, hoặc tên font bất kỳ | Kiểu chữ. Xem [Theme và chữ](text.md#font-cho-tieng-trung-nhat-va-han). |
-| `rtl` | switch | Chữ viết từ phải sang trái, cho tiếng Ả Rập, Do Thái và Ba Tư. |
-| `vertical` | switch | Chữ viết từ trên xuống, như tiếng Nhật in trong sách. |
-| `math` | switch, hoặc `math=block` | Ô là một công thức. Xem [Theme và chữ](text.md#cong-thuc-va-code). |
-| `code` | switch, hoặc `code=python` (tên ngôn ngữ bất kỳ) | Ô là source code, tô màu theo ngôn ngữ. |
+| `bold` | switch | Chữ đậm. |
+| `color` | `muted`, `accent` | Màu chữ: `muted` là màu nhạt cho chữ phụ, `accent` là màu nhấn. Cả hai đổi theo chế độ sáng/tối của Anki và [theme](text.md#theme) của sheet. Màu khác: xem [Nâng cao](#chu). |
 | `tts` | mã ngôn ngữ **đầy đủ**: `en_US`, `zh_CN`, `ja_JP` | Anki đọc to cột này. Xem [Text to speech](tts.md). |
-| `voices` | tên giọng, cách nhau bằng dấu phẩy | Giọng bạn muốn ưu tiên. Không có thì Anki dùng giọng bất kỳ của ngôn ngữ đó. |
-| `speed` | **0.5–2.0** | Tốc độ đọc cho cột này. |
-| `image`, `audio`, `video` | switch | Ô chứa một link, và card hiện ảnh, trình phát, hoặc video. Xem [Media](media.md). |
-| `cloze` | switch | Cột chứa các chỗ trống `{{c1::…}}`, và cả sheet thành sheet cloze. Xem [Các loại card](card-types.md#cloze). |
+| `image` | switch | Ô chứa link một ảnh, và card hiện ảnh đó. Xem [Media](media.md). |
 | `type` | switch, hoặc `type=nc` | Một ô ở mặt hỏi để bạn gõ đáp án. `nc` bỏ qua dấu. Xem [Các loại card](card-types.md#go-dap-an). |
-| `draw` | switch | Ô chứa một chữ Hán để bạn viết tay trên card. Xem [Các loại card](card-types.md#viet-chu-bang-tay). |
-| `subdeck` | số tầng: `subdeck=1` | Cột là tầng đó của đường dẫn deck, và không hiện trên card. Xem bên dưới. |
-| `sort` | switch | Browse của Anki liệt kê và sắp xếp note theo cột này thay vì theo `ID`. |
+| `hint` | switch | Giấu giá trị sau một link, bấm vào mới hiện. |
+| `label` | chữ bất kỳ, hoặc để trơn | Một nhãn nhỏ phía trên giá trị. `label` để trơn dùng chính tên cột làm nhãn; `label=Pinyin` ghi nhãn khác. |
 
 ## Key cho cả sheet
 
@@ -76,28 +63,94 @@ Ghi sau `#config` trong ô dấu hiệu.
 
 | Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
-| `align` | `left`, `center`, `right` | Căn lề cho cả card. `align` riêng của một cột vẫn được ưu tiên. |
-| `speed` | một con số từ 0.5 đến 2.0 | Tốc độ đọc cho mọi cột có đọc mà không tự đặt tốc độ. |
-| `reverse` | switch | Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Xem [Các loại card](card-types.md#reverse-card). |
-| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Trong Tạo Sheet bạn chọn theme ngay ở bước chọn template. Xem [Theme và chữ](text.md#theme). |
 | `name` | tên bộ flashcard, có dấu cách và tiếng Việt cũng được, tối đa 100 ký tự | Tên bộ flashcard — Anki hiện deck đúng như bạn gõ, ví dụ `Từ vựng IELTS tuần 1`, không thêm `sc_` — đồng thời là danh tính của sheet. Sheet to Anki và add-on nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một bộ. Hai sheet cùng `name` là **một** bộ: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `name` là tạo bộ mới (một deck mới trong Anki); tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
-| `next` | một ID kết thúc bằng số, như `w15` | ID tiếp theo Tạo Sheet sẽ cấp. Nhờ nó, ID của một từ đã xoá không bao giờ được cấp lại cho từ mới, vì từ mới sẽ thừa hưởng lịch sử ôn tập của từ cũ trong Anki. |
-| `shape` | một mã ngắn, như `b1f3a2c` | Mã của các cột và card template ở lần tải `.apkg` gần nhất. Tạo Sheet tự ghi; Sheet to Anki so với nó để biết lúc nào cần bật **Merge note types** + **Update notes: Always**, trên bất kỳ máy nào. Đừng sửa tay. |
+| `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Trong Tạo Sheet bạn chọn theme ngay ở bước chọn template. Xem [Theme và chữ](text.md#theme). |
 
-Tạo Sheet tự viết ba key cuối, ví dụ `#config name=Từ vựng tiếng Anh; next=w15; shape=b1f3a2c`:
-`name` là ô **Tên bộ flashcard** bạn điền khi chọn template, và Tạo Sheet hỏi lại
-trước khi đổi nó, vì tên mới là một deck mới trong Anki. `next` và `shape` không
-hiện trong bảng; Tạo Sheet tự giữ chúng.
+`name` là ô **Tên bộ flashcard** bạn điền khi chọn template trong Tạo Sheet, và
+Tạo Sheet hỏi lại trước khi đổi nó, vì tên mới là một deck mới trong Anki.
 Sheet không có `name` thì được nhận ra theo link Google Sheets, hoặc theo tên
 file (bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố ` (1)`, `-2`), và deck của nó mang
 tiền tố `sc_`. Add-on dùng `name` y như Sheet to Anki: làm tên deck và danh tính,
-nên file `.apkg` và add-on cập nhật cùng các note. `next` và `shape` thì add-on
-đọc mà không cảnh báo và không dùng tới.
+nên file `.apkg` và add-on cập nhật cùng các note.
+
+Trong ô `#config` bạn có thể thấy thêm `next=w15` và `shape=b1f3a2c`. Tạo Sheet tự
+ghi hai key này để không cấp lại ID của một từ đã xoá và để biết lúc nào cần
+**Merge note types**. Đừng sửa tay; add-on đọc chúng mà không dùng tới.
+
+## Nâng cao
+
+Các key dưới đây dành cho khi bạn cần nhiều hơn. Key cho từng cột ghi trong ô của
+cột đó; `reverse` ghi sau `#config`.
+
+### Giọng đọc
+
+| Key | Giá trị | Tác dụng |
+| :--- | :--- | :--- |
+| `voices` | tên giọng, cách nhau bằng dấu phẩy | Giọng bạn muốn ưu tiên cho cột có `tts`. Không có thì Anki dùng giọng bất kỳ của ngôn ngữ đó. |
+| `speed` | **0.5–2.0** | Tốc độ đọc cho cột này. |
+
+### Loại card
+
+| Key | Giá trị | Tác dụng |
+| :--- | :--- | :--- |
+| `cloze` | switch | Cột chứa các chỗ trống `{{c1::…}}`, và cả sheet thành sheet cloze. Xem [Các loại card](card-types.md#cloze). |
+| `reverse` | switch, ghi sau `#config` | Thêm card thứ hai hỏi mặt sau và trả lời bằng mặt trước. Xem [Các loại card](card-types.md#reverse-card). |
+| `draw` | switch | Ô chứa một chữ Hán để bạn viết tay trên card. Xem [Các loại card](card-types.md#viet-chu-bang-tay). |
+| `furigana` | switch | In cách đọc phía trên chữ. Ô phải viết dạng `日本語[にほんご]`: chữ, rồi cách đọc trong ngoặc vuông. |
+
+### Chữ
+
+| Key | Giá trị | Tác dụng |
+| :--- | :--- | :--- |
+| `italic` | switch | Chữ nghiêng. |
+| `align` | `left`, `center`, `right` | Căn lề, chỉ cho cột này. Mặc định là căn giữa. |
+| `font` | `sc`, `tc`, `jp`, `kr`, `serif`, `sans`, `mono`, hoặc tên font bất kỳ | Kiểu chữ. Cột có `tts` tiếng Trung, Nhật hoặc Hàn tự được font đúng; xem [Theme và chữ](text.md#font-cho-tieng-trung-nhat-va-han). |
+| `color` | tên màu CSS (`crimson`), hoặc `#hex` | Màu cố định. Khác với `muted`/`accent`, nó không đổi theo night mode, nên `black` sẽ biến mất trên nền tối. |
+| `code` | switch, hoặc `code=python` (tên ngôn ngữ bất kỳ) | Ô là source code, tô màu theo ngôn ngữ. Xem [Theme và chữ](text.md#cong-thuc-va-code). |
+| `math` | switch, hoặc `math=block` | Ô là một công thức. |
+
+### Media
+
+| Key | Giá trị | Tác dụng |
+| :--- | :--- | :--- |
+| `audio` | switch | Ô chứa link một file âm thanh, và card hiện trình phát. |
+| `video` | switch | Ô chứa link YouTube, Google Drive hoặc một file video, và card hiện video. Xem [Media](media.md). |
+
+### Deck
+
+| Key | Giá trị | Tác dụng |
+| :--- | :--- | :--- |
+| `subdeck` | số tầng: `subdeck=1` | Cột là tầng đó của đường dẫn deck, và không hiện trên card. Xem [bên dưới](#xep-note-vao-deck-bang-mot-cot-subdeck). |
+
+### Cột dành riêng
+
+Đây không phải key mà là tên cột ở dòng 1. Xem [Các cột](columns.md).
+
+| Cột | Tác dụng |
+| :--- | :--- |
+| `ID` | Khoá cố định của từng dòng, để note được cập nhật khi bạn sync hay import lại. Không có thì chữ ở cột đầu tiên là khoá. |
+| `TAGS` | Tag thêm cho note, cách nhau bằng dấu phẩy hoặc `;`. |
+| `SYNC` | Chỉ dòng ghi `TRUE`, `1`, `yes`, `sim`, `x` hoặc `✓` mới được sync. Không có cột này thì mọi dòng đều sync. |
+
+### Tự động, không cần key
+
+- **Hướng viết.** Mỗi ô tự theo hướng của chữ trong nó, nên tiếng Ả Rập, Do Thái
+  và Ba Tư tự viết từ phải sang trái.
+- **Thứ tự trong Browse.** Browse của Anki liệt kê và sắp xếp note theo cột nội
+  dung đầu tiên không phải tầng deck hay cột media, thay vì theo `ID`.
+- **Xuống dòng.** Một ô có nhiều dòng hiện thành nhiều dòng trên card.
+- **Gợi ý.** Một cột mà phần lớn ô trông như link ảnh sẽ có cảnh báo
+  *trông như link ảnh — thêm `image`*; một cột phần lớn trông như `漢字[かな]` sẽ
+  có cảnh báo *trông như furigana — thêm `furigana`*.
+
+`rtl` và `sort` vẫn được chấp nhận mà không làm gì thêm. `vertical`, và `align`
+hay `speed` ghi trong ô `#config`, không còn là setting nữa: chúng tạo ra một
+cảnh báo nói cần làm gì thay thế (ghi `align=`/`speed=` vào ô của từng cột).
 
 ## Xếp note vào deck bằng một cột (`subdeck`)
 
-`SUBDECK 1`, `SUBDECK 2` là tên do add-on đặt. `subdeck=1` nói cùng một điều đó
-từ một cột của bạn, nên bạn giữ được tên cột của mình:
+Ghi `subdeck=1` trong ô settings của một cột, và cột đó thành tầng thứ nhất của
+đường dẫn deck. Cột vẫn giữ tên thật của nó, như `Bài học` hay `Level`:
 
 ```text
 ID       Level        Word     Meaning
@@ -109,14 +162,18 @@ w02      HSK 2        山       mountain
 Sheet này xếp `w01` vào subdeck `HSK 1` của deck, và `Level` không hiện trên
 card. Note nằm ở đâu thì deck chứa nó đã cho thấy, nên không cần lặp lại trên
 card; các setting của card (`size`, `color`, `side`, `tts` và những cái khác) bị
-từ chối trên cột như vậy, kèm cảnh báo. `sort` là ngoại lệ duy nhất, vì nó cũng
-nói về note.
+từ chối trên cột như vậy, kèm cảnh báo.
 
 - Con số là tầng, nên thứ tự lấy theo con số, không theo vị trí các cột.
-- Ô trống thì bỏ tầng đó, giống hệt một ô `SUBDECK` trống.
+  `subdeck=2` là tầng bên dưới `subdeck=1`.
+- Ô trống thì bỏ tầng đó.
 - Hai cột không thể cùng một tầng, và cột media không thể là một tầng.
-- Nếu sheet dùng cả hai cách, settings row thắng, và cảnh báo sẽ nêu tên các cột
-  `SUBDECK` bị nó ghi đè.
+
+**Sheet cũ có cột tên `SUBDECK 1`, `SUBDECK 2`** vẫn chạy như trước, nhưng có một
+cảnh báo: *Cột SUBDECK n sắp bỏ — đổi tên cột (vd. 'Bài học') và ghi subdeck=1 ở
+settings row*. Đổi tên cột là đổi field của note type một lần: trên Sheet to Anki,
+trang tải `.apkg` sẽ nhắc bạn bật **Merge note types** cho lần import đó; note
+vẫn ở đúng subdeck và giữ tiến độ ôn tập.
 
 ## Nghe được nhưng không hiện (`side=hide` với `tts`)
 

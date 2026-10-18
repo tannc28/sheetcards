@@ -15,7 +15,6 @@ Chỉ những tên này là đặc biệt:
 | :--- | :--- | :--- |
 | `ID` | **Nên có** | Khoá cố định của dòng. Ghi gì cũng được (`1`, `Q-101`, `w01`) miễn là không có hai dòng trùng nhau. **Đừng bao giờ đổi hay dùng lại một ID.** Sheet không có cột này vẫn dùng được, xem [Sheet không có cột ID](#sheet-khong-co-cot-id). |
 | `SYNC` | Không | Bật hoặc tắt một dòng. Dòng được sync khi ô ghi `TRUE`, `1`, `yes`, `sim`, `x` hoặc `✓`. Mọi giá trị khác, kể cả ô trống, nghĩa là "bỏ qua dòng này". **Sheet không có cột `SYNC` thì sync mọi dòng.** |
-| `SUBDECK 1`, `SUBDECK 2`, … | Không | Mỗi cột là một tầng của đường dẫn deck. Thứ tự theo con số, không theo vị trí trong sheet, và ô trống thì bỏ tầng đó. `subdeck2` và `Subdeck  10` cũng được. |
 | `TAGS` | Không | Tag Anki thêm cho dòng, cách nhau bằng dấu phẩy hoặc chấm phẩy. |
 
 ## Sheet không có cột ID
@@ -38,7 +37,7 @@ mới."*
 - [Settings row](settings-row.md) vẫn dùng được: không có ô ID thì `#config` mở đầu
   ô settings của cột đầu tiên, ví dụ `#config name=Từ vựng; size=40`. Các key cho cả
   sheet (`name`, `reverse`, `theme`, `next`, `shape`) thuộc về sheet; các key còn lại
-  trong ô đó (kể cả `align` và `speed`) thuộc về cột đầu.
+  trong ô đó thuộc về cột đầu.
 
 Template *Mặt trước / Mặt sau* và *Học từ vựng* của Tạo Sheet là sheet như vậy: cột
 đầu (Mặt trước, hay Word) là khoá, không có cột `ID`. Mở một file không có cột `ID`
@@ -64,19 +63,22 @@ Mỗi sheet là một deck. Sheet có `name=` trong
 [settings row](settings-row.md#key-cho-ca-sheet) thì deck mang đúng tên đó, như bạn
 gõ (ví dụ `Từ vựng IELTS tuần 1`), cả trong file `.apkg` lẫn add-on. Sheet không có
 `name=` thì deck mang tiền tố `sc_`: `sc_<tên file>` trong Sheet to Anki,
-`sc_<file>::<sheet>` trong add-on. Các cột `SUBDECK` thêm tầng bên dưới nó:
+`sc_<file>::<sheet>` trong add-on. Một cột có `subdeck=1` trong
+[settings row](settings-row.md#xep-note-vao-deck-bang-mot-cot-subdeck) thêm một tầng
+bên dưới nó, `subdeck=2` thêm tầng tiếp theo:
 
-| ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |
+| ID | Ngôn ngữ | Bài học | Word | Meaning |
 | :--- | :--- | :--- | :--- | :--- |
+| `#config` | `subdeck=1` | `subdeck=2` | | |
 | 1 | Japanese | Kanji | 水 | water |
 
-xếp card vào `<deck>::Japanese::Kanji`.
+xếp card vào `<deck>::Japanese::Kanji`. Hai cột tầng không hiện trên card.
 
-- Sheet không có cột `SUBDECK` thì giữ mọi thứ ngay trong deck đó.
+- Sheet không có cột tầng nào thì giữ mọi thứ ngay trong deck đó.
 - Trên sheet có chia tầng, **dòng nào không ghi tầng nào sẽ nằm trong một subdeck
   tên `Unsorted`**, để dễ tìm.
-- Một cột bình thường cũng có thể là một tầng deck, bằng `subdeck=1` trong
-  [settings row](settings-row.md#xep-note-vao-deck-bang-mot-cot-subdeck).
+- Sheet cũ có cột tên `SUBDECK 1`, `SUBDECK 2` vẫn được xếp tầng như trước, kèm
+  cảnh báo nhắc đổi sang `subdeck=`.
 - Subdeck nào trống sau khi sync sẽ bị xoá.
 
 ## Tag
@@ -96,10 +98,10 @@ bỏ. `Unit 3: Intro` thành `unit_3_intro`.
 Dòng 1:
 
 ```text
-ID | SYNC | SUBDECK 1 | SUBDECK 2 | Word | Reading | Meaning | Example | TAGS
+ID | SYNC | Ngôn ngữ | Bài học | Word | Reading | Meaning | Example | TAGS
 ```
 
-Một dòng:
+Settings row ghi `subdeck=1` dưới `Ngôn ngữ` và `subdeck=2` dưới `Bài học`. Một dòng:
 
 ```text
 42 | TRUE | Japanese | Kanji | 水 | みず | water | 水を飲む | jlpt-n5; nature

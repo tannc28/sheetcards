@@ -67,14 +67,20 @@ Japanese shapes. `font=` tells the card which one you mean:
 The four Noto fonts are loaded from Google Fonts, so they need a connection the
 first time.
 
+**A column with `tts` gets the right font by itself** when no `font=` is written:
+`tts=zh_CN` or `zh_SG` uses `sc`, `zh_TW` or `zh_HK` uses `tc`, `ja_JP` uses `jp`,
+`ko_KR` uses `kr`. A `font=` you write still wins.
+
 ## Writing direction
 
-- **`rtl`** writes right to left, for Arabic, Hebrew and Persian. The text is
-  right-aligned unless `align` says otherwise.
-- **`vertical`** writes top to bottom, columns right to left, the way Japanese is
-  set in a book. Latin letters stay upright.
+Each cell follows the direction of its own text: Arabic, Hebrew and Persian run
+right to left by themselves, with no key needed.
 
-A column takes one direction; if both are written, `rtl` wins.
+## Line breaks in a cell
+
+A cell with several lines (Alt+Enter in Google Sheets, Ctrl+Enter in Excel) shows
+as several lines on the card. A `code` cell keeps its lines anyway; a media cell
+holds only a link.
 
 ## Formulas and code
 
@@ -95,5 +101,6 @@ the internet; without a connection the code is shown uncoloured.
 
 ## Sort order in Anki's browser
 
-`sort` on a column makes Anki's browser list and sort the notes by that column.
-Without it they are listed by `ID`, which reads `w01, w02, w03`.
+Anki's browser lists and sorts the notes by the first content column that is not
+a deck level or a media column, for example `Word`, instead of by `ID` (which
+reads `w01, w02, w03`). No key is needed for this.

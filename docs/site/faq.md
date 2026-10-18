@@ -38,7 +38,7 @@ nếu nó xuất bản cả sheet, nhưng nên dùng link **Share → Anyone wit
 Viewer**: nó luôn là bản mới nhất và giữ đúng từng tab.
 
 **"The sheet has no content columns"**
-Sheet chỉ có các cột `ID`, `SYNC`, `TAGS` hoặc `SUBDECK`. Thêm ít nhất một cột
+Sheet chỉ có các cột `ID`, `SYNC` hoặc `TAGS`. Thêm ít nhất một cột
 của riêng bạn.
 
 **"Duplicate IDs in the spreadsheet"**

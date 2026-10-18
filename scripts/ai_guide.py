@@ -47,10 +47,9 @@ KEY_NOTES = {
     ),
     "color": (
         "color=muted",
-        "`muted` or `accent` (follow the card theme; prefer "
-        "these), a CSS colour name, or #hex",
+        "`muted` (soft) or `accent` (highlight); both follow the card theme",
     ),
-    "align": ("align=left", "{alignments}"),
+    "align": ("align=left", "this column's alignment: {alignments}"),
     "tts": (
         "tts=en_US",
         "read the column aloud. A FULL code: `en_US`, `zh_CN`, "
@@ -61,7 +60,10 @@ KEY_NOTES = {
         "preferred voice; only the " "names this guide's recipes use. Optional",
     ),
     "speed": ("tts=en_US; speed=0.8", "speech speed, 0.5-2.0"),
-    "label": ("label=Meaning", "a small caption shown above the value"),
+    "label": (
+        "label=Meaning",
+        "a small caption above the value; a bare `label` uses the column's name",
+    ),
     "type": (
         "type",
         "the learner types this column before the answer shows; "
@@ -76,7 +78,8 @@ KEY_NOTES = {
     "font": (
         "font=sc",
         "{fonts}, or a font family name. Use `sc` for Simplified "
-        "Chinese, `tc` Traditional, `jp` Japanese, `kr` Korean",
+        "Chinese, `tc` Traditional, `jp` Japanese, `kr` Korean; a `tts` column "
+        "gets its language's one without it",
     ),
     "bold": ("bold", "bold text"),
     "italic": ("italic", "italic text"),
@@ -95,9 +98,6 @@ KEY_NOTES = {
         "a writing box: on the front the learner writes the "
         "character stroke by stroke, on the back it animates the strokes",
     ),
-    "sort": ("sort", "Anki's browser lists and sorts notes by this column"),
-    "rtl": ("rtl", "right-to-left text (Arabic, Hebrew)"),
-    "vertical": ("vertical", "top-to-bottom text"),
     "image": ("image; size=300", "the cell is an image URL"),
     "audio": ("audio", "the cell is an audio URL"),
     "video": ("video", "the cell is a YouTube/Drive/.mp4 URL"),
@@ -107,14 +107,40 @@ DECK_NOTES = {
              "identity. ALWAYS write it. Up to 100 characters, no `;`"),
     "reverse": ("reverse", "every note also gets a back-to-front card"),
     "theme": ("theme=matcha", "a colour theme for the whole card: {themes}"),
-    "align": ("align=left", "default alignment for every column (with an `ID` "
-              "column only; without one it is the first column's)"),
-    "speed": ("speed=0.9", "default speech speed for every column, 0.5-2.0 (as "
-              "`align`)"),
-    "next": ("next=w15", "written by Create sheet. Never add or change it; keep it "
-             "if the learner's file has it"),
-    "shape": ("shape=b1f3a2c", "written by SheetCards. Never add or change it; keep "
-              "it if the learner's file has it"),
+}  # fmt: skip
+# The Advanced table says `color` again, for the values Basic leaves out.
+ADVANCED_NOTES = {
+    "color": (None, "a CSS colour name or #hex: fixed, so it ignores night mode"),
+}
+
+# Mirrors of sheet_config's split, used when the shipped copy predates it.
+_BASIC_KEYS = (
+    "side",
+    "size",
+    "bold",
+    "color",
+    "tts",
+    "image",
+    "type",
+    "hint",
+    "label",
+    "name",
+    "theme",
+)
+_ADVANCED_GROUPS = (
+    ("voice", ("voices", "speed")),
+    ("card", ("cloze", "reverse", "draw", "furigana")),
+    ("text", ("italic", "align", "font", "color", "code", "math")),
+    ("media", ("audio", "video")),
+    ("deck", ("subdeck",)),
+)
+_INTERNAL_KEYS = ("next", "shape")
+GROUP_TITLES = {
+    "voice": "voice",
+    "card": "card type",
+    "text": "text",
+    "media": "media",
+    "deck": "deck",
 }  # fmt: skip
 
 BASIC_WORDS = [
@@ -204,9 +230,44 @@ def _key_line(key, notes, values, sc, site):
     return f"| `{key}` | {what} |"
 
 
-def _table(notes, keys, values, sc, site):
-    head = "| key | meaning |\n| :--- | :--- |\n"
-    return head + "\n".join(_key_line(k, notes, values, sc, site) for k in keys) + "\n"
+def _split(sc):
+    """(basic, [(group, keys)]): every key the parser takes, once, in Basic or
+    under its Advanced group; the internal ones nowhere. A key the split does
+    not name goes under "other" rather than being left out."""
+    basic = list(getattr(sc, "BASIC_KEYS", _BASIC_KEYS))
+    groups = [(g, list(k)) for g, k in getattr(sc, "ADVANCED_GROUPS", _ADVANCED_GROUPS)]
+    internal = set(getattr(sc, "INTERNAL_KEYS", _INTERNAL_KEYS))
+    named = set(basic) | {k for _, keys in groups for k in keys} | internal
+    other = [k for k in (*sc._FIELD_KEYS, *sc._DECK_KEYS) if k not in named]
+    if other:
+        groups.append(("other", other))
+    return basic, groups
+
+
+def _split_tables(notes, values, sc, site):
+    """The Basic table, then the Advanced one, each key marked with where it
+    goes (its column, or the `#config` cell) and Advanced ones with their group."""
+    basic, groups = _split(sc)
+
+    def line(key, table_notes, group=None):
+        where = "`#config`" if key in sc._DECK_KEYS else "column"
+        if group:
+            where += f", {GROUP_TITLES.get(group, group)}"
+        return _key_line(key, table_notes, values, sc, site).replace(
+            f"| `{key}` |", f"| `{key}` | {where} |", 1
+        )
+
+    head = "| key | where | meaning |\n| :--- | :--- | :--- |\n"
+    advanced = {**notes, **ADVANCED_NOTES}
+    return (
+        "**Basic** (enough for most sets):\n\n"
+        + head
+        + "\n".join(line(k, notes) for k in basic)
+        + "\n\n**Advanced** (only when the learner asks for it):\n\n"
+        + head
+        + "\n".join(line(k, advanced, g) for g, keys in groups for k in keys)
+        + "\n"
+    )
 
 
 def recipes(templates, cloze_rows):
@@ -339,8 +400,9 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
         "make a short one in their language (`Du lịch B1`). Keep it the same when "
         "adding words: the same name updates the same deck, a new name makes a "
         "new deck. No `;` in it; `::` makes a sub-deck.\n"
-        "- Keep any `next=` or `shape=` already in the learner's `#config` cell "
-        "exactly as it is. Never add them.\n"
+        "- Keep any `next` or `shape` key (`next=w15`, `shape=b1f3a2c`) already "
+        "in the learner's `#config` cell exactly as it is. SheetCards writes "
+        "them; never add or change them.\n"
     )
     w(
         "## 4. Read the request, pick a recipe\n\n"
@@ -439,16 +501,10 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
         "`;`, a bare key is a flag (`size=44; bold; tts=en_US`). An empty cell "
         "means defaults. Quote a cell that has a comma (`voices=A,B`). Use only "
         "the keys below: anything else shows the learner a warning.\n\n"
-        "Deck settings, in the `#config` cell: `#config name=Travel B1; theme=matcha`\n\n"
-        + _table(
-            DECK_NOTES,
-            sorted(sc._DECK_KEYS, key=lambda k: k != "name"),
-            values,
-            sc,
-            site,
-        )
+        "Deck settings go in the `#config` cell: "
+        "`#config name=Travel B1; theme=matcha`.\n\n"
+        + _split_tables({**KEY_NOTES, **DECK_NOTES}, values, sc, site)
     )
-    w("Column settings:\n\n" + _table(KEY_NOTES, sc._FIELD_KEYS, values, sc, site))
     w(
         f"Colours that follow the theme: {colours}. Flags: "
         + ", ".join(f"`{f}`" for f in sc._FLAGS)
@@ -456,9 +512,12 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
         + ", ".join(f"`{m}`" for m in sc.MEDIA_KINDS)
         + ".\n\n"
         "Reserved headers, never card fields: `ID` (optional, see section 3), "
-        "`SYNC`, `SUBDECK 1`, "
-        "`SUBDECK 2`... (deck levels), `TAGS` (comma-separated tags, quote the "
-        "cell). Name no other column like them.\n\n"
+        "`SYNC` (only rows saying yes sync), `TAGS` (comma-separated tags, quote "
+        "the cell). Name no other column like them. For deck levels give a "
+        "column a real name (`Lesson`) and `subdeck=1`; never a `SUBDECK 1` "
+        "header (retired: it warns).\n\n"
+        "Automatic, no key: right-to-left text, the browser's sort column, line "
+        "breaks in a cell, and the CJK font of a `tts` column.\n\n"
         "Voices: write `tts=` with a full code. Add `voices=` only with these "
         "names, for their language: "
         + ", ".join(

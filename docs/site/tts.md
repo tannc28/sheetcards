@@ -25,8 +25,10 @@ người học tiếng Trung phồn thể (`zh_TW`).
   `tts=zh_CN; voices=Huihui,Yaoyao`. Đây chỉ là ưu tiên: nếu máy không có giọng
   nào trong số đó, Anki dùng bất kỳ giọng nào của ngôn ngữ đó. Nhờ vậy cùng một
   sheet chạy được cả trên máy tính lẫn điện thoại.
-- **`speed=`** đặt tốc độ đọc, từ 0.5 đến 2.0. Ghi trong ô `#config` thì nó là
-  mặc định cho mọi cột được đọc.
+- **`speed=`** đặt tốc độ đọc của cột, từ 0.5 đến 2.0. Ghi trong ô của từng cột
+  được đọc; ghi trong ô `#config` thì không còn tác dụng và có cảnh báo.
+- Cột có `tts` tiếng Trung, Nhật hoặc Hàn tự được [font](text.md#font-cho-tieng-trung-nhat-va-han)
+  đúng ngôn ngữ, trừ khi bạn ghi `font=` khác.
 
 ## Tìm các giọng có trên máy
 

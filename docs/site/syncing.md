@@ -25,7 +25,7 @@ lần sync, add-on đọc field đó để ghép dòng với note. Vì vậy:
 | :--- | :--- |
 | Thêm một dòng | Tạo một note |
 | Sửa một ô | Cập nhật field đó; note giữ nguyên lịch sử review |
-| Đổi một ô `SUBDECK` | Chuyển card của note sang subdeck mới và cập nhật tag |
+| Đổi một ô của cột `subdeck=` | Chuyển card của note sang subdeck mới và cập nhật tag |
 | Đặt `SYNC` thành bất cứ gì khác yes | **Giữ nguyên note** và ngừng cập nhật nó. Note không bị xoá |
 | Đặt `SYNC` lại thành yes | Cập nhật note đó trở lại |
 | Xoá một dòng | **Xoá note** |

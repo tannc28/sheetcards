@@ -52,3 +52,5 @@ nếu cột có `label`.
 - **`tts` và `furigana` bị từ chối** trên cột media, vì chúng sẽ tác động lên
   địa chỉ: card sẽ đọc to cái link.
 - **`hint`** giấu hình hoặc trình phát sau một cú bấm.
+- **Quên ghi `image`?** Một cột mà phần lớn ô trông như link ảnh sẽ có cảnh báo
+  *trông như link ảnh — thêm `image`*, vì không có nó card chỉ in cái link ra.

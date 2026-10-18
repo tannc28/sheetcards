@@ -26,7 +26,7 @@ sync the add-on reads that field to pair rows with notes. So:
 | :--- | :--- |
 | Add a row | Creates a note |
 | Edit a cell | Updates that field; the note keeps its review history |
-| Change a `SUBDECK` cell | Moves the note's cards to the new subdeck and updates its tags |
+| Change a cell in a `subdeck=` column | Moves the note's cards to the new subdeck and updates its tags |
 | Set `SYNC` to anything but yes | **Leaves the note as it is** and stops updating it. It is not deleted |
 | Set `SYNC` back to yes | Updates that note again |
 | Delete a row | **Deletes the note** |

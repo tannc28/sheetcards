@@ -66,14 +66,20 @@ bạn muốn kiểu nào:
 
 Bốn font Noto được tải từ Google Fonts, nên lần đầu cần có mạng.
 
+**Cột có `tts` tự được font đúng** khi không ghi `font=`: `tts=zh_CN` hay `zh_SG`
+dùng `sc`, `zh_TW` hay `zh_HK` dùng `tc`, `ja_JP` dùng `jp`, `ko_KR` dùng `kr`.
+`font=` ghi tay vẫn được ưu tiên.
+
 ## Hướng viết
 
-- **`rtl`** viết từ phải sang trái, cho tiếng Ả Rập, Do Thái và Ba Tư. Chữ được
-  canh phải, trừ khi `align` ghi khác.
-- **`vertical`** viết từ trên xuống, các cột từ phải sang trái, như tiếng Nhật
-  in trong sách. Chữ Latin vẫn đứng thẳng.
+Mỗi ô tự theo hướng của chữ trong nó: tiếng Ả Rập, Do Thái và Ba Tư tự viết từ
+phải sang trái, không cần key nào.
 
-Mỗi cột chỉ một hướng viết; nếu ghi cả hai thì `rtl` thắng.
+## Xuống dòng trong một ô
+
+Một ô có nhiều dòng (Alt+Enter trong Google Sheets, Ctrl+Enter trong Excel) hiện
+thành nhiều dòng trên card. Ô `code` vốn đã giữ nguyên các dòng; ô media chỉ chứa
+một link.
 
 ## Công thức và code
 
@@ -94,5 +100,6 @@ mạng thì code hiện ra không màu.
 
 ## Thứ tự sắp xếp trong Browse của Anki
 
-`sort` trên một cột khiến Browse của Anki liệt kê và sắp xếp các note theo cột
-đó. Không có nó thì note được liệt kê theo `ID`, đọc lên là `w01, w02, w03`.
+Browse của Anki liệt kê và sắp xếp các note theo cột nội dung đầu tiên không phải
+tầng deck hay cột media, ví dụ `Word`, thay vì theo `ID` (đọc lên là `w01, w02,
+w03`). Không cần key nào cho việc này.

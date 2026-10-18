@@ -15,7 +15,6 @@ Only these names are special:
 | :--- | :--- | :--- |
 | `ID` | **Recommended** | The row's permanent key. Any text works (`1`, `Q-101`, `w01`) as long as no two rows share it. **Never change or reuse an ID.** A sheet without one still works, see [A sheet with no ID column](#a-sheet-with-no-id-column). |
 | `SYNC` | No | Turns a row on or off. A row syncs when the cell says `TRUE`, `1`, `yes`, `sim`, `x` or `✓`. Anything else, including an empty cell, means "skip this row". **A sheet with no `SYNC` column syncs every row.** |
-| `SUBDECK 1`, `SUBDECK 2`, … | No | One level of the deck path each. They are ordered by their number, not by where they sit in the sheet, and an empty cell skips that level. `subdeck2` and `Subdeck  10` work too. |
 | `TAGS` | No | Extra Anki tags for the row, separated by commas or semicolons. |
 
 ## A sheet with no ID column
@@ -41,8 +40,7 @@ makes it a new card."*
 - A [settings row](settings-row.md) still works: with no ID cell, `#config` opens
   the first column's settings cell, for example `#config name=Vocabulary; size=40`.
   The sheet-wide keys (`name`, `reverse`, `theme`, `next`, `shape`) belong to the
-  sheet; every other key in that cell (`align` and `speed` included) belongs to the
-  first column.
+  sheet; every other key in that cell belongs to the first column.
 
 Create sheet's *Front / Back* and *Vocabulary* templates are sheets like this: the
 first column (Front, or Word) is the key, with no `ID` column. A file with no `ID`
@@ -68,20 +66,23 @@ Each sheet is a deck. A sheet with `name=` in its
 [settings row](settings-row.md#sheet-wide-keys) gets a deck named exactly that, as
 typed (e.g. `Từ vựng IELTS tuần 1`), from the `.apkg` and from the add-on. A sheet
 without `name=` gets an `sc_` prefix: `sc_<file name>` in Sheet to Anki,
-`sc_<file>::<sheet>` in the add-on. The `SUBDECK` columns add
-levels under it:
+`sc_<file>::<sheet>` in the add-on. A column with `subdeck=1` in the
+[settings row](settings-row.md#filing-notes-with-a-column-subdeck) adds a level
+under it, and `subdeck=2` the next one:
 
-| ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |
+| ID | Language | Lesson | Word | Meaning |
 | :--- | :--- | :--- | :--- | :--- |
+| `#config` | `subdeck=1` | `subdeck=2` | | |
 | 1 | Japanese | Kanji | 水 | water |
 
-files the card in `<deck>::Japanese::Kanji`.
+files the card in `<deck>::Japanese::Kanji`. Neither level column is shown on the
+card.
 
-- A sheet with no `SUBDECK` columns keeps everything in the deck itself.
+- A sheet with no level columns keeps everything in the deck itself.
 - On a sheet that does sort its rows, **a row that names no level lands in a
   subdeck called `Unsorted`**, so it is easy to find.
-- An ordinary column can also be a deck level, with `subdeck=1` in the
-  [settings row](settings-row.md#filing-notes-with-a-column-subdeck).
+- An older sheet with columns named `SUBDECK 1`, `SUBDECK 2` is still filed the
+  same way, with a warning asking you to switch to `subdeck=`.
 - Subdecks that end up empty after a sync are removed.
 
 ## Tags
@@ -101,9 +102,10 @@ punctuation removed. `Unit 3: Intro` becomes `unit_3_intro`.
 Row 1:
 
 ```text
-ID | SYNC | SUBDECK 1 | SUBDECK 2 | Word | Reading | Meaning | Example | TAGS
+ID | SYNC | Language | Lesson | Word | Reading | Meaning | Example | TAGS
 ```
 
+The settings row has `subdeck=1` under `Language` and `subdeck=2` under `Lesson`.
 One row:
 
 ```text

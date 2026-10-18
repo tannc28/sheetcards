@@ -54,3 +54,6 @@ has one.
 - **`tts` and `furigana` are refused** on a media column, because they would act
   on the address: the card would read the link aloud.
 - **`hint`** puts the picture or player behind a click.
+- **Forgot `image`?** A column whose cells mostly look like picture links gives
+  the warning *looks like picture links — add `image`*, because without it the
+  card prints the link itself.

@@ -25,8 +25,12 @@ someone learning Traditional Chinese (`zh_TW`).
   `tts=zh_CN; voices=Huihui,Yaoyao`. It is a preference: if none of them exist on
   a device, Anki uses any voice for that language. So the same sheet works on your
   computer and your phone.
-- **`speed=`** sets the speaking rate, from 0.5 to 2.0. Written in the `#config`
-  cell it is the default for every spoken column.
+- **`speed=`** sets the column's speaking rate, from 0.5 to 2.0. Write it in each
+  spoken column's own cell; in the `#config` cell it no longer does anything and
+  gives a warning.
+- A column with Chinese, Japanese or Korean `tts` gets that language's
+  [font](text.md#fonts-for-chinese-japanese-and-korean) by itself, unless you
+  write a different `font=`.
 
 ## Finding the voices a device has
 
