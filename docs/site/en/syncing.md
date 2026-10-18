@@ -14,8 +14,10 @@ sync the add-on reads that field to pair rows with notes. So:
   history.
 - **Never reuse an ID.** Two rows with the same ID become one note. The sync
   lists duplicates as an error: *"Duplicate IDs in the spreadsheet"*.
-- **A row with an empty `ID` is never synced.**
-- **Keep the notes in their deck.** A note moved out of its `sc_…` deck in Anki
+- **A row with an empty `ID` is never synced.** A sheet with no `ID` column uses
+  its first column's text as the ID, so fixing that word's spelling makes a new
+  note (see [Columns](columns.md#a-sheet-with-no-id-column)).
+- **Keep the notes in their deck.** A note moved out of its sheet's deck in Anki
   is no longer found, and the next sync creates it again.
 
 ## What each change does
@@ -52,11 +54,11 @@ and its note types `SheetCards - <deck> - Basic` and `- Cloze`. When you rename
 the spreadsheet file, the next sync renames the deck and note types to match.
 
 When a sheet has `name=` in its [settings row](settings-row.md), the add-on uses
-exactly that as the deck name, as Sheet to Anki's `.apkg` does. **To make the
+exactly that as the deck name, with no `sc_` prefix, as Sheet to Anki's `.apkg` does. **To make the
 add-on and the `.apkg` one deck (say, the `.apkg` on a phone and the add-on on a
 computer), set `name=` in the settings row.** Both then recognise the same notes,
 with no duplicates. A sheet without `name=` that is its file's only sheet is named
-after the file; decks the add-on connected earlier keep `sc_<file>::<sheet>`.
+`sc_<file>`; decks the add-on connected earlier keep `sc_<file>::<sheet>`.
 
 **Renaming a SheetCards deck or note type inside Anki does not last**: the next
 sync renames it back. Rename the spreadsheet instead.

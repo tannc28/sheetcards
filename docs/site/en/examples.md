@@ -12,14 +12,14 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
   or [download the file](../../sheetcards-examples.xlsx) and upload it. Pick a
   sheet in the bar at the top, check the cards, then Download `.apkg`.
 - **Start your own sheet from one in [Create sheet](../../sheet/)**: download
-  the file, press **Open a file to add words** and pick the sheet. To keep only
+  the file, press **Open .xlsx/.csv file** and pick the sheet. To keep only
   its columns and settings row, upload the file under **Your templates**.
 - **With the add-on**: paste the link into **Tools → SheetCards → Connect a Google
   Sheet…**; every sheet in the file becomes its own deck.
 
 A sheet without `name=` becomes a deck named after the file and the sheet, such
-as `sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 declares
-`name=`, so its deck carries that name, from the `.apkg` and from the add-on.
+as `sc_sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 declares
+`name=`, so its deck carries exactly that name, with no `sc_`, from the `.apkg` and from the add-on.
 
 Most of it is English for Vietnamese speakers; Chinese, Japanese, Korean and
 others appear where a feature belongs to them. Nothing in SheetCards is specific

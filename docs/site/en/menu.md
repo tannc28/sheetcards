@@ -18,9 +18,10 @@ Anki already uses `Ctrl+Shift+A` (Add-ons) and `Ctrl+Shift+D` (Set Due Date).
 Paste the link to a Google Sheet, or to an `.xlsx` file. The window checks the
 link a moment after you stop typing, downloads it, and tells you what it found:
 the sheets, their rows, and the decks it will make. Each sheet with an `ID`
-column becomes a deck; see [Sheets, files and .apkg](sources.md).
+column becomes a deck (in a file where no sheet has one, every sheet does); see [Sheets, files and .apkg](sources.md).
 
-- There is no name field: decks are named after the file and the sheet.
+- There is no name field: a deck takes the sheet's `name=` when it has one
+  (exactly as typed), otherwise it is named after the file and the sheet.
 - A sheet already connected cannot be added twice.
 - The sheet must be shared as **Anyone with the link → Viewer**.
 

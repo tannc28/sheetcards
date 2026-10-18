@@ -13,8 +13,10 @@ lần sync, add-on đọc field đó để ghép dòng với note. Vì vậy:
   note cũ bị xoá và một note mới được tạo, mất luôn lịch sử review.
 - **Đừng dùng lại ID.** Hai dòng cùng ID thành một note. Sync báo trùng lặp như
   một lỗi: *"Duplicate IDs in the spreadsheet"*.
-- **Dòng có `ID` trống không bao giờ được sync.**
-- **Để note nằm yên trong deck của nó.** Note bị chuyển ra khỏi deck `sc_…`
+- **Dòng có `ID` trống không bao giờ được sync.** Sheet không có cột `ID` thì chữ
+  ở cột đầu tiên làm ID, nên sửa chính tả chữ đó là một note mới (xem
+  [Các cột](columns.md#sheet-khong-co-cot-id)).
+- **Để note nằm yên trong deck của nó.** Note bị chuyển ra khỏi deck của sheet
   trong Anki sẽ không còn được tìm thấy, và lần sync sau sẽ tạo lại nó.
 
 ## Mỗi thay đổi dẫn tới gì
@@ -51,11 +53,11 @@ note type là `SheetCards - <deck> - Basic` và `- Cloze`. Khi bạn đổi tên
 spreadsheet, lần sync sau sẽ đổi tên deck và note type cho khớp.
 
 Khi sheet có `name=` trong [settings row](settings-row.md), add-on dùng đúng tên đó
-làm tên deck, giống file `.apkg` của Sheet to Anki. **Muốn add-on và file `.apkg`
+làm tên deck, không có tiền tố `sc_`, giống file `.apkg` của Sheet to Anki. **Muốn add-on và file `.apkg`
 là cùng một deck (ví dụ học trên điện thoại bằng `.apkg`, sync trên máy tính bằng
 add-on): đặt `name=` trong settings row.** Khi đó hai cách nhận ra cùng các note,
 không nhân đôi. Sheet không có `name=` mà là sheet duy nhất của file thì deck mang
-tên file; các deck add-on đã kết nối từ trước vẫn giữ tên `sc_<file>::<sheet>`.
+tên `sc_<file>`; các deck add-on đã kết nối từ trước vẫn giữ tên `sc_<file>::<sheet>`.
 
 **Đổi tên deck hay note type của SheetCards ngay trong Anki sẽ không giữ được**:
 lần sync sau sẽ đổi lại. Hãy đổi tên spreadsheet thay vào đó.

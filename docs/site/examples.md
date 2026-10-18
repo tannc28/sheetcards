@@ -12,14 +12,14 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
   [tải file về](../sheetcards-examples.xlsx) rồi upload. Chọn sheet ở thanh phía
   trên, xem card, rồi Download `.apkg`.
 - **Lấy một sheet làm điểm xuất phát trong [Tạo Sheet](../sheet/)**: tải file
-  về, bấm **Mở file để thêm từ** rồi chọn sheet. Chỉ muốn giữ cột và settings
+  về, bấm **Mở file .xlsx/.csv** rồi chọn sheet. Chỉ muốn giữ cột và settings
   row thì upload file vào **Template của bạn**.
 - **Với add-on**: dán link vào **Tools → SheetCards → Connect a Google Sheet…**;
   mỗi sheet trong file thành một deck.
 
 Sheet không có `name=` thành deck mang tên file và tên sheet, ví dụ
-`sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 có `name=`, nên
-deck của nó mang đúng tên đó, cả từ `.apkg` lẫn từ add-on.
+`sc_sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 có `name=`,
+nên deck của nó mang đúng tên đó, không có `sc_`, cả từ `.apkg` lẫn từ add-on.
 
 Phần lớn là tiếng Anh cho người Việt; tiếng Trung, Nhật, Hàn và các thứ tiếng
 khác xuất hiện ở những tính năng dành cho chúng. Không có gì trong SheetCards gắn

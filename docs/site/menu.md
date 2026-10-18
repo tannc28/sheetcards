@@ -18,9 +18,10 @@ Anki đã dùng `Ctrl+Shift+A` (Add-ons) và `Ctrl+Shift+D` (Set Due Date).
 Dán link tới một Google Sheet, hoặc tới một file `.xlsx`. Cửa sổ kiểm tra link
 ngay sau khi bạn ngừng gõ, tải nó về và cho biết nó tìm thấy gì: các sheet, số
 dòng của từng sheet, và các deck sẽ được tạo. Mỗi sheet có cột `ID` thành một
-deck; xem [Sheet, file và .apkg](sources.md).
+deck (file không sheet nào có cột `ID` thì mỗi sheet đều thành deck); xem [Sheet, file và .apkg](sources.md).
 
-- Không có ô đặt tên: deck được đặt theo tên file và tên sheet.
+- Không có ô đặt tên: deck mang `name=` của sheet nếu có (đúng như bạn gõ), không
+  thì được đặt theo tên file và tên sheet.
 - Một sheet đã kết nối thì không thêm lần thứ hai được.
 - Sheet phải được chia sẻ ở chế độ **Anyone with the link → Viewer**.
 

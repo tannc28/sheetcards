@@ -13,10 +13,34 @@ Chỉ những tên này là đặc biệt:
 
 | Cột | Bắt buộc? | Tác dụng |
 | :--- | :--- | :--- |
-| `ID` | **Có** | Khoá cố định của dòng. Ghi gì cũng được (`1`, `Q-101`, `w01`) miễn là không có hai dòng trùng nhau. **Đừng bao giờ đổi hay dùng lại một ID.** |
+| `ID` | **Nên có** | Khoá cố định của dòng. Ghi gì cũng được (`1`, `Q-101`, `w01`) miễn là không có hai dòng trùng nhau. **Đừng bao giờ đổi hay dùng lại một ID.** Sheet không có cột này vẫn dùng được, xem [Sheet không có cột ID](#sheet-khong-co-cot-id). |
 | `SYNC` | Không | Bật hoặc tắt một dòng. Dòng được sync khi ô ghi `TRUE`, `1`, `yes`, `sim`, `x` hoặc `✓`. Mọi giá trị khác, kể cả ô trống, nghĩa là "bỏ qua dòng này". **Sheet không có cột `SYNC` thì sync mọi dòng.** |
 | `SUBDECK 1`, `SUBDECK 2`, … | Không | Mỗi cột là một tầng của đường dẫn deck. Thứ tự theo con số, không theo vị trí trong sheet, và ô trống thì bỏ tầng đó. `subdeck2` và `Subdeck  10` cũng được. |
 | `TAGS` | Không | Tag Anki thêm cho dòng, cách nhau bằng dấu phẩy hoặc chấm phẩy. |
+
+## Sheet không có cột ID
+
+Sheet không có cột `ID` vẫn thành card. Khi đó **chữ ở cột nội dung đầu tiên của
+mỗi dòng là ID của dòng**, và Sheet to Anki báo một dòng:
+*"Không có cột ID → dùng cột Word làm ID. Sửa chính tả chính từ đó sẽ thành card
+mới."*
+
+- Chữ được chuẩn hoá trước khi làm ID: bỏ dấu cách ở hai đầu, gộp các dấu cách
+  liền nhau, và thống nhất cách gõ dấu tiếng Việt (bàn phím điện thoại và máy tính
+  có thể ghép `ệ` khác nhau). Hoa thường được giữ nguyên.
+- Hai dòng cùng một chữ (không tính hoa thường) thì dòng sau thành `từ (2)`, rồi
+  `từ (3)`, theo thứ tự trong sheet.
+- Chèn dòng mới vào giữa hay đổi thứ tự các dòng không sao: khoá là chữ, không
+  phải vị trí, nên import lại vẫn cập nhật đúng note cũ và giữ tiến độ ôn tập.
+- **Sửa chính tả chính chữ đó là một card mới**, và card cũ (cùng tiến độ của nó)
+  vẫn nằm trong Anki. Nếu bạn hay sửa từ ở cột đầu, hãy thêm một cột `ID`.
+- Dòng có cột đầu trống là dòng lỗi (không có gì làm khoá), dù các ô khác có chữ.
+- [Settings row](settings-row.md) cần cột `ID`, vì dấu hiệu `#config` nằm ở ô ID.
+
+Mở một file như vậy trong Tạo Sheet thì Tạo Sheet ghi ID `w01`, `w02`… vào sheet
+một lần và nhắc bạn lưu file. Từ đó sheet đã có cột `ID`. Lưu ý: ID mới khác chữ
+cũ, nên nếu bạn đã import file không có ID trước đó, lần import đầu sau khi thêm
+ID sẽ tạo card mới.
 
 ## Các cột của bạn
 
@@ -33,9 +57,11 @@ Mọi cột khác thành một field của note, đặt tên đúng như tên c�
 
 ## Subdeck
 
-Mỗi sheet là một deck. Trong Sheet to Anki, deck mang tên của `name=` trong
-[settings row](settings-row.md#key-cho-ca-sheet) (không có thì lấy tên file);
-add-on đặt tên `sc_<file>::<sheet>`. Các cột `SUBDECK` thêm tầng bên dưới nó:
+Mỗi sheet là một deck. Sheet có `name=` trong
+[settings row](settings-row.md#key-cho-ca-sheet) thì deck mang đúng tên đó, như bạn
+gõ (ví dụ `Từ vựng IELTS tuần 1`), cả trong file `.apkg` lẫn add-on. Sheet không có
+`name=` thì deck mang tiền tố `sc_`: `sc_<tên file>` trong Sheet to Anki,
+`sc_<file>::<sheet>` trong add-on. Các cột `SUBDECK` thêm tầng bên dưới nó:
 
 | ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |
 | :--- | :--- | :--- | :--- | :--- |

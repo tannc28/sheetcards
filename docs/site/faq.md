@@ -25,9 +25,17 @@ Dán link từ thanh địa chỉ của trình duyệt, link có dạng
 Địa chỉ phải là địa chỉ công khai và bắt đầu bằng `https`. Xem
 [Sheet, file và .apkg](sources.md#file-xlsx-thay-cho-google-sheet).
 
-**"Mandatory header missing: 'ID'"**
-Dòng 1 không có cột `ID`. Chỉ dòng 1 được đọc làm tên cột, nên một dòng tiêu đề
-nằm phía trên nó sẽ gây ra lỗi này.
+**"Không có cột ID → dùng cột … làm ID."**
+Sheet không có cột `ID`, nên chữ ở cột nội dung đầu tiên làm ID của mỗi dòng.
+Thêm, chèn hay đổi thứ tự dòng vẫn cập nhật đúng note cũ, nhưng sửa chính tả chính
+chữ đó sẽ thành một card mới. Muốn sửa chữ thoải mái thì thêm một cột `ID`. Chỉ
+dòng 1 được đọc làm tên cột, nên nếu cột `ID` của bạn nằm dưới một dòng tiêu đề,
+hãy xoá dòng tiêu đề đó. Xem [Sheet không có cột ID](columns.md#sheet-khong-co-cot-id).
+
+**"Dùng link Share, không phải Publish"**
+Link **File → Share → Publish to web** (`…/spreadsheets/d/e/…/pub…`) được đọc
+nếu nó xuất bản cả sheet, nhưng nên dùng link **Share → Anyone with the link →
+Viewer**: nó luôn là bản mới nhất và giữ đúng từng tab.
 
 **"The sheet has no content columns"**
 Sheet chỉ có các cột `ID`, `SYNC`, `TAGS` hoặc `SUBDECK`. Thêm ít nhất một cột
@@ -92,6 +100,16 @@ không cho phép nhúng. Phần cảnh báo trong Sheet to Anki sẽ cho biết 
 Đó là bình thường: tên lấy từ sheet. Hãy đổi tên file spreadsheet thay vì đổi
 tên deck. Xem [Sync](syncing.md#ten-lay-tu-sheet).
 
+**Bộ có `name=` giờ có hai deck: `sc_Tên bộ` và `Tên bộ`.**
+Bộ có `name=` giờ vào Anki đúng tên bạn đặt, không còn tiền tố `sc_`. Anki nhận deck
+theo tên và giữ card cũ ở deck cũ, nên nếu bạn đã import bộ này trước thay đổi đó,
+card cũ ở lại `sc_Tên bộ` còn card mới vào `Tên bộ`. Cách sửa, một lần: trong Anki
+mở Browse, chọn deck `sc_Tên bộ`, chọn hết card, **Cards → Change Deck…** sang
+`Tên bộ`, rồi xoá deck `sc_Tên bộ` đã trống. Chưa import file mới thì đơn giản hơn:
+đổi tên deck `sc_Tên bộ` thành `Tên bộ` trước (bánh răng cạnh deck → **Rename**).
+Sheet to Anki tự nhắc việc này nếu trình duyệt đã từng tải bộ đó. Add-on tự đổi tên
+deck của nó, không cần làm gì.
+
 **Tôi đổi tên một tab sheet và deck của nó không còn cập nhật nữa.**
 Deck nhớ sheet của nó theo tên. Hãy kết nối lại file để add-on nhận tên mới.
 
@@ -138,6 +156,19 @@ mặc định Anki bỏ qua mọi note. Import lại file đó, lần này bật
 types** và đặt **Update notes** thành **Always**. Sheet to Anki cũng nhắc việc này
 ngay trước khi tải.
 
+**Import sau khi Merge note types mà note không đổi.**
+Khi bật **Merge note types**, Anki ghi lại thời điểm sửa của các note cũ, nên
+**Update notes: If newer** sẽ bỏ qua chúng. Lần import đó hãy đặt **Update
+notes** thành **Always**. Chuyển giữa Basic và Cloze thì không gộp được: trong
+Anki, chọn các note và dùng **Change Note Type**.
+
+**Tôi tắt `reverse` mà card ngược vẫn còn.**
+Anki giữ những card một card template đã tạo ra. SheetCards giữ template đó lại
+dưới dạng một template rỗng, nên import vẫn cập nhật note bình thường; sau đó
+trong Anki chọn **Tools → Empty Cards** để xoá các card ngược. Nếu bạn tải file
+trên một máy chưa từng tải deck này, hãy bật **Merge note types** một lần khi
+import.
+
 **Từ đã xoá khỏi sheet vẫn còn trong Anki.**
 Import `.apkg` chỉ thêm và cập nhật, không bao giờ xoá. Muốn bỏ thì xoá trong
 Anki: **Browse**, tìm từ đó, **Delete**. Add-on trên máy tính thì sync cả việc
@@ -145,8 +176,7 @@ xoá.
 
 **Tôi lưu file `.csv` trên Android, chạm vào nó và AnkiDroid import một mớ note lạ.**
 AnkiDroid nhận cả file CSV và import từng dòng thành note, kể cả settings row.
-Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file để thêm
-từ** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
+Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file .xlsx/.csv** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
 
 **File CSV lưu từ Excel bị lỗi dấu tiếng Việt.**
 Sheet to Anki và Tạo Sheet tự nhận ra dấu phân cách và bảng mã của file CSV từ

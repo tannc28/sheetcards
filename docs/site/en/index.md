@@ -38,7 +38,9 @@ Open a new Google Sheet and type this, starting in cell A1:
 | 2 | airport | sân bay |
 | 3 | season | mùa |
 
-- **Row 1 holds the column names.** `ID` is the only name the add-on requires.
+- **Row 1 holds the column names.** `ID` is the only name you should
+  have. A sheet without an `ID` column uses its first column as the ID (see
+  [Columns](columns.md#a-sheet-with-no-id-column)).
 - **`ID` is each card's permanent label.** Any text works (`1`, `w01`, `HSK-17`),
   as long as no two rows share one. Never change or reuse an ID: the add-on uses
   it to know which card is which.
@@ -77,18 +79,21 @@ has a button that downloads exactly this file.
    yuki, or Anki's own colours); a theme is not a template, so any template can
    wear any theme.
 2. **Name the flashcard set.** The name is written as `name=` in the settings
-   row: it is both the deck's name in Anki and what lets Anki recognise the old
+   row: it is both the deck's name in Anki (exactly as typed) and what lets Anki recognise the old
    deck when you import again. A new name is a new deck, so Create sheet asks
    before a rename.
 3. **① Columns & card**: the column names and the settings row (row 2 of the
    sheet, where each cell says how that column shows on the card), with the card
-   previewed beside them. **② Cards**: add, edit and delete words; IDs (`w01`,
-   `w02`…) are given automatically. *Custom* opens on step ①, every other
-   template goes straight to step ②.
+   previewed beside them. **② Add cards**: add, edit and delete words; IDs
+   (`w01`, `w02`…) are given automatically. *Custom* opens on step ①, every
+   other template goes straight to step ②. A new sheet starts empty, with one
+   row for your first word; the template's example word only appears in the
+   card preview.
 
 **Your templates**: a sheet you already have (upload an `.xlsx` or `.csv`), or
 the one you are writing (**Save as template**), kept as a template of your own:
-its column names, settings row and one sample word. It lives in this browser
+its column names, settings row and one example word for the preview (the word
+is not put into a new sheet). It lives in this browser
 only.
 
 The draft lives only in the browser (and Safari on an iPhone deletes it after 7
@@ -98,7 +103,7 @@ days without a visit), so save the sheet:
   it (send it to yourself in Messenger, Telegram or Notes). Next time: open the link → add words
   → Make flashcards. Added words? Save a new link; the old one opens the old
   sheet.
-- **On a computer: press Save .csv.** Next time, **Open a file to add words**.
+- **On a computer: press Save .csv.** Next time, **Open .xlsx/.csv file**.
 
 The old words keep their IDs, so re-importing the `.apkg` updates the notes and
 keeps your review progress.
@@ -132,7 +137,9 @@ browsers cannot download files, so the page shows a banner with **Copy link**
 
 Added or renamed a column, or turned on `reverse`? The note type changed, so
 when you import, turn on **Merge note types** and set **Update notes** to
-**Always**. Sheet to Anki reminds you right before the download.
+**Always**. Sheet to Anki reminds you before and after the download, on another
+device too, because Create sheet records the note type's shape in the sheet
+(`shape=`, see [Settings row](settings-row.md#sheet-wide-keys)).
 
 Importing the same sheet again later updates those notes instead of duplicating
 them, but it cannot delete one: a row you remove from the sheet stays in Anki
@@ -141,8 +148,7 @@ details.
 
 ## Next week: adding words
 
-1. Open the sheet again: the sheet link you saved, the `.csv` (with **Open a file
-   to add words** in Create sheet — on Android, not from the Files app, where
+1. Open the sheet again: the sheet link you saved, the `.csv` (with **Open .xlsx/.csv file** in Create sheet — on Android, not from the Files app, where
    AnkiDroid would import the CSV straight into junk notes), or your Google Sheet.
 2. Add the words. Leave the **flashcard set's name** alone: it is how Anki
    recognises the deck.
@@ -174,7 +180,7 @@ link. The window checks the link as you type and tells you what it found: how
 many sheets, how many rows, and the names of the decks it will make.
 
 You do not name the deck. It is named after the file and the sheet, as
-`sc_<file name>::<sheet name>`. Each tab in the file becomes a deck of its own
+`sc_<file name>::<sheet name>`; a sheet with `name=` gets exactly that name. Each tab in the file becomes a deck of its own
 (see [Sheets, files and .apkg](sources.md)).
 
 ### Sync

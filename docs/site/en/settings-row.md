@@ -79,17 +79,20 @@ Written after `#config` in the marker cell.
 | `speed` | a number from 0.5 to 2.0 | Speaking rate for every spoken column that does not set its own. |
 | `reverse` | switch | Adds a second card that asks the back and answers with the front. See [Card types](card-types.md#reverse-cards). |
 | `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. In Create sheet you pick it in the template step. See [Themes and text](text.md#themes). |
-| `name` | a deck name; spaces and any script are fine, up to 100 characters | The deck's name in Anki, and the sheet's identity. Sheet to Anki recognises the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
+| `name` | a deck name; spaces and any script are fine, up to 100 characters | The deck's name in Anki, exactly as typed (e.g. `Từ vựng IELTS tuần 1`, no `sc_` in front), and the sheet's identity. Sheet to Anki and the add-on recognise the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
 | `next` | an ID ending in a number, like `w15` | The next ID Create sheet will hand out. It is why a deleted word's ID is never given to a new word, which would inherit the old word's review history in Anki. |
+| `shape` | a short code, like `b1f3a2c` | A code for the note type's columns and card templates at the last `.apkg` download. Create sheet writes it; Sheet to Anki compares against it to know when you need **Merge note types** + **Update notes: Always**, on any device. Do not edit it by hand. |
 
-Create sheet writes both for you, e.g. `#config name=Từ vựng tiếng Anh; next=w15`:
+Create sheet writes the last three for you, e.g. `#config name=Từ vựng tiếng Anh; next=w15; shape=b1f3a2c`:
 `name` is the **Flashcard set name** you fill in when you pick a template, and
 Create sheet asks before changing it, since a new name is a new deck in Anki.
-`next` is not shown in the grid; Create sheet keeps it for you.
+`next` and `shape` are not shown in the grid; Create sheet keeps them for you.
 A sheet without `name` is recognised by its Google Sheets link, or by its
 file name (the `.csv`/`.tsv`/`.xlsx` extension and a ` (1)`, `-2` suffix left
-out). The add-on reads both keys without a warning and does not use them yet: it
-matches notes by deck and by the `ID` column.
+out), and its deck carries an `sc_` prefix. The add-on uses `name` exactly as
+Sheet to Anki does, as the deck name and the identity, so an `.apkg` and the
+add-on update the same notes. `next` and `shape` the add-on reads without a
+warning and does not use.
 
 ## Filing notes with a column (`subdeck`)
 

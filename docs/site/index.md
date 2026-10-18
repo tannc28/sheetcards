@@ -36,7 +36,8 @@ Mở một Google Sheet mới và gõ bảng sau, bắt đầu từ ô A1:
 | 2 | airport | sân bay |
 | 3 | season | mùa |
 
-- **Dòng 1 là tên các cột.** `ID` là tên cột duy nhất bắt buộc.
+- **Dòng 1 là tên các cột.** `ID` là tên cột duy nhất nên có. Sheet không có cột
+  `ID` thì chữ ở cột đầu tiên làm ID (xem [Các cột](columns.md#sheet-khong-co-cot-id)).
 - **`ID` là nhãn cố định của mỗi card.** Ghi gì cũng được (`1`, `w01`,
   `HSK-17`), miễn là không có hai dòng trùng nhau. Đừng bao giờ đổi hay dùng lại
   một ID: SheetCards dựa vào nó để biết card nào là card nào.
@@ -72,16 +73,19 @@ cũng có nút tải đúng file này về.
    sakura, yuki, hoặc màu mặc định của Anki); theme không phải là template, nên
    template nào cũng mặc được theme nào.
 2. **Đặt Tên bộ flashcard.** Tên này được ghi thành `name=` trong settings row:
-   vừa là tên deck trong Anki, vừa là thứ giúp Anki nhận ra deck cũ khi import
+   vừa là tên deck trong Anki (đúng như bạn gõ), vừa là thứ giúp Anki nhận ra deck cũ khi import
    lại. Đổi tên là thành deck mới, nên Tạo Sheet hỏi lại trước khi đổi.
 3. **① Cột & card**: tên cột và settings row (dòng 2 của sheet, mỗi ô ghi cột
    đó hiện thế nào trên card), có card xem trước ngay bên cạnh.
-   **② Thẻ**: thêm, sửa, xoá từ; ID (`w01`, `w02`…) được đánh tự động.
-   *Tùy chỉnh* mở ở bước ①, các template khác vào thẳng bước ②.
+   **② Thêm thẻ**: thêm, sửa, xoá từ; ID (`w01`, `w02`…) được đánh tự động.
+   *Tùy chỉnh* mở ở bước ①, các template khác vào thẳng bước ②. Sheet mới bắt
+   đầu trống, với một dòng để gõ từ đầu tiên; từ ví dụ của template chỉ hiện ở
+   card xem trước.
 
 **Template của bạn**: một sheet bạn đã có (upload file `.xlsx` hoặc `.csv`),
 hoặc sheet đang soạn (**Lưu làm template**), được giữ làm template riêng, gồm tên
-cột, settings row và một từ mẫu. Template này chỉ nằm trong trình duyệt này.
+cột, settings row và một từ ví dụ để xem trước (từ đó không vào sheet mới). Template
+này chỉ nằm trong trình duyệt này.
 
 Bản nháp chỉ nằm trong trình duyệt (và Safari trên iPhone xoá nó sau 7 ngày
 không mở trang), nên hãy lưu sheet:
@@ -89,7 +93,7 @@ không mở trang), nên hãy lưu sheet:
 - **Trên điện thoại: bấm Lưu link sheet.** Cả sheet nằm trong link đó. Giữ link
   này (gửi cho chính bạn qua Messenger/Telegram hoặc Ghi chú). Lần sau mở link
   → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới, vì link cũ mở bản cũ.
-- **Trên máy tính: bấm Lưu file .csv.** Lần sau bấm **Mở file để thêm từ**.
+- **Trên máy tính: bấm Lưu file .csv.** Lần sau bấm **Mở file .xlsx/.csv**.
 
 ID của từ cũ giữ nguyên, nên import lại file `.apkg` sẽ cập nhật note và giữ
 tiến độ ôn.
@@ -124,7 +128,8 @@ không tải được file, nên trang hiện một thanh báo với nút **Copy
 
 Đã thêm, đổi tên cột hay bật `reverse`? Note type đã đổi, nên khi import hãy bật
 **Merge note types** và đặt **Update notes** thành **Always**. Sheet to Anki nhắc
-việc này ngay trước khi tải.
+việc này trước và sau khi tải, cả trên máy khác, vì Tạo Sheet ghi lại hình dạng
+note type vào sheet (`shape=`, xem [Settings row](settings-row.md#key-cho-ca-sheet)).
 
 Sau này import lại cùng sheet đó sẽ cập nhật các note chứ không nhân đôi, nhưng
 không xoá được: dòng bạn bỏ khỏi sheet vẫn nằm trong Anki cho tới khi bạn tự xoá
@@ -132,7 +137,7 @@ nó ở đó. Xem chi tiết ở [Sheet, file và .apkg](sources.md).
 
 ## Tuần sau: thêm từ
 
-1. Mở lại sheet: link sheet bạn đã lưu, file `.csv` (bằng **Mở file để thêm từ**
+1. Mở lại sheet: link sheet bạn đã lưu, file `.csv` (bằng **Mở file .xlsx/.csv**
    trong Tạo Sheet — trên Android đừng chạm vào nó trong app Files, kẻo AnkiDroid
    import thẳng file CSV thành note rác), hoặc Google Sheet của bạn.
 2. Thêm từ. Đừng đổi **Tên bộ flashcard**: đó là thứ giúp Anki nhận ra deck cũ.
@@ -164,7 +169,7 @@ Cửa sổ sẽ kiểm tra link khi bạn gõ và cho biết nó tìm thấy gì
 bao nhiêu dòng, và tên các deck sẽ được tạo.
 
 Bạn không cần đặt tên deck. Deck được đặt theo tên file và tên sheet, dạng
-`sc_<tên file>::<tên sheet>`. Mỗi tab trong file thành một deck riêng (xem
+`sc_<tên file>::<tên sheet>`; sheet có `name=` thì deck mang đúng tên đó. Mỗi tab trong file thành một deck riêng (xem
 [Sheet, file và .apkg](sources.md)).
 
 ### Sync

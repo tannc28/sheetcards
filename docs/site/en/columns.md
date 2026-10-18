@@ -13,10 +13,38 @@ Only these names are special:
 
 | Column | Needed? | What it does |
 | :--- | :--- | :--- |
-| `ID` | **Yes** | The row's permanent key. Any text works (`1`, `Q-101`, `w01`) as long as no two rows share it. **Never change or reuse an ID.** |
+| `ID` | **Recommended** | The row's permanent key. Any text works (`1`, `Q-101`, `w01`) as long as no two rows share it. **Never change or reuse an ID.** A sheet without one still works, see [A sheet with no ID column](#a-sheet-with-no-id-column). |
 | `SYNC` | No | Turns a row on or off. A row syncs when the cell says `TRUE`, `1`, `yes`, `sim`, `x` or `✓`. Anything else, including an empty cell, means "skip this row". **A sheet with no `SYNC` column syncs every row.** |
 | `SUBDECK 1`, `SUBDECK 2`, … | No | One level of the deck path each. They are ordered by their number, not by where they sit in the sheet, and an empty cell skips that level. `subdeck2` and `Subdeck  10` work too. |
 | `TAGS` | No | Extra Anki tags for the row, separated by commas or semicolons. |
+
+## A sheet with no ID column
+
+A sheet with no `ID` column still makes cards. **The text in each row's first
+content column is then the row's ID**, and Sheet to Anki says so in one line:
+*"No ID column → using column Word as the ID. Fixing the spelling of that word
+makes it a new card."*
+
+- The text is normalised before it becomes an ID: spaces trimmed at both ends,
+  runs of spaces collapsed, and accents brought to one encoding (a phone keyboard
+  and a desktop one can compose `ệ` differently). Upper and lower case are kept.
+- Two rows with the same text (ignoring case) become `word (2)`, then
+  `word (3)`, in sheet order.
+- Inserting a row in the middle or reordering rows is fine: the key is the
+  word, not its position, so a re-import updates the same notes and keeps their
+  review progress.
+- **Fixing the spelling of that word makes it a new card**, and the old card
+  (with its progress) stays in Anki. If you often correct words in the first
+  column, add an `ID` column.
+- A row whose first column is empty is an invalid row (nothing can key it), even
+  if other cells are filled.
+- A [settings row](settings-row.md) needs an `ID` column, because the `#config`
+  marker lives in the ID cell.
+
+Opening such a file in Create sheet writes IDs `w01`, `w02`… into the sheet once
+and reminds you to save the file. From then on the sheet has an `ID` column.
+Note that the new IDs differ from the words, so if you already imported the file
+without IDs, the first import after adding them makes new cards.
 
 ## Your own columns
 
@@ -33,9 +61,11 @@ Every other column becomes a field of the note, named exactly like the column.
 
 ## Subdecks
 
-Each sheet is a deck. In Sheet to Anki the deck takes its name from `name=` in
-the [settings row](settings-row.md#sheet-wide-keys) (or from the file name
-without one); the add-on names it `sc_<file>::<sheet>`. The `SUBDECK` columns add
+Each sheet is a deck. A sheet with `name=` in its
+[settings row](settings-row.md#sheet-wide-keys) gets a deck named exactly that, as
+typed (e.g. `Từ vựng IELTS tuần 1`), from the `.apkg` and from the add-on. A sheet
+without `name=` gets an `sc_` prefix: `sc_<file name>` in Sheet to Anki,
+`sc_<file>::<sheet>` in the add-on. The `SUBDECK` columns add
 levels under it:
 
 | ID | SUBDECK 1 | SUBDECK 2 | Word | Meaning |

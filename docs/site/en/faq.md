@@ -23,9 +23,18 @@ Paste the link from your browser's address bar, the one that looks like
 The address must be public and start with `https`. See
 [Sheets, files and .apkg](sources.md#an-xlsx-file-instead-of-a-google-sheet).
 
-**"Mandatory header missing: 'ID'"**
-Row 1 has no `ID` column. Only row 1 is read as the column names, so a title row
-above it breaks this.
+**"No ID column → using column … as the ID."**
+The sheet has no `ID` column, so the text in its first content column is each
+row's ID. Adding, inserting or reordering rows still updates the same notes, but
+fixing the spelling of that word makes a new card. To correct words freely, add
+an `ID` column. Only row 1 is read as the column names, so if your `ID` column
+sits under a title row, delete the title row. See
+[A sheet with no ID column](columns.md#a-sheet-with-no-id-column).
+
+**"Use the Share link, not Publish"**
+A **File → Share → Publish to web** link (`…/spreadsheets/d/e/…/pub…`) is read
+when it publishes the whole sheet, but the **Share → Anyone with the link →
+Viewer** link is the one to use: it is always current and keeps each tab apart.
 
 **"The sheet has no content columns"**
 The sheet only has `ID`, `SYNC`, `TAGS` or `SUBDECK` columns. Add at least one
@@ -88,6 +97,17 @@ does not allow embedding. The warnings in Sheet to Anki say which.
 
 ## Decks
 
+**A set with `name=` now has two decks: `sc_My set` and `My set`.**
+A set with `name=` now arrives in Anki exactly as you named it, with no `sc_`
+prefix. Anki matches decks by name and keeps existing cards where they are, so if
+you imported the set before that change, the old cards stay in `sc_My set` and new
+ones go to `My set`. To fix it, once: in Anki open Browse, pick the `sc_My set`
+deck, select all its cards, **Cards → Change Deck…** to `My set`, then delete the
+empty `sc_My set`. If you have not imported the new file yet it is simpler: rename
+`sc_My set` to `My set` first (the gear beside the deck → **Rename**). Sheet to
+Anki reminds you of this when this browser has downloaded the set before. The
+add-on renames its own deck, nothing to do.
+
 **Anki renamed my deck back after I renamed it.**
 That is expected: names come from the sheet. Rename the spreadsheet file instead.
 See [Syncing](syncing.md#names-come-from-the-sheet).
@@ -138,6 +158,18 @@ and with the default options Anki skips every note. Import the same file again
 with **Merge note types** on and **Update notes** set to **Always**. Sheet to
 Anki says so just before the download too.
 
+**After Merge note types, the import still changed no notes.**
+Merging note types re-stamps the existing notes, so **Update notes: If newer**
+then skips them. For that import, set **Update notes** to **Always**. Basic and
+Cloze cannot be merged: select the notes in Anki and use **Change Note Type**.
+
+**I turned `reverse` off, but the reverse cards are still there.**
+Anki keeps the cards a card template already made. SheetCards keeps that
+template as an empty one, so the import still updates the notes; then use
+**Tools → Empty Cards** in Anki to remove the reverse cards. If you download on a
+device that has never downloaded this deck, turn on **Merge note types** once
+when importing.
+
 **Words I deleted from the sheet are still in Anki.**
 Importing an `.apkg` adds and updates; it never deletes. Delete them in Anki:
 **Browse**, find the word, **Delete**. The add-on on a computer syncs deletions.
@@ -145,7 +177,7 @@ Importing an `.apkg` adds and updates; it never deletes. Delete them in Anki:
 **I saved a `.csv` on Android, tapped it, and AnkiDroid imported strange notes.**
 AnkiDroid accepts CSV files too and turns every row into a note, the settings
 row included. Delete those notes in AnkiDroid, and next time open the `.csv` with
-**Open a file to add words** in Create sheet. On a phone, **Save sheet link** is
+**Open .xlsx/.csv file** in Create sheet. On a phone, **Save sheet link** is
 easier than a file.
 
 **A CSV saved from Excel has broken Vietnamese accents.**
