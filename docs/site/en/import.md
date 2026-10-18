@@ -17,8 +17,9 @@ journey - chuyến đi
 - **Edited in the form you pasted**: a list or a note is edited as a note; a
   table copied from Google Sheets or Excel, a CSV file or a Markdown table is
   edited as a small table (row 1 the column names, row 2 the settings). The
-  **Note / Table** switch at the top turns one into the other. Beside it is the
-  real card; ← → steps through them.
+  **Note / Table** switch at the top turns one into the other. The real card is
+  always in sight (on a phone, just above the text) and is the card of the line
+  the caret is on; ← → steps to the others.
 - **The separator is detected**: tab, ` - `, `=`, `|`, `;`, `:`, `,`, `>>`. If
   the guess is wrong, open **Split wrong?** and pick another.
 - A line with more than two parts gets extra back columns.
@@ -70,10 +71,10 @@ the keys for the whole set and the first column's settings; every other cell is
 the settings of the column above it. Pasting the whole table into **Paste text**
 works too.
 
-Only pasting words? Under the card are **Read aloud**, **Theme** and **Columns**
+Only pasting words? The bar at the bottom has **Read aloud**, **Theme** and **Columns**
 (which side each column goes on). A choice there is written straight into the
 note (its `#config` line and the brackets) or into row 2 of the table. **Copy
-text** / **Copy table** copies the whole set in that form; paste it into your
+text** / **Copy table** (on a phone, under **⋯**) copies the whole set in that form; paste it into your
 note or Google Sheets, add words next week and paste the whole thing again.
 
 ## Paste a whole CSV sheet

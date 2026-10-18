@@ -17,7 +17,8 @@ journey - chuyến đi
 - **Sửa theo đúng dạng bạn dán**: danh sách hay ghi chú được sửa như một ghi
   chú; bảng copy từ Google Sheets, Excel, file CSV hay bảng Markdown được sửa
   như một bảng nhỏ (hàng 1 tên cột, hàng 2 cài đặt). Nút **Ghi chú / Bảng** ở
-  trên đổi qua lại. Bên cạnh là card thật, bấm ← → để xem từng card.
+  trên đổi qua lại. Card thật luôn hiện cùng lúc (trên điện thoại thì ở ngay
+  trên chỗ gõ) và là card của dòng con trỏ đang đứng; ← → để xem card khác.
 - **Dấu tách được tự nhận**: tab, ` - `, `=`, `|`, `;`, `:`, `,`, `>>`. Nếu đoán
   sai, mở **Tách sai?** và chọn lại.
 - Dòng có hơn hai phần thì các phần sau thành thêm cột ở mặt sau.
@@ -66,9 +67,9 @@ Hàng 1 là tên cột, hàng 2 là settings row: ô đầu là `#config`, các 
 và cài đặt của cột đầu; mỗi ô sau là cài đặt của cột ở trên nó. Dán cả bảng vào
 **Dán văn bản** cũng được.
 
-Chỉ dán từ thôi? Dưới card có **Đọc to**, **Theme** và **Cột** (mặt nào cho
-từng cột). Chọn ở đó là cài đặt được viết thẳng vào ghi chú (dòng `#config` và
-ngoặc vuông) hay vào hàng 2 của bảng. **Copy văn bản** / **Copy bảng** copy cả
+Chỉ dán từ thôi? Ở thanh dưới cùng có **Đọc to**, **Theme** và **Cột** (mặt
+nào cho từng cột). Chọn ở đó là cài đặt được viết thẳng vào ghi chú (dòng `#config` và
+ngoặc vuông) hay vào hàng 2 của bảng. **Copy văn bản** / **Copy bảng** (trên điện thoại: nút **⋯**) copy cả
 bộ theo đúng dạng đó; dán vào ghi chú hay Google Sheets, tuần sau viết thêm từ
 rồi dán lại cả đoạn.
 

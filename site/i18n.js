@@ -69,10 +69,6 @@ const STRINGS = {
     en: "Anki flashcards from <mark>Google Sheets, files or notes</mark>",
     vi: "Tạo flashcard Anki từ <mark>Google Sheets, file hay ghi chú</mark>",
   },
-  homeLead: {
-    en: "Paste a word list or a Google Sheets link, or open a file. Check every card, then download an .apkg for the Anki app.",
-    vi: "Dán danh sách từ hoặc link Google Sheets, hay mở một file. Xem từng card, rồi tải file .apkg cho app Anki.",
-  },
   homeDownload: { en: "Download", vi: "Tải về" },
   homeNeeds: {
     en: "Needs Anki 25.x or later on a computer",
@@ -123,17 +119,9 @@ const STRINGS = {
     en: "Phone or computer",
     vi: "Điện thoại hay máy tính",
   },
-  featDevices: {
-    en: "Every step works on both.",
-    vi: "Mọi bước đều làm được trên cả hai.",
-  },
   featPreviewTitle: {
     en: "See every card before you download",
     vi: "Xem từng card trước khi tải",
-  },
-  featPreview: {
-    en: "Cards look just as they will in Anki, with Show Answer, before you download the .apkg.",
-    vi: "Card hiện đúng như trong Anki, có Show Answer, trước khi bạn tải file .apkg.",
   },
   soonTitle: {
     en: "Coming soon",
@@ -155,10 +143,6 @@ const STRINGS = {
     en: "Theme library",
     vi: "Thư viện Theme",
   },
-  soonTheme: {
-    en: "More themes to dress your cards in.",
-    vi: "Thêm nhiều theme để khoác lên card của bạn.",
-  },
   soonAsk: {
     en: "Want these sooner? Tell us →",
     vi: "Muốn có sớm? Góp ý →",
@@ -170,8 +154,8 @@ const STRINGS = {
     vi: "Có danh sách từ",
   },
   homeHow1: {
-    en: "A Google Sheet, an Excel file, or a list in your notes. None yet? Write one in Create sheet: pick a template, set up columns &amp; card, then add cards.",
-    vi: "Một Google Sheet, file Excel, hay danh sách trong ghi chú. Chưa có thì soạn trong Tạo Sheet: chọn template, đặt cột &amp; card, rồi thêm thẻ.",
+    en: "A Google Sheet, an Excel file, or a list in your notes.",
+    vi: "Một Google Sheet, file Excel, hay danh sách trong ghi chú.",
   },
   homeHow2Title: {
     en: "Make flashcards",
@@ -186,8 +170,8 @@ const STRINGS = {
     vi: "Mở bằng app Anki",
   },
   homeHow3: {
-    en: "Open the .apkg in the Anki app (AnkiDroid, AnkiMobile or Anki on a computer). Added words? Import again: cards are updated, progress kept.",
-    vi: "Mở file .apkg bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên máy tính). Thêm từ rồi import lại: card được cập nhật, giữ tiến độ.",
+    en: "Open the .apkg in the Anki app (AnkiDroid, AnkiMobile or Anki on a computer).",
+    vi: "Mở file .apkg bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên máy tính).",
   },
   homeFootNote: {
     en: "MIT licence. SheetCards is not made by or affiliated with Anki or Ankitects.",
@@ -204,10 +188,6 @@ const STRINGS = {
   shTitle: {
     en: "Write a flashcard sheet <mark>right on the web</mark>",
     vi: "Soạn sheet flashcard <mark>ngay trên web</mark>",
-  },
-  shLead: {
-    en: "No Google Sheets needed. Pick a template, type your words, then press Make flashcards for an .apkg that AnkiDroid, AnkiMobile or Anki opens.",
-    vi: "Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Tạo flashcard để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.",
   },
   shPickTemplate: { en: "Or start from a template", vi: "Hoặc bắt đầu từ một template" },
   tplBasic: { en: "Front / Back", vi: "Mặt trước / Mặt sau" },
@@ -260,10 +240,6 @@ const STRINGS = {
   bSample: { en: "Example for this column", vi: "Ví dụ cho cột này" },
   bAdvanced: { en: "Advanced settings", vi: "Tùy chỉnh nâng cao" },
   tplCustomName: { en: "My deck", vi: "Deck của tôi" },
-  tplSheetCaption: {
-    en: "Example: the sample row shows what the sheet looks like, and the card beside it is made from it. Your sheet starts empty — you add your words in step ② Add cards.",
-    vi: "Ví dụ: dòng mẫu cho thấy sheet trông thế nào, và card bên cạnh được tạo từ nó. Sheet của bạn bắt đầu trống — bạn thêm từ ở bước ② Thêm thẻ.",
-  },
   tplNoIdNote: {
     en: "Changing the words on the front makes a new card (the old card's progress is lost).",
     vi: "Sửa chữ ở mặt trước sẽ thành card mới (mất tiến độ của card cũ).",
@@ -272,32 +248,16 @@ const STRINGS = {
   tplCsv: { en: "Download .csv", vi: "Tải file .csv mẫu" },
   vocabCreate: { en: "Create sheet", vi: "Tạo sheet" },
   shOpenFile: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
-  shOpenFileHint: {
-    en: "The .csv or .xlsx you saved — open it and carry on adding words",
-    vi: "File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay",
-  },
-  shIdsKept: {
-    en: "Every word keeps its ID, so re-importing the .apkg updates the notes and keeps your review progress.",
-    vi: "ID của từng từ giữ nguyên, nên import lại file .apkg sẽ cập nhật note và giữ tiến độ ôn.",
-  },
   shMyTemplates: { en: "Your templates", vi: "Template của bạn" },
   shMyTemplatesHint: {
-    en: "Kept in this browser only, never sent anywhere. To give one to someone: pick it, Create sheet, then Share link.",
-    vi: "Chỉ lưu trong trình duyệt này, không gửi đi đâu. Muốn gửi cho người khác: chọn template, Tạo sheet, rồi bấm Share link.",
+    en: "Kept in this browser only, never sent anywhere.",
+    vi: "Chỉ lưu trong trình duyệt này, không gửi đi đâu.",
   },
   tplUpload: { en: "Upload a template", vi: "Tải lên template" },
-  tplUploadHint: {
-    en: ".xlsx or .csv — its columns and settings row are kept, ready for new words",
-    vi: ".xlsx hoặc .csv — giữ tên cột và settings row, sẵn sàng cho từ mới",
-  },
   tplSaveMine: { en: "Save as template", vi: "Lưu làm template" },
   tplMineText: {
     en: (cols) => `Your template · ${cols} column${cols === 1 ? "" : "s"}`,
     vi: (cols) => `Template của bạn · ${cols} cột`,
-  },
-  tplMineShare: {
-    en: "Create sheet to add words. To give this template to someone: Create sheet, then Share link.",
-    vi: "Chọn Tạo sheet để thêm từ. Muốn gửi template này cho người khác: Tạo sheet rồi bấm Share link.",
   },
   tplSaved: {
     en: (name) => `Saved “${name}” to Your templates`,
@@ -361,7 +321,6 @@ const STRINGS = {
   tplRevFront: { en: "Card 2 (reverse) · front", vi: "Card 2 (reverse) · mặt trước" },
   tplRevBack: { en: "Card 2 (reverse) · back", vi: "Card 2 (reverse) · mặt sau" },
   shHaveSheet: { en: "Already have a Google Sheet?", vi: "Đã có Google Sheet?" },
-  shHaveSheetHint: { en: "Paste its link straight into Make flashcards", vi: "Dán link thẳng vào trang Tạo flashcard" },
   shPrivacy: {
     en: "The sheet is kept in this browser. Nothing is sent to SheetCards' servers.",
     vi: "Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.",
@@ -465,10 +424,6 @@ const STRINGS = {
     vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file .xlsx/.csv. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
   },
   shAskAi: { en: "Ask AI to make a word set", vi: "Nhờ AI tạo bộ từ" },
-  shAskAiHint: {
-    en: "— ChatGPT, Gemini or Claude writes the .csv for you, then press Open .xlsx/.csv file.",
-    vi: "— ChatGPT, Gemini hoặc Claude viết file .csv cho bạn, rồi bấm Mở file .xlsx/.csv.",
-  },
   shIosNote: {
     en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Save sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",
     vi: "Trên iPhone/iPad, Safari xoá bản nháp này nếu 7 ngày bạn không mở trang. Bấm <b>Lưu link sheet</b> để giữ sheet. Mẹo: <b>Share → Add to Home Screen</b> (Thêm vào MH chính) để mở lại trang này chỉ với một chạm.",
@@ -571,17 +526,9 @@ const STRINGS = {
 
   // ---- Sheet to Anki: paste text (textimport.js), other apps' files --------
   txOpen: { en: "Paste text", vi: "Dán văn bản" },
-  txOpenHint: { en: "A word list, a note, Quizlet, CSV", vi: "Danh sách từ, ghi chú, Quizlet, CSV" },
-  pickHint: { en: ".csv, .txt, .apkg, or drop it on the page", vi: ".csv, .txt, .apkg hoặc kéo thả vào trang" },
   txTitle: { en: "Paste text", vi: "Dán văn bản" },
-  txLead: {
-    en: "One word per line, e.g. <code>apple - quả táo</code>.",
-    vi: "Mỗi dòng một từ, ví dụ <code>apple - quả táo</code>.",
-  },
   txSyntaxLink: { en: "Writing a whole set as text?", vi: "Viết cả bộ bằng chữ?" },
   txSplit: { en: "Split wrong?", vi: "Tách sai?" },
-  txSeeCards: { en: (n) => `See the cards (${n})`, vi: (n) => `Xem card (${n})` },
-  txBackToText: { en: "Back to the text", vi: "Về phần chữ" },
   txCardEmpty: { en: "Your cards appear here.", vi: "Card của bạn hiện ở đây." },
   txDupesOut: {
     en: (n) => `${n} duplicate${n === 1 ? "" : "s"} (left out)`,
@@ -592,10 +539,7 @@ const STRINGS = {
     vi: (n) => `${n} từ trùng (đã giữ)`,
   },
   txCols: { en: "Columns", vi: "Cột" },
-  txLeadTable: {
-    en: "Edit right in the table: row 1 names the columns, row 2 holds the settings.",
-    vi: "Sửa ngay trong bảng: hàng 1 là tên cột, hàng 2 là cài đặt.",
-  },
+  txMore: { en: "More", vi: "Thêm" },
   txFormLabel: { en: "Edit as", vi: "Sửa dạng" },
   txFormNote: { en: "Note", vi: "Ghi chú" },
   txFormTable: { en: "Table", vi: "Bảng" },
@@ -1419,10 +1363,6 @@ const STRINGS = {
     vi: "Hãy dán danh sách từ hoặc link Google Sheets trước.",
   },
   useExample: { en: "See an example", vi: "Xem ví dụ" },
-  exampleHint: {
-    en: "31 sample sheets, simple to advanced",
-    vi: "31 sheet mẫu, từ đơn giản tới nâng cao",
-  },
   // The four buttons themselves are drawn in English: they are English in every
   // learner's Google Sheets, so they are the words to look for.
   shareTitle: { en: "Share your sheet first", vi: "Sheet phải được chia sẻ trước" },
@@ -1605,10 +1545,6 @@ const STRINGS = {
   },
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
-  doorHaveText: {
-    en: "A list in your notes, an Excel file or Google Sheets.",
-    vi: "Danh sách trong ghi chú, file Excel hoặc Google Sheets.",
-  },
   homeStep1: { en: "Text, link or file", vi: "Chữ, link hoặc file" },
   // What feeds the phone in the demo: one set, written two ways side by side.
   demoSrcNote: { en: "Notes / text", vi: "Ghi chú / văn bản" },
@@ -1658,10 +1594,6 @@ const STRINGS = {
   doorNewTitle: {
     en: "No sheet yet? Write one on the web",
     vi: "Chưa có sheet? Soạn trên web",
-  },
-  doorNewText: {
-    en: "Pick a template and a theme, type your words, then press Make flashcards. No Google Sheets needed.",
-    vi: "Chọn template và theme, gõ từ, rồi bấm Tạo flashcard. Không cần Google Sheets.",
   },
   doorNewGo: { en: "Open Create sheet", vi: "Mở Tạo Sheet" },
   homeTemplate: { en: "starter file (.xlsx)", vi: "file mẫu (.xlsx)" },

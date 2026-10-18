@@ -1,7 +1,8 @@
 /* Sheet to Anki's "Dán văn bản" (textimport.js) and the three ways in on step 1.
-   The dialog is the text and the cards it makes: two columns from 60rem, below
-   that a full-screen sheet in two steps (data-step="text" | "card"). The card
-   is the review's own (.deckstack, .cardslot, .reviewbar from create.css). */
+   The dialog is the text and the cards it makes, always both in sight: two
+   columns from 60rem; below that one full-screen sheet with a small live card
+   between the name and the text, folded to one line while the keyboard is up.
+   The card is the review's own (.deckstack, .cardslot, .reviewbar, create.css). */
 
 /* Three equal ways in: stacked on a phone, side by side once they fit. */
 @media (min-width: 40rem) {
@@ -23,6 +24,8 @@
 #textbox.txbox {
   width: min(74rem, calc(100% - 48px)); height: min(50rem, calc(100dvh - 48px));
   max-height: none; overflow: hidden;
+  /* One line of the note: the text's line box and the ruling's period. */
+  --tx-fs: 17px; --tx-lh: 30px;
 }
 #textbox.txbox[open] { display: flex; flex-direction: column; }
 #textbox [hidden] { display: none !important; }
@@ -32,29 +35,24 @@
   padding: 12px 12px 12px 24px; border-bottom: 1px solid var(--line-soft);
 }
 .tx-top strong { flex: 1 1 auto; min-width: 0; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
-.tx-back { display: none; margin-left: -12px; }
 
 .tx-body {
   flex: 1 1 auto; min-height: 0;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  grid-template-areas: "write look" "set set";
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "name look" "write look";
 }
 
-/* ---- the text --------------------------------------------------------------- */
+/* ---- the name ---------------------------------------------------------------- */
 
-.tx-write {
-  grid-area: write; min-height: 0; overflow: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; gap: 14px; padding: 20px 24px;
-}
+.tx-name { grid-area: name; display: flex; flex-direction: column; gap: 6px; padding: 20px 24px 0; }
 .tx-label {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .tx-label .icon { color: var(--muted); }
-.tx-name { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .tx-name input {
-  min-height: 48px; padding: 0 14px; border-radius: 13px;
+  min-height: 46px; padding: 0 14px; border-radius: 13px;
   border: 1.5px solid var(--line-strong); background: var(--panel); color: var(--ink);
   font: inherit; font-size: 1rem; font-weight: 600;
 }
@@ -63,18 +61,24 @@
 .tx-name input[aria-invalid="true"] { border-color: var(--bad); }
 .tx-name .field-error { display: flex; align-items: center; gap: 6px; margin: 0; }
 
-.tx-lead { flex: none; margin: 0 0 -6px; font-size: var(--t-sm); color: var(--muted); }
-.tx-lead code { font-family: inherit; font-weight: 600; color: var(--ink); padding: 1px 6px; border-radius: 6px; background: var(--sunken); white-space: nowrap; }
-.tx-lead a { margin-left: 4px; font-weight: 600; color: var(--accent); text-underline-offset: 2px; white-space: nowrap; }
+/* ---- the text --------------------------------------------------------------- */
+
+.tx-write {
+  grid-area: write; min-height: 0; overflow: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 12px; padding: 14px 24px 18px;
+}
 
 .tx-area { position: relative; flex: 1 1 auto; min-height: 10rem; display: flex; }
 /* The note: ruled paper under the words, and on it the tints of the #config
    line and the settings in brackets. The paper is a layer behind a textarea
    with no background of its own, wrapped and scrolled as the textarea is, so
-   what is typed is always the browser's own text. */
+   what is typed is always the browser's own text. The rules are drawn by each
+   line of the paper (and by the paper after the last one), one per line box,
+   just under the letters, so every line sits on one and none floats above the
+   first. */
 .tx-area textarea, .tx-paper {
-  margin: 0; padding: 14px 16px;
-  font: inherit; font-size: 1.0625rem; line-height: 1.75; letter-spacing: normal;
+  margin: 0; padding: 12px 16px;
+  font: inherit; font-size: var(--tx-fs); line-height: var(--tx-lh); letter-spacing: normal;
   white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 4;
   border: 1.5px solid transparent; border-radius: 16px; box-sizing: border-box;
 }
@@ -85,13 +89,17 @@
 .tx-paper {
   position: absolute; left: 0; top: 0; z-index: 0; overflow: hidden; pointer-events: none;
   color: transparent; background-color: var(--panel);
-  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.75em - 1px), var(--rule) calc(1.75em - 1px), var(--rule) 1.75em);
-  background-position: 0 14px; background-attachment: local;
+  --tx-ruling: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(var(--tx-lh) - 6px),
+    var(--rule) calc(var(--tx-lh) - 6px), var(--rule) calc(var(--tx-lh) - 5px),
+    transparent calc(var(--tx-lh) - 5px), transparent var(--tx-lh));
 }
-.tx-paper .ln { min-height: 1.75em; margin: 0 -8px; padding: 0 8px; }
-.tx-paper .ln.cfg { background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; }
+.tx-paper .ln, .tx-paper::after { margin: 0 -16px; padding: 0 16px; background-image: var(--tx-ruling); }
+.tx-paper::after { content: ""; display: block; height: 100%; }
+.tx-paper .ln { min-height: var(--tx-lh); }
+.tx-paper .ln.cfg { background-color: color-mix(in srgb, var(--accent) 10%, transparent); }
 .tx-paper .ln.cfg .kw { background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 4px; }
-.tx-paper .ln.head { background: color-mix(in srgb, var(--ok) 8%, transparent); border-radius: 6px; }
+.tx-paper .ln.head { background-color: color-mix(in srgb, var(--ok) 8%, transparent); }
 .tx-paper .br { background: color-mix(in srgb, var(--mark) 60%, transparent); border-radius: 4px; }
 
 /* The table: letters, row numbers, names in row 1, the settings row in row 2,
@@ -148,8 +156,8 @@
 }
 .tx-split > summary::-webkit-details-marker { display: none; }
 .tx-split > summary:hover { color: var(--accent); }
-.tx-split .caret, .tx-cols .caret { transition: transform .2s ease; }
-.tx-split[open] .caret, .tx-cols[open] .caret { transform: rotate(180deg); }
+.tx-split .caret, .tx-opt .caret { transition: transform .2s ease; }
+.tx-split[open] .caret, .tx-opt.open .caret { transform: rotate(180deg); }
 .tx-splitrow { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 4px 0 2px; }
 .tx-splitrow label { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-xs); font-weight: 600; color: var(--muted); }
 
@@ -160,16 +168,17 @@
   background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b87a0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
 }
 
-/* ---- the cards -------------------------------------------------------------- */
+/* ---- the card ---------------------------------------------------------------- */
 
 .tx-look {
-  grid-area: look; min-height: 0; display: flex; flex-direction: column;
+  grid-area: look; min-height: 0; overflow: auto; display: flex; flex-direction: column;
   padding: 18px 28px 14px; background: var(--ground);
   border-left: 1px solid var(--line-soft);
 }
+.tx-lookhead { flex: none; display: flex; align-items: center; gap: 10px; min-height: 32px; margin: 0 0 12px; }
 .tx-meta {
-  flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
-  min-height: 32px; margin: 0 0 12px; font-size: var(--t-sm);
+  flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 0; font-size: var(--t-sm);
 }
 .tx-meta strong { font-size: var(--t-md); font-weight: 800; font-variant-numeric: tabular-nums; }
 .tx-dim { color: var(--muted); }
@@ -180,34 +189,78 @@
 }
 .tx-chipbtn:hover { border-color: var(--warn); }
 .tx-chipbtn.on { color: var(--ink); background: var(--panel); border-color: var(--line-strong); }
-
-.tx-stack { flex: 1 1 auto; min-height: 12rem; margin: 0 0 26px; }
-.tx-stack .cardslot { height: 100%; min-height: 0; }
-.tx-slot iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
-.tx-empty {
-  display: grid; place-items: center; height: 100%; min-height: 12rem; padding: 2rem;
-  color: var(--muted); font-size: var(--t-sm); text-align: center;
-}
-.tx-review { flex: none; }
-.tx-review .flipbtn { width: 100%; }
 .tx-counter {
-  flex: none; margin: 8px 0 0; min-height: 1.4em; text-align: center;
+  flex: none; margin: 0; text-align: right;
   font-size: var(--t-sm); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted);
 }
-.tx-look .tx-warn { flex: none; margin-top: 8px; }
 
-/* ---- the settings, one row under both --------------------------------------- */
-
-.tx-set {
-  grid-area: set; position: relative;
-  padding: 12px 24px; border-top: 1px solid var(--line-soft); background: var(--panel);
+.tx-cardzone { position: relative; flex: none; }
+/* The card as tall as what is on it, from a floor to what the column has room
+   for; past that it scrolls inside itself. */
+.tx-stack { margin: 0 0 22px; }
+.tx-stack .cardslot { min-height: 0; }
+.tx-slot iframe {
+  display: block; width: 100%; height: 10rem; border: 0; background: transparent;
+  min-height: 10rem; max-height: calc(min(50rem, 100dvh - 48px) - 23rem);
+  transform-origin: 50% 0;
 }
-.tx-set { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
+.tx-empty {
+  display: grid; place-items: center; height: 100%; min-height: 14rem; padding: 2rem;
+  color: var(--muted); font-size: var(--t-sm); text-align: center;
+}
+.tx-edge, .tx-strip { display: none; }
+.tx-review { flex: none; }
+.tx-review .flipbtn { width: 100%; }
+.tx-look .tx-warn { flex: none; margin-top: 12px; }
+
+/* ---- the settings and the way out -------------------------------------------- */
+
+.tx-foot {
+  flex: none; position: relative;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+  grid-template-areas: "set set" "aux go"; gap: 0 10px;
+  padding: 0 16px 12px 18px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-soft); background: var(--panel);
+}
+.tx-set {
+  grid-area: set; margin: 0 -16px 12px -18px; padding: 12px 24px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px;
+  border-bottom: 1px solid var(--line-soft);
+}
 .tx-set > * { flex: none; }
-.tx-field { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px 10px; }
-.tx-field .tx-label { white-space: nowrap; }
+.tx-more { grid-area: aux; }
+.tx-go { grid-area: go; }
+
+/* A setting: on a wide screen its controls are on the bar and the chip is not
+   drawn; on a phone it is a chip and the controls open over the bar. Cột is a
+   popover at every width. */
+.tx-opt { display: flex; align-items: center; }
+.tx-chip { display: none; }
+.tx-optbody { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px 10px; }
+.tx-optbody .tx-label { white-space: nowrap; }
 .tx-check { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); min-height: 40px; }
 .tx-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+
+.tx-cols { position: relative; }
+.tx-cols .tx-chip { display: inline-flex; }
+.tx-cols:not(.open) .tx-optbody { display: none; }
+.tx-pill {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel);
+  font-size: var(--t-sm); font-weight: 650;
+}
+.tx-pill > .icon:first-child { color: var(--accent); }
+.tx-cols.open .tx-pill { border-color: var(--accent); color: var(--accent); }
+.tx-pop.tx-optbody {
+  position: absolute; z-index: 5; left: 0; bottom: calc(100% + 8px);
+  width: min(22rem, 80vw); padding: 14px; display: grid; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg);
+}
+.tx-pop .tx-label { margin: 0; }
+.tx-roles { display: grid; gap: 8px; }
+.tx-role { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: var(--t-sm); }
+.tx-role > span { overflow-wrap: anywhere; font-weight: 600; }
+.tx-reused { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-size: var(--t-xs); color: var(--muted); }
 
 .tx-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
 .tx-swatch {
@@ -222,51 +275,22 @@
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px;
   background: var(--sw-ac, var(--accent));
 }
-.tx-swatch.plain { background: var(--sunken); }
 .tx-swatch:hover { transform: translateY(-1px); }
 .tx-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
 .tx-themename { font-size: var(--t-sm); font-weight: 600; color: var(--muted); min-width: 4.5em; }
 
-.tx-cols { position: relative; }
-.tx-pill {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px;
-  border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel);
-  font-size: var(--t-sm); font-weight: 650; cursor: pointer; list-style: none;
-}
-.tx-pill::-webkit-details-marker { display: none; }
-.tx-pill > .icon:first-child { color: var(--accent); }
-.tx-cols[open] .tx-pill { border-color: var(--accent); color: var(--accent); }
-.tx-pop {
-  position: absolute; z-index: 5; left: 0; bottom: calc(100% + 8px);
-  width: min(22rem, 80vw); padding: 14px; display: grid; gap: 10px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg);
-}
-.tx-pop .tx-label { margin: 0; }
-.tx-roles { display: grid; gap: 8px; }
-.tx-role { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: var(--t-sm); }
-.tx-role > span { overflow-wrap: anywhere; font-weight: 600; }
-.tx-reused { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-size: var(--t-xs); color: var(--muted); }
-
-
-/* ---- the foot ----------------------------------------------------------------- */
-
-.tx-foot {
-  flex: none; display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px 12px 18px; padding-bottom: max(12px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line-soft); background: var(--panel);
-}
-.tx-aux { display: flex; flex-wrap: wrap; gap: 2px; margin-right: auto; }
+.tx-aux { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
 .tx-quiet {
   display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 10px;
-  border-radius: 10px; font-size: var(--t-sm); font-weight: 600; color: var(--muted);
+  border-radius: 10px; font-size: var(--t-sm); font-weight: 600; color: var(--muted); text-decoration: none;
 }
-.tx-quiet .icon { font-size: 16px; }
+.tx-quiet .icon { font-size: 16px; flex: none; }
 .tx-quiet:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); }
 .tx-foot .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 48px; padding: 0 24px; border-radius: 13px; font-size: var(--t-base); font-weight: 700;
 }
-.tx-see { display: none !important; }
+.tx-copied { align-self: center; padding: 0 6px; font-size: var(--t-sm); font-weight: 600; color: var(--ok); }
 
 /* ---- the note box --------------------------------------------------------------- */
 
@@ -279,53 +303,118 @@
   font-family: var(--mono); font-size: var(--t-sm); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
   max-height: 16rem; overflow: auto;
 }
-.tx-copied { align-self: center; padding: 0 6px; font-size: var(--t-sm); font-weight: 600; color: var(--ok); }
 
-/* ==== a phone, a tablet: one full-screen sheet, two steps =================== */
+/* ==== a phone, a tablet: one screen, the card between the name and the text == */
 
 @media (max-width: 59.99rem) {
   #textbox.txbox {
     width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh;
     margin: 0; border-radius: 0; padding-bottom: 0;
+    --tx-fs: 16px; --tx-lh: 28px;
   }
-  .tx-top { padding: 8px 8px 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); }
-  #textbox[data-step="card"] .tx-back { display: inline-grid; }
-  #textbox[data-step="card"] .tx-top { padding-left: 16px; }
+  .tx-top { padding: 6px 6px 6px 16px; padding-top: max(6px, env(safe-area-inset-top)); }
+  .tx-forms { margin-right: 0; }
+  .tx-forms button { padding: 0 10px; min-height: 32px; }
+  .tx-forms .icon { display: none; }
 
   .tx-body { display: flex; flex-direction: column; overflow: auto; overscroll-behavior: contain; }
-  #textbox[data-step="text"] .tx-look, #textbox[data-step="text"] .tx-set,
-  #textbox[data-step="card"] .tx-write { display: none; }
 
-  .tx-write { flex: 1 0 auto; overflow: visible; padding: 16px; gap: 12px; }
-  .tx-area { min-height: 12rem; }
-  .tx-look { flex: 1 0 auto; padding: 18px 16px 12px; border-left: 0; }
-  .tx-stack { min-height: min(22rem, 52dvh); }
-  .tx-set { padding: 14px 16px; background: var(--ground); border-top: 0; }
-  .tx-set { flex-direction: column; align-items: stretch; gap: 14px; }
-  .tx-field { display: grid; grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr); }
-  .tx-field select { width: 100%; }
-  .tx-field .tx-check { grid-column: 1 / -1; }
+  /* The name on one slim line, its label beside it. */
+  .tx-name {
+    flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
+    gap: 4px 10px; padding: 10px 16px 0;
+  }
+  .tx-name .tx-label { font-size: var(--t-xs); color: var(--muted); }
+  .tx-name input { min-height: 38px; padding: 0 12px; border-radius: 10px; font-size: 16px; }
+  .tx-name .field-error { grid-column: 1 / -1; }
+
+  /* The card: a fixed room, so nothing typed below ever moves; ‹ › on its
+     edges, a tap turns it. */
+  .tx-look { flex: none; padding: 8px 16px 0; background: none; border-left: 0; overflow: visible; }
+  .tx-lookhead { min-height: 26px; margin: 0 0 6px; }
+  .tx-meta { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
+  .tx-meta strong { font-size: var(--t-sm); }
+  .tx-chipbtn { min-height: 24px; padding: 0 9px; }
+  .tx-meta .tx-dim { overflow: hidden; text-overflow: ellipsis; }
+  .tx-stack { margin: 0 0 10px; }
+  .tx-stack .cardslot { height: clamp(8.5rem, 20dvh, 11rem); border-radius: 16px; box-shadow: var(--shadow); }
+  .tx-stack.deckstack::before, .tx-stack.deckstack::after { border-radius: 16px; }
+  .tx-stack.deckstack::before { transform: translateY(5px) scale(.97); }
+  .tx-stack.deckstack::after { transform: translateY(10px) scale(.94); }
+  .tx-slot iframe { position: absolute; left: 0; top: 0; height: 100%; min-height: 0; max-height: none; }
+  .tx-empty { min-height: 0; padding: 1rem; }
+  .tx-review { display: none; }
+  .tx-edge {
+    position: absolute; top: 50%; z-index: 2; translate: 0 calc(-50% - 5px);
+    display: grid; place-items: center; width: 30px; height: 44px; padding: 0;
+    border-radius: 10px; font-size: 18px; color: var(--muted);
+    background: color-mix(in srgb, var(--panel) 80%, transparent); border: 1px solid var(--line);
+  }
+  .tx-edge.prev { left: -10px; }
+  .tx-edge.next { right: -10px; }
+  .tx-edge:disabled { display: none; }
+  .tx-look .tx-warn { margin: 0 0 4px; }
+
+  /* While the keyboard is up: the card is one line over the text. */
+  #textbox[data-kb] .tx-cardzone, #textbox[data-kb] .tx-lookhead { display: none; }
+  .tx-strip:not([hidden]) {
+    display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; margin: 2px 0 4px; padding: 0 12px;
+    border-radius: 10px; border: 1px solid var(--line); background: var(--sunken);
+    font-size: var(--t-sm); text-align: left; white-space: nowrap; overflow: hidden;
+  }
+  .tx-stripn { flex: none; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .tx-stripq { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+  .tx-stripa { flex: 0 1000 auto; min-width: 0; display: inline-flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+  .tx-stripa .icon { flex: none; font-size: 13px; }
+  #textbox[data-kb] .tx-name { padding-top: 6px; }
+  #textbox[data-kb] .tx-set, #textbox[data-kb] .tx-more { display: none; }
+  #textbox[data-kb] .tx-foot { padding-top: 8px; padding-bottom: 8px; }
+
+  .tx-write { flex: 1 1 auto; min-height: 9rem; overflow: visible; padding: 4px 16px 10px; gap: 8px; }
+  .tx-area, .tx-table { min-height: 8rem; }
+
+  /* The bar: a row of chips, each opening its controls over the bar, then
+     Tạo flashcard across the width. */
+  .tx-foot {
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "set aux" "go go";
+    gap: 8px 6px; padding: 8px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .tx-set { margin: 0; padding: 0; border: 0; flex-wrap: nowrap; gap: 6px; overflow: hidden; }
+  .tx-set > .tx-opt { flex: none; }
+  .tx-set > .tx-opt[data-opt="tts"] { flex: 0 1 auto; min-width: 0; }
+  .tx-reused { display: none !important; }
+  .tx-chip {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 36px; padding: 0 10px;
+    border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel);
+    font-size: var(--t-xs); font-weight: 650; color: var(--ink); white-space: nowrap;
+  }
+  .tx-chip > .icon:first-child { flex: none; color: var(--accent); }
+  .tx-chip .caret { flex: none; color: var(--muted); }
+  .tx-chiptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .tx-opt.open > .tx-chip { border-color: var(--accent); color: var(--accent); }
+  .tx-morebtn { width: 36px; padding: 0; justify-content: center; font-size: 18px; }
+  .tx-morebtn .icon { color: var(--ink) !important; }
+  .tx-dot {
+    flex: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--sw-bg, var(--panel)); box-shadow: inset 0 -5px 0 var(--sw-ac, var(--accent)), 0 0 0 1px color-mix(in srgb, var(--ink) 20%, transparent);
+  }
+
+  .tx-opt:not(.open) > .tx-optbody { display: none; }
+  .tx-opt > .tx-optbody, .tx-pop.tx-optbody {
+    position: absolute; z-index: 6; left: 12px; right: 12px; bottom: calc(100% + 6px); width: auto;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 14px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg);
+  }
+  .tx-pop.tx-optbody { display: grid; }
+  .tx-opt[data-opt="tts"] select { flex: 1 1 10rem; }
   .tx-themename { display: none; }
-  .tx-swatches { gap: 5px; flex-wrap: nowrap; }
-  .tx-swatch { width: 34px; height: 40px; flex: none; }
-  .tx-pop { position: static; width: auto; margin-top: 8px; box-shadow: none; }
-  .tx-cols .tx-pill { width: 100%; }
-  .tx-cols .tx-pill .caret { margin-left: auto; }
-
-  .tx-foot { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 16px; }
-  .tx-foot .btn { width: 100%; }
-  .tx-aux { justify-content: center; margin: 0; }
-  #textbox[data-step="text"] .tx-aux, #textbox[data-step="text"] .tx-go { display: none; }
-  #textbox[data-step="text"] .tx-see { display: inline-flex !important; }
+  .tx-swatches { gap: 6px; }
+  .tx-swatch { width: 38px; height: 40px; }
+  .tx-aux.tx-optbody { flex-direction: column; align-items: stretch; gap: 2px; padding: 8px; }
+  .tx-aux .tx-quiet { min-height: 44px; color: var(--ink); }
+  .tx-foot .btn { width: 100%; min-height: 50px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tx-swatch, .tx-split .caret, .tx-cols .caret { transition: none; }
-}
-
-@media (max-width: 59.99rem) {
-  .tx-forms button { padding: 0 10px; }
-  .tx-forms .icon { display: none; }
-  #textbox[data-step="card"] .tx-forms { display: none; }
-  .tx-table { min-height: 14rem; }
+  .tx-swatch, .tx-split .caret, .tx-opt .caret { transition: none; }
 }

@@ -69,7 +69,6 @@
   <!-- ==== no sheet yet: where to start ===================================== -->
   <section id="entry" class="entry sh-entry" aria-labelledby="entry-title">
     <h1 id="entry-title" class="entry-title" data-i18n="shTitle">Soạn sheet flashcard <mark>ngay trên web</mark></h1>
-    <p class="entry-lead" data-i18n="shLead">Không cần Google Sheets. Chọn một mẫu, gõ từ của bạn, rồi bấm Tạo flashcard để có file .apkg cho AnkiDroid, AnkiMobile hoặc Anki.</p>
 
     <!-- Coming back is the commonest visit: the sheet was saved as a file, and
          opening it is step 2 straight away. -->
@@ -84,20 +83,17 @@
       <div class="reopen-row">
         <a class="altcard reopen-card reopen-sheet" href="./create/">
           <span class="altcard-icon" data-icon="link"></span>
-          <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
-            <span data-i18n="shHaveSheetHint">Dán link thẳng vào trang Tạo flashcard</span></span>
+          <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong></span>
           <span class="reopen-arrow" data-icon="arrow-right"></span>
         </a>
         <button id="pick" class="altcard reopen-card reopen-go" type="button">
           <span class="altcard-icon" data-icon="folder-open"></span>
-          <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file .xlsx/.csv</strong>
-            <span data-i18n="shOpenFileHint">File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay</span></span>
+          <span class="altcard-text"><strong data-i18n="shOpenFile">Mở file .xlsx/.csv</strong></span>
           <span class="reopen-arrow" data-icon="arrow-right"></span>
         </button>
       </div>
       <p class="reopen-ids"><span data-icon="link"></span><span data-i18n="shComeBack">Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file .xlsx/.csv. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.</span></p>
-      <p class="reopen-ids"><span data-icon="history"></span><span data-i18n="shIdsKept">ID của từng từ giữ nguyên, nên import lại file .apkg sẽ cập nhật note và giữ tiến độ ôn.</span></p>
-      <p class="reopen-ids"><span data-icon="sparkles"></span><span><a href="./#ai" data-i18n="shAskAi">Nhờ AI tạo bộ từ</a> <span data-i18n="shAskAiHint">— ChatGPT, Gemini hoặc Claude viết file .csv cho bạn, rồi bấm Mở file .xlsx/.csv.</span></span></p>
+      <p class="reopen-ids"><span data-icon="sparkles"></span><a href="./#ai" data-i18n="shAskAi">Nhờ AI tạo bộ từ</a></p>
     </div>
 
     <h2 class="sh-pickhead" id="templates-title" data-i18n="shPickTemplate">Hoặc bắt đầu từ một template</h2>
@@ -105,11 +101,10 @@
 
     <section class="tplgroup" id="minegroup" aria-labelledby="mine-title">
       <h2 class="sh-pickhead" id="mine-title" data-i18n="shMyTemplates">Template của bạn</h2>
-      <p class="tplgroup-hint" data-i18n="shMyTemplatesHint">Chỉ lưu trong trình duyệt này, không gửi đi đâu. Muốn gửi cho người khác: chọn template, Tạo sheet, rồi bấm Share link.</p>
+      <p class="tplgroup-hint" data-i18n="shMyTemplatesHint">Chỉ lưu trong trình duyệt này, không gửi đi đâu.</p>
       <div class="moretpl" id="mytemplates"></div>
       <p class="tplupload">
         <button id="tpl-upload" class="toolbtn" type="button"><span data-icon="upload"></span><span data-i18n="tplUpload">Tải lên template</span></button>
-        <span class="muted small" data-i18n="tplUploadHint">.xlsx hoặc .csv — giữ tên cột và settings row, sẵn sàng cho từ mới</span>
       </p>
     </section>
 
@@ -400,11 +395,9 @@
       <div class="tpl-file" id="tpl-file">
         <div id="tpl-sheet" class="tpl-sheet scrapwrap" tabindex="0" role="region"
              aria-label="Sheet ví dụ" data-i18n-attr="aria-label:tplSheetLabel"></div>
-        <p class="tpl-caption" data-i18n="tplSheetCaption">Ví dụ: dòng mẫu cho thấy sheet trông thế nào, và card bên cạnh được tạo từ nó. Sheet của bạn bắt đầu trống — bạn thêm từ ở bước ② Thêm thẻ.</p>
       </div>
     </div>
     <p id="tpl-noid" class="tpl-note" hidden><span data-icon="circle-alert"></span><span data-i18n="tplNoIdNote">Sửa chữ ở mặt trước sẽ thành card mới (mất tiến độ của card cũ).</span></p>
-    <p id="tpl-mine" class="tpl-note" hidden><span data-icon="share-2"></span><span data-i18n="tplMineShare">Chọn Tạo sheet để thêm từ. Muốn gửi template này cho người khác: Tạo sheet rồi bấm Share link.</span></p>
     <!-- The set's name is its deck in Anki, so it is asked here, where the sheet
          is made: two sets with one name would overwrite each other. -->
     <div class="tpl-name">

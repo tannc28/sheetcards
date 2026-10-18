@@ -1604,7 +1604,6 @@ function paintStep() {
   $("#tpl-advanced").hidden = !building;
   if (building) paintBuilder();
   $("#vocab-opts").hidden = !languaged;
-  $("#tpl-mine").hidden = !isMine(stepId);
   // Keyed by its first column (no ID column): the one trade-off, said once.
   $("#tpl-noid").hidden = /^\s*id\s*$/i.test(templateNow(stepId)?.rows?.[0]?.[0] ?? "ID");
   if (languaged) {

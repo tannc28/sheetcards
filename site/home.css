@@ -135,7 +135,6 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @media (min-width: 100rem) { .doors { max-width: 46rem; } }
 
 .quick { margin: 0; }
-.quick-label { display: block; margin: 0 0 .6rem; font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
 .quick-field {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 6px 6px 16px; border-radius: 18px;
@@ -756,6 +755,17 @@ a.btn, a.btn-quiet { text-decoration: none; }
   .hero-text { grid-column: 1; grid-row: 1; }
   .demo { grid-column: 2; grid-row: 1; }
   .aiquick { grid-column: 1; grid-row: 2; align-self: start; margin-top: 0; }
+}
+/* One column: the demo straight under the headline, before the doors — it says
+   what the page does faster than any sentence could. The text's box steps
+   aside so its headline and its doors can sit either side of it. */
+@media (max-width: 63.99rem) {
+  .hero-inner { row-gap: 1.75rem; }
+  .hero-text { display: contents; }
+  .hero-text > .display { order: 0; margin-bottom: 0; }
+  .demo { order: 1; }
+  .doors { order: 2; margin-top: 0; }
+  .aiquick { order: 3; margin-top: calc(14px - 1.75rem); }
 }
 @media (min-width: 100rem) {
   .hero-inner { grid-template-rows: 1fr auto; }

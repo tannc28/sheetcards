@@ -23,11 +23,12 @@
  * the brackets of a note, row 2 of a table. "Ghi chú / Bảng" turns one into the
  * other; the keys are the same.
  *
- * Beside it (after it, on a phone) is the real card: drawn by the page's own
- * Python and framed the way the review below draws it, so what is checked here
- * is what the download will hold. Typing never moves what is typed into:
- * everything redrawn while it changes sits beside it or under it, and the card
- * waits for a pause.
+ * Beside it (above it, on a phone, in a room of fixed height) is the real card:
+ * drawn by the page's own Python and framed the way the review below draws it,
+ * so what is checked here is what the download will hold. It is the card of the
+ * line or row the caret is in, so what is typed and what it makes are always
+ * in sight together; while a phone's keyboard is up it folds to one line.
+ * Typing never moves what is typed into, and the card waits for a pause.
  */
 
 import { clozeOrdinals, escapeHtml, renderCard } from "./anki.js";
@@ -37,7 +38,7 @@ import { site } from "./paths.js";
 import { SEPARATORS } from "./wordlist.js";
 import { deckKey, markerGet, markerSet } from "./identity.js";
 import { warningText } from "./sheetwarnings.js";
-import { cardDoc, cardFrame } from "./cardframe.js";
+import { backOnly, cardDoc, cardFrame } from "./cardframe.js";
 import { THEME_SWATCHES } from "./theme-swatches.js";
 import {
   SPOKEN,
@@ -64,7 +65,7 @@ const CHOICES_KEY = "sc-paste-settings";
 // A pause in typing long enough to be one: redrawing on every key is what
 // made the dialog jump under the caret.
 const SETTLE = 250;
-// Two columns from here, as the review below; one step at a time under it.
+// Two columns from here, as the review below; one column under it, the card on top.
 const WIDE = matchMedia("(min-width: 60rem)");
 const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 // What in a card is a control of its own rather than a place to tap to turn it.
@@ -162,13 +163,10 @@ function build() {
   box = document.createElement("dialog");
   box.id = "textbox";
   box.className = "donebox txbox";
-  box.dataset.step = "text";
   box.dataset.form = "note";
   box.setAttribute("aria-labelledby", "tx-title");
   box.innerHTML = `
     <div class="tx-top">
-      <button class="iconbtn tx-back" id="tx-back" type="button" title="${escapeHtml(t("txBackToText"))}"
-              aria-label="${escapeHtml(t("txBackToText"))}">${icon("arrow-left")}</button>
       <strong id="tx-title">${escapeHtml(t("txTitle"))}</strong>
       <div class="tx-forms" role="group" aria-label="${escapeHtml(t("txFormLabel"))}">
         <button type="button" data-form="note" aria-pressed="true">${icon("notebook-pen")}<span>${escapeHtml(t("txFormNote"))}</span></button>
@@ -177,19 +175,37 @@ function build() {
       <button class="iconbtn" data-close type="button" title="${escapeHtml(t("close"))}" aria-label="${escapeHtml(t("close"))}">${icon("x")}</button>
     </div>
     <div class="tx-body">
-      <section class="tx-write">
-        <div class="tx-name">
-          <label class="tx-label" for="tx-name">${escapeHtml(t("txName"))}</label>
-          <input id="tx-name" type="text" maxlength="100" autocomplete="off" required
-                 placeholder="${escapeHtml(t("txNamePlaceholder"))}" aria-describedby="tx-name-error">
-          <span id="tx-name-error" class="field-error" hidden>${icon("circle-alert")}<span>${escapeHtml(t("txNameEmpty"))}</span></span>
+      <div class="tx-name">
+        <label class="tx-label" for="tx-name">${escapeHtml(t("txName"))}</label>
+        <input id="tx-name" type="text" maxlength="100" autocomplete="off" required
+               placeholder="${escapeHtml(t("txNamePlaceholder"))}" aria-describedby="tx-name-error">
+        <span id="tx-name-error" class="field-error" hidden>${icon("circle-alert")}<span>${escapeHtml(t("txNameEmpty"))}</span></span>
+      </div>
+      <section class="tx-look" aria-label="${escapeHtml(t("cardFrameTitle"))}">
+        <div class="tx-lookhead">
+          <p class="tx-meta" id="tx-meta" aria-live="polite"></p>
+          <p class="tx-counter" id="tx-counter"></p>
         </div>
-        <p class="tx-lead" id="tx-lead"><span id="tx-lead-text"></span>
-          <a href="${escapeHtml(syntaxDoc())}" target="_blank" rel="noopener">${escapeHtml(t("txSyntaxLink"))}</a></p>
+        <div class="tx-cardzone">
+          <div class="deckstack tx-stack" id="tx-stack">
+            <div class="cardslot tx-slot" id="tx-card"></div>
+          </div>
+          <button class="tx-edge prev" id="tx-eprev" type="button" tabindex="-1" aria-hidden="true">${icon("chevron-left")}</button>
+          <button class="tx-edge next" id="tx-enext" type="button" tabindex="-1" aria-hidden="true">${icon("chevron-right")}</button>
+        </div>
+        <button class="tx-strip" id="tx-strip" type="button" hidden></button>
+        <div class="reviewbar tx-review">
+          <button class="navbtn" id="tx-prev" type="button" title="${escapeHtml(t("prevRow"))}" aria-label="${escapeHtml(t("prevRow"))}">${icon("arrow-left")}</button>
+          <button class="btn flipbtn" id="tx-flip" type="button">${escapeHtml(t("showAnswer"))}</button>
+          <button class="navbtn" id="tx-next" type="button" title="${escapeHtml(t("nextRow"))}" aria-label="${escapeHtml(t("nextRow"))}">${icon("arrow-right")}</button>
+        </div>
+        <ul class="tx-warn" id="tx-cardwarn" hidden></ul>
+      </section>
+      <section class="tx-write">
         <div class="tx-area" id="tx-area">
           <div class="tx-paper" id="tx-paper" aria-hidden="true"></div>
           <textarea id="tx-text" spellcheck="false" autocapitalize="off" autocomplete="off"
-                    placeholder="${escapeHtml(t("txPlaceholder"))}" aria-labelledby="tx-lead-text"></textarea>
+                    placeholder="${escapeHtml(t("txPlaceholder"))}" aria-label="${escapeHtml(t("txTitle"))}"></textarea>
           <button class="toolbtn tx-pastebtn" id="tx-paste" type="button" hidden>${icon("clipboard")}<span>${escapeHtml(t("wlPasteBtn"))}</span></button>
         </div>
         <div class="tx-table" id="tx-table" hidden>
@@ -209,48 +225,45 @@ function build() {
           </details>
         </div>
       </section>
-      <section class="tx-look" aria-label="${escapeHtml(t("cardFrameTitle"))}">
-        <p class="tx-meta" id="tx-meta" aria-live="polite"></p>
-        <div class="deckstack tx-stack" id="tx-stack">
-          <div class="cardslot tx-slot" id="tx-card"></div>
+    </div>
+    <div class="tx-foot">
+      <section class="tx-set" id="tx-set" aria-label="${escapeHtml(t("txSettings"))}">
+        <div class="tx-opt" data-opt="tts">
+          <button class="tx-chip" type="button" aria-expanded="false" aria-controls="tx-pop-tts">${icon("volume-2")}<span class="tx-chiptext" id="tx-chip-tts"></span>${icon("chevron-down", "caret")}</button>
+          <div class="tx-optbody" id="tx-pop-tts">
+            <label class="tx-label" for="tx-tts">${icon("volume-2")}<span>${escapeHtml(t("txSpeak"))}</span></label>
+            <select id="tx-tts"></select>
+            <label class="tx-check" id="tx-ex-wrap" hidden><input type="checkbox" id="tx-ex"><span>${escapeHtml(t("txSpeakExample"))}</span></label>
+          </div>
         </div>
-        <div class="reviewbar tx-review">
-          <button class="navbtn" id="tx-prev" type="button" title="${escapeHtml(t("prevRow"))}" aria-label="${escapeHtml(t("prevRow"))}">${icon("arrow-left")}</button>
-          <button class="btn flipbtn" id="tx-flip" type="button">${escapeHtml(t("showAnswer"))}</button>
-          <button class="navbtn" id="tx-next" type="button" title="${escapeHtml(t("nextRow"))}" aria-label="${escapeHtml(t("nextRow"))}">${icon("arrow-right")}</button>
+        <div class="tx-opt" data-opt="theme">
+          <button class="tx-chip" type="button" aria-expanded="false" aria-controls="tx-pop-theme"><span class="tx-dot" id="tx-chip-dot"></span><span class="tx-chiptext">${escapeHtml(t("txTheme"))}</span>${icon("chevron-down", "caret")}</button>
+          <div class="tx-optbody" id="tx-pop-theme">
+            <span class="tx-label" id="tx-theme-label">${escapeHtml(t("txTheme"))}</span>
+            <div class="tx-swatches" id="tx-themes" role="group" aria-labelledby="tx-theme-label"></div>
+            <span class="tx-themename" id="tx-themename"></span>
+          </div>
         </div>
-        <p class="tx-counter" id="tx-counter"></p>
-        <ul class="tx-warn" id="tx-cardwarn" hidden></ul>
-      </section>
-      <section class="tx-set" id="tx-set" hidden aria-label="${escapeHtml(t("txSettings"))}">
-        <div class="tx-field">
-          <label class="tx-label" for="tx-tts">${icon("volume-2")}<span>${escapeHtml(t("txSpeak"))}</span></label>
-          <select id="tx-tts"></select>
-          <label class="tx-check" id="tx-ex-wrap" hidden><input type="checkbox" id="tx-ex"><span>${escapeHtml(t("txSpeakExample"))}</span></label>
-        </div>
-        <div class="tx-field">
-          <span class="tx-label" id="tx-theme-label">${escapeHtml(t("txTheme"))}</span>
-          <div class="tx-swatches" id="tx-themes" role="group" aria-labelledby="tx-theme-label"></div>
-          <span class="tx-themename" id="tx-themename"></span>
-        </div>
-        <details class="tx-cols" id="tx-roles-wrap" hidden>
-          <summary class="tx-pill">${icon("sliders-horizontal")}<span>${escapeHtml(t("txCols"))}</span>${icon("chevron-down", "caret")}</summary>
-          <div class="tx-pop">
+        <div class="tx-opt tx-cols" data-opt="cols" id="tx-roles-wrap" hidden>
+          <button class="tx-chip tx-pill" type="button" aria-expanded="false" aria-controls="tx-pop-cols">${icon("sliders-horizontal")}<span class="tx-chiptext">${escapeHtml(t("txCols"))}</span>${icon("chevron-down", "caret")}</button>
+          <div class="tx-optbody tx-pop" id="tx-pop-cols">
             <p class="tx-label">${escapeHtml(t("txRoles"))}</p>
             <div class="tx-roles" id="tx-roles"></div>
           </div>
-        </details>
+        </div>
         <p class="tx-reused" id="tx-reused" hidden>${icon("history")}<span>${escapeHtml(t("txReused"))}</span></p>
       </section>
-    </div>
-    <div class="tx-foot">
-      <div class="tx-aux">
-        <button class="tx-quiet" id="tx-save" type="button" disabled title="${escapeHtml(t("txOutHint"))}">${icon("copy")}<span id="tx-save-text"></span></button>
-        <button class="tx-quiet" id="tx-edit" type="button" disabled>${icon("pen-line")}<span>${escapeHtml(t("txEdit"))}</span></button>
-        <span class="tx-copied" id="tx-copied" aria-live="polite"></span>
+      <div class="tx-opt tx-more" data-opt="more">
+        <button class="tx-chip tx-morebtn" type="button" aria-expanded="false" aria-controls="tx-pop-more"
+                title="${escapeHtml(t("txMore"))}" aria-label="${escapeHtml(t("txMore"))}">${icon("ellipsis")}</button>
+        <div class="tx-optbody tx-aux" id="tx-pop-more">
+          <button class="tx-quiet" id="tx-save" type="button" disabled title="${escapeHtml(t("txOutHint"))}">${icon("copy")}<span id="tx-save-text"></span></button>
+          <button class="tx-quiet" id="tx-edit" type="button" disabled>${icon("pen-line")}<span>${escapeHtml(t("txEdit"))}</span></button>
+          <a class="tx-quiet" href="${escapeHtml(syntaxDoc())}" target="_blank" rel="noopener">${icon("external-link")}<span>${escapeHtml(t("txSyntaxLink"))}</span></a>
+          <span class="tx-copied" id="tx-copied" aria-live="polite"></span>
+        </div>
       </div>
-      <button class="btn tx-see" id="tx-see" type="button" disabled><span id="tx-see-text"></span>${icon("arrow-right")}</button>
-      <button class="btn tx-go" id="tx-go" type="button" disabled><span>${escapeHtml(t("go"))}</span>${icon("arrow-right")}</button>
+      <button class="btn tx-go" id="tx-go" type="button" disabled><span id="tx-go-text">${escapeHtml(t("go"))}</span>${icon("arrow-right")}</button>
     </div>`;
   document.body.append(box);
   buildSaveBox();
@@ -258,11 +271,21 @@ function build() {
   box.querySelector("[data-close]").addEventListener("click", () => box.close());
   box.addEventListener("click", (e) => {
     if (e.target === box) box.close();
-    // The columns' popover closes on a click anywhere else, as a menu does.
-    const cols = $in("#tx-roles-wrap");
-    if (cols.open && !e.target.closest("#tx-roles-wrap")) cols.open = false;
+    // A setting's popover closes on a click anywhere else, as a menu does.
+    const opt = e.target.closest(".tx-opt");
+    const chip = e.target.closest(".tx-chip");
+    if (chip) return toggleOpt(opt);
+    for (const o of box.querySelectorAll(".tx-opt.open")) if (o !== opt) toggleOpt(o, false);
   });
   box.addEventListener("keydown", keys);
+  // Escape shuts an open popover before it shuts the dialog.
+  box.addEventListener("cancel", (e) => {
+    const open = box.querySelector(".tx-opt.open");
+    if (!open) return;
+    e.preventDefault();
+    toggleOpt(open, false);
+    open.querySelector(".tx-chip").focus();
+  });
 
   // ---- the note
   const text = $in("#tx-text");
@@ -273,6 +296,8 @@ function build() {
     clearTimeout(timer);
     timer = setTimeout(refresh, SETTLE);
   });
+  // The card shown is the one the caret is in.
+  for (const type of ["keyup", "click", "focus"]) text.addEventListener(type, () => follow());
   text.addEventListener("scroll", () => ($in("#tx-paper").scrollTop = text.scrollTop));
   // A table pasted into an empty note is a table: it opens as one.
   text.addEventListener("paste", (e) => {
@@ -311,6 +336,7 @@ function build() {
     }, SETTLE);
   });
   wrap.addEventListener("keydown", gridKeys);
+  wrap.addEventListener("focusin", () => follow());
   $in("#tx-addrow").addEventListener("click", () => {
     addRow();
     focusCell(state.grid.length - 1, 0);
@@ -366,13 +392,169 @@ function build() {
   $in("#tx-prev").addEventListener("click", () => step(-1));
   $in("#tx-next").addEventListener("click", () => step(1));
   $in("#tx-flip").addEventListener("click", flip);
-  $in("#tx-see").addEventListener("click", () => setStep("card"));
-  $in("#tx-back").addEventListener("click", () => setStep("text"));
+  $in("#tx-eprev").addEventListener("click", () => step(-1));
+  $in("#tx-enext").addEventListener("click", () => step(1));
+  $in("#tx-strip").addEventListener("click", flip);
   $in("#tx-save").addEventListener("click", copyOut);
   $in("#tx-go").addEventListener("click", () => finish(false));
   $in("#tx-edit").addEventListener("click", () => finish(true));
   // The card is the size of the room it is given; a new size is a new layout.
-  WIDE.addEventListener("change", () => box.open && drawCard(true));
+  WIDE.addEventListener("change", () => {
+    if (!box.open) return;
+    keyboard();
+    drawCard(true);
+  });
+  // The card's document says how tall it is; the frame is sized from that.
+  addEventListener("message", (e) => {
+    const frame = $in("#tx-card iframe");
+    if (!frame || e.source !== frame.contentWindow || !e.data?.h) return;
+    state.h = e.data.h;
+    fitCard();
+  });
+  new ResizeObserver(() => fitCard()).observe($in("#tx-card"));
+  const vv = window.visualViewport;
+  if (vv) {
+    vv.addEventListener("resize", keyboard);
+    vv.addEventListener("scroll", keyboard);
+  }
+  box.addEventListener("focusin", keyboard);
+  box.addEventListener("focusout", () => setTimeout(keyboard, 0));
+}
+
+/** Opens or shuts one setting's popover (a phone's chips, and Cột everywhere). */
+function toggleOpt(opt, on = !opt.classList.contains("open")) {
+  if (!opt) return;
+  if (on) for (const o of box.querySelectorAll(".tx-opt.open")) if (o !== opt) toggleOpt(o, false);
+  opt.classList.toggle("open", on);
+  opt.querySelector(".tx-chip").setAttribute("aria-expanded", String(on));
+}
+
+// ---------------------------------------------------------------------------
+// The card follows the caret
+// ---------------------------------------------------------------------------
+
+const norm = (s) => String(s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/**
+ * Which of the rows the caret is in: an index into the rows the cards are made
+ * from, -1 on the names or the settings, null where there is no card (a blank
+ * line). A line is matched by what it says, the count of lines before it only
+ * breaking a tie — what a line becomes depends on how the paste was read
+ * (bullets, a Markdown table's rule, words said around a table), and the
+ * words are the one thing that survives every reading.
+ */
+function caretRow() {
+  const el = document.activeElement;
+  if (state.form === "table") {
+    const r = el?.closest?.("#tx-gridwrap") ? Number(el.dataset.r) : NaN;
+    if (Number.isNaN(r)) return null;
+    return r < 2 ? -1 : r - 2;
+  }
+  const text = $in("#tx-text");
+  if (el !== text || !state.parsed) return null;
+  const value = text.value;
+  const before = value.slice(0, text.selectionStart).split("\n");
+  const at = before.length - 1;
+  const lines = value.split("\n");
+  const where = state.parsed.lines || {};
+  if (at === where.config || at === where.header) return -1;
+  let segment = lines[at] || "";
+  const sep = state.parsed.rowSeparator;
+  if (sep?.id === "token" && sep.token) {
+    const col = before[at].length;
+    let from = 0;
+    for (const piece of segment.split(sep.token)) {
+      if (col <= from + piece.length) {
+        segment = piece;
+        break;
+      }
+      from += piece.length + sep.token.length;
+    }
+  }
+  if (!segment.trim() || MARKER.test(segment.trim())) return segment.trim() ? -1 : null;
+  let guess = 0;
+  for (let i = 0; i < at; i++) {
+    const l = lines[i].trim();
+    if (l && i !== where.config && i !== where.header && !/^[\s|:-]+$/.test(l)) guess++;
+  }
+  const seg = norm(segment);
+  const rows = state.sourceRows || [];
+  let best = -1;
+  let bestScore = 0;
+  rows.forEach((row, i) => {
+    const cells = row.map(norm).filter(Boolean);
+    if (!cells.length) return;
+    const score = cells.filter((c) => seg.includes(c)).length / cells.length;
+    if (score > bestScore || (score === bestScore && best >= 0 && Math.abs(i - guess) < Math.abs(best - guess))) {
+      best = i;
+      bestScore = score;
+    }
+  });
+  return best >= 0 ? best : Math.min(guess, Math.max(0, rows.length - 1));
+}
+
+/**
+ * Lines up the rows the cards are made from with the notes the Python made of
+ * them, by their key: a row it skipped (no key, nothing on it) takes the next
+ * note's card rather than shifting every card after it.
+ */
+function alignRows() {
+  const m = model();
+  const keyAt = state.form === "table" ? m.keyAt : Math.max(0, state.parsed?.keyAt || 0);
+  const rows = state.form === "table" ? state.grid.slice(2) : state.parsed ? chosenRows() : [];
+  state.sourceRows = rows;
+  const keys = state.noteKeys || [];
+  const map = [];
+  let p = 0;
+  for (const row of rows) {
+    const key = String(row[keyAt] ?? "").trim();
+    if (p < keys.length && key && keys[p] === key) map.push(p++);
+    else map.push(Math.min(p, keys.length - 1));
+  }
+  state.rowNote = map;
+}
+
+/** Shows the card for the caret's line or row, when that is not the one showing. */
+function follow() {
+  const row = caretRow();
+  if (row === null || !state.cards.length) return;
+  const note = row < 0 ? 0 : state.rowNote?.[row];
+  const card = note === undefined || note < 0 ? state.at : (state.firstCard?.[note] ?? state.at);
+  if (card === state.at) return;
+  state.at = card;
+  state.answered = false;
+  drawCard();
+}
+
+// ---------------------------------------------------------------------------
+// The on-screen keyboard: the card folds to a line while it is up
+// ---------------------------------------------------------------------------
+
+let tallest = 0;
+let wide = 0;
+/**
+ * A phone's keyboard takes half the screen. While it is up the card is folded
+ * into one line over the text and the dialog is fitted to what is left, so the
+ * line being typed and its card are both in sight. Read from visualViewport
+ * against the tallest it has been at this width; without one, the card stays.
+ */
+function keyboard() {
+  const vv = window.visualViewport;
+  if (!box?.open || !vv) return;
+  if (innerWidth !== wide) [wide, tallest] = [innerWidth, 0];
+  tallest = Math.max(tallest, vv.height, innerHeight);
+  const typing = Boolean(document.activeElement?.closest?.("#textbox input, #textbox textarea"));
+  const up = !WIDE.matches && typing && vv.height < tallest - 120;
+  if (up) {
+    box.dataset.kb = "";
+    box.style.height = `${vv.height}px`;
+    box.style.maxHeight = `${vv.height}px`;
+    box.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : "";
+  } else if ("kb" in box.dataset) {
+    delete box.dataset.kb;
+    box.style.height = box.style.maxHeight = box.style.transform = "";
+  }
+  $in("#tx-strip").hidden = !up;
 }
 
 /** Where the copy goes when the clipboard refuses it: selected, to copy by hand. */
@@ -399,17 +581,6 @@ function buildSaveBox() {
 
 function paintPasteButton() {
   $in("#tx-paste").hidden = !navigator.clipboard?.readText || Boolean($in("#tx-text").value);
-}
-
-/** Text or cards: the phone's two steps. A wide screen shows both at once. */
-function setStep(name) {
-  box.dataset.step = name;
-  if (name === "card") {
-    document.activeElement?.blur?.();
-    drawCard(true);
-    $in("#tx-flip").focus({ preventScroll: true });
-  }
-  $in(".tx-body").scrollTop = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -723,11 +894,10 @@ function paintMeta(count, { dupes = 0, oneSided = 0 } = {}) {
   }
   if (oneSided) parts.push(`<span class="tx-dim">${escapeHtml(t("txOneSided", oneSided))}</span>`);
   setHtml($in("#tx-meta"), parts.join(""));
-  $in("#tx-see-text").textContent = t("txSeeCards", count);
 }
 
 function enable(on) {
-  for (const id of ["#tx-go", "#tx-edit", "#tx-see", "#tx-save"]) $in(id).disabled = !on;
+  for (const id of ["#tx-go", "#tx-edit", "#tx-save"]) $in(id).disabled = !on;
 }
 
 /** Which form is on screen, and the words that go with it. */
@@ -736,7 +906,6 @@ function paintForm() {
   box.dataset.form = state.form;
   $in("#tx-area").hidden = table;
   $in("#tx-table").hidden = !table;
-  $in("#tx-lead-text").innerHTML = t(table ? "txLeadTable" : "txLead");
   $in("#tx-save-text").textContent = t(table ? "txCopyTable" : "txCopyText");
   for (const b of box.querySelectorAll(".tx-forms [data-form]")) b.setAttribute("aria-pressed", String(b.dataset.form === state.form));
 }
@@ -790,6 +959,8 @@ function paint() {
       ? state.grid
       : pasteGrid({ name: currentName() || "x", rows, header: m.header, cells: made.cells, deck: made.deck, language: lang() }),
   );
+  alignRows();
+  follow();
 }
 
 /** A theme's chip: its own card colours, the accent as a bar under "Aa". */
@@ -815,6 +986,12 @@ function paintChoices(choices) {
   tts.value = choices.tts;
   $in("#tx-ex-wrap").hidden = s.example < 0 || !choices.tts;
   $in("#tx-ex").checked = choices.example;
+  const spoken = SPOKEN.find(([code]) => code === choices.tts)?.[1] || choices.tts || t("txSpeakNone");
+  // The chip says the choice; its speaker icon and its title say what it is.
+  $in("#tx-chip-tts").textContent = spoken;
+  const ttsChip = $in("#tx-chip-tts").parentElement;
+  ttsChip.title = `${t("txSpeak")}: ${spoken}`;
+  ttsChip.setAttribute("aria-label", ttsChip.title);
 
   const mode = dark() ? "night" : "light";
   const listed = new Map(THEME_SWATCHES.map((w) => [w.name, w[mode]]));
@@ -823,6 +1000,10 @@ function paintChoices(choices) {
   if (choices.theme && !THEMES.includes(choices.theme)) chips.push(swatch(choices.theme, choices.theme, null, choices.theme));
   setHtml($in("#tx-themes"), chips.join(""));
   $in("#tx-themename").textContent = choices.theme || t("txThemeNone");
+  const shown = choices.theme ? listed.get(choices.theme) : plain;
+  const dot = $in("#tx-chip-dot");
+  dot.style.cssText = shown ? `--sw-bg:${shown.bg};--sw-ac:${shown.accent}` : "";
+  dot.parentElement.title = choices.theme || t("txThemeNone");
 
   const many = s.content.length >= 3;
   $in("#tx-roles-wrap").hidden = !many;
@@ -850,14 +1031,14 @@ function paintChoices(choices) {
 function cardsOf(deck) {
   if (!deck) return [];
   const out = [];
-  for (const note of deck.notes) {
+  deck.notes.forEach((note, n) => {
     if (note.cloze) {
       const ords = [...new Set(Object.values(note.values).flatMap((v) => clozeOrdinals(v)))];
-      for (const ordinal of ords.length ? ords : [1]) out.push({ template: deck.templates.cloze[0], values: note.values, ordinal });
+      for (const ordinal of ords.length ? ords : [1]) out.push({ template: deck.templates.cloze[0], values: note.values, ordinal, note: n });
     } else {
-      for (const template of deck.templates.basic) out.push({ template, values: note.values, ordinal: 1 });
+      for (const template of deck.templates.basic) out.push({ template, values: note.values, ordinal: 1, note: n });
     }
-  }
+  });
   return out;
 }
 
@@ -869,6 +1050,11 @@ function paintCards(grid) {
   state.tsv = deck ? tsv : "";
   state.deck = deck;
   state.cards = cardsOf(deck);
+  // Each note's key and its first card, for the card that follows the caret.
+  const keyName = grid ? String(grid[0][gridKey(grid)] ?? "") : "";
+  state.noteKeys = (deck?.notes || []).map((n) => String(n.values[keyName] ?? "").trim());
+  state.firstCard = [];
+  state.cards.forEach((c, i) => state.firstCard[c.note] ??= i);
   state.at = Math.min(state.at, Math.max(0, state.cards.length - 1));
   if (deck) {
     const m = model();
@@ -889,7 +1075,7 @@ function paintCards(grid) {
 function drawCard(force = false, waiting = false) {
   const slot = $in("#tx-card");
   const n = state.cards.length;
-  $in("#tx-prev").disabled = $in("#tx-next").disabled = n < 2;
+  for (const id of ["#tx-prev", "#tx-next", "#tx-eprev", "#tx-enext"]) $in(id).disabled = n < 2;
   $in("#tx-flip").disabled = !n;
   $in("#tx-flip").textContent = t(state.answered ? "flipBack" : "showAnswer");
   $in("#tx-flip").classList.toggle("answered", state.answered);
@@ -899,10 +1085,12 @@ function drawCard(force = false, waiting = false) {
     state.doc = "";
     // Before Python is up the card waits; ready() draws it when it is.
     setHtml(slot, `<div class="tx-empty">${escapeHtml(t(waiting ? "txCardLoading" : "txCardEmpty"))}</div>`);
+    $in("#tx-strip").textContent = "";
     return;
   }
   const card = state.cards[state.at];
   const { front, back } = renderCard(card.template, card.values, { ordinal: card.ordinal });
+  paintStrip(front.html, backOnly(back.html, front.html));
   const doc = cardDoc({ front, back, tab: state.answered ? "both" : "front", dark: dark() });
   if (doc === state.doc && !force && slot.querySelector("iframe")) return;
   state.doc = doc;
@@ -911,6 +1099,51 @@ function drawCard(force = false, waiting = false) {
   const frame = slot.querySelector("iframe");
   frame.removeAttribute("id");
   frame.addEventListener("load", () => wireFrame(frame), { once: true });
+  fitCard();
+}
+
+/** The words of a side, for the one-line card shown while the keyboard is up. */
+function words(html) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  for (const el of tpl.content.querySelectorAll("script, style, button, details, .sc-type, input")) el.remove();
+  return tpl.content.textContent.replace(/\s+/g, " ").trim();
+}
+
+function paintStrip(front, back) {
+  const n = state.cards.length;
+  const shown = state.answered ? back : front;
+  const other = state.answered ? front : back;
+  const strip = $in("#tx-strip");
+  strip.innerHTML =
+    `<span class="tx-stripn">${state.at + 1}/${n}</span>` +
+    `<span class="tx-stripq">${escapeHtml(words(shown))}</span>` +
+    (words(other) ? `<span class="tx-stripa">${icon("arrow-right")}${escapeHtml(words(other))}</span>` : "");
+  strip.setAttribute("aria-label", `${state.at + 1} / ${n}: ${words(front)} → ${words(back)}`);
+}
+
+/**
+ * The frame sized to its card. Beside the text it is as tall as what is on it,
+ * between a floor and what the column has room for, scrolling inside past
+ * that. On a phone the room is fixed, so typing never moves the text under it:
+ * a card taller than the room is shrunk to fit, a shorter one centred in it.
+ */
+function fitCard() {
+  const slot = $in("#tx-card");
+  const frame = slot?.querySelector("iframe");
+  if (!frame) return;
+  const h = state.h || 0;
+  if (WIDE.matches) {
+    frame.style.transform = frame.style.top = "";
+    frame.style.height = h ? `${h}px` : "";
+    return;
+  }
+  const room = slot.clientHeight;
+  if (!h || !room) return;
+  const scale = Math.min(1, room / h);
+  frame.style.height = `${h}px`;
+  frame.style.top = `${Math.max(0, (room - h * scale) / 2)}px`;
+  frame.style.transform = scale < 1 ? `scale(${scale})` : "";
 }
 
 function step(by) {
@@ -944,7 +1177,6 @@ function turn(swap) {
 function keys(e) {
   if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
-  if (!WIDE.matches && box.dataset.step !== "card") return;
   if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
     e.preventDefault();
     step(e.key === "ArrowLeft" ? -1 : 1);
@@ -964,6 +1196,12 @@ function wireFrame(frame) {
   }
   if (!doc) return;
   doc.body.style.cursor = "pointer";
+  // A card shrunk or shorter than its room leaves room around it: the card's
+  // own colour fills it, not the page's.
+  const bg = [doc.body, doc.documentElement]
+    .map((el) => getComputedStyle(el).backgroundColor)
+    .find((c) => !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(c));
+  frame.parentElement.style.background = bg || "";
   let x0 = 0;
   let y0 = 0;
   let swiped = false;
@@ -1077,7 +1315,6 @@ function load(text) {
 function nameMissing() {
   const input = $in("#tx-name");
   if (currentName()) return false;
-  if (box.dataset.step !== "text") setStep("text");
   $in("#tx-name-error").hidden = false;
   input.setAttribute("aria-invalid", "true");
   input.focus();
@@ -1181,7 +1418,6 @@ export function mountTextImport(host) {
 export function open(text) {
   if (!box) build();
   Object.assign(state, { at: 0, answered: false, tsv: "", doc: "", deck: null, cards: [] });
-  box.dataset.step = "text";
   const input = $in("#tx-name");
   if (!input.value) input.value = remembered();
   $in("#tx-name-error").hidden = true;
@@ -1192,6 +1428,7 @@ export function open(text) {
   } else load($in("#tx-text").value);
   box.showModal();
   paintPaper();
+  keyboard();
   if (!input.value) input.focus();
   else if (state.form === "table") focusCell(Math.min(2, state.grid.length - 1), 0);
   else $in("#tx-text").focus();

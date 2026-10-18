@@ -70,7 +70,6 @@
    <div class="hero-inner">
     <div class="hero-text">
       <h1 class="display" data-i18n="homeTitle">Tạo flashcard Anki từ <mark>Google Sheets, file hay ghi chú</mark></h1>
-      <p class="lead" data-i18n="homeLead">Dán danh sách từ hoặc link Google Sheets, hay mở một file. Xem từng card, rồi tải file .apkg cho app Anki.</p>
       <!-- Two doors, as equal as a phone allows: words that exist already
            (a sheet, a file, a list in a note), and a sheet that does not yet.
            The first is Tạo flashcard's first step, right here — a link goes
@@ -80,17 +79,15 @@
       <div class="doors">
         <section class="door" aria-labelledby="door-have">
           <h2 class="door-title" id="door-have"><span data-icon="clipboard"></span><span data-i18n="doorHaveTitle">Đã có danh sách từ</span></h2>
-          <p class="door-text" data-i18n="doorHaveText">Danh sách trong ghi chú, file Excel hoặc Google Sheets.</p>
           <form class="quick" id="quick" novalidate>
-            <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán danh sách từ hoặc link Google Sheets</label>
             <div class="quick-field">
               <span class="quick-icon" data-icon="clipboard"></span>
               <!-- Words or a link, as on Tạo flashcard: a one-line textarea, since
                    an input drops a pasted list's line breaks. -->
               <textarea id="q-url" rows="1" wrap="off" autocomplete="off" spellcheck="false"
                      autocapitalize="off" enterkeyhint="go" aria-describedby="q-err"
-                     placeholder="apple - quả táo… hoặc link"
-                     data-i18n-attr="placeholder:homeLinkPlaceholder"></textarea>
+                     placeholder="apple - quả táo… hoặc link" aria-label="Dán danh sách từ hoặc link Google Sheets"
+                     data-i18n-attr="placeholder:homeLinkPlaceholder,aria-label:homeLinkLabel"></textarea>
               <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo flashcard</span><span data-icon="arrow-right"></span></button>
             </div>
             <p class="quick-err" id="q-err" role="alert" hidden></p>
@@ -107,7 +104,6 @@
         </section>
         <section class="door door-new" aria-labelledby="door-new">
           <h2 class="door-title" id="door-new"><span data-icon="pen-line"></span><span data-i18n="doorNewTitle">Chưa có sheet? Soạn trên web</span></h2>
-          <p class="door-text" data-i18n="doorNewText">Chọn template và theme, gõ từ, rồi bấm Tạo flashcard. Không cần Google Sheets.</p>
           <a class="btn big door-go" href="./sheet/#templates"><span data-i18n="doorNewGo">Mở Tạo Sheet</span><span data-icon="arrow-right"></span></a>
           <p class="door-files"><a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">file mẫu (.xlsx)</a>
             <span aria-hidden="true">·</span>
@@ -269,7 +265,7 @@
           </g>
         </svg>
         <h3><span class="hstep-n">1</span><span data-i18n="homeHow1Title">Có danh sách từ</span></h3>
-        <p data-i18n="homeHow1">Một Google Sheet, file Excel, hay danh sách trong ghi chú. Chưa có thì soạn trong Tạo Sheet: chọn template, đặt cột &amp; card, rồi thêm thẻ.</p>
+        <p data-i18n="homeHow1">Một Google Sheet, file Excel, hay danh sách trong ghi chú.</p>
       </li>
       <li class="hstep reveal">
         <svg class="ill" viewBox="0 0 160 100" aria-hidden="true">
@@ -303,7 +299,7 @@
           <path class="i-line-b" d="M104 66h56"/>
         </svg>
         <h3><span class="hstep-n">3</span><span data-i18n="homeHow3Title">Mở bằng app Anki</span></h3>
-        <p data-i18n="homeHow3">Mở file .apkg bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên máy tính). Thêm từ rồi import lại: card được cập nhật, giữ tiến độ.</p>
+        <p data-i18n="homeHow3">Mở file .apkg bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên máy tính).</p>
       </li>
     </ol>
   </section>
@@ -329,11 +325,9 @@
         <p class="hchips"><code class="hchip">ID</code><code class="hchip">name=</code></p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="monitor"></span>
         <h3 data-i18n="featDevicesTitle">Điện thoại hay máy tính</h3>
-        <p data-i18n="featDevices">Mọi bước đều làm được trên cả hai.</p>
         <p class="hchips" translate="no"><span class="hchip">Android</span><span class="hchip">iPhone</span><span class="hchip">Windows</span><span class="hchip">Mac</span></p></li>
       <li class="feature reveal"><span class="feat-icon" data-icon="layers"></span>
-        <h3 data-i18n="featPreviewTitle">Xem từng card trước khi tải</h3>
-        <p data-i18n="featPreview">Card hiện đúng như trong Anki, có Show Answer, trước khi bạn tải file .apkg.</p></li>
+        <h3 data-i18n="featPreviewTitle">Xem từng card trước khi tải</h3></li>
     </ul>
   </section>
 
@@ -366,8 +360,7 @@
           <circle class="i-pick" cx="100" cy="52" r="11"/>
         </svg>
         <div><p class="soon-badge" data-i18n="soonBadge">Sắp có</p>
-          <h3 data-i18n="soonThemeTitle">Thư viện Theme</h3>
-          <p data-i18n="soonTheme">Thêm nhiều theme để khoác lên card của bạn.</p></div>
+          <h3 data-i18n="soonThemeTitle">Thư viện Theme</h3></div>
       </li>
     </ul>
     <p class="fine reveal"><a href="./contact/?from=home&amp;kind=feature" data-i18n="soonAsk">Muốn có sớm? Góp ý →</a></p>
