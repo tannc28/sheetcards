@@ -895,6 +895,11 @@ const STRINGS = {
   },
 
   // --- demo ---------------------------------------------------------------
+  // A sheet with no ID column is keyed by its first column (column_model.derived_ids).
+  idFromColumn: {
+    en: (col) => `No ID column → using column <strong>${col}</strong> as the ID. Fixing the spelling of a word there makes it a new card.`,
+    vi: (col) => `Không có cột ID → dùng cột <strong>${col}</strong> làm ID. Sửa chính tả chính từ đó sẽ thành card mới.`,
+  },
   demoNote: {
     en: "This is the example workbook. Pick another sheet above, or change to your own link.",
     vi: "Đang xem file ví dụ. Chọn sheet khác ở ô phía trên, hoặc đổi sang link của bạn.",
@@ -1311,14 +1316,10 @@ const STRINGS = {
     en: (name) => `“${name}” is not a spreadsheet. SheetCards reads .xlsx, .xlsm, .csv and .tsv files.`,
     vi: (name) => `“${name}” không phải file bảng tính. SheetCards đọc được file .xlsx, .xlsm, .csv và .tsv.`,
   },
-  noIdColumn: {
-    en: "This sheet has no ID column. Row 1 needs a column named ID, with a different value in each row below it.",
-    vi: "Sheet này chưa có cột ID. Dòng 1 cần một cột tên ID, mỗi dòng bên dưới ghi một giá trị khác nhau.",
-  },
   // The parser's other refusals (pythonMessage), said in the page's language.
   emptySheet: {
-    en: "This sheet is empty. Row 1 needs the column names (ID and at least one more), with a word in each row below.",
-    vi: "Sheet này đang trống. Dòng 1 cần tên các cột (ID và ít nhất một cột nữa), mỗi dòng bên dưới là một từ.",
+    en: "This sheet is empty. Row 1 needs the column names (at least one, such as Word), with a word in each row below.",
+    vi: "Sheet này đang trống. Dòng 1 cần tên các cột (ít nhất một cột, ví dụ Word), mỗi dòng bên dưới là một từ.",
   },
   noContentColumns: {
     en: "This sheet has only ID, SYNC, TAGS or SUBDECK columns. Add at least one column for what goes on the card, such as Word or Meaning.",

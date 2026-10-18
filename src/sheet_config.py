@@ -318,7 +318,9 @@ def is_config_row(row, plan):
     The marker cell may carry the deck-wide settings after it
     (``#config align=left``), so the test is on the leading token, not the cell.
     """
-    if not plan.id_header:
+    # A sheet keyed by its first content column has no ID cell to carry the
+    # marker in; that column's cell is a word, whatever it says.
+    if not plan.id_header or getattr(plan, "id_from", None):
         return False
     cell = str(row.get(plan.id_header, "")).strip().lower()
     if not cell.startswith(MARKER):

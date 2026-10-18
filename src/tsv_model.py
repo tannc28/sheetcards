@@ -110,10 +110,6 @@ def parse_tsv_data(tsv_data, debug_messages=None):
         # The sheet defines its own fields, so ID is the only header the add-on
         # insists on — it is the key every note is matched by.
         plan = plan_columns(headers)
-        if not plan.has_id:
-            raise RemoteDeckError(
-                f"Mandatory header missing: '{column_model.IDENTIFIER}'"
-            )
         if not plan.content_headers:
             raise RemoteDeckError(
                 "The sheet has no content columns — add at least one column besides "
@@ -123,12 +119,44 @@ def parse_tsv_data(tsv_data, debug_messages=None):
         if plan.duplicates:
             add_debug_msg(f"⚠️ Duplicate headers ignored: {plan.duplicates}")
 
-        return {"headers": headers, "rows": data_rows, "plan": plan}
+        parsed = {"headers": headers, "rows": data_rows, "plan": plan}
+        if not plan.has_id:
+            parsed = _with_derived_ids(parsed)
+            add_debug_msg(
+                f"No '{column_model.IDENTIFIER}' column: using "
+                f"'{parsed['plan'].id_from}' as the ID"
+            )
+        return parsed
 
     except csv.Error as e:
         raise RemoteDeckError(f"Error processing TSV data: {e}")
     except Exception as e:
         raise RemoteDeckError(f"Unexpected parsing error: {e}")
+
+
+def _with_derived_ids(parsed):
+    """A sheet with no ID column, keyed by its first content column instead.
+
+    The IDs are written in as a real leading ``ID`` column, so everything after
+    this — classification, the note's ``ID`` field, the .apkg's guids, the sync's
+    matching — reads them exactly as it reads a sheet that has one. The sheet as
+    written is kept beside it (``sheet_headers``/``sheet_rows``) for anything that
+    draws the spreadsheet itself, which must not grow a column nobody typed.
+    """
+    headers, rows, plan = parsed["headers"], parsed["rows"], parsed["plan"]
+    source = plan.content_headers[0]
+    at = next(i for i, h in enumerate(headers) if column_model.clean(h) == source)
+    ids = column_model.derived_ids([row[at] if at < len(row) else "" for row in rows])
+    new_headers = [column_model.IDENTIFIER] + list(headers)
+    new_plan = plan_columns(new_headers)
+    new_plan.id_from = source
+    return {
+        "headers": new_headers,
+        "rows": [[key] + list(row) for key, row in zip(ids, rows, strict=True)],
+        "plan": new_plan,
+        "sheet_headers": headers,
+        "sheet_rows": rows,
+    }
 
 
 def row_to_dict(row, headers):
@@ -620,6 +648,13 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     remote_deck = RemoteDeck(url=url, plan=plan, sheet_config=sheet_config)
     remote_deck.headers = headers
 
+    if plan.id_from:
+        message = (
+            f"No ID column: each row is keyed by its '{plan.id_from}' cell, so fixing "
+            f"the spelling of one makes it a new note"
+        )
+        add_debug_msg(message)
+        log_to_addon(message, "SHEET_CONFIG")
     add_debug_msg(f"Content columns: {plan.content_headers}")
     add_debug_msg(f"Deck path columns: {plan.subdeck_headers}")
 

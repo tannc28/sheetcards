@@ -8,7 +8,8 @@ Headers may be in any language or script; the text becomes the field name verbat
 
 Reserved headers (matched case-insensitively, surrounding whitespace ignored):
 
-    ID          the row's stable key — required
+    ID          the row's stable key; a sheet without one is keyed by its first
+                content column instead (see derived_ids)
     SYNC        per-row on/off switch; when the column is absent, every row syncs
     SUBDECK n   one level of the deck path, ordered by n (SUBDECK 1, SUBDECK 2, …)
     TAGS        comma-separated Anki tags
@@ -18,6 +19,7 @@ the columns in the sheet is the order the fields appear on the card by default.
 """
 
 import re
+import unicodedata
 
 # =============================================================================
 # RESERVED HEADERS
@@ -80,6 +82,8 @@ class ColumnPlan:
 
     Attributes:
         id_header: the header that acts as ID, or None when the sheet has none
+        id_from: the content column the IDs were derived from, when the sheet
+            has no ID column of its own (see derived_ids); None otherwise
         sync_header: the header that gates syncing, or None when absent
         tags_header: the header holding tags, or None when absent
         subdeck_headers: headers forming the deck path, ordered by their level
@@ -89,6 +93,7 @@ class ColumnPlan:
 
     def __init__(self):
         self.id_header = None
+        self.id_from = None
         self.sync_header = None
         self.tags_header = None
         self.subdeck_headers = []
@@ -160,6 +165,45 @@ def plan_columns(headers):
     plan.subdeck_headers = [name for _, name in sorted(subdecks, key=lambda p: p[0])]
 
     return plan
+
+
+def id_text(value):
+    """A cell as an ID: NFC, trimmed, inner whitespace collapsed, case kept.
+
+    NFC because a phone keyboard and a desktop one can compose ``ệ`` differently,
+    and the same word typed on each must stay the same note.
+    """
+    text = unicodedata.normalize("NFC", str(value or ""))
+    return " ".join(text.split())
+
+
+def derived_ids(values):
+    """IDs for a sheet with no ID column, from its first content column.
+
+    Each row is keyed by its own word, so inserting a row or reordering the sheet
+    keeps every note — only fixing the word's spelling makes a new one. A word
+    written twice (compared case-insensitively, the way Anki compares deck names)
+    is told apart by `` (2)``, `` (3)`` in row order. A blank cell stays blank: a
+    row with no word is a row nothing can key.
+    """
+    out, taken, counts = [], set(), {}
+    for value in values:
+        text = id_text(value)
+        if not text:
+            out.append("")
+            continue
+        key = text.casefold()
+        count = counts.get(key, 0) + 1
+        candidate = text if count == 1 else f"{text} ({count})"
+        # A word that is literally "journey (2)" must not collide with the second
+        # "journey", nor the other way round.
+        while candidate.casefold() in taken:
+            count += 1
+            candidate = f"{text} ({count})"
+        counts[key] = count
+        taken.add(candidate.casefold())
+        out.append(candidate)
+    return out
 
 
 def row_is_marked_for_sync(row, plan):

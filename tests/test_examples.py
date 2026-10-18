@@ -94,7 +94,7 @@ def test_the_workbook_is_the_only_file_people_need(workbook_bytes):
 
 @pytest.mark.unit
 def test_every_sheet_has_an_id_column(sheets):
-    """A sheet with no ID column is skipped by the add-on, so none of these may be."""
+    """Every example keys its notes by an ID column, the way a sheet should."""
     for name, deck in sheets:
         assert deck.plan.has_id, f"{name} has no ID column"
 

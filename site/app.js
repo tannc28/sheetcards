@@ -143,6 +143,9 @@ def analyze(tsv, deck_name, sheet_id=""):
     log = []
     parsed = tm.parse_tsv_data(tsv, log)
     headers, plan = parsed["headers"], parsed["plan"]
+    # A sheet with no ID column gains one in the parser (keyed by its first
+    # column); the grid and the column list show the sheet as it was written.
+    shown = parsed.get("sheet_headers", headers)
 
     # The authoritative numbers: the same object the sync builds and reports from.
     deck = tm.build_remote_deck_from_tsv(parsed, "", log)
@@ -188,7 +191,7 @@ def analyze(tsv, deck_name, sheet_id=""):
             # SYNC, TAGS and the SUBDECK columns to be looked at, and a cell it
             # was never sent reads as an empty cell — which is a lie about the
             # sheet, told in the one place built to answer questions about it.
-            "values": {h: note.get(h, "") for h in _headers(headers)},
+            "values": {h: note.get(h, "") for h in _headers(shown)},
         })
 
     _STATE["deck"] = deck
@@ -214,11 +217,12 @@ def analyze(tsv, deck_name, sheet_id=""):
         # parse, with an error pointing at whatever word came next.
         "plan": {
             "id": plan.id_header,
+            "idFrom": plan.id_from,
             "sync": plan.sync_header,
             "tags": plan.tags_header,
             "subdecks": plan.subdeck_headers,
             "content": plan.content_headers,
-            "headers": [clean(h) for h in headers if clean(h)],
+            "headers": [clean(h) for h in shown if clean(h)],
         },
         "config": {
             "warnings": cfg.warnings,
@@ -236,7 +240,7 @@ def analyze(tsv, deck_name, sheet_id=""):
             "cloze": tm.get_note_type_name("", deck_name, is_cloze=True),
         },
         "rows": listed,
-        "grid": _grid(headers, parsed["rows"], offset),
+        "grid": _grid(shown, parsed.get("sheet_rows", parsed["rows"]), offset),
         "stats": deck.get_statistics(),
         "duplicateIds": deck.duplicate_ids,
     }, ensure_ascii=False)
@@ -470,10 +474,8 @@ async function boot() {
 function pythonMessage(err) {
   const lines = String(err?.message || err).trimEnd().split("\n");
   const last = lines[lines.length - 1].trim();
-  // A sheet with no ID column is the commonest first mistake there is, and the
-  // parser's sentence for it is English and names a "mandatory header". Said
-  // as what to do about it instead.
-  if (/Mandatory header missing: 'ID'/.test(last)) return t("noIdColumn");
+  // The parser's sentences are English and name what it was looking for; each
+  // is said as what to do about it instead.
   if (/not UTF-8 text/.test(last)) return t("badEncoding");
   if (/Empty TSV data|No rows found in TSV data/.test(last)) return t("emptySheet");
   if (/has no content columns/.test(last)) return t("noContentColumns");
@@ -920,7 +922,7 @@ const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
 /** A file picked or dropped here: read once Python is ready, if it is one. */
 function openFile(file) {
   // Said before anything is read or queued: the parser's answer for a PDF is a
-  // complaint about a missing ID column, which sends the reader looking in the
+  // complaint about a sheet with no columns, which sends the reader looking in the
   // wrong place. A deck already on screen stays there under the toast.
   if (!FILE_TYPES.test(file.name)) return status(t("badFileType", file.name), "bad");
   fromPage = true;
@@ -1844,6 +1846,10 @@ function render() {
   // Above the card rather than behind a menu: a sheet that warns is telling you
   // some cards will come out wrong. Folded to its count, so it is seen without
   // being read before the card.
+  // Said once, in words, because it decides what a spelling fix does.
+  $("#idnote").hidden = !a.plan.idFrom;
+  $("#idnote-text").innerHTML = a.plan.idFrom ? t("idFromColumn", escapeHtml(a.plan.idFrom)) : "";
+
   const warnings = warningItems(a);
   $("#warnbar").hidden = !warnings.length;
   $("#warntitle").textContent = t("warnTitle", warnings.length);

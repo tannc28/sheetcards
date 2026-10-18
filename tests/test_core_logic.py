@@ -36,9 +36,85 @@ class TestTsvParsing:
         # The embedded newline must NOT create a spurious extra row.
         assert len(parsed["rows"]) == 2
 
-    def test_missing_required_headers_raise(self):
+    def test_a_sheet_with_only_reserved_columns_raises(self):
         with pytest.raises(d.RemoteDeckError):
-            d.parse_tsv_data("FOO\tBAR\nx\ty")
+            d.parse_tsv_data("SYNC\tTAGS\nx\ty")
+
+
+@pytest.mark.unit
+class TestNoIdColumn:
+    """A sheet with no ID column is keyed by its first content column."""
+
+    def deck(self, tsv):
+        parsed = d.parse_tsv_data(tsv)
+        return parsed, d.build_remote_deck_from_tsv(parsed, "")
+
+    def test_the_first_content_column_becomes_the_id(self):
+        parsed, deck = self.deck("Word\tMeaning\njourney\tchuyến đi\nborrow\tmượn")
+        assert parsed["plan"].id_from == "Word"
+        assert parsed["plan"].id_header == "ID"
+        assert [n["ID"] for n in deck.notes] == ["journey", "borrow"]
+        assert parsed["plan"].content_headers == ["Word", "Meaning"]
+        # The sheet as written is kept for whatever draws the spreadsheet itself.
+        assert parsed["sheet_headers"] == ["Word", "Meaning"]
+
+    def test_the_id_is_normalised_but_keeps_its_case(self):
+        _, deck = self.deck("Word\tMeaning\n  New   York \tx\nCafe\u0301\ty")
+        assert [n["ID"] for n in deck.notes] == ["New York", "Café"]
+
+    def test_repeats_are_numbered_in_row_order_ignoring_case(self):
+        _, deck = self.deck("Word\tM\nbank\t1\nBank\t2\nbank\t3\nbank (2)\t4")
+        assert [n["ID"] for n in deck.notes] == [
+            "bank",
+            "Bank (2)",
+            "bank (3)",
+            "bank (2) (2)",
+        ]
+        assert deck.duplicate_ids == []
+
+    def test_a_blank_first_cell_is_still_an_invalid_row(self):
+        _, deck = self.deck("Word\tMeaning\n\tno word\njourney\tx")
+        assert deck.invalid_note_lines == 1
+        assert deck.total_potential_anki_notes == 1
+
+    def test_inserting_a_row_keeps_every_other_id(self):
+        _, before = self.deck("Word\tM\na\t1\nb\t2")
+        _, after = self.deck("Word\tM\nz\t0\na\t1\nb\t2")
+        assert {n["ID"] for n in before.notes} < {n["ID"] for n in after.notes}
+
+    def test_reserved_columns_still_work(self):
+        _, deck = self.deck("TAGS\tWord\tM\tSYNC\nt1\tx\ty\t\nt2\tz\tw\tx")
+        assert [n["ID"] for n in deck.notes] == ["x", "z"]
+        assert deck.sync_marked_lines == 1
+
+    def test_the_package_keys_each_note_by_its_word(self):
+        import io
+        import sqlite3
+        import tempfile
+        import zipfile
+
+        from src import apkg
+
+        _, deck = self.deck("Word\tMeaning\njourney\tx\nborrow\ty")
+        data = apkg.build_package(
+            "file:w.tsv#", "w", deck.plan, deck.sheet_config, deck.notes, now=1
+        )
+        with tempfile.NamedTemporaryFile(suffix=".anki2") as f:
+            f.write(zipfile.ZipFile(io.BytesIO(data)).read("collection.anki2"))
+            f.flush()
+            guids = {
+                g for (g,) in sqlite3.connect(f.name).execute("select guid from notes")
+            }
+        assert guids == {
+            apkg.note_guid("file:w.tsv#", "journey"),
+            apkg.note_guid("file:w.tsv#", "borrow"),
+        }
+
+    def test_a_sheet_with_an_id_column_is_untouched(self):
+        parsed, deck = self.deck("ID\tWord\nw01\tjourney")
+        assert parsed["plan"].id_from is None
+        assert "sheet_headers" not in parsed
+        assert deck.notes[0]["ID"] == "w01"
 
     def test_empty_input_raises(self):
         with pytest.raises(d.RemoteDeckError):

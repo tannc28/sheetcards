@@ -548,3 +548,33 @@ class TestEachSheetKeepsItsOwnNoteType:
         assert get_note_type_name("", "fileA::vocab") != get_note_type_name(
             "", "fileB::vocab"
         )
+
+
+@pytest.mark.unit
+class TestSheetsWithoutAnId:
+    """A word list with no ID column is a deck — unless its file has real decks."""
+
+    def offers(self, monkeypatch, sheets):
+        from src import data_processor as dp
+
+        monkeypatch.setattr(dp, "download_sheet_names", lambda url, t=30: list(sheets))
+        monkeypatch.setattr(
+            dp,
+            "download_deck_tsv",
+            lambda url, t=30: sheets[dp_sheet(url)],
+        )
+        return {o.name: o.usable for o in dp.read_all_sheets("https://x/f.xlsx")}
+
+    def test_a_file_of_word_lists_is_all_decks(self, monkeypatch):
+        sheets = {"A": "Word\tM\na\tb", "B": "Word\tM\nc\td"}
+        assert self.offers(monkeypatch, sheets) == {"A": True, "B": True}
+
+    def test_beside_a_real_deck_the_sheet_without_an_id_is_left_out(self, monkeypatch):
+        sheets = {"Deck": "ID\tWord\nw01\ta", "Notes": "Note\tWhen\nhi\tnow"}
+        assert self.offers(monkeypatch, sheets) == {"Deck": True, "Notes": False}
+
+
+def dp_sheet(url):
+    from src.utils import sheet_name_from_url
+
+    return sheet_name_from_url(url)

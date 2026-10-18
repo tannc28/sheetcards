@@ -377,6 +377,20 @@ def read_all_sheets(url, timeout=30, debug_messages=None):
             offers.append(SheetOffer(name, deck=deck))
         except RemoteDeckError as e:
             offers.append(SheetOffer(name, problem=str(e)))
+
+    # A sheet with no ID column is keyed by its first column (tsv_model), which
+    # makes a plain word list usable on its own. In a file whose other sheets do
+    # have an ID column, though, the one without is the legend, the notes or the
+    # draft people keep beside their decks, and it is left out as before.
+    if any(o.usable and not o.deck.plan.id_from for o in offers):
+        offers = [
+            (
+                SheetOffer(o.name, problem="The sheet has no ID column.")
+                if o.usable and o.deck.plan.id_from
+                else o
+            )
+            for o in offers
+        ]
     return offers
 
 
