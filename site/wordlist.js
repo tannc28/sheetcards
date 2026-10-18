@@ -52,7 +52,9 @@ export function splitBy(line, id) {
   }
   parts = parts.map((p) => p.trim());
   // "word -" or "- meaning": a separator with nothing on one side split nothing.
-  if (parts.length > 1 && parts.filter(Boolean).length < 2) return [line.trim()];
+  // Except a bar, which is a cell's edge however empty the cell beside it:
+  // `book |` is a word whose meaning is still to be written.
+  if (parts.length > 1 && parts.filter(Boolean).length < 2 && id !== "pipe") return [line.trim()];
   return parts;
 }
 

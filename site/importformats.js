@@ -494,12 +494,14 @@ export function readPaste(text, { rows = "auto", separator = "auto", existing = 
   let parsed = split(table ? "pipe" : separator);
   // The cards read by their own marks unless the names' mark fits them better:
   // `Word | IPA` over `apple - táo` is a dashed list, but over a card holding a
-  // `::` the bars are the columns.
+  // `::` the bars are the columns. A card fits when it splits into two cells or
+  // more and no more than there are names (its empty cells at the end may be
+  // left off), and a tie goes to the names' mark, which is the one they chose.
   if (!table && separator === "auto" && namesSep !== "none" && namesSep !== parsed.separator) {
     const width = splitBy(lines[namesAt], namesSep).length;
-    const fits = (p) => p.rows.filter((r) => r.length === width).length;
+    const fits = (p) => p.rows.filter((r) => r.length >= 2 && r.length <= width).length;
     const other = split(namesSep);
-    if (fits(other) > fits(parsed)) parsed = other;
+    if (fits(other) >= fits(parsed)) parsed = other;
   }
 
   // The names over a #config line: split the way the cards are, or, when that
@@ -624,7 +626,8 @@ export function pasteGrid({ name, rows, header = null, cells = [], deck = [], la
   const names = synthHeaders(width, language).map((fallback, i) => {
     const given = own[i] || "";
     if (!given) return fallback;
-    return !RESERVED.test(norm(given)) || (i === keyAt && /^id$/i.test(given)) ? given : fallback;
+    // SYNC, TAGS and SUBDECK n keep their meaning; only one column is the ID.
+    return norm(given) !== "id" || i === keyAt ? given : fallback;
   });
   const settings = names.map((_, i) => (i === keyAt ? "" : String(cells[i] ?? "")));
   const marker = [...namedDeck(deck, name), ...chunksOf(cells[keyAt])].join("; ");

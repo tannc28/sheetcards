@@ -84,6 +84,33 @@ def test_quizlet_rows_separated_by_semicolons():
     assert [r[0] for r in out["rows"]] == ["apple", "book", "journey"]
 
 
+# ---------------------------------------------------------------------------
+# The text form Create sheet writes (sheettext.js)
+# ---------------------------------------------------------------------------
+
+
+def test_the_names_bar_wins_a_tie_with_a_dash_in_the_cards():
+    # A dash inside a meaning is not where the columns are: the names say |.
+    out = _paste("#config\nFront | Back\ndog | chó - con\ncat | mèo - con\n")
+    assert out["rows"] == [["dog", "chó - con"], ["cat", "mèo - con"]]
+
+
+def test_an_empty_cell_after_a_bar_is_a_cell():
+    out = _paste("#config\nFront | Back | Note\nbook |\npen | | x\n")
+    assert out["rows"] == [["book", ""], ["pen", "", "x"]]
+
+
+def test_pasted_names_keep_tags_and_subdeck():
+    grid = _run(
+        "return m.pasteGrid({name: 'X', rows: data.rows, header: data.header});",
+        {
+            "header": ["ID", "Front", "TAGS", "SUBDECK 1"],
+            "rows": [["w1", "a", "t", "s"]],
+        },
+    )
+    assert grid[0] == ["ID", "Front", "TAGS", "SUBDECK 1"]
+
+
 def test_quizlet_comma_between_term_and_definition_semicolon_between_rows():
     out = _paste("apple,quả táo;book,quyển sách;journey,chuyến đi")
     assert out["rowSeparator"]["token"] == ";"
