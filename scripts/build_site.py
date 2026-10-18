@@ -35,6 +35,7 @@ Usage:
 import argparse
 import html
 import json
+import os
 import re
 import shutil
 import sys
@@ -46,6 +47,29 @@ SITE = REPO / "site"
 DOCS = REPO / "docs" / "site"
 OUT = REPO / "build" / "site"
 EXAMPLES = REPO / "examples" / "sheetcards-examples.xlsx"
+
+# Where the site is served. Only what has to be absolute is built from it — the
+# AI guide and llms.txt, which an assistant reads with no page around them; the
+# pages work out their own address at runtime (site/paths.js). Moving the site:
+# set SHEETCARDS_SITE_URL in pages.yml, or put the domain in site/CNAME.
+PAGES_URL = "https://tannc28.github.io/sheetcards/"
+
+
+def site_url():
+    """The site's address, with a trailing slash: the environment's, else
+    site/CNAME's domain, else GitHub Pages'."""
+    url = os.environ.get("SHEETCARDS_SITE_URL", "").strip()
+    cname = SITE / "CNAME"
+    if not url and cname.exists():
+        domain = cname.read_text(encoding="utf-8").strip()
+        url = f"https://{domain}/" if domain else ""
+    url = url or PAGES_URL
+    return url if url.endswith("/") else url + "/"
+
+
+# A docs page names the site's address as this token; the build writes the
+# address in a span page.js repaints with the address the page was served from.
+SITE_TOKEN = "%%SITE%%"
 
 
 # The file a learner downloads from the landing page to start from: one sheet,
@@ -94,7 +118,7 @@ STARTER = {
 # information — the build refuses a page missing from this list, or from either
 # language, and a name with no file.
 DOC_GROUPS = [
-    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples"]),
+    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples", "ai"]),
     (
         {"vi": "Viết sheet", "en": "Write a sheet"},
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
@@ -700,6 +724,7 @@ def build(out=OUT):
     build_home_cards(out)
     build_sheet_templates(out)
     build_downloads(out)
+    build_ai_guide(out)
     pages = build_docs(out)
 
     # GitHub Pages runs the output through Jekyll unless told not to, which
@@ -725,6 +750,20 @@ def build_downloads(out):
     data, _ = build_examples.build_bytes(STARTER)
     (out / STARTER_NAME).write_bytes(data)
     shutil.copy2(EXAMPLES, out / EXAMPLES.name)
+
+
+def build_ai_guide(out):
+    """/ai.md and /llms.txt, for an AI assistant writing a CSV (scripts/ai_guide.py)."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        import ai_guide
+        import build_examples
+    finally:
+        sys.path.pop(0)
+    cloze = build_examples.SHEETS["06 Cloze (điền chỗ trống)"]
+    return ai_guide.write(
+        out, sheet_templates(out), *_pure_package(out), cloze, site_url()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1220,6 +1259,9 @@ def build_docs_in(out, lang, template):
             },
         )
         body = _wrap_tables(_rewrite_links(md.convert(sources[name])))
+        body = body.replace(
+            SITE_TOKEN, f'<span data-site-url="">{html.escape(site_url())}</span>'
+        )
         toc = md.toc_tokens[0]["children"] if md.toc_tokens else []
         first = re.search(r"<p>(.*?)</p>", body, re.S)
         summary = re.sub(r"<[^>]+>", "", first.group(1)) if first else ""

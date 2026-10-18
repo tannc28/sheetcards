@@ -463,6 +463,11 @@ const STRINGS = {
     en: "Back to add words? Open the sheet link you saved (in Messenger, Telegram, Notes…) and the sheet appears here; saved a .csv instead? Press Open .xlsx/.csv file. Then press Make flashcards and import the new .apkg.",
     vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file .xlsx/.csv. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
   },
+  shAskAi: { en: "Ask AI to make a word set", vi: "Nhờ AI tạo bộ từ" },
+  shAskAiHint: {
+    en: "— ChatGPT, Gemini or Claude writes the .csv for you, then press Open .xlsx/.csv file.",
+    vi: "— ChatGPT, Gemini hoặc Claude viết file .csv cho bạn, rồi bấm Mở file .xlsx/.csv.",
+  },
   shIosNote: {
     en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Save sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",
     vi: "Trên iPhone/iPad, Safari xoá bản nháp này nếu 7 ngày bạn không mở trang. Bấm <b>Lưu link sheet</b> để giữ sheet. Mẹo: <b>Share → Add to Home Screen</b> (Thêm vào MH chính) để mở lại trang này chỉ với một chạm.",

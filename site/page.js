@@ -14,6 +14,7 @@
 import { mountInAppBanner } from "./inapp.js";
 import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { icon, paintIcons } from "./icons.js";
+import { ROOT } from "./paths.js";
 
 const repaints = [];
 
@@ -98,6 +99,12 @@ if (contents) {
     if (!wide.matches && e.target.closest("a[href]")) contents.open = false;
   });
 }
+
+// The site's address, where a docs page names it (the build's %%SITE%% token):
+// written by the build as the address it was built for, and repainted as the
+// address this page was actually served from, so a prompt copied from the docs
+// names the right domain wherever the site lives.
+for (const el of document.querySelectorAll("[data-site-url]")) el.textContent = ROOT;
 
 mountInAppBanner({ t, icon });
 paintIcons();
