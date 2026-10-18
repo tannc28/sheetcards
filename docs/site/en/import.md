@@ -14,10 +14,16 @@ book - quyển sách
 journey - chuyến đi
 ```
 
+- **Edited in the form you pasted**: a list or a note is edited as a note; a
+  table copied from Google Sheets or Excel, a CSV file or a Markdown table is
+  edited as a small table (row 1 the column names, row 2 the settings). The
+  **Note / Table** switch at the top turns one into the other. Beside it is the
+  real card; ← → steps through them.
 - **The separator is detected**: tab, ` - `, `=`, `|`, `;`, `:`, `,`, `>>`. If
-  the guess is wrong, pick another under *Between front and back*.
+  the guess is wrong, open **Split wrong?** and pick another.
 - A line with more than two parts gets extra back columns.
-- Repeated lines are marked and left out; tick one to keep it.
+- Repeated lines are left out; press the *duplicates* label over the card to
+  keep them.
 - The cards become a Basic sheet with two columns, **Front** / **Back**, and
   `#config name=<name>`. The page's address carries the whole sheet, so a reload
   or a link sent to someone opens the same set.
@@ -64,10 +70,11 @@ the keys for the whole set and the first column's settings; every other cell is
 the settings of the column above it. Pasting the whole table into **Paste text**
 works too.
 
-Only pasting words? The page shows a **Settings** panel (read aloud, theme, which
-side each column goes on) and hands your own text back with the first two lines
-added, with a **Copy** button. Paste that into your note; next week add words at
-the bottom and paste the whole thing again.
+Only pasting words? Under the card are **Read aloud**, **Theme** and **Columns**
+(which side each column goes on). A choice there is written straight into the
+note (its `#config` line and the brackets) or into row 2 of the table. **Copy
+text** / **Copy table** copies the whole set in that form; paste it into your
+note or Google Sheets, add words next week and paste the whole thing again.
 
 ## Paste a whole CSV sheet
 

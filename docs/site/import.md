@@ -14,10 +14,14 @@ book - quyển sách
 journey - chuyến đi
 ```
 
+- **Sửa theo đúng dạng bạn dán**: danh sách hay ghi chú được sửa như một ghi
+  chú; bảng copy từ Google Sheets, Excel, file CSV hay bảng Markdown được sửa
+  như một bảng nhỏ (hàng 1 tên cột, hàng 2 cài đặt). Nút **Ghi chú / Bảng** ở
+  trên đổi qua lại. Bên cạnh là card thật, bấm ← → để xem từng card.
 - **Dấu tách được tự nhận**: tab, ` - `, `=`, `|`, `;`, `:`, `,`, `>>`. Nếu đoán
-  sai, chọn lại ở ô *Giữa mặt trước và mặt sau*.
+  sai, mở **Tách sai?** và chọn lại.
 - Dòng có hơn hai phần thì các phần sau thành thêm cột ở mặt sau.
-- Dòng trùng được đánh dấu và bỏ ra; tick lại nếu bạn muốn giữ.
+- Dòng trùng được bỏ ra; bấm vào nhãn *từ trùng* trên card để giữ lại.
 - Card được tạo thành một sheet Basic với hai cột **Mặt trước** / **Mặt sau** và
   `#config name=<tên>`. Link của trang chứa cả sheet, nên tải lại trang hay gửi
   link cho người khác đều mở lại đúng bộ này.
@@ -62,9 +66,11 @@ Hàng 1 là tên cột, hàng 2 là settings row: ô đầu là `#config`, các 
 và cài đặt của cột đầu; mỗi ô sau là cài đặt của cột ở trên nó. Dán cả bảng vào
 **Dán văn bản** cũng được.
 
-Chỉ dán từ thôi? Trang hiện ô **Cài đặt** (đọc to, theme, mặt nào cho từng cột)
-và trả lại chính đoạn chữ của bạn đã thêm hai dòng đầu, có nút **Copy**. Dán
-đoạn đó vào ghi chú; tuần sau viết thêm từ xuống dưới rồi dán lại cả đoạn.
+Chỉ dán từ thôi? Dưới card có **Đọc to**, **Theme** và **Cột** (mặt nào cho
+từng cột). Chọn ở đó là cài đặt được viết thẳng vào ghi chú (dòng `#config` và
+ngoặc vuông) hay vào hàng 2 của bảng. **Copy văn bản** / **Copy bảng** copy cả
+bộ theo đúng dạng đó; dán vào ghi chú hay Google Sheets, tuần sau viết thêm từ
+rồi dán lại cả đoạn.
 
 ## Dán cả một sheet CSV
 

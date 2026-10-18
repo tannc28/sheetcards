@@ -183,9 +183,10 @@ def _headers(headers):
     return out
 
 
-def preview_card(tsv):
-    # Dán văn bản's card: the sheet's first card as analyze would draw it, with
-    # the warnings, and nothing of the page's last analysis touched.
+def preview_deck(tsv):
+    # Dán văn bản's cards: every note the sheet makes, as analyze would draw it,
+    # with the settings row's warnings, and nothing of the page's last analysis
+    # touched.
     parsed = tm.parse_tsv_data(tsv, [])
     headers, plan = parsed["headers"], parsed["plan"]
     shown = parsed.get("sheet_headers", headers)
@@ -194,19 +195,26 @@ def preview_card(tsv):
     rows = parsed["rows"]
     if rows and is_config_row(tm.row_to_dict(rows[0], headers), plan):
         rows = rows[1:]
+    notes = []
     for raw in rows:
         note = tm.row_to_dict(raw, headers)
         tm.apply_media_rewrites(note, plan, cfg)
-        if tm.classify_row(note, plan) == tm.GHOST:
+        if tm.classify_row(note, plan) != tm.SYNCED:
             continue
-        cloze = tm.row_has_cloze(note, plan)
-        return json.dumps({
-            "template": build_templates(plan, cfg, is_cloze=cloze)[0],
+        notes.append({
+            "cloze": tm.row_has_cloze(note, plan),
             "values": {h: note.get(h, "") for h in _headers(shown)},
-            "warnings": cfg.warnings,
-            "warningCodes": warning_codes(cfg.warnings),
-        }, ensure_ascii=False)
-    return "null"
+        })
+    if not notes:
+        return "null"
+    return json.dumps({
+        "templates": {
+            "basic": build_templates(plan, cfg, is_cloze=False),
+            "cloze": build_templates(plan, cfg, is_cloze=True),
+        },
+        "notes": notes,
+        "warningCodes": warning_codes(cfg.warnings),
+    }, ensure_ascii=False)
 
 
 def analyze(tsv, deck_name, sheet_id=""):
@@ -350,7 +358,7 @@ const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 const TOUCH = matchMedia("(hover: none)");
 
 let analyze = null;
-let previewCard = null;
+let previewDeck = null;
 let buildPackage = null;
 // The deck's media addresses and the rules for fetching them (src/media.py).
 let mediaJobs = null;
@@ -546,8 +554,8 @@ async function boot() {
   };
   const shapeOf = py.globals.get("shape");
   nextShape = (last) => JSON.parse(shapeOf(JSON.stringify(last)));
-  const preview = py.globals.get("preview_card");
-  previewCard = (tsv) => JSON.parse(preview(tsv));
+  const preview = py.globals.get("preview_deck");
+  previewDeck = (tsv) => JSON.parse(preview(tsv));
   const wb = py.pyimport("sc.workbook");
   readUpload = (bytes, name, index) =>
     JSON.parse(wb.read_upload(bytes, name, index));
@@ -2653,20 +2661,13 @@ $("#example").addEventListener("click", () => {
 });
 
 const textImport = mountTextImport({
-  previewCard(tsv) {
-    if (!previewCard) return null;
-    let card;
+  previewDeck(tsv) {
+    if (!previewDeck) return null;
     try {
-      card = previewCard(tsv);
+      return previewDeck(tsv);
     } catch {
       return null;
     }
-    if (!card) return null;
-    const { front, back } = renderCard(card.template, card.values, { ordinal: 1 });
-    return {
-      doc: cardDoc({ front, back, tab: "both", dark: dark() }),
-      warnings: card.warningCodes,
-    };
   },
   openShared(hash) {
     fromPage = true;
