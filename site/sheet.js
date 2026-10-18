@@ -50,7 +50,7 @@ from sc import workbook
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import deck_path, plan_columns
 from sc.sheet_config import SheetConfig, is_config_row, parse_config_row, warning_codes
-from sc.tsv_model import build_tags
+from sc.tsv_model import apply_media_rewrites, build_tags
 
 
 def keys():
@@ -61,6 +61,8 @@ def keys():
     """
     from sc.sheet_config import (
         ALIGNMENTS,
+        BASIC_KEYS,
+        INTERNAL_KEYS,
         MEDIA_KINDS,
         SIDES,
         THEME_COLORS,
@@ -73,6 +75,8 @@ def keys():
         {
             "field": list(_FIELD_KEYS),
             "deck": list(_DECK_KEYS),
+            "basic": list(BASIC_KEYS),
+            "internal": list(INTERNAL_KEYS),
             "closed": {
                 "side": list(SIDES),
                 "align": list(ALIGNMENTS),
@@ -119,6 +123,9 @@ def preview(payload):
         config = SheetConfig()
     front, back = split_sides(plan, config)
     values = dict(zip(names, data["values"]))
+    # What a sync stores: a video address as its player, a cell's line breaks
+    # as <br>. The card is drawn from the stored value.
+    apply_media_rewrites(values, plan, config)
     decks = [
         "::".join(deck_path(dict(zip(names, row)), plan, config))
         for row in data.get("rows", [])
@@ -287,12 +294,9 @@ const HELP = {
   label: { text: "helpLabel" },
   type: { text: "helpType" },
   subdeck: { text: "helpSubdeck" },
-  sort: { text: "helpSort" },
   math: { text: "helpMath", sample: "a^2 + b^2 = c^2" },
   code: { text: "helpCode", sample: "def greet(name):\n    print('hi', name)" },
   font: { text: "helpFont" },
-  rtl: { text: "helpRtl", sample: "مرحبا بالعالم" },
-  vertical: { text: "helpVertical", sample: "山は静かです" },
   bold: { text: "helpBold" },
   italic: { text: "helpItalic" },
   hint: { text: "helpHint" },
@@ -387,6 +391,8 @@ function splitMarker(cell) {
 }
 
 const ui = {
+  // Whether the "Nâng cao" fold of the key chips was opened by hand.
+  advOpen: false,
   stage: "empty",
   // The word the card shows, and the column the chips act on (-1: the #config
   // cell, where the deck-wide settings live).
@@ -2302,19 +2308,33 @@ function paintColumns() {
 
 function paintKeys() {
   const on = new Set(parts(cellText()).map(nameOf));
-  // The set's name and the ID mark are the page's to write (the title field,
-  // nextId), not settings to toggle.
-  const list = ui.col === -1 ? keys.deck.filter((k) => k !== "name" && k !== "next") : keys.field;
+  // The set's name is the page's to write (the title field), and `next`/`shape`
+  // are its bookkeeping (nextId, shapeMark) — none of them a setting to toggle.
+  const hidden = new Set(["name", ...(keys.internal ?? ["next", "shape"])]);
+  const list = (ui.col === -1 ? keys.deck : keys.field).filter((k) => !hidden.has(k));
   if (ui.open && !list.includes(ui.open)) ui.open = null;
-  $("#keys").innerHTML = list
-    .map(
-      (key) =>
-        `<button type="button" class="col${on.has(key) ? " on" : ""}${ui.open === key ? " open" : ""}"` +
-        ` data-key="${escapeHtml(key)}" aria-pressed="${on.has(key)}"` +
-        `${hasPanel(key) ? ` aria-expanded="${ui.open === key}" aria-controls="opts"` : ""}` +
-        `>${escapeHtml(key)}</button>`,
-    )
-    .join("");
+  // The keys most sheets need are shown; the rest wait under "Nâng cao", the
+  // same split as the docs (sheet_config.BASIC_KEYS). `image` stands for the
+  // media kinds in Basic; audio and video are advanced.
+  const basic = new Set(keys.basic ?? []);
+  const chip = (key) =>
+    `<button type="button" class="col${on.has(key) ? " on" : ""}${ui.open === key ? " open" : ""}"` +
+    ` data-key="${escapeHtml(key)}" aria-pressed="${on.has(key)}"` +
+    `${hasPanel(key) ? ` aria-expanded="${ui.open === key}" aria-controls="opts"` : ""}` +
+    `>${escapeHtml(key)}</button>`;
+  const order = [...basic];
+  const shown = list.filter((k) => basic.has(k)).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const more = list.filter((k) => !basic.has(k));
+  // Open while one of its keys is written or being edited, or once opened.
+  const open = ui.advOpen || more.some((k) => on.has(k) || ui.open === k);
+  $("#keys").innerHTML =
+    shown.map(chip).join("") +
+    (more.length
+      ? `<details class="advkeys" id="advkeys"${open ? " open" : ""}><summary>${escapeHtml(
+          t("edAdvanced"),
+        )}</summary><div class="advlist">${more.map(chip).join("")}</div></details>`
+      : "");
+  $("#advkeys")?.addEventListener("toggle", (e) => (ui.advOpen = e.target.open));
   $("#keyfor").textContent =
     ui.col === -1 ? t("edForDeck") : t("edForColumn", sheet.columns[ui.col]?.name || "");
   paintOptions();

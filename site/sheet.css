@@ -361,6 +361,18 @@ a.altcard { color: inherit; text-decoration: none; }
 }
 .colpanel .stack { margin: 0; gap: 8px; }
 .colpanel .collist { gap: 6px; }
+/* The advanced keys, folded after the Basic chips on a line of their own. */
+.advkeys { flex: 1 1 100%; margin: 4px 0 0; }
+.advkeys > summary {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 4px;
+  cursor: pointer; color: var(--muted); font-size: var(--t-sm); font-weight: 650;
+}
+.advkeys > summary::-webkit-details-marker { display: none; }
+.advkeys > summary::before { content: "▸"; margin-right: 6px; }
+.advkeys[open] > summary::before { content: "▾"; }
+.advkeys > summary:hover { color: var(--accent); }
+.advkeys .advlist { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 0; }
+@media (pointer: coarse) { .advkeys > summary { min-height: 44px; } }
 /* Chips are taps on a phone: tall enough for a thumb, the way every other
    control on this page is. */
 .colpanel .col { min-height: 36px; padding: 0 12px; }

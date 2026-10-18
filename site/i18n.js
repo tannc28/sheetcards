@@ -780,6 +780,7 @@ const STRINGS = {
   edRemoveColumn: { en: "Remove this column", vi: "Bỏ cột này" },
   edTemplate: { en: "Card template", vi: "Card template" },
   edForDeck: { en: "for the whole sheet", vi: "cho cả sheet" },
+  edAdvanced: { en: "Advanced", vi: "Nâng cao" },
   edForColumn: { en: (name) => `for ${name}`, vi: (name) => `cho ${name}` },
   edNoMarker: {
     en: "Row 2 no longer starts with #config, so it is an ordinary note",
@@ -805,8 +806,8 @@ const STRINGS = {
     vi: "Màu chữ. muted và accent đổi theo nền sáng/tối của card; ngoài ra là tên màu CSS hoặc mã #hex.",
   },
   helpAlign: {
-    en: "Text alignment. Written in the #config cell it sets the default for every column.",
-    vi: "Căn lề chữ. Viết trong ô #config thì nó là mặc định cho mọi cột.",
+    en: "Text alignment for this column: left, center or right.",
+    vi: "Căn lề chữ của cột này: left, center hoặc right.",
   },
   helpTts: {
     en: "Anki reads this column aloud. The code must be the full form: zh on its own matches no installed voice and plays silence.",
@@ -817,12 +818,12 @@ const STRINGS = {
     vi: "Tên giọng ưu tiên, cách nhau bằng dấu phẩy. Chỉ là ưu tiên — Anki vẫn dùng giọng khác cùng ngôn ngữ nếu không có.",
   },
   helpSpeed: {
-    en: "Speaking rate, 0.5–2.0. Written in the #config cell it sets the default for every column.",
-    vi: "Tốc độ đọc, 0.5–2.0. Viết trong ô #config thì nó là mặc định cho mọi cột.",
+    en: "Speaking rate for this column's tts, 0.5–2.0.",
+    vi: "Tốc độ đọc tts của cột này, 0.5–2.0.",
   },
   helpLabel: {
-    en: "A small caption printed above the field.",
-    vi: "Một dòng nhãn nhỏ in phía trên field.",
+    en: "A small caption printed above the field. Bare label uses the column's name; label=… writes your own.",
+    vi: "Một dòng nhãn nhỏ in phía trên field. Ghi trần label thì nhãn là tên cột; label=… để tự đặt.",
   },
   helpType: {
     en: "Anki draws a box on the question and compares what you type against this column. type=nc ignores accents. One column per sheet.",
@@ -831,10 +832,6 @@ const STRINGS = {
   helpSubdeck: {
     en: "This column becomes a level of the deck path. It is never drawn on the card — filing a note and printing on it are different jobs.",
     vi: "Cột này thành một tầng trong đường dẫn deck. Nó không bao giờ hiện trên card — xếp note vào deck và in lên card là hai việc khác nhau.",
-  },
-  helpSort: {
-    en: "Anki lists notes by this column in the browser and sorts a deck by it. Without it that is the ID column, which is a list of nothing. One column per sheet, and it is drawn on the card exactly as before.",
-    vi: "Anki sẽ hiện cột này ở Browse và sắp xếp deck theo nó. Không đặt thì nó lấy cột ID, tức là một danh sách vô nghĩa. Mỗi sheet một cột, và cột đó vẫn hiện trên card như bình thường.",
   },
   helpMath: {
     en: "The cell is a formula, drawn by the MathJax that Anki already ships — write TeX without the delimiters. Bare math is inline; math=block is the centred display form.",
@@ -845,16 +842,8 @@ const STRINGS = {
     vi: "Ô là code: giữ nguyên như bạn gõ, khối chữ đều nét, tô màu theo ngôn ngữ. code=python là chỉ định ngôn ngữ; ghi trần code thì chỉ giữ định dạng.",
   },
   helpFont: {
-    en: "The typeface for this column. sc/tc/jp/kr load a Noto CJK font — worth it because 直 and 骨 are drawn differently in Chinese and Japanese and a machine with one CJK font picks for you. Any installed family name also works.",
-    vi: "Font cho cột này. sc/tc/jp/kr nạp font Noto CJK — đáng dùng vì 直 hay 骨 có tự dạng khác nhau giữa tiếng Trung và tiếng Nhật, máy chỉ có một font CJK thì nó chọn thay bạn. Gõ tên font đã cài trong máy cũng được.",
-  },
-  helpRtl: {
-    en: "Right to left, for Arabic, Hebrew and Persian. The column also starts from the right unless align says otherwise.",
-    vi: "Viết từ phải sang trái, cho tiếng Ả Rập, Do Thái, Ba Tư. Cột cũng canh phải luôn, trừ khi bạn ghi align khác.",
-  },
-  helpVertical: {
-    en: "Top to bottom, right to left — classical Japanese and Chinese. Latin words inside the line stay upright.",
-    vi: "Viết từ trên xuống, phải sang trái — kiểu văn bản Nhật/Trung cổ. Chữ Latin trong dòng vẫn đứng thẳng.",
+    en: "The typeface for this column. sc/tc/jp/kr load a Noto CJK font — worth it because 直 and 骨 are drawn differently in Chinese and Japanese. A column with tts=zh_CN, zh_TW, ja_JP or ko_KR gets its font without asking. Any installed family name also works.",
+    vi: "Font cho cột này. sc/tc/jp/kr nạp font Noto CJK — đáng dùng vì 直 hay 骨 có tự dạng khác nhau giữa tiếng Trung và tiếng Nhật. Cột có tts=zh_CN, zh_TW, ja_JP hay ko_KR tự có font, không cần ghi. Gõ tên font đã cài trong máy cũng được.",
   },
   helpBold: { en: "Bold text.", vi: "Chữ đậm." },
   helpItalic: { en: "Italic text.", vi: "Chữ nghiêng." },
