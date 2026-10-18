@@ -132,11 +132,22 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
           speechSynthesis.cancel();
           speechSynthesis.speak(u);
         });
+        // The frame is at least as tall as the page gives it, so a short card
+        // would sit at the top of an empty one: it is moved down to the middle
+        // with extra padding on top, which is left out of the height reported.
+        let extra = 0, pad0 = null;
         const post = () => {
           const b = document.body, s = getComputedStyle(b);
-          parent.postMessage({ h: Math.ceil(b.getBoundingClientRect().height
-            + parseFloat(s.marginTop) + parseFloat(s.marginBottom)) }, "*");
+          if (pad0 === null) pad0 = parseFloat(s.paddingTop) || 0;
+          const h = Math.ceil(b.getBoundingClientRect().height - extra
+            + parseFloat(s.marginTop) + parseFloat(s.marginBottom));
+          parent.postMessage({ h }, "*");
+          const down = Math.max(0, Math.floor((innerHeight - h) / 2));
+          if (down === extra) return;
+          extra = down;
+          b.style.paddingTop = down ? pad0 + down + "px" : "";
         };
+        addEventListener("resize", post);
         addEventListener("load", post); new ResizeObserver(post).observe(document.body);
       <\/script>
       ${typeansRuntime()}`;

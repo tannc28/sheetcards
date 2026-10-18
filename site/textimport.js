@@ -65,6 +65,7 @@ const CHOICES_KEY = "sc-paste-settings";
 // A pause in typing long enough to be one: redrawing on every key is what
 // made the dialog jump under the caret.
 const SETTLE = 250;
+const DEFAULT_THEME = "paper";
 // Two columns from here, as the review below; one column under it, the card on top.
 const WIDE = matchMedia("(min-width: 60rem)");
 const STILL = matchMedia("(prefers-reduced-motion: reduce)");
@@ -817,6 +818,10 @@ function currentChoices() {
       sides: suggestion.names.map((n, i) => last.sides?.[n] ?? choices.sides[i]),
     };
     state.reused = true;
+  } else if (!choices.theme) {
+    // A list that says nothing about its look, for a set not made here before,
+    // starts on paper: the first card anyone sees should look designed.
+    choices.theme = DEFAULT_THEME;
   }
   return (state.choices = choices);
 }
@@ -953,7 +958,7 @@ function paint() {
   $in("#tx-set").hidden = !rows.length;
   if (!rows.length) return paintCards(null);
   const made = settings();
-  paintChoices(made.choices);
+  paintChoices(made.choices, rows[0]?.[state.suggestion.front] ?? "");
   paintCards(
     table
       ? state.grid
@@ -963,14 +968,17 @@ function paint() {
   follow();
 }
 
-/** A theme's chip: its own card colours, the accent as a bar under "Aa". */
-function swatch(value, label, colours, chosen) {
+/** A theme as a small card: the set's first word in that theme's colours, the
+ *  accent ruled under it, the theme's name below. */
+function swatch(value, label, colours, chosen, word) {
   const style = colours ? `--sw-bg:${colours.bg};--sw-fg:${colours.fg};--sw-ac:${colours.accent}` : "";
   return `<button type="button" class="tx-swatch" data-theme="${escapeHtml(value)}"
-    aria-pressed="${value === chosen}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="${style}"><span aria-hidden="true">Aa</span></button>`;
+    aria-pressed="${value === chosen}" aria-label="${escapeHtml(label)}"><span class="tx-mini" aria-hidden="true" style="${style}"><span>${escapeHtml(
+      word,
+    )}</span></span><span class="tx-swname" aria-hidden="true">${escapeHtml(label)}</span></button>`;
 }
 
-function paintChoices(choices) {
+function paintChoices(choices, first = "") {
   const s = state.suggestion;
   $in("#tx-reused").hidden = !state.reused;
   const tts = $in("#tx-tts");
@@ -996,8 +1004,12 @@ function paintChoices(choices) {
   const mode = dark() ? "night" : "light";
   const listed = new Map(THEME_SWATCHES.map((w) => [w.name, w[mode]]));
   const plain = dark() ? { bg: "#1b1f25", fg: "#e6e9ee", accent: "#7aa7ef" } : { bg: "#ffffff", fg: "#111111", accent: "#2f6fd0" };
-  const chips = [swatch("", t("txThemeNone"), plain, choices.theme), ...THEMES.map((name) => swatch(name, name, listed.get(name), choices.theme))];
-  if (choices.theme && !THEMES.includes(choices.theme)) chips.push(swatch(choices.theme, choices.theme, null, choices.theme));
+  const word = String(first).replace(/\s+/g, " ").trim().slice(0, 24) || "Aa";
+  const chips = [
+    ...THEMES.map((name) => swatch(name, name, listed.get(name), choices.theme, word)),
+    swatch("", t("txThemeNone"), plain, choices.theme, word),
+  ];
+  if (choices.theme && !THEMES.includes(choices.theme)) chips.push(swatch(choices.theme, choices.theme, null, choices.theme, word));
   setHtml($in("#tx-themes"), chips.join(""));
   $in("#tx-themename").textContent = choices.theme || t("txThemeNone");
   const shown = choices.theme ? listed.get(choices.theme) : plain;

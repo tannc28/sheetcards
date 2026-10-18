@@ -62,9 +62,14 @@
   --t-lg: 1.125rem;     /* 18px — section headings */
   --t-xl: 1.5rem;       /* 24px — the page title */
 
-  --r-sm: 6px;
-  --r-md: 9px;
-  --r-lg: 14px;
+  /* Three radii: a control (button, field, chip), a card or panel, a dialog.
+     The older names are the same three steps. */
+  --r-control: 10px;
+  --r-card: 16px;
+  --r-dialog: 22px;
+  --r-sm: var(--r-control);
+  --r-md: var(--r-control);
+  --r-lg: var(--r-card);
 
   --shadow: 0 1px 2px rgb(22 19 31 / .05), 0 6px 20px -8px rgb(22 19 31 / .14);
   --shadow-lg: 0 2px 4px rgb(22 19 31 / .04), 0 24px 48px -18px rgb(40 24 110 / .28);
