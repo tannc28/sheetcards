@@ -16,7 +16,7 @@ APP = (Path(__file__).resolve().parent.parent / "site" / "app.js").read_text("ut
 
 @pytest.mark.unit
 def test_the_analyzer_never_tests_a_js_value_against_none():
-    analyzer = APP.split("const ANALYZER = `", 1)[1].split("`;", 1)[0]
+    analyzer = APP.split("const ANALYZER = String.raw`", 1)[1].split("`;", 1)[0]
     assert not re.search(r"\bis not None\b|\bis None\b", analyzer)
 
 
