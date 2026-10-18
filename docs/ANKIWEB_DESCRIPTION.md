@@ -27,7 +27,7 @@ Everything above is a snapshot. Install the add-on and the deck stays in step wi
 *   **Collaboration:** Work with friends or classmates on the same spreadsheet.
 *   **Not only Google:** an `.xlsx` at any https address works too, and the browser preview takes an uploaded `.xlsx`, `.csv` or `.tsv`.
 *   **Smart Sync:** Cards are automatically organized into subdecks that follow your `SUBDECK` columns.
-*   **Media from a link:** Mark a column `image`, `audio` or `video` and a cell holding a bare URL becomes the picture or the player (`size=320` caps the width). These are links, so the card fetches them each time it is shown — great for a tidy sheet, but nothing shows offline, and mobile clients are stricter about remote content. For media that works on a plane, use Anki's own `collection.media`.
+*   **Media from a link:** Mark a column `image`, `audio` or `video` and a cell holding a bare URL becomes the picture or the player (`size=320` caps the width). Pictures and recordings are downloaded into Anki's media folder at sync (Wikimedia Commons always, other sites when they allow it), so those cards work offline and a recording gets Anki's own play button and Replay. Video stays a link.
 *   **Video from an ordinary link:** Paste the YouTube address out of your browser — `watch?v=`, `youtu.be/`, `/shorts/` — or a Google Drive file link, and a `video` column turns it into a player. The address is rewritten into that site's own embed address while it syncs, so nothing has to be typed in a special form. A direct `.mp4` works too. Framed players are blocked on AnkiDroid and AnkiMobile, which get a link instead.
 *   **Cloze Support:** Automatically detects `{{c1::cloze}}` cards.
 

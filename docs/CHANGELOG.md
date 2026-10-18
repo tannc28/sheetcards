@@ -8,6 +8,14 @@ Until then a minor bump (`0.2.0`) may change how a sheet is read; a patch bump
 
 ## Unreleased (next minor — changes how a sheet is read)
 
+- **Pictures and recordings work offline.** Download .apkg in Sheet to Anki puts
+  the files of `image` and `audio` columns inside the package, and the add-on's
+  sync stores them in Anki's media folder; the field holds the file's name
+  (`_sc-…`), the same on both paths. Wikimedia Commons always works (500 px
+  pictures, Ogg recordings as MP3 for iPhone); other sites when they allow a
+  browser to download (CORS) — the rest stay links. A recording is now Anki's own
+  sound (autoplay, Replay with R); one left as a link still gets a player.
+  Video stays a link.
 - **The settings row is smaller.** `rtl` and `sort` are done without asking and
   still accepted silently: every field reads its own direction (`dir="auto"`),
   and Anki lists notes by the first content column that is not a deck level.
