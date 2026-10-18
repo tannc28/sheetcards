@@ -402,5 +402,137 @@ dump(col, "after add-on")
 one_set(col, ["w01", "w02", "w03"])
 check(col.db.scalar("select count() from revlog") == 2, "review history kept")
 
+print("\n### pictures and recordings inside the deck, both orders")
+from addon.src import media as md  # noqa: E402
+from addon.src.media_fetch import fetch_deck_media  # noqa: E402
+from addon.src.media_fetch import store_deck_media  # noqa: E402
+
+PIC = "https://example.org/pic/apple.jpg"
+SND = "https://example.org/snd/apple.mp3"
+BYTES = {PIC: ("image/jpeg", b"\xff\xd8jpeg-apple"), SND: ("audio/mpeg", b"ID3-apple")}
+MH = ["ID", "Sound", "Word", "Picture"]
+M = [MH, ["#config", "audio; side=front", "", "image"], ["w01", SND, "apple", PIC]]
+
+
+def fake_get(url, timeout):
+    kind, data = BYTES[url]
+    return kind, data, "*"
+
+
+def media_package(text, sheet_id, deck):
+    CLOCK[0] += 100
+    remote = build_remote_deck_from_tsv(parse_tsv_data(text), "url")
+    files = {}
+    for job in md.jobs(remote.notes, remote.plan, remote.sheet_config):
+        kind, data = BYTES[job["url"]]
+        files[job["url"]] = (md.settle(job, kind, len(data)), data)
+    data = build_package(
+        sheet_id,
+        deck,
+        remote.plan,
+        remote.sheet_config,
+        remote.notes,
+        now=CLOCK[0],
+        media=files,
+    )
+    path = os.path.join(tempfile.mkdtemp(), "p.apkg")
+    open(path, "wb").write(data)
+    return path
+
+
+def media_import(col, text, label):
+    opts = pb.ImportAnkiPackageOptions(
+        merge_notetypes=False,
+        with_scheduling=False,
+        update_notes=IF_NEWER,
+        update_notetypes=IF_NEWER,
+    )
+    log = col.import_anki_package(
+        anki.collection.ImportAnkiPackageRequest(
+            package_path=media_package(text, SID, "Vocab"), options=opts
+        )
+    ).log
+    print(
+        f"  IMPORT[{label}] new={len(log.new)} updated={len(log.updated)} "
+        f"conflicting={len(log.conflicting)} duplicate={len(log.duplicate)}"
+    )
+    return log
+
+
+def media_sync(col, url, text, label):
+    remote = build_remote_deck_from_tsv(parse_tsv_data(text), url)
+    fetched = fetch_deck_media(remote, col.media.dir(), get=fake_get)
+    print(
+        f"  FETCH[{label}] fetched={sorted(fetched['files'])} "
+        f"known={len(fetched['names'])}"
+    )
+    store_deck_media(col, remote, fetched)
+    info = cm.get_remote_decks()[cm.get_deck_id(url)]
+    stats = dp.create_or_update_notes(col, remote, info["local_deck_id"], url)
+    print(f"  SYNC[{label}] +{stats.created} ~{stats.updated} ={stats.unchanged}")
+    return stats, fetched
+
+
+def media_files(col):
+    return sorted(f for f in os.listdir(col.media.dir()) if f.startswith("_sc-"))
+
+
+def check_media_note(col, what):
+    nid = col.find_notes("")[0]
+    note = col.get_note(nid)
+    sound, picture = note["Sound"], note["Picture"]
+    check(
+        sound.startswith("[sound:_sc-") and sound.endswith(".mp3]"),
+        f"{what}: the recording's field is Anki's own reference ({sound})",
+    )
+    check(
+        picture.startswith("_sc-") and picture.endswith(".jpg"),
+        f"{what}: the picture's field is the file's name ({picture})",
+    )
+    card = note.cards()[0]
+    tags = card.question_av_tags()
+    check(
+        len(tags) == 1 and tags[0].filename == sound[7:-1],
+        f"{what}: the question plays the file through Anki ({tags})",
+    )
+    check(
+        f'<img src="{picture}"' in card.answer(),
+        f"{what}: the answer draws the local picture",
+    )
+    check(
+        media_files(col) == sorted([sound[7:-1], picture]),
+        f"{what}: exactly the two files are in the media folder ({media_files(col)})",
+    )
+    return note.fields
+
+
+MT = tsv(M)
+col = reset()
+media_import(col, MT, "apkg")
+first = check_media_note(col, "after the .apkg")
+url = connect(col, "Vocab", MT)
+stats, fetched = media_sync(col, url, MT, "add-on")
+check(not fetched["files"], "the add-on fetches nothing the .apkg already brought")
+check(stats.updated == 0 and stats.created == 0, "the add-on finds the notes unchanged")
+check(check_media_note(col, "after the add-on") == first, "same field values")
+log = media_import(col, MT, "apkg again")
+check(
+    len(log.conflicting) == 0 and len(log.new) == 0,
+    "re-import: no conflicts, nothing new",
+)
+check_media_note(col, "after the second .apkg")
+
+col = reset()
+url = connect(col, "Vocab", MT)
+stats, fetched = media_sync(col, url, MT, "add-on first")
+check(len(fetched["files"]) == 2, "the add-on fetched both files")
+first = check_media_note(col, "after the add-on")
+log = media_import(col, MT, "apkg after add-on")
+check(
+    len(log.conflicting) == 0 and len(log.new) == 0,
+    "the .apkg: no conflicts, nothing new",
+)
+check(check_media_note(col, "after the .apkg") == first, "same field values")
+
 print("\nFAILURES:", fails or "none")
 sys.exit(1 if fails else 0)

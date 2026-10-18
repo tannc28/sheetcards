@@ -78,7 +78,7 @@ class SyncQueryOp:
 def run_env(monkeypatch):
     calls = {"fetched": [], "written": [], "tooltip": [], "summary": [], "ankiweb": 0}
 
-    def fetch(url):
+    def fetch(url, media_dir=None):
         calls["fetched"].append(url)
         if "broken" in url:
             raise RemoteDeckError("There's no sheet at this address.")

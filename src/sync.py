@@ -773,7 +773,7 @@ def syncDecks(selected_deck_names=None, selected_deck_urls=None, new_deck_mode=F
 _ACTIVE_RUN = None
 
 
-def _fetch_deck(remote_deck_url):
+def _fetch_deck(remote_deck_url, media_dir=None):
     """Downloads and parses one deck's sheet. Runs on a background thread.
 
     Touches nothing but the network, the add-on's own files and the pure
@@ -786,6 +786,11 @@ def _fetch_deck(remote_deck_url):
     named falls back to downloading the file's *first* sheet. Every deck of one
     file then synced the same sheet — the second deck ending up with the first
     one's columns, note type and rows. getRemoteDeck converts the URL itself.
+
+    The pictures and recordings its media columns point at are fetched here too
+    (``media_fetch``), so a card can be reviewed offline; ``media_dir`` is the
+    collection's media folder, read on the main thread, so a file already there
+    is not fetched again. Nothing about media can fail the deck.
     """
     from .deck_manager import DeckNameManager
     from .deck_manager import remember_declared_name
@@ -795,6 +800,13 @@ def _fetch_deck(remote_deck_url):
     # as in Sheet to Anki, and needs no page fetched to find out.
     remember_declared_name(remote_deck_url, getattr(remoteDeck, "sheet_config", None))
     DeckNameManager.extract_remote_name_from_url(remote_deck_url)
+    try:
+        from .media_fetch import fetch_deck_media
+
+        remoteDeck.fetched_media = fetch_deck_media(remoteDeck, media_dir)
+    except Exception as e:
+        add_debug_message(f"Media fetch skipped: {e}", "MEDIA")
+        remoteDeck.fetched_media = None
     return remoteDeck
 
 
@@ -871,9 +883,15 @@ class _SyncRun:
             self.status_msgs.append(f"{label}: downloading…")
             _update_progress_text(self.progress, self.status_msgs)
 
+            # Read here, on the main thread: the background step must not touch
+            # the collection.
+            try:
+                media_dir = mw.col.media.dir()
+            except Exception:
+                media_dir = None
             QueryOp(
                 parent=self.progress,
-                op=lambda _col: _fetch_deck(url),
+                op=lambda _col: _fetch_deck(url, media_dir),
                 success=self._on_fetched,
             ).failure(self._on_fetch_failed).without_collection().run_in_background()
         except Exception as e:
@@ -1792,6 +1810,24 @@ def _sync_single_deck(
 
     # 2. Processing and writing to database
     remoteDeck.deckName = deckName
+
+    # The files fetched in the background go into the media folder first, and
+    # the cells that point at them become their names, before anything compares
+    # the rows against the notes.
+    try:
+        from .media_fetch import store_deck_media
+
+        embedded = store_deck_media(
+            mw.col, remoteDeck, getattr(remoteDeck, "fetched_media", None)
+        )
+        if embedded:
+            status_msgs.append(
+                f"{deckName}: {embedded} picture{'s' if embedded != 1 else ''}/"
+                f"recording{'s' if embedded != 1 else ''} saved for offline review."
+            )
+            _update_progress_text(progress, status_msgs)
+    except Exception as e:
+        add_debug_message(f"Media not stored: {e}", "MEDIA")
 
     msg = f"{deckName}: saving changes…"
     status_msgs.append(msg)
