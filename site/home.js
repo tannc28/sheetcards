@@ -40,6 +40,9 @@ const still = matchMedia("(prefers-reduced-motion: reduce)");
 
 // The story, one phase at a time, and how long each stays up (ms).
 const PHASES = ["link", "front", "back", "apkg"];
+// What goes in on the first screen, one kind per turn of the demo: Sheet to
+// Anki takes a Google Sheets link, a file, or pasted text.
+const INPUTS = ["link", "file", "text"];
 const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
 // A character takes longer to write than a word takes to read.
 const DRAW_HOLD = { front: 7200, back: 5600 };
@@ -52,6 +55,7 @@ const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
 const state = {
   at: 0,
+  turn: 0,
   phase: "front",
   playing: !still.matches,
   visible: true,
@@ -258,6 +262,7 @@ function show(index, phase) {
   state.phase = phase;
   const demo = $("#demo");
   demo.dataset.phase = phase;
+  demo.dataset.input = INPUTS[state.turn % INPUTS.length];
   for (const flip of document.querySelectorAll(".flip")) {
     const here = Number(flip.dataset.card) === index;
     flip.classList.toggle("active", here);
@@ -296,7 +301,10 @@ function schedule() {
 function advance() {
   const next = PHASES.indexOf(state.phase) + 1;
   if (next < PHASES.length) show(state.at, PHASES[next]);
-  else show((state.at + 1) % CARDS.length, PHASES[0]);
+  else {
+    state.turn += 1;
+    show((state.at + 1) % CARDS.length, PHASES[0]);
+  }
   schedule();
 }
 

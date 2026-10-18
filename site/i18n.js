@@ -69,8 +69,8 @@ const STRINGS = {
     vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
   },
   homeLead: {
-    en: "Write a sheet or paste a Google Sheets link, check every card, then download an .apkg for the Anki app.",
-    vi: "Soạn sheet hoặc dán link Google Sheets, xem từng card, rồi tải file .apkg cho app Anki.",
+    en: "Paste a Google Sheets link, open a file or paste a word list, check every card, then download an .apkg for the Anki app.",
+    vi: "Dán link Google Sheets, mở file hoặc dán danh sách từ, xem từng card, rồi tải file .apkg cho app Anki.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
   homeNeeds: {
@@ -165,20 +165,20 @@ const STRINGS = {
 
   homeHow: { en: "How it works", vi: "Cách hoạt động" },
   homeHow1Title: {
-    en: "Create sheet",
-    vi: "Tạo Sheet",
+    en: "Have a word list",
+    vi: "Có danh sách từ",
   },
   homeHow1: {
-    en: "Pick a template, set the columns &amp; card, then add cards. Or use your own Google Sheets or Excel.",
-    vi: "Chọn template, đặt cột &amp; card, rồi thêm thẻ. Hoặc dùng Google Sheets, Excel của bạn.",
+    en: "A Google Sheet, an Excel file, or a list in your notes. None yet? Write one in Create sheet: pick a template, set up columns &amp; card, then add cards.",
+    vi: "Một Google Sheet, file Excel, hay danh sách trong ghi chú. Chưa có thì soạn trong Tạo Sheet: chọn template, đặt cột &amp; card, rồi thêm thẻ.",
   },
   homeHow2Title: {
     en: "Sheet to Anki",
     vi: "Sheet to Anki",
   },
   homeHow2: {
-    en: "Paste a link or open a file, check every real card, then press Download .apkg.",
-    vi: "Dán link hoặc mở file, xem từng card thật, rồi bấm Download .apkg.",
+    en: "Paste a link, open a file or paste text, check each real card, then press Download .apkg.",
+    vi: "Dán link, mở file hoặc dán chữ, xem từng card thật, rồi bấm Download .apkg.",
   },
   homeHow3Title: {
     en: "Open it in the Anki app",
@@ -1579,10 +1579,18 @@ const STRINGS = {
   },
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
-  doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
-  homePaste: {
-    en: "Got a list in your notes? Paste it into Sheet to Anki, name it, download the .apkg.",
-    vi: "Có danh sách trong ghi chú? Dán vào Sheet to Anki, đặt tên, tải .apkg.",
+  doorHaveText: {
+    en: "Google Sheets, Excel, or a list in your notes.",
+    vi: "Google Sheets, Excel, hoặc danh sách trong ghi chú.",
+  },
+  homeStep1: { en: "Link, file or text", vi: "Link, file hoặc chữ" },
+  homeNoteSample: {
+    en: "#config name=New words\nWord [tts=en_US] | Meaning\napple | quả táo\nborrow | mượn",
+    vi: "#config name=Từ mới\nWord [tts=en_US] | Meaning\napple | quả táo\nborrow | mượn",
+  },
+  doorHaveTitle: {
+    en: "Already have a word list",
+    vi: "Đã có danh sách từ",
   },
   aiTitle: { en: "Ask AI to make your word set", vi: "Nhờ AI tạo bộ từ" },
   aiLead: {

@@ -373,6 +373,19 @@ a.btn, a.btn-quiet { text-decoration: none; }
   font-size: 11.5px; color: var(--ink); overflow: hidden; white-space: nowrap;
 }
 .scr-input [data-icon] { color: var(--muted); flex: none; }
+/* One way in per turn of the demo: a link, a file, or pasted text. */
+.scr-in { display: none; }
+.demo[data-input="link"] .scr-in-link,
+.demo[data-input="file"] .scr-in-file { display: flex; }
+.demo[data-input="text"] .scr-in-text { display: block; }
+.scr-in-file .mono { font-size: 12px; font-weight: 600; }
+.scr-in-file [data-icon] { color: var(--accent); }
+.scr-note {
+  margin: 0; padding: 8px 10px; border-radius: 12px; border: 1.5px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft); background: var(--panel); color: var(--ink);
+  font-family: var(--mono); font-size: 9.5px; line-height: 1.55; white-space: pre; overflow: hidden;
+}
+.demo[data-phase="link"] .scr-in-file, .demo[data-phase="link"] .scr-note { animation: drop .45s cubic-bezier(.2, .9, .3, 1.2) .15s backwards; }
 .typed { overflow: hidden; text-overflow: clip; }
 .demo[data-phase="link"] .typed { animation: type 1.1s steps(28, end) .2s backwards; }
 @keyframes type { from { max-width: 0; } to { max-width: 100%; } }
@@ -663,7 +676,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .flip, .cells .dcell, .btn-quiet, .scr, .demo-sheet, .btn.big .icon { transition: none; }
-  .typed, .scr-go, .scr-file, .scr-done { animation: none !important; }
+  .typed, .scr-go, .scr-file, .scr-done, .scr-in-file, .scr-note { animation: none !important; }
   .tapdot { display: none; }
 }
 
@@ -692,6 +705,3 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .ai-open { text-decoration: none; }
 .ai-status:empty { display: none; }
 #ai .fine a { font-weight: 650; color: var(--accent); }
-.doors-paste { display: flex; align-items: center; gap: 7px; max-width: 40rem; }
-.doors-paste .icon { flex: none; color: var(--accent); }
-.doors-paste a { font-weight: 650; color: var(--accent); }
