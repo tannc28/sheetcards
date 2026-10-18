@@ -439,6 +439,19 @@ def test_names_written_with_bars_over_a_dashed_list():
     assert model["cells"] == ["tts=en_US", ""]
 
 
+def test_a_single_cloze_card_is_split_the_way_the_names_are():
+    # `{{c1::been}}` holds RemNote's `::` and the note's own `:` — neither is
+    # the columns when the names over the card are split by bars.
+    model = _paste(
+        "#config name=X\nSentence [cloze] | Meaning | Note [hint]\n"
+        "She has {{c1::been}} here. | Cô ấy ở đây. | Present perfect: has been.\n"
+    )
+    assert model["separator"] == "pipe"
+    assert model["rows"] == [
+        ["She has {{c1::been}} here.", "Cô ấy ở đây.", "Present perfect: has been."]
+    ]
+
+
 def test_without_config_the_reader_can_say_the_first_line_is_names():
     model = _read("foo | bar\napple | táo\n", header=True)["model"]
     assert model["header"] == ["foo", "bar"]

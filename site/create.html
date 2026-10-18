@@ -98,6 +98,19 @@
       </div>
     </form>
 
+    <!-- What the field and the cards below take, as marks a reader knows at a
+         glance. Each opens its own way in: a link the field, a file the picker,
+         notes and Quizlet's export Dán văn bản. -->
+    <ul class="srcrow srcrow-create" aria-label="Hỗ trợ" data-i18n-attr="aria-label:srcSupports">
+      <li class="srcrow-lead" aria-hidden="true" data-i18n="srcSupports">Hỗ trợ</li>
+      <li><button type="button" class="srcitem" data-src-go="link" title="Google Sheets: dán link" aria-label="Google Sheets: dán link" data-i18n-attr="title:srcSheetsTitle,aria-label:srcSheetsTitle"><span data-icon="googlesheets"></span><span translate="no">Google Sheets</span></button></li>
+      <li><button type="button" class="srcitem" data-src-go="file" title="File Excel .xlsx" aria-label="File Excel .xlsx" data-i18n-attr="title:srcXlsxTitle,aria-label:srcXlsxTitle"><span data-icon="file-spreadsheet"></span><span translate="no">.xlsx</span></button></li>
+      <li><button type="button" class="srcitem" data-src-go="file" title="File .csv" aria-label="File .csv" data-i18n-attr="title:srcCsvTitle,aria-label:srcCsvTitle"><span data-icon="file-spreadsheet"></span><span translate="no">.csv</span></button></li>
+      <li><button type="button" class="srcitem" data-src-go="paste" title="Ghi chú: dán danh sách từ" aria-label="Ghi chú: dán danh sách từ" data-i18n-attr="title:srcNotesTitle,aria-label:srcNotesTitle"><span data-icon="notebook-pen"></span><span data-i18n="srcNotes">Ghi chú</span></button></li>
+      <li><button type="button" class="srcitem" data-src-go="paste" title="Quizlet: dán văn bản export" aria-label="Quizlet: dán văn bản export" data-i18n-attr="title:srcQuizletTitle,aria-label:srcQuizletTitle"><span data-icon="quizlet"></span><span translate="no">Quizlet</span></button></li>
+      <li><button type="button" class="srcitem" data-src-go="file" title="Anki .apkg: deck được chia sẻ" aria-label="Anki .apkg: deck được chia sẻ" data-i18n-attr="title:srcApkgTitle,aria-label:srcApkgTitle"><span data-icon="anki"></span><span translate="no">.apkg</span></button></li>
+    </ul>
+
     <!-- The first visit downloads the add-on's own Python (~6 MB). Said here,
          quietly, while everything above stays usable: a link pasted now is taken
          and run the moment it is ready. -->

@@ -2757,6 +2757,13 @@ $("#devtabs").addEventListener("keydown", (e) => {
 });
 
 $("#pick").addEventListener("click", () => $("#file").click());
+// The row of sources under the field: each opens its own way in.
+$(".srcrow-create").addEventListener("click", (e) => {
+  const go = e.target.closest("[data-src-go]")?.dataset.srcGo;
+  if (go === "link") $("#url").focus();
+  else if (go === "file") $("#pick").click();
+  else if (go === "paste") $("#pastetext").click();
+});
 $("#file").addEventListener("change", (e) => {
   const file = e.target.files[0];
   // Cleared so that choosing the same file twice fires a change event again —

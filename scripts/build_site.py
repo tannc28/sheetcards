@@ -176,50 +176,70 @@ DOC_CHROME = {
 }
 
 # The landing page's demo: (sheet in the example workbook, row ID, i18n key of
-# its label, theme). Real rows, rendered with the real templates — the page
-# claims the sheet becomes this card, so it had better be the card the add-on
-# makes. Each card wears a different theme to show there is more than one; the
-# theme is written into the settings cell the strip shows, so the sheet on the
-# left still says exactly what made the card on the right.
+# its label, theme, deck name, columns). Real rows, rendered with the real
+# templates — the page claims the words become this card, so it had better be
+# the card the add-on makes. Each card wears a different theme to show there is
+# more than one.
 #
-# The last two name the columns the demo's note shows its words from, as the
-# "word - meaning" lines somebody keeps in a notes app: on the turns where a note
-# feeds the phone instead of the sheet, it is still this row going in. The
-# English card leads, because the demo opens on a note and "to afford - đủ tiền
-# để mua" is what such a note looks like.
+# The demo writes each row down twice, side by side: in the text form (a note:
+# `#config` and the deck's keys, the column names with their settings in
+# brackets, the word) and in the table form (a sheet: the names, the settings
+# row, the word) — the two ways importformats.readPaste reads a set, which say
+# the same thing and make the same card. Only the columns named here are
+# written, with the settings that change how the card looks to a reader
+# (_DEMO_KEYS), so each form stays a few lines a reader takes in at a glance;
+# the card is rendered from exactly that sheet, so nothing on it comes from a
+# setting neither panel shows. The English card leads, because "to afford" is
+# what a note of new words looks like.
 HOME_EXAMPLES = [
     (
         "15 Theme + subdeck (màu, tầng)",
         "n01",
         "demoEnglish",
         "paper",
-        ("Word", "Meaning"),
+        "Từ vựng",
+        ("Word", "Phonetic", "Meaning"),
     ),
     (
         "12 Chinese drawing (viết tay)",
         "d01",
         "demoWriting",
         "momiji",
-        ("Character", "Meaning"),
+        "Chữ Hán",
+        ("Meaning", "Draw", "Character"),
     ),
     (
         "13 Furigana (phiên âm kanji)",
         "f01",
         "demoJapanese",
         "sakura",
-        ("Japanese", "Meaning"),
+        "Tiếng Nhật",
+        ("Japanese", "Meaning", "Note"),
     ),
     (
         "06 Cloze (điền chỗ trống)",
         "z01",
         "demoCloze",
         "matcha",
-        ("Sentence", "Meaning"),
+        "Ngữ pháp",
+        ("Sentence", "Meaning", "Note"),
     ),
 ]
 
-# How many lines of the sheet the demo's note holds: the row, and the next ones.
-_NOTE_LINES = 4
+# The settings the demo keeps from a column's cell: what a reader sees change
+# on the card. Sizes, speeds and labels are left out to keep both forms short;
+# `side=back` is what a column after the first does anyway.
+_DEMO_KEYS = (
+    "side",
+    "tts",
+    "bold",
+    "italic",
+    "color",
+    "furigana",
+    "cloze",
+    "draw",
+    "hint",
+)
 
 
 # Create sheet's starting points. There are two, because everything else a
@@ -860,86 +880,199 @@ def _letter(index):
     return text
 
 
+def _demo_chunks(cell):
+    """A settings cell's pairs that the demo keeps, in the sheet's order."""
+    kept = []
+    for pair in cell.split(";"):
+        pair = pair.strip()
+        key, _, value = pair.partition("=")
+        key = key.strip().lower()
+        if key not in _DEMO_KEYS or (key == "side" and value.strip() == "back"):
+            continue
+        kept.append(pair)
+    return kept
+
+
+def demo_forms(deck, columns):
+    """One row written both ways, as segments ``[text, tint]``.
+
+    ``deck`` is the deck's keys (``name=…``, ``theme=…``) and ``columns`` is
+    ``[{name, chunks, value}]``. A segment's tint is ``"d"`` for a deck key and
+    ``"c<n>"`` for column n's settings, so the page can colour one setting the
+    same in both panels. Returns ``{"text": [line…], "table": [[cell…]…]}``,
+    each line or cell a list of segments; joining a line's texts gives exactly
+    what a reader would type (``demo_strings``).
+    """
+
+    def seps(items, between):
+        out = []
+        for i, item in enumerate(items):
+            if i:
+                out.append([between, None])
+            out.append(item)
+        return out
+
+    marker = [["#config ", None], *seps([[k, "d"] for k in deck], "; ")]
+    names = []
+    for i, col in enumerate(columns):
+        line = [[col["name"], None]]
+        if col["chunks"]:
+            line += [[" [", None]]
+            line += seps([[c, f"c{i}"] for c in col["chunks"]], "; ")
+            line += [["]", None]]
+        names.append(line)
+    text = [
+        marker,
+        [
+            seg
+            for i, line in enumerate(names)
+            for seg in ([[" | ", None]] if i else []) + line
+        ],
+        [[" | ".join(col["value"] for col in columns), None]],
+    ]
+    first = [*marker]
+    if columns and columns[0]["chunks"]:
+        first += [["; ", None], *seps([[c, "c0"] for c in columns[0]["chunks"]], "; ")]
+    settings = [first] + [
+        seps([[c, f"c{i}"] for c in col["chunks"]], "; ")
+        for i, col in enumerate(columns)
+        if i
+    ]
+    table = [
+        [[[col["name"], None]] for col in columns],
+        settings,
+        [[[col["value"], None]] for col in columns],
+    ]
+    return {"text": text, "table": table}
+
+
+def demo_strings(forms):
+    """The two forms as plain text a reader could paste: text form, table form."""
+    join = lambda segs: "".join(text for text, _tint in segs)  # noqa: E731
+    text = "\n".join(join(line) for line in forms["text"])
+    table = "\n".join(" | ".join(join(cell) for cell in row) for row in forms["table"])
+    return text, table
+
+
+def demo_grid(forms):
+    """The sheet both forms stand for, as importformats.pasteGrid writes it."""
+    join = lambda segs: "".join(text for text, _tint in segs)  # noqa: E731
+    return [[join(cell) for cell in row] for row in forms["table"]]
+
+
 def home_cards(out):
-    """Each demo row as the sheet shows it and the templates the add-on builds."""
+    """Each demo row, written in both forms, and the card the add-on makes of it."""
     tm, card_layout, workbook = _pure_package(out)
     data = EXAMPLES.read_bytes()
     cards = []
-    for sheet, row_id, label, theme, (word, meaning) in HOME_EXAMPLES:
-        tsv = workbook.sheet_tsv(data, sheet)
-        lines = tsv.split("\n")
-        marker, _, rest = lines[1].partition("\t")
-        if not marker.lower().startswith("#config"):
-            sys.exit(f"home demo: {sheet!r} has no settings row to set a theme in")
-        kept = [
-            pair.strip()
-            for pair in marker[len("#config") :].split(";")
-            if pair.strip() and not pair.strip().lower().startswith("theme")
-        ]
-        marker = "#config " + "; ".join(kept + [f"theme={theme}"])
-        lines[1] = marker + "\t" + rest
-        parsed = tm.parse_tsv_data("\n".join(lines), [])
-        deck = tm.build_remote_deck_from_tsv(parsed, "", [])
-        plan, cfg = deck.plan, deck.sheet_config
-        if cfg.theme != theme or cfg.warnings:
-            sys.exit(f"home demo: {sheet!r} did not take theme={theme}: {cfg.warnings}")
+    for sheet, row_id, label, theme, name, shown in HOME_EXAMPLES:
+        parsed = tm.parse_tsv_data(workbook.sheet_tsv(data, sheet), [])
         headers = parsed["headers"]
         config, row, line = parsed["rows"][0], None, 0
         for at, raw in enumerate(parsed["rows"]):
             if raw and raw[0] == row_id:
-                # Row 1 is the header, so the first parsed row is row 2.
                 row, line = raw, at + 2
-        if row is None:
-            sys.exit(f"home demo: {sheet!r} has no row {row_id!r}")
-        note = []
-        for raw in parsed["rows"][line - 2 :]:
-            got = tm.row_to_dict(raw, headers)
-            pair = [
-                str(got.get(word) or "").strip(),
-                str(got.get(meaning) or "").strip(),
-            ]
-            if all(pair):
-                note.append(pair)
-            if len(note) == _NOTE_LINES:
-                break
-        if (
-            not note
-            or note[0][0] != str(tm.row_to_dict(row, headers).get(word) or "").strip()
-        ):
-            sys.exit(
-                f"home demo: {sheet!r} row {row_id!r} has no {word!r} - {meaning!r}"
-            )
-        values = tm.row_to_dict(row, headers)
-        tm.apply_media_rewrites(values, plan, cfg)
-        front, back = card_layout.split_sides(plan, cfg)
-        shown = [plan.id_header] + list(plan.content_headers)
+        if row is None or not config or not config[0].lower().startswith("#config"):
+            sys.exit(f"home demo: {sheet!r} has no settings row or no row {row_id!r}")
         columns = []
-        for name in shown:
-            at = headers.index(name)
+        for header in shown:
+            if header not in headers:
+                sys.exit(f"home demo: {sheet!r} has no column {header!r}")
+            at = headers.index(header)
             columns.append(
                 {
-                    "letter": _letter(at),
-                    "name": name,
-                    "config": config[at] if at < len(config) else "",
+                    "name": header,
+                    "chunks": _demo_chunks(config[at] if at < len(config) else ""),
                     "value": row[at] if at < len(row) else "",
-                    "side": (
-                        "front" if name in front else "back" if name in back else "none"
-                    ),
                 }
             )
+        deck = [f"name={name}", f"theme={theme}"]
+        forms = demo_forms(deck, columns)
+        grid = demo_grid(forms)
+
+        # The card, from exactly the sheet the two forms stand for.
+        sheet_tsv = "\n".join("\t".join(r) for r in grid)
+        parsed = tm.parse_tsv_data(sheet_tsv, [])
+        built = tm.build_remote_deck_from_tsv(parsed, "", [])
+        plan, cfg = built.plan, built.sheet_config
+        if cfg.theme != theme or cfg.deck_name != name or cfg.warnings:
+            sys.exit(f"home demo: {sheet!r} did not read back: {cfg.warnings}")
+        values = tm.row_to_dict(parsed["rows"][-1], parsed["headers"])
+        tm.apply_media_rewrites(values, plan, cfg)
+        front, back = card_layout.split_sides(plan, cfg)
+        if not front:
+            sys.exit(f"home demo: {sheet!r} has an empty front")
         template = card_layout.build_templates(plan, cfg, bool(cfg.cloze_field))[0]
         cards.append(
             {
                 "sheet": sheet,
+                "row": row_id,
                 "label": label,
-                "line": line,
-                "columns": columns,
-                "note": note,
+                "name": name,
+                "theme": theme,
+                "forms": forms,
+                "columns": [
+                    {
+                        "letter": _letter(i),
+                        "name": col["name"],
+                        "value": col["value"],
+                        "side": (
+                            "front"
+                            if col["name"] in front
+                            else "back" if col["name"] in back else "none"
+                        ),
+                    }
+                    for i, col in enumerate(columns)
+                ],
                 "template": {"qfmt": template["qfmt"], "afmt": template["afmt"]},
                 "values": values,
             }
         )
     return cards
+
+
+def check_demo_forms(cards):
+    """Both forms through importformats.readPaste + pasteGrid give one sheet.
+
+    The demo says the note and the sheet are the same set; this is the proof,
+    run in node against the page's own reader. Returns the list of mismatches
+    (empty when they agree), or None when node is not installed.
+    """
+    node = shutil.which("node")
+    if not node:
+        return None
+    import subprocess
+
+    jobs = []
+    for card in cards:
+        text, table = demo_strings(card["forms"])
+        jobs.append({"text": text, "table": table, "grid": demo_grid(card["forms"])})
+    script = (
+        "let raw = ''; process.stdin.on('data', (c) => (raw += c));"
+        "process.stdin.on('end', async () => {"
+        f"const m = await import({json.dumps((SITE / 'importformats.js').as_uri())});"
+        "const sheet = (s) => { const r = m.readPaste(s);"
+        " return m.pasteGrid({ rows: r.rows, header: r.header, cells: r.cells, deck: r.deck }); };"
+        "process.stdout.write(JSON.stringify(JSON.parse(raw).map((j) =>"
+        " ({ text: sheet(j.text), table: sheet(j.table) }))));"
+        "});"
+    )
+    out = subprocess.run(
+        [node, "--no-warnings", "-e", script],
+        input=json.dumps(jobs),
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    )
+    problems = []
+    for card, job, got in zip(cards, jobs, json.loads(out.stdout), strict=True):
+        for form in ("text", "table"):
+            if got[form] != job["grid"]:
+                problems.append(
+                    f"{card['sheet']} ({form} form): {got[form]} != {job['grid']}"
+                )
+    return problems
 
 
 def _hanzi_writer(out):
@@ -948,7 +1081,15 @@ def _hanzi_writer(out):
 
 
 def build_home_cards(out):
-    body = json.dumps(home_cards(out), ensure_ascii=False, indent=1)
+    cards = home_cards(out)
+    problems = check_demo_forms(cards)
+    if problems:
+        sys.exit(
+            "home demo: the text and table forms disagree:\n  " + "\n  ".join(problems)
+        )
+    if problems is None:
+        print("home demo: node not found, the two forms were not compared")
+    body = json.dumps(cards, ensure_ascii=False, indent=1)
     (out / "home-cards.js").write_text(
         "// Generated by scripts/build_site.py from examples/sheetcards-examples.xlsx\n"
         "// with the add-on's own card_layout.py. Do not edit.\n"

@@ -122,7 +122,7 @@
          card_layout.py (see scripts/build_site.py) — not a drawing of a card.
          Every box has a size of its own before the script fills it, so nothing
          moves as it does. -->
-    <figure class="demo" id="demo" data-phase="link" data-input="text" role="group" aria-label="Ví dụ: từ ghi chú, sheet hay file tới file .apkg trên điện thoại" data-i18n-attr="aria-label:demoLabel">
+    <figure class="demo" id="demo" data-phase="link" role="group" aria-label="Ví dụ: cùng một bộ viết bằng ghi chú hay sheet, thành một card và file .apkg trên điện thoại" data-i18n-attr="aria-label:demoLabel">
       <ol class="demo-rail" id="demo-rail">
         <li><button type="button" data-phase-to="link"><span class="dr-n">1</span><span data-i18n="homeStep1">Chữ, link hoặc file</span></button></li>
         <li><button type="button" data-phase-to="front"><span class="dr-n">2</span><span data-i18n="crStep2">Kiểm tra cards</span></button></li>
@@ -130,59 +130,60 @@
       </ol>
 
       <div class="demo-stage">
-        <!-- What feeds the phone, one kind per turn of the demo (data-input on
-             the figure): a note of "word - meaning" lines, the row in Google
-             Sheets, or a file. Each is labelled, and the three sit in one place
-             so the stage keeps its size as one fades into the next. The note
-             holds the same words as the row: it is the same card going in. -->
-        <div class="demo-src" aria-hidden="true">
+        <!-- What feeds the phone: the same words written two ways, side by
+             side — as a note (the text form: #config, then names with their
+             settings in brackets) and as a sheet (the table form: names, the
+             settings row, the word). The same setting is tinted the same in
+             both, and both run into the one phone: two ways to write a set,
+             one card. Filled by home.js from home-cards.js, which the build
+             checks through importformats.js's own reader. -->
+        <div class="demo-src">
           <div class="src-panel src-note">
-            <p class="src-tag"><span data-icon="file-text"></span><span data-i18n="demoSrcNote">Ghi chú</span></p>
-            <div class="note-paper">
-              <p class="note-title" data-i18n="demoNoteTitle">Từ mới</p>
-              <ul class="note-lines" id="demo-note" translate="no"></ul>
-            </div>
+            <p class="src-tag"><span data-icon="notebook-pen"></span><span data-i18n="demoSrcNote">Ghi chú / văn bản</span></p>
+            <div class="note-paper" id="demo-note" translate="no"></div>
           </div>
+          <span class="src-eq" aria-hidden="true">=</span>
           <div class="src-panel src-sheet">
-            <p class="src-tag"><span data-icon="sheet"></span><span data-i18n="demoSrcSheet">Google Sheets</span></p>
-            <div class="demo-sheet" id="demo-sheet">
-              <div class="fx"><span class="fx-ref" id="fx-ref">B3</span><span class="fx-sign">fx</span><span
+            <p class="src-tag"><span data-icon="googlesheets"></span><span data-i18n="demoSrcSheet">Google Sheets / Excel</span></p>
+            <div class="demo-sheet" id="demo-sheet" translate="no">
+              <div class="fx"><span class="fx-ref" id="fx-ref">A3</span><span class="fx-sign">fx</span><span
                    class="fx-val" id="fx-val"></span></div>
               <div class="cells" id="demo-cells"></div>
               <div class="sheettab"><span id="demo-tab"></span></div>
             </div>
           </div>
-          <div class="src-panel src-file">
-            <p class="src-tag"><span data-icon="file-spreadsheet"></span><span data-i18n="demoSrcFile">File Excel</span></p>
-            <div class="file-desk">
-              <div class="file-chip">
-                <svg class="ill" viewBox="0 0 48 56" aria-hidden="true">
-                  <path class="i-paper" d="M4 3h28l12 12v38H4z"/>
-                  <path class="i-line" d="M32 3v12h12"/>
-                  <rect class="i-soft" x="10" y="24" width="28" height="22" rx="2"/>
-                  <path class="i-line" d="M10 31.3h28M10 38.6h28M19.3 24v22M28.6 24v22"/>
-                </svg>
-                <span class="file-name" translate="no">tu-vung.xlsx</span>
-                <span class="file-meta" translate="no">12 KB</span>
-              </div>
-            </div>
-          </div>
+          <p class="src-cap" data-i18n="demoSame">Cùng một bộ, viết kiểu nào cũng ra cùng một card.</p>
+          <ul class="srcrow" aria-label="Nhận" data-i18n-attr="aria-label:srcTakes">
+            <li class="srcrow-lead" aria-hidden="true" data-i18n="srcTakes">Nhận</li>
+            <li class="srcitem" title="Google Sheets: dán link" data-i18n-attr="title:srcSheetsTitle"><span data-icon="googlesheets"></span><span translate="no">Google Sheets</span></li>
+            <li class="srcitem" title="File Excel .xlsx" data-i18n-attr="title:srcXlsxTitle"><span data-icon="file-spreadsheet"></span><span translate="no">.xlsx</span></li>
+            <li class="srcitem" title="File .csv" data-i18n-attr="title:srcCsvTitle"><span data-icon="file-spreadsheet"></span><span translate="no">.csv</span></li>
+            <li class="srcitem" title="Ghi chú: dán danh sách từ" data-i18n-attr="title:srcNotesTitle"><span data-icon="notebook-pen"></span><span data-i18n="srcNotes">Ghi chú</span></li>
+            <li class="srcitem" title="Quizlet: dán văn bản export" data-i18n-attr="title:srcQuizletTitle"><span data-icon="quizlet"></span><span translate="no">Quizlet</span></li>
+            <li class="srcitem" title="Anki .apkg: deck được chia sẻ" data-i18n-attr="title:srcApkgTitle"><span data-icon="anki"></span><span translate="no">.apkg</span></li>
+          </ul>
+        </div>
+
+        <!-- Both panels run into the phone: two lines meeting in one arrow. -->
+        <div class="demo-join" aria-hidden="true">
+          <svg viewBox="0 0 40 100" preserveAspectRatio="none">
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M0 24C22 24 18 48 38 48M0 64C22 64 18 48 38 48"/>
+          </svg>
+          <span data-icon="arrow-right"></span>
         </div>
 
         <div class="phone">
           <div class="phone-screen">
             <span class="phone-notch" aria-hidden="true"></span>
 
-            <!-- 1: the words going in — pasted text, a link or a file, as the
-                 source beside the phone says. It looks like a field and a
+            <!-- 1: the words going in, pasted as the note beside the phone
+                 writes them. It looks like a field and a
                  button, so a tap on it does what they promise: Tạo flashcard,
                  with the example. Out of the tab order and hidden from screen
                  readers — the hero's own "Xem ví dụ" link is that same action. -->
             <a class="scr scr-link" href="./create/#example" tabindex="-1" aria-hidden="true">
               <p class="scr-title" translate="no">SheetCards</p>
-              <div class="scr-input scr-in scr-in-link"><span data-icon="link"></span><span class="typed">docs.google.com/spreadsheets/d/1Xk…</span></div>
-              <div class="scr-input scr-in scr-in-file"><span data-icon="file-spreadsheet"></span><span class="mono" translate="no">tu-vung.xlsx</span></div>
-              <div class="scr-note scr-in scr-in-text" id="demo-paste" translate="no"></div>
+              <div class="scr-note" id="demo-paste" translate="no"></div>
               <span class="scr-go" data-i18n="go">Tạo flashcard</span>
               <div class="scr-ghost"><span></span><span></span><span></span></div>
             </a>

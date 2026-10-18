@@ -8,10 +8,12 @@
  * `renderCard` and framed by the same `cardDoc` Tạo flashcard uses. No Pyodide: the
  * Python already ran at build time.
  *
- * It tells Tạo flashcard's three steps in order — the words go in (from a note,
- * a sheet or a file, one kind per turn, each drawn beside the phone), the card is
+ * It tells Tạo flashcard's three steps in order — the words go in, the card is
  * checked front then back, the .apkg lands in Anki — and then does it again with
- * the next example, each in a different theme. Each step ends in a tap on the
+ * the next example, each in a different theme. Beside the phone the words are
+ * written twice, side by side: as a note (the text form) and as a sheet (the
+ * table form), each setting tinted the same in both, both running into the one
+ * phone — two ways to write a set, one card. Each step ends in a tap on the
  * button that leads to the next (Tạo flashcard, Show Answer, Download .apkg), a
  * fingertip pressing it, so the story reads as what a learner would do rather
  * than as cuts. A writing card is written: the question's square fills in stroke
@@ -41,13 +43,6 @@ const still = matchMedia("(prefers-reduced-motion: reduce)");
 
 // The story, one phase at a time, and how long each stays up (ms).
 const PHASES = ["link", "front", "back", "apkg"];
-// What feeds the phone, one kind per turn of the demo: Tạo flashcard takes
-// pasted words, a Google Sheets link or a file. Words first, since that is the
-// headline way in: a list from a notes app, pasted. Each kind has its own
-// source beside the phone (a note, the sheet, a file) and its own first screen.
-const INPUTS = ["text", "link", "file"];
-// What the .apkg is called at the end of each kind of turn.
-const APKG = { text: () => `${t("demoNoteTitle")}.apkg`, link: () => "sheetcards-examples.apkg", file: () => "tu-vung.apkg" };
 const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
 // A character takes longer to write than a word takes to read.
 const DRAW_HOLD = { front: 7200, back: 5600 };
@@ -60,7 +55,6 @@ const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
 const state = {
   at: 0,
-  turn: 0,
   phase: "front",
   playing: !still.matches,
   visible: true,
@@ -216,11 +210,21 @@ function buildTabs() {
   play.hidden = still.matches;
 }
 
-/** The row as a spreadsheet draws it: letters, row numbers, the three rows. */
+/** Segments `[text, tint]` as markup, each tinted setting in a mark of its own. */
+function segments(segs) {
+  return segs
+    .map(([text, tint]) =>
+      tint ? `<span class="hl hl-${tint}">${escapeHtml(text)}</span>` : escapeHtml(text),
+    )
+    .join("");
+}
+
+/** The table form, as a spreadsheet draws it: letters, row numbers, three rows. */
 function paintSheet() {
   const card = CARDS[state.at];
   const cols = card.columns;
-  // While the link goes in the whole row is the selection; after that, the
+  const [names, settings, words] = card.forms.table;
+  // While the words go in the whole row is the selection; after that, the
   // columns on the side of the card that is showing.
   const lit = state.phase === "back" ? "back" : "front";
   const litIdx = cols
@@ -229,17 +233,18 @@ function paintSheet() {
   const first = litIdx[0];
   const last = litIdx[litIdx.length - 1];
 
-  const cell = (text, cls = "") =>
-    `<span class="dcell ${cls}" title="${escapeHtml(text)}"><span>${escapeHtml(text)}</span></span>`;
+  const cell = (inner, cls = "", title = "") =>
+    `<span class="dcell ${cls}"${title ? ` title="${escapeHtml(title)}"` : ""}><span>${inner}</span></span>`;
+  const plain = (segs) => segs.map(([text]) => text).join("");
 
   let out = `<span class="dcell corner"></span>`;
   out += cols.map((c) => cell(c.letter, "letter")).join("");
-  out += `<span class="dcell rownum">1</span>` + cols.map((c) => cell(c.name, "head")).join("");
-  out += `<span class="dcell rownum">2</span>` + cols.map((c) => cell(c.config, "conf")).join("");
+  out += `<span class="dcell rownum">1</span>` + names.map((n) => cell(segments(n), "head")).join("");
+  out += `<span class="dcell rownum">2</span>` + settings.map((s) => cell(segments(s), "conf", plain(s))).join("");
   out +=
-    `<span class="dcell rownum here">${card.line}</span>` +
-    cols
-      .map((c, i) => {
+    `<span class="dcell rownum here">3</span>` +
+    words
+      .map((w, i) => {
         const on = litIdx.includes(i);
         const cls = [
           "data",
@@ -247,7 +252,7 @@ function paintSheet() {
           on && i === first ? "pick-l" : "",
           on && i === last ? "pick-r" : "",
         ].join(" ");
-        return cell(c.value, cls);
+        return cell(segments(w), cls, plain(w));
       })
       .join("");
 
@@ -255,19 +260,19 @@ function paintSheet() {
   sheet.style.setProperty("--cols", cols.length);
   sheet.innerHTML = out;
 
-  const at = cols[first] ?? cols[1];
-  $("#fx-ref").textContent = `${at.letter}${card.line}`;
+  const at = cols[first] ?? cols[0];
+  $("#fx-ref").textContent = `${at.letter}3`;
   $("#fx-val").textContent = at.value;
-  $("#demo-tab").textContent = card.sheet;
+  $("#demo-tab").textContent = card.name;
 }
 
-/** The note's lines and the text pasted on the phone: the same words as the row. */
+/** The text form, as a note holds it, and as it is pasted on the phone. */
 function paintNote() {
-  const lines = CARDS[state.at].note || [];
-  const line = ([word, meaning]) =>
-    `<span class="w">${escapeHtml(word)}</span> - <span class="m">${escapeHtml(meaning)}</span>`;
-  $("#demo-note").innerHTML = lines.map((pair) => `<li>${line(pair)}</li>`).join("");
-  $("#demo-paste").innerHTML = lines.map((pair) => `<p>${line(pair)}</p>`).join("");
+  const lines = CARDS[state.at].forms.text;
+  $("#demo-note").innerHTML = lines.map((segs) => `<p>${segments(segs)}</p>`).join("");
+  $("#demo-paste").innerHTML = lines
+    .map((segs) => `<p>${escapeHtml(segs.map(([text]) => text).join(""))}</p>`)
+    .join("");
 }
 
 /** Shows example `index` at `phase`. */
@@ -276,9 +281,7 @@ function show(index, phase) {
   state.phase = phase;
   const demo = $("#demo");
   demo.dataset.phase = phase;
-  const input = INPUTS[state.turn % INPUTS.length];
-  demo.dataset.input = input;
-  $("#demo-file").textContent = APKG[input]();
+  $("#demo-file").textContent = `${CARDS[index].name}.apkg`;
   for (const flip of document.querySelectorAll(".flip")) {
     const here = Number(flip.dataset.card) === index;
     flip.classList.toggle("active", here);
@@ -318,10 +321,7 @@ function schedule() {
 function advance() {
   const next = PHASES.indexOf(state.phase) + 1;
   if (next < PHASES.length) show(state.at, PHASES[next]);
-  else {
-    state.turn += 1;
-    show((state.at + 1) % CARDS.length, PHASES[0]);
-  }
+  else show((state.at + 1) % CARDS.length, PHASES[0]);
   schedule();
 }
 
@@ -576,8 +576,9 @@ window.scHomeReady = true;
 
 buildCards();
 buildTabs();
-// Still, the demo opens on the card — the step that needs no motion to read.
-show(0, still.matches ? "front" : "link");
+// Still, the demo opens on the answered card — both forms beside it, the card
+// they make, and nothing that needs motion to read.
+show(0, still.matches ? "back" : "link");
 schedule();
 
 // Most visits here go on to Tạo flashcard or Create sheet, and both start with

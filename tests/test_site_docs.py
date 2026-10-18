@@ -178,9 +178,27 @@ def test_the_landing_demo_is_rendered_from_the_workbook(site):
     build, out = site
     text = (out / "home-cards.js").read_text(encoding="utf-8")
     assert text.count('"qfmt"') == len(build.HOME_EXAMPLES)
-    for sheet, row_id, _label, theme, _note in build.HOME_EXAMPLES:
+    for sheet, row_id, _label, theme, name, _columns in build.HOME_EXAMPLES:
         assert sheet in text and f'"{row_id}"' in text
-        assert f"theme={theme}" in text
+        assert f"theme={theme}" in text and f"name={name}" in text
+
+
+@pytest.mark.unit
+def test_the_landing_demo_writes_one_set_both_ways(site):
+    """The note and the sheet beside the phone are one set: read through the
+    page's own reader (importformats.readPaste + pasteGrid), the text form and
+    the table form make the same sheet the card was rendered from."""
+    build, out = site
+    cards = build.home_cards(out)
+    for card in cards:
+        text, table = build.demo_strings(card["forms"])
+        lines = text.split("\n")
+        assert lines[0].startswith("#config name=") and "[" in lines[1], text
+        assert table.split("\n")[1].startswith(lines[0]), table
+    problems = build.check_demo_forms(cards)
+    if problems is None:
+        pytest.skip("node is not installed")
+    assert problems == []
 
 
 @pytest.mark.unit

@@ -474,16 +474,33 @@ export function readPaste(text, { rows = "auto", separator = "auto", existing = 
 
   let named = null;
   if (forced >= 0) drop.add(forced);
+  // Names known to be names (beside a #config line, or carrying settings in
+  // brackets) were written on a line of their own, and split the way the cards
+  // are: so the cards are one per line, and a single card is not split at a
+  // mark inside it — `{{c1::been}}` is a cloze, not RemNote's `::`.
+  const namesAt = forced >= 0 ? forced : masks.length ? candidate : -1;
+  const namesSep = namesAt >= 0 ? detectSeparator([lines[namesAt]]) : "none";
   const bodyText = () => filled().map((i) => lines[i]).join("\n");
   const rowSeparator = table
     ? { id: "newline" }
     : rows === "auto"
-      ? detectRowSeparator(bodyText())
+      ? forced >= 0 && namesSep !== "none"
+        ? { id: "newline" }
+        : detectRowSeparator(bodyText())
       : rows === "newline"
         ? { id: "newline" }
         : { id: "token", token: rows };
   const split = (sep) => parseList(splitRecords(bodyText(), rowSeparator), { separator: sep, existing });
   let parsed = split(table ? "pipe" : separator);
+  // The cards read by their own marks unless the names' mark fits them better:
+  // `Word | IPA` over `apple - táo` is a dashed list, but over a card holding a
+  // `::` the bars are the columns.
+  if (!table && separator === "auto" && namesSep !== "none" && namesSep !== parsed.separator) {
+    const width = splitBy(lines[namesAt], namesSep).length;
+    const fits = (p) => p.rows.filter((r) => r.length === width).length;
+    const other = split(namesSep);
+    if (fits(other) > fits(parsed)) parsed = other;
+  }
 
   // The names over a #config line: split the way the cards are, or, when that
   // does not split them, the way the line itself is written.

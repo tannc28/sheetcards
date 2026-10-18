@@ -81,8 +81,8 @@ const STRINGS = {
 
   // The demo: a row of the example workbook and the card it becomes.
   demoLabel: {
-    en: "Example: from a note, a sheet or a file to an .apkg on a phone",
-    vi: "Ví dụ: từ ghi chú, sheet hay file tới file .apkg trên điện thoại",
+    en: "Example: one set written as a note or as a sheet, the same card and .apkg on a phone",
+    vi: "Ví dụ: cùng một bộ viết bằng ghi chú hay sheet, thành một card và file .apkg trên điện thoại",
   },
   demoEnglish: { en: "English · paper", vi: "English · paper" },
   demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
@@ -1601,11 +1601,23 @@ const STRINGS = {
     vi: "Danh sách trong ghi chú, file Excel hoặc Google Sheets.",
   },
   homeStep1: { en: "Text, link or file", vi: "Chữ, link hoặc file" },
-  // What feeds the phone in the demo, one kind per turn.
-  demoSrcNote: { en: "Notes", vi: "Ghi chú" },
-  demoSrcSheet: { en: "Google Sheets", vi: "Google Sheets" },
-  demoSrcFile: { en: "Excel file", vi: "File Excel" },
-  demoNoteTitle: { en: "New words", vi: "Từ mới" },
+  // What feeds the phone in the demo: one set, written two ways side by side.
+  demoSrcNote: { en: "Notes / text", vi: "Ghi chú / văn bản" },
+  demoSrcSheet: { en: "Google Sheets / Excel", vi: "Google Sheets / Excel" },
+  demoSame: {
+    en: "One set, written either way, makes the same card.",
+    vi: "Cùng một bộ, viết kiểu nào cũng ra cùng một card.",
+  },
+  // The sources a set can come from, as a row of marks (landing and step 1).
+  srcTakes: { en: "Takes", vi: "Nhận" },
+  srcSupports: { en: "Supports", vi: "Hỗ trợ" },
+  srcNotes: { en: "Notes", vi: "Ghi chú" },
+  srcSheetsTitle: { en: "Google Sheets: paste the link", vi: "Google Sheets: dán link" },
+  srcXlsxTitle: { en: "Excel file .xlsx", vi: "File Excel .xlsx" },
+  srcCsvTitle: { en: ".csv file", vi: "File .csv" },
+  srcNotesTitle: { en: "Notes: paste a word list", vi: "Ghi chú: dán danh sách từ" },
+  srcQuizletTitle: { en: "Quizlet: paste the exported text", vi: "Quizlet: dán văn bản export" },
+  srcApkgTitle: { en: "Anki .apkg: a shared deck", vi: "Anki .apkg: deck được chia sẻ" },
   doorHaveTitle: {
     en: "Already have a word list",
     vi: "Đã có danh sách từ",
