@@ -38,6 +38,7 @@ import zipfile
 
 from .card_layout import build_templates
 from .column_model import deck_path
+from .media import embed as embed_media
 from .sheet_config import sort_column
 from .tsv_model import SYNCED
 from .tsv_model import build_tags
@@ -531,6 +532,7 @@ def build_package(
     previous_fields=(),
     previous_templates=(),
     previous_sort=None,
+    media=None,
 ):
     """Builds an ``.apkg`` from the rows of one sheet.
 
@@ -549,6 +551,9 @@ def build_package(
         previous_templates (list, optional): that package's template names, so a
             template taken out stays as a stub (see kept_templates)
         previous_sort (str, optional): that package's sort field (see sort_index)
+        media (dict, optional): ``{address: (file name, bytes)}`` for the
+            pictures and recordings that were fetched; their cells are pointed at
+            the files (media.embed) and the files travel inside the package
 
     Returns:
         bytes: the package, ready to be written to a file or handed to a browser
@@ -581,6 +586,12 @@ def build_package(
 
     note_rows, card_rows, all_tags = [], [], set()
     seen = set()
+    media = dict(media or {})
+    names = {url: name for url, (name, _) in media.items()}
+    if names:
+        rows = [dict(row) for row in rows]
+        for row in rows:
+            embed_media(row, plan, sheet_config, names)
 
     for index, row in enumerate(rows):
         if classify_row(row, plan) != SYNCED:
@@ -687,7 +698,12 @@ def build_package(
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as package:
         package.writestr("collection.anki2", collection)
-        # No entries: every media column in this add-on holds a remote URL, so
-        # nothing has to travel inside the package.
-        package.writestr("media", "{}")
+        # The legacy layout: each file under a number, and a map from the numbers
+        # to the names. A picture is already compressed, so it is stored as is.
+        files = {}
+        for name, data in sorted(dict(media.values()).items()):
+            key = str(len(files))
+            package.writestr(key, bytes(data), compress_type=zipfile.ZIP_STORED)
+            files[key] = name
+        package.writestr("media", json.dumps(files))
     return buffer.getvalue()

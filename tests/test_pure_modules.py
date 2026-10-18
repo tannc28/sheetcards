@@ -30,6 +30,7 @@ PURE_MODULES = [
     "sheet_config",
     "card_layout",
     "tsv_model",
+    "media",
     "apkg",
     "apkg_read",
     "workbook",

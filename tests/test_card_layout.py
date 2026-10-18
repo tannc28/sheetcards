@@ -573,7 +573,6 @@ class TestMediaColumns:
         "cell,tag",
         [
             ("image", "<img"),
-            ("audio", "<audio"),
             ("video", "<iframe"),
         ],
     )
@@ -584,6 +583,15 @@ class TestMediaColumns:
         # gives the request an origin — see TestFramedPlayerOnMobile.
         assert f"{tag} src=" in afmt
         assert "{{Link}}" in afmt
+
+    def test_a_recording_is_left_to_anki_or_to_the_script(self):
+        # A fetched recording is [sound:name] in the field, which only works if
+        # the template does not put it inside an attribute; one still at its
+        # address is made a player by the script on the same side.
+        plan, sheet_config = self._cfg("audio")
+        afmt = build_templates(plan, sheet_config)[0]["afmt"]
+        assert '<span class="sc-audio">{{Link}}</span>' in afmt
+        assert 'createElement("audio")' in afmt
 
     def test_sound_can_always_be_replayed(self):
         # A sound the learner cannot replay is worse than no sound. Video gets its

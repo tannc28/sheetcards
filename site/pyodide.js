@@ -115,7 +115,7 @@ export function prefetchPython(nav = globalThis.navigator) {
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
 export const PURE_MODULES = [
-  "errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg",
+  "errors", "column_model", "sheet_config", "card_layout", "tsv_model", "media", "apkg",
   // Reads a shared Anki deck (.apkg/.colpkg) back into sheets, for workbook.
   "apkg_read",
   // Reads an uploaded file, and the file a Google Sheets link downloads to when a

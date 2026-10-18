@@ -536,7 +536,11 @@ def _font_stack(name):
 # replay is worse than no sound.
 _MEDIA_ELEMENTS = {
     "image": '<img src="{ref}"{style}>',
-    "audio": '<audio src="{ref}" controls></audio>',
+    # Not an <audio> element: a recording that was fetched (media.py) is in the
+    # field as Anki's own [sound:name], which gives the card Anki's play button,
+    # autoplay and Replay. One still at its address is turned into a player by
+    # _AUDIO_SCRIPT, since a template cannot tell the two apart.
+    "audio": '<span class="sc-audio">{ref}</span>',
     # A frame rather than <video>, because the address a learner pastes is almost
     # always a YouTube or Drive *page*: the site's own player has to do the playing,
     # and YouTube refuses to be framed anywhere but its /embed path — which is why
@@ -680,6 +684,28 @@ _DRAW_SCRIPT = (
     "    document.head.appendChild(tag);\n"
     "  }\n"
     '  tag.addEventListener("load", draw);\n'
+    "})();\n"
+    "</script>"
+)
+
+
+# A recording still at its web address (not fetched into the deck) arrives as
+# the address's text; this turns it into a player. A fetched one has already
+# been replaced by Anki's own play button, which has children, so it is left
+# alone. Idempotent for the same reason as the scripts below.
+_AUDIO_SCRIPT = (
+    "<script>\n"
+    "(function () {\n"
+    '  document.querySelectorAll(".sc-audio").forEach(function (box) {\n'
+    "    var url = box.textContent.trim();\n"
+    "    if (box.children.length || !/^https?:[/][/]\\S+$/.test(url)) return;\n"
+    '    var player = document.createElement("audio");\n'
+    "    player.src = url;\n"
+    "    player.controls = true;\n"
+    '    player.preload = "none";\n'
+    '    box.textContent = "";\n'
+    "    box.appendChild(player);\n"
+    "  });\n"
     "})();\n"
     "</script>"
 )
@@ -1167,6 +1193,10 @@ def _one_template(
         """Whether this side has a code block, and so needs the other library."""
         return any(sheet_config.for_field(name).code is not None for name in fields)
 
+    def heard_from(fields):
+        """Whether this side has a recording, which may still be an address."""
+        return any(sheet_config.for_field(name).media == "audio" for name in fields)
+
     qfmt = (
         _css(sheet_config)
         + '<div class="sc-wrap">\n'
@@ -1176,6 +1206,7 @@ def _one_template(
         + heard[0]
         + (_DRAW_SCRIPT if drawn(front_fields) else "")
         + (_CODE_SCRIPT if coded(front_fields) else "")
+        + (_AUDIO_SCRIPT if heard_from(front_fields) else "")
     )
 
     if is_cloze:
@@ -1205,6 +1236,7 @@ def _one_template(
         # already filled.
         + (_DRAW_SCRIPT if drawn(back_fields) else "")
         + (_CODE_SCRIPT if coded(back_fields) else "")
+        + (_AUDIO_SCRIPT if heard_from(back_fields) else "")
         # Forgives a capital letter the phone's keyboard put there (see below).
         + (
             (_TYPE_CASE_NC_SCRIPT if "{{type:nc:" in type_box else _TYPE_CASE_SCRIPT)
