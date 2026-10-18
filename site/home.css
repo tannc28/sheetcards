@@ -275,16 +275,17 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 
 /* A page of a notes app holding the text form: #config, the names with their
-   settings in brackets, the word. Wrapped rather than cut, since the settings
-   are what the two panels are compared by. */
+   settings in brackets, the word. One line of text is one line here, never
+   wrapped: the build keeps the first two short (_DEMO_LINE), home.js (fitNote)
+   shrinks the type to fit them, and a long word line ends in an ellipsis. */
 .note-paper {
   padding: 10px 14px; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
   font-family: var(--mono); font-size: 12px; line-height: 1.75; color: var(--ink);
 }
-.note-paper p { margin: 0; overflow-wrap: anywhere; }
+.note-paper p { margin: 0; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .note-paper p:first-child { color: var(--muted); }
-.note-paper p:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 650; }
+.note-paper p:last-child { font-weight: 650; }
 .demo[data-phase="link"] .note-paper p { animation: select .5s ease .25s backwards; }
 .demo[data-phase="link"] .note-paper p:nth-child(2) { animation-delay: .4s; }
 .demo[data-phase="link"] .note-paper p:nth-child(3) { animation-delay: .55s; }

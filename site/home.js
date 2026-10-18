@@ -273,7 +273,23 @@ function paintNote() {
   $("#demo-paste").innerHTML = lines
     .map((segs) => `<p>${escapeHtml(segs.map(([text]) => text).join(""))}</p>`)
     .join("");
+  fitNote();
 }
+
+// A line of the text form is one line of the format: wrapped, the names line
+// reads as two lines of names. So the #config and names lines never wrap; the
+// note's type shrinks until they fit. The word line is cut with an ellipsis.
+const NOTE_PX = [12, 11.5, 11, 10.5, 10, 9.5];
+function fitNote() {
+  const note = $("#demo-note");
+  if (!note) return;
+  const lines = [...note.querySelectorAll("p")].slice(0, -1);
+  for (const px of NOTE_PX) {
+    note.style.fontSize = `${px}px`;
+    if (lines.every((p) => p.scrollWidth <= p.clientWidth)) return;
+  }
+}
+addEventListener("resize", fitNote);
 
 /** Shows example `index` at `phase`. */
 function show(index, phase) {

@@ -226,20 +226,13 @@ HOME_EXAMPLES = [
     ),
 ]
 
-# The settings the demo keeps from a column's cell: what a reader sees change
-# on the card. Sizes, speeds and labels are left out to keep both forms short;
-# `side=back` is what a column after the first does anyway.
-_DEMO_KEYS = (
-    "side",
-    "tts",
-    "bold",
-    "italic",
-    "color",
-    "furigana",
-    "cloze",
-    "draw",
-    "hint",
-)
+# The settings the demo keeps from a column's cell: the ones that make the card
+# a different kind of card. Looks (bold, colour, size) and a second voice are
+# left out, because each line of the text form has to fit the note on a phone
+# unwrapped (_DEMO_LINE); `side=back` is what a column after the first does
+# anyway, and only the first column keeps `tts`.
+_DEMO_KEYS = ("side", "tts", "furigana", "cloze", "draw")
+_DEMO_LINE = 50
 
 
 # Create sheet's starting points. There are two, because everything else a
@@ -975,19 +968,26 @@ def home_cards(out):
         if row is None or not config or not config[0].lower().startswith("#config"):
             sys.exit(f"home demo: {sheet!r} has no settings row or no row {row_id!r}")
         columns = []
-        for header in shown:
+        for n, header in enumerate(shown):
             if header not in headers:
                 sys.exit(f"home demo: {sheet!r} has no column {header!r}")
             at = headers.index(header)
+            chunks = _demo_chunks(config[at] if at < len(config) else "")
+            if n:
+                chunks = [c for c in chunks if not c.lower().startswith("tts")]
             columns.append(
                 {
                     "name": header,
-                    "chunks": _demo_chunks(config[at] if at < len(config) else ""),
+                    "chunks": chunks,
                     "value": row[at] if at < len(row) else "",
                 }
             )
         deck = [f"name={name}", f"theme={theme}"]
         forms = demo_forms(deck, columns)
+        for segs in forms["text"][:2]:
+            text = "".join(seg[0] for seg in segs)
+            if len(text) > _DEMO_LINE:
+                sys.exit(f"home demo: {sheet!r} line too long for the note: {text}")
         grid = demo_grid(forms)
 
         # The card, from exactly the sheet the two forms stand for.
