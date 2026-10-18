@@ -1168,6 +1168,22 @@ const STRINGS = {
       "nhân đôi, nhưng không xoá được.",
   },
   packing: { en: "Building the package…", vi: "Đang đóng gói…" },
+  mediaFetching: {
+    en: (n, total) => `Fetching pictures and sounds ${n}/${total}…`,
+    vi: (n, total) => `Đang tải ảnh/âm thanh ${n}/${total}…`,
+  },
+  mediaInside: {
+    en: (n, size) => `<strong>${n} picture${n === 1 ? "" : "s"}/sound${n === 1 ? "" : "s"} are inside the file</strong> (${size}): the cards work without a connection.`,
+    vi: (n, size) => `<strong>${n} ảnh/âm thanh đã nằm trong file</strong> (${size}): ôn được khi không có mạng.`,
+  },
+  mediaLinks: {
+    en: (n) => `${n} still need the internet: the site they are on does not let a browser download them.`,
+    vi: (n) => `${n} vẫn cần mạng: trang chứa chúng không cho trình duyệt tải về.`,
+  },
+  mediaOver: {
+    en: (n) => `${n} still need the internet: past 100 MB the rest stay links.`,
+    vi: (n) => `${n} vẫn cần mạng: quá 100 MB thì phần còn lại vẫn là link.`,
+  },
   packed: {
     en: (kb) => `Package ready — ${kb} KB`,
     vi: (kb) => `Đã đóng gói xong — ${kb} KB`,

@@ -875,4 +875,12 @@ a.chgbtn { text-decoration: none; }
 .nameoffer p { color: var(--muted); }
 .nameoffer code { overflow-wrap: anywhere; }
 .schemanote.quiet { border-color: var(--line); background: var(--sunken); }
+
+/* Which pictures and sounds travelled inside the file. */
+.donemedia {
+  margin: 14px 20px 0; padding: 12px 16px;
+  border-radius: 16px; background: var(--sunken);
+  font-size: var(--t-sm); color: var(--muted);
+}
+.donemedia strong { color: var(--ink); font-weight: 700; }
 .schemanote.quiet p:first-child { margin-top: 0; }

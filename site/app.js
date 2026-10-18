@@ -32,6 +32,10 @@ import { fileIdentity, fileStem, judgeShape, keepShape, lastShape, renamedRoot }
 import { withHeaders } from "./importformats.js";
 import { mountTextImport } from "./textimport.js";
 import { parseTsv, toTsv } from "./sharelink.js";
+import { gatherMedia, idbCache } from "./media.js";
+
+// What this browser has fetched before, so a second download fetches nothing.
+const mediaCache = idbCache();
 
 // The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
@@ -55,6 +59,7 @@ from sc.card_layout import build_templates, split_sides
 from sc.column_model import clean, deck_path
 from sc.sheet_config import is_config_row, warning_codes
 from sc.apkg import OLD_SORT_RULE, build_package, note_type_shape, resolve_identity, shape_code
+from sc import media as md
 
 # The last analysis, so the package can be built from exactly the rows the page
 # drew rather than by parsing the sheet a second time.
@@ -93,14 +98,38 @@ def shape(last):
     )
 
 
-def package_bytes(last):
+def package_bytes(last, files=None):
+    """The package; files is [address, name, bytes] per picture or recording fetched."""
     deck = _STATE["deck"]
+    files = files.to_py() if files is not None else []
     return build_package(
         _STATE["id"], _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"],
         previous_fields=_previous(last),
         previous_templates=_previous(last, "templates"),
         previous_sort=_previous_sort(last),
+        media={url: (name, bytes(data)) for url, name, data in files},
     )
+
+
+def media_jobs():
+    """Every address the deck's picture and recording columns hold (media.jobs)."""
+    deck = _STATE["deck"]
+    return json.dumps(md.jobs(_STATE["rows"], deck.plan, deck.sheet_config))
+
+
+def media_queries(titles):
+    return json.dumps(md.commons_queries(json.loads(titles)))
+
+
+def media_sources(answers):
+    return json.dumps(md.commons_sources(json.loads(answers)))
+
+
+def media_settle(job, content_type, size):
+    return md.settle(json.loads(job), content_type, size) or ""
+
+
+MEDIA_LIMIT = md.TOTAL_LIMIT
 
 
 def _settings(cfg):
@@ -323,6 +352,9 @@ const TOUCH = matchMedia("(hover: none)");
 let analyze = null;
 let previewCard = null;
 let buildPackage = null;
+// The deck's media addresses and the rules for fetching them (src/media.py).
+let mediaJobs = null;
+let mediaRules = null;
 let nextShape = null;
 let readUpload = null;
 let sheetNames = null;
@@ -500,7 +532,18 @@ async function boot() {
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName, sheetId) => JSON.parse(fn(tsv, deckName, sheetId));
   const pack = py.globals.get("package_bytes");
-  buildPackage = (last) => pack(JSON.stringify(last)).toJs();
+  buildPackage = (last, files) => pack(JSON.stringify(last), files || null).toJs();
+  const jobs = py.globals.get("media_jobs");
+  const queries = py.globals.get("media_queries");
+  const sources = py.globals.get("media_sources");
+  const settle = py.globals.get("media_settle");
+  mediaJobs = () => JSON.parse(jobs());
+  mediaRules = {
+    queries: (titles) => JSON.parse(queries(JSON.stringify(titles))),
+    sources: (answers) => JSON.parse(sources(JSON.stringify(answers))),
+    settle: (job, type, size) => settle(JSON.stringify(job), type, size) || null,
+    limit: py.globals.get("MEDIA_LIMIT"),
+  };
   const shapeOf = py.globals.get("shape");
   nextShape = (last) => JSON.parse(shapeOf(JSON.stringify(last)));
   const preview = py.globals.get("preview_card");
@@ -1814,12 +1857,33 @@ function keys(e) {
 
 const fileName = () => `${state.deckName || "deck"}.apkg`.replace(/[\\/:*?"<>|]+/g, " ");
 
+/**
+ * Fetches the deck's pictures and recordings into the package, so it can be
+ * reviewed offline (site/media.js, src/media.py). Never throws: whatever could
+ * not be fetched stays a link and the cards still show it online.
+ */
+async function packMedia() {
+  const jobs = mediaJobs ? mediaJobs() : [];
+  if (!jobs.length) return null;
+  try {
+    return await gatherMedia(jobs, {
+      py: mediaRules,
+      cache: mediaCache,
+      progress: (done, total) => status(t("mediaFetching", done, total), "", true),
+    });
+  } catch {
+    return { files: [], links: jobs.length, bytes: 0, over: 0, image: 0, audio: 0 };
+  }
+}
+
 /** Hands the built package to the browser as a download. */
-function downloadPackage() {
+async function downloadPackage() {
   const button = $("#apkg");
   button.disabled = true;
   status(t("packing"), "", true);
   try {
+    state.media = await packMedia();
+    status(t("packing"), "", true);
     // What Anki has now, as far as this browser knows: the last package of the
     // deck. Its fields go in front of this one's (apkg.kept_fields), and the
     // change between the two is what the done dialog warns about.
@@ -1827,7 +1891,7 @@ function downloadPackage() {
     judge();
     // A copy, because the array Pyodide hands over is a view onto its heap and
     // the next Python call is free to reuse that memory.
-    const bytes = new Uint8Array(buildPackage(last));
+    const bytes = new Uint8Array(buildPackage(last, state.media?.files));
     if (state.shape) {
       // `code` is what Create sheet writes back into the sheet as shape=, so the
       // next device to open it knows what Anki has now.
@@ -1891,7 +1955,22 @@ function paintDone() {
     .map((key) => `<li>${t(key, escapeHtml(name))}</li>`)
     .join("")}</ol>`;
   paintSchema($("#done-schema"), state.device);
+  paintMedia();
   paintAssure();
+}
+
+/** What travelled inside the file, and what still needs the network. */
+function paintMedia() {
+  const box = $("#done-media");
+  const m = state.media;
+  box.hidden = !m;
+  if (!m) return;
+  const inside = m.image + m.audio;
+  const parts = [];
+  const size = m.bytes < 1048576 ? `${Math.max(1, Math.round(m.bytes / 1024))} KB` : `${(m.bytes / 1048576).toFixed(1)} MB`;
+  if (inside) parts.push(t("mediaInside", inside, size));
+  if (m.links) parts.push(t(m.over ? "mediaOver" : "mediaLinks", m.links));
+  box.innerHTML = parts.join(" ");
 }
 
 /**
