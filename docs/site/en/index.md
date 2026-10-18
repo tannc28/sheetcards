@@ -154,7 +154,8 @@ details.
 
 ## Next week: adding words
 
-1. Open the sheet again: the sheet link you saved, the `.csv` (with **Open .xlsx/.csv file** in Create sheet — on Android, not from the Files app, where
+1. Open the sheet again: **Recent sets** on Make flashcards (sets downloaded in this
+   browser), the link you saved (**Save this set's link** after a download), the `.csv` (with **Open .xlsx/.csv file** in Create sheet — on Android, not from the Files app, where
    AnkiDroid would import the CSV straight into junk notes), or your Google Sheet.
 2. Add the words. Leave the **flashcard set's name** alone: it is how Anki
    recognises the deck.

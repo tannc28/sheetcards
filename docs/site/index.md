@@ -142,7 +142,8 @@ nó ở đó. Xem chi tiết ở [Sheet, file và .apkg](sources.md).
 
 ## Tuần sau: thêm từ
 
-1. Mở lại sheet: link sheet bạn đã lưu, file `.csv` (bằng **Mở file .xlsx/.csv**
+1. Mở lại sheet: **Bộ gần đây** ở trang Tạo flashcard (bộ đã tải trên trình
+   duyệt này), link bộ bạn đã lưu (nút **Lưu link bộ này** sau khi tải), file `.csv` (bằng **Mở file .xlsx/.csv**
    trong Tạo Sheet — trên Android đừng chạm vào nó trong app Files, kẻo AnkiDroid
    import thẳng file CSV thành note rác), hoặc Google Sheet của bạn.
 2. Thêm từ. Đừng đổi **Tên bộ flashcard**: đó là thứ giúp Anki nhận ra deck cũ.

@@ -5,8 +5,9 @@ Mọi thứ đều được đọc ngay trong trình duyệt, không gửi lên 
 
 ## Dán văn bản
 
-Trong trang Tạo flashcard, bấm **Dán văn bản**, đặt **Tên bộ flashcard**, rồi dán
-danh sách vào ô. Mỗi dòng một card, ví dụ:
+Trong trang Tạo flashcard, bấm **Dán văn bản** rồi dán danh sách vào ô. Tên bộ
+được gợi ý sẵn (ví dụ *Từ vựng 18/10*), sửa được ngay ở đầu hộp; gõ tên một bộ
+đã tạo trước đó thì hộp nói rõ sẽ thêm bao nhiêu từ mới vào bộ đó. Mỗi dòng một card, ví dụ:
 
 ```
 apple - quả táo
@@ -67,8 +68,9 @@ Hàng 1 là tên cột, hàng 2 là settings row: ô đầu là `#config`, các 
 và cài đặt của cột đầu; mỗi ô sau là cài đặt của cột ở trên nó. Dán cả bảng vào
 **Dán văn bản** cũng được.
 
-Chỉ dán từ thôi? Ở thanh dưới cùng có **Đọc to**, **Theme** và **Cột** (mặt
-nào cho từng cột). Chọn ở đó là cài đặt được viết thẳng vào ghi chú (dòng `#config` và
+Chỉ dán từ thôi? Ở thanh dưới cùng có nút đọc to (ví dụ **Đọc tiếng Anh**: ngôn
+ngữ được đoán từ chữ — chữ Hán, kana, Hangul thì bật sẵn; bấm **đổi** để chọn
+ngôn ngữ khác), **Theme** (mặc định `paper`) và **Cột** (mặt nào cho từng cột). Chọn ở đó là cài đặt được viết thẳng vào ghi chú (dòng `#config` và
 ngoặc vuông) hay vào hàng 2 của bảng. **Copy văn bản** / **Copy bảng** (trên điện thoại: nút **⋯**) copy cả
 bộ theo đúng dạng đó; dán vào ghi chú hay Google Sheets, tuần sau viết thêm từ
 rồi dán lại cả đoạn.

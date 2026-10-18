@@ -5,8 +5,10 @@ typing them again. Everything is read in your browser and sent nowhere.
 
 ## Paste text
 
-In the Make flashcards page, press **Paste text**, give the **Flashcard set name**, and
-paste the list into the box. One card per line, for example:
+In the Make flashcards page, press **Paste text** and paste the list into the box.
+The set's name is suggested (e.g. *Words 18 Oct*) and editable at the top; type the
+name of a set made before and the box says how many new words it will add to it.
+One card per line, for example:
 
 ```
 apple - quả táo
@@ -71,8 +73,10 @@ the keys for the whole set and the first column's settings; every other cell is
 the settings of the column above it. Pasting the whole table into **Paste text**
 works too.
 
-Only pasting words? The bar at the bottom has **Read aloud**, **Theme** and **Columns**
-(which side each column goes on). A choice there is written straight into the
+Only pasting words? The bar at the bottom has a read-aloud toggle (for example
+**Read aloud in English**: the language is guessed from the words — Chinese,
+Japanese and Korean script switch it on; **change** picks another), **Theme**
+(`paper` unless you choose) and **Columns** (which side each column goes on). A choice there is written straight into the
 note (its `#config` line and the brackets) or into row 2 of the table. **Copy
 text** / **Copy table** (on a phone, under **⋯**) copies the whole set in that form; paste it into your
 note or Google Sheets, add words next week and paste the whole thing again.
