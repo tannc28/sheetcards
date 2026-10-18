@@ -722,7 +722,7 @@ function tableFrom(text) {
 function paintGrid() {
   const grid = state.grid;
   const width = gridWidth(grid);
-  const head = `<tr><th class="corner"></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
+  const head = `<tr><th class="corner"><span class="sr-only">#</span></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
   const body = grid
     .map((row, r) => {
       const cls = r === 0 ? "names" : r === 1 ? "settings" : "";

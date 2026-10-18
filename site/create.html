@@ -34,6 +34,7 @@
 <!-- To the working area: it holds the link field before a sheet is loaded and the
      card after, so it is the right place to land either way. -->
 <a class="skip" href="#app" data-i18n="skip">Tới phần Tạo flashcard</a>
+<a class="skip" href="#stage" id="skip-card" data-i18n="skipCard">Tới card</a>
 
 <header class="masthead">
   <div class="brand">
@@ -164,7 +165,8 @@
   </section>
 
   <!-- ==== steps 2 and 3: the deck =========================================== -->
-  <section id="deck" class="deckview" hidden aria-label="Deck của bạn" data-i18n-attr="aria-label:deckLabel">
+  <section id="deck" class="deckview" hidden aria-labelledby="deck-h1">
+    <h1 class="sr-only" id="deck-h1" data-i18n="deckLabel">Deck của bạn</h1>
 
     <!-- What is loaded, and the things you do to it without starting over:
          pick another sheet of the workbook, fetch it again after editing it in
@@ -190,6 +192,12 @@
       </span>
     </div>
 
+    <!-- A problem with the deck on screen: said here, under the source bar and
+         its actions, and kept until it is put away. -->
+    <div class="alertbox" id="reviewalert" role="alert" hidden><span data-icon="circle-alert"></span><span id="reviewalert-text"></span>
+      <button class="iconbtn" type="button" data-dismiss="reviewalert"
+              title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button></div>
+
     <p id="demo-note" class="demo-note" hidden><span data-icon="sparkles"></span><span
        data-i18n="demoNote">Đang xem file ví dụ. Chọn sheet khác ở ô phía trên, hoặc đổi sang link của bạn.</span></p>
 
@@ -210,27 +218,7 @@
 
     <div class="workspace">
 
-      <!-- The deck and its rows. One element, two shapes: beside the card on a
-           wide screen (shown non-modally), a bottom sheet on a phone (shown
-           modally, so it traps focus and closes on Escape). -->
-      <dialog id="deckpanel" class="deckpanel" aria-labelledby="deckpanel-title">
-        <div class="dp-head">
-          <span class="dp-grab" aria-hidden="true"></span>
-          <h2 id="deckpanel-title" data-i18n="deckPanel">Deck & bộ lọc</h2>
-          <button class="iconbtn dp-close" id="dp-close" type="button"
-                  title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
-        </div>
-        <div class="dp-body">
-          <p id="summary" class="summary"></p>
-          <h3 data-i18n="decks">Deck</h3>
-          <div id="tree"></div>
-          <h3><span data-i18n="rows">Dòng</span> <span id="rowcount" class="count"></span></h3>
-          <p id="rows-legend" class="legend"></p>
-          <div id="rowlist" class="rowlist"></div>
-        </div>
-      </dialog>
-
-      <div class="stage" id="stage">
+      <div class="stage" id="stage" tabindex="-1">
         <p class="cardmeta" id="cardmeta"></p>
         <div class="cardbar" id="cardbar" hidden></div>
 
@@ -280,7 +268,7 @@
             <div class="sv-block" id="gridbox" hidden>
               <h3><span data-i18n="gridHead">Sheet gốc</span><span class="count" id="gridcount"></span></h3>
               <div class="gridwrap" id="grid" tabindex="0" role="region"
-                   aria-label="Sheet gốc" data-i18n-attr="aria-label:gridHead"></div>
+                   aria-label="Bảng của sheet gốc" data-i18n-attr="aria-label:gridTableLabel"></div>
               <p class="muted small" id="gridcut" hidden></p>
             </div>
             <div class="sv-block" id="cells" hidden>
@@ -296,6 +284,9 @@
         <!-- The note type changed since this deck's last download: said before the
              download as well as after, because the import is where it matters. -->
         <div class="schemanote" id="schemanote" role="note" hidden></div>
+        <div class="alertbox" id="dlalert" role="alert" hidden><span data-icon="circle-alert"></span><span id="dlalert-text"></span>
+          <button class="iconbtn" type="button" data-dismiss="dlalert"
+                  title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button></div>
         <div class="dlbar" id="dlbar">
           <div class="dl-meta">
             <strong id="dl-count"></strong>
@@ -312,6 +303,28 @@
                   data-i18n="downloadApkg">Download .apkg</span></button>
         </div>
       </div>
+
+      <!-- After the card in the page's order, so Tab reaches the card and the
+           download first; a wide screen still draws it in the left column. -->
+      <!-- The deck and its rows. One element, two shapes: beside the card on a
+           wide screen (shown non-modally), a bottom sheet on a phone (shown
+           modally, so it traps focus and closes on Escape). -->
+      <dialog id="deckpanel" class="deckpanel" aria-labelledby="deckpanel-title">
+        <div class="dp-head">
+          <span class="dp-grab" aria-hidden="true"></span>
+          <h2 id="deckpanel-title" data-i18n="deckPanel">Deck & bộ lọc</h2>
+          <button class="iconbtn dp-close" id="dp-close" type="button"
+                  title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
+        </div>
+        <div class="dp-body">
+          <p id="summary" class="summary"></p>
+          <h3 data-i18n="decks">Deck</h3>
+          <div id="tree"></div>
+          <h3><span data-i18n="rows">Dòng</span> <span id="rowcount" class="count"></span></h3>
+          <p id="rows-legend" class="legend"></p>
+          <div id="rowlist" class="rowlist"></div>
+        </div>
+      </dialog>
     </div>
 
   </section>

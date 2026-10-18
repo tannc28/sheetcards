@@ -1194,9 +1194,15 @@ const STRINGS = {
     vi: (kb) => `Đã đóng gói xong — ${kb} KB`,
   },
   packFailed: {
-    en: (m) => `Could not build the package: ${m}`,
-    vi: (m) => `Không đóng gói được: ${m}`,
+    en: "The .apkg could not be made. Try Download .apkg again; if it keeps failing, tell us through Contact & feedback.",
+    vi: "Chưa tạo được file .apkg. Bấm Download .apkg lần nữa; nếu vẫn lỗi, hãy báo cho chúng tôi ở Liên hệ & góp ý.",
   },
+  unexpectedError: {
+    en: "Something went wrong reading this sheet. Check the file or link and try again.",
+    vi: "Có lỗi khi đọc sheet này. Kiểm tra lại file hoặc link rồi thử lần nữa.",
+  },
+  skipCard: { en: "Skip to the card", vi: "Tới card" },
+  gridTableLabel: { en: "The source sheet as a table", vi: "Bảng của sheet gốc" },
 
   // --- tabs ---------------------------------------------------------------
   // Four tabs on one strip: "mặt" is said by the strip itself, and the two words

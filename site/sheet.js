@@ -1482,7 +1482,7 @@ function paintThemes(own) {
 function sheetScrap(rows) {
   const width = Math.max(...rows.map((r) => r.length));
   const shown = rows;
-  const head = `<tr><th></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
+  const head = `<tr><th><span class="sr-only">#</span></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
   const body = shown
     .map(
       (row, r) =>
@@ -3495,6 +3495,11 @@ document.addEventListener("keydown", (e) => {
     $("#moreacts").focus();
   }
 });
+
+// The sticky bar's height, for the page's scroll-padding (200% zoom included).
+new ResizeObserver(() =>
+  document.documentElement.style.setProperty("--outbar-h", `${Math.ceil($("#outbar").getBoundingClientRect().height)}px`),
+).observe($("#outbar"));
 
 $("#filenote-close").addEventListener("click", () => {
   $("#filenote").hidden = true;

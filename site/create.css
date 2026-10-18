@@ -663,9 +663,12 @@ a.chgbtn { text-decoration: none; }
   /* The panel takes the left column from the top; everything else — the source
      bar, the notes, the card — is centred in the right one. */
   .create { --card-w: 40rem; }
+  /* The panel and the card are one block, a fixed gap apart, centred together:
+     a card centred in what was left of the window stood a hand's width away
+     from the panel it is filtered by. */
   .deckview {
-    display: grid; grid-template-columns: 19rem minmax(0, 1fr);
-    column-gap: clamp(1.5rem, 3vw, 3rem); align-items: start;
+    display: grid; grid-template-columns: 19rem minmax(0, var(--card-w));
+    column-gap: 2rem; align-items: start; justify-content: center;
   }
   .workspace { display: contents; }
   .deckview > :not(.workspace), .stage { grid-column: 2; width: 100%; }
@@ -691,7 +694,7 @@ a.chgbtn { text-decoration: none; }
    card came from, open beside it (placeSheetView in app.js) — the question and
    the answer side by side, where a narrower screen keeps the sheet a tap away. */
 @media (min-width: 100rem) {
-  .deckview { grid-template-columns: 20rem minmax(0, 1fr); }
+  .deckview { grid-template-columns: 20rem minmax(0, 1fr); justify-content: stretch; }
   /* The bars above the card span both of the columns beside the panel; the card
      keeps its own width and the sheet takes the rest. */
   .sourcebar, .demo-note, .create .warnbar { max-width: none; }
@@ -889,3 +892,21 @@ a.chgbtn { text-decoration: none; }
 .recentitem > .icon { color: var(--accent); }
 .recent-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-meta { font-size: var(--t-xs); color: var(--muted); white-space: nowrap; }
+
+/* ---- problems, kept until put away ----------------------------------------- */
+.alertbox {
+  display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; padding: 8px 6px 8px 12px;
+  border-radius: var(--r-control); background: var(--bad-soft); color: var(--bad);
+  border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent);
+  font-size: var(--t-sm); font-weight: 600; line-height: 1.45;
+}
+.alertbox[hidden] { display: none; }
+.alertbox > [data-icon] { flex: none; margin-top: 2px; }
+.alertbox > span:nth-child(2) { flex: 1 1 auto; }
+.alertbox .iconbtn { flex: none; width: 36px; height: 36px; margin: -6px 0; color: var(--bad); }
+.stage > .alertbox { margin: 0 0 10px; }
+
+/* Nothing scrolled or tabbed to ends up under the sticky download bar. */
+html:has(.cr[data-stage="review"]) { scroll-padding-bottom: calc(var(--dlbar-h, 80px) + 16px); }
+.cr[data-stage="review"] .stage { padding-bottom: 8px; }
+.stage:focus { outline: none; }

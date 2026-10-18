@@ -393,6 +393,8 @@ function setStage(stage) {
   $("#skeleton").hidden = stage !== "loading";
   $("#loadline").hidden = stage !== "loading";
   if (stage === "empty") $("#toast").hidden = true;
+  // A new load is a new question: the last one's problems go with it.
+  if (stage === "loading") for (const id of ["reviewalert", "dlalert"]) $(`#${id}`).hidden = true;
   paintTitle();
   paintRail();
   placeDeckPanel();
@@ -460,8 +462,18 @@ function status(text, kind = "", busy = false) {
     load.className = `loadline ${kind} busy`;
     return;
   }
+  // A problem with the deck on screen stays until it is put away, next to what
+  // it is about, rather than passing by as a toast.
+  if (kind === "bad" && text) {
+    toast.hidden = true;
+    return alertAt("reviewalert", text);
+  }
   toast.hidden = !text;
   if (!text) return;
+  // Under the step rail while the rail is in view: a toast over it hid which
+  // step the page was on, at the moment it changed.
+  const rail = $("#rail").getBoundingClientRect();
+  toast.style.top = rail.bottom > 0 ? `${Math.round(rail.bottom + 8)}px` : "";
   toast.innerHTML =
     (busy ? '<span class="spinner" aria-hidden="true"></span>' : kind === "ok" ? icon("check") : kind === "bad" ? icon("circle-alert") : "") +
     `<span>${escapeHtml(text)}</span>`;
@@ -586,7 +598,44 @@ function pythonMessage(err) {
   if (/NewFormatError|exported by a newer Anki/.test(last)) return t("apkgNewFormat");
   if (/not an Anki package/.test(last)) return t("apkgBroken");
   if (/has no notes in it/.test(last)) return t("apkgEmpty");
-  return last.replace(/^[\w.]*Error:\s*/, "") || String(err?.message || err);
+  // Anything else is the program's own sentence, in English and about its
+  // insides: kept for whoever opens the console, never shown.
+  console.error(err);
+  return t("unexpectedError");
+}
+
+/** A problem said where it belongs (#reviewalert under the source bar, #dlalert
+ *  over the download), kept until its × is pressed or the next load. */
+function alertAt(id, text) {
+  const box = $(`#${id}`);
+  $(`#${id}-text`).textContent = text;
+  box.hidden = !text;
+}
+
+/**
+ * One tab stop for a list of buttons: the chosen one (or the first) takes Tab,
+ * and the arrow keys, Home and End move between them (roving tabindex).
+ */
+function rove(list) {
+  const items = [...list.querySelectorAll("button")];
+  const current = items.find((b) => b.classList.contains("on")) || items[0];
+  for (const b of items) b.tabIndex = b === current ? 0 : -1;
+}
+function roveKeys(e) {
+  const items = [...e.currentTarget.querySelectorAll("button")];
+  const at = items.indexOf(document.activeElement);
+  if (at < 0) return;
+  const to =
+    e.key === "ArrowDown" ? Math.min(items.length - 1, at + 1)
+    : e.key === "ArrowUp" ? Math.max(0, at - 1)
+    : e.key === "Home" ? 0
+    : e.key === "End" ? items.length - 1
+    : null;
+  if (to === null) return;
+  e.preventDefault();
+  for (const b of items) b.tabIndex = -1;
+  items[to].tabIndex = 0;
+  items[to].focus();
 }
 
 // ---------------------------------------------------------------------------
@@ -1909,6 +1958,8 @@ async function packMedia() {
 /** Hands the built package to the browser as a download. */
 async function downloadPackage() {
   const button = $("#apkg");
+  alertAt("dlalert", "");
+  if (!cardCount(state.analysis)) return alertAt("dlalert", t("noSyncRows"));
   button.disabled = true;
   status(t("packing"), "", true);
   try {
@@ -1946,8 +1997,9 @@ async function downloadPackage() {
     paintRail();
     openDone();
   } catch (err) {
-    // The sentence, never the traceback above it.
-    status(t("packFailed", pythonMessage(err)), "bad");
+    // Said over the button, in words; the traceback goes to the console.
+    console.error(err);
+    alertAt("dlalert", t("packFailed"));
   } finally {
     button.disabled = false;
   }
@@ -2207,6 +2259,8 @@ function render() {
   $("#summary").innerHTML = summaryLine(a);
   $("#tree").innerHTML = deckPanel(a);
   $("#rowlist").innerHTML = rowList();
+  rove($("#tree"));
+  rove($("#rowlist"));
   $("#rowcount").textContent = `${visibleRows().length}`;
   paintCard();
   paintSheetView(a);
@@ -2221,7 +2275,6 @@ function render() {
   const decks = deckCount(a);
   $("#dl-count").textContent = cards ? t("dlCards", cards) : t("noSyncRows");
   $("#dl-decks").textContent = cards ? t("dlDecks", decks) : "";
-  $("#apkg").disabled = !cards;
 
   // Above the card rather than behind a menu: a sheet that warns is telling you
   // some cards will come out wrong. Folded to its count, so it is seen without
@@ -2304,7 +2357,9 @@ function placeDeckPanel() {
   const want = WIDE.matches && state.stage === "review";
   if (want) {
     if (dlg.open && dlg.matches(":modal")) dlg.close();
-    if (!dlg.open) dlg.show();
+    // Opened by its attribute, not show(): show() hands focus to the panel,
+    // which drew a ring round it on arrival and moved where Tab starts from.
+    if (!dlg.open) dlg.setAttribute("open", "");
   } else if (dlg.open && !dlg.matches(":modal")) {
     dlg.close();
   }
@@ -2516,7 +2571,7 @@ function sheetGrid(a) {
     .join("");
 
   return `<table class="sheetgrid">
-    <thead><tr><th class="corner"></th>${letters}</tr></thead>
+    <thead><tr><th class="corner"><span class="sr-only">#</span></th>${letters}</tr></thead>
     <tbody>${body}</tbody></table>`;
 }
 
@@ -2838,6 +2893,27 @@ $("#flip").addEventListener("click", flip);
 $("#apkg").addEventListener("click", downloadPackage);
 $("#again").addEventListener("click", downloadPackage);
 $("#savelink").addEventListener("click", saveSetLink);
+for (const b of document.querySelectorAll("[data-dismiss]")) {
+  b.addEventListener("click", () => ($(`#${b.dataset.dismiss}`).hidden = true));
+}
+$("#tree").addEventListener("keydown", roveKeys);
+$("#rowlist").addEventListener("keydown", roveKeys);
+// "Tới card": to the card, without the fragment a plain anchor would write into
+// an address that may be holding a #s= set.
+$("#skip-card").addEventListener("click", (e) => {
+  e.preventDefault();
+  const target = state.stage === "review" ? $("#stage") : $("#url");
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: "start", behavior: STILL.matches ? "auto" : "smooth" });
+});
+// The sticky download bar's height, so whatever is scrolled or tabbed to stops
+// above it rather than under it — 200% zoom included.
+{
+  const bar = $("#dlbar");
+  new ResizeObserver(() =>
+    document.documentElement.style.setProperty("--dlbar-h", `${Math.ceil(bar.getBoundingClientRect().height)}px`),
+  ).observe(bar);
+}
 $("#recentlist").addEventListener("click", (e) => {
   const b = e.target.closest("[data-href]");
   if (b) openRecent(b.dataset.href);
