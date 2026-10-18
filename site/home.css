@@ -80,13 +80,13 @@ mark {
   font-size: clamp(1.05rem, .98rem + .35vw, 1.25rem); line-height: 1.6;
   color: var(--muted);
 }
-@media (min-width: 100rem) { .lead { font-size: 1.4rem; max-width: 40rem; } }
+@media (min-width: 100rem) { .lead { font-size: var(--t-xl); max-width: 40rem; } }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin: 1.9rem 0 0; }
 .ctas > a { flex: 1 1 12rem; }
 @media (min-width: 40rem) { .ctas > a { flex: none; } }
 a.btn, a.btn-quiet { text-decoration: none; }
 .btn.big, .btn-quiet.big {
-  min-height: 56px; padding: 0 26px; border-radius: 15px;
+  min-height: 56px; padding: 0 26px; border-radius: var(--r-card);
   font-size: var(--t-base); font-weight: 700;
 }
 .btn.big { box-shadow: 0 10px 26px -12px color-mix(in srgb, var(--accent) 85%, transparent); }
@@ -100,7 +100,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .btn-quiet .icon { color: var(--accent); }
 .btn .anki-mark { flex: none; border-radius: 4px; background: #fff; }
 .btn .ext {
-  margin-left: -3px; font-family: var(--mono); font-size: .85em; font-weight: 500;
+  margin-left: -3px; font-family: var(--mono); font-size: .85em; font-weight: 400;
   opacity: .85;
 }
 .fine { margin: 1rem 0 0; font-size: var(--t-sm); color: var(--muted); }
@@ -113,19 +113,19 @@ a.btn, a.btn-quiet { text-decoration: none; }
 /* Two doors of one weight: a sheet that exists, and one written here. */
 .doors { display: grid; gap: 14px; margin: 1.9rem 0 0; max-width: 40rem; }
 .door {
-  padding: 18px; border-radius: 22px;
+  padding: 18px; border-radius: var(--r-dialog);
   background: color-mix(in srgb, var(--panel) 88%, transparent);
   border: 1px solid var(--line);
 }
 .door-title {
   display: flex; align-items: center; gap: 9px; margin: 0 0 .9rem;
-  font-size: var(--t-lg); font-weight: 750; letter-spacing: -.01em;
+  font-size: var(--t-lg); font-weight: 700; letter-spacing: -.01em;
 }
 .door-title .icon { color: var(--accent); width: 20px; height: 20px; }
 .door-text { margin: 0 0 1rem; color: var(--muted); }
 .door-go { min-height: 52px; border-radius: var(--r-control); }
 .door-files { margin: .9rem 0 0; font-size: var(--t-sm); color: var(--muted); }
-.door-files a { font-weight: 650; color: var(--accent); }
+.door-files a { font-weight: 600; color: var(--accent); }
 @media (max-width: 30rem) {
   .door { padding: 14px; }
   .door-go { width: 100%; }
@@ -135,7 +135,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .quick { margin: 0; }
 .quick-field {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 6px 6px 16px; border-radius: 18px;
+  padding: 6px 6px 6px 16px; border-radius: var(--r-card);
   background: var(--panel); border: 1.5px solid var(--line-strong);
   box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 60%, transparent);
   transition: border-color .15s ease, box-shadow .15s ease;
@@ -154,7 +154,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .quick-field textarea::placeholder { color: var(--muted); }
 .quick-field textarea:focus-visible { outline: 0; }
-.quick-field .btn.big { flex: none; min-height: 52px; border-radius: 13px; }
+.quick-field .btn.big { flex: none; min-height: 52px; border-radius: var(--r-control); }
 .quick-field [aria-invalid] { color: var(--bad); }
 .quick-err {
   margin: .6rem 0 0; font-size: var(--t-sm); font-weight: 600; color: var(--bad);
@@ -172,7 +172,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
   margin: 1.1rem 0 0; font-size: var(--t-sm); color: var(--muted);
 }
 .quick-template .icon { color: var(--accent); width: 16px; height: 16px; }
-.quick-template a { font-weight: 650; color: var(--accent); }
+.quick-template a { font-weight: 600; color: var(--accent); }
 /* A phone has the width for the field or the button, not both on one line. */
 @media (max-width: 30rem) {
   .quick-field { flex-wrap: wrap; padding: 6px; }
@@ -190,9 +190,9 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .dropzone p {
   display: flex; align-items: center; gap: 12px; margin: 0;
-  padding: 1.6rem 2.2rem; border-radius: 22px;
+  padding: 1.6rem 2.2rem; border-radius: var(--r-dialog);
   border: 2.5px dashed #fff; color: #fff;
-  font-size: var(--t-lg); font-weight: 800;
+  font-size: var(--t-lg); font-weight: 700;
 }
 
 
@@ -212,12 +212,12 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .demo-rail button {
   width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: center;
   gap: 7px; padding: 0 12px; border-radius: 999px;
-  font-size: var(--t-xs); font-weight: 650; color: var(--muted); white-space: nowrap;
+  font-size: var(--t-xs); font-weight: 600; color: var(--muted); white-space: nowrap;
 }
 .demo-rail button:hover { color: var(--ink); }
 .dr-n {
   flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
-  border: 1.5px solid currentColor; font-size: 11px; font-weight: 800;
+  border: 1.5px solid currentColor; font-size: var(--t-xs); font-weight: 700;
 }
 .demo-rail button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .demo-rail button[aria-pressed="true"] .dr-n { background: var(--accent-ink); color: var(--accent); border-color: var(--accent-ink); }
@@ -257,14 +257,14 @@ a.btn, a.btn-quiet { text-decoration: none; }
   align-self: center; display: grid; place-items: center;
   width: 1.7rem; height: 1.7rem; margin: -2px 0 -4px; border-radius: 50%;
   background: var(--panel); border: 1.5px solid var(--line-strong); color: var(--accent);
-  font-weight: 800; font-size: 1rem; line-height: 1;
+  font-weight: 700; font-size: var(--t-base); line-height: 1;
 }
 
 .demo-sheet {
   min-width: 0;
   background: var(--panel); border: 1px solid var(--line);
-  border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
-  font-family: var(--mono); font-size: 12px;
+  border-radius: var(--r-card); box-shadow: var(--shadow); overflow: hidden;
+  font-family: var(--mono); font-size: var(--t-xs);
 }
 
 /* A page of a notes app holding the text form: #config, the names with their
@@ -272,13 +272,13 @@ a.btn, a.btn-quiet { text-decoration: none; }
    wrapped: the build keeps the first two short (_DEMO_LINE), home.js (fitNote)
    shrinks the type to fit them, and a long word line ends in an ellipsis. */
 .note-paper {
-  padding: 10px 14px; border-radius: 14px;
+  padding: 10px 14px; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
-  font-family: var(--mono); font-size: 12px; line-height: 1.75; color: var(--ink);
+  font-family: var(--mono); font-size: var(--t-xs); line-height: 1.75; color: var(--ink);
 }
 .note-paper p { margin: 0; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .note-paper p:first-child { color: var(--muted); }
-.note-paper p:last-child { font-weight: 650; }
+.note-paper p:last-child { font-weight: 600; }
 .demo[data-phase="link"] .note-paper p { animation: select .5s ease .25s backwards; }
 .demo[data-phase="link"] .note-paper p:nth-child(2) { animation-delay: .4s; }
 .demo[data-phase="link"] .note-paper p:nth-child(3) { animation-delay: .55s; }
@@ -345,7 +345,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .cells .letter, .cells .corner { height: 1.6rem; }
 .cells .rownum.here { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
-.cells .head { font-family: var(--sans); font-weight: 650; color: var(--ink); }
+.cells .head { font-family: var(--sans); font-weight: 600; color: var(--ink); }
 /* The settings row is read whole, each setting in its tint: it wraps. */
 .cells .conf {
   height: auto; min-height: 2.25rem; padding-block: 5px;
@@ -378,7 +378,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
   min-height: 1.5rem; max-width: 100%; padding: 3px 10px; border-radius: 4px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   background: var(--panel); color: #188038;
-  font-size: 12px; font-weight: 650; box-shadow: 0 1px 2px rgb(16 22 32 / .08);
+  font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgb(16 22 32 / .08);
 }
 :root[data-theme="dark"] .sheettab span { color: var(--ok); }
 
@@ -436,18 +436,18 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .scr-link:hover .scr-note { border-color: color-mix(in srgb, var(--accent) 70%, var(--ink)); }
 .scr-title { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; text-align: center; }
 .scr-note {
-  flex: none; margin: 0; padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--accent);
+  flex: none; margin: 0; padding: 8px 12px; border-radius: var(--r-control); border: 1.5px solid var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft); background: var(--panel); color: var(--ink);
   font-family: var(--mono); font-size: 10px; line-height: 1.8; overflow: hidden;
 }
 .scr-note p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .demo[data-phase="link"] .scr-note { animation: drop .45s cubic-bezier(.2, .9, .3, 1.2) .15s backwards; }
 .scr-go {
-  display: grid; place-items: center; height: 2.8rem; border-radius: 12px;
+  display: grid; place-items: center; height: 2.8rem; border-radius: var(--r-control);
   background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700;
 }
 .scr-ghost { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.scr-ghost span { height: 2.6rem; border-radius: 12px; border: 1.5px dashed var(--line); }
+.scr-ghost span { height: 2.6rem; border-radius: var(--r-control); border: 1.5px dashed var(--line); }
 
 .scr-card { gap: 10px; }
 .demo-card {
@@ -464,7 +464,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .flip.turned { transform: rotateY(180deg); }
 .flip .face {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  border: 1px solid var(--line); border-radius: 18px;
+  border: 1px solid var(--line); border-radius: var(--r-card);
   display: block; pointer-events: none;
   background: var(--card-bg);
   box-shadow: 0 10px 24px -14px rgb(40 24 110 / .35);
@@ -472,7 +472,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .flip .face.both { transform: rotateY(180deg); }
 .scr-show {
-  flex: none; height: 2.6rem; border-radius: 12px;
+  flex: none; height: 2.6rem; border-radius: var(--r-control);
   background: var(--ink); color: var(--panel); font-size: 13px; font-weight: 700;
 }
 .scr-show:hover { background: color-mix(in srgb, var(--ink) 85%, var(--accent)); }
@@ -480,14 +480,14 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .scr-apkg { align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .scr-file {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 16px 14px; border-radius: 18px; width: 100%;
+  padding: 16px 14px; border-radius: var(--r-card); width: 100%;
   background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
 }
-.scr-file img { width: 44px; height: 44px; padding: 4px; border-radius: 11px; background: #fff; border: 1px solid var(--line); }
+.scr-file img { width: 44px; height: 44px; padding: 4px; border-radius: var(--r-control); background: #fff; border: 1px solid var(--line); }
 .scr-file .mono { font-size: 11px; color: var(--muted); }
 .scr-arrow { transform: rotate(90deg); color: var(--accent); font-size: 20px; }
 .scr-done {
-  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 14px;
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--r-card);
   background: var(--ok-soft); color: var(--ok); font-size: 13px; font-weight: 700;
 }
 .scr-check { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ok); color: #fff; }
@@ -500,7 +500,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .scr-bar {
   position: absolute; left: 12px; right: 12px; bottom: 1.2rem;
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  height: 2.8rem; border-radius: 12px;
+  height: 2.8rem; border-radius: var(--r-control);
   background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700;
   transition: transform .2s ease, box-shadow .3s ease;
 }
@@ -543,12 +543,12 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .demo-tabs button {
   min-height: 34px; padding: 0 13px; border-radius: 999px;
-  font-size: var(--t-sm); font-weight: 550; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 600; color: var(--muted);
   border: 1px solid var(--line); background: var(--panel);
 }
 .demo-tabs button:hover { color: var(--ink); border-color: var(--line-strong); }
 .demo-tabs button[aria-pressed="true"] {
-  color: var(--accent); border-color: var(--accent); background: var(--accent-soft); font-weight: 650;
+  color: var(--accent); border-color: var(--accent); background: var(--accent-soft); font-weight: 600;
 }
 .demo-controls .themebtn { border-radius: 999px; color: var(--muted); background: var(--panel); }
 .demo-controls .themebtn .icon { width: 14px; height: 14px; }
@@ -591,22 +591,22 @@ a.btn, a.btn-quiet { text-decoration: none; }
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
 }
 .hstep {
-  padding: 18px 20px 20px; border-radius: 20px;
+  padding: 18px 20px 20px; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--line);
 }
 .hstep .ill {
   max-width: 15rem; margin: 0 auto 14px; padding: 10px;
-  border-radius: 14px; background: var(--ground);
+  border-radius: var(--r-card); background: var(--ground);
   box-sizing: border-box;
 }
 .hstep h3 {
   display: flex; align-items: center; gap: 10px;
-  margin: 0 0 .3rem; font-size: var(--t-lg); font-weight: 750; letter-spacing: -.01em;
+  margin: 0 0 .3rem; font-size: var(--t-lg); font-weight: 700; letter-spacing: -.01em;
 }
 .hstep-n {
   flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
   border-radius: 50%; background: var(--accent); color: var(--accent-ink);
-  font-size: var(--t-sm); font-weight: 800;
+  font-size: var(--t-sm); font-weight: 700;
 }
 .hstep p { margin: 0; color: var(--muted); }
 /* On a phone the picture sits beside the words, so three steps stay short. */
@@ -625,17 +625,17 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @media (min-width: 64rem) { .features { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .feature {
   display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; align-content: start;
-  padding: 18px; border-radius: 18px;
+  padding: 18px; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--line);
 }
 .feat-icon {
   grid-row: span 3;
   display: inline-grid; place-items: center;
-  width: 40px; height: 40px; border-radius: 12px;
+  width: 40px; height: 40px; border-radius: var(--r-control);
   background: var(--accent-soft); color: var(--accent);
 }
 .feat-icon .icon { width: 19px; height: 19px; }
-.feature h3 { margin: .1rem 0 .2rem; font-size: var(--t-md); font-weight: 750; letter-spacing: -.01em; }
+.feature h3 { margin: .1rem 0 .2rem; font-size: var(--t-md); font-weight: 700; letter-spacing: -.01em; }
 .feature p { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 
 .hchips {
@@ -671,23 +671,23 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .soon-item {
   display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 16px; align-items: center;
-  padding: 16px 18px; border-radius: 18px;
+  padding: 16px 18px; border-radius: var(--r-card);
   border: 1.5px dashed var(--line-strong);
 }
-.soon-item h3 { margin: .3rem 0 .15rem; font-size: var(--t-md); font-weight: 750; }
+.soon-item h3 { margin: .3rem 0 .15rem; font-size: var(--t-md); font-weight: 700; }
 .soon-item p { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .soon-item .soon-badge {
   display: inline-block; padding: 1px 9px; border-radius: 999px;
-  background: var(--mark); color: var(--ink);
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .02em;
+  background: var(--sunken); color: var(--muted);
+  font-size: var(--t-xs); font-weight: 700;
 }
-#soon > .fine a { font-weight: 650; color: var(--accent); }
+#soon > .fine a { font-weight: 600; color: var(--accent); }
 
 /* The companion, in a box of its own. */
 .addon {
   display: grid; gap: 1.25rem 2.5rem;
   padding: clamp(1.25rem, 3vw, 2rem);
-  border-radius: 24px;
+  border-radius: var(--r-dialog);
   background: var(--panel); border: 1px solid var(--line);
 }
 @media (min-width: 56rem) { .addon { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: center; } }
@@ -696,7 +696,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
   font-weight: 800; letter-spacing: -.02em; line-height: 1.2;
 }
 .addon-text > p:not(.eyebrow) { margin: 0 0 .5rem; color: var(--muted); max-width: 40rem; }
-.addon-steps b { color: var(--ink); font-weight: 650; }
+.addon-steps b { color: var(--ink); font-weight: 600; }
 .addon .eyebrow { color: var(--muted); }
 .addon-go .fine { margin-top: .6rem; }
 
@@ -738,7 +738,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
    itself, and four small buttons. Lighter than a door, so it reads as a shortcut,
    not as a third way in of the same weight. */
 .aiquick {
-  max-width: 40rem; padding: 12px 14px 14px; border-radius: 18px;
+  max-width: 40rem; padding: 12px 14px 14px; border-radius: var(--r-card);
   background: color-mix(in srgb, var(--panel) 70%, transparent);
   border: 1px solid var(--line);
   /* Close under the doors, not a hero's gap away. */
@@ -778,16 +778,16 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .ai-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .ai-title {
   display: flex; align-items: center; gap: 8px; margin: 0;
-  font-size: var(--t-base); font-weight: 750; letter-spacing: -.01em;
+  font-size: var(--t-base); font-weight: 700; letter-spacing: -.01em;
 }
 .ai-title .icon { color: var(--accent); width: 18px; height: 18px; }
 .ai-lead { margin: .35rem 0 .55rem; font-size: var(--t-sm); color: var(--muted); }
 .ai-forms { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--sunken); border: 1px solid var(--line); }
-.ai-form { min-height: 32px; padding: 0 12px; border-radius: 999px; font-size: var(--t-sm); font-weight: 650; color: var(--muted); }
+.ai-form { min-height: 32px; padding: 0 12px; border-radius: 999px; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 .ai-form[aria-pressed="true"] { background: var(--panel); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
 .ai-prompt {
   max-height: calc(6.75em + 18px); overflow-y: auto; overscroll-behavior: contain;
-  padding: 8px 12px; border-radius: 12px;
+  padding: 8px 12px; border-radius: var(--r-control);
   background: var(--sunken); border: 1px solid var(--line);
   font-size: var(--t-sm); line-height: 1.5; overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -796,12 +796,12 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .ai-prompt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ai-slot {
   padding: 0 3px; border-radius: 4px;
-  background: var(--accent-soft); color: var(--accent); font-weight: 650;
+  background: var(--accent-soft); color: var(--accent); font-weight: 600;
 }
 .ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: .6rem 0 0; }
 .ai-actions .btn-2, .ai-open {
-  min-height: 36px; padding: 0 12px; border-radius: 10px;
-  font-size: var(--t-sm); font-weight: 650; gap: 6px;
+  min-height: 36px; padding: 0 12px; border-radius: var(--r-control);
+  font-size: var(--t-sm); font-weight: 600; gap: 6px;
 }
 .ai-actions .btn-2 .icon { width: 16px; height: 16px; }
 .ai-open { text-decoration: none; }

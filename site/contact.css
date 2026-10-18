@@ -10,7 +10,7 @@
 }
 .contact h1 {
   margin: 0 0 .3em; font-size: clamp(1.75rem, 5vw, 2.5rem);
-  font-weight: 750; letter-spacing: -.025em; line-height: 1.15;
+  font-weight: 700; letter-spacing: -.025em; line-height: 1.15;
 }
 .contact-lead { margin: 0 0 1.75rem; max-width: 40rem; color: var(--muted); }
 
@@ -22,7 +22,7 @@
 
 .contact-card {
   min-width: 0; padding: clamp(16px, 3vw, 24px);
-  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card);
 }
 .contact-card h2 {
   display: flex; align-items: center; gap: 9px;
@@ -39,8 +39,8 @@
 /* A quiet, bordered action: the screenshot picker and the two links out. */
 .cbtn {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: 44px; padding: 0 14px; border-radius: 12px;
-  font-size: var(--t-sm); font-weight: 650; color: var(--ink); text-decoration: none;
+  min-height: 44px; padding: 0 14px; border-radius: var(--r-control);
+  font-size: var(--t-sm); font-weight: 600; color: var(--ink); text-decoration: none;
   background: var(--panel); border: 1px solid var(--line-strong); cursor: pointer;
 }
 .cbtn:hover { border-color: var(--accent); color: var(--accent); }
@@ -50,7 +50,7 @@
 /* ---- the form ------------------------------------------------------------- */
 
 .fb-closed {
-  margin: 0; padding: 12px 14px; border-radius: 12px;
+  margin: 0; padding: 12px 14px; border-radius: var(--r-control);
   background: var(--accent-soft); color: var(--ink) !important; font-size: var(--t-md);
 }
 
@@ -72,7 +72,7 @@
 
 .fb-form { display: grid; gap: 18px; }
 .fb-form .field label, .fb-label, .fb-kinds legend {
-  font-size: var(--t-sm); font-weight: 650; color: var(--ink); letter-spacing: 0;
+  font-size: var(--t-sm); font-weight: 600; color: var(--ink); letter-spacing: 0;
 }
 .fb-hint { margin: 0; font-size: var(--t-xs); color: var(--muted); }
 
@@ -81,7 +81,7 @@
 .fb-kinds label {
   display: inline-flex; align-items: center; gap: 7px;
   min-height: 44px; padding: 0 14px; border-radius: 999px;
-  border: 1px solid var(--line-strong); font-size: var(--t-sm); font-weight: 550; cursor: pointer;
+  border: 1px solid var(--line-strong); font-size: var(--t-sm); font-weight: 600; cursor: pointer;
 }
 .fb-kinds input { width: auto; margin: 0; accent-color: var(--accent); }
 .fb-kinds label:has(input:checked) {
@@ -103,12 +103,12 @@
   margin: 0; text-align: right; font-size: var(--t-xs); color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.fb-count.full { color: var(--warn); font-weight: 650; }
+.fb-count.full { color: var(--warn); font-weight: 600; }
 
 .fb-shot { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; margin-top: 4px; }
 .fb-preview {
   display: grid; gap: 6px; margin: 0; max-width: 100%;
-  padding: 8px; border-radius: 12px; background: var(--sunken); border: 1px solid var(--line);
+  padding: 8px; border-radius: var(--r-control); background: var(--sunken); border: 1px solid var(--line);
 }
 .fb-preview img { display: block; max-width: min(100%, 16rem); max-height: 10rem; border-radius: 6px; object-fit: contain; }
 .fb-preview figcaption {
@@ -117,10 +117,10 @@
 }
 
 .fb-extra {
-  padding: 10px 14px; border-radius: 12px;
+  padding: 10px 14px; border-radius: var(--r-control);
   background: var(--sunken); border: 1px solid var(--line-soft);
 }
-.fb-extra summary { cursor: pointer; font-size: var(--t-sm); font-weight: 650; }
+.fb-extra summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; }
 .fb-extra .fb-hint { margin: 6px 0 8px; }
 .fb-extra dl { display: grid; gap: 6px; margin: 0; }
 .fb-extra dl div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 8px; }
@@ -133,7 +133,7 @@
 .fb-status:empty { min-height: 0; }
 .fb-status.bad { color: var(--bad); font-weight: 600; }
 .fb-sendbtn {
-  justify-self: start; min-height: 50px; padding: 0 24px; border-radius: 13px;
+  justify-self: start; min-height: 50px; padding: 0 24px; border-radius: var(--r-control);
   font-size: var(--t-base); font-weight: 700;
 }
 @media (max-width: 30rem) { .fb-sendbtn { justify-self: stretch; } }
