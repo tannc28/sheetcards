@@ -374,7 +374,8 @@ function status(text, kind = "", busy = false) {
     (busy ? '<span class="spinner" aria-hidden="true"></span>' : kind === "ok" ? icon("check") : kind === "bad" ? icon("circle-alert") : "") +
     `<span>${escapeHtml(text)}</span>`;
   toast.className = `toast ${kind} ${busy ? "busy" : ""}`;
-  if (!busy) toastTimer = setTimeout(() => (toast.hidden = true), 4200);
+  // Long enough to be read: a sentence of advice needs more than a "Copied".
+  if (!busy) toastTimer = setTimeout(() => (toast.hidden = true), Math.max(4200, text.length * 60));
 }
 
 // ---- the first load --------------------------------------------------------
@@ -1073,6 +1074,33 @@ function syncAddress() {
   if (state.stage !== "review" || !state.analysis || wanted || !addressable()) return;
   const next = writeState(location.href, addressState(), CREATE_STATE);
   if (next.href !== location.href) history.replaceState(history.state, "", next);
+}
+
+/**
+ * The source bar's share button: the address as it stands, which already says
+ * which card is on screen. On a phone the system's share sheet (a chat app is
+ * where a link goes from there); elsewhere the clipboard. A file opened from
+ * this device has no address anybody else can open — #file is this browser's
+ * own storage — so that is said instead, with the two ways to get one.
+ */
+async function shareCard() {
+  if (!addressable() || location.hash === "#file") return status(t("shareCardFile"));
+  syncAddress();
+  const url = location.href;
+  if (TOUCH.matches && navigator.share) {
+    try {
+      await navigator.share({ title: document.title, url });
+    } catch {
+      // Dismissed: nothing to say.
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    status(t("shareCardCopied"), "ok");
+  } catch {
+    status(t("shareCardFailed"), "bad");
+  }
 }
 
 /** The link form, with whatever link was last in it. */
@@ -2327,6 +2355,7 @@ $("#example").addEventListener("click", () => {
 });
 
 $("#reload").addEventListener("click", reload);
+$("#sharecard").addEventListener("click", shareCard);
 $("#change").addEventListener("click", changeSource);
 // The rail's first step, once done, is the same way back: it is where a learner
 // looks for "start again with another sheet".

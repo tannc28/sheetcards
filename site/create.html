@@ -138,9 +138,10 @@
   <!-- ==== steps 2 and 3: the deck =========================================== -->
   <section id="deck" class="deckview" hidden aria-label="Deck của bạn" data-i18n-attr="aria-label:deckLabel">
 
-    <!-- What is loaded, and the three things you do to it without starting over:
+    <!-- What is loaded, and the things you do to it without starting over:
          pick another sheet of the workbook, fetch it again after editing it in
-         another tab, or go back to a different link. -->
+         another tab, send somebody a link to the card on screen, or go back to
+         a different link. -->
     <div class="sourcebar">
       <span class="src-icon" data-icon="sheet"></span>
       <span class="src-name" id="source"></span>
@@ -151,6 +152,9 @@
         <button class="iconbtn" id="reload" type="button" hidden
                 title="Tải lại sheet này" aria-label="Tải lại sheet này" data-i18n-attr="title:reloadLabel,aria-label:reloadLabel"><span
                 data-icon="rotate-cw"></span></button>
+        <button class="iconbtn" id="sharecard" type="button"
+                title="Chia sẻ link tới card này" aria-label="Chia sẻ link tới card này" data-i18n-attr="title:shareCard,aria-label:shareCard"><span
+                data-icon="share-2"></span></button>
         <a class="chgbtn" id="editsheet" href="./sheet/" hidden><span
                 data-icon="pen-line"></span><span data-i18n="crEditSheet">Sửa sheet</span></a>
         <button class="chgbtn" id="change" type="button"><span

@@ -1150,6 +1150,20 @@ const STRINGS = {
   readyNow: { en: "Ready.", vi: "Đã sẵn sàng." },
   deckLabel: { en: "Your deck", vi: "Deck của bạn" },
   changeSource: { en: "Use another link", vi: "Đổi link" },
+  // The source bar's share button: the address, with the card in it.
+  shareCard: { en: "Share a link to this card", vi: "Chia sẻ link tới card này" },
+  shareCardCopied: {
+    en: "Link copied. Whoever opens it sees this card.",
+    vi: "Đã copy link. Ai mở link sẽ thấy đúng card này.",
+  },
+  shareCardFailed: {
+    en: "Could not copy. Copy the address from the address bar instead.",
+    vi: "Không copy được. Hãy copy địa chỉ trên thanh địa chỉ.",
+  },
+  shareCardFile: {
+    en: "A file opened from this device has no link to share. Upload it to Google Sheets and paste that link here, or open it in Create sheet and use Share link.",
+    vi: "File mở từ máy này không có link để chia sẻ. Hãy đưa file lên Google Sheets rồi dán link đó vào đây, hoặc mở nó trong Tạo Sheet và dùng Share link.",
+  },
   deckPanel: { en: "Decks & filter", vi: "Deck & bộ lọc" },
   flipBack: { en: "Show front", vi: "Lật lại" },
   flipHintTouch: {
