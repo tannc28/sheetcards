@@ -305,8 +305,7 @@ a.ghost:hover { color: var(--accent); border-color: var(--accent); background: v
 }
 .panel-name {
   flex: none;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 /* Leading rather than trailing, so the sheet picker can have the right-hand end
    of the header without the arrow stranded in the middle of the row. */
@@ -507,8 +506,7 @@ main:focus { outline: none; }
 .panel-body h3, .stage-h {
   margin: 0 0 8px;
   display: flex; align-items: baseline; gap: 8px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 h3.spaced { margin-top: 18px; }
 
@@ -705,6 +703,20 @@ h3.spaced { margin-top: 18px; }
 .sheet .cell.editing textarea { pointer-events: auto; }
 .sheet .drop { pointer-events: auto; }
 .sheet .cell, .sheet .ref { cursor: cell; }
+/* Row 2 folded: one line naming the keys it uses; a click opens the cells. */
+.sheet .cfgsum {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-start; gap: 8px;
+  min-width: 0; min-height: 34px; padding: 4px 10px;
+  background: var(--sunken); color: var(--muted); font-size: var(--t-xs); font-weight: 600; text-align: left;
+  border-radius: 0; cursor: pointer;
+}
+.sheet .cfgsum:hover { color: var(--ink); }
+.sheet .cfgsum:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sheet .cfgsum .caret { margin: 0; transition: transform .15s ease; }
+.sheet.cfgopen .cfgsum .caret { transform: rotate(90deg); }
+.cfgsum-n { font-family: var(--mono); color: var(--muted); }
+.cfgsum-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet:not(.cfgopen) [data-r="1"] { display: none; }
 .sheet .ref.corner, .sheet .ref[data-r], .sheet .ref[data-c] { cursor: pointer; }
 /* Nothing in the grid is text-selectable while a range is up: the browser's own
    selection and this one would both answer to Ctrl+C, and only one of them holds
@@ -954,10 +966,7 @@ h3.spaced { margin-top: 18px; }
   display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;
   margin: 6px 0 0; padding-left: 8px; font-size: var(--t-sm);
 }
-.tagline b {
-  font-weight: 600; color: var(--muted); font-size: var(--t-xs);
-  text-transform: uppercase; letter-spacing: .04em;
-}
+.tagline b { font-weight: 600; color: var(--muted); font-size: var(--t-xs); }
 /* Two tags side by side with only a gap between them read as one long string,
    which is exactly what a tag must not look like. */
 .tagline code {
@@ -1025,8 +1034,7 @@ iframe#card {
 
 .src-head {
   margin: 22px 0 8px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .src-head:first-of-type { margin-top: 0; }
 .source {
@@ -1237,8 +1245,7 @@ iframe#card {
 .docnav details > ul:last-child { margin-bottom: 10px; }
 .docnav-group {
   margin: .9rem 0 .25rem; padding: 0 10px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .docnav ul { list-style: none; margin: 0; padding: 0; }
 .docnav a {

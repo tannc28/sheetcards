@@ -249,16 +249,18 @@ _DEMO_LINE = 50
 # live in site/sheet.js, so they are translated with the rest of the page.
 # Basic's two columns are named in the page's language when the sheet is made,
 # and keep that name after: by then they are field names. ID is reserved.
+# Its sample word is what the tile draws, so the first tile is a card rather
+# than two column names; the sheet made from it starts with no words.
 BASIC_TEMPLATES = {
     "vi": [
         ["Mặt trước", "Mặt sau"],
         ["#config size=40", "size=24"],
-        ["", ""],
+        ["apple", "quả táo"],
     ],
     "en": [
         ["Front", "Back"],
         ["#config size=40", "size=24"],
-        ["", ""],
+        ["apple", "a round fruit"],
     ],
 }
 

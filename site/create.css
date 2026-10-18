@@ -415,8 +415,7 @@ a.chgbtn { text-decoration: none; }
 .dp-body h3 {
   margin: 18px 6px 6px;
   display: flex; align-items: baseline; gap: 6px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .deckpanel .summary {
   margin: 0; padding: 10px 12px; gap: 4px 14px;
@@ -621,8 +620,7 @@ a.chgbtn { text-decoration: none; }
 .sv-block { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
 .sv-block h3, .sheetview .src-head {
   margin: 4px 0 0; display: flex; align-items: baseline; gap: 8px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .sheetview .gridwrap { max-height: min(20rem, 46vh); border-radius: 10px; }
 .sheetview .cellrow { min-height: 40px; }

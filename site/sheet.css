@@ -28,8 +28,7 @@
 .sh-entry .entry-lead { max-width: 34rem; }
 .sh-pickhead {
   margin: 0 0 12px; text-align: center;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-base); font-weight: 700; color: var(--ink);
 }
 
 .templates {
@@ -79,6 +78,13 @@
 .tpl-go strong { font-size: var(--t-md); font-weight: 750; letter-spacing: -.01em; }
 .tplcard:hover .tpl-go strong { color: var(--accent); }
 .tpl-desc { font-size: var(--t-sm); color: var(--muted); }
+/* A tile: the front of the card it makes, large, then its name and one line. */
+.tplcard .tplfaces.one { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+.tplcard .tplfaces.one .tplface iframe { height: 11rem; }
+.tplcard .tpl-go { padding-bottom: 14px; }
+.tplcard .tpl-desc, .tplmini .tpl-desc {
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
 .tpl-note {
   display: flex; gap: 6px; align-items: flex-start; margin-top: 6px;
   font-size: var(--t-xs); color: var(--muted); line-height: 1.4;
@@ -144,7 +150,6 @@ a.altcard { color: inherit; text-decoration: none; }
 .tplmini .tpl-go strong { font-size: var(--t-sm); }
 .tplmini .tpl-desc { font-size: var(--t-xs); line-height: 1.35; }
 .tplmini:hover .tpl-go strong { color: var(--accent); }
-.tplmini > .tpl-sheet { overflow: hidden; margin: -4px 12px 12px; border: 1px solid var(--line); border-radius: 8px; }
 /* Above the tile's own button, which covers the rest of it. */
 .tpl-del {
   position: absolute; top: 4px; right: 4px; z-index: 1; width: 40px; height: 40px;
@@ -191,16 +196,48 @@ a.altcard { color: inherit; text-decoration: none; }
 .sheetbar .src-acts { margin-left: auto; }
 @media (max-width: 39.99rem) {
   .saved { order: 3; flex-basis: 100%; margin: -6px 0 4px; }
-  .sheetbar .src-acts { order: 4; flex: 1 1 100%; justify-content: flex-start; gap: 2px; margin: 0 0 0 -10px; }
-  .sheetbar #new { margin-left: auto; }
+  .sheetbar .src-acts { order: 2; flex: none; gap: 0; margin: 0 -2px 0 auto; }
+}
+
+/* The toolbar: icons with their words on a computer; on a phone undo and redo
+   stay, and the rest open from ⋯. A label hidden is still the button's name. */
+.tbbtn .tblabel {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.sheetbar { position: relative; }
+@media (max-width: 59.99rem) {
+  .rareacts {
+    display: none; position: absolute; right: 4px; top: calc(100% + 6px); z-index: 30;
+    flex-direction: column; align-items: stretch; min-width: 15rem; padding: 6px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-lg);
+  }
+  .src-acts.open .rareacts { display: flex; }
+  .rareacts .tbbtn { display: flex; width: auto; justify-content: flex-start; gap: 10px; padding: 0 12px; color: var(--ink); font-size: var(--t-sm); font-weight: 600; }
+  .rareacts .tblabel { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+}
+@media (min-width: 60rem) {
+  .moreacts { display: none; }
+  .rareacts { display: contents; }
+  .sheetbar .tbbtn {
+    display: inline-flex; width: auto; padding: 0 10px; gap: 6px;
+    font-size: var(--t-sm); font-weight: 600;
+  }
+  .sheetbar .tbbtn .tblabel { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
 }
 
 /* The draft is in this browser; the file is the save. */
 .fileline {
-  display: flex; gap: 8px; align-items: flex-start; margin: 8px 6px 0;
+  display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 0; padding: 6px 4px 6px 10px;
   font-size: var(--t-xs); color: var(--muted); line-height: 1.45;
+  border-radius: var(--r-control); background: var(--sunken);
 }
-.fileline .icon { flex: none; margin-top: 2px; }
+.fileline[hidden] { display: none; }
+.fileline > [data-icon] { flex: none; margin-top: 2px; }
+.fileline > span:nth-child(2) { flex: 1 1 auto; }
+.fileline #devnote-text { display: block; margin-top: 4px; color: var(--warn); }
+.fileline #devnote-text[hidden] { display: none; }
+.fileline .iconbtn { flex: none; width: 32px; height: 32px; margin: -4px 0; font-size: 15px; }
+@media (pointer: coarse) { .fileline .iconbtn { width: 44px; height: 44px; margin: -10px -2px -10px 0; } }
 
 /* The two steps of a sheet, as a phone switches between them. */
 .viewseg { display: flex; width: 100%; margin: 12px 0 0; }
@@ -229,8 +266,7 @@ a.altcard { color: inherit; text-decoration: none; }
 
 .pane-h {
   display: flex; align-items: baseline; gap: 8px; margin: 0 2px 10px;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .pane-h .count { font-size: var(--t-xs); font-weight: 700; color: var(--accent); }
 
@@ -366,8 +402,7 @@ a.altcard { color: inherit; text-decoration: none; }
 .colnote { margin: 0; font-size: var(--t-sm); color: var(--muted); }
 .keyhead {
   display: flex; align-items: baseline; gap: 8px; margin: 0;
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
 }
 .colpanel .stack { margin: 0; gap: 8px; }
 .colpanel .collist { gap: 6px; }
@@ -641,10 +676,18 @@ a.altcard { color: inherit; text-decoration: none; }
 .vocab-toggles { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .tplbody .tpl-note { margin: 0; }
 .tpl-made { display: grid; gap: 12px; }
-@media (min-width: 48rem) { .tpl-made { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+
 .tpl-card .tplfaces { border: 1px solid var(--line); border-radius: 14px; }
 .tpl-card .tplface iframe { height: 12rem; }
-.tpl-file { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tpl-file { min-width: 0; }
+.tpl-file > summary {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; list-style: none;
+  font-size: var(--t-sm); font-weight: 600; color: var(--accent);
+}
+.tpl-file > summary::-webkit-details-marker { display: none; }
+.tpl-file > summary .caret { transition: transform .15s ease; }
+.tpl-file[open] > summary .caret { transform: rotate(180deg); }
+.tpl-file > .scrapwrap { margin-top: 4px; }
 .tpl-caption { margin: 0; font-size: var(--t-sm); color: var(--muted); }
 .tpl-acts { margin-top: 4px; }
 .tpl-acts .toolbtn { display: inline-flex; align-items: center; gap: 8px; }
@@ -666,10 +709,7 @@ a.altcard { color: inherit; text-decoration: none; }
 .scrap tr.names td { color: var(--accent); font-weight: 700; }
 .scrap tr.settings td { color: var(--muted); font-style: italic; }
 .scrap tr.settings td:first-of-type { color: var(--accent); }
-.scrap.mini { font-size: 10px; }
-.scrap.mini td { max-width: 8rem; }
 .tpl-sheet { min-width: 0; }
-.tplcard > .tpl-sheet { overflow: hidden; margin: 2px 14px 14px; border: 1px solid var(--line); border-radius: 8px; }
 
 .askbody { padding: 22px 20px 20px; }
 .askbody strong { display: block; font-size: var(--t-lg); font-weight: 800; letter-spacing: -.01em; }
@@ -725,16 +765,6 @@ a.altcard { color: inherit; text-decoration: none; }
 /* What the settings row is, said where it is edited. */
 .settingsline { margin: -2px 0 12px; font-size: var(--t-sm); color: var(--muted); max-width: 52rem; }
 
-/* Said once on this device: what it does to a draft or a .csv. */
-.devnote {
-  display: flex; gap: 10px; align-items: flex-start; margin: 10px 0 0; padding: 10px 6px 10px 12px;
-  border-radius: 14px; background: var(--warn-soft); border: 1px solid var(--warn-line);
-  font-size: var(--t-sm); line-height: 1.5;
-}
-.devnote[hidden] { display: none; }
-.devnote > [data-icon] { flex: none; margin-top: 3px; color: var(--warn); }
-.devnote > span:nth-child(2) { flex: 1 1 auto; }
-.devnote .iconbtn { flex: none; margin: -4px 0; }
 #templates-title { scroll-margin-top: 84px; }
 
 /* ---- Tùy chỉnh: a tile to build from, and the builder ------------------- */
@@ -809,4 +839,13 @@ a.altcard { color: inherit; text-decoration: none; }
 @media (max-width: 33.99rem) {
   #saveopen { min-width: 0; padding: 0 12px; gap: 6px; }
   #saveopen > :first-child { display: none; }
+}
+
+/* A phone's step switch already names step 2; its heading stays for a screen
+   reader and leaves the line to Bảng / Văn bản. */
+@media (max-width: 59.99rem) {
+  .rowshead .stephead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0;
+  }
+  .rowshead { justify-content: flex-end; }
 }

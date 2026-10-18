@@ -744,7 +744,16 @@ function showNote(device) {
   }
   $("#devnote-text").dataset.i18n = key;
   $("#devnote-text").innerHTML = t(key);
-  $("#devnote").hidden = false;
+  $("#devnote-text").hidden = false;
+  // News about this device brings the note back even if it was put away.
+  $("#filenote").hidden = false;
+}
+
+const NOTE_DISMISSED = "sc-filenote-dismissed";
+try {
+  if (localStorage.getItem(NOTE_DISMISSED)) $("#filenote").hidden = true;
+} catch {
+  // Without storage the note just stays.
 }
 
 // Asked once: a browser may then keep this site's storage through a clean-up.
@@ -988,8 +997,33 @@ function setStage(stage) {
  * columns, the settings row and the card they make), "rows" step 2, the words.
  * A phone shows one at a time; a wide screen shows both and numbers them.
  */
+/** Whether the grid shows row 2's cells, or the one line that sums them up. */
+function cfgOpen() {
+  return ui.cfgOpen || ui.view === "look";
+}
+
+/** "Cài đặt: tts, size, color…" — the keys row 2 uses, in the order met. */
+function cfgSummary() {
+  const keys = [];
+  for (const cell of [sheet.marker.replace(/^#config\b/i, ""), ...sheet.columns.map((c) => c.cell)]) {
+    for (const part of String(cell ?? "").split(";")) {
+      const key = part.split("=")[0].trim().toLowerCase();
+      // The set's own name and bookkeeping are not how a card looks.
+      if (key && !["name", "next", "shape"].includes(key) && !keys.includes(key)) keys.push(key);
+    }
+  }
+  return keys.length ? t("cfgSummary", keys.slice(0, 5).join(", ") + (keys.length > 5 ? "…" : "")) : t("cfgSummaryNone");
+}
+
+function paintCfgFold() {
+  const open = cfgOpen();
+  $("#sheet").classList.toggle("cfgopen", open);
+  $("#cfgsum")?.setAttribute("aria-expanded", String(open));
+}
+
 function setView(view) {
   ui.view = view;
+  paintCfgFold();
   $("#app").dataset.view = view;
   for (const b of document.querySelectorAll(".viewseg [data-view]")) {
     b.setAttribute("aria-pressed", String(b.dataset.view === view));
@@ -1123,7 +1157,7 @@ const facesSeen = new IntersectionObserver(
       entry.target.srcdoc = pendingFaces.get(entry.target)();
     }
   },
-  { rootMargin: "200px 0px" },
+  { rootMargin: "600px 0px" },
 );
 
 const FACE_CAPTION = { front: "demoFront", back: "demoBack", front2: "tplRevFront", back2: "tplRevBack" };
@@ -1135,7 +1169,7 @@ const FACE_CAPTION = { front: "demoFront", back: "demoBack", front2: "tplRevFron
  */
 function facesHtml(key, faces = ["front", "back"], { compact = false, waiting = false } = {}) {
   // Two faces in a small tile are each a quarter of a card: drawn smaller still.
-  const zoom = compact ? (faces.length > 1 ? (WIDE.matches ? 0.5 : 0.42) : 0.55) : 0.6;
+  const zoom = compact ? (faces.length > 1 ? (WIDE.matches ? 0.5 : 0.42) : 0.7) : 0.6;
   const face = (name) =>
     waiting
       ? `<figure class="tplface"><div class="facewait"><span class="sk-line w60"></span><span class="sk-line w30"></span></div></figure>`
@@ -1445,9 +1479,9 @@ function paintThemes(own) {
 }
 
 /** Rows drawn as a small spreadsheet: letters, row numbers, the ruled cells. */
-function sheetScrap(rows, { mini = false } = {}) {
+function sheetScrap(rows) {
   const width = Math.max(...rows.map((r) => r.length));
-  const shown = mini ? rows.slice(0, 3) : rows;
+  const shown = rows;
   const head = `<tr><th></th>${Array.from({ length: width }, (_, i) => `<th>${letter(i)}</th>`).join("")}</tr>`;
   const body = shown
     .map(
@@ -1458,12 +1492,7 @@ function sheetScrap(rows, { mini = false } = {}) {
         ).join("")}</tr>`,
     )
     .join("");
-  return `<table class="scrap${mini ? " mini" : ""}">${head}${body}</table>`;
-}
-
-/** Which faces a tile shows: the front, and the reverse card's front if any. */
-function tileFaces(card) {
-  return card?.reverse ? ["front", "front2"] : ["front"];
+  return `<table class="scrap">${head}${body}</table>`;
 }
 
 /**
@@ -1487,14 +1516,12 @@ function paintTemplates() {
         </button>
       </div>`;
     }
-    const rows = exportGrid(templateSheet(id, VOCAB_DEFAULT), { mark: false });
     return `<div class="tplcard">
-        ${facesHtml(id)}
+        ${facesHtml(id, ["front"], { compact: true })}
         <button type="button" class="tpl-go" data-template="${id}">
           <strong>${escapeHtml(text.title)}</strong>
           <span class="tpl-desc">${escapeHtml(text.text)}</span>
         </button>
-        <div class="tpl-sheet" aria-hidden="true">${sheetScrap(rows, { mini: true })}</div>
       </div>`;
   }).join("");
   watchFaces($("#templates"), (id) => templateNow(id, VOCAB_DEFAULT).card);
@@ -1512,14 +1539,12 @@ function paintMine() {
     const id = MINE + tpl.id;
     const card = mineCard(tpl);
     const text = textOf(id);
-    const rows = exportGrid(fromGrid(tpl.rows, tpl.title), { mark: false });
     return `<div class="tplmini mine">
-        ${facesHtml(id, tileFaces(card), { compact: true, waiting: !card })}
+        ${facesHtml(id, ["front"], { compact: true, waiting: !card })}
         <button type="button" class="tpl-go" data-template="${escapeHtml(id)}">
           <strong>${escapeHtml(text.title)}</strong>
           <span class="tpl-desc">${escapeHtml(text.text)}</span>
         </button>
-        <div class="tpl-sheet" aria-hidden="true">${sheetScrap(rows, { mini: true })}</div>
         <button type="button" class="iconbtn tpl-del" data-drop="${escapeHtml(tpl.id)}"
           title="${escapeHtml(t("tplDelete"))}" aria-label="${escapeHtml(`${t("tplDelete")}: ${tpl.title}`)}">${icon("trash-2")}</button>
       </div>`;
@@ -1922,7 +1947,12 @@ function paintSheet() {
       )
       .join("");
 
+  // Row 2 is folded to one line naming the keys it uses, and opened by a click
+  // on that line (or by step 1, where its cells are what the chips edit).
+  const summary = `<button type="button" class="cfgsum" id="cfgsum" aria-expanded="${cfgOpen()}"
+      aria-controls="sheet">${icon("chevron-right", "caret")}<span class="cfgsum-n">2</span><span class="cfgsum-t">${escapeHtml(cfgSummary())}</span></button>`;
   const settings =
+    summary +
     '<span class="ref" data-r="1">2</span>' +
     cell(
       `<input data-edit="marker" value="${escapeHtml(sheet.marker)}"
@@ -1974,6 +2004,7 @@ function paintSheet() {
 
   const grid = $("#sheet");
   grid.style.setProperty("--cols", String(cols.length));
+  grid.classList.toggle("cfgopen", cfgOpen());
   grid.innerHTML = head + names + settings + words;
   if (!SIZES_ITSELF) for (const box of grid.querySelectorAll("textarea")) grow(box);
   paintSelection();
@@ -2628,7 +2659,6 @@ function paintOut() {
   const n = wordCount();
   $("#out-count").textContent = t("shWords", n);
   $("#out-sub").textContent = t("shColumnsN", sheet.columns.length);
-  $("#todeck").disabled = !n;
   paintFiled();
 }
 
@@ -3447,7 +3477,33 @@ $("#sheettext").addEventListener("blur", () => {
   if (ui.form === "text") paintText({ force: true });
 });
 addEventListener("resize", () => ui.form === "text" && paintPaper());
-$("#devnote-close").addEventListener("click", () => ($("#devnote").hidden = true));
+// ⋯ on a phone: the toolbar's rarer actions, closed by a pick, a tap elsewhere or Escape.
+function rareMenu(open) {
+  $(".sheetbar .src-acts").classList.toggle("open", open);
+  $("#moreacts").setAttribute("aria-expanded", String(open));
+}
+$("#moreacts").addEventListener("click", () => rareMenu($("#moreacts").getAttribute("aria-expanded") !== "true"));
+$("#rareacts").addEventListener("click", (e) => {
+  if (e.target.closest("button")) rareMenu(false);
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".sheetbar .src-acts")) rareMenu(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("#moreacts").getAttribute("aria-expanded") === "true") {
+    rareMenu(false);
+    $("#moreacts").focus();
+  }
+});
+
+$("#filenote-close").addEventListener("click", () => {
+  $("#filenote").hidden = true;
+  try {
+    localStorage.setItem(NOTE_DISMISSED, "1");
+  } catch {
+    // A private window: put away for this visit only.
+  }
+});
 $("#share-deck").addEventListener("change", paintShare);
 $("#vocab-lang").addEventListener("change", (e) => {
   vocabChoice.lang = e.target.value;
@@ -3525,6 +3581,14 @@ function fillFrom(src, box) {
     }
   }
 }
+
+$("#sheet").addEventListener("click", (e) => {
+  if (!e.target.closest("#cfgsum")) return;
+  ui.cfgOpen = !cfgOpen();
+  // Step 1 holds it open; folding it there means going back to the words.
+  if (!ui.cfgOpen && ui.view === "look") setView("rows");
+  paintCfgFold();
+});
 
 $("#sheet").addEventListener("pointerdown", (e) => {
   if (e.target === FILL_HANDLE) {

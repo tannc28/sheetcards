@@ -123,27 +123,33 @@
       <input id="title" class="titlebox" spellcheck="false" autocomplete="off" maxlength="100" enterkeyhint="done"
              placeholder="Tên bộ flashcard" data-i18n-attr="placeholder:setName">
       <span class="saved" id="saved" aria-live="polite"></span>
+      <!-- Undo and redo are always at hand; the rest is said in words on a
+           computer and kept behind ⋯ on a phone, where they are rarely wanted. -->
       <span class="src-acts">
-        <button class="iconbtn" id="undo" type="button" disabled
-                title="Hoàn tác" aria-label="Hoàn tác" data-i18n-attr="title:shUndo,aria-label:shUndo"><span data-icon="undo-2"></span></button>
-        <button class="iconbtn" id="redo" type="button" disabled
-                title="Làm lại" aria-label="Làm lại" data-i18n-attr="title:shRedo,aria-label:shRedo"><span data-icon="redo-2"></span></button>
-        <button class="iconbtn" id="keep" type="button"
-                title="Lưu làm template" aria-label="Lưu làm template" data-i18n-attr="title:tplSaveMine,aria-label:tplSaveMine"><span data-icon="bookmark-plus"></span></button>
-        <button class="iconbtn" id="open" type="button"
-                title="Mở file .xlsx/.csv" aria-label="Mở file .xlsx/.csv" data-i18n-attr="title:shOpenFile,aria-label:shOpenFile"><span data-icon="folder-open"></span></button>
-        <button class="chgbtn" id="new" type="button"><span data-icon="file-plus"></span><span
-                data-i18n="shNew">Tạo sheet mới</span></button>
+        <button class="iconbtn tbbtn" id="undo" type="button" disabled
+                title="Hoàn tác" data-i18n-attr="title:shUndo"><span data-icon="undo-2"></span><span class="tblabel" data-i18n="shUndo">Hoàn tác</span></button>
+        <button class="iconbtn tbbtn" id="redo" type="button" disabled
+                title="Làm lại" data-i18n-attr="title:shRedo"><span data-icon="redo-2"></span><span class="tblabel" data-i18n="shRedo">Làm lại</span></button>
+        <button class="iconbtn moreacts" id="moreacts" type="button" aria-expanded="false" aria-controls="rareacts"
+                title="Thêm" aria-label="Thêm" data-i18n-attr="title:txMore,aria-label:txMore"><span data-icon="ellipsis"></span></button>
+        <span class="rareacts" id="rareacts">
+          <button class="iconbtn tbbtn" id="keep" type="button"
+                  title="Lưu làm template" data-i18n-attr="title:tplSaveMine"><span data-icon="bookmark-plus"></span><span class="tblabel" data-i18n="tplSaveMine">Lưu làm template</span></button>
+          <button class="iconbtn tbbtn" id="open" type="button"
+                  title="Mở file .xlsx/.csv" data-i18n-attr="title:shOpenFile"><span data-icon="folder-open"></span><span class="tblabel" data-i18n="shOpenFile">Mở file .xlsx/.csv</span></button>
+          <button class="iconbtn tbbtn" id="new" type="button"><span data-icon="file-plus"></span><span
+                  class="tblabel" data-i18n="shNew">Tạo sheet mới</span></button>
+        </span>
       </span>
     </div>
 
     <!-- The draft is only in this browser: the file (or, on a phone, the
          link) is the save. The wording follows the device; see sheet.js. -->
-    <p class="fileline"><span data-icon="file-text"></span><span id="fileline" data-i18n="shFileLine">Bản nháp chỉ nằm trong trình duyệt này. Lưu file .csv để giữ mãi và làm tiếp trên máy khác, trong Google Sheets hay Excel.</span></p>
-
-    <!-- Said once per device: what this phone does to a draft or a .csv. -->
-    <p class="devnote" id="devnote" role="note" hidden><span data-icon="smartphone"></span><span id="devnote-text"></span>
-      <button class="iconbtn" id="devnote-close" type="button"
+    <!-- One note, dismissible: where the draft lives, and — said once per
+         device — what this phone does to a draft or a .csv. -->
+    <p class="fileline" id="filenote" role="note"><span data-icon="file-text"></span><span><span id="fileline" data-i18n="shFileLine">Bản nháp chỉ nằm trong trình duyệt này. Lưu file .csv để giữ mãi và làm tiếp trên máy khác, trong Google Sheets hay Excel.</span>
+      <span id="devnote-text" hidden></span></span>
+      <button class="iconbtn" id="filenote-close" type="button"
               title="Đã hiểu" aria-label="Đã hiểu" data-i18n-attr="title:gotIt,aria-label:gotIt"><span data-icon="x"></span></button></p>
 
     <!-- A sheet from before sets had names: offered one, never given one. -->
@@ -423,10 +429,11 @@
     </div>
     <div class="tpl-made">
       <div id="tpl-card" class="tpl-card"></div>
-      <div class="tpl-file" id="tpl-file">
+      <details class="tpl-file" id="tpl-file">
+        <summary><span data-icon="sheet"></span><span data-i18n="tplSeeSheet">Xem sheet</span><span class="caret" data-icon="chevron-down"></span></summary>
         <div id="tpl-sheet" class="tpl-sheet scrapwrap" tabindex="0" role="region"
              aria-label="Sheet ví dụ" data-i18n-attr="aria-label:tplSheetLabel"></div>
-      </div>
+      </details>
     </div>
     <p id="tpl-noid" class="tpl-note" hidden><span data-icon="circle-alert"></span><span data-i18n="tplNoIdNote">Sửa chữ ở mặt trước sẽ thành card mới (mất tiến độ của card cũ).</span></p>
     <!-- The set's name is its deck in Anki, so it is asked here, where the sheet
