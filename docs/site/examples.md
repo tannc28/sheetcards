@@ -51,7 +51,7 @@ row của nó.
 | `20 Video lesson (bài video)` | đoạn clip *chính là* câu hỏi — `video` ở mặt trước, xếp theo bài |
 | `21 Formulas & code (công thức)` | `math` cho công thức và `code=python` cho code — hai loại ô không phải văn xuôi |
 | `22 Arabic (phải sang trái)` | chữ Ả Rập tự viết từ phải sang trái, không cần key nào |
-| `23 Vertical text (viết dọc)` | `vertical` — từ trên xuống, phải sang trái, như tiếng Nhật in trong sách |
+| `23 Haiku (thơ haiku)` | thơ tiếng Nhật với `tts=ja_JP` — font Nhật được chọn theo giọng đọc, không cần ghi `font` |
 | `24 Korean (tiếng Hàn)` | `font=kr` và một giọng tiếng Hàn — một hệ chữ có font riêng |
 | `25 Traditional (chữ phồn thể)` | cùng một từ bằng `font=tc` và `font=sc` cạnh nhau, đọc bằng `zh_TW` |
 | `26 Shell commands (dòng lệnh)` | `code=bash` — đáp án là một câu lệnh, xếp theo công dụng |

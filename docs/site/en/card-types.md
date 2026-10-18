@@ -60,6 +60,10 @@ ID       Hán tự    Pinyin        Meaning
 
 - `type=nc` ignores accents and tone marks, so typing `shuxi` matches `shúxī`.
   Useful when the marks are hard to type but not the point.
+- Capitals do not count as a mistake: a phone keyboard capitalises the first
+  letter, so `Library` still matches `library`. Checked in desktop Anki; if
+  AnkiDroid or AnkiMobile draws the comparison differently, the card keeps
+  Anki's own result.
 - One `type` column per sheet; Anki allows one box per card.
 - The box is not repeated on the reverse card.
 - On a cloze sheet, `type` on the cloze column asks you to type the deleted

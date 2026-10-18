@@ -53,7 +53,7 @@ Chừng này là đủ cho hầu hết các bộ flashcard. Ghi trong ô của c
 | `color` | `muted`, `accent` | Màu chữ: `muted` là màu nhạt cho chữ phụ, `accent` là màu nhấn. Cả hai đổi theo chế độ sáng/tối của Anki và [theme](text.md#theme) của sheet. Màu khác: xem [Nâng cao](#chu). |
 | `tts` | mã ngôn ngữ **đầy đủ**: `en_US`, `zh_CN`, `ja_JP` | Anki đọc to cột này. Xem [Text to speech](tts.md). |
 | `image` | switch | Ô chứa link một ảnh, và card hiện ảnh đó. Xem [Media](media.md). |
-| `type` | switch, hoặc `type=nc` | Một ô ở mặt hỏi để bạn gõ đáp án. `nc` bỏ qua dấu. Xem [Các loại card](card-types.md#go-dap-an). |
+| `type` | switch, hoặc `type=nc` | Một ô ở mặt hỏi để bạn gõ đáp án. `nc` bỏ qua dấu. Chữ hoa/thường không tính là sai (bàn phím điện thoại hay tự viết hoa chữ đầu). Xem [Các loại card](card-types.md#go-dap-an). |
 | `hint` | switch | Giấu giá trị sau một link, bấm vào mới hiện. |
 | `label` | chữ bất kỳ, hoặc để trơn | Một nhãn nhỏ phía trên giá trị. `label` để trơn dùng chính tên cột làm nhãn; `label=Pinyin` ghi nhãn khác. |
 

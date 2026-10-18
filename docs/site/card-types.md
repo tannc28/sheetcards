@@ -61,6 +61,10 @@ ID       Hán tự    Pinyin        Meaning
 
 - `type=nc` bỏ qua dấu và thanh điệu, nên gõ `shuxi` vẫn khớp `shúxī`. Hữu ích
   khi dấu khó gõ mà lại không phải điều cần học.
+- Chữ hoa/thường không tính là sai: bàn phím điện thoại tự viết hoa chữ đầu,
+  nên `Library` vẫn khớp `library`. Đã kiểm trên Anki máy tính; trên AnkiDroid
+  hay AnkiMobile, nếu app hiển thị kết quả khác kiểu thì card giữ nguyên cách
+  Anki chấm.
 - Mỗi sheet một cột `type`; Anki chỉ cho một ô nhập mỗi card.
 - Ô nhập không lặp lại trên reverse card.
 - Trên sheet cloze, `type` trên cột cloze sẽ bắt bạn gõ những chữ bị giấu.

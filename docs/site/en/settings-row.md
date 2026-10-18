@@ -52,7 +52,7 @@ These are enough for most flashcard sets. Written in that column's own cell.
 | `color` | `muted`, `accent` | Text colour: `muted` is a soft colour for secondary text, `accent` the highlight colour. Both follow Anki's light and dark mode and the sheet's [theme](text.md#themes). Other colours: see [Advanced](#text). |
 | `tts` | a **full** language code: `en_US`, `zh_CN`, `ja_JP` | Anki reads the column aloud. See [Text to speech](tts.md). |
 | `image` | switch | The cell holds a link to a picture, and the card shows the picture. See [Media](media.md). |
-| `type` | switch, or `type=nc` | A box on the question where you type the answer. `nc` ignores accents. See [Card types](card-types.md#typing-the-answer). |
+| `type` | switch, or `type=nc` | A box on the question where you type the answer. `nc` ignores accents. Capitals never count as a mistake (phone keyboards capitalise the first letter). See [Card types](card-types.md#typing-the-answer). |
 | `hint` | switch | Hides the value behind a link you click to reveal. |
 | `label` | any text, or bare | A small caption above the value. A bare `label` uses the column's own name as the caption; `label=Pinyin` writes a different one. |
 

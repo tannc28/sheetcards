@@ -50,7 +50,7 @@ a feature is to find the sheet below that uses it and copy its settings row.
 | `20 Video lesson (bài video)` | the clip *is* the question — `video` on the front, filed by lesson |
 | `21 Formulas & code (công thức)` | `math` for formulas and `code=python` for listings — the two kinds of cell that are not prose |
 | `22 Arabic (phải sang trái)` | Arabic, written right to left by itself, with no key |
-| `23 Vertical text (viết dọc)` | `vertical` — top to bottom, right to left, the way Japanese is set in a book |
+| `23 Haiku (thơ haiku)` | Japanese verse with `tts=ja_JP` — the Japanese font comes from the voice, no `font` needed |
 | `24 Korean (tiếng Hàn)` | `font=kr` and a Korean voice — a script with a font of its own |
 | `25 Traditional (chữ phồn thể)` | the same word in `font=tc` and `font=sc` side by side, spoken in `zh_TW` |
 | `26 Shell commands (dòng lệnh)` | `code=bash` — the answer is a command, filed by what it is for |
