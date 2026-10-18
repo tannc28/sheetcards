@@ -714,3 +714,32 @@ a.altcard { color: inherit; text-decoration: none; }
 .devnote > span:nth-child(2) { flex: 1 1 auto; }
 .devnote .iconbtn { flex: none; margin: -4px 0; }
 #templates-title { scroll-margin-top: 84px; }
+
+/* ---- Tùy chỉnh: a tile to build from, and the builder ------------------- */
+.tplcard.tpl-own {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 12rem; border: 2px dashed var(--line); background: transparent; box-shadow: none; text-align: center;
+}
+.tplcard.tpl-own:hover { border-color: var(--accent); }
+.tpl-own-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px;
+  background: var(--accent-soft); color: var(--accent); font-size: 28px; }
+.tpl-own .tpl-go { position: static; text-align: center; }
+.builder { margin: 4px 0 14px; }
+.b-cols { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.b-col { padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.b-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.b-name { flex: 1 1 8rem; width: auto; min-width: 0; min-height: 40px; font-weight: 650; }
+.b-line select { flex: 0 0 auto; width: auto; min-height: 40px; }
+.b-move { display: flex; margin-left: auto; }
+@media (min-width: 40rem) {
+  /* Room for the builder and its card side by side. */
+  .tplbox.building .tplbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); column-gap: 20px; align-items: start; }
+  .tplbox.building .tplbody > * { grid-column: 1; }
+  .tplbox.building .tplbody > .tpl-made { grid-column: 2; grid-row: 1 / span 6; position: sticky; top: 0; display: block; width: 100%; }
+  .tplbox.building .tpl-made .tpl-card { width: 100%; max-width: none; }
+}
+.b-flags { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 6px; font-size: var(--t-sm); }
+.b-flag { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; white-space: nowrap; cursor: pointer; }
+.b-flag input { width: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--accent); }
+.b-sample { width: 100%; min-height: 38px; font-size: var(--t-sm); }
+.b-acts { margin: 10px 0 0; }

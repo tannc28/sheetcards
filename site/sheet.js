@@ -214,13 +214,14 @@ const BASIC = byId("basic");
 const VOCAB = byId("vocab");
 // Every built-in template, in one grid: the main ones, then picture, reverse
 // and typed, which used to sit in a smaller row of their own further down.
+// Tùy chỉnh comes last and is not a sample: it is the builder below.
 const MAIN = [
   "basic",
   "vocab",
   "hanzi",
   "kanji",
-  "custom",
   ...TEMPLATES.filter((tpl) => tpl.more).map((tpl) => tpl.id),
+  "custom",
 ];
 // Basic's columns are named in the page's language at the moment the sheet is
 // made; a draft keeps them, because by then they are its field names.
@@ -324,7 +325,61 @@ const HELP = {
 let sheet = blankSheet();
 
 function blankSheet() {
-  return { title: "", marker: "#config", columns: [], rows: [], next: null, retired: [] };
+  return { title: "", marker: "#config", columns: [], rows: [], next: null, retired: [], noId: false };
+}
+
+// ---------------------------------------------------------------------------
+// A sheet with no ID column
+// ---------------------------------------------------------------------------
+//
+// Basic and the vocabulary templates have no ID column: each word is keyed by
+// its first column, exactly as the add-on and the .apkg key such a sheet
+// (column_model.derived_ids). In that mode a row's `id` is derived, never typed
+// or handed out — no w01, no next=, no deleted-ID list — and the settings
+// row's marker shares the first column's cell on the way out (sheet_config.
+// marker_parts), since there is no ID cell to put it in.
+
+/** A cell as an ID: NFC, trimmed, inner whitespace collapsed (column_model.id_text). */
+const idText = (value) => String(value ?? "").normalize("NFC").split(/\s+/).filter(Boolean).join(" ");
+
+/** column_model.derived_ids: a repeat (ignoring case) becomes "word (2)", "word (3)". */
+function derivedIds(values) {
+  const taken = new Set();
+  const counts = new Map();
+  return values.map((value) => {
+    const text = idText(value);
+    if (!text) return "";
+    const key = text.toLowerCase();
+    let count = (counts.get(key) ?? 0) + 1;
+    let candidate = count === 1 ? text : `${text} (${count})`;
+    while (taken.has(candidate.toLowerCase())) candidate = `${text} (${++count})`;
+    counts.set(key, count);
+    taken.add(candidate.toLowerCase());
+    return candidate;
+  });
+}
+
+/** Writes each row's derived ID, for a sheet keyed by its first column. */
+function deriveIds(of = sheet) {
+  if (!of.noId) return;
+  const ids = derivedIds(of.rows.map((r) => (blankRow(r) ? "" : r.values[0] ?? "")));
+  of.rows.forEach((r, k) => (r.id = ids[k]));
+}
+
+// The keys a marker cell keeps for the whole sheet when it shares the first
+// column's cell; the rest of that cell is the column's (sheet_config._DECK_ONLY_KEYS).
+const DECK_ONLY = new Set(["reverse", "theme", "name", "next", "shape"]);
+
+/** "#config name=X; size=40" as the sheet's marker and the first column's own cell. */
+function splitMarker(cell) {
+  const deck = [];
+  const own = [];
+  for (const part of String(cell ?? "").replace(/^\s*#config/i, "").split(";")) {
+    const chunk = part.trim();
+    if (!chunk) continue;
+    (DECK_ONLY.has(chunk.split("=")[0].trim().toLowerCase()) ? deck : own).push(chunk);
+  }
+  return { marker: "#config" + (deck.length ? " " + deck.join("; ") : ""), own: own.join("; ") };
 }
 
 const ui = {
@@ -377,7 +432,11 @@ function fit() {
 }
 
 function cellAt(r, c) {
-  if (c === -1) return r === 0 ? "ID" : r === 1 ? sheet.marker : (sheet.rows[r - 2]?.id ?? "");
+  if (c === -1) {
+    if (r === 1) return sheet.marker;
+    if (sheet.noId) return "";
+    return r === 0 ? "ID" : (sheet.rows[r - 2]?.id ?? "");
+  }
   const col = sheet.columns[c];
   if (!col) return "";
   if (r === 0) return col.name;
@@ -388,7 +447,7 @@ function cellAt(r, c) {
 function writeCell(r, c, text) {
   if (c === -1) {
     if (r === 1) sheet.marker = text;
-    else if (r >= 2 && sheet.rows[r - 2]) sheet.rows[r - 2].id = text;
+    else if (r >= 2 && sheet.rows[r - 2] && !sheet.noId) sheet.rows[r - 2].id = text;
     return;
   }
   const col = sheet.columns[c];
@@ -406,6 +465,7 @@ function writeCell(r, c, text) {
  * inserted in the middle never collides with one further down.
  */
 function nextId() {
+  if (sheet.noId) return "";
   raiseMark();
   const ids = new Set(sheet.rows.map((r) => r.id));
   const { prefix, width } = idShape();
@@ -434,6 +494,7 @@ function nextId() {
  * so a mark of w99999 over ten words is not a list of a hundred thousand.
  */
 function retireGaps() {
+  if (sheet.noId) return;
   const mark = splitId(sheet.next);
   if (!mark || mark.n > 5000) return;
   const held = new Set(sheet.rows.map((r) => String(r.id ?? "").trim()));
@@ -463,6 +524,7 @@ function idShape() {
  * a file (the mark travels as `next=` in the marker).
  */
 function raiseMark(of = sheet) {
+  if (of.noId) return;
   const mark = splitId(of.next);
   const shaped = [...of.rows].reverse().map((r) => splitId(r.id)).find(Boolean);
   const prefix = mark?.prefix ?? shaped?.prefix;
@@ -486,38 +548,40 @@ function newRow(values = []) {
  * as the sheet this page edits.
  *
  * The ID column is found by name rather than assumed to be first, a settings
- * row by its marker, and a sheet with no ID column at all gets IDs, since a row
- * without one is a row Anki cannot keep.
+ * row by its marker, and a sheet with no ID column stays one: its first column
+ * is the key (deriveIds), as it is to the add-on and the .apkg.
  */
 function fromGrid(grid, title) {
   const rows = (grid || []).map((row) => row.map((cell) => String(cell ?? "")));
   const header = rows[0] || [];
-  const idAt = header.findIndex((h) => /^\s*﻿?id\s*$/i.test(h));
-  const keyAt = idAt < 0 ? 0 : idAt;
+  const idAt = header.findIndex((h) => /^\s*\ufeff?id\s*$/i.test(h));
+  // No ID column: the first column is the key, and a settings row's marker
+  // opens that column's own cell (splitMarker).
+  const noId = idAt < 0;
+  const keyAt = noId ? 0 : idAt;
   const marked = rows[1] && isMarkerCell(rows[1][keyAt]);
+  const split = noId && marked ? splitMarker(rows[1][0]) : null;
   const width = Math.max(header.length, ...rows.map((r) => r.length));
   const content = [];
-  for (let i = 0; i < width; i++) {
-    if (i === idAt) continue;
-    if (idAt < 0 && marked && i === 0) continue;
-    content.push(i);
-  }
+  for (let i = 0; i < width; i++) if (i !== idAt) content.push(i);
   const used = content.filter(
     (i) => (header[i] || "").trim() || rows.slice(1).some((r) => (r[i] || "").trim()),
   );
-  const marker = marked ? rows[1][keyAt].trim() : "#config";
+  const marker = split ? split.marker : marked ? rows[1][keyAt].trim() : "#config";
+  const settingOf = (i) => (!marked ? "" : split && i === 0 ? split.own : (rows[1][i] || "").trim());
   const out = {
     // The sheet's own name, when it has one, over whatever the file was called.
     title: markerGet(marker, "name") ?? title ?? "",
     // `next=` and `shape=` are kept out of the cell and written back on the way
     // out (exportGrid), so the cell shows what a person wrote.
     marker: markerSet(markerSet(marker, "next", null), "shape", null),
-    next: markerGet(marker, "next") || null,
+    next: noId ? null : markerGet(marker, "next") || null,
     shape: markerGet(marker, "shape") || null,
     retired: [],
+    noId,
     columns: used.map((i, n) => ({
       name: (header[i] || "").trim() || `Column ${n + 1}`,
-      cell: marked ? (rows[1][i] || "").trim() : "",
+      cell: settingOf(i),
     })),
     rows: [],
   };
@@ -531,15 +595,11 @@ function fromGrid(grid, title) {
   }
   if (!sheet.columns.length) sheet.columns.push({ name: "Front", cell: "" }, { name: "Back", cell: "" });
   if (!sheet.rows.length) sheet.rows.push(newRow());
+  deriveIds(sheet);
   const made = sheet;
   sheet = before;
-  // Said once by whoever opened it (readPicked), never kept with the sheet.
-  if (idAt < 0 && made.rows.some((r) => !blankRow(r))) ids.given.add(made);
   return made;
 }
-
-// Sheets fromGrid had to write IDs into: a file with no ID column.
-const ids = { given: new WeakSet() };
 
 /**
  * What this sheet is to Sheet to Anki (apkg.resolve_identity): its name= when it
@@ -568,12 +628,23 @@ function exportGrid(of = sheet, { mark = true } = {}) {
   // A template's own words are samples, not IDs anybody was given.
   if (mark) raiseMark(of);
   let marker = of.marker;
-  if (mark && of.next) marker = markerSet(marker, "next", of.next);
+  if (mark && of.next && !of.noId) marker = markerSet(marker, "next", of.next);
   if (mark && shapeMark(of)) marker = markerSet(marker, "shape", of.shape);
+  const words = of.rows.filter((r) => !blankRow(r));
+  if (of.noId) {
+    // No ID cell: the marker opens the first column's settings cell.
+    const first = of.columns[0]?.cell ?? "";
+    const opened = first ? `${marker}${/#config$/i.test(marker) ? " " : "; "}${first}` : marker;
+    return [
+      of.columns.map((c) => c.name),
+      of.columns.map((c, i) => (i === 0 ? opened : c.cell)),
+      ...words.map((r) => [...r.values]),
+    ];
+  }
   return [
     ["ID", ...of.columns.map((c) => c.name)],
     [marker, ...of.columns.map((c) => c.cell)],
-    ...of.rows.filter((r) => !blankRow(r)).map((r) => [r.id, ...r.values]),
+    ...words.map((r) => [r.id, ...r.values]),
   ];
 }
 
@@ -980,6 +1051,7 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
   sheet = next;
   sheet.next ??= null;
   sheet.shape ??= null;
+  sheet.noId = Boolean(sheet.noId);
   if (!Array.isArray(sheet.retired)) sheet.retired = [];
   retireGaps();
   lastFiled = filed;
@@ -1087,9 +1159,17 @@ const mineCards = new Map();
 function mineCard(tpl) {
   if (!run) return null;
   if (mineCards.has(tpl.id)) return mineCards.get(tpl.id);
+  const card = cardOfGrid(tpl.rows, tpl.title);
+  mineCards.set(tpl.id, card);
+  return card;
+}
+
+/** The card a grid's first word makes, drawn by preview() — null until Python is up. */
+function cardOfGrid(rows, title = "") {
+  if (!run) return null;
   let card = null;
   try {
-    const made = fromGrid(tpl.rows, tpl.title);
+    const made = fromGrid(rows, title);
     const first = made.rows.find((r) => !blankRow(r)) ?? made.rows[0];
     const out = run(
       JSON.stringify({ marker: made.marker, columns: made.columns, values: first.values, rows: [] }),
@@ -1111,13 +1191,154 @@ function mineCard(tpl) {
   } catch {
     card = null;
   }
-  mineCards.set(tpl.id, card);
   return card;
 }
+
+// ---------------------------------------------------------------------------
+// Tùy chỉnh: a template built here, column by column
+// ---------------------------------------------------------------------------
+//
+// Not a sample deck: a short list of columns, each with its side and a few
+// switches (read aloud, picture, typed answer, hint), the theme and the name.
+// It writes an ordinary sheet with an ID column — "Tùy chỉnh nâng cao" opens
+// that sheet in the full editor for everything else.
+
+const builder = { cols: null, lang: "en_US" };
+const SIDES = [
+  ["front", "bSideFront"],
+  ["back", "bSideBack"],
+  ["hide", "bSideHide"],
+];
+const FLAGS = [
+  ["tts", "bTts"],
+  ["image", "bImage"],
+  ["type", "bType"],
+  ["hint", "bHint"],
+];
+
+function builderCols() {
+  builder.cols ??= [
+    { name: t("bFrontName"), side: "front", sample: "" },
+    { name: t("bBackName"), side: "back", sample: "" },
+  ];
+  return builder.cols;
+}
+
+/** One column's settings cell: its side, then each switch that is on. */
+function builderCell(col) {
+  const language = VOCAB.languages.find((l) => l.code === builder.lang);
+  const parts = [`side=${col.side}`];
+  if (col.image) parts.push("image");
+  if (col.type && !col.image) parts.push("type");
+  if (col.hint) parts.push("hint");
+  if (col.tts && !col.image) parts.push(`tts=${builder.lang}` + (language?.voice ? `; voices=${language.voice}` : ""));
+  return parts.join("; ");
+}
+
+/** The sheet the builder stands for: names, settings row, the sample word. */
+function builderRows() {
+  const cols = builderCols();
+  const names = cols.map((c, i) => c.name.trim() || t("bColN", i + 1));
+  return [["ID", ...names], ["#config", ...cols.map(builderCell)], ["w01", ...cols.map((c) => c.sample)]];
+}
+
+const builderCard = () => cardOfGrid(builderRows());
+
+function paintBuilder() {
+  const cols = builderCols();
+  const opt = (value, key, on) => `<option value="${value}"${on ? " selected" : ""}>${escapeHtml(t(key))}</option>`;
+  $("#b-cols").innerHTML = cols
+    .map(
+      (col, i) => `<li class="b-col" data-i="${i}">
+      <div class="b-line">
+        <input class="b-name" data-b="name" value="${escapeHtml(col.name)}" spellcheck="false" autocomplete="off"
+          aria-label="${escapeHtml(t("bColName"))}">
+        <select data-b="side" aria-label="${escapeHtml(t("bSide"))}">${SIDES.map(([v, k]) => opt(v, k, col.side === v)).join("")}</select>
+        <span class="b-move">
+          <button type="button" class="iconbtn" data-b="up" ${i === 0 ? "disabled" : ""}
+            title="${escapeHtml(t("bUp"))}" aria-label="${escapeHtml(t("bUp"))}">${icon("arrow-up")}</button>
+          <button type="button" class="iconbtn" data-b="down" ${i === cols.length - 1 ? "disabled" : ""}
+            title="${escapeHtml(t("bDown"))}" aria-label="${escapeHtml(t("bDown"))}">${icon("arrow-down")}</button>
+          <button type="button" class="iconbtn" data-b="remove" ${cols.length < 2 ? "disabled" : ""}
+            title="${escapeHtml(t("bRemove"))}" aria-label="${escapeHtml(t("bRemove"))}">${icon("trash-2")}</button>
+        </span>
+      </div>
+      <div class="b-flags">${FLAGS.map(
+        ([f, k]) => `<label class="b-flag"><input type="checkbox" data-b="${f}"${col[f] ? " checked" : ""}${
+          (f === "tts" || f === "type") && col.image ? " disabled" : ""
+        }> ${escapeHtml(t(k))}</label>`,
+      ).join("")}</div>
+      <input class="b-sample" data-b="sample" value="${escapeHtml(col.sample)}" spellcheck="false" autocomplete="off"
+        placeholder="${escapeHtml(t("bSample"))}" aria-label="${escapeHtml(t("bSample"))}: ${escapeHtml(col.name)}">
+    </li>`,
+    )
+    .join("");
+  const spoken = cols.some((c) => c.tts && !c.image);
+  $("#b-langrow").hidden = !spoken;
+  $("#b-lang").innerHTML = VOCAB.languages
+    .map((l) => `<option value="${l.code}"${l.code === builder.lang ? " selected" : ""}>${escapeHtml(l.label)}</option>`)
+    .join("");
+}
+
+/** Redraws the builder's card, once the typing pauses. */
+let builderTimer = 0;
+function builderChanged({ list = false } = {}) {
+  if (list) paintBuilder();
+  clearTimeout(builderTimer);
+  builderTimer = setTimeout(paintBuilderCard, 150);
+}
+
+function paintBuilderCard() {
+  if (stepId !== "custom" || !$("#tplbox").open) return;
+  const card = themedCard(builderCard(), stepTheme);
+  const faces = card?.reverse ? ["front", "back", "front2", "back2"] : ["front", "back"];
+  $("#tpl-card").innerHTML = facesHtml("custom", faces, { waiting: !card });
+  for (const el of $("#tplbox").querySelectorAll("iframe[data-face]")) el.srcdoc = faceDoc(card, el.dataset.tab, 0.72);
+}
+
+$("#b-cols").addEventListener("input", (e) => {
+  const el = e.target.closest("[data-b]");
+  const li = e.target.closest(".b-col");
+  if (!el || !li) return;
+  const col = builderCols()[Number(li.dataset.i)];
+  const what = el.dataset.b;
+  if (what === "name" || what === "sample") col[what] = el.value;
+  else if (what === "side") col.side = el.value;
+  else if (el.type === "checkbox") {
+    col[what] = el.checked;
+    // Anki honours one typed answer per card.
+    if (what === "type" && el.checked) for (const other of builderCols()) if (other !== col) other.type = false;
+    return builderChanged({ list: true });
+  }
+  builderChanged({ list: what === "side" });
+});
+$("#b-cols").addEventListener("click", (e) => {
+  const el = e.target.closest("button[data-b]");
+  const li = e.target.closest(".b-col");
+  if (!el || !li) return;
+  const cols = builderCols();
+  const i = Number(li.dataset.i);
+  const to = el.dataset.b === "up" ? i - 1 : el.dataset.b === "down" ? i + 1 : null;
+  if (el.dataset.b === "remove" && cols.length > 1) cols.splice(i, 1);
+  else if (to !== null && to >= 0 && to < cols.length) [cols[i], cols[to]] = [cols[to], cols[i]];
+  builderChanged({ list: true });
+  $(`#b-cols .b-col[data-i="${Math.max(0, Math.min(to ?? i, cols.length - 1))}"] [data-b="${el.dataset.b}"]`)?.focus();
+});
+$("#b-add").addEventListener("click", () => {
+  const cols = builderCols();
+  cols.push({ name: t("bColN", cols.length + 1), side: "back", sample: "" });
+  builderChanged({ list: true });
+  $(`#b-cols .b-col[data-i="${cols.length - 1}"] .b-name`)?.select();
+});
+$("#b-lang").addEventListener("change", (e) => {
+  builder.lang = e.target.value;
+  builderChanged();
+});
 
 /** What a template makes right now: its rows and its first word's card. */
 function templateNow(id, choice = vocabChoice) {
   if (id === "basic") return basicVariant();
+  if (id === "custom") return { rows: builderRows(), card: builderCard() };
   // A template written in Vietnamese words keeps an English copy for the
   // English page (build_site.py, HANZI_TEMPLATE_EN).
   if (byId(id)?.rows) return (lang() !== "vi" && byId(id).en) || byId(id);
@@ -1241,6 +1462,16 @@ function paintTemplates() {
   facesSeen.disconnect();
   $("#templates").innerHTML = MAIN.map((id) => {
     const text = textOf(id);
+    // Tùy chỉnh is something to build, not a deck to look at: no card, a pencil.
+    if (id === "custom") {
+      return `<div class="tplcard tpl-own">
+        <span class="tpl-own-icon" aria-hidden="true">${icon("pencil-ruler")}</span>
+        <button type="button" class="tpl-go" data-template="custom">
+          <strong>${escapeHtml(text.title)}</strong>
+          <span class="tpl-desc">${escapeHtml(text.text)}</span>
+        </button>
+      </div>`;
+    }
     const rows = exportGrid(templateSheet(id, VOCAB_DEFAULT), { mark: false });
     return `<div class="tplcard">
         ${facesHtml(id)}
@@ -1348,8 +1579,17 @@ function paintStep() {
   $("#tpl-title").textContent = text.title;
   $("#tpl-desc").textContent = text.text;
   const languaged = Boolean(tpl?.toggles);
+  const building = stepId === "custom";
+  box.classList.toggle("building", building);
+  $("#builder").hidden = !building;
+  $("#tpl-file").hidden = building;
+  $("#tpl-csv").hidden = building;
+  $("#tpl-advanced").hidden = !building;
+  if (building) paintBuilder();
   $("#vocab-opts").hidden = !languaged;
   $("#tpl-mine").hidden = !isMine(stepId);
+  // Keyed by its first column (no ID column): the one trade-off, said once.
+  $("#tpl-noid").hidden = /^\s*id\s*$/i.test(templateNow(stepId)?.rows?.[0]?.[0] ?? "ID");
   if (languaged) {
     const example = tpl.toggles.includes("example");
     $("#vocab-lang").innerHTML = VOCAB.languages
@@ -1434,7 +1674,7 @@ function stepCsv() {
   toast(t("shDownloaded", name), "ok");
 }
 
-async function createFromStep() {
+async function createFromStep({ advanced = false } = {}) {
   const name = $("#tpl-name").value.replace(/\s+/g, " ").trim().replace(/;/g, ",");
   if (!name) {
     paintNameNote();
@@ -1459,11 +1699,11 @@ async function createFromStep() {
   // The template's sample word shows what a row looks like (the card and the
   // scrap in the step say "example"); it is not one of the learner's words, so
   // the sheet starts with one empty row instead.
-  made.rows = [{ id: "w01", values: made.columns.map(() => "") }];
-  // Custom is a template to make, so it opens on step 1; every other one is a
-  // template already, and opens on its first word.
-  begin(made, { row: 0, col: 0, view: stepId === "custom" ? "look" : "rows" });
-  if (stepId === "custom") return;
+  made.rows = [{ id: made.noId ? "" : "w01", values: made.columns.map(() => "") }];
+  // Built here, it is ready for words; "Tùy chỉnh nâng cao" opens step 1, the
+  // full editor, on the same sheet.
+  begin(made, { row: 0, col: 0, view: advanced ? "look" : "rows" });
+  if (advanced) return;
   if (WIDE.matches) {
     select(firstWordRow, 0);
     startEditing(firstWordRow, 0);
@@ -1512,6 +1752,7 @@ const lines = (text) => Math.min(6, String(text ?? "").split("\n").length);
  * rebuilds it, so a cell being written in keeps its caret.
  */
 function paintSheet() {
+  deriveIds();
   const cols = sheet.columns;
   const label = (key) => escapeHtml(t(key));
   const cell = (inner, r, c, cls = "") =>
@@ -1520,12 +1761,14 @@ function paintSheet() {
 
   const head =
     `<span class="ref corner" data-all="1" title="${label("edSelectAll")}"></span>` +
-    '<span class="ref" data-c="-1">A</span>' +
-    cols.map((_, i) => `<span class="ref" data-c="${i}">${letter(i + 1)}</span>`).join("");
+    // A sheet keyed by its first column has no column A of IDs: the narrow
+    // column left of it only holds the settings row's marker.
+    `<span class="ref" data-c="-1"${sheet.noId ? ` title="#config"` : ""}>${sheet.noId ? "" : "A"}</span>` +
+    cols.map((_, i) => `<span class="ref" data-c="${i}">${letter(sheet.noId ? i : i + 1)}</span>`).join("");
 
   const names =
     '<span class="ref" data-r="0">1</span>' +
-    cell("ID", 0, -1, "fixed") +
+    cell(sheet.noId ? "" : "ID", 0, -1, "fixed") +
     cols
       .map((c, i) =>
         cell(
@@ -1564,13 +1807,15 @@ function paintSheet() {
       const r = k + firstWordRow;
       return (
         `<span class="ref${k === ui.row ? " cur" : ""}" data-r="${r}">${r + 1}</span>` +
-        cell(
-          `<input data-edit="id" data-row="${k}" value="${escapeHtml(row.id)}"
+        (sheet.noId
+          ? cell("", r, -1, `fixed nokey${!row.id && !blankRow(row) ? " dup" : ""}`)
+          : cell(
+              `<input data-edit="id" data-row="${k}" value="${escapeHtml(row.id)}"
              spellcheck="false" autocomplete="off" aria-label="${label("shIdLabel")}">`,
-          r,
-          -1,
-          `idcell${dupes.has(row.id) || !row.id.trim() ? " dup" : sheet.retired.includes(row.id.trim()) ? " reused" : ""}`,
-        ) +
+              r,
+              -1,
+              `idcell${dupes.has(row.id) || !row.id.trim() ? " dup" : sheet.retired.includes(row.id.trim()) ? " reused" : ""}`,
+            )) +
         cols
           .map((_, i) =>
             cell(
@@ -1601,6 +1846,7 @@ function paintSheet() {
  * review history.
  */
 function idProblems() {
+  if (sheet.noId) return keyProblems();
   const dupes = duplicates();
   const rowsOf = (pred) =>
     sheet.rows.flatMap((r, k) => (!blankRow(r) && pred(r) ? [k + firstWordRow + 1] : []));
@@ -1612,13 +1858,38 @@ function idProblems() {
   return { dup, blank, reused, blocking: dup.length > 0 || blank.length > 0 };
 }
 
+/**
+ * The same question for a sheet keyed by its first column: a row with words in
+ * it and nothing in that column cannot be keyed (blocks), and a word written
+ * twice is kept twice — the second as "word (2)", as the .apkg will — which is
+ * said, not refused.
+ */
+function keyProblems() {
+  deriveIds();
+  const line = (k) => k + firstWordRow + 1;
+  const blank = sheet.rows.flatMap((r, k) => (!blankRow(r) && !r.id ? [line(k)] : []));
+  const twins = new Map();
+  sheet.rows.forEach((r, k) => {
+    if (blankRow(r) || !r.id) return;
+    const key = idText(r.values[0]).toLowerCase();
+    twins.set(key, [...(twins.get(key) ?? []), k]);
+  });
+  const twice = [...twins.values()]
+    .filter((ks) => ks.length > 1)
+    .map((ks) => ({ word: idText(sheet.rows[ks[0]].values[0]), rows: ks.map(line), ids: ks.map((k) => sheet.rows[k].id) }));
+  return { dup: [], blank, reused: [], twice, blocking: blank.length > 0 };
+}
+
 function paintIdWarning() {
   const box = $("#idwarn");
   if (!box) return;
-  const { dup, blank, reused } = idProblems();
+  const { dup, blank, reused, twice = [] } = idProblems();
+  const col = sheet.columns[0]?.name || "A";
   const lines = [
+    ...(sheet.noId && blank.length ? [t("keyBlank", col, blank.join(", "))] : []),
+    ...twice.map((d) => t("keyTwice", d.word, d.rows.join(", "), d.ids[1])),
     ...dup.map((d) => t("idDup", d.id, d.rows.join(", "))),
-    ...(blank.length ? [t("idBlank", blank.join(", "))] : []),
+    ...(!sheet.noId && blank.length ? [t("idBlank", blank.join(", "))] : []),
     ...reused.map((id) => t("idReused", id)),
   ];
   box.hidden = !lines.length;
@@ -1636,10 +1907,12 @@ function idsBlock() {
     (r) => !blankRow(r) && (!r.id.trim() || problems.dup.some((d) => d.id === r.id)),
   );
   if (k >= 0) {
+    // The cell to fix: the ID, or the first column of a sheet keyed by it.
+    const c = sheet.noId ? 0 : -1;
     if (WIDE.matches) {
       if (ui.view !== "rows") setView("rows");
-      select(k + firstWordRow, -1);
-      reveal(k + firstWordRow, -1);
+      select(k + firstWordRow, c);
+      reveal(k + firstWordRow, c);
     } else openForm(k);
   }
   return true;
@@ -1647,6 +1920,8 @@ function idsBlock() {
 
 /** IDs written more than once: Anki keeps one note per ID, so the rest are lost. */
 function duplicates() {
+  // Derived IDs are made unique ("word (2)"); nothing to refuse.
+  if (sheet.noId) return new Set();
   const seen = new Set();
   const twice = new Set();
   for (const row of sheet.rows) {
@@ -1659,13 +1934,14 @@ function duplicates() {
 
 /** The phone's list: one line per word, the first two fields of it. */
 function paintList() {
+  deriveIds();
   const dupes = duplicates();
   $("#wordlist").innerHTML = sheet.rows
     .map((row, k) => {
       const [first = "", second = ""] = row.values.filter((v) => String(v).trim());
       const empty = blankRow(row);
       return `<li><button type="button" class="worditem${k === ui.row ? " cur" : ""}${empty ? " empty" : ""}" data-row="${k}">
-        <span class="wi-id${dupes.has(row.id) ? " dup" : ""}">${escapeHtml(row.id)}</span>
+        <span class="wi-id${dupes.has(row.id) ? " dup" : ""}">${sheet.noId ? "" : escapeHtml(row.id)}</span>
         <span class="wi-main">${escapeHtml(first) || escapeHtml(t("shEmptyWord"))}</span>
         <span class="wi-sub">${escapeHtml(second)}</span>
         <span class="wi-go" aria-hidden="true">${icon("chevron-right")}</span>
@@ -1838,7 +2114,7 @@ function addRow(at = sheet.rows.length, values = []) {
 function removeRows(from, to) {
   raiseMark();
   for (const row of sheet.rows.slice(from, to + 1)) {
-    if (row.id.trim() && !sheet.retired.includes(row.id.trim())) sheet.retired.push(row.id.trim());
+    if (!sheet.noId && row.id.trim() && !sheet.retired.includes(row.id.trim())) sheet.retired.push(row.id.trim());
   }
   sheet.rows.splice(from, to - from + 1);
   if (!sheet.rows.length) sheet.rows.push(newRow());
@@ -1912,7 +2188,8 @@ function importBlock(block) {
   // filled rather than left above what was pasted.
   while (sheet.rows.length && blankRow(sheet.rows[sheet.rows.length - 1])) sheet.rows.pop();
   const width = Math.max(...rows.map((r) => r.length));
-  const withIds = width === sheet.columns.length + 1 && rows.every((r) => looksLikeId(r[0] ?? ""));
+  const withIds =
+    !sheet.noId && width === sheet.columns.length + 1 && rows.every((r) => looksLikeId(r[0] ?? ""));
   for (const row of rows) {
     const values = withIds ? row.slice(1) : row;
     while (values.length > sheet.columns.length) addColumn();
@@ -2348,6 +2625,8 @@ function openForm(k, { field = null } = {}) {
   const box = $("#rowform");
   $("#rf-title").textContent = t("shWordN", ui.row + 1, sheet.rows.length);
   $("#rf-id").value = row.id;
+  // A sheet keyed by its first column has no ID to type.
+  $("#rf-id").closest(".rf-id").hidden = Boolean(sheet.noId);
   const last = sheet.columns.length - 1;
   $("#rf-fields").innerHTML = sheet.columns
     .map(
@@ -2454,12 +2733,8 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   // What the file was called, for the line that says it is keyed by its name.
   opened.source = file.name;
   if (markerGet(opened.marker, "name")) rememberName(opened.title);
-  // IDs written in here exist only on this page until the file is saved again,
-  // so the sheet is not "saved" yet — and the reader is told why.
-  const given = ids.given.has(opened);
-  begin(opened, { keepHistory: true, view: "rows", filed: given ? null : toTsv(exportGrid(opened)) });
+  begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
   if (out.encoding) toast(t("readAsEncoding", out.encoding), "bad");
-  else if (given) toast(t("shIdsGiven", wordCount()), "bad");
   else toast(t("shOpened", name, wordCount()), "ok");
 }
 
@@ -2506,6 +2781,7 @@ document.addEventListener("click", (e) => {
     return paintStep();
   }
   if (e.target.closest("#tpl-go")) return createFromStep();
+  if (e.target.closest("#tpl-advanced")) return createFromStep({ advanced: true });
   if (e.target.closest("#tpl-csv")) return stepCsv();
   if (e.target.closest("#tpl-upload")) return $("#tplfile").click();
   const drop = e.target.closest("[data-drop]");
@@ -2712,6 +2988,7 @@ $("#sheet").addEventListener("input", (e) => {
     idTyped(el.value);
   }
   else sheet.rows[Number(el.dataset.row)].values[Number(el.dataset.col)] = el.value;
+  if (sheet.noId && kind === "value" && el.dataset.col === "0") paintIdWarning();
   if (el.tagName === "TEXTAREA") grow(el);
   if (kind === "marker") followMarker();
   if (kind === "name" || kind === "cell" || kind === "marker") paintColumns();
@@ -2727,6 +3004,7 @@ $("#rf-fields").addEventListener("input", (e) => {
   if (!area) return;
   markRun(`form:${ui.row}:${area.dataset.fi}`);
   sheet.rows[ui.row].values[Number(area.dataset.fi)] = area.value;
+  if (sheet.noId && area.dataset.fi === "0") paintIdWarning();
   grow(area);
   drawSoon();
   saveSoon();
@@ -3403,7 +3681,7 @@ const python = startPython(
     status("");
     // A kept template's card could not be drawn before now.
     if (ui.stage === "empty") paintMine();
-    if ($("#tplbox").open && isMine(stepId)) paintStep();
+    if ($("#tplbox").open && (isMine(stepId) || stepId === "custom")) paintStep();
     if (ui.stage === "edit") {
       paintColumns();
       drawCard();

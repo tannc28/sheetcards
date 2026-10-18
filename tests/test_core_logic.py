@@ -110,6 +110,24 @@ class TestNoIdColumn:
             apkg.note_guid("file:w.tsv#", "borrow"),
         }
 
+    def test_the_settings_row_opens_the_first_columns_cell(self):
+        _, deck = self.deck(
+            "Front\tBack\n#config name=Bộ thử; reverse; size=40; bold\tsize=24\n"
+            "journey\tchuyến đi"
+        )
+        cfg = deck.sheet_config
+        assert cfg.present and cfg.deck_name == "Bộ thử" and cfg.reverse
+        assert cfg.fields["Front"].size == 40 and cfg.fields["Front"].bold
+        assert cfg.fields["Back"].size == 24
+        assert not cfg.warnings
+        assert [n["ID"] for n in deck.notes] == ["journey"]
+        assert deck.total_table_lines == 1
+
+    def test_a_word_that_only_starts_with_config_is_a_word(self):
+        _, deck = self.deck("Front\tBack\n#configuration\tx")
+        assert not deck.sheet_config.present
+        assert [n["ID"] for n in deck.notes] == ["#configuration"]
+
     def test_a_sheet_with_an_id_column_is_untouched(self):
         parsed, deck = self.deck("ID\tWord\nw01\tjourney")
         assert parsed["plan"].id_from is None

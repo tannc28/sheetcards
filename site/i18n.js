@@ -235,13 +235,37 @@ const STRINGS = {
   vocabSpeakExample: { en: "Read Example aloud", vi: "Đọc to Example" },
   tplCustom: { en: "Custom", vi: "Tùy chỉnh" },
   tplCustomText: {
-    en: "Every feature: speech, pictures, typed answers, theme, subdeck… — tune each column in the settings row",
-    vi: "Mọi tính năng: đọc to, ảnh, gõ đáp án, theme, subdeck… — chỉnh từng cột trong settings row",
+    en: "Choose your own columns, front / back",
+    vi: "Tự chọn cột, mặt trước / mặt sau",
   },
+  // The Tùy chỉnh builder (sheet.js, paintBuilder).
+  bFrontName: { en: "Front", vi: "Mặt trước" },
+  bBackName: { en: "Back", vi: "Mặt sau" },
+  bColN: { en: (n) => `Column ${n}`, vi: (n) => `Cột ${n}` },
+  bColName: { en: "Column name", vi: "Tên cột" },
+  bSide: { en: "Side", vi: "Mặt" },
+  bSideFront: { en: "Front", vi: "Mặt trước" },
+  bSideBack: { en: "Back", vi: "Mặt sau" },
+  bSideHide: { en: "Hidden", vi: "Ẩn" },
+  bTts: { en: "Read aloud", vi: "Đọc to" },
+  bImage: { en: "Picture", vi: "Ảnh" },
+  bType: { en: "Type the answer", vi: "Gõ đáp án" },
+  bHint: { en: "Hint", vi: "Gợi ý" },
+  bUp: { en: "Move up", vi: "Lên trên" },
+  bDown: { en: "Move down", vi: "Xuống dưới" },
+  bRemove: { en: "Remove column", vi: "Xoá cột" },
+  bAdd: { en: "Add column", vi: "Thêm cột" },
+  bLang: { en: "Read aloud in", vi: "Đọc to bằng tiếng" },
+  bSample: { en: "Example for this column", vi: "Ví dụ cho cột này" },
+  bAdvanced: { en: "Advanced settings", vi: "Tùy chỉnh nâng cao" },
   tplCustomName: { en: "My deck", vi: "Deck của tôi" },
   tplSheetCaption: {
     en: "Example: the sample row shows what the sheet looks like, and the card beside it is made from it. Your sheet starts empty — you add your words in step ② Add cards.",
     vi: "Ví dụ: dòng mẫu cho thấy sheet trông thế nào, và card bên cạnh được tạo từ nó. Sheet của bạn bắt đầu trống — bạn thêm từ ở bước ② Thêm thẻ.",
+  },
+  tplNoIdNote: {
+    en: "Changing the words on the front makes a new card (the old card's progress is lost).",
+    vi: "Sửa chữ ở mặt trước sẽ thành card mới (mất tiến độ của card cũ).",
   },
   tplSheetLabel: { en: "Example sheet", vi: "Sheet ví dụ" },
   tplCsv: { en: "Download .csv", vi: "Tải file .csv mẫu" },
@@ -368,10 +392,6 @@ const STRINGS = {
     vi: (file) =>
       `Sheet này chưa ghi tên bộ flashcard bên trong, nên được nhận ra theo tên file “${file}”: giữ nguyên tên thì import vẫn cập nhật deck đang có.`,
   },
-  shIdsGiven: {
-    en: (n) => `This file has no ID column, so each of its ${n} words was given one (w01, w02…). Press Save .csv file to keep them: an ID is what lets the next import update a card instead of making a new one.`,
-    vi: (n) => `File này không có cột ID, nên ${n} từ đã được gán ID (w01, w02…). Bấm Lưu file .csv để giữ các ID này: nhờ ID, lần import sau mới cập nhật đúng card thay vì tạo card mới.`,
-  },
   nameOfferGo: { en: "Write the name into the sheet", vi: "Ghi tên vào sheet" },
   // The same draft open in two tabs (sheet.js, the storage event).
   otherTab: {
@@ -387,6 +407,15 @@ const STRINGS = {
       `Từ nay sheet mang tên “${name}” dù file bị đổi tên hay lưu ra .xlsx. Lần import tới sẽ là một deck mới trong Anki, chỉ một lần này: tiến độ học ở deck cũ không chuyển sang.`,
   },
   nameAddYes: { en: "Write it in", vi: "Ghi tên" },
+  // A sheet keyed by its first column (Basic, Học từ vựng).
+  keyBlank: {
+    en: (col, rows) => `Row ${rows}: words but nothing in ${col}, the column each word is known by. Fill it in or clear the row.`,
+    vi: (col, rows) => `Dòng ${rows}: có chữ nhưng ô ${col} trống — cột ${col} là khoá của từng từ. Điền vào hoặc xoá dòng.`,
+  },
+  keyTwice: {
+    en: (word, rows, second) => `“${word}” is on rows ${rows}: both become cards, the second as “${second}”.`,
+    vi: (word, rows, second) => `“${word}” có ở dòng ${rows}: cả hai đều thành card, dòng sau thành “${second}”.`,
+  },
   idDup: {
     en: (id, rows) => `ID ${id} is used twice (rows ${rows}). Each word needs its own ID — fix it, then try again.`,
     vi: (id, rows) => `ID ${id} bị trùng (dòng ${rows}). Mỗi từ cần một ID riêng — sửa rồi thử lại.`,
@@ -715,9 +744,9 @@ const STRINGS = {
   },
   edSides: {
     en: (front, back) =>
-      `${front} field on the front, ${back} on the back — the same split the sync makes.`,
+      `${front} field on the front, ${back} on the back — as the card will be in Anki.`,
     vi: (front, back) =>
-      `${front} field ở mặt trước, ${back} ở mặt sau — đúng cách sync chia.`,
+      `${front} field ở mặt trước, ${back} ở mặt sau — đúng như card trong Anki.`,
   },
   edSelectAll: { en: "Select every cell", vi: "Chọn tất cả các ô" },
   edInsertLeft: { en: "Insert column left", vi: "Chèn cột bên trái" },

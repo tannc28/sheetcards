@@ -47,24 +47,45 @@ DOCS = REPO / "docs" / "site"
 OUT = REPO / "build" / "site"
 EXAMPLES = REPO / "examples" / "sheetcards-examples.xlsx"
 
+
 # The file a learner downloads from the landing page to start from: one sheet,
 # four columns, a settings row and three words — the smallest sheet that already
 # makes a good card. Served beside the example workbook, which is copied in too,
 # so both downloads are same-origin files rather than GitHub pages.
+def _drop_id(rows):
+    """A grid with an ID column as the same sheet without one.
+
+    Basic and the vocabulary templates key each word by their first column
+    (column_model.derived_ids), so they carry no ID column. With no ID cell the
+    settings row's marker opens the first column's own cell
+    (sheet_config.marker_parts): ``#config theme=sakura; size=44; bold``.
+    """
+    header, config, *words = rows
+    marker, first = config[0], config[1] if len(config) > 1 else ""
+    opened = (
+        f"{marker}; {first}"
+        if first and marker != "#config"
+        else (f"{marker} {first}" if first else marker)
+    )
+    return [header[1:], [opened, *config[2:]], *[word[1:] for word in words]]
+
+
 STARTER_NAME = "sheetcards-mau.xlsx"
 STARTER = {
-    "Vocabulary": [
-        ["ID", "Word", "Meaning", "Example"],
+    "Vocabulary": _drop_id(
         [
-            "#config",
-            "size=44; bold; tts=en_US",
-            "side=back; size=22",
-            "side=back; color=muted; italic; tts=en_US",
-        ],
-        ["w01", "hello", "xin chào", "Hello, how are you today?"],
-        ["w02", "thank you", "cảm ơn", "Thank you for your help."],
-        ["w03", "goodbye", "tạm biệt", "Goodbye, see you tomorrow."],
-    ],
+            ["ID", "Word", "Meaning", "Example"],
+            [
+                "#config",
+                "size=44; bold; tts=en_US",
+                "side=back; size=22",
+                "side=back; color=muted; italic; tts=en_US",
+            ],
+            ["w01", "hello", "xin chào", "Hello, how are you today?"],
+            ["w02", "thank you", "cảm ơn", "Thank you for your help."],
+            ["w03", "goodbye", "tạm biệt", "Goodbye, see you tomorrow."],
+        ]
+    ),
 }
 
 # The documentation's table of contents: ({language: group}, [page, ...]). A
@@ -153,64 +174,19 @@ HOME_EXAMPLES = [
 # and keep that name after: by then they are field names. ID is reserved.
 BASIC_TEMPLATES = {
     "vi": [
-        ["ID", "Mặt trước", "Mặt sau"],
-        ["#config", "size=40", "size=24"],
-        ["w01", "", ""],
+        ["Mặt trước", "Mặt sau"],
+        ["#config size=40", "size=24"],
+        ["", ""],
     ],
     "en": [
-        ["ID", "Front", "Back"],
-        ["#config", "size=40", "size=24"],
-        ["w01", "", ""],
+        ["Front", "Back"],
+        ["#config size=40", "size=24"],
+        ["", ""],
     ],
 }
 
-# Custom: the whole editor, opened on a sheet that shows what a settings row
-# can do — a few keys per column, each one visible on the card. The pictures
-# and recordings are the example workbook's, already checked to load.
+# The pictures and recordings of the example workbook, already checked to load.
 _COMMONS = "https://upload.wikimedia.org/wikipedia/commons/thumb"
-CUSTOM_TEMPLATE = [
-    ["ID", "SUBDECK 1", "TAGS", "Picture", "Word", "IPA", "Meaning", "Example"],
-    [
-        "#config theme=sakura",
-        "",
-        "",
-        "image; size=200",
-        "side=back; size=44; bold; color=accent; type; tts=en_US; voices=Apple_Samantha",
-        "side=back; size=20; color=muted",
-        "side=back; size=24; label=Nghĩa",
-        "side=back; size=16; italic; hint; tts=en_US; voices=Apple_Samantha",
-    ],
-    [
-        "w01",
-        "Animals",
-        "animals, a1",
-        f"{_COMMONS}/4/4d/Cat_November_2010-1a.jpg/500px-Cat_November_2010-1a.jpg",
-        "cat",
-        "/kæt/",
-        "con mèo",
-        "The cat is asleep on the chair.",
-    ],
-    [
-        "w02",
-        "Animals",
-        "animals, a1",
-        f"{_COMMONS}/1/17/Tiger_in_Ranthambhore.jpg/500px-Tiger_in_Ranthambhore.jpg",
-        "tiger",
-        "/ˈtaɪ.ɡɚ/",
-        "con hổ",
-        "A tiger hunts alone.",
-    ],
-    [
-        "w03",
-        "Food and drink",
-        "food, a1",
-        f"{_COMMONS}/1/15/Red_Apple.jpg/500px-Red_Apple.jpg",
-        "apple",
-        "/ˈæp.əl/",
-        "quả táo",
-        "An apple a day is an old English saying.",
-    ],
-]
 
 # Writing Chinese: the meaning and pinyin ask, the learner writes the character
 # stroke by stroke in the box (draw, on the question), and the answer animates
@@ -516,7 +492,7 @@ def vocab_config(
     ]
 
 
-def vocab_rows(language, speak_word=True, speak_example=True, **shape):
+def _vocab_grid(language, speak_word=True, speak_example=True, **shape):
     code, _label, voice, font, words = language
     config = vocab_config(code, voice, font, speak_word, speak_example, **shape)
     rows = [VOCAB_HEADERS, config]
@@ -524,15 +500,20 @@ def vocab_rows(language, speak_word=True, speak_example=True, **shape):
     return rows
 
 
+def vocab_rows(language, speak_word=True, speak_example=True, **shape):
+    """The vocabulary sheet, keyed by its Word column (no ID column)."""
+    return _drop_id(_vocab_grid(language, speak_word, speak_example, **shape))
+
+
 def reverse_rows(language, speak_word=True, _speak_example=False):
     """The vocabulary card and its reverse: Word asks on card 1, and Phiên âm +
     Meaning ask on card 2. Example and Note are left out, because whatever is on
     the back of card 1 is the *question* of card 2, and an example sentence
     holding the word gives the answer away."""
-    rows = vocab_rows(language, speak_word, False)
+    rows = _vocab_grid(language, speak_word, False)
     rows = [row[:4] for row in rows]
     rows[1][0] = "#config reverse"
-    return rows
+    return _drop_id(rows)
 
 
 # The pictures are the example workbook's (16 Picture words), already checked to
@@ -580,7 +561,7 @@ def picture_rows(language, speak_word=True, _speak_example=False):
         zip(words, PICTURES, meanings, strict=True), 1
     ):
         rows.append([f"w{n:02}", word, picture, meaning])
-    return rows
+    return _drop_id(rows)
 
 
 def modules_the_site_loads():
@@ -955,8 +936,8 @@ def _language_template(tm, card_layout, tid, rows_for, toggles, theme=None):
 
 def sheet_templates(out):
     """Every template: the main ones — Basic in both languages, every variant of
-    the vocabulary template, Chinese writing, Japanese furigana and the custom
-    one — then the others: picture words, reverse and typed answer. A theme is
+    the vocabulary template, Chinese writing and Japanese furigana — then the
+    others: picture words, reverse and typed answer. A theme is
     not a template of its own: the step offers every listed theme over any of
     them (theme_palettes()).
 
@@ -985,11 +966,10 @@ def sheet_templates(out):
         for tid, rows in (
             ("hanzi", HANZI_TEMPLATE),
             ("kanji", KANJI_TEMPLATE),
-            ("custom", CUSTOM_TEMPLATE),
         )
     ]
     # The English page's copy of a template whose words are Vietnamese.
-    for tpl, rows in zip(fixed, (HANZI_TEMPLATE_EN, KANJI_TEMPLATE_EN), strict=False):
+    for tpl, rows in zip(fixed, (HANZI_TEMPLATE_EN, KANJI_TEMPLATE_EN), strict=True):
         tpl["en"] = {
             "rows": rows,
             "card": _template_card(tm, card_layout, f"{tpl['id']} en", rows),

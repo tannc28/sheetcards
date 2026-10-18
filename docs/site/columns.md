@@ -35,12 +35,15 @@ mới."*
 - **Sửa chính tả chính chữ đó là một card mới**, và card cũ (cùng tiến độ của nó)
   vẫn nằm trong Anki. Nếu bạn hay sửa từ ở cột đầu, hãy thêm một cột `ID`.
 - Dòng có cột đầu trống là dòng lỗi (không có gì làm khoá), dù các ô khác có chữ.
-- [Settings row](settings-row.md) cần cột `ID`, vì dấu hiệu `#config` nằm ở ô ID.
+- [Settings row](settings-row.md) vẫn dùng được: không có ô ID thì `#config` mở đầu
+  ô settings của cột đầu tiên, ví dụ `#config name=Từ vựng; size=40`. Các key cho cả
+  sheet (`name`, `reverse`, `theme`, `next`, `shape`) thuộc về sheet; các key còn lại
+  trong ô đó (kể cả `align` và `speed`) thuộc về cột đầu.
 
-Mở một file như vậy trong Tạo Sheet thì Tạo Sheet ghi ID `w01`, `w02`… vào sheet
-một lần và nhắc bạn lưu file. Từ đó sheet đã có cột `ID`. Lưu ý: ID mới khác chữ
-cũ, nên nếu bạn đã import file không có ID trước đó, lần import đầu sau khi thêm
-ID sẽ tạo card mới.
+Template *Mặt trước / Mặt sau* và *Học từ vựng* của Tạo Sheet là sheet như vậy: cột
+đầu (Mặt trước, hay Word) là khoá, không có cột `ID`. Mở một file không có cột `ID`
+trong Tạo Sheet thì nó vẫn không có cột `ID`. Sheet có cột `ID` thì giữ nguyên ID
+và `next=`.
 
 ## Các cột của bạn
 

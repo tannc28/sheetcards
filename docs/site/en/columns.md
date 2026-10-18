@@ -38,13 +38,16 @@ makes it a new card."*
   column, add an `ID` column.
 - A row whose first column is empty is an invalid row (nothing can key it), even
   if other cells are filled.
-- A [settings row](settings-row.md) needs an `ID` column, because the `#config`
-  marker lives in the ID cell.
+- A [settings row](settings-row.md) still works: with no ID cell, `#config` opens
+  the first column's settings cell, for example `#config name=Vocabulary; size=40`.
+  The sheet-wide keys (`name`, `reverse`, `theme`, `next`, `shape`) belong to the
+  sheet; every other key in that cell (`align` and `speed` included) belongs to the
+  first column.
 
-Opening such a file in Create sheet writes IDs `w01`, `w02`… into the sheet once
-and reminds you to save the file. From then on the sheet has an `ID` column.
-Note that the new IDs differ from the words, so if you already imported the file
-without IDs, the first import after adding them makes new cards.
+Create sheet's *Front / Back* and *Vocabulary* templates are sheets like this: the
+first column (Front, or Word) is the key, with no `ID` column. A file with no `ID`
+column opened in Create sheet stays that way. A sheet with an `ID` column keeps its
+IDs and `next=`.
 
 ## Your own columns
 

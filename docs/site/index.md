@@ -77,8 +77,11 @@ cũng có nút tải đúng file này về.
    lại. Đổi tên là thành deck mới, nên Tạo Sheet hỏi lại trước khi đổi.
 3. **① Cột & card**: tên cột và settings row (dòng 2 của sheet, mỗi ô ghi cột
    đó hiện thế nào trên card), có card xem trước ngay bên cạnh.
-   **② Thêm thẻ**: thêm, sửa, xoá từ; ID (`w01`, `w02`…) được đánh tự động.
-   *Tùy chỉnh* mở ở bước ①, các template khác vào thẳng bước ②. Sheet mới bắt
+   **② Thêm thẻ**: thêm, sửa, xoá từ. *Mặt trước / Mặt sau* và *Học từ vựng*
+   không có cột ID: chữ ở cột đầu là khoá, nên sửa chữ ở mặt trước sẽ thành card
+   mới (mất tiến độ của card cũ). Các template khác có cột ID (`w01`, `w02`…),
+   được đánh tự động. *Tùy chỉnh* là một bộ dựng nhỏ: chọn cột, mặt trước / mặt
+   sau, đọc to, ảnh, gõ đáp án, gợi ý; **Tùy chỉnh nâng cao** mở bước ① đầy đủ. Sheet mới bắt
    đầu trống, với một dòng để gõ từ đầu tiên; từ ví dụ của template chỉ hiện ở
    card xem trước.
 

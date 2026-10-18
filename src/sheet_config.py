@@ -321,11 +321,12 @@ def is_config_row(row, plan):
     The marker cell may carry the deck-wide settings after it
     (``#config align=left``), so the test is on the leading token, not the cell.
     """
-    # A sheet keyed by its first content column has no ID cell to carry the
-    # marker in; that column's cell is a word, whatever it says.
-    if not plan.id_header or getattr(plan, "id_from", None):
+    # A sheet keyed by its first content column has no ID cell, so the marker
+    # opens that column's own settings cell instead (see marker_parts).
+    key = getattr(plan, "id_from", None) or plan.id_header
+    if not key:
         return False
-    cell = str(row.get(plan.id_header, "")).strip().lower()
+    cell = str(row.get(key, "")).strip().lower()
     if not cell.startswith(MARKER):
         return False
     # Anything directly after the marker must be a separator, never more word
@@ -334,6 +335,38 @@ def is_config_row(row, plan):
     # the alternative is silently importing the settings row as a note.
     rest = cell[len(MARKER) :]
     return rest == "" or not rest[0].isalnum()
+
+
+# Keys that only mean something for the whole sheet. In a sheet with no ID
+# column the marker shares the first column's settings cell, and these are the
+# ones taken for the sheet; every other key there (align and speed included)
+# is that column's own.
+_DECK_ONLY_KEYS = ("reverse", "theme", "name", "next", "shape")
+
+
+def marker_parts(row, plan):
+    """The marker cell's deck-wide text, and the row as the columns read it.
+
+    Normally the marker is the ID cell and the row is unchanged. A sheet keyed
+    by its first content column writes ``#config name=Từ vựng; size=40`` in that
+    column's settings cell: the sheet-wide keys are split off for the sheet and
+    the rest stays the column's.
+    """
+    source = getattr(plan, "id_from", None)
+    if not source:
+        cell = str(row.get(plan.id_header, "")).strip()
+        return (cell[len(MARKER) :] if len(cell) > len(MARKER) else ""), row
+    cell = str(row.get(source, "")).strip()
+    deck, own = [], []
+    for chunk in cell[len(MARKER) :].split(";"):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        key = chunk.split("=", 1)[0].strip().lower()
+        (deck if key in _DECK_ONLY_KEYS else own).append(chunk)
+    row = dict(row)
+    row[source] = "; ".join(own)
+    return "; ".join(deck), row
 
 
 def normalize_tts_language(value):
@@ -920,8 +953,7 @@ def parse_config_row(row, plan):
         config.warnings.append(message)
 
     # Deck-wide settings ride along in the marker cell: "#config align=left".
-    marker_cell = str(row.get(plan.id_header, "")).strip()
-    remainder = marker_cell[len(MARKER) :] if len(marker_cell) > len(MARKER) else ""
+    remainder, row = marker_parts(row, plan)
     for key, value in _parse_pairs(remainder):
         if key not in _DECK_KEYS:
             warn(

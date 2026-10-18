@@ -69,7 +69,6 @@ def _all_rows(templates):
     yield from (
         (f"vocab {key}", v["rows"]) for key, v in templates["vocab"]["variants"].items()
     )
-    yield "custom", templates["custom"]["rows"]
     for tid, tpl in templates.items():
         if tpl.get("more"):
             yield from (
@@ -79,7 +78,6 @@ def _all_rows(templates):
 
 def _all_cards(templates):
     yield from (v["card"] for v in templates["basic"]["variants"].values())
-    yield templates["custom"]["card"]
     for tpl in templates.values():
         if "toggles" in tpl:
             yield from (v["card"] for v in tpl["variants"].values())
@@ -97,7 +95,8 @@ def _sheet_config():
 def test_the_main_templates_then_the_others(built):
     _, _, templates = built
     main = [tid for tid, tpl in templates.items() if not tpl.get("more")]
-    assert main == ["basic", "vocab", "hanzi", "kanji", "custom"]
+    # Tùy chỉnh is not a sample: it is the builder in sheet.js, with no grid here.
+    assert main == ["basic", "vocab", "hanzi", "kanji"]
     more = [tid for tid, tpl in templates.items() if tpl.get("more")]
     # A theme is a choice in the step, never a template of its own.
     assert more == ["picture", "reverse", "typed"]
@@ -113,11 +112,10 @@ def test_every_listed_theme_can_dress_a_template_and_no_other(built):
     assert list(palettes) == ["", *themes]
     assert len(set(palettes.values())) == len(palettes)
     # Each block is, verbatim, the one a template in that theme was built with:
-    # the unthemed vocabulary card holds the default, the custom one sakura's.
+    # the unthemed vocabulary card holds the default.
     _, _, templates = built
     vocab = next(iter(templates["vocab"]["variants"].values()))["card"]
     assert palettes[""] in vocab["template"]["qfmt"]
-    assert palettes["sakura"] in templates["custom"]["card"]["template"]["qfmt"]
 
 
 def test_chinese_writing_and_japanese_furigana_are_offered(built):
@@ -156,19 +154,20 @@ def test_ptrang_is_never_offered(built):
 
 def test_the_other_templates_keep_the_main_column_names(built):
     _, _, templates = built
-    vocab = ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
+    vocab = ["Word", "Phiên âm", "Meaning", "Example", "Note"]
     for key, v in templates["typed"]["variants"].items():
         assert v["rows"][0] == vocab, key
-        assert "type=nc" in v["rows"][1][1] and "side=front" in v["rows"][1][3]
+        # No ID column: the marker opens Word's own settings cell.
+        assert "type=nc" in v["rows"][1][0] and "side=front" in v["rows"][1][2]
     for key, v in templates["reverse"]["variants"].items():
-        assert v["rows"][0] == vocab[:4], key
-        assert v["rows"][1][0] == "#config reverse"
+        assert v["rows"][0] == vocab[:3], key
+        assert v["rows"][1][0].startswith("#config reverse")
         assert "reverse" in v["card"], key
     for key, v in templates["picture"]["variants"].items():
-        assert v["rows"][0] == ["ID", "Word", "Picture", "Meaning"], key
-        assert "image" in v["rows"][1][2]
+        assert v["rows"][0] == ["Word", "Picture", "Meaning"], key
+        assert "image" in v["rows"][1][1]
         assert all(
-            row[2].startswith("https://upload.wikimedia.org/") for row in v["rows"][2:]
+            row[1].startswith("https://upload.wikimedia.org/") for row in v["rows"][2:]
         )
 
 
@@ -182,8 +181,8 @@ def test_the_pictures_are_the_example_workbooks(built):
 def test_basic_is_named_in_the_page_language(built):
     _, _, templates = built
     variants = templates["basic"]["variants"]
-    assert variants["vi"]["rows"][0] == ["ID", "Mặt trước", "Mặt sau"]
-    assert variants["en"]["rows"][0] == ["ID", "Front", "Back"]
+    assert variants["vi"]["rows"][0] == ["Mặt trước", "Mặt sau"]
+    assert variants["en"]["rows"][0] == ["Front", "Back"]
 
 
 def test_every_vocab_choice_is_built(built):
@@ -194,8 +193,8 @@ def test_every_vocab_choice_is_built(built):
     for code in codes:
         for choice in ("11", "10", "01", "00"):
             rows = variants[f"{code}|{choice}"]["rows"]
-            assert rows[0] == ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
-            word, example = rows[1][1], rows[1][4]
+            assert rows[0] == ["Word", "Phiên âm", "Meaning", "Example", "Note"]
+            word, example = rows[1][0], rows[1][3]
             assert ("tts=" in word) == (choice[0] == "1"), (code, choice)
             assert ("tts=" in example) == (choice[1] == "1"), (code, choice)
             assert len(rows) == 5, f"{code} should carry three words"
@@ -233,17 +232,6 @@ def test_every_template_card_has_a_front(built):
         assert "sc-tts-debug" not in card["template"]["afmt"]
 
 
-def test_custom_shows_off_the_settings_row(built):
-    _, _, templates = built
-    rows = templates["custom"]["rows"]
-    text = " ".join(rows[1])
-    for key in ("tts=", "voices=", "size=", "bold", "color=", "side=back", "hint"):
-        assert key in text, key
-    for key in ("label=", "type", "image", "theme="):
-        assert key in text, key
-    assert "SUBDECK 1" in rows[0] and "TAGS" in rows[0]
-
-
 def _trimmed(grid):
     out = []
     for row in grid:
@@ -260,7 +248,7 @@ def test_the_csv_reads_back_as_the_same_deck(built):
     tm, _card_layout, workbook = build._pure_package(out)
     grids = [
         # What exportGrid writes: the blank word Basic opens on is not written.
-        (name, rows[:2] + [row for row in rows[2:] if any(c.strip() for c in row[1:])])
+        (name, rows[:2] + [row for row in rows[2:] if any(c.strip() for c in row)])
         for name, rows in _all_rows(templates)
     ]
     # The grids go in on stdin, not in the script: every variant of every
@@ -288,7 +276,10 @@ def test_the_csv_reads_back_as_the_same_deck(built):
         read = json.loads(workbook.read_upload(csv_text.encode("utf-8"), "t.csv"))
         parsed = tm.parse_tsv_data(read["tsv"], [])
         # A trailing empty cell is no cell to a spreadsheet, nor to the reader.
-        assert _trimmed([parsed["headers"], *parsed["rows"]]) == _trimmed(rows), name
+        # A sheet with no ID column gains one in the parser; compare as written.
+        written = [parsed.get("sheet_headers", parsed["headers"])]
+        written += parsed.get("sheet_rows", parsed["rows"])
+        assert _trimmed(written) == _trimmed(rows), name
         deck = tm.build_remote_deck_from_tsv(parsed, "", [])
         assert not deck.sheet_config.warnings, (name, deck.sheet_config.warnings)
         assert deck.sheet_config.present, name

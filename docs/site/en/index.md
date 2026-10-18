@@ -84,9 +84,12 @@ has a button that downloads exactly this file.
    before a rename.
 3. **① Columns & card**: the column names and the settings row (row 2 of the
    sheet, where each cell says how that column shows on the card), with the card
-   previewed beside them. **② Add cards**: add, edit and delete words; IDs
-   (`w01`, `w02`…) are given automatically. *Custom* opens on step ①, every
-   other template goes straight to step ②. A new sheet starts empty, with one
+   previewed beside them. **② Add cards**: add, edit and delete words. *Front /
+   Back* and *Vocabulary* have no ID column: the first column's text is the key,
+   so changing the words on the front makes a new card (the old card's progress is
+   lost). The other templates have an ID column (`w01`, `w02`…), filled in for you.
+   *Custom* is a small builder: pick columns, front / back, read aloud, picture,
+   typed answer, hint; **Advanced settings** opens the full step ①. A new sheet starts empty, with one
    row for your first word; the template's example word only appears in the
    card preview.
 
