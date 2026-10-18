@@ -94,11 +94,9 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .btn.big:hover .icon:last-child { transform: translateX(3px); }
 .btn-quiet {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-weight: 650; color: var(--ink);
-  background: var(--panel); border: 1.5px solid var(--line-strong);
+  font-weight: 600;
   transition: border-color .12s ease, background-color .12s ease;
 }
-.btn-quiet:hover { border-color: var(--accent); background: var(--accent-soft); }
 .btn-quiet .icon { color: var(--accent); }
 .btn .anki-mark { flex: none; border-radius: 4px; background: #fff; }
 .btn .ext {
@@ -125,7 +123,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 }
 .door-title .icon { color: var(--accent); width: 20px; height: 20px; }
 .door-text { margin: 0 0 1rem; color: var(--muted); }
-.door-go { min-height: 52px; border-radius: 13px; }
+.door-go { min-height: 52px; border-radius: var(--r-control); }
 .door-files { margin: .9rem 0 0; font-size: var(--t-sm); color: var(--muted); }
 .door-files a { font-weight: 650; color: var(--accent); }
 @media (max-width: 30rem) {
@@ -164,13 +162,11 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .quick-alt { display: flex; flex-wrap: wrap; gap: 10px; margin: .9rem 0 0; }
 .quick-file {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: 44px; padding: 0 16px; border-radius: 12px;
-  background: var(--panel); border: 1.5px dashed var(--line-strong);
-  font: inherit; font-size: var(--t-sm); font-weight: 650; color: var(--ink);
+  min-height: 44px; padding: 0 16px; border-radius: var(--r-control);
+  font: inherit; font-size: var(--t-sm); font-weight: 600;
   text-decoration: none; cursor: pointer;
 }
 .quick-file .icon { color: var(--accent); }
-.quick-file:hover { border-color: var(--accent); background: var(--accent-soft); }
 .quick-template {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
   margin: 1.1rem 0 0; font-size: var(--t-sm); color: var(--muted);
@@ -198,7 +194,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
   border: 2.5px dashed #fff; color: #fff;
   font-size: var(--t-lg); font-weight: 800;
 }
-.btn:focus-visible, .btn-quiet:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
 
 /* ---- the demo -------------------------------------------------------------- */
 
@@ -744,7 +740,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .aiquick {
   max-width: 40rem; padding: 12px 14px 14px; border-radius: 18px;
   background: color-mix(in srgb, var(--panel) 70%, transparent);
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line);
   /* Close under the doors, not a hero's gap away. */
   margin-top: calc(14px - clamp(2.5rem, 5vw, 3.5rem));
 }
@@ -803,16 +799,16 @@ a.btn, a.btn-quiet { text-decoration: none; }
   background: var(--accent-soft); color: var(--accent); font-weight: 650;
 }
 .ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: .6rem 0 0; }
-.ai-actions .btn, .ai-open {
+.ai-actions .btn-2, .ai-open {
   min-height: 36px; padding: 0 12px; border-radius: 10px;
   font-size: var(--t-sm); font-weight: 650; gap: 6px;
 }
-.ai-actions .btn .icon { width: 16px; height: 16px; }
+.ai-actions .btn-2 .icon { width: 16px; height: 16px; }
 .ai-open { text-decoration: none; }
-@media (pointer: coarse) { .ai-actions .btn, .ai-open { min-height: 40px; } }
+@media (pointer: coarse) { .ai-actions .btn-2, .ai-open { min-height: 40px; } }
 /* A phone: the four buttons share one row instead of leaving Gemini alone. */
 @media (max-width: 30rem) {
-  .ai-actions .btn, .ai-open { flex: 1 1 0; padding: 0 6px; }
+  .ai-actions .btn-2, .ai-open { flex: 1 1 0; padding: 0 6px; }
   .ai-status { flex-basis: 100%; }
 }
 .ai-status:empty { display: none; }

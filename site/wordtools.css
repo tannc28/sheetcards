@@ -57,7 +57,7 @@
 
 /* A value that came from a suggestion and is not the learner's yet. */
 .sgval { color: var(--accent); font-style: italic; }
-input.sgval { background: var(--accent-soft); border-style: dashed !important; border-color: var(--accent) !important; }
+input.sgval { background: var(--accent-soft); border-style: solid !important; border-color: var(--accent) !important; }
 
 /* ---- the suggestion panel ------------------------------------------------- */
 
