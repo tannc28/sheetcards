@@ -177,7 +177,7 @@ Importing an `.apkg` adds and updates; it never deletes. Delete them in Anki:
 **I saved a `.csv` on Android, tapped it, and AnkiDroid imported strange notes.**
 AnkiDroid accepts CSV files too and turns every row into a note, the settings
 row included. Delete those notes in AnkiDroid, and next time open the `.csv` with
-**Open .xlsx/.csv file** in Create sheet. On a phone, **Save sheet link** is
+**Open .xlsx/.csv file** in Create sheet. On a phone, **Download / Save → Sheet link** is
 easier than a file.
 
 **A CSV saved from Excel has broken Vietnamese accents.**
@@ -189,8 +189,8 @@ so when they had to guess the code page. If the accents are still wrong, choose
 
 **My draft in Create sheet disappeared.**
 The draft lives only in the browser, and Safari on an iPhone deletes a site's
-data after 7 days without a visit. Save the sheet with **Save sheet link** (on a
-phone) or **Save .csv** (on a computer); adding the page to the Home Screen
+data after 7 days without a visit. Save the sheet with **Download / Save → Sheet link**
+(on a phone) or **Download / Save → .csv** (on a computer); adding the page to the Home Screen
 (**Share → Add to Home Screen**) makes it one tap away.
 
 ## Anything else

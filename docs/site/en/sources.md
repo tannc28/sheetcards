@@ -111,21 +111,33 @@ field per column. Settings are picked from a list, and the card for the word you
 are editing is drawn beside it.
 
 The draft is saved in the browser after every change, but only in this
-browser, so save the sheet outside it: **on a phone press Save sheet link, on a
-computer press Save .csv**. The page says *Not saved — only a draft in this
-browser* until you do. There are three ways out:
+browser, so save the sheet outside it with **Download / Save**: **on a phone pick Sheet
+link, on a computer pick .csv**. The page says *Not saved — only a draft in this
+browser* until you do.
+
+The **Table / Text** switch beside the words changes how the sheet is shown:
+**Table** is cells, as in a spreadsheet; **Text** is the whole sheet written as a
+note — line 1 `#config` and the deck's keys, line 2 the column names with their
+settings in `[ ]`, then one word a line, cells split by `|`. Editing the text
+edits the sheet. A cell holding a `|` or a line break cannot be written as text;
+then Text is read-only and the page says why.
+
+There are two ways out:
 
 - **Make flashcards**: hands the sheet straight to the Make flashcards page, to check the cards
   and download an `.apkg`.
-- **Save the sheet as a file**, `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
-  keep editing, or upload it to Google Drive to make it a Google Sheet.
-- **Share link**: the whole sheet is compressed into the link itself (after the
-  `#`) and sent to no server. Whoever opens it sees that sheet and edits their
-  own copy; the link can also open straight as cards in the Make flashcards page. Some chat
-  apps cut very long links short; send the file instead. **On a phone this
-  button is Save sheet link, and it is the main save**: keep the link (send it to
-  yourself) and open it next time to add words. On a computer the main save is
-  the `.csv`.
+- **Download / Save**:
+  - a `.csv`, `.xlsx`, `.txt` (the text form) or `.tsv` file: open it here again to
+    keep editing, or upload the `.xlsx`/`.csv` to Google Drive to make it a Google Sheet;
+  - **Copy text** (pasted into Make flashcards' **Paste text** it makes the same
+    cards) or **Copy table** (pasted into Google Sheets or Excel it becomes cells).
+    A copy does not count as saved;
+  - **Sheet link**: the whole sheet is compressed into the link itself (after the
+    `#`) and sent to no server. Whoever opens it sees that sheet and edits their
+    own copy; the link can also open straight as cards in the Make flashcards page.
+    Some chat apps cut very long links short; send the file instead. On a phone
+    this is the main save: keep the link (send it to yourself) and open it next
+    time to add words.
 
 ### Paste a word list
 

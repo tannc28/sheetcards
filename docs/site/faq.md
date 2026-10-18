@@ -176,7 +176,7 @@ xoá.
 
 **Tôi lưu file `.csv` trên Android, chạm vào nó và AnkiDroid import một mớ note lạ.**
 AnkiDroid nhận cả file CSV và import từng dòng thành note, kể cả settings row.
-Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file .xlsx/.csv** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
+Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file .xlsx/.csv** trong Tạo Sheet. Trên điện thoại, **Tải về / Lưu → Link sheet** tiện hơn file.
 
 **File CSV lưu từ Excel bị lỗi dấu tiếng Việt.**
 Trang Tạo flashcard và Tạo Sheet tự nhận ra dấu phân cách và bảng mã của file CSV từ
@@ -186,8 +186,8 @@ file đó. Xem [Upload một file](sources.md#upload-mot-file).
 
 **Bản nháp trong Tạo Sheet biến mất.**
 Bản nháp chỉ nằm trong trình duyệt, và Safari trên iPhone xoá dữ liệu của trang
-sau 7 ngày không mở. Lưu sheet bằng **Lưu link sheet** (điện thoại) hoặc **Lưu
-file .csv** (máy tính); thêm trang vào màn hình chính (**Share → Add to Home
+sau 7 ngày không mở. Lưu sheet bằng **Tải về / Lưu → Link sheet** (điện thoại) hoặc
+**Tải về / Lưu → .csv** (máy tính); thêm trang vào màn hình chính (**Share → Add to Home
 Screen**) để mở lại nhanh.
 
 ## Những vấn đề khác

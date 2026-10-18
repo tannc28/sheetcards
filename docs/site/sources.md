@@ -105,19 +105,29 @@ Sheets là thêm từ. Trên điện thoại mỗi từ mở ra thành một for
 Setting được chọn từ danh sách, và card của từ đang sửa hiện ngay bên cạnh.
 
 Bản nháp được lưu trong trình duyệt sau mỗi thay đổi, nhưng chỉ trong trình
-duyệt này, nên hãy lưu sheet ra ngoài: **trên điện thoại bấm Lưu link sheet,
-trên máy tính bấm Lưu file .csv**. Trang ghi *Chưa lưu… mới là nháp trong trình duyệt* cho tới khi bạn lưu. Từ
-đó có ba lối ra:
+duyệt này, nên hãy lưu sheet ra ngoài bằng **Tải về / Lưu**: **trên điện thoại chọn Link
+sheet, trên máy tính chọn .csv**. Trang ghi *Chưa lưu… mới là nháp trong trình duyệt* cho tới khi bạn lưu.
+
+Nút **Bảng / Văn bản** cạnh danh sách từ đổi cách xem sheet: **Bảng** là ô như
+bảng tính, **Văn bản** là cả sheet viết như ghi chú — dòng 1 `#config` và các
+key của deck, dòng 2 tên cột kèm setting trong `[ ]`, rồi mỗi dòng một từ, các
+ô cách nhau bằng `|`. Sửa ở Văn bản là sửa sheet. Ô có dấu `|` hoặc xuống dòng
+không viết được thành văn bản; khi đó Văn bản chỉ để xem và trang nói rõ.
+
+Có hai lối ra:
 
 - **Tạo flashcard**: chuyển thẳng sheet sang trang Tạo flashcard để xem card và tải `.apkg`.
-- **Tải sheet về máy** dạng `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
-  tiếp, hoặc upload lên Google Drive thành Google Sheets.
-- **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
-  máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
-  cũng mở thẳng được thành card trong trang Tạo flashcard. Link rất dài có thể bị vài app
-  chat cắt bớt, khi đó hãy gửi file. **Trên điện thoại, nút này là Lưu link
-  sheet và là cách lưu chính**: giữ link (gửi cho chính bạn), lần sau mở link là
-  thêm từ tiếp được. Trên máy tính, cách lưu chính là file `.csv`.
+- **Tải về / Lưu**:
+  - file `.csv`, `.xlsx`, `.txt` (dạng văn bản) hoặc `.tsv`: mở lại ở đây để sửa
+    tiếp, hoặc upload `.xlsx`/`.csv` lên Google Drive thành Google Sheets;
+  - **Copy văn bản** (dán vào **Dán văn bản** của Tạo flashcard ra đúng các
+    card đó) hoặc **Copy bảng** (dán vào Google Sheets hay Excel thành ô). Copy
+    không tính là đã lưu;
+  - **Link sheet**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
+    máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
+    cũng mở thẳng được thành card trong trang Tạo flashcard. Link rất dài có thể bị
+    vài app chat cắt bớt, khi đó hãy gửi file. Trên điện thoại đây là cách lưu
+    chính: giữ link (gửi cho chính bạn), lần sau mở link là thêm từ tiếp được.
 
 ### Dán danh sách từ
 
