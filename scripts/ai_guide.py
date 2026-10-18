@@ -1,8 +1,8 @@
-"""The guide an AI assistant reads to write a SheetCards CSV: ``/ai.md`` and ``/llms.txt``.
+"""The guide an AI assistant reads to write a SheetCards set: ``/ai.md`` and ``/llms.txt``.
 
 A learner gives ChatGPT, Gemini or Claude the address of ``ai.md`` and says what
-cards they want; the assistant answers with a CSV that opens in Sheet to Anki or
-Create sheet without a warning. The page is plain Markdown because that is what
+cards they want; the assistant answers with a set in the text form (or, asked
+for one, a table or CSV) that opens in Sheet to Anki without a warning. The page is plain Markdown because that is what
 an assistant fetching a URL reads cleanly, and English because that is what every
 model follows best — the learner talks to it in their own language.
 
@@ -10,9 +10,11 @@ Nothing in it is written twice. The settings-row keys, their values, the fonts,
 the colours and the themes are read from ``sheet_config`` (the copy the site
 ships), and every recipe is one of Create sheet's own templates from
 ``build_site.sheet_templates()`` — or, for cloze, the example workbook's sheet —
-with ``name=`` added. Each recipe is written as CSV, read back through the same
-path an upload takes (``workbook.read_upload`` → ``tsv_model``) and refused on a
-warning or an empty front, so the guide cannot show a sample that would not work.
+with ``name=`` added. Each recipe is written in the text form, read by the
+page's own reader (``site/importformats.js``, in node) and then through the
+path an upload takes (``workbook.read_upload`` → ``tsv_model``), and refused on
+a warning or an empty front, so the guide cannot show a sample that would not
+work; the table-form sample is checked the same way as CSV.
 A key added to ``sheet_config`` shows up in the table by itself; a line in
 ``KEY_NOTES`` only makes its explanation better.
 
@@ -23,6 +25,8 @@ import csv
 import io
 import json
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -195,11 +199,11 @@ def _file_path(url):
     )
 
 
-def check(text, label, tm, card_layout, workbook):
-    """Reads a CSV the way an upload is read, and refuses it on a warning, an
-    empty front, a missing name or a repeated key (an ID, or a first-column word
-    on a sheet without one)."""
-    upload = json.loads(workbook.read_upload(text.encode("utf-8"), f"{label}.csv"))
+def check(text, label, tm, card_layout, workbook, kind="csv"):
+    """Reads a CSV (or the TSV a text recipe becomes) the way an upload is read,
+    and refuses it on a warning, an empty front, a missing name or a repeated
+    key (an ID, or a first-column word on a sheet without one)."""
+    upload = json.loads(workbook.read_upload(text.encode("utf-8"), f"{label}.{kind}"))
     parsed = tm.parse_tsv_data(upload["tsv"], [])
     deck = tm.build_remote_deck_from_tsv(parsed, "", [])
     cfg = deck.sheet_config
@@ -219,6 +223,61 @@ def check(text, label, tm, card_layout, workbook):
     if problems:
         sys.exit(f"ai.md recipe {label!r}: {problems}")
     return deck
+
+
+def as_text(rows, deck_keys):
+    """A recipe's grid in the text form: ``#config`` and the deck's keys on
+    line 1, the names on line 2 with each column's settings in brackets, then
+    one card per line, cells separated by `` | ``."""
+    names, config, *words = rows
+    marker = config[0][len("#config") :]
+    deck, own = [], []
+    for chunk in (c.strip() for c in marker.split(";")):
+        if chunk:
+            key = chunk.split("=", 1)[0].strip().lower()
+            (deck if key in deck_keys else own).append(chunk)
+    cells = ["; ".join(own)] + list(config[1:])
+    if names and names[0].strip().upper() == "ID":
+        # The marker is the ID cell's; the ID column itself has no settings.
+        cells[0] = ""
+    head = " | ".join(
+        f"{n} [{c}]" if c.strip() else n for n, c in zip(names, cells, strict=True)
+    )
+    for row in words:
+        for cell in row:
+            if "|" in cell or "\n" in cell:
+                sys.exit(f"ai.md: a text recipe cell holds | or a line break: {cell!r}")
+    lines = [f"#config {'; '.join(deck)}".rstrip(), head]
+    lines += [" | ".join(row).rstrip() for row in words]
+    return "\n".join(lines) + "\n"
+
+
+def text_to_tsv(texts):
+    """Each text recipe as the sheet Dán văn bản makes of it, by the page's own
+    reader (site/importformats.js, run in node): nothing here re-implements it."""
+    node = shutil.which("node")
+    if node is None:
+        sys.exit("ai.md: node is needed to check the text recipes")
+    site = Path(__file__).resolve().parent.parent / "site"
+    script = (
+        "let raw = ''; process.stdin.on('data', (c) => (raw += c));"
+        "process.stdin.on('end', async () => {"
+        f"const m = await import({json.dumps((site / 'importformats.js').as_uri())});"
+        f"const s = await import({json.dumps((site / 'sharelink.js').as_uri())});"
+        "const out = JSON.parse(raw).map((text) => { const r = m.readPaste(text);"
+        " return s.toTsv(m.pasteGrid({name: '', rows: r.rows, header: r.header,"
+        " cells: r.cells, deck: r.deck, language: 'en'})); });"
+        "process.stdout.write(JSON.stringify(out)); });"
+    )
+    done = subprocess.run(
+        [node, "--no-warnings", "-e", script],
+        input=json.dumps(texts),
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    )
+    return json.loads(done.stdout)
 
 
 def _key_line(key, notes, values, sc, site):
@@ -340,38 +399,51 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
     parts = []
     w = parts.append
     w(
-        "# SheetCards: write a flashcard CSV\n\n"
+        "# SheetCards: write a flashcard set\n\n"
         "> For AI assistants. A learner sent you this page and asked for flashcards. "
-        "Follow it to reply with ONE CSV file. The learner opens it in SheetCards "
-        "and gets an Anki deck. Every rule and sample here is generated from "
-        "SheetCards' own code and checked by its parser.\n"
+        "Follow it to reply with ONE flashcard set, as text (the default) or as a "
+        "table. The learner pastes or opens it in SheetCards and gets an Anki deck. "
+        "Every rule and sample here is generated from SheetCards' own code and "
+        "checked by its parser.\n"
     )
     w(
         "## 1. Role and goal\n\n"
-        "You are producing a CSV for SheetCards, which turns a sheet into Anki "
-        "flashcards: one row = one note, row 2 says how the cards look.\n\n"
+        "You are writing a set for SheetCards, which turns it into Anki flashcards: "
+        "one line (row) = one note, and a few settings say how the cards look.\n\n"
         "- Missing the target language, or the words/topic? Ask at most 2 short "
         "questions, in one message, in the learner's language. Anything else has a "
         "default (section 4): do not ask, go ahead.\n"
-        "- Talk to the learner in their language; the CSV follows this guide.\n"
+        "- Talk to the learner in their language; the set follows this guide.\n"
         "- Aim: cards that look good and open with no warnings.\n"
     )
     w(
         "## 2. Output contract\n\n"
-        "1. Exactly one CSV. UTF-8. Comma-separated, RFC 4180: put a field in "
-        'double quotes if it holds a comma, a double quote (written `""`) or a '
-        "line break. No space after a separating comma.\n"
-        "2. Row 1: the recipe's headers, as the recipe has them (most have no "
-        "`ID` column; section 3).\n"
-        "3. Row 2: the settings row. Its first cell starts `#config name=<set name>`.\n"
-        "4. Then one row per card. Every row has as many cells as row 1.\n"
-        "5. If you can create files, attach it as a downloadable `.csv`. Otherwise "
-        "give one fenced code block with `csv` as its language, and nothing else "
-        "inside it.\n"
-        "6. Suggest a file name: lowercase ASCII with hyphens, e.g. "
-        "`travel-b1.csv`.\n"
-        "7. No prose, comments, Markdown or HTML inside the CSV. Say anything "
-        "else outside it, briefly.\n"
+        "Two forms carry the same set. The settings keys are identical; only where "
+        "they sit differs.\n\n"
+        "**Text form (the default).** One fenced code block with `text` as its "
+        "language, and nothing else inside it:\n\n"
+        "1. Line 1: `#config name=<set name>`, then any deck keys "
+        "(`#config name=Travel B1; theme=matcha`).\n"
+        "2. Line 2: the column names, separated by ` | `. A column's settings go in "
+        "brackets after its name: `Word [tts=en_US; bold]`. A name without brackets "
+        "has default settings.\n"
+        "3. Then one card per line, its cells separated by ` | `, as many as there "
+        "are names. A cell never holds `|` or a line break.\n\n"
+        "**Table form** - only when the learner asks for a table, a spreadsheet, "
+        "Google Sheets, Excel or a file:\n\n"
+        "1. Row 1: the column names.\n"
+        "2. Row 2: the settings row. Its first cell is `#config name=<set name>`, "
+        "the deck keys and the first column's own settings "
+        "(`#config name=Travel B1; tts=en_US; bold`); every other cell holds its "
+        "column's settings, or is empty.\n"
+        "3. Then one row per card.\n"
+        "4. If you can create files, attach it as a `.csv` (UTF-8, RFC 4180: quote "
+        'a field holding a comma, a double quote (written `""`) or a line break; '
+        "no space after a comma) with a short lowercase ASCII file name, "
+        "`travel-b1.csv`. Otherwise give one fenced `csv` block.\n\n"
+        "Which form? Text, unless the learner mentions a table, a sheet, Excel or a "
+        "file. If you really cannot tell, ask in one short question. Say anything "
+        "else outside the block, briefly; no prose, Markdown or HTML inside it.\n"
     )
     w(
         "## 3. Keys (IDs) and the set name\n\n"
@@ -388,9 +460,8 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
         "header, short, unique and stable: `w01`, `w02`, ... (`w001` for more "
         "than 99 cards). The word can then be corrected without losing progress, "
         "so an ID must never change or be reused for another word. Any recipe "
-        "can take one: add `ID` as the first header, move `#config ...` and the "
-        "deck keys into its cell, and leave the first column's own settings in "
-        "its cell.\n"
+        "can take one: add `ID` as the first column name, with no settings of its "
+        "own (in the table form the `#config` cell is then the ID column's).\n"
         "- Adding to an existing list: if the learner gives you their CSV, return "
         "the whole file, old rows unchanged, new rows after them (with an `ID` "
         "column, continuing after the highest ID; never reuse one). If they only "
@@ -418,10 +489,10 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
         "| both directions, hai chiều | Reverse |\n"
         "| pictures, ảnh (and they give URLs or ask for pictures) | Picture words |\n"
         "| facts, Q&A, not a language | Basic |\n\n"
-        "Change only the words. Keep the recipe's headers and settings row, "
-        "except: you may rename a content header (any language works; its "
-        "settings stay in the same column), you may drop a column (drop its "
-        "settings cell too) and you may add `theme=` from section 6 if the learner "
+        "Change only the words. Keep the recipe's column names and settings, "
+        "except: you may rename a column (any language works; its settings stay "
+        "with it), you may drop a column (and its settings) and you may add "
+        "`theme=` from section 6 if the learner "
         "asks for a look. Write `label=` text and any sample-like note in the "
         "learner's language. For a language not listed, use the Vocabulary recipe "
         "with that language's full `tts` code and no `voices=`.\n"
@@ -429,12 +500,17 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
 
     w(
         "## 5. Recipes\n\n"
-        "Each is a complete, valid CSV (headers, settings row, 2 sample rows). "
-        "Copy it, set `name=`, replace the sample rows.\n"
+        "Each is a complete, valid set in the text form (settings line, names, 2 "
+        "sample cards). Copy it, set `name=`, replace the sample cards. The first "
+        "is shown in the table form as well: for a table, move each column's "
+        "brackets into row 2 under it, and the `#config` line's keys to the front "
+        "of row 2's first cell.\n"
     )
-    for rid, title, _when, rows, lang in recipes(templates, cloze_rows):
-        text = _csv(rows)
-        check(text, rid, tm, card_layout, workbook)
+    listed = recipes(templates, cloze_rows)
+    texts = [as_text(rows, sc._DECK_KEYS) for _, _, _, rows, _ in listed]
+    for (rid, *_), tsv in zip(listed, text_to_tsv(texts), strict=True):
+        check(tsv, rid, tm, card_layout, workbook, kind="tsv")
+    for (rid, title, _when, rows, lang), text in zip(listed, texts, strict=True):
         blocks[rid] = text
         w(f"### {title}\n")
         if rid == "vocab-en_US":
@@ -488,21 +564,22 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
                 "`https://commons.wikimedia.org/wiki/Special:FilePath/<File name>"
                 "?width=500`. Never invent a URL; leave the cell empty if unsure.\n"
             )
-        w(f"```csv\n{text}```\n")
+        w(f"```text\n{text}```\n")
+        if rid == "vocab-en_US":
+            table = _csv(rows)
+            check(table, rid, tm, card_layout, workbook)
+            blocks["table"] = table
+            w(f"The same set in the table form, as CSV:\n\n```csv\n{table}```\n")
 
     w(
-        "## 6. The settings row\n\n"
-        "Row 2. Its first cell starts `#config`. With an `ID` column, that cell holds "
-        "only the deck settings and every other cell its column's settings. "
-        "Without one, the first cell is shared: `name`, `reverse`, `theme` in it "
-        "are the deck's, every other key is the first column's "
-        "(`#config name=Travel B1; theme=matcha; size=44; bold`). "
-        "A cell is `key=value` pairs separated by "
-        "`;`, a bare key is a flag (`size=44; bold; tts=en_US`). An empty cell "
-        "means defaults. Quote a cell that has a comma (`voices=A,B`). Use only "
+        "## 6. The settings\n\n"
+        "A column's settings are `key=value` pairs separated by `;`; a bare key is "
+        "a flag (`size=44; bold; tts=en_US`). No settings means defaults. In the "
+        "text form they go in brackets after the column's name and the deck keys "
+        "on the `#config` line; in the table form all of them go in row 2: the "
+        "first cell `#config` + the deck keys + the first column's keys, then one "
+        "cell per column (quote a CSV cell holding a comma, `voices=A,B`). Use only "
         "the keys below: anything else shows the learner a warning.\n\n"
-        "Deck settings go in the `#config` cell: "
-        "`#config name=Travel B1; theme=matcha`.\n\n"
         + _split_tables({**KEY_NOTES, **DECK_NOTES}, values, sc, site)
     )
     w(
@@ -545,28 +622,33 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
     )
     w(
         "## 8. Final checklist\n\n"
-        "- [ ] Row 1: the recipe's headers (`ID` first only if it has one).\n"
-        "- [ ] Row 2: `#config name=...`, then only keys from section 6.\n"
+        "- [ ] Text form, unless a table or a file was asked for.\n"
+        "- [ ] Text: line 1 `#config name=...`, line 2 the names (settings in "
+        "brackets), then the cards. Table: row 1 the names, row 2 `#config "
+        "name=...` and the settings by column.\n"
+        "- [ ] Only keys from section 6.\n"
         "- [ ] Every key unique and none empty: the first-column words, or every "
         "`ID` (numbering continued if adding).\n"
-        "- [ ] Every row has as many cells as row 1; commas, quotes and line "
-        "breaks quoted.\n"
+        "- [ ] Every card has as many cells as there are names; no `|` in a text "
+        "cell; CSV commas, quotes and line breaks quoted.\n"
         "- [ ] `tts=` full codes; `voices=` only from the list.\n"
-        "- [ ] Cloze: deletions only in the `cloze` column, one in every row.\n"
+        "- [ ] Cloze: deletions only in the `cloze` column, one in every card.\n"
         "- [ ] Requested count, no duplicates, no invented URLs.\n"
-        "- [ ] One file (or one `csv` block) and a suggested file name.\n"
+        "- [ ] One block (or one file).\n"
     )
     w(
-        "## 9. Tell the learner where the file goes\n\n"
-        f"1. Open Sheet to Anki, {site}create/ , and press **Open .xlsx/.csv "
-        f"file** (VI: **Mở file .xlsx/.csv**). Or open Create sheet, {site}"
-        "sheet/ , to edit it first.\n"
+        "## 9. Tell the learner where it goes\n\n"
+        f"1. Open Sheet to Anki, {site}create/ . Text: press **Paste text** (VI: "
+        "**Dán văn bản**) and paste the block. A table or file: press **Open "
+        ".xlsx/.csv file** (VI: **Mở file .xlsx/.csv**), or paste the table into "
+        f"**Paste text**. Or open Create sheet, {site}sheet/ , to edit it first.\n"
         "2. Check the cards, then press **Download .apkg** and open that file in "
         "Anki, AnkiDroid or AnkiMobile.\n"
-        "3. Do not import the `.csv` into Anki or AnkiDroid directly: they would "
+        "3. Do not import a `.csv` into Anki or AnkiDroid directly: they would "
         "turn the settings row into a card.\n"
-        "4. Keep the `.csv`: to add words later, give it back to you and ask for "
-        "more.\n\n"
+        "4. Keep the text in a note (or keep the `.csv`): to add words later, add "
+        "lines under it, or give it back to you and ask for more. The same "
+        "`name=` updates the same deck.\n\n"
         f"More: {site}docs/en/settings-row/ · {site}docs/en/card-types/\n"
     )
     text = "\n".join(parts)
@@ -579,16 +661,17 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
 def llms_txt(site):
     return (
         "# SheetCards\n\n"
-        "> SheetCards turns a spreadsheet into Anki flashcards. Sheet to Anki, on "
-        "the web, reads a Google Sheet or a .csv/.xlsx file and builds an .apkg "
+        "> SheetCards turns a spreadsheet or a list into Anki flashcards. Sheet to "
+        "Anki, on the web, reads a Google Sheet, a .csv/.xlsx file or pasted text and builds an .apkg "
         "for Anki, AnkiDroid or AnkiMobile; an Anki add-on syncs Google Sheets. "
         "If a learner asks you to make flashcards for SheetCards, read the guide "
-        "below: it says how to write the CSV (headers, the `#config` settings row, "
-        "IDs) and gives ready recipes for vocabulary in many languages, Chinese "
+        "below: it says how to write the set (as text: a `#config` line, column "
+        "names with their settings in brackets, one card per line; or as a table "
+        "or CSV with a `#config` settings row) and gives ready recipes for vocabulary in many languages, Chinese "
         "writing, Japanese furigana, cloze, typed answers, reverse and picture "
         "cards.\n\n"
         "## Guide\n\n"
-        f"- [Write a flashcard CSV for SheetCards]({site}{GUIDE}): the "
+        f"- [Write a flashcard set for SheetCards]({site}{GUIDE}): the "
         "complete instructions for AI assistants, plain Markdown\n\n"
         "## Docs\n\n"
         f"- [Settings row]({site}docs/en/settings-row/)\n"

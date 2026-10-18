@@ -27,12 +27,51 @@ journey - chuyến đi
 - **Mở trong Tạo Sheet** đưa danh sách sang Tạo Sheet để thêm cột (phiên âm, ví
   dụ, ảnh…).
 
-### Một sheet CSV do trợ lý AI viết
+## Viết cả bộ bằng chữ
 
-Nếu bạn nhờ ChatGPT, Gemini hay Claude soạn sheet, chúng thường trả lời bằng
-một khối CSV. Dán nguyên câu trả lời vào **Dán văn bản**: khối ` ```csv ` được
-lấy ra, và nếu dòng đầu có cột `ID` hoặc dòng thứ hai là `#config`, sheet được
-mở nguyên như vậy, với các cột và settings row của nó.
+Một bộ flashcard có thể nằm gọn trong một ghi chú, kèm cả tên bộ và cài đặt. Có
+hai cách viết, cùng một bộ, cùng các key; chỉ khác chỗ đặt cài đặt.
+
+**Văn bản**, cho app ghi chú:
+
+```text
+#config name=Du lịch B1; theme=sakura
+Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]
+airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early.
+luggage | /ˈlʌɡ.ɪdʒ/ | hành lý | My luggage is too heavy.
+```
+
+1. **Dòng 1 là `#config`** với các key của cả bộ: `name=`, `theme=`,
+   `reverse`. Có thể bỏ, nhưng có `name=` thì lần sau dán lại sẽ cập nhật đúng
+   bộ cũ.
+2. **Dòng 2 là tên cột**, cách nhau bằng `|`. Cài đặt của một cột ghi trong
+   ngoặc vuông sau tên nó, đúng các key của [settings row](settings-row.md).
+   Tên không có ngoặc là cột dùng mặc định (cột đầu ở mặt trước, các cột sau ở
+   mặt sau).
+3. **Mỗi dòng sau là một card**, các ô cách nhau bằng `|`.
+
+**Bảng**, cho Google Sheets và Excel (file CSV hay bảng Markdown cũng là dạng
+này):
+
+| Word | IPA | Meaning | Example |
+| :--- | :--- | :--- | :--- |
+| `#config name=Du lịch B1; theme=sakura; tts=en_US; bold` | `color=muted` | | `italic` |
+| airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early. |
+
+Hàng 1 là tên cột, hàng 2 là settings row: ô đầu là `#config`, các key của cả bộ
+và cài đặt của cột đầu; mỗi ô sau là cài đặt của cột ở trên nó. Dán cả bảng vào
+**Dán văn bản** cũng được.
+
+Chỉ dán từ thôi? Trang hiện ô **Cài đặt** (đọc to, theme, mặt nào cho từng cột)
+và trả lại chính đoạn chữ của bạn đã thêm hai dòng đầu, có nút **Copy**. Dán
+đoạn đó vào ghi chú; tuần sau viết thêm từ xuống dưới rồi dán lại cả đoạn.
+
+## Dán cả một sheet CSV
+
+Chữ dạng CSV hay TSV (copy từ một file, hoặc trong khối ` ```csv `) cũng dán
+được vào **Dán văn bản**: khối ` ``` ` được lấy ra, và nếu dòng đầu có cột `ID`
+hoặc dòng thứ hai là `#config`, sheet được mở nguyên như vậy, với các cột và
+settings row của nó.
 
 ## Quizlet
 

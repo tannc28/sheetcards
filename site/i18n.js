@@ -1586,14 +1586,23 @@ const STRINGS = {
   },
   aiTitle: { en: "Ask AI to make your word set", vi: "Nhờ AI tạo bộ từ" },
   aiLead: {
-    en: "Copy this into ChatGPT, Gemini or Claude, change the parts in brackets, then put the file it gives back into Sheet to Anki.",
-    vi: "Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần trong ngoặc, rồi dán file nó trả về vào Sheet to Anki.",
+    en: "Copy this into ChatGPT, Gemini or Claude, change the highlighted parts, then paste the answer into Paste text in Sheet to Anki (or open the file it gives you).",
+    vi: "Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào Dán văn bản của Sheet to Anki (hoặc mở file nó gửi).",
   },
+  aiFormLabel: { en: "Answer as", vi: "Kiểu câu trả lời" },
+  aiFormText: { en: "Text", vi: "Văn bản" },
+  aiFormTable: { en: "Table", vi: "Bảng" },
   aiPrompt: {
-    en: (url) =>
-      `Read the guide at ${url}, then make me a CSV file: <span class="ai-slot">[30]</span> <span class="ai-slot">[English]</span> words about <span class="ai-slot">[travel]</span>, level <span class="ai-slot">[B1]</span>, meanings in <span class="ai-slot">[Vietnamese]</span>, with an example sentence. Set name: <span class="ai-slot">[Travel B1]</span>.`,
-    vi: (url) =>
-      `Đọc hướng dẫn tại ${url} rồi tạo cho tôi file CSV: <span class="ai-slot">[30]</span> từ <span class="ai-slot">[tiếng Anh]</span> chủ đề <span class="ai-slot">[du lịch]</span>, trình độ <span class="ai-slot">[B1]</span>, nghĩa tiếng Việt, có câu ví dụ. Tên bộ: <span class="ai-slot">[Du lịch B1]</span>.`,
+    en: () =>
+      `Make <span class="ai-slot">30</span> <span class="ai-slot">English</span> words about <span class="ai-slot">travel</span>, level <span class="ai-slot">B1</span>, meanings in <span class="ai-slot">Vietnamese</span>. Answer in one code block. Line 1 exactly: #config name=<span class="ai-slot">Travel B1</span>. Line 2: Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]. Then one word per line, columns separated by |.`,
+    vi: () =>
+      `Làm <span class="ai-slot">30</span> từ <span class="ai-slot">tiếng Anh</span> chủ đề <span class="ai-slot">du lịch</span>, trình độ <span class="ai-slot">B1</span>, nghĩa tiếng Việt. Trả lời bằng một khối code. Dòng 1 ghi đúng: #config name=<span class="ai-slot">Du lịch B1</span>. Dòng 2: Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]. Sau đó mỗi từ một dòng, các cột cách nhau bằng |.`,
+  },
+  aiPromptTable: {
+    en: () =>
+      `Make <span class="ai-slot">30</span> <span class="ai-slot">English</span> words about <span class="ai-slot">travel</span>, level <span class="ai-slot">B1</span>, meanings in <span class="ai-slot">Vietnamese</span>, as a table (or a CSV file if you can attach files). Row 1: Word | IPA | Meaning | Example. Row 2 is the settings row: first cell exactly #config name=<span class="ai-slot">Travel B1</span>; tts=en_US; bold, then color=muted, an empty cell, italic. Then one word per row.`,
+    vi: () =>
+      `Làm <span class="ai-slot">30</span> từ <span class="ai-slot">tiếng Anh</span> chủ đề <span class="ai-slot">du lịch</span>, trình độ <span class="ai-slot">B1</span>, nghĩa tiếng Việt, dạng bảng (hoặc file CSV nếu bạn đính kèm được file). Hàng 1: Word | IPA | Meaning | Example. Hàng 2 là settings row: ô đầu ghi đúng #config name=<span class="ai-slot">Du lịch B1</span>; tts=en_US; bold, rồi color=muted, một ô trống, italic. Sau đó mỗi từ một hàng.`,
   },
   aiPromptLabel: { en: "Prompt for the AI (you can edit it here)", vi: "Câu lệnh cho AI (sửa được ngay ở đây)" },
   aiCopy: { en: "Copy", vi: "Copy" },
@@ -1603,7 +1612,7 @@ const STRINGS = {
   aiOpenChatgpt: { en: "Open ChatGPT", vi: "Mở ChatGPT" },
   aiOpenClaude: { en: "Open Claude", vi: "Mở Claude" },
   aiOpenGemini: { en: "Open Gemini", vi: "Mở Gemini" },
-  aiMore: { en: "More prompts, and what to do if the AI cannot open the link →", vi: "Thêm câu lệnh mẫu, và cách làm khi AI không mở được link →" },
+  aiMore: { en: "More prompts, and fancier cards (pictures, typing, cloze) →", vi: "Thêm câu lệnh mẫu, và card cầu kỳ hơn (ảnh, gõ đáp án, cloze) →" },
   doorNewTitle: {
     en: "No sheet yet? Write one on the web",
     vi: "Chưa có sheet? Soạn trên web",

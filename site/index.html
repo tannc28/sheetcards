@@ -176,12 +176,16 @@
    </div>
   </section>
 
-  <!-- Asking an AI assistant for the words. The prompt is written by home.js,
-       because it names the guide by the address this page was served from. -->
+  <!-- Asking an AI assistant for the words, as text (one code block) or as a
+       table (or CSV). The prompt is written by home.js from the switch. -->
   <section class="band" id="ai" aria-labelledby="ai-title">
     <h2 class="section-title reveal" id="ai-title" data-i18n="aiTitle">Nhờ AI tạo bộ từ</h2>
     <div class="aibox reveal">
-      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần trong ngoặc, rồi dán file nó trả về vào Sheet to Anki.</p>
+      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào Dán văn bản của Sheet to Anki (hoặc mở file nó gửi).</p>
+      <div class="ai-forms" role="group" aria-label="Kiểu câu trả lời" data-i18n-attr="aria-label:aiFormLabel">
+        <button type="button" class="ai-form" data-form="text" aria-pressed="true" data-i18n="aiFormText">Văn bản</button>
+        <button type="button" class="ai-form" data-form="table" aria-pressed="false" data-i18n="aiFormTable">Bảng</button>
+      </div>
       <div class="ai-prompt" id="ai-prompt" contenteditable="plaintext-only" role="textbox" aria-multiline="true"
            spellcheck="false" aria-label="Câu lệnh cho AI (sửa được ngay ở đây)" data-i18n-attr="aria-label:aiPromptLabel"></div>
       <div class="ai-actions">
@@ -191,7 +195,7 @@
         <a class="btn-quiet ai-open" id="ai-gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener"><span data-icon="external-link"></span><span data-i18n="aiOpenGemini">Mở Gemini</span></a>
         <span class="ai-status small muted" id="ai-status" aria-live="polite"></span>
       </div>
-      <p class="fine"><a href="./docs/ai/" data-doc="ai/" data-i18n="aiMore">Thêm câu lệnh mẫu, và cách làm khi AI không mở được link →</a></p>
+      <p class="fine"><a href="./docs/ai/" data-doc="ai/" data-i18n="aiMore">Thêm câu lệnh mẫu, và card cầu kỳ hơn (ảnh, gõ đáp án, cloze) →</a></p>
     </div>
   </section>
 

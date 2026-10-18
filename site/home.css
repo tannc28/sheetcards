@@ -673,6 +673,9 @@ a.btn, a.btn-quiet { text-decoration: none; }
   border-radius: 22px; background: var(--panel); border: 1px solid var(--line);
 }
 .ai-lead { margin: 0 0 1rem; color: var(--muted); }
+.ai-forms { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 .75rem; border-radius: 999px; background: var(--sunken); border: 1px solid var(--line); }
+.ai-form { min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 650; color: var(--muted); }
+.ai-form[aria-pressed="true"] { background: var(--panel); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
 .ai-prompt {
   padding: 14px 16px; border-radius: 14px;
   background: var(--sunken); border: 1.5px solid var(--line);

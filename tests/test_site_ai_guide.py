@@ -31,6 +31,8 @@ def _builder():
 
 @pytest.fixture(scope="module")
 def built(tmp_path_factory):
+    if shutil.which("node") is None:
+        pytest.skip("node checks the text recipes")
     build = _builder()
     out = tmp_path_factory.mktemp("site")
     pkg = out / "sc"
@@ -73,6 +75,10 @@ class SimpleModules:
 
 def _blocks(text):
     return re.findall(r"```csv\n(.*?)```", text, re.S)
+
+
+def _texts(text):
+    return re.findall(r"```text\n(.*?)```", text, re.S)
 
 
 def test_the_guide_is_built_and_fits_the_budget(built):
@@ -130,29 +136,62 @@ def test_the_ranges_the_guide_states_are_the_parsers(built):
         assert warns(bad), bad  # fmt: skip
 
 
-def test_every_sample_csv_opens_without_a_warning(built):
-    blocks = _blocks(built.guide)
-    assert len(blocks) >= 15
-    for text in blocks:
-        upload = json.loads(built.wb.read_upload(text.encode("utf-8"), "ai.csv"))
-        parsed = built.tm.parse_tsv_data(upload["tsv"], [])
-        deck = built.tm.build_remote_deck_from_tsv(parsed, "", [])
-        cfg = deck.sheet_config
-        assert cfg.present, text
-        assert not cfg.warnings, (cfg.warnings, text)
-        assert cfg.deck_name, text
-        # Most recipes are keyed by their first column; the rest lead with ID.
-        keys = [note.get("ID") for note in deck.notes]
-        assert all(keys) and len(set(keys)) == len(keys), text
-        assert len(deck.notes) == 2 and not deck.duplicate_ids, text
-        front, _ = built.cl.split_sides(deck.plan, cfg)
-        assert front, text
-        for note in deck.notes:
-            assert any(note.get(h) for h in front), text
-        lines = upload["tsv"].splitlines()
-        width = len(lines[0].split("\t"))
-        for row in lines:
-            assert len(row.split("\t")) == width, row
+def _check_deck(built, tsv, text):
+    parsed = built.tm.parse_tsv_data(tsv, [])
+    deck = built.tm.build_remote_deck_from_tsv(parsed, "", [])
+    cfg = deck.sheet_config
+    assert cfg.present, text
+    assert not cfg.warnings, (cfg.warnings, text)
+    assert cfg.deck_name, text
+    # Most recipes are keyed by their first column; the rest lead with ID.
+    keys = [note.get("ID") for note in deck.notes]
+    assert all(keys) and len(set(keys)) == len(keys), text
+    assert len(deck.notes) == 2 and not deck.duplicate_ids, text
+    front, _ = built.cl.split_sides(deck.plan, cfg)
+    assert front, text
+    for note in deck.notes:
+        assert any(note.get(h) for h in front), text
+    lines = tsv.splitlines()
+    width = len(lines[0].split("\t"))
+    for row in lines:
+        assert len(row.split("\t")) == width, row
+    return deck
+
+
+def test_every_text_recipe_opens_without_a_warning(built):
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        import ai_guide
+    finally:
+        sys.path.pop(0)
+    texts = _texts(built.guide)
+    assert len(texts) >= 15
+    for text in texts:
+        lines = text.splitlines()
+        assert lines[0].startswith("#config name="), text
+        assert "[" in lines[1] or "|" in lines[1], text
+    for text, tsv in zip(texts, ai_guide.text_to_tsv(texts), strict=True):
+        upload = json.loads(built.wb.read_upload(tsv.encode("utf-8"), "ai.tsv"))
+        _check_deck(built, upload["tsv"], text)
+
+
+def test_the_table_form_is_the_same_set_as_the_text_form(built):
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        import ai_guide
+    finally:
+        sys.path.pop(0)
+    (table,) = _blocks(built.guide)
+    text = _texts(built.guide)[0]
+    from_csv = json.loads(built.wb.read_upload(table.encode("utf-8"), "ai.csv"))["tsv"]
+    from_text = ai_guide.text_to_tsv([text])[0]
+    a = _check_deck(built, from_csv, table)
+    b = _check_deck(built, from_text, text)
+    assert a.plan.content_headers == b.plan.content_headers
+    for header in a.plan.content_headers:
+        assert vars(a.sheet_config.for_field(header)) == vars(
+            b.sheet_config.for_field(header)
+        ), header
 
 
 def test_the_guide_covers_every_card_type_asked_for(built):
@@ -192,7 +231,9 @@ def test_the_guide_covers_every_card_type_asked_for(built):
 
 
 def test_the_guide_shows_both_kinds_of_key(built):
-    heads = [b.splitlines()[0].split(",")[0] for b in _blocks(built.guide)]
+    heads = [
+        b.splitlines()[1].split(" | ")[0].split(" [")[0] for b in _texts(built.guide)
+    ]
     assert "ID" in heads and any(h != "ID" for h in heads), heads
     for text in ("No `ID` column", "An `ID` column", "`word (2)`", "never reuse"):
         assert text in built.guide, text

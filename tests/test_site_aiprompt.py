@@ -37,27 +37,55 @@ def _run(expr):
     return json.loads(out.stdout)
 
 
-@pytest.mark.parametrize(
-    "root",
-    [
-        "https://tannc28.github.io/sheetcards/",
-        "https://cards.example.org/",
-        "http://localhost:8123/",
-    ],
-)
+@pytest.mark.parametrize("key", ["aiPrompt", "aiPromptTable"])
 @pytest.mark.parametrize("lang", ["vi", "en"])
-def test_the_prompt_names_the_guide_under_the_given_root(root, lang):
+def test_the_prompt_teaches_the_format_with_its_slots_marked(key, lang):
     got = _run(
         f"(i.setLang({json.dumps(lang)}, false),"
-        f" m.promptFor((u) => i.t('aiPrompt', u), {json.dumps(root)}))"
+        f" m.promptFor(() => i.t({json.dumps(key)}), 'https://x.example/'))"
     )
-    assert f"{root}ai.md" in got["text"]
     assert "<" not in got["text"] and "&amp;" not in got["text"]
+    assert "#config name=" in got["text"]
     # The slots the reader is asked to change are marked, and survive as text.
-    slots = re.findall(r'<span class="ai-slot">(\[[^]]+\])</span>', got["html"])
-    assert len(slots) >= 4
+    slots = re.findall(r'<span class="ai-slot">([^<]+)</span>', got["html"])
+    assert len(slots) >= 5
     for slot in slots:
         assert slot in got["text"]
+    if key == "aiPrompt":
+        assert (
+            "Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]"
+            in got["text"]
+        )
+    else:
+        assert "Word | IPA | Meaning | Example" in got["text"]
+
+
+def test_a_text_prompt_answer_reads_as_the_deck_it_describes():
+    """What the text prompt asks for, written out, is a set with no warnings."""
+    from src.tsv_model import build_remote_deck_from_tsv
+    from src.tsv_model import parse_tsv_data
+
+    answer = (
+        "#config name=Du lịch B1\n"
+        "Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]\n"
+        "airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early.\n"
+    )
+    script = (
+        f"Promise.all([import({json.dumps((SITE / 'importformats.js').as_uri())}),"
+        f" import({json.dumps((SITE / 'sharelink.js').as_uri())})]).then(([m, s]) => {{"
+        f"const r = m.readPaste({json.dumps(answer)});"
+        "process.stdout.write(JSON.stringify(s.toTsv(m.pasteGrid({name: '', rows: r.rows,"
+        " header: r.header, cells: r.cells, deck: r.deck}))));})"
+    )
+    out = subprocess.run(
+        [NODE, "--no-warnings", "-e", script],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    deck = build_remote_deck_from_tsv(parse_tsv_data(json.loads(out.stdout)), "")
+    assert deck.sheet_config.warnings == []
+    assert deck.sheet_config.deck_name == "Du lịch B1"
 
 
 def test_the_quick_open_links_carry_the_prompt():

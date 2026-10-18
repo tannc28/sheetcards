@@ -468,13 +468,24 @@ addEventListener("drop", (e) => {
 
 // --- asking an AI for the words ---------------------------------------------
 
-// The prompt names the guide by this site's own address, so it is right on any
-// domain the site moves to. It is editable in place: ChatGPT sends a `?q=`
+// Two prompts, one per form a set can come back in: text (one code block, for
+// pasting) or a table (or a CSV file). Editable in place: ChatGPT sends a `?q=`
 // prompt as soon as it opens, so the slots are best filled in here first.
 const aiPrompt = $("#ai-prompt");
 
+let aiForm = "text";
+
 function paintAiPrompt() {
-  aiPrompt.innerHTML = promptFor((url) => t("aiPrompt", url), ROOT).html;
+  aiPrompt.innerHTML = promptFor(() => t(aiForm === "table" ? "aiPromptTable" : "aiPrompt"), ROOT).html;
+  for (const b of document.querySelectorAll(".ai-form")) b.setAttribute("aria-pressed", String(b.dataset.form === aiForm));
+}
+
+for (const b of document.querySelectorAll(".ai-form")) {
+  b.addEventListener("click", () => {
+    aiForm = b.dataset.form;
+    $("#ai-status").textContent = "";
+    paintAiPrompt();
+  });
 }
 
 const aiText = () => aiPrompt.textContent.replace(/\s+/g, " ").trim();

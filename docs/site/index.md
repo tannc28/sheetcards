@@ -114,7 +114,9 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 
 1. Dán link vào [Sheet to Anki](../create/). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
-   sẽ làm ra.
+   sẽ làm ra. Chưa có sheet mà có danh sách từ trong ghi chú? Bấm **Dán văn
+   bản**; cả bộ, kèm tên và cài đặt, viết được bằng chữ (xem
+   [Viết cả bộ bằng chữ](import.md#viet-ca-bo-bang-chu)).
 2. Kiểm tra các card: các deck, từng dòng, và từng card hoàn chỉnh mà bạn có thể
    lật, nghe và gõ đáp án vào.
 3. Bấm **Download .apkg** để lấy file.

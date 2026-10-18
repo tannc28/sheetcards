@@ -28,12 +28,53 @@ journey - chuyến đi
 - **Open in Create sheet** takes the list to Create sheet to add columns
   (reading, example, picture…).
 
-### A CSV sheet written by an AI assistant
+## Write a whole set as text
 
-Ask ChatGPT, Gemini or Claude for a sheet and they usually answer with a CSV
-block. Paste the whole answer into **Paste text**: the ` ```csv ` block is taken
-out, and when its first row has an `ID` column or its second row is `#config`,
-the sheet opens as it is, with its own columns and settings row.
+A flashcard set fits in one note, with its name and settings. There are two ways
+to write it: the same set, the same keys; only where the settings sit differs.
+
+**Text**, for notes apps:
+
+```text
+#config name=Travel B1; theme=sakura
+Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]
+airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early.
+luggage | /ˈlʌɡ.ɪdʒ/ | hành lý | My luggage is too heavy.
+```
+
+1. **Line 1 is `#config`** with the keys for the whole set: `name=`, `theme=`,
+   `reverse`. It can be left out, but with `name=` pasting it again later
+   updates the same set.
+2. **Line 2 is the column names**, separated by `|`. A column's settings go in
+   square brackets after its name, with the keys of the
+   [settings row](settings-row.md). A name without brackets uses the defaults
+   (the first column on the front, the rest on the back).
+3. **Every line after that is a card**, its cells separated by `|`.
+
+**Table**, for Google Sheets and Excel (a CSV file or a Markdown table is this
+form too):
+
+| Word | IPA | Meaning | Example |
+| :--- | :--- | :--- | :--- |
+| `#config name=Travel B1; theme=sakura; tts=en_US; bold` | `color=muted` | | `italic` |
+| airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early. |
+
+Row 1 is the column names, row 2 the settings row: the first cell is `#config`,
+the keys for the whole set and the first column's settings; every other cell is
+the settings of the column above it. Pasting the whole table into **Paste text**
+works too.
+
+Only pasting words? The page shows a **Settings** panel (read aloud, theme, which
+side each column goes on) and hands your own text back with the first two lines
+added, with a **Copy** button. Paste that into your note; next week add words at
+the bottom and paste the whole thing again.
+
+## Paste a whole CSV sheet
+
+CSV or TSV text (copied from a file, or inside a ` ```csv ` block) can be pasted
+into **Paste text** too: the ` ``` ` block is taken out, and when its first row
+has an `ID` column or its second row is `#config`, the sheet opens as it is,
+with its own columns and settings row.
 
 ## Quizlet
 

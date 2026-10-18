@@ -1,10 +1,9 @@
 /**
  * The landing page's "Nhờ AI tạo bộ từ": a prompt a reader copies into an AI
- * assistant, naming the guide the assistant should read.
- *
- * The guide's address is worked out from the site's own root (site/paths.js),
- * never written down, so the prompt names whatever domain the site is served
- * from. DOM-free, so tests/test_site_aiprompt.py runs it in node.
+ * assistant. The prompt says the whole format itself (text or table), so a
+ * simple set needs no guide; a translated string that does name one is handed
+ * the guide's address, worked out from the site's own root (site/paths.js),
+ * never written down. DOM-free, so tests/test_site_aiprompt.py runs it in node.
  */
 
 /** The guide an assistant reads, under the site's root. */

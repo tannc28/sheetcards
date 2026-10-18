@@ -123,7 +123,10 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
 ## 3. Make the flashcards
 
 1. Paste the link into [Sheet to Anki](../../create/). It runs the add-on's
-   own code in your browser, so what you see is what the add-on would make.
+   own code in your browser, so what you see is what the add-on would make. No
+   sheet, but a word list in your notes? Press **Paste text**; a whole set, with
+   its name and settings, can be written as text (see
+   [Write a whole set as text](import.md#write-a-whole-set-as-text)).
 2. Check the cards: the decks, every row, and each finished card, which you can
    turn over, listen to and type into.
 3. Press **Download .apkg** to get the file.
