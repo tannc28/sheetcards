@@ -1,33 +1,42 @@
 # The example workbook
 
-Every feature has a working example, and they all live in one file. Paste this
-link into [Sheet to Anki](../../create.html), or into **Tools → SheetCards → Connect
-a Google Sheet…**, and look at the result:
+Every feature has a working example, and they all live in one file of
+thirty-one sheets, ordered from simple to advanced. Each sheet is a deck you could
+study, and each shows one feature.
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-It has thirty-one sheets, each its own deck, ordered from the smallest sheet that
-works to decks you could keep studying. Most of it is English for Vietnamese
-speakers; Chinese, Japanese and Korean appear where a feature belongs to them
-(handwriting, furigana, headers in other scripts). Nothing in the add-on is
-specific to languages: a deck of anatomy works the same way.
+- **See it in [Sheet to Anki](../../create.html#example)**: paste the link above,
+  or [download the file](../../sheetcards-examples.xlsx) and upload it. Pick a
+  sheet in the bar at the top, check the cards, then Download `.apkg`.
+- **Start your own sheet from one in [Create sheet](../../sheet.html)**: download
+  the file, press **Open a file to add words** and pick the sheet. To keep only
+  its columns and settings row, upload the file under **Your templates**.
+- **With the add-on**: paste the link into **Tools → SheetCards → Connect a Google
+  Sheet…**; every sheet in the file becomes its own deck.
 
-The quickest way to learn a feature is to find the sheet below that uses it, open
-it in Sheet to Anki and copy its settings row.
+A sheet without `name=` becomes a deck named after the file and the sheet, such
+as `sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 declares
+`name=`, so its deck carries that name, from the `.apkg` and from the add-on.
+
+Most of it is English for Vietnamese speakers; Chinese, Japanese, Korean and
+others appear where a feature belongs to them. Nothing in SheetCards is specific
+to one language: a deck of anatomy works the same way. The quickest way to learn
+a feature is to find the sheet below that uses it and copy its settings row.
 
 | Sheet | What it shows |
 | :--- | :--- |
 | `01 Basic (cơ bản)` | `ID`, `Front`, `Back` — a word each in English, Chinese, Japanese, Korean, German and Spanish, answered in Vietnamese. No settings row, no `SYNC` |
-| `02 Sync & subdecks (deck con)` | `SYNC` gating, `SUBDECK 1`/`2`, `TAGS` |
+| `02 Sync & subdecks (deck con)` | `SYNC` gating, `SUBDECK 1`/`2` (a row naming no level goes to `Unsorted`), `TAGS` |
 | `03 Card layout (bố cục thẻ)` | `side`, `size`, all three colour forms, `bold`, `italic`, `label`, `hint`, `side=hide`, deck-wide `align` |
 | `04 Reverse (thẻ ngược)` | one row, two cards |
 | `05 Type the answer (gõ đáp án)` | `type=nc`, so the Vietnamese marks do not have to be typed |
 | `06 Cloze (điền chỗ trống)` | a declared `cloze` column, including a row with two deletions |
 | `07 Images (hình ảnh)` | `image` on the prompt, with `size` — the picture asks and the Chinese word answers |
 | `08 Audio (âm thanh)` | `audio`, listen-then-recall: an English word spoken by a person, not a synthesiser |
-| `09 Video (video nhúng)` | every YouTube link form the add-on rewrites, plus a direct file |
+| `09 Video (video nhúng)` | every YouTube link form that is turned into a player, plus a direct file |
 | `10 Speech (đọc thành tiếng)` | `tts=en_US`, a `voices=` preference, deck-wide `speed`, and a hidden column that repeats the phrase at half speed |
 | `11 Chinese writing (gõ chữ)` | write the character, then check it against a stroke-order animation — `type` + `image` + `hint` + `tts` on one card, and `subdeck=1` filing it by HSK level |
 | `12 Chinese drawing (viết tay)` | `draw` — you write the character stroke by stroke and each stroke is marked |
@@ -55,4 +64,4 @@ The workbook is generated from `SHEETS` in
 [`scripts/build_examples.py`](https://github.com/tannc28/sheetcards/blob/main/scripts/build_examples.py),
 and the test suite fails if any setting has no example in it.
 [`examples/README.md`](https://github.com/tannc28/sheetcards/blob/main/examples/README.md)
-walks through each sheet in detail.
+says more about each sheet and how to edit the file.

@@ -1,33 +1,43 @@
 # File ví dụ
 
-Mỗi tính năng đều có một ví dụ chạy được, và tất cả nằm trong một file. Dán link
-này vào [Sheet to Anki](../create.html), hoặc vào **Tools → SheetCards → Connect a
-Google Sheet…**, rồi xem kết quả:
+Mỗi tính năng đều có một ví dụ chạy được, và tất cả nằm trong một file ba mươi
+mốt sheet, xếp từ đơn giản tới nâng cao. Mỗi sheet là một deck học được và minh
+hoạ một tính năng.
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-File có ba mươi mốt sheet, mỗi sheet là một deck riêng, xếp từ sheet nhỏ nhất
-chạy được tới những deck bạn có thể học tiếp lâu dài. Phần lớn là tiếng Anh cho
-người Việt; tiếng Trung, Nhật và Hàn xuất hiện ở những tính năng dành cho chúng
-(viết tay, furigana, tên cột bằng chữ khác). Không có gì trong add-on gắn với
-riêng ngôn ngữ: một deck giải phẫu học cũng chạy y như vậy.
+- **Xem trong [Sheet to Anki](../create.html#example)**: dán link trên, hoặc
+  [tải file về](../sheetcards-examples.xlsx) rồi upload. Chọn sheet ở thanh phía
+  trên, xem card, rồi Download `.apkg`.
+- **Lấy một sheet làm điểm xuất phát trong [Tạo Sheet](../sheet.html)**: tải file
+  về, bấm **Mở file để thêm từ** rồi chọn sheet. Chỉ muốn giữ cột và settings
+  row thì upload file vào **Template của bạn**.
+- **Với add-on**: dán link vào **Tools → SheetCards → Connect a Google Sheet…**;
+  mỗi sheet trong file thành một deck.
 
-Cách nhanh nhất để học một tính năng là tìm sheet dùng nó trong bảng dưới, mở
-trong Sheet to Anki và copy settings row của nó.
+Sheet không có `name=` thành deck mang tên file và tên sheet, ví dụ
+`sheetcards-examples::05 Type the answer (gõ đáp án)`. Sheet 16 có `name=`, nên
+deck của nó mang đúng tên đó, cả từ `.apkg` lẫn từ add-on.
+
+Phần lớn là tiếng Anh cho người Việt; tiếng Trung, Nhật, Hàn và các thứ tiếng
+khác xuất hiện ở những tính năng dành cho chúng. Không có gì trong SheetCards gắn
+với riêng một ngôn ngữ: một deck giải phẫu học cũng chạy y như vậy. Cách nhanh
+nhất để học một tính năng là tìm sheet dùng nó trong bảng dưới và copy settings
+row của nó.
 
 | Sheet | Nội dung minh hoạ |
 | :--- | :--- |
 | `01 Basic (cơ bản)` | `ID`, `Front`, `Back` — mỗi thứ tiếng một từ: Anh, Trung, Nhật, Hàn, Đức và Tây Ban Nha, trả lời bằng tiếng Việt. Không có settings row, không có `SYNC` |
-| `02 Sync & subdecks (deck con)` | bật/tắt dòng bằng `SYNC`, `SUBDECK 1`/`2`, `TAGS` |
+| `02 Sync & subdecks (deck con)` | bật/tắt dòng bằng `SYNC`, `SUBDECK 1`/`2` (dòng không ghi tầng nào vào `Unsorted`), `TAGS` |
 | `03 Card layout (bố cục thẻ)` | `side`, `size`, cả ba dạng màu, `bold`, `italic`, `label`, `hint`, `side=hide`, `align` cho cả deck |
 | `04 Reverse (thẻ ngược)` | một dòng, hai card |
 | `05 Type the answer (gõ đáp án)` | `type=nc`, nên không phải gõ dấu tiếng Việt |
 | `06 Cloze (điền chỗ trống)` | một cột `cloze` được khai báo, có cả một dòng với hai chỗ trống |
 | `07 Images (hình ảnh)` | `image` ở mặt hỏi, kèm `size` — ảnh hỏi và từ tiếng Trung trả lời |
 | `08 Audio (âm thanh)` | `audio`, nghe rồi nhớ lại: một từ tiếng Anh do người thật đọc, không phải giọng máy |
-| `09 Video (video nhúng)` | mọi dạng link YouTube mà add-on chuyển đổi, cộng một file trực tiếp |
+| `09 Video (video nhúng)` | mọi dạng link YouTube được chuyển thành trình phát, cộng một file trực tiếp |
 | `10 Speech (đọc thành tiếng)` | `tts=en_US`, ưu tiên giọng bằng `voices=`, `speed` cho cả deck, và một cột ẩn đọc lại câu với nửa tốc độ |
 | `11 Chinese writing (gõ chữ)` | viết chữ, rồi đối chiếu với hoạt hình thứ tự nét — `type` + `image` + `hint` + `tts` trên một card, và `subdeck=1` xếp theo cấp HSK |
 | `12 Chinese drawing (viết tay)` | `draw` — bạn viết chữ từng nét và mỗi nét đều được chấm |
@@ -55,4 +65,4 @@ File này được sinh ra từ `SHEETS` trong
 [`scripts/build_examples.py`](https://github.com/tannc28/sheetcards/blob/main/scripts/build_examples.py),
 và bộ test sẽ fail nếu có setting nào không có ví dụ trong đó.
 [`examples/README.md`](https://github.com/tannc28/sheetcards/blob/main/examples/README.md)
-giải thích chi tiết từng sheet.
+nói thêm về từng sheet và cách sửa file.
