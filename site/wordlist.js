@@ -27,6 +27,8 @@ export const SEPARATORS = [
   { id: "tab", label: "Tab", re: /\t/ },
   // One family: a notes app turns some " - " into " – " and leaves others.
   { id: "dash", label: " - ", re: /\s+[-–—]\s+/ },
+  // What RemNote and a few other apps write between the two sides.
+  { id: "arrow", label: ">>", re: /\s*(?:>>|=>|->|→|::)\s*/ },
   { id: "equals", label: "=", re: /\s*=\s*/ },
   { id: "pipe", label: "|", re: /\s*\|\s*/ },
   { id: "semicolon", label: ";", re: /\s*;\s*/ },

@@ -39,6 +39,7 @@ import { detectDevice } from "./devices.js";
 import { warningText } from "./sheetwarnings.js";
 import { mountWordPaste } from "./wordpaste.js";
 import { mountSuggest } from "./suggestpanel.js";
+import { withHeaders } from "./importformats.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -152,6 +153,7 @@ def open_file(data, name, index=0):
             "tab": out["tab"],
             "rows": rows,
             "encoding": out.get("encoding", ""),
+            "package": out.get("package"),
         },
         ensure_ascii=False,
     )
@@ -554,7 +556,10 @@ function newRow(values = []) {
  * is the key (deriveIds), as it is to the add-on and the .apkg.
  */
 function fromGrid(grid, title) {
-  const rows = (grid || []).map((row) => row.map((cell) => String(cell ?? "")));
+  // A file with no header row (term, definition) is read as words, under
+  // Mặt trước / Mặt sau: importformats.js decides, as it does on Sheet to Anki.
+  const headed = withHeaders((grid || []).map((row) => row.map((cell) => String(cell ?? ""))), { language: lang() });
+  const rows = headed.rows;
   const header = rows[0] || [];
   const idAt = header.findIndex((h) => /^\s*\ufeff?id\s*$/i.test(h));
   // No ID column: the first column is the key, and a settings row's marker
@@ -600,8 +605,12 @@ function fromGrid(grid, title) {
   deriveIds(sheet);
   const made = sheet;
   sheet = before;
+  if (headed.synthesized) headless.add(made);
   return made;
 }
+
+// Sheets whose first row fromGrid read as a word (importformats.withHeaders).
+const headless = new WeakSet();
 
 /**
  * What this sheet is to Sheet to Anki (apkg.resolve_identity): its name= when it
@@ -2691,7 +2700,7 @@ function nextWord() {
 // Opening a file
 // ---------------------------------------------------------------------------
 
-const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
+const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt|apkg|colpkg)$/i;
 
 /** Opens a picked file to edit — or, `asTemplate`, keeps it as a template. */
 function openFile(file, asTemplate = false) {
@@ -2705,7 +2714,16 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
     out = readFile(new Uint8Array(await file.arrayBuffer()), file.name, index);
   } catch (err) {
     const last = String(err?.message || err).trim().split("\n").pop();
-    return toast(/not UTF-8 text/.test(last) ? t("badEncoding") : last, "bad");
+    const known = /not UTF-8 text/.test(last)
+      ? "badEncoding"
+      : /NewFormatError|exported by a newer Anki/.test(last)
+        ? "apkgNewFormat"
+        : /not an Anki package/.test(last)
+          ? "apkgBroken"
+          : /has no notes in it/.test(last)
+            ? "apkgEmpty"
+            : "";
+    return toast(known ? t(known) : last, "bad");
   }
   toast("");
   // Without what a phone adds to a second download, so a legacy sheet keeps
@@ -2736,7 +2754,10 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   opened.source = file.name;
   if (markerGet(opened.marker, "name")) rememberName(opened.title);
   begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
+  const lost = (out.package?.media?.images || 0) + (out.package?.media?.audio || 0);
   if (out.encoding) toast(t("readAsEncoding", out.encoding), "bad");
+  else if (lost) toast(t("apkgMedia", lost), "bad");
+  else if (headless.has(opened)) toast(t("hdSynth"), "bad");
   else toast(t("shOpened", name, wordCount()), "ok");
 }
 

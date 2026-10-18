@@ -567,6 +567,60 @@ const STRINGS = {
   wlAdd: { en: (n) => `Add ${n} word${n === 1 ? "" : "s"}`, vi: (n) => `Thêm ${n} từ` },
   wlSuggestN: { en: (n) => `Suggest for ${n} word${n === 1 ? "" : "s"}`, vi: (n) => `Gợi ý cho ${n} từ` },
   wlAdded: { en: (n) => `Added ${n} word${n === 1 ? "" : "s"}`, vi: (n) => `Đã thêm ${n} từ` },
+
+  // ---- Sheet to Anki: paste text (textimport.js), other apps' files --------
+  txOpen: { en: "Paste text", vi: "Dán văn bản" },
+  txOpenHint: { en: "A word list, Quizlet, CSV", vi: "Danh sách từ, Quizlet, CSV" },
+  pickHint: { en: ".csv, .txt, .apkg, or drop it on the page", vi: ".csv, .txt, .apkg hoặc kéo thả vào trang" },
+  txTitle: { en: "Paste text", vi: "Dán văn bản" },
+  txLead: {
+    en: "One card per line: <code>apple - quả táo</code>. Copy it from Notes, Google Keep, Quizlet's Export → Copy text, or paste a whole CSV sheet an AI assistant wrote for you.",
+    vi: "Mỗi dòng một card: <code>apple - quả táo</code>. Copy từ Ghi chú, Google Keep, Export → Copy text của Quizlet, hoặc dán cả một sheet CSV do trợ lý AI viết cho bạn.",
+  },
+  txName: { en: "Flashcard set name", vi: "Tên bộ flashcard" },
+  txNamePlaceholder: { en: "e.g. English vocabulary week 1", vi: "Ví dụ: Từ vựng tiếng Anh tuần 1" },
+  txNameHint: {
+    en: "The deck's name in Anki. Paste a longer list under the same name later and importing it updates the cards you already have.",
+    vi: "Tên deck trong Anki. Lần sau dán danh sách dài hơn với cùng tên này, import sẽ cập nhật các card đã có.",
+  },
+  txNameEmpty: { en: "Give the set a name.", vi: "Hãy đặt tên cho bộ flashcard." },
+  txPlaceholder: {
+    en: "apple - quả táo\nbook - quyển sách\njourney - chuyến đi",
+    vi: "apple - quả táo\nbook - quyển sách\njourney - chuyến đi",
+  },
+  txSides: { en: "Between front and back", vi: "Giữa mặt trước và mặt sau" },
+  txRows: { en: "Between cards", vi: "Giữa các card" },
+  txRowsNewline: { en: "new line", vi: "xuống dòng" },
+  txEdit: { en: "Open in Create sheet", vi: "Mở trong Tạo Sheet" },
+  txCount: { en: (n) => `${n} card${n === 1 ? "" : "s"}`, vi: (n) => `${n} card` },
+  txOneSided: {
+    en: (n) => `${n} with nothing on the back`,
+    vi: (n) => `${n} card không có mặt sau`,
+  },
+  txWholeSheet: {
+    en: (cols, rows) => `A whole sheet: ${cols} columns, ${rows} row${rows === 1 ? "" : "s"}, opened as it is`,
+    vi: (cols, rows) => `Một sheet đầy đủ: ${cols} cột, ${rows} dòng, mở nguyên như vậy`,
+  },
+  hdSynth: {
+    en: "The first row looked like a card, not column names, so the columns are called Front and Back.",
+    vi: "Dòng đầu trông như một card chứ không phải tên cột, nên các cột được đặt tên Mặt trước, Mặt sau.",
+  },
+  hdKept: { en: "The first row is read as column names.", vi: "Dòng đầu được đọc là tên cột." },
+  hdUseFirst: { en: "The first row is column names", vi: "Dòng đầu là tên cột" },
+  hdUseCard: { en: "The first row is a card", vi: "Dòng đầu là một card" },
+  apkgNewFormat: {
+    en: "This deck was exported by a newer Anki, in a format this page cannot read. In Anki choose File → Export → Anki Deck Package and tick “Support older Anki versions”, then open the new file here.",
+    vi: "Deck này xuất bằng Anki mới; trong Anki chọn File → Export → Anki Deck Package và tick “Support older Anki versions”, rồi mở file mới ở đây.",
+  },
+  apkgBroken: {
+    en: "This file is named .apkg but is not an Anki package, or it is damaged.",
+    vi: "File này tên .apkg nhưng không phải deck Anki, hoặc đã bị hỏng.",
+  },
+  apkgEmpty: { en: "This Anki package has no notes in it.", vi: "Deck Anki này không có note nào." },
+  apkgMedia: {
+    en: (n) => `${n} picture${n === 1 ? "" : "s"}/sound${n === 1 ? "" : "s"} could not come along: they are files inside the package, and a sheet can only link to the web.`,
+    vi: (n) => `${n} ảnh/âm thanh không chuyển được: chúng là file nằm trong deck, còn sheet chỉ có thể link tới web.`,
+  },
   sgOpen: { en: "Suggest", vi: "Gợi ý" },
   sgTitle: { en: "Suggestions", vi: "Gợi ý" },
   sgTitleWord: { en: (w) => `Suggestions: ${w}`, vi: (w) => `Gợi ý: ${w}` },
@@ -873,7 +927,6 @@ const STRINGS = {
   urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
   go: { en: "Make flashcards", vi: "Tạo flashcard" },
   pick: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
-  orDrop: { en: "or drop one anywhere on this page", vi: "hoặc kéo thả file vào trang này" },
   tabLabel: { en: "Sheet", vi: "Sheet" },
   reloadLabel: {
     en: "Fetch this sheet again",
@@ -1505,6 +1558,10 @@ const STRINGS = {
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
+  homePaste: {
+    en: "Got a list in your notes? Paste it into Sheet to Anki, name it, download the .apkg.",
+    vi: "Có danh sách trong ghi chú? Dán vào Sheet to Anki, đặt tên, tải .apkg.",
+  },
   aiTitle: { en: "Ask AI to make your word set", vi: "Nhờ AI tạo bộ từ" },
   aiLead: {
     en: "Copy this into ChatGPT, Gemini or Claude, change the parts in brackets, then put the file it gives back into Sheet to Anki.",

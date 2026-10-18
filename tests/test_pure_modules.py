@@ -31,6 +31,7 @@ PURE_MODULES = [
     "card_layout",
     "tsv_model",
     "apkg",
+    "apkg_read",
     "workbook",
 ]
 

@@ -689,3 +689,6 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .ai-open { text-decoration: none; }
 .ai-status:empty { display: none; }
 #ai .fine a { font-weight: 650; color: var(--accent); }
+.doors-paste { display: flex; align-items: center; gap: 7px; max-width: 40rem; }
+.doors-paste .icon { flex: none; color: var(--accent); }
+.doors-paste a { font-weight: 650; color: var(--accent); }

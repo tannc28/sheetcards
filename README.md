@@ -21,9 +21,12 @@ giữ bản sao.
    Nếu đã đổi cột, lúc import bật **Merge note types** và chọn **Update notes:
    Always**.
 
+Có danh sách trong ghi chú? Bấm **Dán văn bản** trong Sheet to Anki, đặt tên,
+tải `.apkg`.
+
 Chưa có sheet? **[Tạo Sheet](https://tannc28.github.io/sheetcards/sheet/)**
 soạn cả sheet trên web: chọn template và theme, đặt tên bộ flashcard, rồi
-① Cột & card → ② Thẻ. Lưu bằng **Lưu link sheet** hoặc file `.csv`; template
+① Cột & card → ② Thêm thẻ. Lưu bằng **Lưu link sheet** hoặc file `.csv`; template
 riêng của bạn nằm ở **Template của bạn**.
 
 Danh tính của một deck là `name=` trong settings row; không có thì lấy từ id của
@@ -55,9 +58,12 @@ phone or a computer:
    progress is kept. If the columns changed, turn on **Merge note types** and set
    **Update notes** to **Always** when importing.
 
+Got a list in your notes? Press **Paste text** in Sheet to Anki, name it,
+download the `.apkg`.
+
 No sheet yet? **[Create sheet](https://tannc28.github.io/sheetcards/sheet/)**
 writes one in the browser: pick a template and a theme, name the flashcard set,
-then ① Columns & card → ② Cards. Keep it with **Save sheet link** or as a `.csv`;
+then ① Columns & card → ② Add cards. Keep it with **Save sheet link** or as a `.csv`;
 your own templates live under **Your templates**.
 
 A deck's identity is the settings row's `name=`; without one, the Google

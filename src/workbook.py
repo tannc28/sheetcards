@@ -35,6 +35,9 @@ import zipfile
 from xml.sax.saxutils import escape as _escape
 from xml.sax.saxutils import quoteattr as _quoteattr
 
+from .apkg_read import PACKAGE_SUFFIXES
+from .apkg_read import read_package
+
 # A workbook mixes three namespaces, and two of them are called "relationships".
 # The one on a `r:id` attribute is not the one on a `.rels` file's elements.
 MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
@@ -341,6 +344,22 @@ def read_upload(data, name, index=0):
     """
     data = bytes(data)
     lower = name.lower()
+
+    if lower.endswith(PACKAGE_SUFFIXES):
+        # A shared Anki deck: one sheet per note type (apkg_read), with what
+        # could not come along counted so the page can say so.
+        sheets = read_package(data, name)
+        index = max(0, min(int(index), len(sheets) - 1))
+        chosen = sheets[index]
+        return json.dumps(
+            {
+                "tabs": [s["name"] for s in sheets] if len(sheets) > 1 else [],
+                "tab": chosen["name"],
+                "tsv": _tsv(chosen["rows"]),
+                "package": {"notes": chosen["notes"], "media": chosen["media"]},
+            },
+            ensure_ascii=False,
+        )
 
     if lower.endswith(WORKBOOK_SUFFIXES):
         if data[:2] != b"PK":

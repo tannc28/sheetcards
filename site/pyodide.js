@@ -116,6 +116,8 @@ export function prefetchPython(nav = globalThis.navigator) {
 // list and fails if it stops matching the modules it proves importable without Anki.
 export const PURE_MODULES = [
   "errors", "column_model", "sheet_config", "card_layout", "tsv_model", "apkg",
+  // Reads a shared Anki deck (.apkg/.colpkg) back into sheets, for workbook.
+  "apkg_read",
   // Reads an uploaded file, and the file a Google Sheets link downloads to when a
   // deck names a sheet inside it. Shared with the add-on, so both agree.
   "workbook",
