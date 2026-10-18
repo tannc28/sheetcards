@@ -16,7 +16,7 @@
  * tests/test_site_importformats.py runs all of it in node.
  */
 
-import { parseList, splitBy, detectSeparator } from "./wordlist.js";
+import { cleanLines, columnRoles, parseList, splitBy, detectSeparator } from "./wordlist.js";
 import { markerGet, markerSet } from "./identity.js";
 
 // ---------------------------------------------------------------------------
@@ -84,12 +84,15 @@ const MARKER_CELL = /^#config(\s|$|[^a-z0-9])/i;
 export function readSheetText(text) {
   const body = unfence(text).trim();
   if (!body) return null;
+  // The text format (readPaste): a #config line on top, or a Markdown table.
+  if (MARKER_CELL.test(body) || /^\|/.test(body)) return null;
   const delimiter = sniffDelimiter(body);
   const rows = parseDelimited(body, delimiter).map((r) => r.map((c) => c.trim()));
   if (rows.length < 2 || rows[0].length < 2) return null;
   const hasId = rows[0].some((c) => /^﻿?id$/i.test(c));
   const marker = (rows[1] || []).find((c) => MARKER_CELL.test(c));
   if (!hasId && !marker) return null;
+  if (rows[0].some((c) => headerCell(c).cell)) return null;
   return { rows, delimiter, name: (marker && markerGet(marker, "name")) || "" };
 }
 
@@ -308,33 +311,250 @@ export function splitRecords(text, rowSeparator = { id: "newline" }) {
     .join("\n");
 }
 
+// ---------------------------------------------------------------------------
+// The text format: a whole set written the way a note is
+// ---------------------------------------------------------------------------
+//
+//   #config name=Du lịch B1; theme=sakura
+//   Word [tts=en_US; bold] | IPA [color=muted] | Meaning | Example [italic]
+//   airport | /ˈer.pɔːrt/ | sân bay | We got to the airport early.
+//
+// Line 1 the deck's settings, line 2 the column names, each with its own
+// settings in brackets, then one card per line. The same set can be written as
+// a sheet is (names, then a `#config` row whose cells go to the columns by
+// position, the first holding the deck's keys and the first column's own), and
+// both make the ID-less sheet pasteGrid has always made, so nothing after this
+// point knows the text was not a sheet.
+
+/** sheet_config._DECK_KEYS (tests/test_site_importformats.py pins the copy). */
+export const DECK_KEYS = ["reverse", "theme", "name", "next", "shape"];
+/** sheet_config._FIELD_KEYS, plus the retired keys a column cell still reads. */
+export const COLUMN_KEYS = [
+  "side", "size", "color", "align", "tts", "voices", "speed", "label", "type", "subdeck",
+  "math", "code", "font", "bold", "italic", "hint", "furigana", "cloze", "draw",
+  "image", "audio", "video", "rtl", "sort", "vertical",
+];
+/** sheet_config.listed_themes(). */
+export const THEMES = ["contrast", "matcha", "momiji", "paper", "sakura", "yuki"];
+/** build_site.VOCAB_LANGUAGES: the tts codes the vocabulary template offers. */
+export const SPOKEN = [
+  ["en_US", "English (US)"], ["en_GB", "English (UK)"], ["zh_CN", "中文 (简体)"],
+  ["ja_JP", "日本語"], ["ko_KR", "한국어"], ["fr_FR", "Français"], ["de_DE", "Deutsch"],
+  ["es_ES", "Español"], ["vi_VN", "Tiếng Việt"],
+];
+/** tsv_model._IMAGE_URL: a cell that is nothing but a picture's address. */
+export const IMAGE_URL = /^https?:\/\/\S+\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#]\S*)?$/i;
+
+const keyOf = (chunk) => String(chunk).split("=", 1)[0].trim().toLowerCase();
+const chunksOf = (cell) =>
+  String(cell ?? "")
+    .split(";")
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+/** A bracket that holds settings, not a word: `[italic]`, `[tts=en_US; bold]`. */
+function settingsBracket(inner) {
+  const chunks = chunksOf(inner);
+  return !chunks.length || chunks.some((c) => c.includes("=") || COLUMN_KEYS.includes(keyOf(c)));
+}
+
+/** A column name and the settings written after it in brackets. */
+export function headerCell(cell) {
+  const s = String(cell ?? "").trim();
+  const m = s.match(/^(.*?\S)\s*\[([^[\]]*)\]$/);
+  if (m && settingsBracket(m[2])) return { name: m[1].trim(), cell: chunksOf(m[2]).join("; ") };
+  return { name: s, cell: "" };
+}
+
+/** The positional cells of a `#config` line: deck keys and column 1's in the first. */
+export function configCells(line) {
+  return String(line ?? "")
+    .trim()
+    .replace(/^#config/i, "")
+    .split("|")
+    .map((c) => chunksOf(c).join("; "));
+}
+
+/** A marker cell's text split into the deck's keys and its column's own. */
+export function splitDeck(cell) {
+  const deck = [];
+  const own = [];
+  for (const chunk of chunksOf(String(cell ?? "").replace(/^#config/i, ""))) {
+    (DECK_KEYS.includes(keyOf(chunk)) ? deck : own).push(chunk);
+  }
+  return { deck, own };
+}
+
+/**
+ * Two settings cells for one column, merged: every key once. On a key both
+ * give a value for, `over` wins, and the clash is returned so it can be said.
+ */
+export function mergeCells(base, over) {
+  const out = chunksOf(base);
+  const clashes = [];
+  for (const chunk of chunksOf(over)) {
+    const at = out.findIndex((c) => keyOf(c) === keyOf(chunk));
+    if (at < 0) out.push(chunk);
+    else {
+      if (out[at] !== chunk) clashes.push(keyOf(chunk));
+      out[at] = chunk;
+    }
+  }
+  return { cell: out.join("; "), clashes };
+}
+
+const isRule = (line) => /^[\s|:-]+$/.test(line) && line.includes("|") && /-{3,}/.test(line);
+const isFilled = (line) => cleanLines(line).lines.length > 0;
+const tableCells = (line) => line.trim().replace(/^\|/, "").replace(/(?<!\\)\|$/, "");
+
+// Brackets on the header line are hidden while the line is split, so a `;` or
+// `=` inside one is never taken for the separator between columns.
+const MASK = /\[[^[\]\n]*\]/g;
+const unmask = (cell, masks) => cell.replace(/\uE000(\d+)\uE001/g, (_, i) => masks[i]);
+
 /**
  * A paste read as cards.
  *
- *   readPaste(text, {rows: "auto"|"newline"|<token>, separator, existing})
+ *   readPaste(text, {rows: "auto"|"newline"|<token>, separator, existing, header})
  *     → parseList's {separator, rows, duplicates, marks, skipped}, plus
- *       rowSeparator ({id, token}) and header (the pasted column names, or null)
+ *       rowSeparator ({id, token}), header (the column names, or null),
+ *       headerSure (the text said so: a #config line under it, a Markdown
+ *       table, known names), config (a #config line was written), cells (each
+ *       column's settings, the deck's keys left out), deck (the deck's keys),
+ *       warnings ([{key, col}] for i18n), table, keyAt (the key column)
  *
- * A first line that names its columns the way a sheet would (Term / Definition,
- * Mặt trước / Mặt sau) is taken as the names and is not a card.
+ * Two forms, both a sheet: the text form — `#config name=…` on line 1, the
+ * column names (each may carry `[settings]`) on line 2, then the cards — and
+ * the table form — names on line 1, the `#config` settings row on line 2 (a
+ * CSV, a Markdown table, a copy from Sheets). A `#config` line on either line
+ * makes the other one the names, always. With none, a line with settings in
+ * brackets is the names, else headerVerdict decides and `header` (true /
+ * false) is the reader's word against it. Plain lists, Quizlet's export and
+ * notes bullets are the same reading with no names and no settings.
  */
-export function readPaste(text, { rows = "auto", separator = "auto", existing = [] } = {}) {
-  const rowSeparator =
-    rows === "auto" ? detectRowSeparator(text) : rows === "newline" ? { id: "newline" } : { id: "token", token: rows };
-  const body = splitRecords(text, rowSeparator);
-  let parsed = parseList(body, { separator, existing });
-  let header = null;
-  if (parsed.rows.length >= 2 && parsed.separator !== "none") {
-    const verdict = headerVerdict(parsed.rows);
-    if (verdict.header && verdict.strong) {
-      header = parsed.rows[0];
-      const rest = body.replace(/\r\n?/g, "\n").split("\n");
-      const at = rest.findIndex((l) => l.trim());
-      rest.splice(at, 1);
-      parsed = parseList(rest.join("\n"), { separator: parsed.separator, existing });
+export function readPaste(text, { rows = "auto", separator = "auto", existing = [], header = "auto" } = {}) {
+  const source = unfence(text).split("\n");
+  const drop = new Set();
+  const lines = [...source];
+
+  // A Markdown table: the line over the |---| rule names the columns, and
+  // anything said around it ("Here is your table:") is not a card.
+  const ruleAt = source.findIndex(isRule);
+  let tableHead = -1;
+  for (let i = ruleAt - 1; i >= 0 && tableHead < 0; i--) if (source[i].trim()) tableHead = i;
+  const table = ruleAt > 0 && tableHead >= 0 && source[tableHead].includes("|");
+  if (table) {
+    source.forEach((line, i) => {
+      if (isRule(line)) drop.add(i);
+      else if (i < tableHead && !MARKER_CELL.test(line.trim())) drop.add(i);
+      else if (line.includes("|")) lines[i] = tableCells(line);
+    });
+  }
+  const filled = () => source.map((_, i) => i).filter((i) => !drop.has(i) && isFilled(lines[i]));
+  const marker = (i) => i !== undefined && MARKER_CELL.test(lines[i].trim());
+
+  // Where the #config line is, and so whether line 1 is names for certain.
+  const [l0, l1] = filled();
+  let configAt = -1;
+  let forced = -1;
+  if (marker(l0)) [configAt, forced] = [l0, l1 ?? -1];
+  else if (marker(l1)) [configAt, forced] = [l1, l0];
+  if (configAt >= 0) drop.add(configAt);
+
+  // Brackets after a column name are read too (`Word [bold]`), hidden while
+  // the line is split so a `;` or `=` in one is never taken for a separator.
+  const masks = [];
+  const candidate = forced >= 0 ? forced : filled()[0];
+  if (candidate !== undefined) {
+    lines[candidate] = lines[candidate].replace(MASK, (m) =>
+      settingsBracket(m.slice(1, -1)) ? (masks.push(m), `${masks.length - 1}`) : m,
+    );
+  }
+  const restore = (row) => row.map((c) => unmask(c, masks));
+
+  let named = null;
+  if (forced >= 0) drop.add(forced);
+  const bodyText = () => filled().map((i) => lines[i]).join("\n");
+  const rowSeparator = table
+    ? { id: "newline" }
+    : rows === "auto"
+      ? detectRowSeparator(bodyText())
+      : rows === "newline"
+        ? { id: "newline" }
+        : { id: "token", token: rows };
+  const split = (sep) => parseList(splitRecords(bodyText(), rowSeparator), { separator: sep, existing });
+  let parsed = split(table ? "pipe" : separator);
+
+  // The names over a #config line: split the way the cards are, or, when that
+  // does not split them, the way the line itself is written.
+  if (forced >= 0) {
+    const line = lines[forced];
+    let parts = parsed.separator === "none" ? [line.trim()] : splitBy(line, parsed.separator);
+    if (parts.length < 2) parts = splitBy(line, detectSeparator([line]));
+    named = restore(parts).map(headerCell);
+  }
+
+  let sure = forced >= 0;
+  let why = forced >= 0 ? "config" : "";
+  let headerLine = forced;
+  if (!named && parsed.rows.length >= 2 && parsed.separator !== "none") {
+    const first = restore(parsed.rows[0]).map(headerCell);
+    const verdict = headerVerdict([first.map((c) => c.name), ...parsed.rows.slice(1)]);
+    let is = false;
+    if (table) [is, sure, why] = [true, true, "table"];
+    else if (masks.length || verdict.strong) [is, sure, why] = [true, true, masks.length ? "settings" : verdict.why];
+    else why = verdict.why;
+    if (header === true || header === false) is = header;
+    if (is) {
+      named = first;
+      if (rowSeparator.id === "newline") {
+        headerLine = filled()[0];
+        drop.add(headerLine);
+        parsed = split(parsed.separator);
+      } else {
+        const sep = parsed.separator;
+        const records = splitRecords(bodyText(), rowSeparator).split("\n").filter((l) => l.trim());
+        parsed = parseList(records.slice(1).join("\n"), { separator: sep, existing });
+      }
     }
   }
-  return { ...parsed, rowSeparator, header };
+  if (!named && masks.length) parsed.rows = parsed.rows.map((r, i) => (i ? r : restore(r)));
+
+  const width = Math.max(named?.length || 0, ...parsed.rows.map((r) => r.length), 0);
+  const keyAt = Math.max(0, (named || []).findIndex((c) => /^﻿?id$/i.test(c.name)));
+  const warnings = [];
+
+  // Each column's settings: by position from the #config line, then any
+  // written after its name.
+  const cells = Array.from({ length: width }, () => "");
+  (configAt >= 0 ? configCells(lines[configAt]) : []).forEach((cell, i) => {
+    if (i < width) cells[i] = cell;
+    else if (cell) warnings.push({ key: "txExtraCell", col: i + 1 });
+  });
+  const mark = splitDeck(cells[keyAt]);
+  cells[keyAt] = mark.own.join("; ");
+  (named || []).forEach((c, i) => {
+    if (!c.cell) return;
+    const merged = mergeCells(cells[i], c.cell);
+    cells[i] = merged.cell;
+    for (const key of merged.clashes) warnings.push({ key: "txTwice", col: c.name, setting: key });
+  });
+
+  return {
+    ...parsed,
+    rowSeparator,
+    header: named ? named.map((c) => c.name) : null,
+    headerSure: sure,
+    headerWhy: why,
+    brackets: Boolean(masks.length),
+    config: configAt >= 0,
+    cells,
+    deck: mark.deck,
+    warnings,
+    table,
+    keyAt,
+    lines: { config: configAt, header: headerLine },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -350,34 +570,205 @@ export function cleanName(name) {
 }
 const cleanNameText = (name) =>
   String(name ?? "")
-    .replace(/[;\t\r\n]+/g, " ")
+    .replace(/[;|\t\r\n]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 100)
     .trim();
 
+/** The deck's keys with `name=` set to `name` (first) and the others kept. */
+export function namedDeck(deck, name) {
+  if (!cleanName(name)) return [...(deck || [])];
+  const rest = (deck || []).filter((c) => keyOf(c) !== "name");
+  return [`name=${cleanName(name)}`, ...rest];
+}
+
 /**
- * The sheet a pasted list becomes: Basic, named, with no ID column.
+ * The sheet a pasted list becomes: named, with no ID column.
  *
- *   Mặt trước           | Mặt sau   | Mặt sau 2 …
- *   #config name=<name> |           |
- *   <word>              | <meaning> | …
+ *   Mặt trước                    | Mặt sau   | Mặt sau 2 …
+ *   #config name=<name>; <cell>  | <cell>    |
+ *   <word>                       | <meaning> | …
  *
  * A sheet with no ID column is keyed by its first column (column_model.
  * derived_ids: the word itself, " (2)" for a word written again), so pasting
  * the same list again under the same name, with lines added, updates the notes
  * already imported and adds the new ones. The marker opens the first column's
- * settings cell, as in Create sheet's Basic template. A row with nothing on the
- * front has no key and is left out.
+ * settings cell, as in Create sheet's Basic template. A row with nothing in its
+ * key column has no key and is left out. `cells` are each column's settings
+ * and `deck` the deck's keys other than the name; a header naming an `ID`
+ * column keeps it, and the marker goes in its cell.
  */
-export function pasteGrid({ name, rows, header = null, language = "vi" }) {
-  const kept = (rows || []).filter((r) => idText(r[0]));
-  const width = Math.max(2, header?.length || 0, ...kept.map((r) => r.length));
+export function pasteGrid({ name, rows, header = null, cells = [], deck = [], language = "vi" }) {
+  const own = (header || []).map((h) => String(h ?? "").trim());
+  const keyAt = Math.max(0, own.findIndex((h) => /^﻿?id$/i.test(h)));
+  const kept = (rows || []).filter((r) => idText(r[keyAt]));
+  const width = Math.max(2, own.length, ...kept.map((r) => r.length));
   const names = synthHeaders(width, language).map((fallback, i) => {
-    const own = String(header?.[i] ?? "").trim();
-    return own && !RESERVED.test(norm(own)) ? own : fallback;
+    const given = own[i] || "";
+    if (!given) return fallback;
+    return !RESERVED.test(norm(given)) || (i === keyAt && /^id$/i.test(given)) ? given : fallback;
   });
-  const settings = names.map(() => "");
-  settings[0] = `#config name=${cleanName(name)}`;
+  const settings = names.map((_, i) => (i === keyAt ? "" : String(cells[i] ?? "")));
+  const marker = [...namedDeck(deck, name), ...chunksOf(cells[keyAt])].join("; ");
+  settings[keyAt] = `#config${marker ? ` ${marker}` : ""}`;
   return [names, settings, ...kept.map((r) => names.map((_, c) => String(r[c] ?? "")))];
+}
+
+/**
+ * The text a reader pasted in the form the site teaches, with the settings
+ * chosen written into it: `#config` and the deck's keys on line 1, the column
+ * names on line 2 with each column's settings in brackets, then the cards,
+ * every one exactly as written. Names are added when the text had none
+ * (`names`, as the sheet will call the columns); a #config line already there
+ * is replaced. A Markdown table stays a table: its #config row goes under the
+ * |---| rule, as in a sheet.
+ */
+export function withSettings(text, model, { name, names = model.header, deck = model.deck, cells = model.cells } = {}) {
+  const source = unfence(text).split("\n");
+  const at = model.lines || {};
+  const width = Math.max(cells.length, names?.length || 0, 1);
+  const own = (i) => String(cells[i] ?? "").trim();
+  const keys = namedDeck(deck, name);
+  const out = [];
+  if (model.table) {
+    const parts = Array.from({ length: width }, (_, i) =>
+      i === model.keyAt ? `#config ${[...keys, ...chunksOf(own(i))].join("; ")}`.trim() : own(i),
+    );
+    let pending = true;
+    source.forEach((raw, i) => {
+      if (i === at.config) return;
+      out.push(i === at.header && model.brackets ? `| ${model.header.join(" | ")} |` : raw);
+      if (pending && i > at.header && isRule(raw)) {
+        out.push(`| ${parts.join(" | ")} |`);
+        pending = false;
+      }
+    });
+  } else {
+    const head = Array.from({ length: width }, (_, i) => {
+      const label = names?.[i] ?? "";
+      return own(i) ? `${label} [${own(i)}]` : label;
+    }).join(" | ");
+    out.push(`#config ${keys.join("; ")}`.trimEnd(), head);
+    source.forEach((raw, i) => {
+      if (i !== at.config && i !== at.header) out.push(raw);
+    });
+  }
+  while (out.length && !out[0].trim()) out.shift();
+  return out.join("\n").replace(/\s+$/, "") + "\n";
+}
+
+// ---------------------------------------------------------------------------
+// Settings suggested for a paste that has none
+// ---------------------------------------------------------------------------
+
+/** The voice a column's words are written for: Han, kana, Hangul; else none. */
+export function guessVoice(values) {
+  const text = (values || []).join(" ");
+  if (/[぀-ヿ]/.test(text)) return "ja_JP";
+  if (/[가-힯]/.test(text)) return "ko_KR";
+  if (/[㐀-鿿]/.test(text)) return "zh_CN";
+  // A Latin word could be English, French or Vietnamese without its accents:
+  // guessing one would be a voice reading another language aloud.
+  return "";
+}
+
+const MANAGED = new Set(["side", "tts", "voices", "speed"]);
+const most = (values, test) => values.length > 0 && values.filter(test).length > values.length / 2;
+
+/**
+ * What the Cài đặt panel starts from, for a paste read by readPaste:
+ *
+ *   {names, content: [column index…], front (the first content column),
+ *    example (a column of sentences, or -1), choices: {tts, example, theme,
+ *    sides: ["front"|"back"|"hide"…]}, base: [each column's other settings]}
+ *
+ * A paste that already says how it looks is read back (its sides, its voice,
+ * its theme, and every other key kept as written in `base`); one that says
+ * nothing gets a guess: a voice from the front column's script, and, with
+ * three columns or more, a place and a look for each column from its name or
+ * its contents (a word in bold, a reading muted beside it, the meaning in the
+ * accent colour, an example sentence in italics, picture links as pictures).
+ */
+export function suggestSettings(model, { language = "vi" } = {}) {
+  const width = Math.max(model.header?.length || 0, model.cells?.length || 0, ...model.rows.map((r) => r.length), 2);
+  const names = model.header ? [...model.header] : synthHeaders(width, language);
+  while (names.length < width) names.push(synthHeaders(width, language)[names.length]);
+  const values = names.map((_, i) => model.rows.map((r) => String(r[i] ?? "").trim()).filter(Boolean));
+  const content = names.map((_, i) => i).filter((i) => !(model.header && /^﻿?id$/i.test(names[i])));
+  const front = content[0] ?? 0;
+  const defaults = names.map((_, i) => (i === front ? "front" : "back"));
+  // Roles come from names the reader wrote; Mặt trước / Mặt sau name nothing.
+  const roles = model.header ? columnRoles(names.map((name) => ({ name }))) : {};
+  const sentences = (i) => most(values[i], (v) => /[.?!。？！]$/.test(v) && /\s|[。？！]/.test(v));
+  const example = roles.example ?? content.find((i) => i !== front && sentences(i)) ?? -1;
+  const given = model.config || model.brackets;
+  const cells = names.map((_, i) => chunksOf(model.cells?.[i]));
+  const choices = { tts: "", example: false, theme: "", sides: [...defaults] };
+  const base = names.map(() => []);
+
+  const deckTheme = (model.deck || []).find((c) => keyOf(c) === "theme");
+  if (deckTheme) choices.theme = deckTheme.split("=").slice(1).join("=").trim().toLowerCase();
+
+  if (given) {
+    names.forEach((_, i) => {
+      const side = cells[i].find((c) => keyOf(c) === "side");
+      if (side) choices.sides[i] = side.split("=")[1]?.trim().toLowerCase() || defaults[i];
+      base[i] = cells[i].filter((c) => !MANAGED.has(keyOf(c)));
+    });
+    const spoken = names.map((_, i) => cells[i].find((c) => keyOf(c) === "tts")?.split("=")[1]?.trim() || "");
+    const at = content.find((i) => choices.sides[i] === "front" && spoken[i]) ?? content.find((i) => spoken[i]);
+    choices.tts = at === undefined ? "" : spoken[at];
+    choices.example = example >= 0 && Boolean(spoken[example]);
+  } else {
+    choices.tts = guessVoice(values[front]);
+    const many = content.length >= 3;
+    for (const i of content) {
+      if (most(values[i], (v) => IMAGE_URL.test(v))) {
+        base[i] = ["image"];
+        continue;
+      }
+      if (!many) continue;
+      const role = Object.keys(roles).find((r) => roles[r] === i);
+      if (role === "word") base[i] = ["bold"];
+      else if (role === "reading" || role === "ipa") {
+        choices.sides[i] = "front";
+        base[i] = ["color=muted"];
+      } else if (role === "meaning") base[i] = ["color=accent"];
+      else if (i === example) base[i] = ["italic"];
+      else if (most(values[i], (v) => /^\/.+\/$/.test(v))) base[i] = ["color=muted"];
+      else if (sentences(i)) base[i] = ["italic"];
+    }
+  }
+  return { names, content, front, example, choices, base, given: Boolean(given), cells };
+}
+
+/**
+ * Each column's settings, and the deck's keys, for the choices made in the
+ * panel. `side=` is written only where it is not the default (the first
+ * column on the front, the rest on the back), and the voice goes on the
+ * first column shown on the front — and on the example column when asked.
+ */
+export function applySettings(suggestion, choices, deck = []) {
+  const { names, content, front, example, base, cells: was } = suggestion;
+  const sides = choices.sides;
+  const media = (i) => base[i].some((c) => ["image", "audio", "video"].includes(keyOf(c)));
+  const speaker = content.find((i) => sides[i] === "front" && !media(i)) ?? -1;
+  const cells = names.map((_, i) => {
+    const out = [];
+    const side = sides[i] || (i === front ? "front" : "back");
+    if (side !== (i === front ? "front" : "back")) out.push(`side=${side}`);
+    out.push(...base[i]);
+    const spoken = choices.tts && side !== "hide" && (i === speaker || (choices.example && i === example));
+    if (spoken) {
+      out.push(`tts=${choices.tts}`);
+      // A voice the sheet named stays while the language does.
+      const old = (was?.[i] || []).find((c) => keyOf(c) === "tts")?.split("=")[1]?.trim();
+      if (old === choices.tts) out.push(...(was[i] || []).filter((c) => ["voices", "speed"].includes(keyOf(c))));
+    }
+    return out.join("; ");
+  });
+  const keys = (deck || []).filter((c) => keyOf(c) !== "theme");
+  if (choices.theme) keys.push(`theme=${choices.theme}`);
+  return { cells, deck: keys };
 }

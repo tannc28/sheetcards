@@ -30,3 +30,58 @@
   padding: 0; font: inherit; font-weight: 700; color: var(--accent);
   text-decoration: underline; text-underline-offset: 2px;
 }
+
+/* The settings a paste carries, or the ones suggested for it: the choices and
+   the card side by side once there is room, the text to copy under both. */
+#textbox { width: min(60rem, calc(100% - 24px)); }
+.tx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 10px 0 0; }
+.tx-head[hidden] { display: none; }
+.tx-head .linkbtn, .tx-more {
+  padding: 0; font: inherit; font-weight: 700; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.tx-more { font-size: var(--t-sm); min-height: 40px; text-align: left; }
+.tx-warn { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: var(--t-sm); color: var(--warn); }
+.tx-warn[hidden] { display: none; }
+.tx-warn li { display: flex; gap: 6px; align-items: flex-start; }
+.tx-warn .icon { flex: none; margin-top: .2em; }
+.tx-set { margin: 18px 0 4px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 16px; }
+.tx-set[hidden], .tx-set [hidden] { display: none; }
+.tx-setgrid { display: grid; gap: 16px; }
+@media (min-width: 52rem) {
+  .tx-setgrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
+.tx-panel { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.tx-panel > div { display: grid; gap: 12px; }
+.tx-h { margin: 0; font-size: var(--t-md); font-weight: 800; }
+.tx-field { display: grid; gap: 6px; }
+.tx-label { font-size: var(--t-sm); font-weight: 600; }
+.tx-field select, .tx-role select {
+  min-height: 44px; padding: 0 10px; border-radius: 11px; border: 1.5px solid var(--line-strong);
+  background: var(--panel); color: var(--ink); font: inherit; font-size: var(--t-sm); max-width: 100%;
+}
+.tx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tx-chip {
+  min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line-strong);
+  background: var(--panel); color: var(--ink); font-size: var(--t-sm); font-weight: 600;
+}
+.tx-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.tx-roles { display: grid; gap: 6px; }
+.tx-role { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: var(--t-sm); }
+.tx-role > span { overflow-wrap: anywhere; }
+.tx-reused { display: flex; gap: 6px; align-items: center; margin: 0; }
+.tx-givenlist { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; font-size: var(--t-sm); }
+.tx-givenlist dt { font-weight: 600; }
+.tx-givenlist dd { margin: 0; overflow-wrap: anywhere; }
+#tx-given .toolbtn, .tx-outbar .toolbtn { justify-self: start; width: auto; flex: none; min-height: 44px; padding: 0 16px; }
+.tx-cardwrap { display: grid; gap: 8px; min-width: 0; }
+.tx-card iframe { width: 100%; min-height: 12rem; border: 1px solid var(--line); border-radius: 12px; background: #fff; display: block; }
+.tx-cardwait { margin: 0; padding: 24px 12px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
+.tx-out { display: grid; gap: 8px; }
+.tx-outtext {
+  margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunken);
+  font-family: var(--mono); font-size: var(--t-sm); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+  max-height: 16rem; overflow: auto;
+}
+.tx-outbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tx-out p { margin: 0; }
