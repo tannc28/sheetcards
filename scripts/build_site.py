@@ -73,7 +73,7 @@ STARTER = {
 # information — the build refuses a page missing from this list, or from either
 # language, and a name with no file.
 DOC_GROUPS = [
-    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples"]),
+    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples", "ai"]),
     (
         {"vi": "Viết sheet", "en": "Write a sheet"},
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
@@ -716,6 +716,7 @@ def build(out=OUT):
     build_home_cards(out)
     build_sheet_templates(out)
     build_downloads(out)
+    build_ai_guide(out)
     pages = build_docs(out)
 
     # GitHub Pages runs the output through Jekyll unless told not to, which
@@ -741,6 +742,18 @@ def build_downloads(out):
     data, _ = build_examples.build_bytes(STARTER)
     (out / STARTER_NAME).write_bytes(data)
     shutil.copy2(EXAMPLES, out / EXAMPLES.name)
+
+
+def build_ai_guide(out):
+    """/ai.md and /llms.txt, for an AI assistant writing a CSV (scripts/ai_guide.py)."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        import ai_guide
+        import build_examples
+    finally:
+        sys.path.pop(0)
+    cloze = build_examples.SHEETS["06 Cloze (điền chỗ trống)"]
+    return ai_guide.write(out, sheet_templates(out), *_pure_package(out), cloze)
 
 
 # ---------------------------------------------------------------------------
