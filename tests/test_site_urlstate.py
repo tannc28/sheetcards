@@ -118,6 +118,12 @@ class TestCreateSheet:
         assert _read(self.URL + "?view=look", "SHEET_STATE") == {"view": "look"}
         assert _read(self.URL + "?view=grid", "SHEET_STATE") == {}
 
+    def test_the_text_form(self):
+        url = _write(self.URL, {"form": "text"}, "SHEET_STATE")
+        assert url == self.URL + "?form=text"
+        assert _read(url, "SHEET_STATE") == {"form": "text"}
+        assert _write(self.URL, {"form": "table"}, "SHEET_STATE") == self.URL
+
     def test_a_shared_sheet_is_left_alone(self):
         url = _write(self.URL + "#s=1.abc", {"view": "look"}, "SHEET_STATE")
         assert url == self.URL + "?view=look#s=1.abc"

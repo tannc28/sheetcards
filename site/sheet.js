@@ -40,6 +40,7 @@ import { warningText } from "./sheetwarnings.js";
 import { mountWordPaste } from "./wordpaste.js";
 import { mountSuggest } from "./suggestpanel.js";
 import { withHeaders } from "./importformats.js";
+import { sheetGrid, sheetText, textHolds } from "./sheettext.js";
 
 /** What the page asks of the add-on's code. */
 const SHEETPY = String.raw`
@@ -411,6 +412,8 @@ const ui = {
   // A word added from the form and not yet written in: it goes again if the
   // form is closed with it still empty.
   fresh: null,
+  // How the words are shown: "table" (the grid, or a phone's list) or "text".
+  form: "table",
 };
 
 let run = null;
@@ -707,9 +710,7 @@ function paintFiled() {
   if (ui.stage !== "edit") return;
   const n = wordCount();
   const filed = isFiled();
-  for (const button of document.querySelectorAll("#share, #savecsv")) {
-    button.classList.toggle("unsaved", button.classList.contains("savebtn") && !filed && n > 0);
-  }
+  $("#saveopen").classList.toggle("unsaved", !filed && n > 0);
   const [key, kind] = !n
     ? ["", ""]
     : filed
@@ -721,15 +722,11 @@ function paintFiled() {
   $("#saved").className = `saved ${kind}`;
 }
 
-/** The device's save, in the out bar's words. Set before the first paint. */
+/** The device's save, first in the menu and in the line under the title. */
 function wireSave() {
   if (!SAVE_LINK) return;
-  $("#share-label").dataset.i18n = "shSaveLink";
-  $("#share").classList.add("savebtn");
-  $("#savecsv").classList.remove("savebtn");
-  $("#savecsv").hidden = true;
+  $("#savebox").classList.add("linkfirst");
   $("#fileline").dataset.i18n = "shFileLineLink";
-  $("#savemore").dataset.i18n = "shOtherFormatsAll";
 }
 
 // Said once per device, the first time it matters: what an iPhone does to a
@@ -1026,7 +1023,8 @@ function addressState() {
     if (stepTheme !== null) out.theme = stepTheme || "none";
     return out;
   }
-  return ui.stage === "edit" && ui.view === "look" ? { view: "look" } : {};
+  if (ui.stage !== "edit") return {};
+  return { view: ui.view === "look" ? "look" : null, form: ui.form };
 }
 
 function syncAddress() {
@@ -1745,14 +1743,129 @@ function paintAll() {
   drawCard();
 }
 
-/** The grid on a wide screen, the list of words on a phone. */
+/** The grid on a wide screen, the list of words on a phone — or the text. */
 function paintRows() {
   const n = wordCount();
   $("#rowcount").textContent = String(n);
   $("#rowcount-seg").textContent = String(n);
-  if (WIDE.matches) paintSheet();
+  if (ui.form === "text") paintText();
+  else if (WIDE.matches) paintSheet();
   else paintList();
 }
+
+// ---------------------------------------------------------------------------
+// The sheet as text
+// ---------------------------------------------------------------------------
+//
+// The Văn bản view is the sheet written the way the paste dialog teaches
+// (sheettext.js), and editing it edits the sheet: the text is read back a
+// moment after the last key, as one step of undo, and written out again tidy
+// when the box is left. `next=` and `shape=` are left out of it, as they are
+// left out of the grid's marker cell, and put back on the way in. A sheet the
+// text form cannot hold (a cell with a `|` or a line break) is shown read-only
+// and says why, rather than being cut into the wrong cells.
+
+const FORM_KEY = "sc-sheet-form";
+const TEXT_NOTE = { pipe: "shTextPipe", newline: "shTextNewline", other: "shTextOther" };
+let textTimer = 0;
+let held = { ok: true, why: "" };
+
+function storedForm() {
+  try {
+    return localStorage.getItem(FORM_KEY) === "text" ? "text" : "table";
+  } catch {
+    return "table";
+  }
+}
+
+function setForm(form, { remember = true } = {}) {
+  ui.form = form === "text" ? "text" : "table";
+  $("#app").dataset.form = ui.form;
+  for (const b of document.querySelectorAll(".sheetforms [data-form]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.form === ui.form));
+  }
+  if (remember) {
+    try {
+      localStorage.setItem(FORM_KEY, ui.form);
+    } catch {
+      // Remembered for this visit only.
+    }
+  }
+  if (ui.form === "text") {
+    stopEditing();
+    ui.sel = null;
+  }
+  if (ui.stage !== "edit") return;
+  paintRows();
+  syncAddress();
+}
+
+/** The text form of the sheet, or why it has none. */
+function textNow() {
+  const grid = exportGrid(sheet, { mark: false });
+  held = textHolds(grid);
+  return sheetText(grid);
+}
+
+function paintText({ force = false } = {}) {
+  const box = $("#sheettext");
+  const text = textNow();
+  if (force || document.activeElement !== box) box.value = text;
+  box.readOnly = !held.ok;
+  for (const id of ["#textnote", "#save-textnote"]) {
+    $(id).hidden = held.ok;
+    $(id).textContent = held.ok ? "" : t(TEXT_NOTE[held.why]);
+  }
+  $("#copytext").disabled = !held.ok;
+  paintPaper();
+}
+
+/** The ruled layer under the text, its #config line and brackets tinted. */
+function paintPaper() {
+  const box = $("#sheettext");
+  const paper = $("#sheetpaper");
+  if (!box.offsetParent) return;
+  box.style.height = "auto";
+  box.style.height = `${box.scrollHeight + 3}px`;
+  const lines = box.value.split("\n");
+  const filled = lines.map((l, i) => (l.trim() ? i : -1)).filter((i) => i >= 0);
+  const config = filled.find((i) => isMarkerCell(lines[i].trim())) ?? -1;
+  const head = config >= 0 ? filled.find((i) => i > config) : filled[0];
+  paper.innerHTML = lines
+    .map((line, i) => {
+      const body = escapeHtml(line) || "\u200b";
+      if (i === config) return `<div class="ln cfg">${body.replace(/(#config)/i, '<span class="kw">$1</span>')}</div>`;
+      if (i === head) return `<div class="ln head">${body.replace(/(\[[^\]\n]*\])/g, '<span class="br">$1</span>')}</div>`;
+      return `<div class="ln">${body}</div>`;
+    })
+    .join("");
+  paper.style.width = `${box.clientWidth + 3}px`;
+  paper.style.height = `${box.offsetHeight}px`;
+}
+
+const sheetKey = (of) => JSON.stringify([of.title, of.marker, of.noId, of.columns, of.rows.map((r) => [r.id, r.values])]);
+
+/** The text read back into the sheet, when it says something new. */
+function applyText() {
+  clearTimeout(textTimer);
+  textTimer = 0;
+  if (!held.ok || ui.stage !== "edit") return;
+  const { grid } = sheetGrid($("#sheettext").value, { language: lang() });
+  const idAt = grid[0].findIndex((h) => /^\s*\ufeff?id\s*$/i.test(h));
+  const at = Math.max(0, idAt);
+  if (sheet.shape) grid[1][at] = markerSet(grid[1][at], "shape", sheet.shape);
+  if (sheet.next && idAt >= 0) grid[1][at] = markerSet(grid[1][at], "next", sheet.next);
+  const made = fromGrid(grid, sheet.title);
+  made.retired = sheet.retired;
+  if (sheet.source) made.source = sheet.source;
+  if (sheetKey(made) === sheetKey(sheet)) return;
+  markRun("text");
+  sheet = made;
+  fit();
+  paintAll();
+  saveSoon();
+}
+
 
 function letter(index) {
   let out = "";
@@ -2558,19 +2671,64 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function saveCsv() {
+/** Tải về / Lưu: every way the sheet leaves, the device's save first. */
+function openSaveMenu() {
   if (!wordCount()) return toast(t("shNeedWord"), "bad");
-  if (idsBlock()) return $("#savebox").close();
-  download(new Blob([asCsv(exportGrid())], { type: "text/csv" }), `${fileBase()}.csv`);
-  $("#savebox").close();
-  markFiled("file");
-  toast(t("shDownloaded", `${fileBase()}.csv`), "ok");
-  showNote("android");
+  if (idsBlock()) return;
+  textNow();
+  for (const id of ["#save-txt", "#copy-text"]) $(id).disabled = !held.ok;
+  $("#save-textnote").hidden = held.ok;
+  $("#save-textnote").textContent = held.ok ? "" : t(TEXT_NOTE[held.why]);
+  $("#savebox").showModal();
 }
 
+/** Whether the sheet may leave: it has words, and every one an ID. */
+function mayLeave() {
+  if (!wordCount()) {
+    toast(t("shNeedWord"), "bad");
+    return false;
+  }
+  if ($("#savebox").open) $("#savebox").close();
+  return !idsBlock();
+}
+
+/** A file of the sheet, which marks it kept. */
+function saveAs(ext, text, type) {
+  if (!mayLeave()) return;
+  download(new Blob([text], { type }), `${fileBase()}.${ext}`);
+  markFiled("file");
+  toast(t("shDownloaded", `${fileBase()}.${ext}`), "ok");
+  if (ext === "csv") showNote("android");
+}
+
+const saveCsv = () => saveAs("csv", asCsv(exportGrid()), "text/csv");
+const saveTsv = () => saveAs("tsv", toTsv(exportGrid()) + "\n", "text/tab-separated-values");
+function saveTxt() {
+  textNow();
+  if (!held.ok) return toast(t(TEXT_NOTE[held.why]), "bad");
+  saveAs("txt", sheetText(exportGrid()), "text/plain;charset=utf-8");
+}
+
+// A copy is not a save: the clipboard keeps it only until the next copy, so the
+// sheet stays "not saved" until it is in a file or a link.
+async function copyOut(text, done) {
+  if (!mayLeave()) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t(done), "ok");
+  } catch {
+    toast(t("edCopyFailed"), "bad");
+  }
+}
+function copyText() {
+  textNow();
+  if (!held.ok) return toast(t(TEXT_NOTE[held.why]), "bad");
+  return copyOut(sheetText(exportGrid()), "shCopiedText");
+}
+const copyTable = () => copyOut(toTsv(exportGrid()), "shCopiedTable");
+
 function saveXlsx() {
-  $("#savebox").close();
-  if (idsBlock()) return;
+  if (!mayLeave()) return;
   whenReady(() => {
     try {
       const bytes = new Uint8Array(toXlsx(JSON.stringify({ name: sheet.title || fileBase(), rows: exportGrid() })));
@@ -2728,9 +2886,23 @@ function nextWord() {
 const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt|apkg|colpkg)$/i;
 
 /** Opens a picked file to edit — or, `asTemplate`, keeps it as a template. */
-function openFile(file, asTemplate = false) {
+async function openFile(file, asTemplate = false) {
   if (!FILE_TYPES.test(file.name)) return toast(t("badFileType", file.name), "bad");
+  const grid = /\.txt$/i.test(file.name) ? await textFile(file) : null;
+  if (grid) return openGrid(grid, fileStem(file.name), file.name, asTemplate);
   whenReady(() => readPicked(file, 0, true, asTemplate), t("reading"));
+}
+
+/** A .txt written in the text form (its first line `#config`), as cells; else null. */
+async function textFile(file) {
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
+  } catch {
+    return null;
+  }
+  const first = text.replace(/^\ufeff/, "").split(/\r?\n/).find((l) => l.trim()) || "";
+  return isMarkerCell(first.trim()) ? sheetGrid(text, { language: lang() }).grid : null;
 }
 
 async function readPicked(file, index, choose = true, asTemplate = false) {
@@ -2773,15 +2945,20 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
     return;
   }
   const name = out.tabs.length > 1 ? out.tab : title;
-  if (asTemplate) return saveTemplate(exportGrid(fromGrid(out.rows, name), { mark: false }), name);
-  const opened = fromGrid(out.rows, name);
+  const lost = (out.package?.media?.images || 0) + (out.package?.media?.audio || 0);
+  const said = out.encoding ? t("readAsEncoding", out.encoding) : lost ? t("apkgMedia", lost) : "";
+  openGrid(out.rows, name, file.name, asTemplate, said);
+}
+
+/** Cells read from a file, opened to edit (or kept as a template). */
+function openGrid(rows, name, source, asTemplate = false, said = "") {
+  if (asTemplate) return saveTemplate(exportGrid(fromGrid(rows, name), { mark: false }), name);
+  const opened = fromGrid(rows, name);
   // What the file was called, for the line that says it is keyed by its name.
-  opened.source = file.name;
+  opened.source = source;
   if (markerGet(opened.marker, "name")) rememberName(opened.title);
   begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
-  const lost = (out.package?.media?.images || 0) + (out.package?.media?.audio || 0);
-  if (out.encoding) toast(t("readAsEncoding", out.encoding), "bad");
-  else if (lost) toast(t("apkgMedia", lost), "bad");
+  if (said) toast(said, "bad");
   else if (headless.has(opened)) toast(t("hdSynth"), "bad");
   else toast(t("shOpened", name, wordCount()), "ok");
 }
@@ -3234,15 +3411,33 @@ $("#tpl-name").addEventListener("keydown", (e) => {
 $("#nameoffer-go").addEventListener("click", () => rename(sheet.title || fileBase()));
 
 $("#todeck").addEventListener("click", toDeck);
-$("#savecsv").addEventListener("click", saveCsv);
-$("#savemore").addEventListener("click", () => {
-  if (!wordCount()) return toast(t("shNeedWord"), "bad");
-  $("#savebox").showModal();
-});
+$("#saveopen").addEventListener("click", openSaveMenu);
 $("#rail-deck").addEventListener("click", toDeck);
 $("#save-csv").addEventListener("click", saveCsv);
 $("#save-xlsx").addEventListener("click", saveXlsx);
-$("#share").addEventListener("click", () => openShare());
+$("#save-txt").addEventListener("click", saveTxt);
+$("#save-tsv").addEventListener("click", saveTsv);
+$("#copy-text").addEventListener("click", copyText);
+$("#copy-table").addEventListener("click", copyTable);
+$("#save-link").addEventListener("click", () => {
+  $("#savebox").close();
+  openShare();
+});
+$("#copytext").addEventListener("click", copyText);
+$(".sheetforms").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-form]");
+  if (b && b.dataset.form !== ui.form) setForm(b.dataset.form);
+});
+$("#sheettext").addEventListener("input", () => {
+  paintPaper();
+  clearTimeout(textTimer);
+  textTimer = setTimeout(applyText, 500);
+});
+$("#sheettext").addEventListener("blur", () => {
+  if (textTimer) applyText();
+  if (ui.form === "text") paintText({ force: true });
+});
+addEventListener("resize", () => ui.form === "text" && paintPaper());
 $("#devnote-close").addEventListener("click", () => ($("#devnote").hidden = true));
 $("#share-deck").addEventListener("change", paintShare);
 $("#vocab-lang").addEventListener("change", (e) => {
@@ -3600,14 +3795,14 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("copy", (e) => {
-  if (!ui.sel || ui.editing || !WIDE.matches) return;
+  if (!ui.sel || ui.editing || !WIDE.matches || ui.form === "text") return;
   e.preventDefault();
   e.clipboardData.setData("text/plain", selectionTsv());
   toast(t("edCopiedCells"), "ok");
 });
 
 document.addEventListener("cut", (e) => {
-  if (!ui.sel || ui.editing || !WIDE.matches) return;
+  if (!ui.sel || ui.editing || !WIDE.matches || ui.form === "text") return;
   e.preventDefault();
   e.clipboardData.setData("text/plain", selectionTsv());
   mark();
@@ -3749,6 +3944,7 @@ async function arrive() {
 /** After the sheet is open: the step or the view the address asked for. */
 function arriveAt(want) {
   if (want.tpl && openAsked(want)) return;
+  if (want.form && ui.stage === "edit") setForm(want.form, { remember: false });
   if (want.view && ui.stage === "edit") {
     setView(want.view);
     drawCard();
@@ -3757,6 +3953,7 @@ function arriveAt(want) {
 }
 
 wireSave();
+setForm(storedForm(), { remember: false });
 paintIcons();
 paintChrome();
 mountInAppBanner({ t, icon });

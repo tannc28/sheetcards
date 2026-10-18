@@ -49,6 +49,8 @@ export const SHEET_STATE = {
   theme: { type: "text" },
   // The editor's step: look (columns and card) or rows (the words).
   view: { type: "enum", values: ["look", "rows"] },
+  // How the words are shown: the grid (or a phone's list), or the text form.
+  form: { type: "enum", values: ["table", "text"], def: "table" },
 };
 
 export const CONTACT_STATE = {

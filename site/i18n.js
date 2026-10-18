@@ -410,10 +410,9 @@ const STRINGS = {
   },
   shLinkKept: { en: "Link sent — your sheet is in it", vi: "Đã gửi link — sheet nằm trong link đó" },
   shFileLineLink: {
-    en: "The draft lives only in this browser, which may clear it (an iPhone does after 7 days away). Press Save sheet link and send it to yourself to keep the sheet.",
-    vi: "Bản nháp chỉ nằm trong trình duyệt này, và trình duyệt có thể xoá nó (iPhone xoá sau 7 ngày không mở trang). Bấm Lưu link sheet rồi gửi cho chính bạn để giữ sheet.",
+    en: "The draft lives only in this browser, which may clear it (an iPhone does after 7 days away). Press Download / Save → Sheet link and send it to yourself to keep the sheet.",
+    vi: "Bản nháp chỉ nằm trong trình duyệt này, và trình duyệt có thể xoá nó (iPhone xoá sau 7 ngày không mở trang). Bấm Tải về / Lưu → Link sheet rồi gửi cho chính bạn để giữ sheet.",
   },
-  shOtherFormatsAll: { en: "Need a .csv or .xlsx file?", vi: "Cần file .csv / .xlsx?" },
   shUnlinkedTitle: { en: "Save the sheet link first?", vi: "Lưu link sheet trước?" },
   shUnlinkedText: {
     en: "The changes are only in this browser. Save the link and you can open it again next week to add words.",
@@ -425,8 +424,8 @@ const STRINGS = {
   },
   shAskAi: { en: "Ask AI to make a word set", vi: "Nhờ AI tạo bộ từ" },
   shIosNote: {
-    en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Save sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",
-    vi: "Trên iPhone/iPad, Safari xoá bản nháp này nếu 7 ngày bạn không mở trang. Bấm <b>Lưu link sheet</b> để giữ sheet. Mẹo: <b>Share → Add to Home Screen</b> (Thêm vào MH chính) để mở lại trang này chỉ với một chạm.",
+    en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Download / Save → Sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",
+    vi: "Trên iPhone/iPad, Safari xoá bản nháp này nếu 7 ngày bạn không mở trang. Bấm <b>Tải về / Lưu → Link sheet</b> để giữ sheet. Mẹo: <b>Share → Add to Home Screen</b> (Thêm vào MH chính) để mở lại trang này chỉ với một chạm.",
   },
   shAndroidCsvNote: {
     en: "To add words later, open this .csv with <b>Open .xlsx/.csv file</b> on this page — not from the Files app. There, Android may open it in AnkiDroid, whose CSV import turns every row, settings row included, into a junk note.",
@@ -438,8 +437,8 @@ const STRINGS = {
   shNew: { en: "New sheet", vi: "Tạo sheet mới" },
   shNewTitle: { en: "Start a new sheet?", vi: "Tạo sheet mới?" },
   shNewText: {
-    en: (n) => `The ${n} word${n === 1 ? "" : "s"} in this sheet will be cleared from this browser. To keep them, press Save .csv file (or Save sheet link) first.`,
-    vi: (n) => `${n} từ trong sheet này sẽ bị xoá khỏi trình duyệt. Muốn giữ thì bấm Lưu file .csv (hoặc Lưu link sheet) trước.`,
+    en: (n) => `The ${n} word${n === 1 ? "" : "s"} in this sheet will be cleared from this browser. To keep them, press Download / Save first.`,
+    vi: (n) => `${n} từ trong sheet này sẽ bị xoá khỏi trình duyệt. Muốn giữ thì bấm Tải về / Lưu trước.`,
   },
   shNewYes: { en: "Clear and start over", vi: "Xoá và làm lại" },
   shKeep: { en: "Keep my sheet", vi: "Giữ sheet hiện tại" },
@@ -457,7 +456,6 @@ const STRINGS = {
     vi: "Bản nháp chỉ nằm trong trình duyệt này. Lưu file .csv để giữ mãi và làm tiếp trên máy khác, trong Google Sheets hay Excel.",
   },
   shSaveCsv: { en: "Save .csv", vi: "Lưu file .csv" },
-  shOtherFormats: { en: "Need an .xlsx?", vi: "Cần file .xlsx?" },
   shUnfiledTitle: { en: "Save the sheet as a file first?", vi: "Lưu sheet thành file trước?" },
   shUnfiledText: {
     en: "The changes are only in this browser. Save the .csv and you can open it again to add words, on any device.",
@@ -710,16 +708,39 @@ const STRINGS = {
     en: "This browser would not pass the sheet on. Download it and open the file in Make flashcards.",
     vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong trang Tạo flashcard.",
   },
-  shDownloadTitle: { en: "Save the sheet as a file", vi: "Tải sheet về máy" },
-  shXlsxHint: {
-    en: "Opens in Excel, or upload it to Google Drive to make it a Google Sheet",
-    vi: "Mở bằng Excel, hoặc upload lên Google Drive thành Google Sheets",
-  },
-  shCsvHint: { en: "Plain text, opens anywhere", vi: "File chữ đơn giản, mở được ở mọi nơi" },
   shReopenHint: {
     en: "Open the file here again any time to keep editing.",
     vi: "Mở lại file này ở đây bất cứ lúc nào để sửa tiếp.",
   },
+  // ---- Tạo Sheet: the sheet as a table or as text, and every way to keep it ----
+  shFormLabel: { en: "Show the sheet as", vi: "Xem sheet dạng" },
+  shFormTable: { en: "Table", vi: "Bảng" },
+  shFormText: { en: "Text", vi: "Văn bản" },
+  shTextLabel: { en: "The sheet as text", vi: "Sheet dạng văn bản" },
+  shTextHint: { en: "One word a line, cells split by |.", vi: "Một dòng một từ, các ô cách nhau bằng |." },
+  shTextPipe: {
+    en: "A cell holds a |, so text cannot hold this sheet. Use Table, .csv or .xlsx.",
+    vi: "Có ô chứa dấu |, nên văn bản không giữ được sheet này. Dùng Bảng, .csv hoặc .xlsx.",
+  },
+  shTextNewline: {
+    en: "A cell holds a line break, so text cannot hold this sheet. Use Table, .csv or .xlsx.",
+    vi: "Có ô xuống dòng, nên văn bản không giữ được sheet này. Dùng Bảng, .csv hoặc .xlsx.",
+  },
+  shTextOther: {
+    en: "Text cannot hold this sheet exactly. Use Table, .csv or .xlsx.",
+    vi: "Văn bản không giữ được sheet này nguyên vẹn. Dùng Bảng, .csv hoặc .xlsx.",
+  },
+  shSaveMenu: { en: "Download / Save", vi: "Tải về / Lưu" },
+  shLinkSheet: { en: "Sheet link", vi: "Link sheet" },
+  shLinkSheetHint: { en: "Opens again on any device", vi: "Mở lại trên máy nào cũng được" },
+  shFileCsv: { en: "Any spreadsheet", vi: "Mọi bảng tính" },
+  shFileXlsx: { en: "Excel, Google Drive", vi: "Excel, Google Drive" },
+  shFileTxt: { en: "Text form", vi: "Dạng văn bản" },
+  shFileTsv: { en: "Tabs between cells", vi: "Tab giữa các ô" },
+  shCopyText: { en: "Copy text", vi: "Copy văn bản" },
+  shCopyTable: { en: "Copy table", vi: "Copy bảng" },
+  shCopiedText: { en: "Text copied", vi: "Đã copy văn bản" },
+  shCopiedTable: { en: "Table copied — paste it into Google Sheets or Excel", vi: "Đã copy bảng — dán vào Google Sheets hay Excel" },
   shPreparingXlsx: { en: "Preparing the .xlsx…", vi: "Đang tạo file .xlsx…" },
   shDownloaded: { en: (name) => `Downloaded ${name}`, vi: (name) => `Đã tải ${name}` },
   shShareLead: {
