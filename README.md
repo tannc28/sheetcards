@@ -10,7 +10,7 @@ bạn đặt tên là một field. Một settings row (không bắt buộc) quy 
 thế nào, đọc to cột nào và xếp vào deck con nào. Bạn luôn sửa trên sheet; Anki
 giữ bản sao.
 
-**[Sheet to Anki](https://tannc28.github.io/sheetcards/create.html)**, dùng trên
+**[Sheet to Anki](https://tannc28.github.io/sheetcards/create/)**, dùng trên
 điện thoại hay máy tính đều được:
 
 1. Dán link Google Sheets, upload file `.xlsx`/`.csv` (CSV từ Excel tiếng Việt
@@ -21,7 +21,7 @@ giữ bản sao.
    Nếu đã đổi cột, lúc import bật **Merge note types** và chọn **Update notes:
    Always**.
 
-Chưa có sheet? **[Tạo Sheet](https://tannc28.github.io/sheetcards/sheet.html)**
+Chưa có sheet? **[Tạo Sheet](https://tannc28.github.io/sheetcards/sheet/)**
 soạn cả sheet trên web: chọn template và theme, đặt tên bộ flashcard, rồi
 ① Cột & card → ② Thẻ. Lưu bằng **Lưu link sheet** hoặc file `.csv`; template
 riêng của bạn nằm ở **Template của bạn**.
@@ -36,7 +36,7 @@ vào **Tools → Add-ons → Install from file…**, khởi động lại Anki, 
 file `.apkg` nhận cùng một bộ note.
 
 [Docs](https://tannc28.github.io/sheetcards/docs/) ·
-[Liên hệ & góp ý](https://tannc28.github.io/sheetcards/contact.html)
+[Liên hệ & góp ý](https://tannc28.github.io/sheetcards/contact/)
 
 ## English
 
@@ -45,7 +45,7 @@ column you name becomes a field. An optional settings row says how the card
 looks, what is read aloud and which subdeck it goes in. You always edit the
 sheet; Anki keeps the copy.
 
-**[Sheet to Anki](https://tannc28.github.io/sheetcards/create.html)** works on a
+**[Sheet to Anki](https://tannc28.github.io/sheetcards/create/)** works on a
 phone or a computer:
 
 1. Paste a Google Sheets link, upload an `.xlsx`/`.csv`, or open a share link.
@@ -55,7 +55,7 @@ phone or a computer:
    progress is kept. If the columns changed, turn on **Merge note types** and set
    **Update notes** to **Always** when importing.
 
-No sheet yet? **[Create sheet](https://tannc28.github.io/sheetcards/sheet.html)**
+No sheet yet? **[Create sheet](https://tannc28.github.io/sheetcards/sheet/)**
 writes one in the browser: pick a template and a theme, name the flashcard set,
 then ① Columns & card → ② Cards. Keep it with **Save sheet link** or as a `.csv`;
 your own templates live under **Your templates**.
@@ -72,7 +72,7 @@ Sheets…** (`Ctrl+Shift+S`). With `name=` set, the add-on and the `.apkg` recog
 the same notes.
 
 [Docs](https://tannc28.github.io/sheetcards/docs/en/) ·
-[Contact & feedback](https://tannc28.github.io/sheetcards/contact.html)
+[Contact & feedback](https://tannc28.github.io/sheetcards/contact/)
 
 ## Example workbook · File ví dụ
 
@@ -85,7 +85,7 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
 
 ## Developing
 
-Tests, the build and releases: [For developers](https://tannc28.github.io/sheetcards/docs/en/developers.html).
+Tests, the build and releases: [For developers](https://tannc28.github.io/sheetcards/docs/en/developers/).
 
 ## License
 

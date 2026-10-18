@@ -22,7 +22,7 @@ class TestStarterLinks:
     def test_both_links_are_in_the_line(self):
         html = add_deck_dialog.starter_links_html()
         assert f'href="{add_deck_dialog.EXAMPLE_WORKBOOK_URL}"' in html
-        assert 'href="https://tannc28.github.io/sheetcards/create.html"' in html
+        assert 'href="https://tannc28.github.io/sheetcards/create/"' in html
         assert html.startswith("Need a sheet to start from?")
 
 

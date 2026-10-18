@@ -748,7 +748,7 @@ EXAMPLE_WORKBOOK_URL = (
 # Sheet to Anki (called Create deck until 2026-10): the site's main page, which
 # makes an .apkg from a sheet without the add-on and shows what a sync would
 # make of it.
-PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/create.html"
+PREVIEW_SITE_URL = "https://tannc28.github.io/sheetcards/create/"
 
 
 def starter_links_html():

@@ -4,8 +4,8 @@
 could actually study, and each one shows a feature, from the smallest sheet that
 works to the more advanced settings. The same tour is on the website, in
 Vietnamese and English:
-[File ví dụ](https://tannc28.github.io/sheetcards/docs/examples.html) ·
-[The example workbook](https://tannc28.github.io/sheetcards/docs/en/examples.html).
+[File ví dụ](https://tannc28.github.io/sheetcards/docs/examples/) ·
+[The example workbook](https://tannc28.github.io/sheetcards/docs/en/examples/).
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
@@ -13,12 +13,12 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
 
 ## Opening it
 
-- **Sheet to Anki** (<https://tannc28.github.io/sheetcards/create.html>): paste
+- **Sheet to Anki** (<https://tannc28.github.io/sheetcards/create/>): paste
   the link above, or upload the file
   ([direct download](https://tannc28.github.io/sheetcards/sheetcards-examples.xlsx)).
   *Xem ví dụ* on the landing page opens it on sheet 15. Pick a sheet in the source
   bar, check its cards, and download the `.apkg`.
-- **Tạo Sheet / Create sheet** (<https://tannc28.github.io/sheetcards/sheet.html>):
+- **Tạo Sheet / Create sheet** (<https://tannc28.github.io/sheetcards/sheet/>):
   to start your own sheet from one of these, download the file and use **Mở file
   để thêm từ** (*Open a file to add words*), then pick the sheet. To keep only its
   columns and settings row as a starting point, upload it under **Template của
