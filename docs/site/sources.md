@@ -30,7 +30,7 @@ mỗi sheet một deck. File nằm trong một repository GitHub cũng được:
 
 ## Sheet to Anki
 
-[Sheet to Anki](../create.html) tạo flashcard Anki từ sheet trên điện thoại hoặc
+[Sheet to Anki](../create/) tạo flashcard Anki từ sheet trên điện thoại hoặc
 máy tính, không cần cài add-on. Trước khi tải về, nó cho bạn thấy SheetCards làm
 ra gì từ sheet: từng dòng và việc nó có được sync hay không, cây deck, tag, cảnh
 báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật, nghe và gõ đáp
@@ -92,7 +92,7 @@ cách giữ tiến độ.
 
 ## Tạo Sheet
 
-[Tạo Sheet](../sheet.html) là chỗ soạn cả một sheet trên web, không cần
+[Tạo Sheet](../sheet/) là chỗ soạn cả một sheet trên web, không cần
 Google Sheets: tên cột, [settings row](settings-row.md) và từng từ. Bắt đầu từ
 một trong 8 template (xem [Soạn trong Tạo Sheet](index.md#soan-trong-tao-sheet)),
 một template của bạn, hoặc mở một file `.xlsx`/`.csv` có sẵn. Trên máy tính nó là một spreadsheet: dán nhiều dòng từ Excel hay Google

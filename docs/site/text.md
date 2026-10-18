@@ -13,7 +13,7 @@ Ghi tên theme trong ô đánh dấu của settings row:
 #config theme=paper
 ```
 
-Trong [Tạo Sheet](../sheet.html), theme được chọn ngay ở bước chọn template, hàng
+Trong [Tạo Sheet](../sheet/), theme được chọn ngay ở bước chọn template, hàng
 **Theme** dưới card xem trước: bấm **Mặc định** (màu của Anki) hoặc một theme, card
 đổi màu ngay, và Tạo Sheet ghi `theme=` vào ô `#config` giúp bạn. Theme không phải
 là template: template nào cũng dùng được với theme nào.

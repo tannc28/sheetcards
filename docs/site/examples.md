@@ -8,10 +8,10 @@ hoạ một tính năng.
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-- **Xem trong [Sheet to Anki](../create.html#example)**: dán link trên, hoặc
+- **Xem trong [Sheet to Anki](../create/#example)**: dán link trên, hoặc
   [tải file về](../sheetcards-examples.xlsx) rồi upload. Chọn sheet ở thanh phía
   trên, xem card, rồi Download `.apkg`.
-- **Lấy một sheet làm điểm xuất phát trong [Tạo Sheet](../sheet.html)**: tải file
+- **Lấy một sheet làm điểm xuất phát trong [Tạo Sheet](../sheet/)**: tải file
   về, bấm **Mở file để thêm từ** rồi chọn sheet. Chỉ muốn giữ cột và settings
   row thì upload file vào **Template của bạn**.
 - **Với add-on**: dán link vào **Tools → SheetCards → Connect a Google Sheet…**;

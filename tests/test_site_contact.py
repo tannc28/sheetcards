@@ -153,8 +153,8 @@ def test_where_the_reader_came_from():
         ("?from=<script>", "", "script"),
         (
             "",
-            f"{origin}/sheetcards/sheet.html?url=secret#s=1",
-            "/sheetcards/sheet.html",
+            f"{origin}/sheetcards/sheet/?url=secret#s=1",
+            "/sheetcards/sheet/",
         ),
         ("", "https://elsewhere.example/page", ""),
         ("", "", ""),

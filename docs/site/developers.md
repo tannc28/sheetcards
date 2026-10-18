@@ -43,8 +43,10 @@ mypy src/
 ## Website
 
 Trang web này là trang tĩnh, nằm trong `site/`: trang chủ (`index.html`), Sheet
-to Anki (`create.html`), Tạo Sheet (`sheet.html`) và Liên hệ & góp ý
-(`contact.html`). Docs là Markdown trong
+to Anki (`create.html`, ở `/create/`), Tạo Sheet (`sheet.html`, ở `/sheet/`) và
+Liên hệ & góp ý (`contact.html`, ở `/contact/`). Địa chỉ không có đuôi `.html`:
+mỗi trang là một thư mục, và địa chỉ cũ (`create.html`, `docs/faq.html`…) chỉ
+chuyển tiếp sang địa chỉ mới, giữ nguyên query và `#`. Docs là Markdown trong
 `docs/site/` (tiếng Việt, ở `/docs/`) và `docs/site/en/` (tiếng Anh, ở `/docs/en/`). `scripts/build_site.py` gom tất cả vào `build/site/`: nó copy
 `site/`, copy các module Python thuần của add-on (những module không import Anki)
 để Sheet to Anki chạy qua Pyodide, dùng chính các module đó để render các card demo của

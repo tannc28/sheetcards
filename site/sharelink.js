@@ -17,6 +17,8 @@
  * quoted the way csv.writer would quote it.
  */
 
+import { PAGE, site } from "./paths.js";
+
 export const SHARE_VERSION = "1";
 const PREFIX = `#s=${SHARE_VERSION}.`;
 
@@ -113,6 +115,16 @@ export async function encodeShare(name, tsv) {
   const title = String(name ?? "").replace(/[\r\n]+/g, " ").trim();
   const bytes = new TextEncoder().encode(`${title}\n${tsv}`);
   return PREFIX + toBase64Url(await squeeze(bytes, CompressionStream));
+}
+
+/**
+ * The whole address of a shared sheet: Create sheet (`sheet/#s=…`) to edit it,
+ * Sheet to Anki (`create/#s=…`) to make its deck. The pages' old addresses
+ * (`sheet.html`, `create.html`) forward the fragment, so links made before the
+ * pages moved into folders still open.
+ */
+export function shareAddress(hash, { deck = false } = {}) {
+  return site(`${deck ? PAGE.create : PAGE.sheet}${hash}`);
 }
 
 /** True when an address's fragment carries a shared sheet, of any version. */

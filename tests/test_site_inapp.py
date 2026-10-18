@@ -139,10 +139,10 @@ def test_a_page_on_the_home_screen_is_not_a_webview():
 
 @pytest.mark.unit
 def test_the_intent_link_carries_the_fragment_in_the_query():
-    href = "https://tannc28.github.io/sheetcards/sheet.html#s=1.abc_-"
+    href = "https://tannc28.github.io/sheetcards/sheet/#s=1.abc_-"
     intent = _run(f"m.chromeIntent({json.dumps(href)})")
     assert intent.startswith(
-        "intent://tannc28.github.io/sheetcards/sheet.html?sc_hash=s%3D1.abc_-#Intent;"
+        "intent://tannc28.github.io/sheetcards/sheet/?sc_hash=s%3D1.abc_-#Intent;"
     )
     assert "scheme=https;" in intent and "package=com.android.chrome;" in intent
     assert intent.endswith(";end")
@@ -154,7 +154,7 @@ def test_the_intent_link_carries_the_fragment_in_the_query():
 def test_the_fragment_is_put_back_on_arrival():
     out = _run(
         "(() => { let to = null;"
-        " m.restoreHash({ search: '?a=1&sc_hash=s%3D1.abc', pathname: '/sheet.html' },"
+        " m.restoreHash({ search: '?a=1&sc_hash=s%3D1.abc', pathname: '/sheet/' },"
         " { replaceState: (_s, _t, url) => (to = url) }); return to; })()"
     )
-    assert out == "/sheet.html?a=1#s=1.abc"
+    assert out == "/sheet/?a=1#s=1.abc"

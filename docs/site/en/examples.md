@@ -8,10 +8,10 @@ study, and each shows one feature.
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-- **See it in [Sheet to Anki](../../create.html#example)**: paste the link above,
+- **See it in [Sheet to Anki](../../create/#example)**: paste the link above,
   or [download the file](../../sheetcards-examples.xlsx) and upload it. Pick a
   sheet in the bar at the top, check the cards, then Download `.apkg`.
-- **Start your own sheet from one in [Create sheet](../../sheet.html)**: download
+- **Start your own sheet from one in [Create sheet](../../sheet/)**: download
   the file, press **Open a file to add words** and pick the sheet. To keep only
   its columns and settings row, upload the file under **Your templates**.
 - **With the add-on**: paste the link into **Tools → SheetCards → Connect a Google

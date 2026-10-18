@@ -3,8 +3,8 @@
  *
  * A link can travel in the address (?url=), a File cannot, and the landing page
  * must not load Pyodide just to read one. So the File is put in this browser's
- * IndexedDB, the page moves to create.html#file, and Sheet to Anki takes it out
- * again. It stays there while create.html#file is what is open, so a reload
+ * IndexedDB, the page moves to create/#file, and Sheet to Anki takes it out
+ * again. It stays there while create/#file is what is open, so a reload
  * opens the same deck; the next sheet or link opened there drops it
  * (dropHandoff). IndexedDB is this browser's own, so a shared #file address
  * finds nothing on anyone else's device. Nothing leaves the device.

@@ -4,7 +4,7 @@ SheetCards biến bảng tính thành flashcard Anki. Bạn soạn card trong m�
 mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa trên sheet;
 Anki chỉ giữ một bản sao. Mọi bước đều làm được trên điện thoại hay máy tính.
 
-Chưa có Google Sheet? [Tạo Sheet](../sheet.html) cho bạn soạn cả sheet trên
+Chưa có Google Sheet? [Tạo Sheet](../sheet/) cho bạn soạn cả sheet trên
 web, rồi chuyển thẳng sang Sheet to Anki.
 
 Có hai cách đưa flashcard vào Anki:
@@ -22,7 +22,7 @@ Trang này đưa bạn từ một sheet trống tới những card có thể h�
 - **App Anki** bạn đang dùng: file `.apkg` mở bằng AnkiDroid, AnkiMobile hoặc
   Anki trên máy tính.
 - **Một tài khoản Google**, chỉ khi bạn soạn trong Google Sheets. Soạn bằng
-  [Tạo Sheet](../sheet.html) thì không cần gì cả. SheetCards đọc sheet mà không
+  [Tạo Sheet](../sheet/) thì không cần gì cả. SheetCards đọc sheet mà không
   cần đăng nhập.
 - Add-on chỉ dùng cho cách thứ hai và cần Anki 25.x trở lên trên máy tính.
 
@@ -105,7 +105,7 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 
 ## 3. Tạo flashcard
 
-1. Dán link vào [Sheet to Anki](../create.html). Trang này chạy chính code của
+1. Dán link vào [Sheet to Anki](../create/). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
    sẽ làm ra.
 2. Kiểm tra các card: các deck, từng dòng, và từng card hoàn chỉnh mà bạn có thể
@@ -180,16 +180,16 @@ thì card bị xoá theo. Xem chi tiết ở [Sync](syncing.md).
 
 - **Đổi giao diện card.** Thêm một [settings row](settings-row.md) ngay dưới
   dòng tên cột để chỉnh cỡ chữ, màu, cột nào ở mặt nào, âm thanh, hình ảnh và
-  nhiều thứ khác. [Tạo Sheet](../sheet.html) giúp bạn viết dòng này bằng cách
+  nhiều thứ khác. [Tạo Sheet](../sheet/) giúp bạn viết dòng này bằng cách
   bấm chọn.
 - **Bắt đầu từ ví dụ.** [File ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
   hoạ một tính năng.
 - **Có gì không chạy?** Xem [FAQ và xử lý lỗi](faq.md), hoặc
-  [Liên hệ & góp ý](../contact.html?from=docs/index).
+  [Liên hệ & góp ý](../contact/?from=docs/index).
 
 ## Sắp có
 
 - **Thư viện template**: xem và dùng template người khác chia sẻ.
 - **Thư viện Theme**: thêm nhiều theme để khoác lên card của bạn.
 
-Muốn có sớm, hay cần thứ gì khác? [Góp ý](../contact.html?from=docs/index).
+Muốn có sớm, hay cần thứ gì khác? [Góp ý](../contact/?from=docs/index).

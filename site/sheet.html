@@ -41,12 +41,12 @@
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" data-i18n="navHome">Trang chủ</a>
-    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
-    <a href="./sheet.html" aria-current="page" data-i18n="navSheet">Tạo Sheet</a>
+    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet/" aria-current="page" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
   </nav>
   <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
-  <a class="ghlink fbicon" href="./contact.html?from=sheet" aria-label="Liên hệ & góp ý" title="Liên hệ & góp ý" data-i18n-attr="aria-label:contactIcon,title:contactIcon" data-icon="message-square"></a>
+  <a class="ghlink fbicon" href="./contact/?from=sheet" aria-label="Liên hệ & góp ý" title="Liên hệ & góp ý" data-i18n-attr="aria-label:contactIcon,title:contactIcon" data-icon="message-square"></a>
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
@@ -81,7 +81,7 @@
          sheet of one's own to keep as a template. -->
     <div class="reopen">
       <div class="reopen-row">
-        <a class="altcard reopen-card reopen-sheet" href="./create.html">
+        <a class="altcard reopen-card reopen-sheet" href="./create/">
           <span class="altcard-icon" data-icon="link"></span>
           <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
             <span data-i18n="shHaveSheetHint">Dán link thẳng vào Sheet to Anki</span></span>
@@ -114,7 +114,7 @@
     </section>
 
     <p class="privacy"><span data-icon="lock"></span><span data-i18n="shPrivacy">Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.</span></p>
-    <p class="contactlink"><a href="./contact.html?from=sheet"><span data-icon="message-square"></span><span data-i18n="contactLink">Liên hệ &amp; góp ý</span></a></p>
+    <p class="contactlink"><a href="./contact/?from=sheet"><span data-icon="message-square"></span><span data-i18n="contactLink">Liên hệ &amp; góp ý</span></a></p>
   </section>
 
   <!-- ==== the sheet being written =========================================== -->
@@ -231,7 +231,7 @@
             <h3 class="pane-h stephead"><span class="stepn" aria-hidden="true">1</span><span data-i18n="shColumns">Cột & settings row</span></h3>
             <button class="toolbtn tplfold" id="tplfold" type="button"><span data-icon="sliders-horizontal"></span><span
                     id="tplfold-text">Sửa cột & card</span></button>
-            <a class="docslink" href="./docs/settings-row.html" data-doc="settings-row.html" target="_blank" rel="noopener"
+            <a class="docslink" href="./docs/settings-row/" data-doc="settings-row/" target="_blank" rel="noopener"
                data-i18n="shSettingsDocs">Mọi key của settings row</a>
           </div>
           <p class="settingsline" data-i18n="shSettingsLine">Settings row là dòng 2 của sheet, ngay dưới tên cột: mỗi ô ghi cột đó hiện thế nào trên card — mặt trước hay sau, cỡ chữ, có đọc to không. Chọn một cột rồi thêm directive bên dưới.</p>

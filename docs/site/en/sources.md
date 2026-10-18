@@ -30,7 +30,7 @@ address your browser shows and the add-on fetches the file behind it.
 
 ## Sheet to Anki
 
-[Sheet to Anki](../../create.html) makes Anki flashcards from a sheet on a phone or a
+[Sheet to Anki](../../create/) makes Anki flashcards from a sheet on a phone or a
 computer, without the add-on. It shows what SheetCards makes of the sheet first: every row and whether it syncs, the deck tree, the tags, the
 warnings from the settings row, and each finished card, which you can turn over,
 listen to and type into. It runs the add-on's own code in your browser, so what
@@ -95,7 +95,7 @@ your progress.
 
 ## Create sheet
 
-[Create sheet](../../sheet.html) writes a whole sheet on the web, no Google
+[Create sheet](../../sheet/) writes a whole sheet on the web, no Google
 Sheets needed: the column names, the [settings row](settings-row.md) and every
 word. Start from one of 8 templates (see
 [Writing it in Create sheet](index.md#writing-it-in-create-sheet)), one of your

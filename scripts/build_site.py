@@ -2,10 +2,20 @@
 """Assembles the website into build/site/.
 
 Four kinds of page: the landing page (``site/index.html``), Sheet to Anki
-(``site/create.html``; ``site/preview.html`` is its old address, kept as a
-redirect), the settings-row editor (``site/editor.html``) and the
+(``site/create.html``, served at ``/create/``), Create sheet (``site/sheet.html``,
+at ``/sheet/``), the contact page (``site/contact.html``, at ``/contact/``) and the
 documentation, written as Markdown under ``docs/site/`` (Vietnamese, served at
-``/docs/``) and ``docs/site/en/`` (English, at ``/docs/en/``) and converted here.
+``/docs/``, a page at ``/docs/<name>/``) and ``docs/site/en/`` (English, at
+``/docs/en/``) and converted here.
+
+Every page is a folder, so no address ends in ``.html``. The pages are written
+in ``site/`` as if they sat at the site's root, and moved down a folder here
+(``relocate``); every address a page used to have — ``create.html``,
+``preview.html``, ``editor.html``, ``docs/faq.html`` — is kept as a small page
+that forwards to the new one with its query and fragment (``site/_redirect.html``).
+``player.html`` is the exception: its address is written into card templates
+people have already imported into Anki (``card_layout.EMBED_PROXY``), so it never
+moves.
 
 The site is static, but it is not self-contained in the repository on purpose:
 the Python it runs in the browser is copied straight out of ``src/`` at build
@@ -71,6 +81,21 @@ DOC_GROUPS = [
     ({"vi": "Trong Anki", "en": "In Anki"}, ["menu", "syncing", "sources"]),
     ({"vi": "Trợ giúp", "en": "Help"}, ["faq", "developers"]),
 ]
+
+# The pages that are folders: written as site/<file>, served at /<folder>/ (the
+# folder's index.html), with the old address forwarding to it.
+PAGES = {"create.html": "create", "sheet.html": "sheet", "contact.html": "contact"}
+
+# Addresses that were pages once and forward to one now, as {old: new}, each
+# relative to the site's root. A moved page's own old address is added to these.
+REDIRECTS = {"preview.html": "create/", "editor.html": "sheet/"}
+
+# What each forwarding page calls the page it forwards to.
+PAGE_TITLES = {
+    "create/": "SheetCards — Sheet to Anki",
+    "sheet/": "SheetCards — Tạo Sheet",
+    "contact/": "SheetCards — Liên hệ & góp ý",
+}
 
 # The docs in each language: the folder under docs/site/ it is written in, which
 # is also the folder under /docs/ it is served from. Vietnamese is the docs'
@@ -576,18 +601,78 @@ def check_purity(names):
         sys.exit("Preview site would break:\n  " + "\n  ".join(problems))
 
 
+# An address in an attribute that is relative to the page: not empty, not a
+# fragment or a bare query, not rooted, not a scheme (https:, data:, mailto:) and not protocol-relative.
+_RELATIVE = re.compile(r'\b(href|src)="(?![#/?]|[a-z][a-z0-9+.-]*:)([^"]+)"', re.I)
+
+
+def relocate(text, depth):
+    """A page written as if it sat at its folder, moved ``depth`` folders down.
+
+    ``./style.css`` becomes ``../style.css``, ``./`` becomes ``../``. Only
+    ``href`` and ``src`` attributes are touched, and only relative ones; a
+    ``#fragment`` stays on the page it is on. Scripts are not rewritten: they
+    resolve the site's pages from their own address (site/paths.js), which does
+    not depend on the page that loaded them.
+    """
+    if depth <= 0:
+        return text
+    up = "../" * depth
+
+    def swap(match):
+        value = match.group(2)
+        value = value[2:] if value.startswith("./") else value
+        return f'{match.group(1)}="{up}{value}"'
+
+    return _RELATIVE.sub(swap, text)
+
+
+def redirect_page(to, title):
+    """The page left at an old address, forwarding to ``to`` (relative to it)."""
+    template = (SITE / "_redirect.html").read_text(encoding="utf-8")
+    # The template's opening comment is about the template, not the page.
+    template = re.sub(r"<!--.*?-->\n", "", template, count=1, flags=re.S)
+    return template.replace("%%TO%%", html.escape(to, quote=True)).replace(
+        "%%TITLE%%", html.escape(title)
+    )
+
+
+def _relative(old, new):
+    """``new`` (from the site's root) as seen from the page at ``old``."""
+    up = "../" * old.count("/")
+    return (up or "./") + new
+
+
+def build_pages(out):
+    """The site's own pages and the old addresses that forward to them."""
+    # Files only: importing site/workbook.py — which the test suite does — leaves a
+    # __pycache__ beside it, and a directory here used to stop the build dead.
+    # A name starting with "_" is a build input (the docs template), not a page.
+    redirects = dict(REDIRECTS)
+    for item in sorted(SITE.iterdir()):
+        if item.name.startswith((".", "_")) or not item.is_file():
+            continue
+        if item.name in PAGES:
+            folder = out / PAGES[item.name]
+            folder.mkdir()
+            text = item.read_text(encoding="utf-8")
+            (folder / "index.html").write_text(relocate(text, 1), encoding="utf-8")
+            redirects[item.name] = f"{PAGES[item.name]}/"
+            continue
+        if item.name in redirects:
+            sys.exit(f"site/{item.name} is a page and an old address at once")
+        shutil.copy2(item, out / item.name)
+    for old, new in redirects.items():
+        page = redirect_page(_relative(old, new), PAGE_TITLES.get(new, "SheetCards"))
+        (out / old).write_text(page, encoding="utf-8")
+
+
 def build(out=OUT):
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
 
-    # Files only: importing site/workbook.py — which the test suite does — leaves a
-    # __pycache__ beside it, and a directory here used to stop the build dead.
-    # A name starting with "_" is a build input (the docs template), not a page.
-    for item in sorted(SITE.iterdir()):
-        if item.name.startswith((".", "_")) or not item.is_file():
-            continue
-        shutil.copy2(item, out / item.name)
+    build_pages(out)
 
     names = modules_the_site_loads()
     check_purity(names)
@@ -998,11 +1083,15 @@ def _slug_vi(value, separator):
 
 
 def _href(name):
-    return "./" if name == "index" else f"{name}.html"
+    """A docs page's address, from its language's folder (``docs/`` or
+    ``docs/en/``): ``faq/``, or ``./`` for the front page. Every docs page is
+    written as if it sat there and moved into its own folder afterwards
+    (``relocate``), so one function serves every page."""
+    return "./" if name == "index" else f"{name}/"
 
 
 def _rewrite_links(text):
-    """``columns.md#x`` → ``columns.html#x``: the Markdown links work on GitHub
+    """``columns.md#x`` → ``columns/#x``: the Markdown links work on GitHub
     and in an editor, and the built pages link to each other."""
 
     def swap(match):
@@ -1117,7 +1206,7 @@ def build_docs_in(out, lang, template):
         summary = re.sub(r"<[^>]+>", "", first.group(1)) if first else ""
         summary = " ".join(summary.split())[:200]
         twin = up + (DOC_LANGS[twin_lang] + "/" if DOC_LANGS[twin_lang] else "")
-        twin = (twin or "./") if name == "index" else twin + f"{name}.html"
+        twin = (twin or "./") if name == "index" else twin + f"{name}/"
         source = "/".join(p for p in ("docs/site", folder, f"{name}.md") if p)
         page = (
             template.replace("%%TITLE%%", html.escape(titles[name]))
@@ -1139,7 +1228,16 @@ def build_docs_in(out, lang, template):
             .replace("%%SOURCE%%", source)
             .replace("%%BODY%%", body)
         )
-        (target / f"{name}.html").write_text(page, encoding="utf-8")
+        if name == "index":
+            (target / "index.html").write_text(page, encoding="utf-8")
+            continue
+        (target / name).mkdir(exist_ok=True)
+        (target / name / "index.html").write_text(relocate(page, 1), encoding="utf-8")
+        # The page's address until it became a folder, forwarding to it.
+        (target / f"{name}.html").write_text(
+            redirect_page(f"./{name}/", f"{titles[name]} — SheetCards docs"),
+            encoding="utf-8",
+        )
     return len(names)
 
 

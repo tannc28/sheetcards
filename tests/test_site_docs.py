@@ -49,6 +49,12 @@ def _parse(path):
     return page
 
 
+def _doc(out, folder, name):
+    """Where a docs page is built: its own folder, the front page its language's."""
+    base = out / "docs" / folder
+    return base / "index.html" if name == "index" else base / name / "index.html"
+
+
 @pytest.fixture(scope="module")
 def site(tmp_path_factory):
     build = _builder()
@@ -63,7 +69,8 @@ def test_every_docs_page_is_built(site):
     for folder in build.DOC_LANGS.values():
         for _, names in build.DOC_GROUPS:
             for name in names:
-                assert (out / "docs" / folder / f"{name}.html").is_file(), name
+                page = "index.html" if name == "index" else f"{name}/index.html"
+                assert (out / "docs" / folder / page).is_file(), name
         assert (out / "docs" / folder / "index.html").is_file()
 
 
@@ -75,7 +82,7 @@ def test_every_docs_page_speaks_its_language_and_links_its_twin(site):
         (other,) = set(build.DOC_LANGS) - {lang}
         for _, names in build.DOC_GROUPS:
             for name in names:
-                path = out / "docs" / folder / f"{name}.html"
+                path = _doc(out, folder, name)
                 text = path.read_text(encoding="utf-8")
                 assert f'<html lang="{lang}">' in text, path
                 twin = re.search(
@@ -85,7 +92,7 @@ def test_every_docs_page_speaks_its_language_and_links_its_twin(site):
                 target = (path.parent / twin.group(1)).resolve()
                 if target.is_dir():
                     target = target / "index.html"
-                expected = out / "docs" / build.DOC_LANGS[other] / f"{name}.html"
+                expected = _doc(out, build.DOC_LANGS[other], name)
                 assert target == expected.resolve(), (path, twin.group(1))
 
 
@@ -94,16 +101,41 @@ def test_the_four_kinds_of_page_exist(site):
     _, out = site
     for page in (
         "index.html",
+        "create/index.html",
+        "sheet/index.html",
+        "contact/index.html",
+        "player.html",
+        # The old addresses, forwarding (tests/test_site_redirects.py).
         "create.html",
         "preview.html",
         "sheet.html",
         "editor.html",
-        "player.html",
         "contact.html",
     ):
         assert (out / page).is_file(), page
-    # A build input, not a page.
+    # Build inputs, not pages.
     assert not (out / "_docs.html").exists()
+    assert not (out / "_redirect.html").exists()
+
+
+@pytest.mark.unit
+def test_no_page_links_an_address_ending_in_html(site):
+    """Every page is a folder, and the site's own links say so. The old .html
+    addresses are only there to forward; player.html is framed by cards, never
+    linked to."""
+    _, out = site
+    found = []
+    for path in out.rglob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        if "location.replace" in text and 'name="robots" content="noindex"' in text:
+            continue
+        for link in _parse(path).links:
+            parts = urlsplit(link)
+            if parts.scheme or link.startswith("//"):
+                continue
+            if parts.path.endswith(".html"):
+                found.append(f"{path.relative_to(out)}: {link}")
+    assert not found, "links to .html addresses:\n  " + "\n  ".join(found)
 
 
 @pytest.mark.unit
@@ -137,7 +169,7 @@ def test_the_docs_link_the_example_workbook(site):
     _, out = site
     url = "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx"
     for folder in ("", "en"):
-        page = out / "docs" / folder / "examples.html"
+        page = _doc(out, folder, "examples")
         assert url in page.read_text(encoding="utf-8"), page
 
 
@@ -159,10 +191,10 @@ def test_old_preview_links_are_sent_to_create_deck(site):
     this only proves the built pages still carry them.
     """
     _, out = site
-    for page in ("index.html", "preview.html"):
+    for page in ("index.html", "preview.html", "create.html"):
         text = (out / page).read_text(encoding="utf-8")
         assert re.search(
-            r'location\.replace\("\./create\.html" \+ location\.search', text
+            r'location\.replace\("\./create/" \+ location\.search', text
         ), page
 
 

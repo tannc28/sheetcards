@@ -5,7 +5,7 @@ sheet, one row per card, and SheetCards makes them into a deck. The spreadsheet
 is always the place you edit; Anki holds a copy. Every step works on a phone or
 a computer.
 
-No Google Sheet? [Create sheet](../../sheet.html) lets you write the whole sheet
+No Google Sheet? [Create sheet](../../sheet/) lets you write the whole sheet
 on the web, and hands it straight to Sheet to Anki.
 
 There are two ways to get the flashcards into Anki:
@@ -23,7 +23,7 @@ This page takes you from an empty sheet to cards you can study.
 - **The Anki app** you already use: the `.apkg` opens in AnkiDroid, AnkiMobile
   or Anki on a computer.
 - **A Google account**, only if you write in Google Sheets. Writing in
-  [Create sheet](../../sheet.html) needs nothing. SheetCards reads a sheet without
+  [Create sheet](../../sheet/) needs nothing. SheetCards reads a sheet without
   signing in.
 - The add-on is only for the second way, and needs Anki 25.x or later on a
   computer.
@@ -114,7 +114,7 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
 
 ## 3. Make the flashcards
 
-1. Paste the link into [Sheet to Anki](../../create.html). It runs the add-on's
+1. Paste the link into [Sheet to Anki](../../create/). It runs the add-on's
    own code in your browser, so what you see is what the add-on would make.
 2. Check the cards: the decks, every row, and each finished card, which you can
    turn over, listen to and type into.
@@ -190,16 +190,16 @@ deleted rows are removed. [Syncing](syncing.md) has the details.
 
 - **Change how the cards look.** Add a [settings row](settings-row.md) under the
   column names to set sizes, colours, which side a column goes on, sound,
-  pictures and more. [Create sheet](../../sheet.html) helps you write one by
+  pictures and more. [Create sheet](../../sheet/) helps you write one by
   clicking.
 - **Start from an example.** The [example workbook](examples.md) has 31 small
   decks, each showing one feature.
 - **Something not working?** See [FAQ and troubleshooting](faq.md), or
-  [Contact & feedback](../../contact.html?from=docs/en/index).
+  [Contact & feedback](../../contact/?from=docs/en/index).
 
 ## Coming soon
 
 - **Template library**: browse and use templates other people share.
 - **Theme library**: more themes to dress your cards in.
 
-Want them sooner, or something else? [Tell us](../../contact.html?from=docs/en/index).
+Want them sooner, or something else? [Tell us](../../contact/?from=docs/en/index).

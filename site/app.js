@@ -17,11 +17,12 @@
 // anything reads it.
 import { mountInAppBanner } from "./inapp.js";
 import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
-import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { dropHandoff, takeHandoff } from "./handoff.js";
+import { site } from "./paths.js";
 import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
@@ -32,7 +33,7 @@ import { droppedTemplates, fileIdentity, fileStem, keepShape, lastShape, shapeCh
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
 // the docs describe and the sheet the page loads cannot drift apart — a directive
 // added to the add-on gets an example in the same commit. Loaded by the "use the
-// example" button, by create.html#example, and by ?url= pointing at it.
+// example" button, by create/#example, and by ?url= pointing at it.
 const DEMO_SHEET =
   "https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx";
 
@@ -1666,16 +1667,7 @@ function paintStatic() {
   // A screen reader picks its voice from this, so it has to follow the page's
   // language, not just the button that last changed it.
   document.documentElement.lang = lang();
-  paintDocLinks();
-  for (const el of document.querySelectorAll("[data-i18n]")) {
-    el.innerHTML = t(el.dataset.i18n);
-  }
-  for (const el of document.querySelectorAll("[data-i18n-attr]")) {
-    for (const pair of el.dataset.i18nAttr.split(",")) {
-      const [attr, key] = pair.split(":");
-      el.setAttribute(attr.trim(), t(key.trim()));
-    }
-  }
+  paintStrings();
   $("#rows-legend").innerHTML =
     `<span><span class="dot synced"></span> ${escapeHtml(t("legendSynced"))}</span>` +
     `<span><span class="dot skipped"></span> ${escapeHtml(t("legendSkipped"))}</span>` +
@@ -2407,7 +2399,7 @@ if (loadFromAddress()) {
   setStage("loading");
   takeHandoff().then(({ file, from }) => {
     if (file) {
-      const edit = from === "sheet" ? "./sheet.html" : "";
+      const edit = from === "sheet" ? site("sheet/") : "";
       whenReady(() => previewFile(file, { hash: "#file", edit }), "file");
     } else {
       history.replaceState(null, "", location.pathname);
@@ -2426,7 +2418,7 @@ if (loadFromAddress()) {
       const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
         type: "text/tab-separated-values",
       });
-      whenReady(() => previewFile(file, { hash, edit: `./sheet.html${hash}` }), "file");
+      whenReady(() => previewFile(file, { hash, edit: site(`sheet/${hash}`) }), "file");
     },
     (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
   );

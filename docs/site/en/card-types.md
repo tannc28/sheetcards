@@ -3,7 +3,7 @@
 A plain sheet makes one card per row: the front asks, the back answers. The
 [settings row](settings-row.md) can turn that into other kinds of card.
 
-In [Create sheet](../../sheet.html), templates come with the settings row for
+In [Create sheet](../../sheet/), templates come with the settings row for
 the kinds below already written: *Both ways (reverse)*, *Type the answer*,
 *Write Chinese characters* (handwriting) and *Japanese with furigana*.
 

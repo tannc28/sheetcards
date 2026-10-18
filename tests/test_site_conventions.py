@@ -15,7 +15,8 @@ import pytest
 SITE = Path(__file__).resolve().parent.parent / "site"
 
 # Every page with the shared masthead. player.html is a frame inside a card,
-# and preview.html and editor.html are redirects; none of them has chrome.
+# and the old addresses (preview.html, docs/faq.html, …) are redirects the build
+# writes from _redirect.html; none of them has chrome.
 PAGES = (
     "index.html",
     "sheet.html",
@@ -70,8 +71,9 @@ def test_every_masthead_lists_the_pages_in_order(page):
     assert nav, f"{page} has no site navigation"
     links = re.findall(r'<a href="([^"]*)"[^>]*>(.*?)</a>', nav.group(1), re.S)
     assert [name.strip() for _, name in links] == NAV["vi"], f"{page}: {links}"
-    pages = [href.rsplit("/", 1)[-1].replace("%%ROOT%%", "") for href, _ in links[1:3]]
-    assert pages == ["create.html", "sheet.html"], f"{page}: {pages}"
+    # Clean paths, each page a folder: no address on the site ends in .html.
+    pages = [href.replace("%%ROOT%%", "").removeprefix("./") for href, _ in links[1:3]]
+    assert pages == ["create/", "sheet/"], f"{page}: {pages}"
 
 
 @pytest.mark.unit
@@ -90,11 +92,11 @@ def test_github_is_an_icon_beside_the_switches(page):
 # The pages that link to the contact page, and how each says where it is. The
 # "by ctan" byline that stood in this spot was replaced by the link.
 CONTACT_FROM = {
-    "index.html": "./contact.html?from=home",
-    "sheet.html": "./contact.html?from=sheet",
-    "create.html": "./contact.html?from=create",
-    "404.html": "contact.html?from=404",
-    "_docs.html": "%%ROOT%%contact.html?from=%%FROM%%",
+    "index.html": "./contact/?from=home",
+    "sheet.html": "./contact/?from=sheet",
+    "create.html": "./contact/?from=create",
+    "404.html": "contact/?from=404",
+    "_docs.html": "%%ROOT%%contact/?from=%%FROM%%",
 }
 
 
@@ -152,8 +154,8 @@ def test_a_missing_address_gets_a_page_of_ours():
     assert "<base href=" in head, "404.html must set its base before its first link"
     assert 'name="robots" content="noindex"' in text
     for target in (
-        'href="sheet.html"',
-        'href="create.html"',
+        'href="sheet/"',
+        'href="create/"',
         'href="./"',
         'href="docs/"',
     ):

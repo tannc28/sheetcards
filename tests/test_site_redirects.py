@@ -1,14 +1,18 @@
-"""Sheet to Anki's old addresses still reach it, query and fragment intact.
+"""Every address the site has ever had still reaches its page, query and fragment intact.
 
-Sheet to Anki was the site's front page (``/?url=…``), then ``/preview.html``, and
-is now ``/create.html``. Links to both old addresses are out there — in older
-copies of the add-on, in posts, in bookmarks — and they carry the sheet's link in
-``?url=`` or ask for the example with ``#example``. Each old page forwards with
-a few lines of inline script, so those lines are run here, in node, against a
-fake ``location``: a forward that dropped the query would still land on the page,
-just on an empty form, and nothing else would notice.
+The pages are folders now (``/create/``, ``/sheet/``, ``/contact/``,
+``/docs/faq/``), and before that they were files (``create.html``,
+``docs/faq.html``); Sheet to Anki was also ``/?url=…`` and ``/preview.html``, and
+Create sheet ``/editor.html``. Links to all of them are out there — in older
+copies of the add-on, in posts, in bookmarks, in shared sheets (``#s=…``) — so
+each old address is a small page the build writes, forwarding with a line of
+inline script. Those lines are run here, in node, against a fake ``location``
+at the old address, and the result resolved the way a browser would: a forward
+that dropped the query would still land on the page, just on an empty form,
+and nothing else would notice.
 """
 
+import importlib.util
 import json
 import re
 import shutil
@@ -17,29 +21,49 @@ from pathlib import Path
 
 import pytest
 
-SITE = Path(__file__).resolve().parent.parent / "site"
+REPO = Path(__file__).resolve().parent.parent
+SITE = REPO / "site"
 NODE = shutil.which("node")
+ORIGIN = "https://tannc28.github.io"
+ROOT = "/sheetcards/"
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="node is not installed")
 
 
-def _forwarding_script(page):
-    """The first inline script on ``page`` that calls location.replace."""
-    text = (SITE / page).read_text(encoding="utf-8")
+def _builder():
+    spec = importlib.util.spec_from_file_location(
+        "build_site", REPO / "scripts" / "build_site.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+BUILD = _builder()
+
+
+def _forwarding_script(text):
+    """The first inline script in ``text`` that calls location.replace."""
     for body in re.findall(r"<script>(.*?)</script>", text, re.S):
         if "location.replace" in body:
             return body
-    raise AssertionError(f"{page} has no forwarding script")
+    raise AssertionError("no forwarding script")
 
 
-def _run(page, search="", hash_=""):
-    """Where ``page`` sends a visitor arriving with ``search`` and ``hash_``."""
+def _run(text, path, search="", hash_=""):
+    """Where the page ``text``, served at ``path`` under the site's root, sends a
+    visitor arriving with ``search`` and ``hash_`` — as a path under the root
+    plus query and fragment, or None if it stays."""
+    href = f"{ORIGIN}{ROOT}{path}{search}{hash_}"
     script = (
         "const vm = require('vm');"
-        f"const ctx = {{ location: {{ search: {json.dumps(search)},"
+        f"const href = {json.dumps(href)};"
+        f"const ctx = {{ location: {{ href, search: {json.dumps(search)},"
         f" hash: {json.dumps(hash_)}, replace(u) {{ ctx.went = u; }} }}, went: null }};"
-        f"vm.runInNewContext({json.dumps(_forwarding_script(page))}, ctx);"
-        "process.stdout.write(JSON.stringify(ctx.went));"
+        f"vm.runInNewContext({json.dumps(_forwarding_script(text))}, ctx);"
+        "const out = ctx.went === null ? null : new URL(ctx.went, href);"
+        "process.stdout.write(JSON.stringify(out &&"
+        f" out.href.slice({json.dumps(ORIGIN + ROOT)}.length)));"
     )
     out = subprocess.run(
         [NODE, "-e", script], capture_output=True, text=True, check=True, timeout=30
@@ -47,56 +71,109 @@ def _run(page, search="", hash_=""):
     return json.loads(out.stdout)
 
 
+def _old_addresses():
+    """{old address: the page it must reach}, every one the site keeps."""
+    found = dict(BUILD.REDIRECTS)
+    found.update({old: f"{new}/" for old, new in BUILD.PAGES.items()})
+    for folder in BUILD.DOC_LANGS.values():
+        base = f"docs/{folder}/" if folder else "docs/"
+        for _, names in BUILD.DOC_GROUPS:
+            for name in names:
+                if name != "index":
+                    found[f"{base}{name}.html"] = f"{base}{name}/"
+    return found
+
+
+OLD = _old_addresses()
+
+
+@pytest.fixture(scope="module")
+def site(tmp_path_factory):
+    out = tmp_path_factory.mktemp("site") / "site"
+    BUILD.build(out)
+    return out
+
+
 @pytest.mark.unit
-class TestPreviewHtml:
-    def test_a_link_is_carried_over(self):
-        url = "?url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2Fabc"
-        assert _run("preview.html", url) == f"./create.html{url}"
+class TestEveryOldAddress:
+    def test_the_known_old_addresses_are_all_kept(self):
+        for old, new in {
+            "create.html": "create/",
+            "sheet.html": "sheet/",
+            "contact.html": "contact/",
+            "preview.html": "create/",
+            "editor.html": "sheet/",
+            "docs/settings-row.html": "docs/settings-row/",
+            "docs/en/faq.html": "docs/en/faq/",
+        }.items():
+            assert OLD.get(old) == new, old
 
-    def test_the_fragment_is_carried_over(self):
-        assert _run("preview.html", "", "#example") == "./create.html#example"
+    @pytest.mark.parametrize("old", sorted(OLD))
+    def test_query_and_fragment_are_carried_over(self, site, old):
+        text = (site / old).read_text(encoding="utf-8")
+        new = OLD[old]
+        assert _run(text, old) == new
+        assert _run(text, old, "?url=https%3A%2F%2Fx%2Fy&tab=A") == (
+            f"{new}?url=https%3A%2F%2Fx%2Fy&tab=A"
+        )
+        assert _run(text, old, "", "#s=1.abc_-") == f"{new}#s=1.abc_-"
+        assert _run(text, old, "?row=w03", "#example") == f"{new}?row=w03#example"
 
-    def test_a_bare_visit_still_arrives(self):
-        assert _run("preview.html") == "./create.html"
+    @pytest.mark.parametrize("old", sorted(OLD))
+    def test_it_works_without_script_too(self, site, old):
+        text = (site / old).read_text(encoding="utf-8")
+        refresh = re.search(r'http-equiv="refresh" content="0; url=([^"]+)"', text)
+        assert refresh, old
+        script = re.search(r'location\.replace\("([^"]+)"', text).group(1)
+        assert refresh.group(1) == script, old
+        assert 'name="robots" content="noindex"' in text
 
-    def test_it_works_without_script_too(self):
-        text = (SITE / "preview.html").read_text(encoding="utf-8")
-        assert 'http-equiv="refresh" content="0; url=./create.html"' in text
+    @pytest.mark.parametrize("old", sorted(OLD))
+    def test_the_new_address_is_a_page(self, site, old):
+        assert (site / OLD[old] / "index.html").is_file(), OLD[old]
+
+    def test_old_shared_sheets_still_open(self, site):
+        """A sheet shared before the move: sheet.html#s=… and create.html#s=…."""
+        for old, new in (("sheet.html", "sheet/"), ("create.html", "create/")):
+            text = (site / old).read_text(encoding="utf-8")
+            assert _run(text, old, "", "#s=1.q1w2e3") == f"{new}#s=1.q1w2e3"
+
+
+@pytest.mark.unit
+class TestThePlayerNeverMoves:
+    """Its address is in card templates already imported into Anki."""
+
+    def test_it_is_still_a_page_at_the_root(self, site):
+        text = (site / "player.html").read_text(encoding="utf-8")
+        assert "location.replace" not in text and "ALLOWED" in text
+        assert not (site / "player").exists()
+
+    def test_the_cards_still_point_at_it(self):
+        source = (REPO / "src" / "card_layout.py").read_text(encoding="utf-8")
+        assert (
+            'EMBED_PROXY = "https://tannc28.github.io/sheetcards/player.html?src="'
+            in (source)
+        )
 
 
 @pytest.mark.unit
 class TestTheLandingPage:
-    def test_a_link_goes_to_create_deck(self):
-        assert _run("index.html", "?url=x") == "./create.html?url=x"
+    def _text(self):
+        return (SITE / "index.html").read_text(encoding="utf-8")
 
-    def test_a_foreign_fragment_goes_to_create_deck(self):
-        assert _run("index.html", "", "#example") == "./create.html#example"
+    def test_a_link_goes_to_sheet_to_anki(self):
+        assert _run(self._text(), "", "?url=x") == "create/?url=x"
+
+    def test_a_foreign_fragment_goes_to_sheet_to_anki(self):
+        assert _run(self._text(), "", "", "#example") == "create/#example"
 
     @pytest.mark.parametrize("own", ["#main", "#how", "#features", "#soon", "#addon"])
     def test_its_own_sections_stay(self, own):
-        assert _run("index.html", "", own) is None
+        assert _run(self._text(), "", "", own) is None
 
     def test_every_own_fragment_is_a_real_section(self):
         """A section renamed without the list would forward its own anchor away."""
-        text = (SITE / "index.html").read_text(encoding="utf-8")
+        text = self._text()
         listed = re.search(r"var own = \[(.*?)\]", text).group(1)
         for name in re.findall(r'"#([\w-]+)"', listed):
             assert f'id="{name}"' in text, name
-
-
-@pytest.mark.unit
-class TestEditorHtml:
-    """The settings-row editor grew into Create sheet; its address forwards."""
-
-    def test_the_query_and_fragment_are_carried_over(self):
-        assert _run("editor.html", "?x", "#y") == "./sheet.html?x#y"
-
-    def test_a_shared_sheet_survives_the_forward(self):
-        assert _run("editor.html", "", "#s=1.abc") == "./sheet.html#s=1.abc"
-
-    def test_a_bare_visit_still_arrives(self):
-        assert _run("editor.html") == "./sheet.html"
-
-    def test_it_works_without_script_too(self):
-        text = (SITE / "editor.html").read_text(encoding="utf-8")
-        assert 'http-equiv="refresh" content="0; url=./sheet.html"' in text

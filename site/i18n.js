@@ -18,6 +18,8 @@
  * (what shows before any script runs); tests/test_site_i18n.py keeps the two equal.
  */
 
+import { rootLinks, site } from "./paths.js";
+
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
   skip: { en: "Skip to Sheet to Anki", vi: "Tới phần Sheet to Anki" },
@@ -1522,15 +1524,32 @@ export function t(key, ...args) {
  * Links into the docs, pointed at the docs in the page's language.
  *
  * The Vietnamese docs are at docs/, the English at docs/en/. A link carries the
- * page it means in `data-doc` (`""` for the docs' front page) and a static href
+ * page it means in `data-doc` (`""` for the docs' front page, `settings-row/`
+ * for a page) and a static href
  * to the Vietnamese one, which is right before any script runs.
  */
 export function paintDocLinks() {
   for (const a of document.querySelectorAll("a[data-doc]")) {
-    a.setAttribute(
-      "href",
-      `./docs/${current === "en" ? "en/" : ""}${a.dataset.doc}`,
-    );
+    a.setAttribute("href", site(`docs/${current === "en" ? "en/" : ""}${a.dataset.doc}`));
+  }
+}
+
+/**
+ * Every `data-i18n` element and attribute on the page, in the current language.
+ * A link inside a string is written from the site's root and pointed at the
+ * right page here (paths.js), since the same string is painted at several depths.
+ */
+export function paintStrings() {
+  paintDocLinks();
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    el.innerHTML = t(el.dataset.i18n);
+    rootLinks(el);
+  }
+  for (const el of document.querySelectorAll("[data-i18n-attr]")) {
+    for (const pair of el.dataset.i18nAttr.split(",")) {
+      const [attr, key] = pair.split(":").map((s) => s.trim());
+      el.setAttribute(attr, t(key));
+    }
   }
 }
 

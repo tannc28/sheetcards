@@ -12,7 +12,7 @@
   (function () {
     var own = ["#main", "#how", "#features", "#soon", "#addon"];
     if (location.search || (location.hash && own.indexOf(location.hash) < 0)) {
-      location.replace("./create.html" + location.search + location.hash);
+      location.replace("./create/" + location.search + location.hash);
     }
   })();
 </script>
@@ -54,12 +54,12 @@
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" aria-current="page" data-i18n="navHome">Trang chủ</a>
-    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
-    <a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a>
+    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet/" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
   </nav>
   <a class="ghlink" href="https://github.com/tannc28/sheetcards" rel="noopener" aria-label="GitHub" title="GitHub" data-icon="github"></a>
-  <a class="ghlink fbicon" href="./contact.html?from=home" aria-label="Liên hệ & góp ý" title="Liên hệ & góp ý" data-i18n-attr="aria-label:contactIcon,title:contactIcon" data-icon="message-square"></a>
+  <a class="ghlink fbicon" href="./contact/?from=home" aria-label="Liên hệ & góp ý" title="Liên hệ & góp ý" data-i18n-attr="aria-label:contactIcon,title:contactIcon" data-icon="message-square"></a>
   <button id="theme" class="themebtn" type="button"></button>
   <nav id="langs" class="langs" aria-label="Ngôn ngữ" data-i18n-attr="aria-label:langLabel"></nav>
 </header>
@@ -93,7 +93,7 @@
             <div class="quick-alt">
               <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
                       data-i18n="homeUpload">Upload file .xlsx / .csv</span></button>
-              <a class="quick-file" href="./create.html#example"><span data-icon="sparkles"></span><span
+              <a class="quick-file" href="./create/#example"><span data-icon="sparkles"></span><span
                  data-i18n="homeExample">Xem ví dụ</span></a>
             </div>
             <input id="q-file" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" hidden>
@@ -102,7 +102,7 @@
         <section class="door door-new" aria-labelledby="door-new">
           <h2 class="door-title" id="door-new"><span data-icon="pen-line"></span><span data-i18n="doorNewTitle">Chưa có sheet? Soạn trên web</span></h2>
           <p class="door-text" data-i18n="doorNewText">Chọn template và theme, gõ từ, rồi bấm Tạo flashcard. Không cần Google Sheets.</p>
-          <a class="btn big door-go" href="./sheet.html"><span data-i18n="doorNewGo">Mở Tạo Sheet</span><span data-icon="arrow-right"></span></a>
+          <a class="btn big door-go" href="./sheet/"><span data-i18n="doorNewGo">Mở Tạo Sheet</span><span data-icon="arrow-right"></span></a>
           <p class="door-files"><a href="./sheetcards-mau.xlsx" download data-i18n="homeTemplate">file mẫu (.xlsx)</a>
             <span aria-hidden="true">·</span>
             <a href="./sheetcards-examples.xlsx" download data-i18n="homeExamplesFile">31 sheet ví dụ</a></p>
@@ -139,7 +139,7 @@
                  on it does what they promise: Sheet to Anki, with the example.
                  Out of the tab order and hidden from screen readers — the
                  hero's own "Xem ví dụ" link is that same action, labelled. -->
-            <a class="scr scr-link" href="./create.html#example" tabindex="-1" aria-hidden="true">
+            <a class="scr scr-link" href="./create/#example" tabindex="-1" aria-hidden="true">
               <p class="scr-title" translate="no">Sheet to Anki</p>
               <div class="scr-input"><span data-icon="link"></span><span class="typed">docs.google.com/spreadsheets/d/1Xk…</span></div>
               <span class="scr-go" data-i18n="go">Tạo flashcard</span>
@@ -298,7 +298,7 @@
           <p data-i18n="soonTheme">Thêm nhiều theme để khoác lên card của bạn.</p></div>
       </li>
     </ul>
-    <p class="fine reveal"><a href="./contact.html?from=home" data-i18n="soonAsk">Muốn có sớm? Góp ý →</a></p>
+    <p class="fine reveal"><a href="./contact/?from=home" data-i18n="soonAsk">Muốn có sớm? Góp ý →</a></p>
   </section>
 
   <!-- The companion: the same sheet, synced by itself, for whoever studies at a
@@ -327,12 +327,12 @@
 
 <footer class="sitefoot">
   <nav class="footlinks" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
-    <a href="./create.html" data-i18n="navPreview">Sheet to Anki</a>
-    <a href="./sheet.html" data-i18n="navSheet">Tạo Sheet</a>
+    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./sheet/" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>
   </nav>
-  <p class="contactlink"><a href="./contact.html?from=home"><span data-icon="message-square"></span><span data-i18n="contactLink">Liên hệ &amp; góp ý</span></a></p>
+  <p class="contactlink"><a href="./contact/?from=home"><span data-icon="message-square"></span><span data-i18n="contactLink">Liên hệ &amp; góp ý</span></a></p>
   <p class="fine" data-i18n="homeFootNote">Giấy phép MIT. SheetCards không do Anki hay Ankitects làm ra và không liên kết với họ.</p>
 </footer>
 

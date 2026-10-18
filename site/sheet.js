@@ -23,13 +23,14 @@
 // anything reads it.
 import { mountInAppBanner } from "./inapp.js";
 import { renderCard, escapeHtml } from "./anki.js";
-import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { backOnly, cardDoc, cardFrame } from "./cardframe.js";
 import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { stashFile } from "./handoff.js";
-import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, toTsv } from "./sharelink.js";
+import { site } from "./paths.js";
+import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, shareAddress, toTsv } from "./sharelink.js";
 import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
 import { fileStem, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
@@ -837,16 +838,7 @@ function setTheme(on) {
 function paintChrome() {
   document.documentElement.lang = lang();
   document.title = t("titleSheet");
-  paintDocLinks();
-  for (const el of document.querySelectorAll("[data-i18n]")) {
-    el.innerHTML = t(el.dataset.i18n);
-  }
-  for (const el of document.querySelectorAll("[data-i18n-attr]")) {
-    for (const pair of el.dataset.i18nAttr.split(",")) {
-      const [attr, key] = pair.split(":").map((s) => s.trim());
-      el.setAttribute(attr, t(key));
-    }
-  }
+  paintStrings();
   const button = $("#theme");
   button.innerHTML = icon(dark() ? "sun" : "moon");
   button.title = button.ariaLabel = t(dark() ? "toLight" : "toDark");
@@ -2131,7 +2123,7 @@ async function toDeck() {
   } catch {
     return toast(t("shHandoffFailed"), "bad");
   }
-  location.href = "./create.html#file";
+  location.href = site("create/#file");
 }
 
 // Leaving with words no file holds: the browser's own question, the one place
@@ -2183,9 +2175,8 @@ function saveXlsx() {
 
 /** The link, for whichever page it is to open in. */
 async function shareUrl() {
-  const page = $("#share-deck").checked ? "create.html" : "sheet.html";
   const hash = await encodeShare(sheet.title, toTsv(exportGrid()));
-  return new URL(`./${page}${hash}`, location.href).href;
+  return shareAddress(hash, { deck: $("#share-deck").checked });
 }
 
 function sizeText(bytes) {

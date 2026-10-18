@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- An old address, kept so the links to it keep working: scripts/build_site.py
+     writes one of these for every page that has moved (create.html → create/,
+     preview.html → create/, docs/faq.html → docs/faq/ …), with the slots filled by
+     the new address, relative to the old one. Not published itself — a name starting
+     with "_" is a build input. The query and the fragment go along: they carry a
+     sheet's link (?url=…), the example (#example) or a whole shared sheet (#s=…). -->
+<title>%%TITLE%%</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="%%TO%%">
+<script>
+  location.replace("%%TO%%" + location.search + location.hash);
+</script>
+<!-- With scripts off the query is lost, but the reader still lands on the page. -->
+<meta http-equiv="refresh" content="0; url=%%TO%%">
+</head>
+<body>
+<p><a href="%%TO%%">%%TITLE%%</a></p>
+</body>
+</html>

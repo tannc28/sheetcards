@@ -3,7 +3,7 @@
 Một sheet bình thường tạo một card cho mỗi dòng: mặt trước hỏi, mặt sau trả lời.
 [Settings row](settings-row.md) có thể biến nó thành các loại card khác.
 
-Trong [Tạo Sheet](../sheet.html), các template đã dựng sẵn settings row cho
+Trong [Tạo Sheet](../sheet/), các template đã dựng sẵn settings row cho
 những loại card dưới đây: *Hai chiều* (reverse card), *Gõ đáp án*, *Viết chữ
 Hán* (viết tay) và *Tiếng Nhật (furigana)*.
 

@@ -136,7 +136,8 @@ export async function startPython(source, onStep = () => {}, onBytes = () => {})
       // reports a setting the sheet does have as one it has never heard of. Every
       // other request here is a CDN asset that may safely be stale; these seven
       // files are the one thing on the page that must be the deployed ones.
-      const res = await fetch(`./sc/${name}.py`, { cache: "no-cache" });
+      // Beside this module rather than beside the page, which may be a folder down.
+      const res = await fetch(new URL(`./sc/${name}.py`, import.meta.url), { cache: "no-cache" });
       if (!res.ok) throw new Error(`could not load ${name}.py (${res.status})`);
       py.FS.writeFile(`/sc/${name}.py`, await res.text());
     }),

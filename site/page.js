@@ -12,7 +12,7 @@
 // First, so a fragment carried through Chrome's intent link is back before
 // anything reads it.
 import { mountInAppBanner } from "./inapp.js";
-import { LANGUAGES, lang, paintDocLinks, setLang, t } from "./i18n.js";
+import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { icon, paintIcons } from "./icons.js";
 
 const repaints = [];
@@ -50,16 +50,7 @@ function setTheme(on) {
 /** Every translated string on the page, and the two switches. */
 export function paint() {
   document.documentElement.lang = lang();
-  paintDocLinks();
-  for (const el of document.querySelectorAll("[data-i18n]")) {
-    el.innerHTML = t(el.dataset.i18n);
-  }
-  for (const el of document.querySelectorAll("[data-i18n-attr]")) {
-    for (const pair of el.dataset.i18nAttr.split(",")) {
-      const [attr, key] = pair.split(":").map((s) => s.trim());
-      el.setAttribute(attr, t(key));
-    }
-  }
+  paintStrings();
   const button = document.getElementById("theme");
   if (button) {
     button.innerHTML = icon(dark() ? "sun" : "moon");

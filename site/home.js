@@ -30,6 +30,7 @@ import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
 import { CARDS, HANZI_WRITER, THEME_SWATCHES } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
+import { site } from "./paths.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -402,7 +403,7 @@ onRepaint((what) => what === "theme" && paintSwatches());
 //
 // The same first step Sheet to Anki asks for, so a learner who arrives with a
 // sheet in hand starts from here. Nothing is read on this page: a link goes over
-// in ?url=, a file through IndexedDB (handoff.js) to create.html#file.
+// in ?url=, a file through IndexedDB (handoff.js) to create/#file.
 
 const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
 
@@ -422,7 +423,7 @@ async function sendFile(file) {
   } catch {
     return quickError("homeStashFailed");
   }
-  location.href = "./create.html#file";
+  location.href = site("create/#file");
 }
 
 $("#quick").addEventListener("submit", (e) => {
@@ -433,7 +434,7 @@ $("#quick").addEventListener("submit", (e) => {
   // a link to anybody reading it, so it is one here too.
   if (/^[\w-]+(\.[\w-]+)+\/\S*$/.test(link)) link = "https://" + link;
   if (!/^https?:\/\/\S+$/i.test(link)) return quickError("homeNotLink");
-  location.href = "./create.html?url=" + encodeURIComponent(link);
+  location.href = site("create/?url=" + encodeURIComponent(link));
 });
 $("#q-url").addEventListener("input", () => quickError(""));
 $("#q-pick").addEventListener("click", () => $("#q-file").click());
