@@ -94,7 +94,7 @@ STARTER = {
 # information — the build refuses a page missing from this list, or from either
 # language, and a name with no file.
 DOC_GROUPS = [
-    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples"]),
+    ({"vi": "Bắt đầu", "en": "Start"}, ["index", "examples", "import"]),
     (
         {"vi": "Viết sheet", "en": "Write a sheet"},
         ["columns", "settings-row", "card-types", "text", "media", "tts"],
