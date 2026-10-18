@@ -77,3 +77,45 @@ export async function dropHandoff() {
     // Nothing kept, or storage refused: either way nothing is left to open.
   }
 }
+
+// ---- pasted text ---------------------------------------------------------
+//
+// The landing page's field takes a word list as well as a link. A list goes
+// over to create/#paste through this tab's sessionStorage — it is text, it is
+// small, and it should not outlive the tab — and opens there in Dán văn bản,
+// filled in. Taken once: a reload of create/ is the empty form again.
+
+const TEXT_KEY = "sc-paste-text";
+
+/** Keeps `text` for the next page in this tab. False if storage refused it. */
+export function stashText(text) {
+  try {
+    sessionStorage.setItem(TEXT_KEY, text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The text the last page left, removed as it is read; "" when there is none. */
+export function takeText() {
+  try {
+    const text = sessionStorage.getItem(TEXT_KEY) || "";
+    sessionStorage.removeItem(TEXT_KEY);
+    return text;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Whether what was pasted or typed into the one field is a link (to a sheet or
+ * a file) rather than words: one line, no spaces, `https://…` or a bare
+ * `host.tld/path`. Anything else — a list, one "apple - quả táo" line — is
+ * text, and goes to Dán văn bản.
+ */
+export function isLink(value) {
+  const v = String(value || "").trim();
+  if (!v || /\s/.test(v)) return false;
+  return /^https?:\/\/\S+$/i.test(v) || /^[\w-]+(\.[\w-]+)+\/\S*$/.test(v);
+}

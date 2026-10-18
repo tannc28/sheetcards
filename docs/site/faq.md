@@ -92,7 +92,7 @@ nào có link, đặt link vào ô và đánh dấu cột là `image`. Khi đó 
 
 **Video hiện lỗi.**
 Link trỏ tới một channel, playlist hoặc thư mục thay vì một video, hoặc video
-không cho phép nhúng. Phần cảnh báo trong Sheet to Anki sẽ cho biết là trường hợp nào.
+không cho phép nhúng. Phần cảnh báo trong trang Tạo flashcard sẽ cho biết là trường hợp nào.
 
 ## Deck
 
@@ -107,14 +107,14 @@ card cũ ở lại `sc_Tên bộ` còn card mới vào `Tên bộ`. Cách sửa,
 mở Browse, chọn deck `sc_Tên bộ`, chọn hết card, **Cards → Change Deck…** sang
 `Tên bộ`, rồi xoá deck `sc_Tên bộ` đã trống. Chưa import file mới thì đơn giản hơn:
 đổi tên deck `sc_Tên bộ` thành `Tên bộ` trước (bánh răng cạnh deck → **Rename**).
-Sheet to Anki tự nhắc việc này nếu trình duyệt đã từng tải bộ đó. Add-on tự đổi tên
+Trang Tạo flashcard tự nhắc việc này nếu trình duyệt đã từng tải bộ đó. Add-on tự đổi tên
 deck của nó, không cần làm gì.
 
 **Tôi đổi tên một tab sheet và deck của nó không còn cập nhật nữa.**
 Deck nhớ sheet của nó theo tên. Hãy kết nối lại file để add-on nhận tên mới.
 
 **Tôi đã xoá một dòng mà card vẫn còn trong Anki.**
-Nếu bạn import file `.apkg` từ Sheet to Anki thì import vốn hoạt động như vậy: nó cập
+Nếu bạn import file `.apkg` từ trang Tạo flashcard thì import vốn hoạt động như vậy: nó cập
 nhật và thêm mới nhưng không bao giờ xoá. Sync bằng add-on thì có xoá.
 
 **Tôi đặt `SYNC` là no mà card không bị xoá.**
@@ -153,7 +153,7 @@ Tạo Sheet luôn hỏi tên này và đề nghị ghi nó vào một sheet cũ 
 **Import xong mà không có gì thay đổi.**
 Bạn đã thêm, đổi tên cột hay bật `reverse` nên note type đã đổi, và với tuỳ chọn
 mặc định Anki bỏ qua mọi note. Import lại file đó, lần này bật **Merge note
-types** và đặt **Update notes** thành **Always**. Sheet to Anki cũng nhắc việc này
+types** và đặt **Update notes** thành **Always**. Trang Tạo flashcard cũng nhắc việc này
 ngay trước khi tải.
 
 **Import sau khi Merge note types mà note không đổi.**
@@ -179,7 +179,7 @@ AnkiDroid nhận cả file CSV và import từng dòng thành note, kể cả se
 Xoá các note đó trong AnkiDroid, và lần sau mở file `.csv` bằng **Mở file .xlsx/.csv** trong Tạo Sheet. Trên điện thoại, **Lưu link sheet** tiện hơn file.
 
 **File CSV lưu từ Excel bị lỗi dấu tiếng Việt.**
-Sheet to Anki và Tạo Sheet tự nhận ra dấu phân cách và bảng mã của file CSV từ
+Trang Tạo flashcard và Tạo Sheet tự nhận ra dấu phân cách và bảng mã của file CSV từ
 Excel (kể cả "CSV (Comma delimited)" trên Windows tiếng Việt) và báo khi phải
 đoán bảng mã. Nếu dấu vẫn sai, trong Excel chọn **Save As → CSV UTF-8** rồi mở
 file đó. Xem [Upload một file](sources.md#upload-mot-file).

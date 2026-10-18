@@ -17,7 +17,7 @@ one kind of media; `image; video` keeps `image` and warns.
 
 Pictures and sounds are **downloaded and put inside the deck**, so a card still
 shows its picture and plays its sound without a connection. This happens when you
-press Download .apkg in Sheet to Anki (the .apkg carries the media files), and
+press Download .apkg in the Make flashcards page (the .apkg carries the media files), and
 when the add-on syncs (the files go into Anki's media folder). The sheet keeps its
 links; only the notes in Anki point at the files.
 
@@ -41,7 +41,7 @@ links; only the notes in Anki point at the files.
 ## Video: paste the link from the address bar
 
 Write `video` and paste whatever your browser shows. When the card is made (as the
-add-on syncs, or in Sheet to Anki), it is turned into the address of that site's
+add-on syncs, or in the Make flashcards page), it is turned into the address of that site's
 player:
 
 | You paste | It becomes |

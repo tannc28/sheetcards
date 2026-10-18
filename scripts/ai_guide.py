@@ -2,7 +2,7 @@
 
 A learner gives ChatGPT, Gemini or Claude the address of ``ai.md`` and says what
 cards they want; the assistant answers with a set in the text form (or, asked
-for one, a table or CSV) that opens in Sheet to Anki without a warning. The page is plain Markdown because that is what
+for one, a table or CSV) that opens in Make flashcards without a warning. The page is plain Markdown because that is what
 an assistant fetching a URL reads cleanly, and English because that is what every
 model follows best — the learner talks to it in their own language.
 
@@ -638,8 +638,9 @@ def guide(templates, cloze_rows, tm, card_layout, workbook, site):
     )
     w(
         "## 9. Tell the learner where it goes\n\n"
-        f"1. Open Sheet to Anki, {site}create/ . Text: press **Paste text** (VI: "
-        "**Dán văn bản**) and paste the block. A table or file: press **Open "
+        f"1. Open Make flashcards (VI: **Tạo flashcard**), {site}create/ . Text: "
+        "paste the block into the main field, or press **Paste text** (VI: "
+        "**Dán văn bản**). A table or file: press **Open "
         ".xlsx/.csv file** (VI: **Mở file .xlsx/.csv**), or paste the table into "
         f"**Paste text**. Or open Create sheet, {site}sheet/ , to edit it first.\n"
         "2. Check the cards, then press **Download .apkg** and open that file in "

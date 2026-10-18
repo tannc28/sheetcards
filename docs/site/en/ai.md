@@ -6,7 +6,7 @@ kinds of answer: the same set, the same settings (see
 
 - **Text**: one block, line 1 `#config name=…`, line 2 the column names with
   their settings in square brackets, then one word per line. Paste it straight
-  into Sheet to Anki's **Paste text**, and keep it in a note to add words later.
+  into [Make flashcards](../../create/), and keep it in a note to add words later.
 - **Table**: row 1 the column names, row 2 the `#config` settings row, then one
   word per row. The AI sends a `.csv` file (if it can attach files) to open with
   **Open file**, or a table to paste into **Paste text**. Good when you want the
@@ -25,7 +25,7 @@ English, which every AI follows best:
 1. **Copy a prompt** below and change the topic, count and set name.
 2. **Paste it into ChatGPT, Gemini or Claude** and send it.
 3. **Text**: copy the block it answers with, go to
-   [Sheet to Anki](../../create/), press **Paste text** and paste it. **Table**:
+   [Make flashcards](../../create/), press **Paste text** and paste it. **Table**:
    open the `.csv` with **Open .xlsx/.csv file**, or copy the table and paste it
    into **Paste text**.
 4. **Check each card**, then press **Download `.apkg`** and open that file in
@@ -116,11 +116,11 @@ never reuses an ID. See [A sheet with no ID column](columns.md#a-sheet-with-no-i
 ## Notes
 
 - **The AI can be wrong**: IPA, pinyin, meanings or example sentences are
-  sometimes off. Check each card in Sheet to Anki before Download `.apkg`, and
+  sometimes off. Check each card in the Make flashcards page before Download `.apkg`, and
   fix it in [Create sheet](../../sheet/) if needed.
 - **Your words go to the company behind that AI** (OpenAI, Google or
   Anthropic). SheetCards receives nothing: the file is read in your own browser.
 - The AI must not invent picture or audio links. If you want pictures, give it
   the links yourself.
-- A warning in Sheet to Anki means the AI wrote the settings row wrong. Send the
+- A warning in the Make flashcards page means the AI wrote the settings row wrong. Send the
   warning back to the AI and ask it to fix the file.

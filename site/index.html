@@ -17,7 +17,7 @@
   })();
 </script>
 <title data-i18n="titleHome">SheetCards — tạo flashcard Anki từ Google Sheets</title>
-<meta name="description" content="Dán link Google Sheets, mở file hoặc dán danh sách từ, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Chạy ngay trong trình duyệt.">
+<meta name="description" content="Dán danh sách từ hoặc link Google Sheets, hay mở một file, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính. Chạy ngay trong trình duyệt.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -54,7 +54,7 @@
   </div>
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" aria-current="page" data-i18n="navHome">Trang chủ</a>
-    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./create/" data-i18n="navPreview">Tạo flashcard</a>
     <a href="./sheet/" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
   </nav>
@@ -69,34 +69,36 @@
   <section class="hero-home">
    <div class="hero-inner">
     <div class="hero-text">
-      <h1 class="display" data-i18n="homeTitle">Tạo flashcard Anki từ <mark>Google Sheets</mark></h1>
-      <p class="lead" data-i18n="homeLead">Dán link Google Sheets, mở file hoặc dán danh sách từ, xem từng card, rồi tải file .apkg cho app Anki.</p>
+      <h1 class="display" data-i18n="homeTitle">Tạo flashcard Anki từ <mark>Google Sheets, file hay ghi chú</mark></h1>
+      <p class="lead" data-i18n="homeLead">Dán danh sách từ hoặc link Google Sheets, hay mở một file. Xem từng card, rồi tải file .apkg cho app Anki.</p>
       <!-- Two doors, as equal as a phone allows: words that exist already
            (a sheet, a file, a list in a note), and a sheet that does not yet.
-           The first is Sheet to Anki's first step, right here — a link goes
-           over in ?url=, a file through IndexedDB (handoff.js), pasted text to
-           create/#paste — so nothing is loaded on this page and the learner
+           The first is Tạo flashcard's first step, right here — a link goes
+           over in ?url=, a file through IndexedDB (handoff.js), pasted words to
+           create/#paste through sessionStorage (handoff.js) — so nothing is loaded on this page and the learner
            never meets an empty form twice. The second is Create sheet. -->
       <div class="doors">
         <section class="door" aria-labelledby="door-have">
-          <h2 class="door-title" id="door-have"><span data-icon="link"></span><span data-i18n="doorHaveTitle">Đã có danh sách từ</span></h2>
-          <p class="door-text" data-i18n="doorHaveText">Google Sheets, Excel, hoặc danh sách trong ghi chú.</p>
+          <h2 class="door-title" id="door-have"><span data-icon="clipboard"></span><span data-i18n="doorHaveTitle">Đã có danh sách từ</span></h2>
+          <p class="door-text" data-i18n="doorHaveText">Danh sách trong ghi chú, file Excel hoặc Google Sheets.</p>
           <form class="quick" id="quick" novalidate>
-            <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán link Google Sheets để bắt đầu</label>
+            <label class="quick-label" for="q-url" data-i18n="homeLinkLabel">Dán danh sách từ hoặc link Google Sheets</label>
             <div class="quick-field">
-              <span class="quick-icon" data-icon="link"></span>
-              <input id="q-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
-                     aria-describedby="q-err"
-                     placeholder="https://docs.google.com/spreadsheets/d/…"
-                     data-i18n-attr="placeholder:homeLinkPlaceholder">
+              <span class="quick-icon" data-icon="clipboard"></span>
+              <!-- Words or a link, as on Tạo flashcard: a one-line textarea, since
+                   an input drops a pasted list's line breaks. -->
+              <textarea id="q-url" rows="1" wrap="off" autocomplete="off" spellcheck="false"
+                     autocapitalize="off" enterkeyhint="go" aria-describedby="q-err"
+                     placeholder="apple - quả táo… hoặc link"
+                     data-i18n-attr="placeholder:homeLinkPlaceholder"></textarea>
               <button class="btn big" type="submit"><span data-i18n="homeGo">Tạo flashcard</span><span data-icon="arrow-right"></span></button>
             </div>
             <p class="quick-err" id="q-err" role="alert" hidden></p>
             <div class="quick-alt">
-              <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
-                      data-i18n="homeUpload">Mở file .xlsx/.csv</span></button>
               <a class="quick-file" href="./create/#paste"><span data-icon="clipboard"></span><span
                  data-i18n="txOpen">Dán văn bản</span></a>
+              <button type="button" class="quick-file" id="q-pick"><span data-icon="upload"></span><span
+                      data-i18n="homeUpload">Mở file .xlsx/.csv</span></button>
               <a class="quick-file" href="./create/#example"><span data-icon="sparkles"></span><span
                  data-i18n="homeExample">Xem ví dụ</span></a>
             </div>
@@ -120,43 +122,72 @@
          card_layout.py (see scripts/build_site.py) — not a drawing of a card.
          Every box has a size of its own before the script fills it, so nothing
          moves as it does. -->
-    <figure class="demo" id="demo" data-phase="link" data-input="link" role="group" aria-label="Ví dụ: từ một dòng trong sheet tới file .apkg trên điện thoại" data-i18n-attr="aria-label:demoLabel">
+    <figure class="demo" id="demo" data-phase="link" data-input="text" role="group" aria-label="Ví dụ: từ ghi chú, sheet hay file tới file .apkg trên điện thoại" data-i18n-attr="aria-label:demoLabel">
       <ol class="demo-rail" id="demo-rail">
-        <li><button type="button" data-phase-to="link"><span class="dr-n">1</span><span data-i18n="homeStep1">Link, file hoặc chữ</span></button></li>
+        <li><button type="button" data-phase-to="link"><span class="dr-n">1</span><span data-i18n="homeStep1">Chữ, link hoặc file</span></button></li>
         <li><button type="button" data-phase-to="front"><span class="dr-n">2</span><span data-i18n="crStep2">Kiểm tra cards</span></button></li>
         <li><button type="button" data-phase-to="apkg"><span class="dr-n">3</span><span data-i18n="crStep3">Download .apkg</span></button></li>
       </ol>
 
       <div class="demo-stage">
-        <div class="demo-sheet" id="demo-sheet" aria-hidden="true">
-          <div class="fx"><span class="fx-ref" id="fx-ref">B3</span><span class="fx-sign">fx</span><span
-               class="fx-val" id="fx-val"></span></div>
-          <div class="cells" id="demo-cells"></div>
-          <div class="sheettab"><span id="demo-tab"></span></div>
+        <!-- What feeds the phone, one kind per turn of the demo (data-input on
+             the figure): a note of "word - meaning" lines, the row in Google
+             Sheets, or a file. Each is labelled, and the three sit in one place
+             so the stage keeps its size as one fades into the next. The note
+             holds the same words as the row: it is the same card going in. -->
+        <div class="demo-src" aria-hidden="true">
+          <div class="src-panel src-note">
+            <p class="src-tag"><span data-icon="file-text"></span><span data-i18n="demoSrcNote">Ghi chú</span></p>
+            <div class="note-paper">
+              <p class="note-title" data-i18n="demoNoteTitle">Từ mới</p>
+              <ul class="note-lines" id="demo-note" translate="no"></ul>
+            </div>
+          </div>
+          <div class="src-panel src-sheet">
+            <p class="src-tag"><span data-icon="sheet"></span><span data-i18n="demoSrcSheet">Google Sheets</span></p>
+            <div class="demo-sheet" id="demo-sheet">
+              <div class="fx"><span class="fx-ref" id="fx-ref">B3</span><span class="fx-sign">fx</span><span
+                   class="fx-val" id="fx-val"></span></div>
+              <div class="cells" id="demo-cells"></div>
+              <div class="sheettab"><span id="demo-tab"></span></div>
+            </div>
+          </div>
+          <div class="src-panel src-file">
+            <p class="src-tag"><span data-icon="file-spreadsheet"></span><span data-i18n="demoSrcFile">File Excel</span></p>
+            <div class="file-desk">
+              <div class="file-chip">
+                <svg class="ill" viewBox="0 0 48 56" aria-hidden="true">
+                  <path class="i-paper" d="M4 3h28l12 12v38H4z"/>
+                  <path class="i-line" d="M32 3v12h12"/>
+                  <rect class="i-soft" x="10" y="24" width="28" height="22" rx="2"/>
+                  <path class="i-line" d="M10 31.3h28M10 38.6h28M19.3 24v22M28.6 24v22"/>
+                </svg>
+                <span class="file-name" translate="no">tu-vung.xlsx</span>
+                <span class="file-meta" translate="no">12 KB</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="phone">
           <div class="phone-screen">
             <span class="phone-notch" aria-hidden="true"></span>
 
-            <!-- 1: the words going in — a link, a file or pasted text, one kind
-                 per turn of the demo (data-input). It looks like a field and a
-                 button, so a tap on it does what they promise: Sheet to Anki,
+            <!-- 1: the words going in — pasted text, a link or a file, as the
+                 source beside the phone says. It looks like a field and a
+                 button, so a tap on it does what they promise: Tạo flashcard,
                  with the example. Out of the tab order and hidden from screen
                  readers — the hero's own "Xem ví dụ" link is that same action. -->
             <a class="scr scr-link" href="./create/#example" tabindex="-1" aria-hidden="true">
-              <p class="scr-title" translate="no">Sheet to Anki</p>
+              <p class="scr-title" translate="no">SheetCards</p>
               <div class="scr-input scr-in scr-in-link"><span data-icon="link"></span><span class="typed">docs.google.com/spreadsheets/d/1Xk…</span></div>
               <div class="scr-input scr-in scr-in-file"><span data-icon="file-spreadsheet"></span><span class="mono" translate="no">tu-vung.xlsx</span></div>
-              <pre class="scr-note scr-in scr-in-text" translate="no" data-i18n="homeNoteSample">#config name=Từ mới
-Word [tts=en_US] | Meaning
-apple | quả táo
-borrow | mượn</pre>
+              <div class="scr-note scr-in scr-in-text" id="demo-paste" translate="no"></div>
               <span class="scr-go" data-i18n="go">Tạo flashcard</span>
               <div class="scr-ghost"><span></span><span></span><span></span></div>
             </a>
 
-            <!-- 2: the card, as Sheet to Anki shows it -->
+            <!-- 2: the card, as Tạo flashcard shows it -->
             <div class="scr scr-card">
               <div class="demo-card" id="demo-card"></div>
               <button type="button" class="scr-show" id="show-answer" data-i18n="showAnswer">Show Answer</button>
@@ -190,7 +221,7 @@ borrow | mượn</pre>
   <section class="band" id="ai" aria-labelledby="ai-title">
     <h2 class="section-title reveal" id="ai-title" data-i18n="aiTitle">Nhờ AI tạo bộ từ</h2>
     <div class="aibox reveal">
-      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào Dán văn bản của Sheet to Anki (hoặc mở file nó gửi).</p>
+      <p class="ai-lead" data-i18n="aiLead">Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào trang Tạo flashcard (hoặc mở file nó gửi).</p>
       <div class="ai-forms" role="group" aria-label="Kiểu câu trả lời" data-i18n-attr="aria-label:aiFormLabel">
         <button type="button" class="ai-form" data-form="text" aria-pressed="true" data-i18n="aiFormText">Văn bản</button>
         <button type="button" class="ai-form" data-form="table" aria-pressed="false" data-i18n="aiFormTable">Bảng</button>
@@ -247,8 +278,8 @@ borrow | mượn</pre>
           <path class="i-mute" d="M110 46h24M114 53h16"/>
           <rect class="i-fill" x="105" y="66" width="34" height="10" rx="5"/>
         </svg>
-        <h3><span class="hstep-n">2</span><span translate="no" data-i18n="homeHow2Title">Sheet to Anki</span></h3>
-        <p data-i18n="homeHow2">Dán link, mở file hoặc dán chữ, xem từng card thật, rồi bấm Download .apkg.</p>
+        <h3><span class="hstep-n">2</span><span data-i18n="homeHow2Title">Tạo flashcard</span></h3>
+        <p data-i18n="homeHow2">Dán danh sách từ hoặc link, hay mở file, xem từng card thật, rồi bấm Download .apkg.</p>
       </li>
       <li class="hstep reveal">
         <svg class="ill" viewBox="0 0 160 100" aria-hidden="true">
@@ -363,7 +394,7 @@ borrow | mượn</pre>
 
 <footer class="sitefoot">
   <nav class="footlinks" aria-label="Các trang (cuối trang)" data-i18n-attr="aria-label:navFootLabel">
-    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./create/" data-i18n="navPreview">Tạo flashcard</a>
     <a href="./sheet/" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
     <a href="https://github.com/tannc28/sheetcards" rel="noopener" translate="no">GitHub</a>

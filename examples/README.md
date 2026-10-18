@@ -13,7 +13,7 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
 
 ## Opening it
 
-- **Sheet to Anki** (<https://tannc28.github.io/sheetcards/create/>): paste
+- **Tạo flashcard / Make flashcards** (<https://tannc28.github.io/sheetcards/create/>): paste
   the link above, or upload the file
   ([direct download](https://tannc28.github.io/sheetcards/sheetcards-examples.xlsx)).
   *Xem ví dụ* on the landing page opens it on sheet 15. Pick a sheet in the source
@@ -27,7 +27,7 @@ https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xls
   Sheet…**; every sheet in the file becomes its own deck.
 
 A sheet without `name=` becomes a deck named after the file and the sheet:
-`sheetcards-examples::05 Type the answer (gõ đáp án)` from Sheet to Anki,
+`sheetcards-examples::05 Type the answer (gõ đáp án)` from Make flashcards,
 `sc_sheetcards-examples::…` from the add-on. Sheet 16 declares
 `name=SheetCards examples: Picture words`, so both name its deck that, and both
 recognise the same notes.
@@ -54,7 +54,7 @@ Japanese, Korean and others appear where a feature belongs to them.
 | `12 Chinese drawing (viết tay)` | `draw`: write the character stroke by stroke on the question, watch it animated on the answer, filed by `Level` (`subdeck=1`). Needs the network. |
 | `13 Furigana (phiên âm kanji)` | `furigana`: `漢字[かんじ]` drawn as ruby, and read aloud from the reading. |
 | `14 Any headers (mọi ngôn ngữ)` | Headers written `汉字`, `拼音`, `释义`, `例句`: only `ID`, `SYNC` and `TAGS` are reserved. |
-| `15 Theme + subdeck (màu, tầng)` | `theme=sakura`, three deck levels from `Language`, `Level` and `Word class` (`subdeck=1`…`3`, `English::B1::Verbs`), `TAGS` and `tts`. Sheet to Anki's example opens here. |
+| `15 Theme + subdeck (màu, tầng)` | `theme=sakura`, three deck levels from `Language`, `Level` and `Word class` (`subdeck=1`…`3`, `English::B1::Verbs`), `TAGS` and `tts`. Make flashcards' example opens here. |
 | `16 Picture words (từ vựng ảnh)` | `image` and `audio` on one card, `subdeck=1` on `Group`, and the marker `#config name=…; next=i07`: the set's name and identity, and the next ID to hand out. |
 | `17 Draw & type (viết và gõ)` | `draw` for the character and `type=nc` for its pinyin on one card. |
 | `18 Grammar cloze (ngữ pháp)` | English grammar points: `cloze` plus `type` on the same column, so the missing word is typed. |

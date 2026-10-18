@@ -8,7 +8,7 @@ study, and each shows one feature.
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-- **See it in [Sheet to Anki](../../create/#example)**: paste the link above,
+- **See it in [Make flashcards](../../create/#example)**: paste the link above,
   or [download the file](../../sheetcards-examples.xlsx) and upload it. Pick a
   sheet in the bar at the top, check the cards, then Download `.apkg`.
 - **Start your own sheet from one in [Create sheet](../../sheet/)**: download

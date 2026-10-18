@@ -32,9 +32,9 @@ address your browser shows and the add-on fetches the file behind it.
 - **The address must be public and start with `https`.** The add-on refuses
   other kinds of address, and any address inside a private network.
 
-## Sheet to Anki
+## Make flashcards
 
-[Sheet to Anki](../../create/) makes Anki flashcards from a sheet on a phone or a
+[Make flashcards](../../create/) makes Anki flashcards from a sheet on a phone or a
 computer, without the add-on. It shows what SheetCards makes of the sheet first: every row and whether it becomes a note, the deck tree, the tags, the
 warnings from the settings row, and each finished card, which you can turn over,
 listen to and type into. It runs the add-on's own code in your browser, so what
@@ -43,7 +43,7 @@ the card, is the page's own approximation of Anki; the template text it shows is
 exact.
 
 Press the reload button beside the sheet name after editing your sheet, and
-Sheet to Anki fetches it again and keeps your place.
+The Make flashcards page fetches it again and keeps your place.
 
 ### Upload a file
 
@@ -92,7 +92,7 @@ take for the old one.
 
 **Changing the columns needs Merge note types once.** Adding or renaming a
 column, turning on `reverse`… changes the note type, and with the default
-options Anki then updates no note at all. Sheet to Anki compares the sheet with
+options Anki then updates no note at all. The Make flashcards page compares the sheet with
 the `shape=` Create sheet writes into the `#config` cell (and with this device's
 last download) and tells you: when you import, turn on **Merge note types** and
 set **Update notes** to **Always**. Removing or moving a column needs nothing.
@@ -115,13 +115,13 @@ browser, so save the sheet outside it: **on a phone press Save sheet link, on a
 computer press Save .csv**. The page says *Not saved — only a draft in this
 browser* until you do. There are three ways out:
 
-- **Make flashcards**: hands the sheet straight to Sheet to Anki, to check the cards
+- **Make flashcards**: hands the sheet straight to the Make flashcards page, to check the cards
   and download an `.apkg`.
 - **Save the sheet as a file**, `.xlsx` or `.csv`: keep the sheet as a file, open it here again to
   keep editing, or upload it to Google Drive to make it a Google Sheet.
 - **Share link**: the whole sheet is compressed into the link itself (after the
   `#`) and sent to no server. Whoever opens it sees that sheet and edits their
-  own copy; the link can also open straight as cards in Sheet to Anki. Some chat
+  own copy; the link can also open straight as cards in the Make flashcards page. Some chat
   apps cut very long links short; send the file instead. **On a phone this
   button is Save sheet link, and it is the main save**: keep the link (send it to
   yourself) and open it next time to add words. On a computer the main save is

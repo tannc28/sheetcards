@@ -8,7 +8,7 @@ hoạ một tính năng.
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx
 ```
 
-- **Xem trong [Sheet to Anki](../create/#example)**: dán link trên, hoặc
+- **Xem trong [Tạo flashcard](../create/#example)**: dán link trên, hoặc
   [tải file về](../sheetcards-examples.xlsx) rồi upload. Chọn sheet ở thanh phía
   trên, xem card, rồi Download `.apkg`.
 - **Lấy một sheet làm điểm xuất phát trong [Tạo Sheet](../sheet/)**: tải file

@@ -49,7 +49,7 @@ mỗi trang là một thư mục, và địa chỉ cũ (`create.html`, `docs/faq
 chuyển tiếp sang địa chỉ mới, giữ nguyên query và `#`. Docs là Markdown trong
 `docs/site/` (tiếng Việt, ở `/docs/`) và `docs/site/en/` (tiếng Anh, ở `/docs/en/`). `scripts/build_site.py` gom tất cả vào `build/site/`: nó copy
 `site/`, copy các module Python thuần của add-on (những module không import Anki)
-để Sheet to Anki chạy qua Pyodide, dùng chính các module đó để render các card demo của
+để trang Tạo flashcard chạy qua Pyodide, dùng chính các module đó để render các card demo của
 trang chủ, và chuyển Markdown thành các trang này.
 
 ```bash

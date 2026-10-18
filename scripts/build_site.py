@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assembles the website into build/site/.
 
-Four kinds of page: the landing page (``site/index.html``), Sheet to Anki
+Four kinds of page: the landing page (``site/index.html``), Tạo flashcard / Make flashcards
 (``site/create.html``, served at ``/create/``), Create sheet (``site/sheet.html``,
 at ``/sheet/``), the contact page (``site/contact.html``, at ``/contact/``) and the
 documentation, written as Markdown under ``docs/site/`` (Vietnamese, served at
@@ -137,7 +137,7 @@ REDIRECTS = {"preview.html": "create/", "editor.html": "sheet/"}
 
 # What each forwarding page calls the page it forwards to.
 PAGE_TITLES = {
-    "create/": "SheetCards — Sheet to Anki",
+    "create/": "SheetCards — Tạo flashcard",
     "sheet/": "SheetCards — Tạo Sheet",
     "contact/": "SheetCards — Liên hệ & góp ý",
 }
@@ -181,12 +181,45 @@ DOC_CHROME = {
 # makes. Each card wears a different theme to show there is more than one; the
 # theme is written into the settings cell the strip shows, so the sheet on the
 # left still says exactly what made the card on the right.
+#
+# The last two name the columns the demo's note shows its words from, as the
+# "word - meaning" lines somebody keeps in a notes app: on the turns where a note
+# feeds the phone instead of the sheet, it is still this row going in. The
+# English card leads, because the demo opens on a note and "to afford - đủ tiền
+# để mua" is what such a note looks like.
 HOME_EXAMPLES = [
-    ("12 Chinese drawing (viết tay)", "d01", "demoWriting", "momiji"),
-    ("15 Theme + subdeck (màu, tầng)", "n01", "demoEnglish", "paper"),
-    ("13 Furigana (phiên âm kanji)", "f01", "demoJapanese", "sakura"),
-    ("06 Cloze (điền chỗ trống)", "z01", "demoCloze", "matcha"),
+    (
+        "15 Theme + subdeck (màu, tầng)",
+        "n01",
+        "demoEnglish",
+        "paper",
+        ("Word", "Meaning"),
+    ),
+    (
+        "12 Chinese drawing (viết tay)",
+        "d01",
+        "demoWriting",
+        "momiji",
+        ("Character", "Meaning"),
+    ),
+    (
+        "13 Furigana (phiên âm kanji)",
+        "f01",
+        "demoJapanese",
+        "sakura",
+        ("Japanese", "Meaning"),
+    ),
+    (
+        "06 Cloze (điền chỗ trống)",
+        "z01",
+        "demoCloze",
+        "matcha",
+        ("Sentence", "Meaning"),
+    ),
 ]
+
+# How many lines of the sheet the demo's note holds: the row, and the next ones.
+_NOTE_LINES = 4
 
 
 # Create sheet's starting points. There are two, because everything else a
@@ -832,7 +865,7 @@ def home_cards(out):
     tm, card_layout, workbook = _pure_package(out)
     data = EXAMPLES.read_bytes()
     cards = []
-    for sheet, row_id, label, theme in HOME_EXAMPLES:
+    for sheet, row_id, label, theme, (word, meaning) in HOME_EXAMPLES:
         tsv = workbook.sheet_tsv(data, sheet)
         lines = tsv.split("\n")
         marker, _, rest = lines[1].partition("\t")
@@ -858,6 +891,24 @@ def home_cards(out):
                 row, line = raw, at + 2
         if row is None:
             sys.exit(f"home demo: {sheet!r} has no row {row_id!r}")
+        note = []
+        for raw in parsed["rows"][line - 2 :]:
+            got = tm.row_to_dict(raw, headers)
+            pair = [
+                str(got.get(word) or "").strip(),
+                str(got.get(meaning) or "").strip(),
+            ]
+            if all(pair):
+                note.append(pair)
+            if len(note) == _NOTE_LINES:
+                break
+        if (
+            not note
+            or note[0][0] != str(tm.row_to_dict(row, headers).get(word) or "").strip()
+        ):
+            sys.exit(
+                f"home demo: {sheet!r} row {row_id!r} has no {word!r} - {meaning!r}"
+            )
         values = tm.row_to_dict(row, headers)
         tm.apply_media_rewrites(values, plan, cfg)
         front, back = card_layout.split_sides(plan, cfg)
@@ -883,6 +934,7 @@ def home_cards(out):
                 "label": label,
                 "line": line,
                 "columns": columns,
+                "note": note,
                 "template": {"qfmt": template["qfmt"], "afmt": template["afmt"]},
                 "values": values,
             }

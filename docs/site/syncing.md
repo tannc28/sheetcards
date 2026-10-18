@@ -53,7 +53,7 @@ note type là `SheetCards - <deck> - Basic` và `- Cloze`. Khi bạn đổi tên
 spreadsheet, lần sync sau sẽ đổi tên deck và note type cho khớp.
 
 Khi sheet có `name=` trong [settings row](settings-row.md), add-on dùng đúng tên đó
-làm tên deck, không có tiền tố `sc_`, giống file `.apkg` của Sheet to Anki. **Muốn add-on và file `.apkg`
+làm tên deck, không có tiền tố `sc_`, giống file `.apkg` của trang Tạo flashcard. **Muốn add-on và file `.apkg`
 là cùng một deck (ví dụ học trên điện thoại bằng `.apkg`, sync trên máy tính bằng
 add-on): đặt `name=` trong settings row.** Khi đó hai cách nhận ra cùng các note,
 không nhân đôi. Sheet không có `name=` mà là sheet duy nhất của file thì deck mang

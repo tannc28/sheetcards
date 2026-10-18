@@ -599,8 +599,13 @@ export function mountTextImport(host) {
   };
 }
 
-export function open() {
+/**
+ * Opens the dialog. `text`, when given, is what was pasted into the page's main
+ * field (or the landing page's), put in the box as if pasted here.
+ */
+export function open(text) {
   if (!box) build();
+  if (typeof text === "string" && text.trim()) $in("#tx-text").value = text;
   state.separator = "auto";
   state.rows = "auto";
   state.header = "auto";

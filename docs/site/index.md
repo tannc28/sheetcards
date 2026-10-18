@@ -5,11 +5,11 @@ mỗi dòng một card, và SheetCards làm thành một deck. Bạn luôn sửa
 Anki chỉ giữ một bản sao. Mọi bước đều làm được trên điện thoại hay máy tính.
 
 Chưa có Google Sheet? [Tạo Sheet](../sheet/) cho bạn soạn cả sheet trên
-web, rồi chuyển thẳng sang Sheet to Anki.
+web, rồi chuyển thẳng sang trang Tạo flashcard.
 
 Có hai cách đưa flashcard vào Anki:
 
-- **Sheet to Anki**, ngay trên website này: dán link sheet hoặc mở file, kiểm tra
+- **Tạo flashcard**, ngay trên website này: dán danh sách từ hoặc link sheet, hay mở file, kiểm tra
   các card, tải file `.apkg` về rồi mở bằng app Anki (AnkiDroid, AnkiMobile hoặc
   Anki trên máy tính). Không cần cài add-on.
 - **Add-on**, trên máy tính: kết nối sheet một lần, từ đó về sau chỉ một phím tắt
@@ -112,7 +112,7 @@ Quyền Viewer là đủ: không có gì được ghi ngược vào sheet của 
 
 ## 3. Tạo flashcard
 
-1. Dán link vào [Sheet to Anki](../create/). Trang này chạy chính code của
+1. Dán link vào [Tạo flashcard](../create/). Trang này chạy chính code của
    add-on ngay trong trình duyệt, nên những gì bạn thấy cũng là những gì add-on
    sẽ làm ra. Chưa có sheet mà có danh sách từ trong ghi chú? Bấm **Dán văn
    bản**; cả bộ, kèm tên và cài đặt, viết được bằng chữ (xem
@@ -132,7 +132,7 @@ không tải được file, nên trang hiện một thanh báo với nút **Copy
 **Mở bằng Chrome** trên Android) để mở lại bằng trình duyệt thật.
 
 Đã thêm, đổi tên cột hay bật `reverse`? Note type đã đổi, nên khi import hãy bật
-**Merge note types** và đặt **Update notes** thành **Always**. Sheet to Anki nhắc
+**Merge note types** và đặt **Update notes** thành **Always**. Trang Tạo flashcard nhắc
 việc này trước và sau khi tải, cả trên máy khác, vì Tạo Sheet ghi lại hình dạng
 note type vào sheet (`shape=`, xem [Settings row](settings-row.md#key-cho-ca-sheet)).
 

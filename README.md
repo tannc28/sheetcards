@@ -10,18 +10,18 @@ bạn đặt tên là một field. Một settings row (không bắt buộc) quy 
 thế nào, đọc to cột nào và xếp vào deck con nào. Bạn luôn sửa trên sheet; Anki
 giữ bản sao.
 
-**[Sheet to Anki](https://tannc28.github.io/sheetcards/create/)**, dùng trên
+**[Tạo flashcard](https://tannc28.github.io/sheetcards/create/)**, dùng trên
 điện thoại hay máy tính đều được:
 
-1. Dán link Google Sheets, upload file `.xlsx`/`.csv` (CSV từ Excel tiếng Việt
-   cũng đọc được) hoặc mở một share link.
+1. Dán danh sách từ (từ ghi chú, Quizlet…) hoặc link Google Sheets, upload file
+   `.xlsx`/`.csv` (CSV từ Excel tiếng Việt cũng đọc được) hoặc mở một share link.
 2. Kiểm tra các card, đúng như Anki sẽ hiện.
 3. Download `.apkg` rồi mở bằng app Anki (AnkiDroid, AnkiMobile hoặc Anki trên
    máy tính). Sửa sheet rồi import lại: note được cập nhật, tiến độ học vẫn giữ.
    Nếu đã đổi cột, lúc import bật **Merge note types** và chọn **Update notes:
    Always**.
 
-Có danh sách trong ghi chú? Bấm **Dán văn bản** trong Sheet to Anki, đặt tên,
+Có danh sách trong ghi chú? Dán thẳng vào ô ở trang Tạo flashcard, đặt tên,
 tải `.apkg`.
 
 Chưa có sheet? **[Tạo Sheet](https://tannc28.github.io/sheetcards/sheet/)**
@@ -48,18 +48,19 @@ column you name becomes a field. An optional settings row says how the card
 looks, what is read aloud and which subdeck it goes in. You always edit the
 sheet; Anki keeps the copy.
 
-**[Sheet to Anki](https://tannc28.github.io/sheetcards/create/)** works on a
+**[Make flashcards](https://tannc28.github.io/sheetcards/create/)** works on a
 phone or a computer:
 
-1. Paste a Google Sheets link, upload an `.xlsx`/`.csv`, or open a share link.
+1. Paste a word list (from your notes, Quizlet…) or a Google Sheets link, upload
+   an `.xlsx`/`.csv`, or open a share link.
 2. Check the cards, exactly as Anki will show them.
 3. Download the `.apkg` and open it in the Anki app (AnkiDroid, AnkiMobile or
    desktop Anki). Edit the sheet and import again: the notes update and your
    progress is kept. If the columns changed, turn on **Merge note types** and set
    **Update notes** to **Always** when importing.
 
-Got a list in your notes? Press **Paste text** in Sheet to Anki, name it,
-download the `.apkg`.
+Got a list in your notes? Paste it straight into the field on Make flashcards,
+name it, download the `.apkg`.
 
 No sheet yet? **[Create sheet](https://tannc28.github.io/sheetcards/sheet/)**
 writes one in the browser: pick a template and a theme, name the flashcard set,
@@ -83,7 +84,7 @@ the same notes.
 ## Example workbook · File ví dụ
 
 Thirty-one sheets, from the simplest to the most advanced, each showing a
-feature. Open it in Sheet to Anki or connect it with the add-on:
+feature. Open it in Make flashcards or connect it with the add-on:
 
 ```text
 https://github.com/tannc28/sheetcards/blob/main/examples/sheetcards-examples.xlsx

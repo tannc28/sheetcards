@@ -21,7 +21,7 @@ import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
-import { dropHandoff, takeHandoff } from "./handoff.js";
+import { dropHandoff, isLink, takeHandoff, takeText } from "./handoff.js";
 import { site } from "./paths.js";
 import { CREATE_STATE, clearState, readState, writeState } from "./urlstate.js";
 import { decodeShare, isShare } from "./sharelink.js";
@@ -1315,6 +1315,8 @@ function submit() {
     $("#url").focus();
     return;
   }
+  // Words, not a link: Dán văn bản, with them in it.
+  if (!isLink($("#url").value)) return pasteText($("#url").value);
   // Said straight away, with the form still usable: the card placeholder and
   // its status line take over the moment a link is accepted.
   if (!booting.done) {
@@ -2601,7 +2603,26 @@ $("#entry-form").addEventListener("submit", (e) => {
 });
 
 // A changed link is a new question; the old complaint is about the last one.
-$("#url").addEventListener("input", () => fieldError(""));
+// A line break means a list arrived (pasted, or dropped in by a keyboard's
+// clipboard strip): it goes to Dán văn bản as it is, and the field is left
+// empty for a link.
+$("#url").addEventListener("input", () => {
+  fieldError("");
+  if ($("#url").value.includes("\n")) pasteText($("#url").value);
+});
+// Enter in the one-line field is "go", as it was when the field was an input.
+$("#url").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+  e.preventDefault();
+  $("#entry-form").requestSubmit();
+});
+
+/** Words typed or pasted into the main field, opened in Dán văn bản. */
+function pasteText(text) {
+  $("#url").value = "";
+  fieldError("");
+  textImport.open(text);
+}
 
 // Pasting is what everybody arriving here does next, and on a phone a long-press
 // in an empty field is a fiddly way to do it. Only offered where the browser can
@@ -2611,6 +2632,7 @@ if (navigator.clipboard?.readText) {
   $("#paste").addEventListener("click", async () => {
     try {
       const text = (await navigator.clipboard.readText()).trim();
+      if (text && !isLink(text)) return pasteText(text);
       if (text) {
         $("#url").value = text;
         fieldError("");
@@ -2881,11 +2903,13 @@ if (loadFromAddress()) {
   // "edit" takes the same sheet back to Create sheet.
   openShared(location.hash);
 } else if (location.hash === "#paste") {
-  // The landing page's "paste a list" line: the form, with Dán văn bản open.
-  // The fragment is dropped at once, so a reload or Back lands on the form.
+  // The landing page's "paste a list" line, or a list pasted into its field:
+  // the form, with Dán văn bản open — filled in with that list, if one came
+  // (handoff.js). The fragment is dropped at once, so a reload or Back lands
+  // on the form.
   history.replaceState(history.state, "", location.pathname + location.search);
   bootStatus();
-  textImport.open();
+  textImport.open(takeText());
 } else bootStatus();
 
 boot()

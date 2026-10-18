@@ -149,12 +149,14 @@ a.btn, a.btn-quiet { text-decoration: none; }
               0 18px 40px -22px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .quick-icon { flex: none; color: var(--muted); display: inline-flex; }
-.quick-field input {
-  flex: 1 1 auto; min-width: 0; height: 52px; padding: 0;
-  border: 0; outline: 0; background: transparent; box-shadow: none;
-  font-size: var(--t-md); color: var(--ink);
+.quick-field textarea {
+  font: inherit; font-size: var(--t-md); color: var(--ink);
+  flex: 1 1 auto; min-width: 0; height: 52px; padding: 0; margin: 0;
+  line-height: 52px; resize: none; overflow: hidden; white-space: pre;
+  border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none;
 }
-.quick-field input:focus-visible { outline: 0; }
+.quick-field textarea::placeholder { color: var(--muted); }
+.quick-field textarea:focus-visible { outline: 0; }
 .quick-field .btn.big { flex: none; min-height: 52px; border-radius: 13px; }
 .quick-field [aria-invalid] { color: var(--bad); }
 .quick-err {
@@ -180,7 +182,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @media (max-width: 30rem) {
   .quick-field { flex-wrap: wrap; padding: 6px; }
   .quick-icon { display: none; }
-  .quick-field input { flex-basis: 100%; padding: 0 10px; }
+  .quick-field textarea { flex-basis: 100%; padding: 0 10px; }
   .quick-field .btn.big { flex: 1 1 100%; }
   .quick-alt > * { flex: 1 1 100%; justify-content: center; }
 }
@@ -203,7 +205,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 
 .demo { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
 
-/* Sheet to Anki's own three steps, lighting up as the story reaches them — and
+/* Tạo flashcard's own three steps, lighting up as the story reaches them — and
    buttons, so a reader can go straight to the one they care about. */
 .demo-rail {
   list-style: none; margin: 0 auto; padding: 4px;
@@ -235,26 +237,107 @@ a.btn, a.btn-quiet { text-decoration: none; }
   .demo-rail button:not([aria-pressed="true"]) { padding: 0 10px; }
 }
 
-/* The sheet behind, the phone in front. Stacked on a phone, overlapping where
-   there is room. */
+/* The source behind, the phone in front. Stacked on a phone, overlapping where
+   there is room. The source is three panels in one grid cell — a note, the
+   sheet, a file — so the stage is the size of the largest and nothing moves as
+   one turn's source fades into the next. */
 .demo-stage { position: relative; display: grid; justify-items: center; }
+.demo-src {
+  width: 100%; min-width: 0; display: grid;
+  transition: transform .5s cubic-bezier(.2, .9, .3, 1), opacity .4s ease;
+}
+.src-panel {
+  grid-area: 1 / 1; min-width: 0; align-self: start;
+  display: flex; flex-direction: column; gap: 8px;
+  opacity: 0; visibility: hidden; transform: translateY(12px) scale(.98);
+  transition: opacity .45s ease, transform .55s cubic-bezier(.2, .9, .3, 1), visibility 0s .45s;
+}
+.demo[data-input="text"] .src-note,
+.demo[data-input="link"] .src-sheet,
+.demo[data-input="file"] .src-file {
+  opacity: 1; visibility: visible; transform: none; transition-delay: .1s, .1s, 0s;
+}
+/* What the source is, said in words above it: the one thing that changes. */
+.src-tag {
+  align-self: flex-start; margin: 0;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 9px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+  font-family: var(--sans); font-size: var(--t-xs); font-weight: 750; letter-spacing: .01em;
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+.src-tag .icon { width: 15px; height: 15px; }
+
 .demo-sheet {
-  width: 100%; min-width: 0;
+  min-width: 0;
   background: var(--panel); border: 1px solid var(--line);
   border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
   font-family: var(--mono); font-size: 12px;
-  transition: transform .5s cubic-bezier(.2, .9, .3, 1), opacity .4s ease;
 }
+
+/* A page of a notes app: a title, a date-less ruled page, "word - meaning". */
+.note-paper {
+  position: relative; padding: 14px 16px 16px; border-radius: 16px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
+  background-image: linear-gradient(to bottom, transparent calc(2.1rem - 1px), var(--line-soft) calc(2.1rem - 1px), var(--line-soft) 2.1rem);
+  background-size: 100% 2.1rem; background-position: 0 2.9rem; background-repeat: repeat-y;
+  /* About the sheet's height, so the three sources are one size. */
+  min-height: 13.8rem;
+}
+.note-title { margin: 0 0 .35rem; font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; color: var(--ink); }
+.note-lines { list-style: none; margin: 0; padding: 0; }
+.note-lines li {
+  height: 2.1rem; display: flex; align-items: center; gap: .35em; min-width: 0;
+  font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden;
+}
+.note-lines li > span { overflow: hidden; text-overflow: ellipsis; }
+.note-lines .w { font-weight: 650; flex: 0 1 auto; }
+.note-lines .m { color: var(--muted); flex: 0 1 auto; }
+/* Selected, as a notes app shows text about to be copied. */
+.demo[data-phase="link"] .note-lines li { animation: select .5s ease .25s backwards; }
+.demo[data-phase="link"] .note-lines li:nth-child(2) { animation-delay: .4s; }
+.demo[data-phase="link"] .note-lines li:nth-child(3) { animation-delay: .55s; }
+.demo[data-phase="link"] .note-lines li > span { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); border-radius: 2px; }
+@keyframes select { from { opacity: .4; } }
+
+/* A file on the desk, on its way onto the phone. */
+.file-desk {
+  min-height: 13.8rem; display: grid; place-items: center; border-radius: 16px;
+  border: 2px dashed var(--line-strong);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.file-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 18px 12px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.file-chip .ill { width: 46px; }
+.file-name { font-family: var(--mono); font-size: 13px; font-weight: 650; color: var(--ink); }
+.file-meta { font-size: 11px; color: var(--muted); }
+.demo[data-input="file"][data-phase="link"] .file-chip { animation: carry 1.6s cubic-bezier(.5, 0, .3, 1) .2s both; }
+/* Downward on a phone, where the phone is under the file. */
+@keyframes carry {
+  0%, 15% { transform: none; opacity: 1; }
+  80% { transform: translateY(70%) scale(.85); opacity: 0; }
+  100% { transform: translateY(70%) scale(.85); opacity: 0; }
+}
+
 .phone { margin-top: 16px; position: relative; z-index: 1; }
 @media (min-width: 40rem) {
   .demo-stage { display: block; min-height: 34rem; }
-  .demo-sheet {
-    position: absolute; left: 0; top: 2.5rem; width: 68%;
+  .demo-src {
+    position: absolute; left: 0; top: 1.5rem; width: 64%;
     transform: rotate(-2.5deg);
   }
   .phone { position: absolute; right: 2%; top: 0; margin: 0; }
-  /* The sheet steps back once the story has moved onto the phone. */
-  .demo:not([data-phase="link"]) .demo-sheet { transform: rotate(-2.5deg) translate(-8px, 10px) scale(.97); opacity: .8; }
+  /* The source steps back once the story has moved onto the phone. */
+  .demo:not([data-phase="link"]) .demo-src { transform: rotate(-2.5deg) translate(-8px, 10px) scale(.97); opacity: .8; }
+  /* Sideways, onto the phone beside it. */
+  @keyframes carry {
+    0%, 15% { transform: none; opacity: 1; }
+    80% { transform: translate(85%, 6%) rotate(4deg) scale(.8); opacity: 0; }
+    100% { transform: translate(85%, 6%) rotate(4deg) scale(.8); opacity: 0; }
+  }
 }
 
 .fx {
@@ -381,10 +464,12 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .scr-in-file .mono { font-size: 12px; font-weight: 600; }
 .scr-in-file [data-icon] { color: var(--accent); }
 .scr-note {
-  margin: 0; padding: 8px 10px; border-radius: 12px; border: 1.5px solid var(--accent);
+  margin: 0; padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft); background: var(--panel); color: var(--ink);
-  font-family: var(--mono); font-size: 9.5px; line-height: 1.55; white-space: pre; overflow: hidden;
+  font-size: 11.5px; line-height: 1.7; overflow: hidden;
 }
+.scr-note p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scr-note .m { color: var(--muted); }
 .demo[data-phase="link"] .scr-in-file, .demo[data-phase="link"] .scr-note { animation: drop .45s cubic-bezier(.2, .9, .3, 1.2) .15s backwards; }
 .typed { overflow: hidden; text-overflow: clip; }
 .demo[data-phase="link"] .typed { animation: type 1.1s steps(28, end) .2s backwards; }
@@ -443,7 +528,7 @@ a.btn, a.btn-quiet { text-decoration: none; }
 @keyframes drop { from { transform: translateY(-24px) scale(.9); opacity: 0; } }
 @keyframes rise-in { from { transform: translateY(8px); opacity: 0; } }
 
-/* Sheet to Anki's download bar, always there at the bottom of the screen. */
+/* Tạo flashcard's download bar, always there at the bottom of the screen. */
 .scr-bar {
   position: absolute; left: 12px; right: 12px; bottom: 1.2rem;
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -675,8 +760,9 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .motion .steps .reveal:nth-child(3) { transition-delay: 180ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  .flip, .cells .dcell, .btn-quiet, .scr, .demo-sheet, .btn.big .icon { transition: none; }
-  .typed, .scr-go, .scr-file, .scr-done, .scr-in-file, .scr-note { animation: none !important; }
+  .flip, .cells .dcell, .btn-quiet, .scr, .demo-src, .src-panel, .btn.big .icon { transition: none; }
+  .typed, .scr-go, .scr-file, .scr-done, .scr-in-file, .scr-note,
+  .note-lines li, .file-chip { animation: none !important; }
   .tapdot { display: none; }
 }
 

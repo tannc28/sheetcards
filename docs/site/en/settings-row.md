@@ -37,7 +37,7 @@ sheet that never asks for settings is not affected.
 **Mistakes are reported, never guessed at.** An unknown key (`siz=48`), a bad
 value (`color=notacolour`) or a number out of range (`size=400`) produces a
 warning naming the column, and that one setting is left out. The rest of the row
-still applies. You see the warnings in the [Sheet to Anki](../../create/), in
+still applies. You see the warnings in [Make flashcards](../../create/), in
 Create sheet, and in Anki under **Tools → SheetCards → Card Layout…**.
 
 ## Basic keys
@@ -62,7 +62,7 @@ Written after `#config` in the marker cell.
 
 | Key | Values | What it does |
 | :--- | :--- | :--- |
-| `name` | a deck name; spaces and any script are fine, up to 100 characters | The deck's name in Anki, exactly as typed (e.g. `Từ vựng IELTS tuần 1`, no `sc_` in front), and the sheet's identity. Sheet to Anki and the add-on recognise the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
+| `name` | a deck name; spaces and any script are fine, up to 100 characters | The deck's name in Anki, exactly as typed (e.g. `Từ vựng IELTS tuần 1`, no `sc_` in front), and the sheet's identity. The Make flashcards page and the add-on recognise the sheet's notes by it, so a renamed file, a download saved as `Từ vựng (1).csv`, an .xlsx copy or the same sheet in Google Sheets is still one deck. Two sheets with one `name` are **one** deck: importing one overwrites the other's notes that share an ID. Changing `name` makes a new deck; review progress stays with the old one. Case and extra spaces do not count. |
 | `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | A colour scheme for the whole card. In Create sheet you pick it in the template step. See [Themes and text](text.md#themes). |
 
 `name` is the **Flashcard set name** you fill in when you pick a template in
@@ -70,7 +70,7 @@ Create sheet, and Create sheet asks before changing it, since a new name is a ne
 deck in Anki. A sheet without `name` is recognised by its Google Sheets link, or
 by its file name (the `.csv`/`.tsv`/`.xlsx` extension and a ` (1)`, `-2` suffix
 left out), and its deck carries an `sc_` prefix. The add-on uses `name` exactly as
-Sheet to Anki does, as the deck name and the identity, so an `.apkg` and the
+The Make flashcards page does, as the deck name and the identity, so an `.apkg` and the
 add-on update the same notes.
 
 You may also see `next=w15` and `shape=b1f3a2c` in the `#config` cell. Create
@@ -174,7 +174,7 @@ rest) are refused on such a column with a warning.
 **An older sheet with columns named `SUBDECK 1`, `SUBDECK 2`** still works as
 before, with a warning: *SUBDECK columns are being retired — rename the column
 (e.g. 'Lesson') and write subdeck=1 in the settings row*. Renaming the column
-changes the note type's fields once: on Sheet to Anki, the download page reminds
+changes the note type's fields once: on the Make flashcards page, the download page reminds
 you to turn on **Merge note types** for that import; the notes stay in the same
 subdecks and keep their review progress.
 

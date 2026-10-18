@@ -175,17 +175,20 @@ mark {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow);
 }
-.linkbox:has(input[aria-invalid="true"]) {
+.linkbox:has([aria-invalid="true"]) {
   border-color: var(--bad); box-shadow: 0 0 0 4px var(--bad-soft);
 }
 .linkbox-icon { color: var(--muted); font-size: 18px; }
-.linkbox input {
-  flex: 1 1 auto; min-width: 0; height: 54px; padding: 0;
-  font-size: var(--t-base); /* 16px: anything less makes iOS zoom on focus */
-  border: 0; background: transparent; box-shadow: none; outline: none;
+.linkbox textarea {
+  flex: 1 1 auto; min-width: 0; height: 54px; padding: 0; margin: 0;
+  font: inherit; font-size: var(--t-base); /* 16px: anything less makes iOS zoom on focus */
+  line-height: 54px; resize: none; overflow: hidden; white-space: pre;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none; outline: none;
+  color: var(--ink);
 }
-.linkbox input:focus-visible { outline: none; }
-.linkbox input[aria-invalid="true"] { box-shadow: none; }
+.linkbox textarea::placeholder { color: var(--muted); text-overflow: ellipsis; }
+.linkbox textarea:focus-visible { outline: none; }
+.linkbox textarea[aria-invalid="true"] { box-shadow: none; }
 .paste {
   flex: none; display: inline-flex; align-items: center; gap: 6px;
   min-height: var(--tap); padding: 0 14px; border-radius: 11px;

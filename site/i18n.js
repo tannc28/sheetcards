@@ -11,8 +11,9 @@
  * card, cloze, sync, settings row, every Anki and Google Sheets label — and only
  * the explanation around it is translated. The learners run Anki in English, so
  * a translated term is a word they will never see again. Our own page and button
- * names are ours to translate (Trang chủ, Tạo Sheet), except the product name
- * Sheet to Anki, which stays English in both languages.
+ * names are ours to translate (Trang chủ, Tạo flashcard, Tạo Sheet), and so is
+ * the product's: Tạo flashcard / Make flashcards (called Sheet to Anki until
+ * 2026-10-18).
  *
  * Each `data-i18n` element in the HTML carries its `vi` string as static text
  * (what shows before any script runs); tests/test_site_i18n.py keeps the two equal.
@@ -22,7 +23,7 @@ import { rootLinks, site } from "./paths.js";
 
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
-  skip: { en: "Skip to Sheet to Anki", vi: "Tới phần Sheet to Anki" },
+  skip: { en: "Skip to Make flashcards", vi: "Tới phần Tạo flashcard" },
   toDark: { en: "Switch to dark", vi: "Chuyển sang nền tối" },
   langLabel: { en: "Language", vi: "Ngôn ngữ" },
   close: { en: "Close", vi: "Đóng" },
@@ -31,7 +32,7 @@ const STRINGS = {
   navLabel: { en: "Site", vi: "Các trang" },
   navFootLabel: { en: "Pages (footer)", vi: "Các trang (cuối trang)" },
   navHome: { en: "Home", vi: "Trang chủ" },
-  navPreview: { en: "Sheet to Anki", vi: "Sheet to Anki" },
+  navPreview: { en: "Make flashcards", vi: "Tạo flashcard" },
   navSheet: { en: "Create sheet", vi: "Tạo Sheet" },
   navDocs: { en: "Docs", vi: "Docs" },
   docsTag: { en: "docs", vi: "docs" },
@@ -46,10 +47,10 @@ const STRINGS = {
     vi: "SheetCards — tạo flashcard Anki từ Google Sheets",
   },
   titleCreate: {
-    en: "SheetCards — Sheet to Anki: Anki flashcards from Google Sheets",
-    vi: "SheetCards — Sheet to Anki: tạo flashcard Anki từ Google Sheets",
+    en: "SheetCards — Make Anki flashcards from Google Sheets, files or notes",
+    vi: "SheetCards — Tạo flashcard Anki từ Google Sheets, file hay ghi chú",
   },
-  titleDeck: { en: (name) => `${name} — Sheet to Anki · SheetCards`, vi: (name) => `${name} — Sheet to Anki · SheetCards` },
+  titleDeck: { en: (name) => `${name} — Make flashcards · SheetCards`, vi: (name) => `${name} — Tạo flashcard · SheetCards` },
   titleSheet: {
     en: "SheetCards — Create sheet: write a flashcard sheet on the web",
     vi: "SheetCards — Tạo Sheet: soạn sheet flashcard ngay trên web",
@@ -65,12 +66,12 @@ const STRINGS = {
   // Written for somebody who has never used an add-on: what it does, the one
   // file to download, the three steps that get it into Anki, and nothing else.
   homeTitle: {
-    en: "Anki flashcards from <mark>Google Sheets</mark>",
-    vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
+    en: "Anki flashcards from <mark>Google Sheets, files or notes</mark>",
+    vi: "Tạo flashcard Anki từ <mark>Google Sheets, file hay ghi chú</mark>",
   },
   homeLead: {
-    en: "Paste a Google Sheets link, open a file or paste a word list, check every card, then download an .apkg for the Anki app.",
-    vi: "Dán link Google Sheets, mở file hoặc dán danh sách từ, xem từng card, rồi tải file .apkg cho app Anki.",
+    en: "Paste a word list or a Google Sheets link, or open a file. Check every card, then download an .apkg for the Anki app.",
+    vi: "Dán danh sách từ hoặc link Google Sheets, hay mở một file. Xem từng card, rồi tải file .apkg cho app Anki.",
   },
   homeDownload: { en: "Download", vi: "Tải về" },
   homeNeeds: {
@@ -80,8 +81,8 @@ const STRINGS = {
 
   // The demo: a row of the example workbook and the card it becomes.
   demoLabel: {
-    en: "Example: from a row of a sheet to an .apkg on a phone",
-    vi: "Ví dụ: từ một dòng trong sheet tới file .apkg trên điện thoại",
+    en: "Example: from a note, a sheet or a file to an .apkg on a phone",
+    vi: "Ví dụ: từ ghi chú, sheet hay file tới file .apkg trên điện thoại",
   },
   demoEnglish: { en: "English · paper", vi: "English · paper" },
   demoJapanese: { en: "Furigana · sakura", vi: "Furigana · sakura" },
@@ -173,12 +174,12 @@ const STRINGS = {
     vi: "Một Google Sheet, file Excel, hay danh sách trong ghi chú. Chưa có thì soạn trong Tạo Sheet: chọn template, đặt cột &amp; card, rồi thêm thẻ.",
   },
   homeHow2Title: {
-    en: "Sheet to Anki",
-    vi: "Sheet to Anki",
+    en: "Make flashcards",
+    vi: "Tạo flashcard",
   },
   homeHow2: {
-    en: "Paste a link, open a file or paste text, check each real card, then press Download .apkg.",
-    vi: "Dán link, mở file hoặc dán chữ, xem từng card thật, rồi bấm Download .apkg.",
+    en: "Paste your words or a link, or open a file, check each real card, then press Download .apkg.",
+    vi: "Dán danh sách từ hoặc link, hay mở file, xem từng card thật, rồi bấm Download .apkg.",
   },
   homeHow3Title: {
     en: "Open it in the Anki app",
@@ -360,7 +361,7 @@ const STRINGS = {
   tplRevFront: { en: "Card 2 (reverse) · front", vi: "Card 2 (reverse) · mặt trước" },
   tplRevBack: { en: "Card 2 (reverse) · back", vi: "Card 2 (reverse) · mặt sau" },
   shHaveSheet: { en: "Already have a Google Sheet?", vi: "Đã có Google Sheet?" },
-  shHaveSheetHint: { en: "Paste its link straight into Sheet to Anki", vi: "Dán link thẳng vào Sheet to Anki" },
+  shHaveSheetHint: { en: "Paste its link straight into Make flashcards", vi: "Dán link thẳng vào trang Tạo flashcard" },
   shPrivacy: {
     en: "The sheet is kept in this browser. Nothing is sent to SheetCards' servers.",
     vi: "Sheet được lưu ngay trong trình duyệt này. Không có gì được gửi lên máy chủ của SheetCards.",
@@ -753,8 +754,8 @@ const STRINGS = {
   shToDeck: { en: "Make flashcards", vi: "Tạo flashcard" },
   shNeedWord: { en: "Add at least one word first", vi: "Thêm ít nhất một từ trước đã" },
   shHandoffFailed: {
-    en: "This browser would not pass the sheet on. Download it and open the file in Sheet to Anki.",
-    vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong Sheet to Anki.",
+    en: "This browser would not pass the sheet on. Download it and open the file in Make flashcards.",
+    vi: "Trình duyệt không chuyển được sheet. Hãy Download rồi mở file trong trang Tạo flashcard.",
   },
   shDownloadTitle: { en: "Save the sheet as a file", vi: "Tải sheet về máy" },
   shXlsxHint: {
@@ -772,7 +773,7 @@ const STRINGS = {
     en: "Whoever opens this link sees exactly your sheet, and can keep editing their own copy.",
     vi: "Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.",
   },
-  shShareToDeck: { en: "Open straight as cards in Sheet to Anki", vi: "Mở thẳng thành cards trong Sheet to Anki" },
+  shShareToDeck: { en: "Open straight as cards in Make flashcards", vi: "Mở thẳng thành cards trong trang Tạo flashcard" },
   shLinkSize: {
     en: (size, n) => `${size} for ${n} word${n === 1 ? "" : "s"}`,
     vi: (size, n) => `Link dài ${size} cho ${n} từ`,
@@ -943,10 +944,10 @@ const STRINGS = {
   edDeckRoot: { en: "your sheet's deck", vi: "deck của sheet bạn" },
   toLight: { en: "Switch to light", vi: "Chuyển sang nền sáng" },
   urlPlaceholder: {
-    en: "Paste a Google Sheets link, or a link to an .xlsx",
-    vi: "Dán link Google Sheets hoặc link file .xlsx",
+    en: "Paste words or a link",
+    vi: "Dán danh sách từ hoặc link",
   },
-  urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
+  urlLabel: { en: "Word list or Google Sheets link", vi: "Danh sách từ hoặc link Google Sheets" },
   go: { en: "Make flashcards", vi: "Tạo flashcard" },
   pick: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   tabLabel: { en: "Sheet", vi: "Sheet" },
@@ -1059,8 +1060,8 @@ const STRINGS = {
     vi: (n, s) => `${n} dòng · ${s} sẽ thành note`,
   },
   bootFailed: {
-    en: (m) => `Sheet to Anki could not load (${m}). Reload the page to try again.`,
-    vi: (m) => `Không tải được Sheet to Anki (${m}). Tải lại trang để thử lại.`,
+    en: (m) => `Make flashcards could not load (${m}). Reload the page to try again.`,
+    vi: (m) => `Không tải được trang Tạo flashcard (${m}). Tải lại trang để thử lại.`,
   },
 
   // --- errors -------------------------------------------------------------
@@ -1388,25 +1389,25 @@ const STRINGS = {
 
   // --- Sheet to Anki: the three steps ----------------------------------------
   railLabel: { en: "Steps", vi: "Các bước" },
-  crStep1: { en: "Add your sheet", vi: "Dán link sheet" },
+  crStep1: { en: "Text, link or file", vi: "Chữ, link hoặc file" },
   crStep2: { en: "Check the cards", vi: "Kiểm tra cards" },
   crStep3: { en: "Download .apkg", vi: "Download .apkg" },
   crTitle: {
-    en: "Anki flashcards from <mark>Google Sheets</mark>",
-    vi: "Tạo flashcard Anki từ <mark>Google Sheets</mark>",
+    en: "Anki flashcards from <mark>Google Sheets, files or notes</mark>",
+    vi: "Tạo flashcard Anki từ <mark>Google Sheets, file hay ghi chú</mark>",
   },
   crLead: {
     en:
-      "Paste your sheet's link, look through the cards, then download an .apkg that " +
-      "AnkiDroid, AnkiMobile or Anki on a computer opens. No add-on to install.",
+      "Paste your word list (or a Google Sheets link), or open a file. Check each card, " +
+      "then download an .apkg that AnkiDroid, AnkiMobile or Anki on a computer opens.",
     vi:
-      "Dán link sheet, xem từng card, rồi tải file .apkg mở bằng AnkiDroid, " +
-      "AnkiMobile hoặc Anki trên máy tính. Không cần cài add-on.",
+      "Dán danh sách từ (hoặc link Google Sheets), hay mở một file. Xem từng card, " +
+      "rồi tải file .apkg mở bằng AnkiDroid, AnkiMobile hoặc Anki trên máy tính.",
   },
   paste: { en: "Paste", vi: "Dán" },
   emptyLink: {
-    en: "Paste the link of your Google Sheet first.",
-    vi: "Hãy dán link Google Sheets của bạn trước.",
+    en: "Paste your word list or a Google Sheets link first.",
+    vi: "Hãy dán danh sách từ hoặc link Google Sheets trước.",
   },
   useExample: { en: "See an example", vi: "Xem ví dụ" },
   exampleHint: {
@@ -1588,30 +1589,31 @@ const STRINGS = {
 
   // --- the landing page, continued ------------------------------------------
   homeExample: { en: "See an example", vi: "Xem ví dụ" },
-  homeLinkLabel: { en: "Paste a Google Sheets link to start", vi: "Dán link Google Sheets để bắt đầu" },
+  homeLinkLabel: { en: "Paste a word list or a Google Sheets link", vi: "Dán danh sách từ hoặc link Google Sheets" },
   homeLinkPlaceholder: {
-    en: "https://docs.google.com/spreadsheets/d/…",
-    vi: "https://docs.google.com/spreadsheets/d/…",
+    en: "apple - quả táo… or a link",
+    vi: "apple - quả táo… hoặc link",
   },
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
   homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   doorHaveText: {
-    en: "Google Sheets, Excel, or a list in your notes.",
-    vi: "Google Sheets, Excel, hoặc danh sách trong ghi chú.",
+    en: "A list in your notes, an Excel file or Google Sheets.",
+    vi: "Danh sách trong ghi chú, file Excel hoặc Google Sheets.",
   },
-  homeStep1: { en: "Link, file or text", vi: "Link, file hoặc chữ" },
-  homeNoteSample: {
-    en: "#config name=New words\nWord [tts=en_US] | Meaning\napple | quả táo\nborrow | mượn",
-    vi: "#config name=Từ mới\nWord [tts=en_US] | Meaning\napple | quả táo\nborrow | mượn",
-  },
+  homeStep1: { en: "Text, link or file", vi: "Chữ, link hoặc file" },
+  // What feeds the phone in the demo, one kind per turn.
+  demoSrcNote: { en: "Notes", vi: "Ghi chú" },
+  demoSrcSheet: { en: "Google Sheets", vi: "Google Sheets" },
+  demoSrcFile: { en: "Excel file", vi: "File Excel" },
+  demoNoteTitle: { en: "New words", vi: "Từ mới" },
   doorHaveTitle: {
     en: "Already have a word list",
     vi: "Đã có danh sách từ",
   },
   aiTitle: { en: "Ask AI to make your word set", vi: "Nhờ AI tạo bộ từ" },
   aiLead: {
-    en: "Copy this into ChatGPT, Gemini or Claude, change the highlighted parts, then paste the answer into Paste text in Sheet to Anki (or open the file it gives you).",
-    vi: "Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào Dán văn bản của Sheet to Anki (hoặc mở file nó gửi).",
+    en: "Copy this into ChatGPT, Gemini or Claude, change the highlighted parts, then paste the answer into Make flashcards (or open the file it gives you).",
+    vi: "Copy câu này vào ChatGPT, Gemini hoặc Claude, sửa phần tô màu, rồi dán câu trả lời vào trang Tạo flashcard (hoặc mở file nó gửi).",
   },
   aiFormLabel: { en: "Answer as", vi: "Kiểu câu trả lời" },
   aiFormText: { en: "Text", vi: "Văn bản" },
@@ -1650,20 +1652,16 @@ const STRINGS = {
   homeExamplesFile: { en: "31 example sheets", vi: "31 sheet ví dụ" },
   homeDrop: { en: "Drop an .xlsx or .csv file here", vi: "Thả file .xlsx hoặc .csv vào đây" },
   homeNoLink: {
-    en: "Paste the link of your Google Sheet first — or upload a file.",
-    vi: "Dán link Google Sheets trước — hoặc upload một file.",
-  },
-  homeNotLink: {
-    en: "That doesn't look like a link. Copy it from the address bar while the sheet is open.",
-    vi: "Đây chưa phải một link. Hãy copy từ thanh địa chỉ khi đang mở sheet.",
+    en: "Paste your word list or a Google Sheets link first — or open a file.",
+    vi: "Dán danh sách từ hoặc link Google Sheets trước — hoặc mở một file.",
   },
   homeBadFile: {
     en: "SheetCards reads .xlsx, .xlsm, .csv and .tsv files.",
     vi: "SheetCards đọc được file .xlsx, .xlsm, .csv và .tsv.",
   },
   homeStashFailed: {
-    en: "This browser would not keep the file for the next page. Open Sheet to Anki and upload it there.",
-    vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở Sheet to Anki và upload ở đó.",
+    en: "This browser would not keep the file for the next page. Open Make flashcards and upload it there.",
+    vi: "Trình duyệt không giữ được file để chuyển trang. Hãy mở trang Tạo flashcard và upload ở đó.",
   },
   badFileType: {
     en: (name) => `“${name}” is not a spreadsheet. SheetCards reads .xlsx, .xlsm, .csv and .tsv files.`,

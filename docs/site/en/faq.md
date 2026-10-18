@@ -93,7 +93,7 @@ needs the internet to show it. See [Media](media.md).
 
 **A video shows an error.**
 The link names a channel, playlist or folder rather than one video, or the video
-does not allow embedding. The warnings in Sheet to Anki say which.
+does not allow embedding. The warnings in the Make flashcards page say which.
 
 ## Decks
 
@@ -117,7 +117,7 @@ A deck remembers its sheet by name. Connect the file again to pick up the new
 name.
 
 **I deleted a row but the card is still in Anki.**
-If you imported an `.apkg` from Sheet to Anki, that is how imports work: they
+If you imported an `.apkg` from the Make flashcards page, that is how imports work: they
 update and add but never delete. Syncing with the add-on does delete.
 
 **I set `SYNC` to no, but the card was not deleted.**
@@ -181,7 +181,7 @@ row included. Delete those notes in AnkiDroid, and next time open the `.csv` wit
 easier than a file.
 
 **A CSV saved from Excel has broken Vietnamese accents.**
-Sheet to Anki and Create sheet detect the separator and the code page of a CSV
+The Make flashcards page and Create sheet detect the separator and the code page of a CSV
 from Excel (including "CSV (Comma delimited)" on a Vietnamese Windows) and say
 so when they had to guess the code page. If the accents are still wrong, choose
 **Save As → CSV UTF-8** in Excel and open that file. See

@@ -43,7 +43,7 @@ mypy src/
 ## The website
 
 This site is static and lives in `site/`: the landing page (`index.html`),
-Sheet to Anki (`create.html`, at `/create/`), Create sheet (`sheet.html`, at
+The Make flashcards page (`create.html`, at `/create/`), Create sheet (`sheet.html`, at
 `/sheet/`) and Contact & feedback (`contact.html`, at `/contact/`). No address
 ends in `.html`: each page is a folder, and the old addresses (`create.html`,
 `docs/faq.html`…) only forward to the new ones, query and `#` intact. The
@@ -51,7 +51,7 @@ documentation is Markdown in
 `docs/site/` (Vietnamese, served at `/docs/`) and `docs/site/en/` (English, at
 `/docs/en/`). `scripts/build_site.py` assembles it into `build/site/`: it copies
 `site/`, copies the add-on's pure Python modules (the ones with no Anki import)
-for Sheet to Anki to run through Pyodide, renders the landing page's demo cards with
+for the Make flashcards page to run through Pyodide, renders the landing page's demo cards with
 those same modules, and converts the Markdown into these pages.
 
 ```bash

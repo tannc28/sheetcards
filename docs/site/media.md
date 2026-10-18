@@ -17,7 +17,7 @@ một loại media; `image; video` sẽ giữ `image` và báo cảnh báo.
 
 Hình ảnh và âm thanh được **tải về và đặt vào trong deck**, nên card vẫn hiện
 hình và phát tiếng khi không có mạng. Việc này diễn ra khi bạn bấm Download .apkg
-trong Sheet to Anki (file .apkg mang theo các file media), và khi add-on sync
+trong trang Tạo flashcard (file .apkg mang theo các file media), và khi add-on sync
 (file được lưu vào thư mục media của Anki). Sheet vẫn giữ nguyên link; chỉ note
 trong Anki mới trỏ tới file.
 
@@ -27,7 +27,7 @@ trong Anki mới trỏ tới file.
   `.flac`, `.opus` được lấy ở bản MP3 của Commons (khoảng 20 KB mỗi từ), vì
   AnkiMobile trên iPhone không phát được Ogg.
 - **Trang khác** tải được nếu trang đó cho phép trình duyệt tải file (CORS). Trang
-  không cho thì ô vẫn là link: card vẫn hiện khi có mạng, và Sheet to Anki nói
+  không cho thì ô vẫn là link: card vẫn hiện khi có mạng, và trang Tạo flashcard nói
   có bao nhiêu file như vậy sau khi tải. Add-on cũng chỉ tải đúng những file mà
   trình duyệt tải được, để note từ file .apkg và note do add-on sync luôn giống
   hệt nhau.
@@ -41,7 +41,7 @@ trong Anki mới trỏ tới file.
 ## Video: dán link từ thanh địa chỉ
 
 Ghi `video` rồi dán đúng cái trình duyệt đang hiện. Khi card được tạo (lúc sync
-bằng add-on, hoặc trong Sheet to Anki), địa chỉ được đổi thành địa chỉ trình phát
+bằng add-on, hoặc trong trang Tạo flashcard), địa chỉ được đổi thành địa chỉ trình phát
 của trang đó:
 
 | Bạn dán | Nó thành |

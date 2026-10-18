@@ -1,11 +1,11 @@
 # Chuyển từ Quizlet, Noji, Anki
 
-Đã có từ vựng ở nơi khác? Đưa chúng vào Sheet to Anki mà không phải gõ lại.
+Đã có từ vựng ở nơi khác? Đưa chúng vào trang Tạo flashcard mà không phải gõ lại.
 Mọi thứ đều được đọc ngay trong trình duyệt, không gửi lên đâu cả.
 
 ## Dán văn bản
 
-Trong Sheet to Anki, bấm **Dán văn bản**, đặt **Tên bộ flashcard**, rồi dán
+Trong trang Tạo flashcard, bấm **Dán văn bản**, đặt **Tên bộ flashcard**, rồi dán
 danh sách vào ô. Mỗi dòng một card, ví dụ:
 
 ```
@@ -88,7 +88,7 @@ Trong Quizlet, mở học phần → **⋯** → **Export** → **Copy text**, r
 ## Noji, Brainscape và các file CSV khác
 
 Noji (trước đây là Anki Pro) export deck thành file CSV, chỉ có chữ. Mở file
-bằng **Mở file** trong Sheet to Anki hoặc Tạo Sheet; file `.txt` cũng được.
+bằng **Mở file** trong trang Tạo flashcard hoặc Tạo Sheet; file `.txt` cũng được.
 
 - **File không có dòng tên cột** (chỉ có thuật ngữ, định nghĩa) vẫn đọc đúng:
   nếu dòng đầu trông giống các dòng bên dưới thì nó được đọc như một card, và các

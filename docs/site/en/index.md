@@ -6,11 +6,11 @@ is always the place you edit; Anki holds a copy. Every step works on a phone or
 a computer.
 
 No Google Sheet? [Create sheet](../../sheet/) lets you write the whole sheet
-on the web, and hands it straight to Sheet to Anki.
+on the web, and hands it straight to the Make flashcards page.
 
 There are two ways to get the flashcards into Anki:
 
-- **Sheet to Anki**, on this website: paste the sheet's link or open a file,
+- **Make flashcards**, on this website: paste a word list or the sheet's link, or open a file,
   check the cards, download an `.apkg` and open it in the Anki app (AnkiDroid,
   AnkiMobile or Anki on a computer). No add-on to install.
 - **The add-on**, on a computer: connect the sheet once, and from then on one
@@ -122,7 +122,7 @@ read. Viewer access is enough: nothing is ever written back to your sheet.
 
 ## 3. Make the flashcards
 
-1. Paste the link into [Sheet to Anki](../../create/). It runs the add-on's
+1. Paste the link into [Make flashcards](../../create/). It runs the add-on's
    own code in your browser, so what you see is what the add-on would make. No
    sheet, but a word list in your notes? Press **Paste text**; a whole set, with
    its name and settings, can be written as text (see
@@ -143,7 +143,7 @@ browsers cannot download files, so the page shows a banner with **Copy link**
 
 Added or renamed a column, or turned on `reverse`? The note type changed, so
 when you import, turn on **Merge note types** and set **Update notes** to
-**Always**. Sheet to Anki reminds you before and after the download, on another
+**Always**. The Make flashcards page reminds you before and after the download, on another
 device too, because Create sheet records the note type's shape in the sheet
 (`shape=`, see [Settings row](settings-row.md#sheet-wide-keys)).
 

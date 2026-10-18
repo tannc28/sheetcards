@@ -53,14 +53,15 @@ def test_the_title_follows_the_language(page):
     assert re.search(r'<title data-i18n="\w+">', _text(page)), page
 
 
-# The site's pages, most used first: Sheet to Anki is the product, Create sheet
-# the step some people need before it, then the docs. Every masthead says it the same way, in the reader's language:
-# our own page names are translated, the product name Sheet to Anki is not. The
+# The site's pages, most used first: Tạo flashcard / Make flashcards is the
+# product (Sheet to Anki until 2026-10-18), Create sheet the step some people
+# need before it, then the docs. Every masthead says it the same way, in the
+# reader's language: our own page names are translated, Docs is not. The
 # static text is the Vietnamese (the default); i18n.js carries both.
 NAV_KEYS = ["navHome", "navPreview", "navSheet", "navDocs"]
 NAV = {
-    "vi": ["Trang chủ", "Sheet to Anki", "Tạo Sheet", "Docs"],
-    "en": ["Home", "Sheet to Anki", "Create sheet", "Docs"],
+    "vi": ["Trang chủ", "Tạo flashcard", "Tạo Sheet", "Docs"],
+    "en": ["Home", "Make flashcards", "Create sheet", "Docs"],
 }
 
 

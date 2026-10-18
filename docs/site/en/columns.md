@@ -20,7 +20,7 @@ Only these names are special:
 ## A sheet with no ID column
 
 A sheet with no `ID` column still makes cards. **The text in each row's first
-content column is then the row's ID**, and Sheet to Anki says so in one line:
+content column is then the row's ID**, and the Make flashcards page says so in one line:
 *"No ID column → using column Word as the ID. Fixing the spelling of that word
 makes it a new card."*
 
@@ -65,7 +65,7 @@ Every other column becomes a field of the note, named exactly like the column.
 Each sheet is a deck. A sheet with `name=` in its
 [settings row](settings-row.md#sheet-wide-keys) gets a deck named exactly that, as
 typed (e.g. `Từ vựng IELTS tuần 1`), from the `.apkg` and from the add-on. A sheet
-without `name=` gets an `sc_` prefix: `sc_<file name>` in Sheet to Anki,
+without `name=` gets an `sc_` prefix: `sc_<file name>` in the Make flashcards page,
 `sc_<file>::<sheet>` in the add-on. A column with `subdeck=1` in the
 [settings row](settings-row.md#filing-notes-with-a-column-subdeck) adds a level
 under it, and `subdeck=2` the next one:

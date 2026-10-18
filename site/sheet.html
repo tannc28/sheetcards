@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title data-i18n="titleSheet">SheetCards — Tạo Sheet: soạn sheet flashcard ngay trên web</title>
-<meta name="description" content="Tạo Sheet: soạn cả một sheet flashcard ngay trong trình duyệt — tên cột, settings row và từng từ — rồi chuyển thẳng sang Sheet to Anki, tải .xlsx/.csv hoặc chia sẻ bằng một link.">
+<meta name="description" content="Tạo Sheet: soạn cả một sheet flashcard ngay trong trình duyệt — tên cột, settings row và từng từ — rồi chuyển thẳng sang trang Tạo flashcard, tải .xlsx/.csv hoặc chia sẻ bằng một link.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='19' height='21' rx='4' fill='%234c32c0' opacity='.4'/%3E%3Crect x='10' y='3' width='19' height='21' rx='4' fill='%234c32c0'/%3E%3Cpath d='M14.5 10h10M14.5 14.5h10M14.5 19h6' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
   try {
@@ -42,7 +42,7 @@
 
   <nav class="sitenav" aria-label="Các trang" data-i18n-attr="aria-label:navLabel">
     <a href="./" data-i18n="navHome">Trang chủ</a>
-    <a href="./create/" data-i18n="navPreview">Sheet to Anki</a>
+    <a href="./create/" data-i18n="navPreview">Tạo flashcard</a>
     <a href="./sheet/" aria-current="page" data-i18n="navSheet">Tạo Sheet</a>
     <a href="./docs/" data-doc="" data-i18n="navDocs">Docs</a>
   </nav>
@@ -61,7 +61,7 @@
     <li data-step="1" class="now" aria-current="step"><span class="rail-n" aria-hidden="true"><span>1</span></span><span
         class="rail-t" data-i18n="shStep1">Viết sheet</span></li>
     <li data-step="2"><button type="button" class="rail-go" id="rail-deck"><span class="rail-n" aria-hidden="true"><span>2</span></span><span
-        class="rail-t" data-i18n="navPreview">Sheet to Anki</span></button></li>
+        class="rail-t" data-i18n="navPreview">Tạo flashcard</span></button></li>
     <li data-step="3"><span class="rail-n" aria-hidden="true"><span>3</span></span><span
         class="rail-t" data-i18n="crStep3">Download .apkg</span></li>
   </ol>
@@ -85,7 +85,7 @@
         <a class="altcard reopen-card reopen-sheet" href="./create/">
           <span class="altcard-icon" data-icon="link"></span>
           <span class="altcard-text"><strong data-i18n="shHaveSheet">Đã có Google Sheet?</strong>
-            <span data-i18n="shHaveSheetHint">Dán link thẳng vào Sheet to Anki</span></span>
+            <span data-i18n="shHaveSheetHint">Dán link thẳng vào trang Tạo flashcard</span></span>
           <span class="reopen-arrow" data-icon="arrow-right"></span>
         </a>
         <button id="pick" class="altcard reopen-card reopen-go" type="button">
@@ -336,7 +336,7 @@
   <div class="sharebody">
     <p class="small" id="share-lead" data-i18n="shShareLead">Ai mở link này sẽ thấy đúng sheet của bạn và sửa tiếp được trên bản của họ.</p>
     <label class="sharechoice" id="share-choice"><input type="checkbox" id="share-deck">
-      <span data-i18n="shShareToDeck">Mở thẳng thành cards trong Sheet to Anki</span></label>
+      <span data-i18n="shShareToDeck">Mở thẳng thành cards trong trang Tạo flashcard</span></label>
     <div class="linkbox sharelink">
       <span class="linkbox-icon" data-icon="link"></span>
       <input id="share-url" readonly spellcheck="false" aria-label="Share link" data-i18n-attr="aria-label:shShare">

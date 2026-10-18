@@ -6,7 +6,7 @@ câu trả lời, cùng một bộ, cùng các cài đặt (xem
 
 - **Văn bản**: một khối chữ, dòng 1 là `#config name=…`, dòng 2 là tên cột kèm
   cài đặt trong ngoặc vuông, sau đó mỗi từ một dòng. Dán thẳng vào **Dán văn
-  bản** của Sheet to Anki, và giữ trong ghi chú để lần sau thêm từ.
+  bản** của trang Tạo flashcard, và giữ trong ghi chú để lần sau thêm từ.
 - **Bảng**: hàng 1 là tên cột, hàng 2 là settings row `#config`, sau đó mỗi từ một
   hàng. AI gửi file `.csv` (nếu đính kèm được file) để mở bằng **Mở file**, hoặc
   một bảng để dán vào **Dán văn bản**. Hợp khi bạn muốn đưa bộ từ vào Google
@@ -24,7 +24,7 @@ tiếng Anh tốt nhất:
 
 1. **Copy một câu lệnh** ở dưới, sửa phần chủ đề, số từ, tên bộ theo ý bạn.
 2. **Dán vào ChatGPT, Gemini hoặc Claude** rồi gửi.
-3. **Văn bản**: copy khối chữ AI trả về, vào [Sheet to Anki](../create/), bấm
+3. **Văn bản**: copy khối chữ AI trả về, vào [Tạo flashcard](../create/), bấm
    **Dán văn bản** và dán vào. **Bảng**: mở file `.csv` bằng **Mở file
    .xlsx/.csv**, hoặc copy bảng rồi dán vào **Dán văn bản**.
 4. **Xem từng card**, rồi bấm **Download `.apkg`** và mở file đó bằng AnkiDroid,
@@ -112,11 +112,11 @@ Nếu bạn định sửa từ về sau, nhắn thêm *"có cột ID"*: AI thêm
 ## Lưu ý
 
 - **AI có thể sai**: phiên âm IPA, pinyin, nghĩa hay câu ví dụ đôi khi không
-  đúng. Xem từng card trong Sheet to Anki trước khi Download `.apkg`, và sửa
+  đúng. Xem từng card trong trang Tạo flashcard trước khi Download `.apkg`, và sửa
   trong [Tạo Sheet](../sheet/) nếu cần.
 - **Từ của bạn được gửi tới công ty làm ra AI đó** (OpenAI, Google hoặc
   Anthropic). SheetCards không nhận gì cả: file được đọc ngay trên trình duyệt của
   bạn.
 - AI không được bịa link ảnh hay âm thanh. Muốn có ảnh, hãy tự đưa link cho AI.
-- Có cảnh báo trong Sheet to Anki nghĩa là AI viết sai settings row. Gửi lại cảnh
+- Có cảnh báo trong trang Tạo flashcard nghĩa là AI viết sai settings row. Gửi lại cảnh
   báo đó cho AI và nhờ nó sửa.

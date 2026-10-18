@@ -20,7 +20,7 @@ Chỉ những tên này là đặc biệt:
 ## Sheet không có cột ID
 
 Sheet không có cột `ID` vẫn thành card. Khi đó **chữ ở cột nội dung đầu tiên của
-mỗi dòng là ID của dòng**, và Sheet to Anki báo một dòng:
+mỗi dòng là ID của dòng**, và trang Tạo flashcard báo một dòng:
 *"Không có cột ID → dùng cột Word làm ID. Sửa chính tả chính từ đó sẽ thành card
 mới."*
 
@@ -62,7 +62,7 @@ Mọi cột khác thành một field của note, đặt tên đúng như tên c�
 Mỗi sheet là một deck. Sheet có `name=` trong
 [settings row](settings-row.md#key-cho-ca-sheet) thì deck mang đúng tên đó, như bạn
 gõ (ví dụ `Từ vựng IELTS tuần 1`), cả trong file `.apkg` lẫn add-on. Sheet không có
-`name=` thì deck mang tiền tố `sc_`: `sc_<tên file>` trong Sheet to Anki,
+`name=` thì deck mang tiền tố `sc_`: `sc_<tên file>` trong trang Tạo flashcard,
 `sc_<file>::<sheet>` trong add-on. Một cột có `subdeck=1` trong
 [settings row](settings-row.md#xep-note-vao-deck-bang-mot-cot-subdeck) thêm một tầng
 bên dưới nó, `subdeck=2` thêm tầng tiếp theo:

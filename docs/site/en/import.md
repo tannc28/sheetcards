@@ -1,11 +1,11 @@
 # Coming from Quizlet, Noji, Anki
 
-Already have your words somewhere else? Bring them into Sheet to Anki without
+Already have your words somewhere else? Bring them into the Make flashcards page without
 typing them again. Everything is read in your browser and sent nowhere.
 
 ## Paste text
 
-In Sheet to Anki, press **Paste text**, give the **Flashcard set name**, and
+In the Make flashcards page, press **Paste text**, give the **Flashcard set name**, and
 paste the list into the box. One card per line, for example:
 
 ```
@@ -91,7 +91,7 @@ In Quizlet, open the set → **⋯** → **Export** → **Copy text**, and paste
 ## Noji, Brainscape and other CSV files
 
 Noji (formerly Anki Pro) exports a deck as a text-only CSV file. Open it with
-**Open file** in Sheet to Anki or Create sheet; a `.txt` file works too.
+**Open file** in the Make flashcards page or Create sheet; a `.txt` file works too.
 
 - **A file with no row of column names** (just term, definition) still reads
   right: when the first row looks like the rows under it, it is read as a card

@@ -31,9 +31,9 @@ mỗi sheet một deck. File nằm trong một repository GitHub cũng được:
 - **Địa chỉ phải công khai và bắt đầu bằng `https`.** Add-on từ chối các loại
   địa chỉ khác, và mọi địa chỉ trong mạng nội bộ.
 
-## Sheet to Anki
+## Tạo flashcard
 
-[Sheet to Anki](../create/) tạo flashcard Anki từ sheet trên điện thoại hoặc
+[Tạo flashcard](../create/) làm flashcard Anki từ sheet trên điện thoại hoặc
 máy tính, không cần cài add-on. Trước khi tải về, nó cho bạn thấy SheetCards làm
 ra gì từ sheet: từng dòng và việc nó có thành note hay không, cây deck, tag, cảnh
 báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật, nghe và gõ đáp
@@ -41,7 +41,7 @@ báo từ settings row, và từng card hoàn chỉnh, mà bạn có thể lật
 được làm đúng như add-on làm. Chỉ có bước cuối cùng, vẽ card, là trang tự mô
 phỏng lại Anki; còn nội dung template nó hiện ra là chính xác.
 
-Sau khi sửa sheet, bấm nút tải lại cạnh tên sheet, Sheet to Anki sẽ tải sheet lại và
+Sau khi sửa sheet, bấm nút tải lại cạnh tên sheet, trang Tạo flashcard sẽ tải sheet lại và
 giữ nguyên chỗ bạn đang xem.
 
 ### Upload một file
@@ -89,7 +89,7 @@ từ đã xoá không bao giờ được dùng lại cho từ khác, vì Anki s�
 
 **Đổi cột thì phải bật Merge note types một lần.** Thêm, đổi tên một cột, bật
 `reverse`… là đổi note type; với tuỳ chọn mặc định Anki sẽ không cập nhật note nào.
-Sheet to Anki so sheet với `shape=` mà Tạo Sheet ghi trong ô `#config` (và với lần
+Trang Tạo flashcard so sheet với `shape=` mà Tạo Sheet ghi trong ô `#config` (và với lần
 tải trước trên máy này) rồi nhắc bạn: khi import, bật **Merge
 note types** và đặt **Update notes** thành **Always**. Bỏ hoặc đổi chỗ một cột thì
 không cần. Chuyển sang hoặc ra khỏi `cloze` thì Anki không gộp được; trang sẽ nói
@@ -109,12 +109,12 @@ duyệt này, nên hãy lưu sheet ra ngoài: **trên điện thoại bấm Lưu
 trên máy tính bấm Lưu file .csv**. Trang ghi *Chưa lưu… mới là nháp trong trình duyệt* cho tới khi bạn lưu. Từ
 đó có ba lối ra:
 
-- **Tạo flashcard**: chuyển thẳng sheet sang Sheet to Anki để xem card và tải `.apkg`.
+- **Tạo flashcard**: chuyển thẳng sheet sang trang Tạo flashcard để xem card và tải `.apkg`.
 - **Tải sheet về máy** dạng `.xlsx` hoặc `.csv`: giữ sheet thành file, mở lại ở đây để sửa
   tiếp, hoặc upload lên Google Drive thành Google Sheets.
 - **Share link**: cả sheet được nén vào chính link (sau dấu `#`), không gửi lên
   máy chủ nào. Người mở link thấy đúng sheet đó và sửa tiếp trên bản của họ; link
-  cũng mở thẳng được thành card trong Sheet to Anki. Link rất dài có thể bị vài app
+  cũng mở thẳng được thành card trong trang Tạo flashcard. Link rất dài có thể bị vài app
   chat cắt bớt, khi đó hãy gửi file. **Trên điện thoại, nút này là Lưu link
   sheet và là cách lưu chính**: giữ link (gửi cho chính bạn), lần sau mở link là
   thêm từ tiếp được. Trên máy tính, cách lưu chính là file `.csv`.

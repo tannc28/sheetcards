@@ -54,7 +54,7 @@ and its note types `SheetCards - <deck> - Basic` and `- Cloze`. When you rename
 the spreadsheet file, the next sync renames the deck and note types to match.
 
 When a sheet has `name=` in its [settings row](settings-row.md), the add-on uses
-exactly that as the deck name, with no `sc_` prefix, as Sheet to Anki's `.apkg` does. **To make the
+exactly that as the deck name, with no `sc_` prefix, as the `.apkg` from Make flashcards does. **To make the
 add-on and the `.apkg` one deck (say, the `.apkg` on a phone and the add-on on a
 computer), set `name=` in the settings row.** Both then recognise the same notes,
 with no duplicates. A sheet without `name=` that is its file's only sheet is named

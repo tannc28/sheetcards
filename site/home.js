@@ -5,10 +5,11 @@
  * a file Anki opens — so it is made of the real thing. `home-cards.js` is written
  * by scripts/build_site.py, which runs the add-on's own card_layout.py over four
  * rows of the example workbook; here those templates are filled by the same
- * `renderCard` and framed by the same `cardDoc` Sheet to Anki uses. No Pyodide: the
+ * `renderCard` and framed by the same `cardDoc` Tạo flashcard uses. No Pyodide: the
  * Python already ran at build time.
  *
- * It tells Sheet to Anki's three steps in order — the link goes in, the card is
+ * It tells Tạo flashcard's three steps in order — the words go in (from a note,
+ * a sheet or a file, one kind per turn, each drawn beside the phone), the card is
  * checked front then back, the .apkg lands in Anki — and then does it again with
  * the next example, each in a different theme. Each step ends in a tap on the
  * button that leads to the next (Tạo flashcard, Show Answer, Download .apkg), a
@@ -29,7 +30,7 @@ import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { dark, onRepaint } from "./page.js";
 import { CARDS, HANZI_WRITER, THEME_SWATCHES } from "./home-cards.js";
-import { stashFile } from "./handoff.js";
+import { isLink, stashFile, stashText } from "./handoff.js";
 import { ROOT, site } from "./paths.js";
 import { chatLinks, promptFor } from "./aiprompt.js";
 import { prefetchPython } from "./pyodide.js";
@@ -40,9 +41,13 @@ const still = matchMedia("(prefers-reduced-motion: reduce)");
 
 // The story, one phase at a time, and how long each stays up (ms).
 const PHASES = ["link", "front", "back", "apkg"];
-// What goes in on the first screen, one kind per turn of the demo: Sheet to
-// Anki takes a Google Sheets link, a file, or pasted text.
-const INPUTS = ["link", "file", "text"];
+// What feeds the phone, one kind per turn of the demo: Tạo flashcard takes
+// pasted words, a Google Sheets link or a file. Words first, since that is the
+// headline way in: a list from a notes app, pasted. Each kind has its own
+// source beside the phone (a note, the sheet, a file) and its own first screen.
+const INPUTS = ["text", "link", "file"];
+// What the .apkg is called at the end of each kind of turn.
+const APKG = { text: () => `${t("demoNoteTitle")}.apkg`, link: () => "sheetcards-examples.apkg", file: () => "tu-vung.apkg" };
 const HOLD = { link: 2400, front: 2600, back: 3400, apkg: 2800 };
 // A character takes longer to write than a word takes to read.
 const DRAW_HOLD = { front: 7200, back: 5600 };
@@ -50,7 +55,7 @@ const DRAW_HOLD = { front: 7200, back: 5600 };
 // out of the end of the phase's hold.
 const TAPS = { link: ".scr-go", front: "#show-answer", back: ".scr-bar" };
 const TAP_MS = 760;
-// Which of Sheet to Anki's three steps each phase is.
+// Which of Tạo flashcard's three steps each phase is.
 const STEP = { link: "link", front: "front", back: "front", apkg: "apkg" };
 
 const state = {
@@ -139,7 +144,7 @@ function drawScript(tab) {
 }
 
 /**
- * The card's own document, as Sheet to Anki builds it, adjusted for a card that
+ * The card's own document, as Tạo flashcard builds it, adjusted for a card that
  * is looked at rather than studied: no scrollbars (the frame is sized to fit),
  * no "TTS voices" list (it lists the voices of the device reviewing the card,
  * and this page is not one), and no scripts — the ones a card carries are for
@@ -191,7 +196,7 @@ function buildCards() {
       `<div class="flip${i === state.at ? " active" : ""}${
         i === state.at && state.phase === "back" ? " turned" : ""
       }" data-card="${i}" ${i === state.at ? "" : "inert"}>` +
-      // "both" on the back, as Anki and Sheet to Anki show an answered card.
+      // "both" on the back, as Anki and Tạo flashcard show an answered card.
       frame(i, "front") +
       frame(i, "both") +
       "</div>",
@@ -256,13 +261,24 @@ function paintSheet() {
   $("#demo-tab").textContent = card.sheet;
 }
 
+/** The note's lines and the text pasted on the phone: the same words as the row. */
+function paintNote() {
+  const lines = CARDS[state.at].note || [];
+  const line = ([word, meaning]) =>
+    `<span class="w">${escapeHtml(word)}</span> - <span class="m">${escapeHtml(meaning)}</span>`;
+  $("#demo-note").innerHTML = lines.map((pair) => `<li>${line(pair)}</li>`).join("");
+  $("#demo-paste").innerHTML = lines.map((pair) => `<p>${line(pair)}</p>`).join("");
+}
+
 /** Shows example `index` at `phase`. */
 function show(index, phase) {
   state.at = index;
   state.phase = phase;
   const demo = $("#demo");
   demo.dataset.phase = phase;
-  demo.dataset.input = INPUTS[state.turn % INPUTS.length];
+  const input = INPUTS[state.turn % INPUTS.length];
+  demo.dataset.input = input;
+  $("#demo-file").textContent = APKG[input]();
   for (const flip of document.querySelectorAll(".flip")) {
     const here = Number(flip.dataset.card) === index;
     flip.classList.toggle("active", here);
@@ -277,6 +293,7 @@ function show(index, phase) {
   }
   $("#show-answer").textContent = t(phase === "back" ? "flipBack" : "showAnswer");
   paintSheet();
+  paintNote();
   playDrawing();
 }
 
@@ -411,9 +428,11 @@ onRepaint((what) => what === "theme" && paintSwatches());
 
 // --- step 1, on the landing page ---------------------------------------------
 //
-// The same first step Sheet to Anki asks for, so a learner who arrives with a
-// sheet in hand starts from here. Nothing is read on this page: a link goes over
-// in ?url=, a file through IndexedDB (handoff.js) to create/#file.
+// The same first step Tạo flashcard asks for, so a learner who arrives with
+// words in hand starts from here. Nothing is read on this page: a link goes over
+// in ?url=, a file through IndexedDB to create/#file, and words — a pasted list,
+// or anything that is not a link — through sessionStorage to create/#paste,
+// where Dán văn bản opens with them in it (handoff.js).
 
 const FILE_TYPES = /\.(xlsx|xlsm|csv|tsv|txt)$/i;
 
@@ -436,17 +455,32 @@ async function sendFile(file) {
   location.href = site("create/#file");
 }
 
+function sendText(text) {
+  if (!stashText(text)) return quickError("homeStashFailed");
+  location.href = site("create/#paste");
+}
+
 $("#quick").addEventListener("submit", (e) => {
   e.preventDefault();
   let link = $("#q-url").value.trim();
   if (!link) return quickError("homeNoLink");
+  if (!isLink(link)) return sendText($("#q-url").value);
   // Typed or copied without its https:// — "docs.google.com/spreadsheets/…" is
   // a link to anybody reading it, so it is one here too.
-  if (/^[\w-]+(\.[\w-]+)+\/\S*$/.test(link)) link = "https://" + link;
-  if (!/^https?:\/\/\S+$/i.test(link)) return quickError("homeNotLink");
+  if (!/^https?:\/\//i.test(link)) link = "https://" + link;
   location.href = site("create/?url=" + encodeURIComponent(link));
 });
-$("#q-url").addEventListener("input", () => quickError(""));
+// A line break means a list arrived: it goes over as it is, at once.
+$("#q-url").addEventListener("input", () => {
+  quickError("");
+  if ($("#q-url").value.includes("\n")) sendText($("#q-url").value);
+});
+// Enter in the one-line field is "go".
+$("#q-url").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+  e.preventDefault();
+  $("#quick").requestSubmit();
+});
 $("#q-pick").addEventListener("click", () => $("#q-file").click());
 $("#q-file").addEventListener("change", (e) => sendFile(e.target.files[0]));
 
@@ -540,13 +574,12 @@ const reveal = new IntersectionObserver(
 for (const el of document.querySelectorAll(".reveal")) reveal.observe(el);
 window.scHomeReady = true;
 
-$("#demo-file").textContent = "sheetcards-examples.apkg";
 buildCards();
 buildTabs();
 // Still, the demo opens on the card — the step that needs no motion to read.
 show(0, still.matches ? "front" : "link");
 schedule();
 
-// Most visits here go on to Sheet to Anki or Create sheet, and both start with
+// Most visits here go on to Tạo flashcard or Create sheet, and both start with
 // the Python download: begun now, on Wi-Fi, while the reader is still reading.
 prefetchPython();

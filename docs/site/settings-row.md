@@ -38,7 +38,7 @@ thường, nên sheet không cần settings thì không bị ảnh hưởng gì.
 **Lỗi được báo ra, không bao giờ bị đoán.** Một key lạ (`siz=48`), một giá trị
 sai (`color=notacolour`) hay một số ngoài khoảng cho phép (`size=400`) sẽ tạo ra
 một cảnh báo nêu tên cột, và chỉ setting đó bị bỏ đi. Phần còn lại của dòng vẫn
-áp dụng. Bạn thấy các cảnh báo trong [Sheet to Anki](../create/), trong Tạo Sheet, và
+áp dụng. Bạn thấy các cảnh báo trong [Tạo flashcard](../create/), trong Tạo Sheet, và
 trong Anki ở **Tools → SheetCards → Card Layout…**.
 
 ## Key cơ bản
@@ -63,14 +63,14 @@ Ghi sau `#config` trong ô dấu hiệu.
 
 | Key | Giá trị | Tác dụng |
 | :--- | :--- | :--- |
-| `name` | tên bộ flashcard, có dấu cách và tiếng Việt cũng được, tối đa 100 ký tự | Tên bộ flashcard — Anki hiện deck đúng như bạn gõ, ví dụ `Từ vựng IELTS tuần 1`, không thêm `sc_` — đồng thời là danh tính của sheet. Sheet to Anki và add-on nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một bộ. Hai sheet cùng `name` là **một** bộ: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `name` là tạo bộ mới (một deck mới trong Anki); tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
+| `name` | tên bộ flashcard, có dấu cách và tiếng Việt cũng được, tối đa 100 ký tự | Tên bộ flashcard — Anki hiện deck đúng như bạn gõ, ví dụ `Từ vựng IELTS tuần 1`, không thêm `sc_` — đồng thời là danh tính của sheet. Trang Tạo flashcard và add-on nhận ra note của sheet nhờ nó, nên đổi tên file, tải về thành `Từ vựng (1).csv`, lưu ra .xlsx hay đưa lên Google Sheets đều vẫn là cùng một bộ. Hai sheet cùng `name` là **một** bộ: import sheet này sẽ ghi đè note cùng ID của sheet kia. Đổi `name` là tạo bộ mới (một deck mới trong Anki); tiến độ ôn tập ở lại deck cũ. Hoa thường và dấu cách thừa không tính. |
 | `theme` | `paper`, `contrast`, `matcha`, `momiji`, `yuki`, `sakura` | Bảng màu cho cả card. Trong Tạo Sheet bạn chọn theme ngay ở bước chọn template. Xem [Theme và chữ](text.md#theme). |
 
 `name` là ô **Tên bộ flashcard** bạn điền khi chọn template trong Tạo Sheet, và
 Tạo Sheet hỏi lại trước khi đổi nó, vì tên mới là một deck mới trong Anki.
 Sheet không có `name` thì được nhận ra theo link Google Sheets, hoặc theo tên
 file (bỏ đuôi `.csv`/`.tsv`/`.xlsx` và hậu tố ` (1)`, `-2`), và deck của nó mang
-tiền tố `sc_`. Add-on dùng `name` y như Sheet to Anki: làm tên deck và danh tính,
+tiền tố `sc_`. Add-on dùng `name` y như trang Tạo flashcard: làm tên deck và danh tính,
 nên file `.apkg` và add-on cập nhật cùng các note.
 
 Trong ô `#config` bạn có thể thấy thêm `next=w15` và `shape=b1f3a2c`. Tạo Sheet tự
@@ -171,7 +171,7 @@ từ chối trên cột như vậy, kèm cảnh báo.
 
 **Sheet cũ có cột tên `SUBDECK 1`, `SUBDECK 2`** vẫn chạy như trước, nhưng có một
 cảnh báo: *Cột SUBDECK n sắp bỏ — đổi tên cột (vd. 'Bài học') và ghi subdeck=1 ở
-settings row*. Đổi tên cột là đổi field của note type một lần: trên Sheet to Anki,
+settings row*. Đổi tên cột là đổi field của note type một lần: trên trang Tạo flashcard,
 trang tải `.apkg` sẽ nhắc bạn bật **Merge note types** cho lần import đó; note
 vẫn ở đúng subdeck và giữ tiến độ ôn tập.
 
