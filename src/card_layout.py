@@ -1205,6 +1205,12 @@ def _one_template(
         # already filled.
         + (_DRAW_SCRIPT if drawn(back_fields) else "")
         + (_CODE_SCRIPT if coded(back_fields) else "")
+        # Forgives a capital letter the phone's keyboard put there (see below).
+        + (
+            (_TYPE_CASE_NC_SCRIPT if "{{type:nc:" in type_box else _TYPE_CASE_SCRIPT)
+            if type_box
+            else ""
+        )
         + tts_debug
     )
 
@@ -1354,3 +1360,99 @@ def build_templates(plan, sheet_config, is_cloze=False):
         )
 
     return templates
+
+
+# A typed answer that differs from the field only in case is marked right.
+#
+# A phone keyboard capitalises the first letter of whatever is typed, so a
+# learner who knows "library" is told "Library" is wrong on every card, and the
+# fix (turning the keyboard's capitalisation off) is not something anyone looks
+# for. Anki's comparison is exact; there is no option for it. So the answer side
+# reads Anki's own comparison back out of the page and, only when what was typed
+# and what was wanted are equal ignoring case, puts in the markup Anki draws for
+# an exact match: one typeGood span holding the expected text.
+#
+# The markup it reads is rslib's compare_answer, which desktop Anki, AnkiDroid
+# (2.16+, through the backend) and AnkiMobile all print inside code#typeans:
+# the typed line (typeGood/typeBad, and typeMissed dashes standing in for what
+# was left out), a br, span#typearrow, a br, then the expected line
+# (typeGood/typeMissed). Anything else — another element, a stray word, a class
+# it does not know, a client that draws its own diff — and it leaves the page
+# exactly as it was, so the worst a client it does not understand can do is
+# keep Anki's verdict. Checked against real Anki 25.07 output in
+# tests/test_card_layout_typecase.py.
+#
+# `nc` is the type=nc fold: combining marks dropped before comparing, as Anki
+# does. Anki prints that expected line decomposed, so it is recomposed (NFC)
+# before being shown, which is the form Anki's own exact match uses.
+# Idempotent (Anki re-runs a card's scripts): a rewritten box has no arrow left,
+# and is marked data-sc-case besides. window.scTypeCase is what the preview's
+# typed-answer box calls after each redraw, since it draws after this has run.
+
+
+def _type_case_script(nc):
+    """The answer side's case-forgiving pass over Anki's comparison."""
+    return (
+        "<script>\n"
+        "(function () {\n"
+        "  function fold(s, nc) {\n"
+        '    s = String(s).normalize("NFC");\n'
+        '    if (nc) s = s.normalize("NFD").replace(new RegExp("\\\\p{M}", "gu"), "");\n'
+        "    return s.toLowerCase();\n"
+        "  }\n"
+        "  function fix(code, nc) {\n"
+        "    try {\n"
+        '    if (!code || code.getAttribute("data-sc-case")) return false;\n'
+        '    var nodes = code.childNodes, line = 0, arrow = 0, typed = "", want = "";\n'
+        "    for (var i = 0; i < nodes.length; i++) {\n"
+        "      var n = nodes[i];\n"
+        "      if (n.nodeType === 3) {\n"
+        "        if (/\\S/.test(n.nodeValue)) return false;\n"
+        "        continue;\n"
+        "      }\n"
+        "      if (n.nodeType !== 1) return false;\n"
+        "      var tag = n.tagName.toLowerCase();\n"
+        '      if (tag === "br") {\n'
+        "        line++;\n"
+        "        continue;\n"
+        "      }\n"
+        '      if (tag !== "span" || n.children.length) return false;\n'
+        '      if (n.id === "typearrow") {\n'
+        "        if (line !== 1) return false;\n"
+        "        arrow++;\n"
+        "        continue;\n"
+        "      }\n"
+        "      var cls = n.className, text = n.textContent;\n"
+        "      if (line === 0) {\n"
+        '        if (cls === "typeGood" || cls === "typeBad") typed += text;\n'
+        '        else if (cls !== "typeMissed" || /[^-]/.test(text)) return false;\n'
+        "      } else if (line === 2) {\n"
+        '        if (cls === "typeGood" || cls === "typeMissed") want += text;\n'
+        "        else return false;\n"
+        "      } else return false;\n"
+        "    }\n"
+        "    if (line !== 2 || arrow !== 1 || !typed || !want) return false;\n"
+        "    if (typed === want || fold(typed, nc) !== fold(want, nc)) return false;\n"
+        '    var good = document.createElement("span");\n'
+        '    good.className = "typeGood";\n'
+        '    good.textContent = want.normalize("NFC");\n'
+        "    while (code.firstChild) code.removeChild(code.firstChild);\n"
+        "    code.appendChild(good);\n"
+        '    code.setAttribute("data-sc-case", "1");\n'
+        "    return true;\n"
+        "    } catch (e) {\n"
+        "      return false;\n"
+        "    }\n"
+        "  }\n"
+        "  window.scTypeCase = fix;\n"
+        '  var all = document.querySelectorAll("code#typeans");\n'
+        "  for (var k = 0; k < all.length; k++) fix(all[k], "
+        + ("true" if nc else "false")
+        + ");\n"
+        "})();\n"
+        "</script>"
+    )
+
+
+_TYPE_CASE_SCRIPT = _type_case_script(False)
+_TYPE_CASE_NC_SCRIPT = _type_case_script(True)

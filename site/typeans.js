@@ -163,6 +163,9 @@ ${compareAnswer.toString()}
       out.hidden = false;
       out.innerHTML = '<code class="typeans">'
         + compareAnswer(spec.expect, input.value, spec.nc) + "</code>";
+      // The card's own answer side forgives a keyboard's capital letter
+      // (card_layout._TYPE_CASE_SCRIPT); it ran before this box was drawn.
+      if (window.scTypeCase) window.scTypeCase(out.firstChild, spec.nc);
     };
     input.addEventListener("input", () => { if (!out.hidden) draw(); });
     input.addEventListener("keydown", (e) => {
