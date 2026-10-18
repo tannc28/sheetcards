@@ -223,7 +223,10 @@ class TestDeckname:
         assert next(iter(json.loads(models).values()))["name"] == (
             "SheetCards - Từ vựng tiếng Anh - Basic"
         )
-        assert "sc_Từ vựng tiếng Anh" in {d["name"] for d in json.loads(decks).values()}
+        names = {d["name"] for d in json.loads(decks).values()}
+        # Exactly as typed: a named set has no sc_ prefix (an unnamed one keeps it).
+        assert "Từ vựng tiếng Anh" in names
+        assert not any(n.startswith("sc_") for n in names)
 
     def test_two_names_do_not_share_notes(self):
         other = self.KEYED.replace("tiếng Anh", "tiếng Trung")
@@ -601,3 +604,29 @@ print(json.dumps({"first": first, "second": second, "cards": col.card_count(),
     assert out["notes"] == 3
     assert out["cards"] == 5  # 2 forward + 2 old reverse + w3's forward only
     assert out["empty"] == 2  # the old reverse cards, for Tools → Empty Cards
+
+
+class TestShapeCode:
+    """shape= — the note type at the last download, small enough for a cell."""
+
+    def test_the_parts_say_what_changed(self):
+        from src.apkg import shape_code
+
+        base = {"kind": "basic", "fields": ["ID", "Word"], "templates": ["Card 1"]}
+        code = shape_code(base)
+        assert len(code) == 7 and code[0] == "b"
+        more = shape_code({**base, "fields": ["ID", "Word", "Meaning"]})
+        assert more[1:5] != code[1:5] and more[5:] == code[5:]
+        rev = shape_code({**base, "templates": ["Card 1", "Card 2"]})
+        assert rev[:5] == code[:5] and rev[5:] != code[5:]
+        assert shape_code({**base, "kind": "cloze"})[0] == "c"
+
+    def test_the_settings_row_reads_it_and_refuses_anything_else(self):
+        from src.column_model import plan_columns
+        from src.sheet_config import parse_config_row
+
+        plan = plan_columns(["ID", "Word"])
+        good = parse_config_row({"ID": "#config shape=B86199C", "Word": ""}, plan)
+        assert good.shape == "b86199c" and not good.warnings
+        bad = parse_config_row({"ID": "#config shape=hello", "Word": ""}, plan)
+        assert bad.shape is None and [w.code for w in bad.warnings] == ["shape-bad"]

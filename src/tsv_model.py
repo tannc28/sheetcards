@@ -42,13 +42,20 @@ TAG_ROOT = "sheetcards"
 DECK_NAME_PREFIX = "sc_"
 
 
-def deck_root_name(remote_deck_name):
+def deck_root_name(remote_deck_name, named=False):
     """The top-level deck a sheet's notes live under.
 
     The single place this name is built. It used to be spelled out as an f-string
     in four modules, and the day one of them disagreed with the others the add-on
     registered one deck and filed its notes into a different one.
+
+    A sheet that names itself (``name=`` in its settings row, ``named``) is shown
+    exactly as it was typed — "Từ vựng IELTS tuần 1" is what its owner chose to
+    see in Anki. Every other sheet keeps the prefix: its name is a file's or a
+    tab's, and the decks already imported under it must not split.
     """
+    if named:
+        return str(remote_deck_name)
     return f"{DECK_NAME_PREFIX}{remote_deck_name}"
 
 

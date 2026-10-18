@@ -190,8 +190,10 @@ class TestTheAnalyzer:
             "id": "name:từ vựng hsk",
             "deck": "Từ vựng HSK",
             "named": True,
+            "root": "Từ vựng HSK",
         }
-        assert {r["deck"] for r in out["rows"]} >= {"sc_Từ vựng HSK::Greetings"}
+        # Shown in Anki exactly as named: no sc_ prefix.
+        assert {r["deck"] for r in out["rows"]} >= {"Từ vựng HSK::Greetings"}
 
     def test_without_one_the_source_is_kept(self):
         app = _loaded("app.js")
@@ -200,6 +202,7 @@ class TestTheAnalyzer:
             "id": "file:Demo.tsv#",
             "deck": "Demo",
             "named": False,
+            "root": "sc_Demo",
         }
 
     def test_the_shape_keeps_the_last_fields_of_the_same_kind(self):

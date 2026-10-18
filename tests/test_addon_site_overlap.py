@@ -81,10 +81,12 @@ class TestDeclaredName:
             assert dm.DeckNameManager.extract_remote_name_from_url(url) == (
                 "Từ vựng: bài 1"
             )
-            # used as written: the .apkg does not clean the ':' either
+            # used as written, with no prefix: the .apkg does the same
             assert dm.DeckNameManager.generate_local_name("Từ vựng: bài 1") == (
-                "sc_Từ vựng: bài 1"
+                "Từ vựng: bài 1"
             )
+            assert dm.local_root_name("Từ vựng: bài 1") == "Từ vựng: bài 1"
+            assert dm.local_root_name("Sheet1") == "sc_Sheet1"
             assert dm.remember_declared_name(url, self._config("#config")) is None
         finally:
             dm._DECLARED_NAMES.clear()

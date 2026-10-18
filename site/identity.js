@@ -158,7 +158,53 @@ export function shapeChange(before, now) {
   if (!before || !now) return null;
   if (before.kind !== now.kind) return "cloze";
   const same = (a, b) => JSON.stringify(a ?? []) === JSON.stringify(b ?? []);
-  return same(before.fields, now.fields) && same(before.templates, now.templates) ? null : "schema";
+  if (!same(before.fields, now.fields)) return "schema";
+  return same(before.templates, now.templates) ? null : "template";
+}
+
+/**
+ * The same question asked of two `shape=` codes (apkg.shape_code): the kind,
+ * four hex digits of the fields, two of the card templates.
+ */
+export function codeChange(before, now) {
+  if (!before || !now) return null;
+  if (before[0] !== now[0]) return "cloze";
+  if (before.slice(1, 5) !== now.slice(1, 5)) return "schema";
+  return before.slice(5) === now.slice(5) ? null : "template";
+}
+
+/**
+ * What Anki has, as well as this page can know it, and so what the import
+ * will need.
+ *
+ * This browser's own record of the last download is exact (it holds the field
+ * list itself), but only for downloads made here; the sheet's `shape=` is
+ * written by Create sheet from whichever device downloaded last, so it travels.
+ * The record wins while it agrees with the sheet, the sheet when they differ —
+ * somebody downloaded elsewhere since — and with neither, `known` is false and
+ * the done dialog says what to do *if* the columns changed.
+ *
+ * @returns {{change: string|null, dropped: string[], known: boolean}}
+ */
+export function judgeShape(last, mark, code, shape) {
+  if (last && (!mark || last.code === mark)) {
+    return { change: shapeChange(last, shape), dropped: droppedTemplates(last, shape), known: true };
+  }
+  if (mark) return { change: codeChange(mark, code), dropped: [], known: true };
+  return { change: null, dropped: [], known: false };
+}
+
+/**
+ * The deck a named set was filed under before a named set was shown as typed:
+ * `sc_Từ vựng` where it is now `Từ vựng`. Anki matches an imported deck by name
+ * and leaves a note's existing cards where they are, so without renaming that
+ * deck first the old cards stay in it and the new ones go to the new one.
+ * Null when there is nothing to rename.
+ */
+export function renamedRoot(last, identity) {
+  if (!last || !identity?.named) return null;
+  const was = last.root ?? (last.deck ? `sc_${last.deck}` : null);
+  return was && was !== identity.root ? was : null;
 }
 
 /**

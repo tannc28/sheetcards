@@ -239,9 +239,10 @@ const STRINGS = {
   },
   tplCustomName: { en: "My deck", vi: "Deck của tôi" },
   tplSheetCaption: {
-    en: "This is your sheet — the cards are made from these very rows. It opens in Google Sheets or Excel just as well.",
-    vi: "Đây là sheet của bạn — card được tạo từ chính những dòng này. Mở bằng Google Sheets hay Excel cũng được.",
+    en: "Example: the sample row shows what the sheet looks like, and the card beside it is made from it. Your sheet starts empty — you add your words in step ② Add cards.",
+    vi: "Ví dụ: dòng mẫu cho thấy sheet trông thế nào, và card bên cạnh được tạo từ nó. Sheet của bạn bắt đầu trống — bạn thêm từ ở bước ② Thêm thẻ.",
   },
+  tplSheetLabel: { en: "Example sheet", vi: "Sheet ví dụ" },
   tplCsv: { en: "Download .csv", vi: "Tải file .csv mẫu" },
   vocabCreate: { en: "Create sheet", vi: "Tạo sheet" },
   shOpenFile: { en: "Open a file to add words", vi: "Mở file để thêm từ" },
@@ -445,10 +446,10 @@ const STRINGS = {
   shKeep: { en: "Keep my sheet", vi: "Giữ sheet hiện tại" },
   shViewLabel: { en: "Steps", vi: "Các bước" },
   shViewLook: { en: "Columns & card", vi: "Cột & card" },
-  shRows: { en: "Cards (the words)", vi: "Thẻ (các từ)" },
+  shRows: { en: "Add cards", vi: "Thêm thẻ" },
   shStepTemplate: { en: "Columns & card", vi: "Cột & card" },
   shStepTemplateSub: { en: "names, settings row", vi: "tên cột, settings row" },
-  shStepCards: { en: "Cards", vi: "Thẻ" },
+  shStepCards: { en: "Add cards", vi: "Thêm thẻ" },
   shStepCardsSub: { en: "words", vi: "từ" },
   shEditTemplate: { en: "Edit columns & card", vi: "Sửa cột & card" },
   shFoldTemplate: { en: "Done", vi: "Xong" },
@@ -684,8 +685,8 @@ const STRINGS = {
     vi: "Ô chứa link audio trần, card hiện trình phát. File tải lại mỗi lần nên card cần mạng.",
   },
   helpVideo: {
-    en: "The cell holds a video link — YouTube, Drive, or a direct file. The address is rewritten into that site's own player while it syncs.",
-    vi: "Ô chứa link video — YouTube, Drive, hoặc file trực tiếp. Địa chỉ được đổi sang trình phát của chính trang đó lúc sync.",
+    en: "The cell holds a video link — YouTube, Drive, or a direct file. The address is rewritten into that site's own player when the note is made.",
+    vi: "Ô chứa link video — YouTube, Drive, hoặc file trực tiếp. Địa chỉ được đổi sang trình phát của chính trang đó khi tạo note.",
   },
   helpReverse: {
     en: "Adds a second card that asks the back and answers with the front. One row, two cards, scheduled separately.",
@@ -827,8 +828,8 @@ const STRINGS = {
   reading: { en: "Reading the file…", vi: "Đang đọc file…" },
   analysing: { en: "Building the cards…", vi: "Đang dựng card…" },
   readRows: {
-    en: (n, s) => `${n} rows · ${s} will sync`,
-    vi: (n, s) => `${n} dòng · ${s} sẽ sync`,
+    en: (n, s) => `${n} rows · ${s} will become notes`,
+    vi: (n, s) => `${n} dòng · ${s} sẽ thành note`,
   },
   bootFailed: {
     en: (m) => `Sheet to Anki could not load (${m}). Reload the page to try again.`,
@@ -909,7 +910,7 @@ const STRINGS = {
   // --- the numbers --------------------------------------------------------
   statRows: { en: "rows in the sheet", vi: "dòng trong sheet" },
   statWithId: { en: "with an ID", vi: "có ID" },
-  statSync: { en: "marked for sync", vi: "sẽ sync" },
+  statSync: { en: "will become notes", vi: "sẽ thành note" },
   statNotes: { en: "notes in Anki", vi: "note trong Anki" },
   statCloze: { en: "cloze rows", vi: "dòng cloze" },
   statDecks: { en: "decks", vi: "deck" },
@@ -918,8 +919,8 @@ const STRINGS = {
   decks: { en: "Decks", vi: "Deck" },
   allDecks: { en: "All decks", vi: "Tất cả deck" },
   noSyncRows: {
-    en: "No rows are marked for sync.",
-    vi: "Không dòng nào được đánh dấu sync.",
+    en: "No row will become a note.",
+    vi: "Không dòng nào sẽ thành note.",
   },
   rows: { en: "Rows", vi: "Dòng" },
   noRowsHere: { en: "No rows in this deck.", vi: "Deck này không có dòng nào." },
@@ -964,12 +965,12 @@ const STRINGS = {
 
   // --- card ---------------------------------------------------------------
   rowSkipped: {
-    en: "This row is not ticked in the SYNC column, so the sync skips it.",
-    vi: "Dòng này chưa tick ở cột SYNC nên sync sẽ bỏ qua.",
+    en: "This row is not ticked in the SYNC column, so it does not become a note.",
+    vi: "Dòng này chưa tick ở cột SYNC nên không thành note.",
   },
   rowInvalid: {
-    en: "This row has no ID, so the sync counts it as broken and skips it.",
-    vi: "Dòng này không có ID nên sync coi là hỏng và bỏ qua.",
+    en: "This row has no ID, so nothing can key it and it does not become a note.",
+    vi: "Dòng này không có ID nên không thành note.",
   },
   clozeStranded: {
     en: (cols) =>
@@ -1038,6 +1039,35 @@ const STRINGS = {
       `Từ lần tải trước, field hoặc card của deck này đã đổi (giờ là: ${fields}). ` +
       "Với tuỳ chọn mặc định, Anki sẽ không cập nhật note nào. Chỉ cần một lần, ở lần import này:",
   },
+  // Only the card templates changed (reverse turned on), not the columns.
+  templateTitle: {
+    en: "You changed the card templates → turn on Merge note types when you import",
+    vi: "Bạn đã đổi card template → khi import hãy bật Merge note types",
+  },
+  templateBody: {
+    en: "Since the last download of this deck its cards changed (for example reverse was turned on), so to Anki it is a new note type. With Anki's default options no note would be updated. Once, for this import:",
+    vi: "Từ lần tải trước, card của deck này đã đổi (ví dụ bật reverse), nên với Anki đây là note type mới. Với tuỳ chọn mặc định, Anki sẽ không cập nhật note nào. Chỉ cần một lần, ở lần import này:",
+  },
+  // Nothing known about the last download (a Google Sheet never downloaded here).
+  schemaMaybe: {
+    en: "If you changed the columns since the last import: turn on <b>Merge note types</b> and set <b>Update notes</b> to <b>Always</b>.",
+    vi: "Nếu bạn đã đổi cột từ lần import trước: bật <b>Merge note types</b> và đặt <b>Update notes</b> thành <b>Always</b>.",
+  },
+  // A named set imported when its deck was still called sc_<name>.
+  renameTitle: {
+    en: "First rename the old deck in Anki",
+    vi: "Trước tiên đổi tên deck cũ trong Anki",
+  },
+  renameBody: {
+    en: (from, to) =>
+      `This set used to arrive in Anki as <b>${from}</b>; it is now called exactly what you named it, <b>${to}</b>. ` +
+      `Before importing, rename <b>${from}</b> to <b>${to}</b> in Anki (the gear beside the deck → Rename). ` +
+      "Anki keeps a note's existing cards in their deck, so otherwise the old cards stay in the old deck and the new ones go to the new one.",
+    vi: (from, to) =>
+      `Bộ này trước đây vào Anki với tên <b>${from}</b>; giờ deck mang đúng tên bạn đặt, <b>${to}</b>. ` +
+      `Trước khi import, đổi tên deck <b>${from}</b> thành <b>${to}</b> trong Anki (bánh răng cạnh deck → Rename). ` +
+      "Anki giữ card cũ ở deck cũ, nên nếu không đổi tên, card cũ ở lại deck cũ còn card mới vào deck mới.",
+  },
   mergeDesktop: {
     en: "<b>Anki on a computer</b>: File → Import…, pick the file, then tick <b>Merge note types</b> and set <b>Update notes</b> to <b>Always</b> before pressing Import.",
     vi: "<b>Anki trên máy tính</b>: File → Import…, chọn file, rồi tick <b>Merge note types</b> và đặt <b>Update notes</b> thành <b>Always</b> trước khi bấm Import.",
@@ -1105,7 +1135,7 @@ const STRINGS = {
     en: (line, state) => `Row ${line} — ${state}`,
     vi: (line, state) => `Dòng ${line} — ${state}`,
   },
-  legendSynced: { en: "syncs", vi: "sẽ sync" },
+  legendSynced: { en: "becomes a note", vi: "sẽ thành note" },
   legendSkipped: { en: "not ticked in SYNC", vi: "chưa tick SYNC" },
   legendInvalid: { en: "no ID", vi: "không có ID" },
   legendGhost: {
@@ -1257,12 +1287,51 @@ const STRINGS = {
       "nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã " +
       "xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.",
   },
+  // The same promise for a sheet that does not name itself: true only while
+  // the link, or the file's name, stays the same.
+  assureBodyLink: {
+    en:
+      "Each note is matched by its ID and by this Google Sheets link, so downloading " +
+      "from the same link again updates the notes you already have and keeps your review " +
+      "progress. The same sheet saved as a file and uploaded would be a different deck, " +
+      "unless the sheet names itself (name=).",
+    vi:
+      "Mỗi note được nhận ra nhờ cột ID và link Google Sheets này, nên tải lại từ đúng " +
+      "link này sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Cùng sheet đó lưu ra file " +
+      "rồi tải lên sẽ thành deck khác, trừ khi sheet có tên riêng (name=).",
+  },
+  assureBodyFile: {
+    en: (file) =>
+      `Each note is matched by its ID and by the file's name, <b>${file}</b>. Upload a file with ` +
+      "that same name and the import updates the notes you already have and keeps your review " +
+      "progress. Renamed, or moved to Google Sheets, it would be a new deck — unless the sheet " +
+      "names itself (name=).",
+    vi: (file) =>
+      `Mỗi note được nhận ra nhờ cột ID và tên file <b>${file}</b>. Tải lên file đúng tên đó ` +
+      "thì import sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Đổi tên file hay chuyển " +
+      "lên Google Sheets sẽ thành deck mới — trừ khi sheet có tên riêng (name=).",
+  },
+  nameOfferAdd: { en: "Add name=", vi: "Thêm name=" },
+  nameOfferWhy: {
+    en: (cell) =>
+      "With a name of its own the sheet stays the same deck however it travels — renamed, " +
+      `saved as .xlsx, moved to Google Sheets. Write <code>${cell}</code> in the ID cell of row 2, right under the column names ` +
+      "(it becomes the deck's name in Anki), then download again. Best done before this set's first import: " +
+      "a set already in Anki becomes a new deck once, and its old cards stop being updated.",
+    vi: (cell) =>
+      "Có tên riêng, sheet luôn là cùng một deck dù đổi tên file, lưu ra .xlsx hay chuyển lên " +
+      `Google Sheets. Ghi <code>${cell}</code> vào ô ID của dòng 2, ngay dưới tên cột ` +
+      "(đó sẽ là tên deck trong Anki), rồi tải lại. Nên làm trước lần import đầu tiên: " +
+      "bộ đã có trong Anki sẽ thành deck mới một lần, và card cũ không được cập nhật nữa.",
+  },
+  nameOfferCopy: { en: "Copy", vi: "Copy" },
+  nameOfferCopied: { en: "Copied", vi: "Đã copy" },
   addonTip: {
     en:
-      'Studying on a computer? The <a href="./#addon">SheetCards add-on</a> syncs ' +
-      "automatically whenever the sheet changes, deleted rows included.",
+      'Studying on a computer? The <a href="./#addon">SheetCards add-on</a> updates ' +
+      "your deck by itself whenever the sheet changes, deleted rows included.",
     vi:
-      'Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi ' +
+      'Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> tự cập nhật deck mỗi khi ' +
       "sheet đổi, kể cả dòng đã xoá.",
   },
   downloadAgain: { en: "No file? Download again", vi: "Không thấy file? Tải lại" },
@@ -1372,8 +1441,8 @@ const STRINGS = {
   },
   addonEyebrow: { en: "The add-on for Anki on a computer", vi: "Add-on cho Anki trên máy tính" },
   addonTitle: {
-    en: "Studying on a computer? Install the add-on and it syncs by itself.",
-    vi: "Học trên máy tính? Cài add-on để sync tự động.",
+    en: "Studying on a computer? Install the add-on and it updates your deck by itself.",
+    vi: "Học trên máy tính? Cài add-on để deck tự cập nhật.",
   },
   addonLead: {
     en: "The add-on connects Anki on a computer to your Google Sheet: each sync adds, updates and removes cards to match the sheet.",

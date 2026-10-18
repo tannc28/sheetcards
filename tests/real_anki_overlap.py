@@ -234,7 +234,7 @@ def review_all(col):
 
     seen = set()
     for d in col.decks.all_names_and_ids():
-        if d.name.startswith("sc_"):
+        if d.name != "Default" and "::" not in d.name:
             col.decks.select(d.id)
             break
     for _ in range(50):
@@ -257,9 +257,7 @@ def dump(col, title=""):
         for m in col.models.all_names_and_ids()
         if m.name.startswith("SheetCards")
     ]
-    decks = sorted(
-        d.name for d in col.decks.all_names_and_ids() if d.name.startswith("sc_")
-    )
+    decks = sorted(d.name for d in col.decks.all_names_and_ids() if d.name != "Default")
     print(f"    notetypes={models} decks={decks}")
     print(
         f"    notes={col.note_count()} cards={col.card_count()} "
@@ -346,7 +344,7 @@ for label, mk, site_deck, only in [
             [
                 d
                 for d in col.decks.all_names_and_ids()
-                if d.name.startswith("sc_") and d.name.count("::") == (0 if only else 1)
+                if d.name != "Default" and d.name.count("::") == (0 if only else 1)
             ]
         )
         == 1,

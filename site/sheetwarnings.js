@@ -151,6 +151,10 @@ export const WARNINGS = {
     en: (p) => `'#config': name ${q(p.value)} has an empty level`,
     vi: (p) => `'#config': name ${q(p.value)} có một tầng trống (hai dấu :: liền nhau)`,
   },
+  "shape-bad": {
+    en: (p) => `'#config': shape is written by SheetCards (like b1f3a2c) — got ${q(p.value)}`,
+    vi: (p) => `'#config': shape do SheetCards tự ghi (như b1f3a2c) — đang là ${q(p.value)}`,
+  },
   "next-bad": {
     en: (p) => `'#config': next must be an ID ending in a number, like w15 — got ${q(p.value)}`,
     vi: (p) => `'#config': next phải là một ID kết thúc bằng số, như w15 — đang là ${q(p.value)}`,

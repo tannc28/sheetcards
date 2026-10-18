@@ -295,20 +295,27 @@
     <button class="iconbtn" id="done-close" type="button"
             title="Đóng" aria-label="Đóng" data-i18n-attr="title:close,aria-label:close"><span data-icon="x"></span></button>
   </div>
+  <div class="done-body">
   <div class="devtabs" id="devtabs" role="tablist" aria-label="Thiết bị" data-i18n-attr="aria-label:deviceLabel"></div>
   <div class="devpanel" id="devpanel" role="tabpanel"></div>
   <div class="schemanote" id="done-schema" role="note" hidden></div>
   <div class="assure">
     <span class="assure-icon" data-icon="history"></span>
     <div><strong data-i18n="assureTitle">Sửa sheet rồi tải lại? Cứ import đè.</strong>
-      <p data-i18n="assureBody">Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.</p></div>
+      <p id="assure-body">Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.</p>
+      <details class="nameoffer" id="done-nameoffer" hidden>
+        <summary><span data-icon="pen-line"></span><span data-i18n="nameOfferAdd">Thêm name=</span></summary>
+        <p id="nameoffer-why"></p>
+        <button class="linky" id="nameoffer-copy" type="button"><span data-icon="copy"></span><span data-i18n="nameOfferCopy">Copy</span></button>
+      </details></div>
   </div>
   <div class="assure">
     <span class="assure-icon" data-icon="link"></span>
     <div><strong data-i18n="nextTimeTitle">Tuần sau thêm từ</strong>
       <p data-i18n="nextTimeBody">Mở lại sheet — link sheet bạn đã lưu, file .csv hoặc Google Sheet của bạn — thêm từ, bấm Tạo flashcard, tải file .apkg mới rồi import. Card cũ được cập nhật, không nhân đôi.</p></div>
   </div>
-  <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> sync tự động mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
+  <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> tự cập nhật deck mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
+  </div>
   <div class="done-foot">
     <button class="linky" id="again" type="button"><span data-icon="download"></span><span data-i18n="downloadAgain">Không thấy file? Tải lại</span></button>
     <button class="btn" id="done-ok" type="button" data-i18n="doneOk">Xong</button>

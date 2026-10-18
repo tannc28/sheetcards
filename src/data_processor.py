@@ -40,7 +40,6 @@ from .tsv_model import RemoteDeck  # noqa: F401  (facade)
 from .tsv_model import build_remote_deck_from_tsv  # noqa: F401  (facade)
 from .tsv_model import build_tags  # noqa: F401  (facade)
 from .tsv_model import clean_tag_text  # noqa: F401  (facade)
-from .tsv_model import deck_root_name
 from .tsv_model import has_cloze_deletion  # noqa: F401  (facade)
 from .tsv_model import parse_tsv_data  # noqa: F401  (facade)
 from .tsv_model import row_has_cloze  # noqa: F401  (facade)
@@ -1442,7 +1441,9 @@ def determine_target_deck(
         remote_deck_name = get_deck_remote_name(deck_url)
 
         # Create base deck following pattern: sc_{remote_deck_name}
-        deck_with_remote_name = deck_root_name(remote_deck_name)
+        from .deck_manager import local_root_name
+
+        deck_with_remote_name = local_root_name(remote_deck_name)
         subdeck_name = get_subdeck_name(
             deck_with_remote_name, deck_path(note_data, plan, sheet_config)
         )

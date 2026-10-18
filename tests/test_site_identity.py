@@ -109,7 +109,48 @@ def test_a_changed_note_type_is_told_apart():
         "               {kind: 'basic', fields: ['ID'], templates: ['Card 1', 'Card 2']}),"
         " m.shapeChange({kind: 'basic', fields: ['ID']}, {kind: 'cloze', fields: ['ID']})]"
     )
-    assert out == [None, None, "schema", "schema", "cloze"]
+    assert out == [None, None, "schema", "template", "cloze"]
+
+
+def test_a_shape_code_is_told_apart_the_same_way():
+    out = _run(
+        "[m.codeChange(null, 'b1234ab'), m.codeChange('b1234ab', 'b1234ab'),"
+        " m.codeChange('b1234ab', 'b9999ab'), m.codeChange('b1234ab', 'b1234cd'),"
+        " m.codeChange('b1234ab', 'c1234ab')]"
+    )
+    assert out == [None, None, "schema", "template", "cloze"]
+
+
+def test_the_sheet_wins_when_another_device_downloaded_since():
+    last = (
+        "{kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1'], code: 'b1111aa'}"
+    )
+    now = "{kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1']}"
+    out = _run(
+        f"[m.judgeShape({last}, 'b1111aa', 'b1111aa', {now}),"
+        f" m.judgeShape({last}, 'b2222aa', 'b1111aa', {now}),"
+        f" m.judgeShape(null, 'b2222aa', 'b1111aa', {now}),"
+        f" m.judgeShape({last}, null, 'b1111aa', {now}),"
+        f" m.judgeShape(null, null, 'b1111aa', {now})]"
+    )
+    assert [(o["change"], o["known"]) for o in out] == [
+        (None, True),
+        ("schema", True),
+        ("schema", True),
+        (None, True),
+        (None, False),
+    ]
+
+
+def test_a_named_set_from_before_asks_for_its_old_deck_to_be_renamed():
+    ident = "{named: true, root: 'Từ vựng', deck: 'Từ vựng'}"
+    out = _run(
+        f"[m.renamedRoot({{deck: 'Từ vựng', fields: []}}, {ident}),"
+        f" m.renamedRoot({{deck: 'Từ vựng', root: 'Từ vựng', fields: []}}, {ident}),"
+        f" m.renamedRoot(null, {ident}),"
+        " m.renamedRoot({deck: 'X', fields: []}, {named: false, root: 'sc_X'})]"
+    )
+    assert out == ["sc_Từ vựng", None, None, None]
 
 
 def test_a_newly_stubbed_template_is_said_once():

@@ -28,7 +28,7 @@ import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 import { warningText } from "./sheetwarnings.js";
-import { droppedTemplates, fileIdentity, fileStem, keepShape, lastShape, shapeChange } from "./identity.js";
+import { fileIdentity, fileStem, judgeShape, keepShape, lastShape, renamedRoot } from "./identity.js";
 
 // The example workbook lives in this repository (examples/, built by
 // scripts/build_examples.py) rather than in somebody's Google Drive, so the sheet
@@ -51,7 +51,7 @@ from sc import tsv_model as tm
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import clean, deck_path
 from sc.sheet_config import is_config_row, warning_codes
-from sc.apkg import build_package, note_type_shape, resolve_identity
+from sc.apkg import build_package, note_type_shape, resolve_identity, shape_code
 
 # The last analysis, so the package can be built from exactly the rows the page
 # drew rather than by parsing the sheet a second time.
@@ -156,7 +156,7 @@ def analyze(tsv, deck_name, sheet_id=""):
 
     # determine_target_deck builds exactly this name, so the tree below is the
     # tree Anki will show.
-    root = tm.deck_root_name(deck_name)
+    root = tm.deck_root_name(deck_name, named=named)
 
     rows = parsed["rows"]
     offset = 0
@@ -201,7 +201,7 @@ def analyze(tsv, deck_name, sheet_id=""):
 
     front, back = split_sides(plan, cfg)
     return json.dumps({
-        "identity": {"id": sheet_id, "deck": deck_name, "named": named},
+        "identity": {"id": sheet_id, "deck": deck_name, "named": named, "root": root},
         # What each column became, and what the settings row said about it. This
         # was dropped once, along with a reference table nobody read. It is back
         # because the Sheet view answers a question with it — "what did this column
@@ -224,7 +224,11 @@ def analyze(tsv, deck_name, sheet_id=""):
             "content": plan.content_headers,
             "headers": [clean(h) for h in shown if clean(h)],
         },
+        # What the note type is now, as the code a sheet carries in shape=, and
+        # what the sheet says it was at its last download.
+        "shapeCode": shape_code(note_type_shape(plan, cfg)),
         "config": {
+            "shape": cfg.shape,
             "warnings": cfg.warnings,
             "warningCodes": warning_codes(cfg.warnings),
             "subdecks": cfg.subdeck_columns,
@@ -586,16 +590,12 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   state.deckName = state.analysis.identity.deck;
   state.sheetId = state.analysis.identity.id;
   state.shape = null;
-  state.change = null;
-  state.dropped = [];
   try {
-    const last = lastShape(state.sheetId);
-    state.shape = nextShape(last);
-    state.change = shapeChange(last, state.shape);
-    state.dropped = droppedTemplates(last, state.shape);
+    state.shape = nextShape(lastShape(state.sheetId));
   } catch {
     // Without a remembered package there is nothing to compare with.
   }
+  judge();
   state.row = state.analysis.rows.findIndex((r) => r.kind === "synced");
   if (state.row < 0) state.row = 0;
   // Only if the row is still there: a sheet can come back shorter than it went.
@@ -1707,12 +1707,20 @@ function downloadPackage() {
     // deck. Its fields go in front of this one's (apkg.kept_fields), and the
     // change between the two is what the done dialog warns about.
     const last = lastShape(state.sheetId);
-    state.change = shapeChange(last, state.shape);
-    state.dropped = droppedTemplates(last, state.shape);
+    judge();
     // A copy, because the array Pyodide hands over is a view onto its heap and
     // the next Python call is free to reuse that memory.
     const bytes = new Uint8Array(buildPackage(last));
-    if (state.shape) keepShape(state.sheetId, { ...state.shape, deck: state.deckName });
+    if (state.shape) {
+      // `code` is what Create sheet writes back into the sheet as shape=, so the
+      // next device to open it knows what Anki has now.
+      keepShape(state.sheetId, {
+        ...state.shape,
+        deck: state.deckName,
+        root: state.analysis.identity.root,
+        code: state.analysis.shapeCode,
+      });
+    }
     const url = URL.createObjectURL(
       new Blob([bytes], { type: "application/octet-stream" }),
     );
@@ -1733,6 +1741,21 @@ function downloadPackage() {
   }
 }
 
+/**
+ * What the next import needs, from this browser's last download of the sheet
+ * and the sheet's own shape= (identity.judgeShape), and whether a named set's
+ * old `sc_` deck has to be renamed first (renamedRoot).
+ */
+function judge() {
+  const a = state.analysis;
+  const last = lastShape(state.sheetId);
+  const j = judgeShape(last, a?.config?.shape ?? null, a?.shapeCode ?? null, state.shape);
+  state.change = j.change;
+  state.dropped = j.dropped;
+  state.shapeKnown = j.known;
+  state.renameFrom = renamedRoot(last, a?.identity);
+}
+
 /** The steps for opening the file, on whichever device is picked. */
 function paintDone() {
   const name = fileName();
@@ -1751,6 +1774,39 @@ function paintDone() {
     .map((key) => `<li>${t(key, escapeHtml(name))}</li>`)
     .join("")}</ol>`;
   paintSchema($("#done-schema"), state.device);
+  paintAssure();
+}
+
+/**
+ * What re-importing keeps, said only as far as it is true. A named sheet is
+ * one deck however it travels; one without a name is keyed by its link or by
+ * its file's name, so the promise is that much narrower — and the dialog offers
+ * the name that would widen it.
+ */
+function paintAssure() {
+  const a = state.analysis;
+  const named = a?.identity?.named;
+  const body = $("#assure-body");
+  if (named) body.textContent = t("assureBody");
+  else if (upload?.google) body.textContent = t("assureBodyLink");
+  else body.innerHTML = t("assureBodyFile", escapeHtml(upload?.name || fileName()));
+  const offer = $("#done-nameoffer");
+  // A settings row lives in the ID column, so a sheet without one cannot carry
+  // a name until it has one.
+  offer.hidden = Boolean(named) || !a || Boolean(a.plan.idFrom);
+  if (offer.hidden) return;
+  const cell = nameCell(a);
+  $("#nameoffer-why").innerHTML = t("nameOfferWhy", escapeHtml(cell));
+  $("#nameoffer-copy").dataset.copy = cell;
+}
+
+/** The ID cell of row 2 with name= in it: the settings row's marker, or a new one. */
+function nameCell(a) {
+  const name = (state.deckName || "").split("::").pop() || "Từ vựng";
+  const cells = a.grid?.cells || [];
+  const at = (cells[0] || []).findIndex((h) => /^\s*\ufeff?id\s*$/i.test(h));
+  const marker = a.grid?.config && at >= 0 ? String(cells[1]?.[at] ?? "").trim() : "";
+  return marker ? `${marker}; name=${name}` : `#config name=${name}`;
 }
 
 function openDone() {
@@ -1869,25 +1925,42 @@ const MERGE_STEP = { desktop: "mergeDesktop", android: "mergeAndroid", ios: "mer
  */
 function paintSchema(el, device = null) {
   const change = state.change;
-  const shown = change || state.dropped?.length;
+  const inDone = el.id === "done-schema";
+  const rename = state.renameFrom
+    ? `<strong>${escapeHtml(t("renameTitle"))}</strong><p>${t(
+        "renameBody",
+        escapeHtml(state.renameFrom),
+        escapeHtml(state.analysis?.identity?.root ?? ""),
+      )}</p>`
+    : "";
+  // Nothing known about what Anki has: said in the done dialog only, as an "if".
+  const maybe = inDone && !state.shapeKnown && !change;
+  const shown = rename || change || state.dropped?.length || maybe;
   el.hidden = !shown;
+  el.classList.toggle("quiet", Boolean(maybe && !rename));
   if (!shown) return (el.innerHTML = "");
   const apps = device ? [device] : ["android", "ios", "desktop"];
   if (change === "cloze") {
     const type = state.analysis?.noteTypes?.[state.shape?.kind === "cloze" ? "cloze" : "basic"] ?? "";
-    el.innerHTML = `<strong>${escapeHtml(t("clozeTitle"))}</strong><p>${t("clozeBody", escapeHtml(type))}</p>`;
+    el.innerHTML = rename + `<strong>${escapeHtml(t("clozeTitle"))}</strong><p>${t("clozeBody", escapeHtml(type))}</p>`;
     return;
   }
   const empty = state.dropped?.length ? `<p>${t("emptyCards")}</p>` : "";
   if (!change) {
     // Only a template taken out: the note type is the same to Anki (it is kept
     // as a stub), so there is nothing to merge — just cards to empty.
-    el.innerHTML = `<strong>${escapeHtml(t("emptyCardsTitle"))}</strong>${empty}`;
+    el.innerHTML =
+      rename +
+      (state.dropped?.length ? `<strong>${escapeHtml(t("emptyCardsTitle"))}</strong>${empty}` : "") +
+      (maybe ? `<p>${t("schemaMaybe")}</p>` : "");
     return;
   }
   const fields = escapeHtml((state.shape?.fields || []).join(", "));
+  const [title, body] =
+    change === "template" ? [t("templateTitle"), t("templateBody")] : [t("schemaTitle"), t("schemaBody", fields)];
   el.innerHTML =
-    `<strong>${escapeHtml(t("schemaTitle"))}</strong><p>${t("schemaBody", fields)}</p>` +
+    rename +
+    `<strong>${escapeHtml(title)}</strong><p>${body}</p>` +
     `<ul>${apps.map((d) => `<li>${t(MERGE_STEP[d])}</li>`).join("")}</ul>` +
     empty +
     `<p class="muted small">${escapeHtml(t("mergeAfter"))}</p>`;
@@ -2406,6 +2479,16 @@ for (const id of ["#done-close", "#done-ok"]) {
 }
 $("#done").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) $("#done").close();
+});
+$("#nameoffer-copy").addEventListener("click", async (e) => {
+  const button = e.currentTarget;
+  try {
+    await navigator.clipboard.writeText(button.dataset.copy || "");
+    button.querySelector("[data-i18n]").textContent = t("nameOfferCopied");
+    setTimeout(() => (button.querySelector("[data-i18n]").textContent = t("nameOfferCopy")), 2000);
+  } catch {
+    // The cell is printed beside the button, so it can still be copied by hand.
+  }
 });
 $("#devtabs").addEventListener("click", (e) => {
   const tab = e.target.closest("[data-device]");

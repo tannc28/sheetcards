@@ -284,6 +284,25 @@ def note_type_shape(plan, sheet_config, previous_fields=(), previous_templates=(
     }
 
 
+def shape_code(shape):
+    """A note type's shape as the short code a sheet carries in ``shape=``.
+
+    The kind (``b`` Basic, ``c`` Cloze), four hex digits of the field list and two
+    of the card template names — split so the page can tell a changed column
+    from a changed card template (``reverse``) without the lists themselves.
+    """
+
+    def digest(parts, n):
+        return hashlib.sha1("\x1f".join(parts).encode()).hexdigest()[:n]
+
+    kind = "c" if shape.get("kind") == "cloze" else "b"
+    return (
+        kind
+        + digest(shape.get("fields", []), 4)
+        + digest(shape.get("templates", []), 2)
+    )
+
+
 def cloze_ordinals(note_data, plan, sheet_config):
     """Which cards a cloze row produces, as zero-based template ordinals.
 
@@ -512,7 +531,7 @@ def build_package(
     model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"
     mid = model_id(sheet_id, deck_name, is_cloze, keyed)
 
-    root = deck_root_name(deck_name)
+    root = deck_root_name(deck_name, named=keyed)
     decks = {"1": _deck(1, "Default", now)}
 
     def deck_id_for(full_name):

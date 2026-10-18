@@ -231,7 +231,7 @@ _FIELD_KEYS = (
     + _FLAGS
     + MEDIA_KINDS
 )
-_DECK_KEYS = ("align", "speed", "reverse", "theme", "name", "next")
+_DECK_KEYS = ("align", "speed", "reverse", "theme", "name", "next", "shape")
 
 # Two keys that are about the sheet rather than its cards, written by Create
 # sheet into the marker cell: `#config name=Từ vựng tiếng Anh; next=w15`.
@@ -251,6 +251,9 @@ _DECK_KEYS = ("align", "speed", "reverse", "theme", "name", "next")
 # being the separator.
 _DECK_NAME_MAX = 100
 _NEXT_ID_RE = re.compile(r"^[^\s;]{0,16}?\d{1,9}$")
+# What the note type looked like at the last .apkg download — apkg.shape_code: the
+# kind, then four hex digits of the fields and two of the card templates.
+_SHAPE_RE = re.compile(r"^[bc][0-9a-f]{6}$")
 
 _HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 # Full form only: a language plus a region, e.g. zh_CN, en_US, pt_BR, zh-TW.
@@ -430,7 +433,7 @@ WARNING_CODES = (
     "only-one-sort", "sort-media", "role-media", "level-twice",
     "subdeck-headers-ignored", "deck-unknown", "deck-needs-value",
     "deck-align-bad", "theme-unknown", "deck-speed-nan", "deck-speed-range",
-    "name-long", "name-empty-level", "next-bad", "unknown-setting",
+    "name-long", "name-empty-level", "next-bad", "shape-bad", "unknown-setting",
     "size-range-width", "size-range-box", "size-range-font", "media-tts",
     "furigana-on", "inert-on", "media-drawn", "audio-size", "draw-media",
     "draw-cloze", "math-and-code", "draw-drops", "cloze-drops", "rtl-vertical",
@@ -474,6 +477,10 @@ class SheetConfig:
         # next ID to hand out) — see _DECK_KEYS. None when the sheet does not say.
         self.deck_name = None
         self.next_id = None
+        # The note type's shape at the last download (apkg.shape_code), written by
+        # Create sheet so the merge notice is right on a device that never
+        # downloaded this sheet. None when the sheet does not say.
+        self.shape = None
         self.warnings = []
         # The column carrying cloze deletions, and the one Anki asks the learner to
         # type. Both are single because a note type has one template set and Anki
@@ -995,6 +1002,18 @@ def parse_config_row(row, plan):
                 )
             else:
                 config.deck_name = value
+        elif key == "shape":
+            if _SHAPE_RE.match(value.lower()):
+                config.shape = value.lower()
+            else:
+                warn(
+                    _w(
+                        "shape-bad",
+                        f"'{MARKER}': shape is written by SheetCards (like b1f3a2c) "
+                        f"— got '{value}'",
+                        value=value,
+                    )
+                )
         elif key == "next":
             if _NEXT_ID_RE.match(value):
                 config.next_id = value

@@ -163,6 +163,8 @@ def test_the_tour_covers_every_directive(sheets):
             used.add("deck name")
         if config.next_id:
             used.add("deck next")
+        if config.shape:
+            used.add("deck shape")
         if config.cloze_field:
             used.add("cloze")
         if config.type_field:
@@ -190,6 +192,7 @@ def test_the_tour_covers_every_directive(sheets):
         "deck theme",
         "deck name",
         "deck next",
+        "deck shape",
         "side",
         "size",
         "color",

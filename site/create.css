@@ -715,6 +715,10 @@ a.chgbtn { text-decoration: none; }
   box-shadow: var(--shadow-lg);
   overflow: auto;
 }
+/* The head and the foot stay put and the steps between them scroll, so "Xong"
+   is on screen however long the notices make the dialog. */
+#done[open] { display: flex; flex-direction: column; overflow: hidden; }
+.done-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .donebox::backdrop { background: rgb(15 12 26 / .5); }
 .donebox[open] { animation: rise .3s cubic-bezier(.2, .9, .3, 1); }
 .donebox[open]::backdrop { animation: fade-in .25s ease; }
@@ -773,9 +777,11 @@ a.chgbtn { text-decoration: none; }
 .addon-tip [data-icon] { flex: none; margin-top: 3px; }
 .addon-tip a { font-weight: 650; }
 .done-foot {
+  flex: none;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 18px 20px 20px;
+  padding: 14px 20px 20px; border-top: 1px solid var(--line);
 }
+.done-body > :last-child { margin-bottom: 16px; }
 .done-foot .btn { min-height: 46px; padding: 0 26px; border-radius: 13px; font-size: var(--t-md); }
 
 @media (max-width: 39.99rem) {
@@ -840,3 +846,14 @@ a.chgbtn { text-decoration: none; }
 .schemanote p { margin: 6px 0 0; }
 .schemanote ul { margin: 8px 0 0; padding-left: 20px; }
 .schemanote li + li { margin-top: 6px; }
+
+/* "Add name=" under the promise a sheet without a name cannot fully make. */
+.nameoffer { margin-top: 8px; font-size: var(--t-sm); }
+.nameoffer > summary {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+  cursor: pointer; color: var(--accent); font-weight: 650;
+}
+.nameoffer p { color: var(--muted); }
+.nameoffer code { overflow-wrap: anywhere; }
+.schemanote.quiet { border-color: var(--line); background: var(--sunken); }
+.schemanote.quiet p:first-child { margin-top: 0; }

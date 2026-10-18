@@ -614,6 +614,12 @@ def declared_name_for(url):
         return None
 
 
+def local_root_name(remote_name):
+    """The deck a remote name lives under in Anki: a sheet's own ``name=`` as
+    typed, any other name behind the ``sc_`` prefix (tsv_model.deck_root_name)."""
+    return deck_root_name(remote_name, named=is_declared_name(remote_name))
+
+
 def is_declared_name(remote_name):
     """Whether a remote name is one a sheet chose itself (and so is used as written)."""
     if not remote_name:
@@ -745,7 +751,8 @@ class DeckNameManager:
 
     @staticmethod
     def generate_local_name(remote_name: str) -> str:
-        """The deck's name in Anki: ``sc_{remote_name}``.
+        """The deck's name in Anki: ``sc_{remote_name}``, or a sheet's own
+        ``name=`` exactly as written.
 
         A top-level deck rather than a child of one called "SheetCards". The
         prefix is what keeps synced decks apart from the ones you made yourself,
@@ -758,7 +765,7 @@ class DeckNameManager:
         # "Bài 1: chào hỏi" to "Bài 1_ chào hỏi" would file the same notes under
         # two decks depending on which way they arrived.
         if is_declared_name(remote_name):
-            return deck_root_name(remote_name)
+            return deck_root_name(remote_name, named=True)
         return deck_root_name(DeckNameManager.clean_name(remote_name))
 
     @staticmethod
