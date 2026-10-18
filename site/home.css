@@ -252,12 +252,10 @@ a.btn, a.btn-quiet { text-decoration: none; }
 .src-tag {
   align-self: flex-start; margin: 0;
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 4px 11px 4px 8px; border-radius: 999px;
-  background: var(--accent); color: var(--accent-ink);
-  font-family: var(--sans); font-size: var(--t-xs); font-weight: 750; letter-spacing: .01em;
-  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent) 80%, transparent);
+  padding: 0 2px; color: var(--muted);
+  font-family: var(--sans); font-size: var(--t-xs); font-weight: 600;
 }
-.src-tag .icon { width: 14px; height: 14px; }
+.src-tag .icon { width: 14px; height: 14px; color: var(--accent); }
 /* The two are one set: said between them, as plainly as an equals sign. */
 .src-eq {
   align-self: center; display: grid; place-items: center;
@@ -292,11 +290,13 @@ a.btn, a.btn-quiet { text-decoration: none; }
 
 /* One setting, one tint, in both panels: the deck's keys, then each column's. */
 .hl { padding: 0 2px; border-radius: 3px; color: var(--ink); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.hl-d { background: color-mix(in srgb, var(--mark) 70%, transparent); }
-.hl-c0 { background: color-mix(in srgb, var(--ok) 16%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent); }
-.hl-c1 { background: color-mix(in srgb, var(--warn) 16%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 40%, transparent); }
-.hl-c2 { background: color-mix(in srgb, var(--bad) 16%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bad) 40%, transparent); }
-.hl-c3 { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+/* Calm on purpose: the syntax is shown so it can be read, not so it shouts —
+   a faint wash per setting, the same wash in both panels, no outline. */
+.hl-d { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
+.hl-c0 { background: color-mix(in srgb, var(--ok) 10%, var(--panel)); }
+.hl-c1 { background: color-mix(in srgb, var(--warn) 10%, var(--panel)); }
+.hl-c2 { background: color-mix(in srgb, var(--bad) 9%, var(--panel)); }
+.hl-c3 { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
 
 /* The two lines meeting, and the arrow they become. Under the sources on a
    phone, turned to run downward. */
@@ -756,16 +756,24 @@ a.btn, a.btn-quiet { text-decoration: none; }
   .demo { grid-column: 2; grid-row: 1; }
   .aiquick { grid-column: 1; grid-row: 2; align-self: start; margin-top: 0; }
 }
-/* One column: the demo straight under the headline, before the doors — it says
-   what the page does faster than any sentence could. The text's box steps
-   aside so its headline and its doors can sit either side of it. */
+/* One column: the headline, then the first door (words already in hand — the
+   form people arrive for), then the demo, then the second door and the AI
+   panel. The text's box and the doors' box step aside so their parts can sit
+   either side of the demo. */
 @media (max-width: 63.99rem) {
   .hero-inner { row-gap: 1.75rem; }
   .hero-text { display: contents; }
   .hero-text > .display { order: 0; margin-bottom: 0; }
-  .demo { order: 1; }
-  .doors { order: 2; margin-top: 0; }
-  .aiquick { order: 3; margin-top: calc(14px - 1.75rem); }
+  .doors { display: contents; }
+  .door:not(.door-new) { order: 1; }
+  .demo { order: 2; }
+  .door-new { order: 3; }
+  .aiquick { order: 4; margin-top: calc(14px - 1.75rem); }
+  .hero-text > .display, .door, .aiquick { width: 100%; max-width: 40rem; justify-self: center; }
+  /* The demo says one thing on a phone: words in, a card out. What it takes
+     and which example is playing are for the room a wide screen has. */
+  .srcrow, .demo-tabs { display: none; }
+  .demo-controls { justify-content: center; }
 }
 @media (min-width: 100rem) {
   .hero-inner { grid-template-rows: 1fr auto; }
