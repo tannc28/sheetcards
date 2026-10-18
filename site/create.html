@@ -98,6 +98,13 @@
       </div>
     </form>
 
+    <!-- The way back next week: the sets this browser downloaded (recent.js),
+         each reopening its own #s= link or Google Sheets address. -->
+    <section class="recent" id="recent" aria-labelledby="recent-title" hidden>
+      <h2 class="recent-title" id="recent-title" data-i18n="recentTitle">Bộ gần đây</h2>
+      <ul class="recentlist" id="recentlist"></ul>
+    </section>
+
     <!-- What the field and the cards below take, as marks a reader knows at a
          glance. Each opens its own way in: a link the field, a file the picker,
          notes and Quizlet's export Dán văn bản. -->
@@ -327,7 +334,7 @@
   <div class="assure">
     <span class="assure-icon" data-icon="history"></span>
     <div><strong data-i18n="assureTitle">Sửa sheet rồi tải lại? Cứ import đè.</strong>
-      <p id="assure-body">Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.</p>
+      <p id="assure-body">Import đè: note cũ được cập nhật và giữ tiến độ, không nhân đôi.</p>
       <details class="nameoffer" id="done-nameoffer" hidden>
         <summary><span data-icon="pen-line"></span><span data-i18n="nameOfferAdd">Thêm name=</span></summary>
         <p id="nameoffer-why"></p>
@@ -337,13 +344,14 @@
   <div class="assure">
     <span class="assure-icon" data-icon="link"></span>
     <div><strong data-i18n="nextTimeTitle">Tuần sau thêm từ</strong>
-      <p data-i18n="nextTimeBody">Mở lại sheet — link sheet bạn đã lưu, file .csv hoặc Google Sheet của bạn — thêm từ, bấm Tạo flashcard, tải file .apkg mới rồi import. Card cũ được cập nhật, không nhân đôi.</p></div>
+      <p data-i18n="nextTimeBody">Mở lại bộ này ở Bộ gần đây (trang Tạo flashcard) hoặc từ link đã lưu, thêm từ, tải file .apkg mới rồi import.</p></div>
   </div>
   <p class="addon-tip"><span data-icon="monitor"></span><span data-i18n="addonTip">Học trên máy tính? <a href="./#addon">Add-on SheetCards</a> tự cập nhật deck mỗi khi sheet đổi, kể cả dòng đã xoá.</span></p>
   </div>
   <div class="done-foot">
     <button class="linky" id="again" type="button"><span data-icon="download"></span><span data-i18n="downloadAgain">Không thấy file? Tải lại</span></button>
-    <button class="btn" id="done-ok" type="button" data-i18n="doneOk">Xong</button>
+    <button class="btn-2" id="done-ok" type="button" data-i18n="doneOk">Xong</button>
+    <button class="btn" id="savelink" type="button" hidden><span data-icon="link"></span><span id="savelink-text">Lưu link bộ này</span></button>
   </div>
 </dialog>
 

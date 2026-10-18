@@ -20,11 +20,12 @@ import { renderCard, clozeOrdinals, escapeHtml } from "./anki.js";
 import { LANGUAGES, lang, paintStrings, setLang, t } from "./i18n.js";
 import { FIRST_LOAD_BYTES, mb, onMobileData, startPython } from "./pyodide.js";
 import { cardDoc, cardFrame } from "./cardframe.js";
-import { deckTree, treeHtml } from "./decktree.js";
+import { deckTree, shown, treeHtml } from "./decktree.js";
 import { dropHandoff, isLink, takeHandoff, takeText } from "./handoff.js";
 import { site } from "./paths.js";
 import { CREATE_STATE, clearState, readState, writeState } from "./urlstate.js";
-import { decodeShare, isShare } from "./sharelink.js";
+import { decodeShare, encodeShare, isShare, shareAddress } from "./sharelink.js";
+import { keepRecent, recentSets } from "./recent.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
 import { warningText } from "./sheetwarnings.js";
@@ -705,6 +706,11 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   // its notes instead of duplicating them.
   state.deckName = state.analysis.identity.deck;
   state.sheetId = state.analysis.identity.id;
+  // A set that names itself is called by that name, not by the file it came in
+  // (whose name had to lose any "/" in it).
+  if (state.analysis.identity.named && state.deckName) {
+    $("#source").textContent = $("#source").title = shown(state.deckName);
+  }
   state.shape = null;
   try {
     state.shape = nextShape(lastShape(state.sheetId));
@@ -1280,6 +1286,7 @@ function showForm({ focus = true } = {}) {
   booting.queued = false;
   setStage("empty");
   bootStatus();
+  paintRecent();
   if (focus) {
     $("#url").focus();
     $("#url").select();
@@ -1878,7 +1885,7 @@ function keys(e) {
 // Download, and what to do with the file
 // ---------------------------------------------------------------------------
 
-const fileName = () => `${state.deckName || "deck"}.apkg`.replace(/[\\/:*?"<>|]+/g, " ");
+const fileName = () => `${state.deckName || "deck"}.apkg`.replace(/\//g, "-").replace(/[\\:*?"<>|]+/g, " ");
 
 /**
  * Fetches the deck's pictures and recordings into the package, so it can be
@@ -1935,6 +1942,7 @@ async function downloadPackage() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     status(t("packed", Math.round(bytes.length / 1024)), "ok");
     state.downloaded = true;
+    await rememberRecent();
     paintRail();
     openDone();
   } catch (err) {
@@ -1942,6 +1950,95 @@ async function downloadPackage() {
     status(t("packFailed", pythonMessage(err)), "bad");
   } finally {
     button.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The way back: a link to this set, and the sets downloaded here
+// ---------------------------------------------------------------------------
+
+/**
+ * The `#s=` fragment that opens this set again: the address's own for words
+ * written out, one written from the sheet for a file opened from the device
+ * (while the grid holds every row of it), none for a Google Sheet — its link
+ * is already the way back — or the example.
+ */
+async function setHash() {
+  if (isShare(location.hash)) return location.hash;
+  const g = state.analysis?.grid;
+  if (!upload || upload.google || location.hash === "#example" || !g?.cells) return "";
+  if (g.total > g.cells.length - 1) return "";
+  return encodeShare(state.deckName || "Sheet", toTsv(g.cells));
+}
+
+/** Where a recent set is opened from: `#s=…`, or `?url=…` for a Google Sheet. */
+async function recentHref() {
+  if (location.hash === "#example") return "";
+  const url = new URLSearchParams(location.search).get("url");
+  if (upload?.google && url) return `?url=${encodeURIComponent(url)}`;
+  return setHash();
+}
+
+async function rememberRecent() {
+  const a = state.analysis;
+  const href = await recentHref();
+  if (!a || !href) return;
+  const front = a.sides.front[0];
+  const synced = a.rows.filter((r) => r.kind === "synced");
+  keepRecent({
+    name: shown(state.deckName || "Deck"),
+    href,
+    count: synced.length,
+    keys: front ? synced.map((r) => String(r.values[front] ?? "").trim()).filter(Boolean) : [],
+  });
+}
+
+/** Step 1's "Bộ gần đây": the sets this browser downloaded, newest first. */
+function paintRecent() {
+  const list = recentSets();
+  $("#recent").hidden = !list.length;
+  $("#recentlist").innerHTML = list
+    .map((r) => {
+      const day = new Date(r.at).toLocaleDateString(lang() === "en" ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" });
+      return `<li><button type="button" class="recentitem" data-href="${escapeHtml(r.href)}">${icon("history")}<span class="recent-name">${escapeHtml(
+        r.name,
+      )}</span><span class="recent-meta">${escapeHtml(t("recentMeta", r.count || 0, day))}</span></button></li>`;
+    })
+    .join("");
+}
+
+function openRecent(href) {
+  fromPage = true;
+  wanted = null;
+  if (href.startsWith("#s=")) {
+    history.pushState(null, "", location.pathname + href);
+    return openShared(href);
+  }
+  const url = new URLSearchParams(href.slice(1)).get("url");
+  if (!url) return;
+  $("#url").value = url;
+  submit();
+}
+
+/** The done dialog's way back: the set's own link, copied or shared. */
+async function saveSetLink() {
+  const hash = await setHash();
+  if (!hash) return;
+  const url = shareAddress(hash, { deck: true });
+  if (TOUCH.matches && navigator.share) {
+    try {
+      await navigator.share({ title: state.deckName || document.title, url });
+      return;
+    } catch {
+      // Dismissed, or refused: the clipboard below.
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    $("#savelink-text").textContent = t("saveSetLinkDone");
+    setTimeout(() => ($("#savelink-text").textContent = t("saveSetLink")), 3000);
+  } catch {
+    status(t("saveSetLinkFailed"), "bad");
   }
 }
 
@@ -1980,6 +2077,13 @@ function paintDone() {
   paintSchema($("#done-schema"), state.device);
   paintMedia();
   paintAssure();
+  // Words written out or a file opened here have no link of their own until
+  // one is saved: that is the one thing to do before closing. A Google Sheet's
+  // link already is the way back.
+  const linkable = !upload?.google && location.hash !== "#example" && (isShare(location.hash) || Boolean(upload));
+  $("#savelink").hidden = !linkable;
+  $("#savelink-text").textContent = t("saveSetLink");
+  $("#done-ok").className = linkable ? "btn-2" : "btn";
 }
 
 /** What travelled inside the file, and what still needs the network. */
@@ -2006,10 +2110,9 @@ function paintAssure() {
   const a = state.analysis;
   const named = a?.identity?.named;
   const body = $("#assure-body");
-  const key = a?.plan?.idFrom || "ID";
-  if (named) body.textContent = t("assureBody", key);
-  else if (upload?.google) body.textContent = t("assureBodyLink", key);
-  else body.innerHTML = t("assureBodyFile", escapeHtml(upload?.name || fileName()), escapeHtml(key));
+  if (named || isShare(location.hash)) body.textContent = t("assureBody");
+  else if (upload?.google) body.textContent = t("assureBodyLink");
+  else body.innerHTML = t("assureBodyFile", escapeHtml(upload?.name || fileName()));
   const offer = $("#done-nameoffer");
   // A settings row lives in the ID column, so a sheet without one cannot carry
   // a name until it has one.
@@ -2095,6 +2198,7 @@ function paintStatic() {
   ).join("");
   paintTitle();
   paintRail();
+  paintRecent();
 }
 
 function render() {
@@ -2145,7 +2249,6 @@ const MERGE_STEP = { desktop: "mergeDesktop", android: "mergeAndroid", ios: "mer
  */
 function paintSchema(el, device = null) {
   const change = state.change;
-  const inDone = el.id === "done-schema";
   const rename = state.renameFrom
     ? `<strong>${escapeHtml(t("renameTitle"))}</strong><p>${t(
         "renameBody",
@@ -2153,12 +2256,11 @@ function paintSchema(el, device = null) {
         escapeHtml(state.analysis?.identity?.root ?? ""),
       )}</p>`
     : "";
-  // Nothing known about what Anki has: said in the done dialog only, as an "if".
-  const maybe = inDone && !state.shapeKnown && !change;
-  const shown = rename || change || state.dropped?.length || maybe;
-  el.hidden = !shown;
-  el.classList.toggle("quiet", Boolean(maybe && !rename));
-  if (!shown) return (el.innerHTML = "");
+  // Said only when something actually changed: a first download, or one whose
+  // shape this browser cannot know, gets no warning about a merge it may not need.
+  const said = rename || change || state.dropped?.length;
+  el.hidden = !said;
+  if (!said) return (el.innerHTML = "");
   const apps = device ? [device] : ["android", "ios", "desktop"];
   if (change === "cloze") {
     const type = state.analysis?.noteTypes?.[state.shape?.kind === "cloze" ? "cloze" : "basic"] ?? "";
@@ -2171,8 +2273,7 @@ function paintSchema(el, device = null) {
     // as a stub), so there is nothing to merge — just cards to empty.
     el.innerHTML =
       rename +
-      (state.dropped?.length ? `<strong>${escapeHtml(t("emptyCardsTitle"))}</strong>${empty}` : "") +
-      (maybe ? `<p>${t("schemaMaybe")}</p>` : "");
+      (state.dropped?.length ? `<strong>${escapeHtml(t("emptyCardsTitle"))}</strong>${empty}` : "");
     return;
   }
   const fields = escapeHtml((state.shape?.fields || []).join(", "));
@@ -2736,6 +2837,11 @@ $("#open-sheet").addEventListener("click", () => {
 $("#flip").addEventListener("click", flip);
 $("#apkg").addEventListener("click", downloadPackage);
 $("#again").addEventListener("click", downloadPackage);
+$("#savelink").addEventListener("click", saveSetLink);
+$("#recentlist").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-href]");
+  if (b) openRecent(b.dataset.href);
+});
 for (const id of ["#done-close", "#done-ok"]) {
   $(id).addEventListener("click", () => $("#done").close());
 }
