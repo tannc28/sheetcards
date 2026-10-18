@@ -543,9 +543,10 @@ class TestSortAndClock:
         assert [f["name"] for f in model["flds"]][model["sortf"]] == "Word"
         assert notes[0][3] == "apple"
 
-    def test_without_sort_it_is_the_first_field(self):
+    def test_without_a_settings_row_it_is_the_first_content_column(self):
+        # Field 0 is ID: a browser listing w01, w02, w03 is a list of nothing.
         col, notes, _ = _collection(_package(BASIC))
-        assert next(iter(json.loads(col[1]).values()))["sortf"] == 0
+        assert next(iter(json.loads(col[1]).values()))["sortf"] == 1
 
     def test_two_downloads_in_one_second_are_still_newer(self):
         from src import apkg
@@ -630,3 +631,126 @@ class TestShapeCode:
         assert good.shape == "b86199c" and not good.warnings
         bad = parse_config_row({"ID": "#config shape=hello", "Word": ""}, plan)
         assert bad.shape is None and [w.code for w in bad.warnings] == ["shape-bad"]
+
+
+@pytest.mark.slow
+@needs_anki
+def test_a_sheet_packaged_before_keeps_its_sort_field():
+    """Why the new sort default is only for note types Anki does not have yet.
+
+    A package whose sort field differs from the collection's has its notes
+    skipped as duplicates on the next default import (Anki rewrites every note
+    when sortf changes, making them newer than the package). So a sheet this
+    device packaged before keeps sortf 0, and its edit updates the note.
+    """
+    result = _real_anki(_HARNESS + """
+import time
+import sc.apkg as apkg
+FIELDS = ["ID", "Word", "Meaning"]
+def pk(meaning, **kw):
+    remote = build_remote_deck_from_tsv(
+        {"headers": FIELDS, "rows": [["1", "apple", meaning]]}, "url")
+    data = build_package("SHEET", "HSK4", remote.plan, remote.sheet_config,
+                         remote.notes, previous_fields=FIELDS if kw else (), **kw)
+    path = os.path.join(tempfile.mkdtemp(), "p.apkg")
+    open(path, "wb").write(data)
+    return path
+real = apkg.sort_index
+apkg.sort_index = lambda *a, **k: 0
+out = {}
+out["first"] = load_default(col, pk("v1"))  # built under the old rule
+apkg.sort_index = real
+time.sleep(1.1)
+# remembered without a sort field: the old rule is kept
+out["kept"] = load_default(col, pk("v2", previous_sort=apkg.OLD_SORT_RULE))
+out["kept_m"] = col.get_note(col.find_notes("")[0]).fields[2]
+# what the new default would have done to it
+remote = build_remote_deck_from_tsv({"headers": FIELDS, "rows": [["1", "apple", "v3"]]}, "url")
+data = build_package("SHEET", "HSK4", remote.plan, remote.sheet_config, remote.notes)
+p = os.path.join(tempfile.mkdtemp(), "p.apkg"); open(p, "wb").write(data)
+time.sleep(1.1)
+out["moved"] = load_default(col, p)
+out["moved_m"] = col.get_note(col.find_notes("")[0]).fields[2]
+# and one remembered with its sort field keeps that one
+time.sleep(1.1)
+out["named"] = load_default(col, pk("v4", previous_sort="Word"))
+out["named_m"] = col.get_note(col.find_notes("")[0]).fields[2]
+fresh = Collection(os.path.join(tempfile.mkdtemp(), "f.anki2"))
+load_default(fresh, pk("v1"))
+out["fresh_sortf"] = fresh.models.by_name("SheetCards - HSK4 - Basic")["sortf"]
+print(json.dumps(out))
+col.close()
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert out["kept"]["updated"] == 1 and out["kept_m"] == "v2"
+    # the trap the rule avoids
+    assert out["moved"]["duplicate"] == 1 and out["moved_m"] == "v2"
+    assert out["named"]["updated"] == 1 and out["named_m"] == "v4"
+    # a sheet never packaged before gets the new default
+    assert out["fresh_sortf"] == 1
+
+
+@pytest.mark.slow
+@needs_anki
+def test_changing_the_sort_field_is_a_schema_change():
+    """Why the add-on never moves an existing note type's sort field: Anki
+    counts it as a schema change, and the next sync would be a full upload."""
+    result = _real_anki(_HARNESS + """
+m = col.models.new("SheetCards - X - Basic")
+for name in ("ID", "Word"):
+    col.models.add_field(m, col.models.new_field(name))
+t = col.models.new_template("Card 1")
+t["qfmt"], t["afmt"] = "{{Word}}", "{{FrontSide}}"
+col.models.add_template(m, t)
+col.models.add(m)
+note = col.new_note(col.models.by_name("SheetCards - X - Basic"))
+note["ID"], note["Word"] = "w01", "apple"
+col.add_note(note, 1)
+col.save() if hasattr(col, "save") else None
+before = col.db.scalar("select scm from col")
+m = col.models.by_name("SheetCards - X - Basic")
+m["sortf"] = 1
+col.models.save(m)
+after = col.db.scalar("select scm from col")
+sfld = col.db.scalar("select sfld from notes")
+print(json.dumps({"same": before == after, "sfld": sfld,
+                  "sortf": col.models.by_name("SheetCards - X - Basic")["sortf"]}))
+col.close()
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert not out["same"], "sortf no longer bumps the schema: the add-on could move it"
+    assert out["sortf"] == 1 and out["sfld"] == "apple"
+
+
+@pytest.mark.slow
+@needs_anki
+def test_a_cell_on_several_lines_renders_on_several_and_reimports_unchanged():
+    result = _real_anki(_HARNESS + """
+rows = {"headers": ["ID", "Word", "Example"],
+        "rows": [["1", "apple", "one\\ntwo\\nthree"]]}
+remote = build_remote_deck_from_tsv(rows, "url")
+def pkg(now):
+    data = build_package("SHEET", "HSK4", remote.plan, remote.sheet_config,
+                         remote.notes, now=now)
+    path = os.path.join(tempfile.mkdtemp(), "p.apkg")
+    open(path, "wb").write(data)
+    return path
+first = load_default(col, pkg(1786000000))
+again = load_default(col, pkg(1786009999))
+card = col.get_card(col.find_cards("")[0])
+note = card.note()
+print(json.dumps({"first": first, "again": again, "field": note["Example"],
+                  "answer": card.answer()}))
+col.close()
+""")
+    assert result.returncode == 0, result.stderr[-2000:]
+    out = json.loads(result.stdout.strip().splitlines()[-1])
+    assert out["first"]["new"] == 1
+    # Stored exactly as built — Anki does not rewrite the <br> — so the add-on's
+    # change comparison (note field vs. rewritten cell) sees no difference.
+    assert out["field"] == "one<br>two<br>three"
+    # A newer package is "updated" whatever it holds; what matters is no conflict.
+    assert out["again"]["conflicting"] == 0 and out["again"]["new"] == 0
+    assert "one<br>two<br>three" in out["answer"]

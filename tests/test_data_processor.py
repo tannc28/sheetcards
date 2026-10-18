@@ -87,7 +87,6 @@ class TestSettingsRow:
         deck = _deck(self.TSV)
         assert deck.sheet_config.present is True
         assert deck.sheet_config.reverse is True
-        assert deck.sheet_config.align == "left"
         assert deck.sheet_config.for_field("QUESTION").size == 48
         assert deck.sheet_config.for_field("QUESTION").tts == "en_US"
         assert deck.sheet_config.for_field("ANSWER").color == "muted"

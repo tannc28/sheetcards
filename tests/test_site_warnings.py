@@ -138,6 +138,15 @@ def _real_warnings():
     found += warning_codes(
         build_remote_deck_from_tsv(parse_tsv_data(tsv), "u").sheet_config.warnings
     )
+    # The hints read the rows, and the SUBDECK one needs no settings row at all.
+    tsv = (
+        "ID\tSUBDECK 1\tWord\tPic\n"
+        "1\tA\t日本語[にほんご]\thttps://example.org/a.png\n"
+        "2\tB\t私[わたし]\thttps://example.org/b.JPG\n"
+    )
+    found += warning_codes(
+        build_remote_deck_from_tsv(parse_tsv_data(tsv), "u").sheet_config.warnings
+    )
     return found
 
 

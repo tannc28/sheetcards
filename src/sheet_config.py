@@ -9,10 +9,10 @@ Each cell holds ``key=value`` pairs separated by ``;``; a key with no value is a
 flag. An empty cell means "use the defaults", so a sheet only spells out what it
 actually wants to change::
 
-    ID       SYNC   SUBDECK 1   Word                      Reading   Meaning
-    #config                     side=front; size=48; tts=zh_CN   size=20   size=16; color=muted; hint
+    ID       Lesson      Word                      Reading   Meaning
+    #config  subdeck=1   side=front; size=48; tts=zh_CN   size=20   size=16; color=muted; hint
 
-The deck-wide settings live in the ``#config`` cell itself: ``#config align=left``.
+The deck-wide settings live in the ``#config`` cell itself: ``#config theme=paper``.
 """
 
 import re
@@ -173,13 +173,6 @@ ALIGNMENTS = ("left", "center", "right")
 # is decided by the side the column lands on, because that is the only thing that
 # distinguishes "ask me" from "show me" — a second directive would be a second way
 # of saying where the column already is.
-# `sort` is not about the card at all: it names the column Anki should show in the
-# browser's first column and sort a deck by. Without it that column is `ID`, so a
-# sheet's notes are listed as w01, w02, w03 — a list of nothing.
-#
-# `rtl` and `vertical` are the two writing directions HTML has and a sheet cannot
-# otherwise ask for: Arabic and Hebrew run right to left, and classical Japanese
-# and Chinese run top to bottom.
 _FLAGS = (
     "bold",
     "italic",
@@ -187,10 +180,78 @@ _FLAGS = (
     "furigana",
     "cloze",
     "draw",
-    "sort",
-    "rtl",
-    "vertical",
 )
+
+# Keys a sheet used to be able to write and no longer can. A sheet written before
+# they went must not suddenly break, so each one is still read — and how it is read
+# depends on whether what it did is now done anyway.
+#
+# Absorbed (None): the card does it without being asked, so the key is accepted
+# and ignored, with nothing to say. `rtl` became `dir="auto"` on every field block,
+# which the browser resolves from the text itself; `sort` became the first content
+# column that is not a deck level (sort_column).
+#
+# Dropped (a sentence): the thing it did is gone, so the sheet is told — under
+# the `retired-key` code — what to write instead.
+_RETIRED_KEYS = {
+    "rtl": None,
+    "sort": None,
+    "vertical": "remove it; cards are written left to right",
+}
+_RETIRED_DECK_KEYS = {
+    "align": "write align= in each column's own cell instead",
+    "speed": "write speed= beside tts in each column's own cell instead",
+}
+
+# How the documentation, the AI guide and Create sheet's editor present the keys:
+# the few most sheets need, and the rest grouped under "Nâng cao" (Advanced).
+# `color` is in both — Basic teaches muted/accent, Advanced names and #hex.
+# `next` and `shape` are Create sheet's own bookkeeping, never offered.
+BASIC_KEYS = (
+    "side", "size", "bold", "color", "tts", "image", "type", "hint", "label",
+    "name", "theme",
+)  # fmt: skip
+ADVANCED_GROUPS = (
+    ("voice", ("voices", "speed")),
+    ("card", ("cloze", "reverse", "draw", "furigana")),
+    ("text", ("italic", "align", "font", "color", "code", "math")),
+    ("media", ("audio", "video")),
+    ("deck", ("subdeck",)),
+)
+INTERNAL_KEYS = ("next", "shape")
+
+# The face a spoken column is drawn in when it names none. A voice says which
+# language the text is in, which is exactly what Han unification needs to know
+# (see FONTS): 直 is drawn one way in Chinese and another in Japanese.
+TTS_FONTS = {
+    "zh_CN": "sc",
+    "zh_SG": "sc",
+    "zh_TW": "tc",
+    "zh_HK": "tc",
+    "ja_JP": "jp",
+    "ko_KR": "kr",
+}
+
+
+def font_of(cfg):
+    """The font a column is drawn in: its own ``font``, else its voice's."""
+    return cfg.font or TTS_FONTS.get(cfg.tts or "")
+
+
+def sort_column(content_headers, config=None):
+    """The column Anki lists notes under in the browser and sorts a deck by.
+
+    The first content column that is not a deck level and not a media address —
+    the word, on almost every sheet. Field 0 would be ``ID``, and a deck listed as
+    w01, w02, w03 is a list of nothing. None when no column qualifies.
+    """
+    for header in content_headers:
+        cfg = config.for_field(header) if config is not None else None
+        if cfg is not None and (cfg.subdeck or cfg.media):
+            continue
+        return header
+    return None
+
 
 # Turn a bare URL in the cell into a media element instead of printing it as
 # text. One field is one kind of media, so these are recorded as a single
@@ -231,7 +292,7 @@ _FIELD_KEYS = (
     + _FLAGS
     + MEDIA_KINDS
 )
-_DECK_KEYS = ("align", "speed", "reverse", "theme", "name", "next", "shape")
+_DECK_KEYS = ("reverse", "theme", "name", "next", "shape")
 
 # Two keys that are about the sheet rather than its cards, written by Create
 # sheet into the marker cell: `#config name=Từ vựng tiếng Anh; next=w15`.
@@ -337,13 +398,6 @@ def is_config_row(row, plan):
     return rest == "" or not rest[0].isalnum()
 
 
-# Keys that only mean something for the whole sheet. In a sheet with no ID
-# column the marker shares the first column's settings cell, and these are the
-# ones taken for the sheet; every other key there (align and speed included)
-# is that column's own.
-_DECK_ONLY_KEYS = ("reverse", "theme", "name", "next", "shape")
-
-
 def marker_parts(row, plan):
     """The marker cell's deck-wide text, and the row as the columns read it.
 
@@ -363,7 +417,9 @@ def marker_parts(row, plan):
         if not chunk:
             continue
         key = chunk.split("=", 1)[0].strip().lower()
-        (deck if key in _DECK_ONLY_KEYS else own).append(chunk)
+        # Deck keys and column keys share no name, so the key alone says
+        # whose it is; everything else in the cell is the column's own.
+        (deck if key in _DECK_KEYS else own).append(chunk)
     row = dict(row)
     row[source] = "; ".join(own)
     return "; ".join(deck), row
@@ -423,9 +479,6 @@ class FieldConfig:
         self.furigana = False
         self.cloze = False
         self.draw = False
-        self.sort = False
-        self.rtl = False
-        self.vertical = False
 
     @property
     def hidden(self):
@@ -463,15 +516,16 @@ WARNING_CODES = (
     "font-empty", "align-bad", "size-nan", "color-bad", "tts-short",
     "voices-empty", "speed-nan", "speed-range", "subdeck-nan", "subdeck-low",
     "media-subdeck", "subdeck-inert", "only-one-cloze", "only-one-type",
-    "only-one-sort", "sort-media", "role-media", "level-twice",
+    "role-media", "level-twice",
     "subdeck-headers-ignored", "deck-unknown", "deck-needs-value",
-    "deck-align-bad", "theme-unknown", "deck-speed-nan", "deck-speed-range",
+    "theme-unknown", "retired-key",
     "name-long", "name-empty-level", "next-bad", "shape-bad", "unknown-setting",
     "size-range-width", "size-range-box", "size-range-font", "media-tts",
     "furigana-on", "inert-on", "media-drawn", "audio-size", "draw-media",
-    "draw-cloze", "math-and-code", "draw-drops", "cloze-drops", "rtl-vertical",
+    "draw-cloze", "math-and-code", "draw-drops", "cloze-drops",
     # raised by tsv_model while the rows are read
-    "embed-not-single", "cloze-unmarked",
+    "embed-not-single", "cloze-unmarked", "subdeck-header-retired",
+    "looks-like-image", "looks-like-furigana",
 )  # fmt: skip
 
 
@@ -502,8 +556,6 @@ class SheetConfig:
     def __init__(self):
         self.present = False
         self.fields = {}
-        self.align = None
-        self.speed = None
         self.reverse = False
         self.theme = None  # a key of THEMES; None leaves the card Anki's own colours
         # `name=` (the deck's name and the sheet's identity) and `next=` (the
@@ -520,9 +572,11 @@ class SheetConfig:
         # honours one {{type:…}} per card.
         self.cloze_field = None
         self.type_field = None
-        # The column the browser lists notes under and sorts a deck by. Without one
-        # that is field 0, which is `ID` — a list of w01, w02, w03.
+        # The column the browser lists notes under and sorts a deck by — see
+        # sort_column. Set by resolve_roles; None until then.
         self.sort_field = None
+        # The column a retired `sort` key named, if any — see apkg.sort_index.
+        self.legacy_sort_field = None
         # The content columns that build the deck path, outermost first. Empty
         # when the sheet says nothing, and then column_model.deck_path falls back
         # to the reserved SUBDECK columns.
@@ -601,6 +655,11 @@ def _apply_field_pair(cfg, key, value, header, warn):
                     value=value,
                 )
             )
+        return
+
+    if key == "label" and value is None:
+        # A bare caption says "name this", and the column already has a name.
+        cfg.label = header
         return
 
     if value is None:
@@ -837,9 +896,6 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
     for key, attribute, what, role in (
         ("cloze", "cloze_field", "carry the cloze deletions", "cloze"),
         ("type_answer", "type_field", "be typed in", "type"),
-        # A note type has one sort field, which is also the column the browser
-        # lists notes under.
-        ("sort", "sort_field", "be the one the browser sorts by", "sort"),
     ):
         claimed = [h for h in content_headers if getattr(config.for_field(h), key)]
         if not claimed:
@@ -860,19 +916,6 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
                 setattr(
                     config.fields[header], key, None if key == "type_answer" else False
                 )
-
-    # Sorting a deck by a column of URLs lists it by whatever the addresses happen
-    # to start with, which is never what was meant.
-    if config.sort_field and config.for_field(config.sort_field).media:
-        warn(
-            _w(
-                "sort-media",
-                f"'{config.sort_field}': a media column is no use to sort by",
-                col=config.sort_field,
-            )
-        )
-        config.fields[config.sort_field].sort = False
-        config.sort_field = None
 
     # Both act on the text of a field, and a media column holds an address.
     for attribute, key, label in (
@@ -914,6 +957,7 @@ def resolve_roles(config, content_headers, subdeck_headers=(), warn=None):
             continue
         levels[level] = header
     config.subdeck_columns = [levels[level] for level in sorted(levels)]
+    config.sort_field = sort_column(content_headers, config)
 
     # Both at once is a sheet saying two different things about where its notes go.
     # The settings row is the one being read right now, so it wins — and the columns
@@ -955,7 +999,18 @@ def parse_config_row(row, plan):
     # Deck-wide settings ride along in the marker cell: "#config align=left".
     remainder, row = marker_parts(row, plan)
     for key, value in _parse_pairs(remainder):
-        if key not in _DECK_KEYS:
+        if key in _RETIRED_DECK_KEYS:
+            instead = _RETIRED_DECK_KEYS[key]
+            warn(
+                _w(
+                    "retired-key",
+                    f"'{MARKER}': a deck-wide '{key}' is no longer a setting — "
+                    + instead,
+                    col=MARKER,
+                    key=key,
+                )
+            )
+        elif key not in _DECK_KEYS:
             warn(
                 _w(
                     "deck-unknown",
@@ -967,17 +1022,6 @@ def parse_config_row(row, plan):
             config.reverse = value is None or value.strip().lower() not in _FALSEY
         elif value is None:
             warn(_w("deck-needs-value", f"'{MARKER}': '{key}' needs a value", key=key))
-        elif key == "align":
-            if value.lower() in ALIGNMENTS:
-                config.align = value.lower()
-            else:
-                warn(
-                    _w(
-                        "deck-align-bad",
-                        f"'{MARKER}': align must be left, center or right",
-                        value=value,
-                    )
-                )
         elif key == "theme":
             if value.lower() in THEMES:
                 config.theme = value.lower()
@@ -991,28 +1035,6 @@ def parse_config_row(row, plan):
                         themes=", ".join(listed_themes()),
                     )
                 )
-        elif key == "speed":
-            try:
-                speed = float(value)
-            except ValueError:
-                warn(
-                    _w(
-                        "deck-speed-nan",
-                        f"'{MARKER}': speed must be a number — got '{value}'",
-                        value=value,
-                    )
-                )
-            else:
-                if 0.5 <= speed <= 2.0:
-                    config.speed = speed
-                else:
-                    warn(
-                        _w(
-                            "deck-speed-range",
-                            f"'{MARKER}': speed {speed} is outside 0.5–2.0",
-                            value=speed,
-                        )
-                    )
         elif not value:
             warn(_w("deck-needs-value", f"'{MARKER}': '{key}' needs a value", key=key))
         elif key == "name":
@@ -1066,6 +1088,22 @@ def parse_config_row(row, plan):
 
         cfg = FieldConfig()
         for key, value in _parse_pairs(cell):
+            if key in _RETIRED_KEYS:
+                # What `sort` used to name is still remembered, so a package for
+                # a note type Anki already has keeps its sort field (apkg.sort_index).
+                if key == "sort" and config.legacy_sort_field is None:
+                    config.legacy_sort_field = header
+                instead = _RETIRED_KEYS[key]
+                if instead:
+                    warn(
+                        _w(
+                            "retired-key",
+                            f"'{header}': '{key}' is no longer a setting — {instead}",
+                            col=header,
+                            key=key,
+                        )
+                    )
+                continue
             if key not in _FIELD_KEYS:
                 warn(
                     _w(
@@ -1135,8 +1173,6 @@ def parse_config_row(row, plan):
                     ("italic", cfg.italic),
                     ("align", cfg.align),
                     ("font", cfg.font),
-                    ("rtl", cfg.rtl),
-                    ("vertical", cfg.vertical),
                 )
                 if on
             ]
@@ -1152,8 +1188,7 @@ def parse_config_row(row, plan):
                         media=cfg.media,
                     )
                 )
-            for name in ("font", "rtl", "vertical"):
-                setattr(cfg, name, None if name == "font" else False)
+            cfg.font = None
             for name in ("math", "code"):
                 if getattr(cfg, name) is not None:
                     # These two do not decorate the text, they *are* how the cell
@@ -1284,17 +1319,6 @@ def parse_config_row(row, plan):
                 )
             )
             cfg.furigana = False
-
-        # One direction of writing at a time.
-        if cfg.rtl and cfg.vertical:
-            warn(
-                _w(
-                    "rtl-vertical",
-                    f"'{header}': rtl and vertical are two directions — keeping rtl",
-                    col=header,
-                )
-            )
-            cfg.vertical = False
 
         config.fields[header] = cfg
 

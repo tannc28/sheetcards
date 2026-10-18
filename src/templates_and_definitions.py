@@ -138,16 +138,23 @@ def apply_templates(col, model, templates):
 
 
 def apply_sort_field(col, model, fields, sheet_config):
-    """Points the note type's sort field at the column the sheet named.
+    """Points the note type's sort field at the sheet's first real column.
 
     Anki stores it as an index into the field list and uses it for two things: the
-    first column of the browser, and what a deck sorts by there. Field 0 is the
-    default, and field 0 here is ``ID`` — so without this a sheet's notes are listed
-    as w01, w02, w03, which is a list of nothing.
+    first column of the browser, and what a deck sorts by there. Field 0 is
+    Anki's default, and field 0 here is ``ID`` — so left alone a sheet's notes are
+    listed as w01, w02, w03, which is a list of nothing. The column is
+    sheet_config.sort_column's: the first content column that is not a deck level
+    or a media address. Only ever called on a note type being created: on one
+    that exists, a new sort field is a schema change and forces a full sync.
 
     Returns True when the model changed, so the caller knows whether to save.
     """
-    header = getattr(sheet_config, "sort_field", None)
+    from .sheet_config import sort_column
+
+    header = getattr(sheet_config, "sort_field", None) or sort_column(
+        list(fields)[1:], sheet_config
+    )
     if not header or header not in fields:
         return False
     index = fields.index(header)
@@ -261,8 +268,7 @@ def create_model(
         template["afmt"] = spec["afmt"]
         col.models.add_template(model, template)
 
-    if sheet_config is not None:
-        apply_sort_field(col, model, list(fields), sheet_config)
+    apply_sort_field(col, model, list(fields), sheet_config)
 
     saved = _add_with_id(col, model, model_id) if model_id else None
     if saved is not None:
@@ -396,11 +402,11 @@ def ensure_custom_models(col, url, plan, sheet_config, debug_messages=None):
             changed = True
             add_debug_msg(f"Templates regenerated for '{model_name}'")
 
-        # After add_missing_fields, so a column added to the sheet in the same sync
-        # that named it the sort column is already in the list to be found.
-        if apply_sort_field(col, model, fields, sheet_config):
-            changed = True
-            add_debug_msg(f"Sort field set to '{sheet_config.sort_field}'")
+        # The sort field of a note type that already exists is left as it is.
+        # Changing it is a schema change in Anki (the collection's `scm` moves —
+        # checked in real Anki 25.07), and the next sync of that collection would
+        # then have to be a one-way full upload. A browser column is not worth
+        # that, so only a note type made from now on gets the new default.
 
         if changed:
             col.models.save(model)

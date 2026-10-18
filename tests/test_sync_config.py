@@ -63,8 +63,6 @@ class TestCacheRoundTrip:
         assert cached_plan.content_headers == FIELDS
         assert cached_config.present is True
         assert cached_config.reverse is True
-        assert cached_config.align == "left"
-        assert cached_config.speed == 0.9
         # The theme has to ride along: a note type rebuilt from the cache outside a
         # sync would otherwise come back in the default colours.
         assert cached_config.theme == "sakura"

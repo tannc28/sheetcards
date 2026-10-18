@@ -17,6 +17,18 @@ const q = (s) => `'${s}'`;
 const does = (list) => (String(list).includes(",") ? "do" : "does");
 const MEDIA_VI = { image: "ảnh", audio: "âm thanh", video: "video", drawn: "ô tập viết" };
 const media = (m) => MEDIA_VI[m] || m;
+// What to write instead of a retired key (sheet_config._RETIRED_KEYS and
+// _RETIRED_DECK_KEYS — a key with nothing to say is not listed).
+const RETIRED_EN = {
+  vertical: "remove it; cards are written left to right",
+  align: "write align= in each column's own cell instead",
+  speed: "write speed= beside tts in each column's own cell instead",
+};
+const RETIRED_VI = {
+  vertical: "xoá đi; card luôn viết từ trái sang phải",
+  align: "ghi align= vào ô settings của từng cột",
+  speed: "ghi speed= cạnh tts trong ô settings của từng cột",
+};
 
 export const WARNINGS = {
   "media-twice": {
@@ -99,14 +111,6 @@ export const WARNINGS = {
     en: (p) => `only one column can be typed in — keeping ${q(p.col)}, ignoring ${p.others}`,
     vi: (p) => `chỉ một cột được gõ đáp án (type) — giữ ${q(p.col)}, bỏ qua ${p.others}`,
   },
-  "only-one-sort": {
-    en: (p) => `only one column can be the one the browser sorts by — keeping ${q(p.col)}, ignoring ${p.others}`,
-    vi: (p) => `chỉ một cột được dùng để sắp xếp (sort) — giữ ${q(p.col)}, bỏ qua ${p.others}`,
-  },
-  "sort-media": {
-    en: (p) => `${q(p.col)}: a media column is no use to sort by`,
-    vi: (p) => `${q(p.col)}: không sắp xếp được theo cột media`,
-  },
   "role-media": {
     en: (p) => `${q(p.col)}: ${p.key} does nothing on a media column`,
     vi: (p) => `${q(p.col)}: ${p.key} không có tác dụng trên cột media`,
@@ -127,21 +131,19 @@ export const WARNINGS = {
     en: (p) => `'#config': ${q(p.key)} needs a value`,
     vi: (p) => `'#config': ${q(p.key)} cần một giá trị`,
   },
-  "deck-align-bad": {
-    en: () => "'#config': align must be left, center or right",
-    vi: () => "'#config': align phải là left, center hoặc right",
-  },
   "theme-unknown": {
     en: (p) => `'#config': unknown theme ${q(p.value)} — the themes are ${p.themes}`,
     vi: (p) => `'#config': không có theme ${q(p.value)} — các theme là ${p.themes}`,
   },
-  "deck-speed-nan": {
-    en: (p) => `'#config': speed must be a number — got ${q(p.value)}`,
-    vi: (p) => `'#config': speed phải là một số — đang là ${q(p.value)}`,
-  },
-  "deck-speed-range": {
-    en: (p) => `'#config': speed ${p.value} is outside 0.5–2.0`,
-    vi: (p) => `'#config': speed ${p.value} nằm ngoài khoảng 0.5–2.0`,
+  "retired-key": {
+    en: (p) =>
+      p.col === "#config"
+        ? `'#config': a deck-wide ${q(p.key)} is no longer a setting — ${RETIRED_EN[p.key]}`
+        : `${q(p.col)}: ${q(p.key)} is no longer a setting — ${RETIRED_EN[p.key]}`,
+    vi: (p) =>
+      p.col === "#config"
+        ? `'#config': ${q(p.key)} cho cả deck đã bỏ — ${RETIRED_VI[p.key]}`
+        : `${q(p.col)}: ${q(p.key)} đã bỏ — ${RETIRED_VI[p.key]}`,
   },
   "name-long": {
     en: (p) => `'#config': name is longer than ${p.value} characters`,
@@ -215,10 +217,6 @@ export const WARNINGS = {
     en: (p) => `${q(p.col)}: the cloze column has to reach the card through {{cloze:}}, which ${p.key} would replace — ${p.key} removed`,
     vi: (p) => `${q(p.col)}: cột cloze phải lên card qua {{cloze:}}, mà ${p.key} sẽ thay mất — đã bỏ ${p.key}`,
   },
-  "rtl-vertical": {
-    en: (p) => `${q(p.col)}: rtl and vertical are two directions — keeping rtl`,
-    vi: (p) => `${q(p.col)}: rtl và vertical là hai hướng viết khác nhau — giữ rtl`,
-  },
   "embed-not-single": {
     en: (p) =>
       `row ${p.row}: ${q(p.col)}: ${q(p.url)} is a ${p.host} address with no video in it — ` +
@@ -234,6 +232,24 @@ export const WARNINGS = {
     vi: (p) =>
       `${p.count} dòng có {{c1::…}} nhưng chưa cột nào ghi cloze trong settings row ` +
       `(dòng ${p.rows}) — phần đánh dấu sẽ hiện nguyên như chữ. Thêm cloze vào cột chứa câu.`,
+  },
+  "subdeck-header-retired": {
+    en: (p) =>
+      `${p.cols}: SUBDECK columns are being retired — rename the column (e.g. 'Lesson') ` +
+      `and write subdeck=${p.level} in the settings row`,
+    vi: (p) =>
+      `${p.cols}: cột SUBDECK sắp bỏ — đổi tên cột (vd. 'Bài học') và ghi subdeck=${p.level} ở settings row`,
+  },
+  "looks-like-image": {
+    en: (p) => `${q(p.col)}: this column looks like picture links — add \`image\` to its settings cell to show the pictures`,
+    vi: (p) => `${q(p.col)}: cột này trông như link ảnh — thêm image vào ô settings của cột để hiện ảnh`,
+  },
+  "looks-like-furigana": {
+    en: (p) =>
+      `${q(p.col)}: this column looks like furigana (漢字[かな]) — add \`furigana\` to its settings cell ` +
+      "to show the reading above the text",
+    vi: (p) =>
+      `${q(p.col)}: cột này trông như furigana (漢字[かな]) — thêm furigana vào ô settings của cột để hiện cách đọc phía trên chữ`,
   },
 };
 

@@ -23,12 +23,14 @@ from .column_model import clean
 from .column_model import deck_path
 from .column_model import plan_columns
 from .column_model import row_is_marked_for_sync
+from .column_model import subdeck_level
 from .column_model import tags_of
 from .errors import RemoteDeckError
 from .sheet_config import SheetConfig
 from .sheet_config import SheetWarning
 from .sheet_config import is_config_row
 from .sheet_config import parse_config_row
+from .sheet_config import resolve_roles
 
 # Marks every note the add-on owns, so they can be found or bulk-removed from the
 # browser without touching notes the user made themselves.
@@ -322,8 +324,39 @@ def normalize_embed_url(value):
     return url, None
 
 
+def _cell_breaks(value):
+    """A cell's own line breaks, as the ``<br>`` a card can show.
+
+    A field is HTML, and HTML folds a raw newline into a space — so a cell typed
+    on three lines (Alt+Enter in a spreadsheet) used to reach the card as one.
+    """
+    text = str(value)
+    if "\n" not in text and "\r" not in text:
+        return value
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>")
+
+
+def _keeps_newlines(cfg):
+    """Whether a column's cell must reach the note with its newlines as typed.
+
+    A media cell is an address; a code block is drawn through ``{{text:}}`` in a
+    ``<pre>``, which strips tags but keeps newlines; a formula is LaTeX; a writing
+    box takes one character; a deck level names a deck.
+    """
+    return bool(
+        cfg.media or cfg.code is not None or cfg.math or cfg.draw or cfg.subdeck
+    )
+
+
 def apply_media_rewrites(note_data, plan, sheet_config):
-    """Rewrites a row's video cells in place, and says what looked wrong.
+    """Rewrites a row's cells in place, and says what looked wrong.
+
+    Two rewrites, both of what the cell *means* rather than how it looks: a video
+    address becomes its site's player address, and a cell's line breaks become
+    ``<br>``. Both happen here, before ``add_note``, because a template can
+    substitute a field but cannot transform one — and because the sync compares
+    what it is about to store against what the note holds, so rewriting at any
+    later point would read every such row as modified on every sync.
 
     Anything that renders a row has to go through this, not just the sync: a
     preview that skipped it would frame the address the user pasted, which is
@@ -340,7 +373,10 @@ def apply_media_rewrites(note_data, plan, sheet_config):
     """
     warnings = []
     for header in plan.content_headers:
-        if sheet_config.for_field(header).media != "video":
+        cfg = sheet_config.for_field(header)
+        if not _keeps_newlines(cfg) and header in note_data:
+            note_data[header] = _cell_breaks(note_data[header])
+        if cfg.media != "video":
             continue
         fixed, problem = normalize_embed_url(note_data.get(header, ""))
         note_data[header] = fixed
@@ -607,6 +643,58 @@ class RemoteDeck:
             )
 
 
+# A cell that is nothing but a picture's address. Commons' Special:FilePath links
+# end in the file name, so the extension is enough for those too.
+_IMAGE_URL = re.compile(
+    r"^https?://\S+\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#]\S*)?$", re.IGNORECASE
+)
+# 漢字[かな]: a run of Han (or 々) followed by its reading in kana, in brackets —
+# the syntax Anki's {{furigana:}} reads.
+_FURIGANA = re.compile(r"[\u3400-\u9fff\uf900-\ufaff々〆ヶ]+\[[\u3040-\u30ff]+\]")
+
+
+def _column_hints(seen_cells, sheet_config):
+    """Columns whose cells look like something the settings row did not declare.
+
+    Said rather than acted on, the way ``cloze-unmarked`` is: guessing a column
+    into a picture would be right most of the time and inexplicable the rest. A
+    column is only named when more than half of its filled cells match.
+    """
+    hints = []
+    for header, cells in seen_cells.items():
+        if not cells:
+            continue
+        cfg = sheet_config.for_field(header)
+        if cfg.subdeck or cfg.code is not None or cfg.math:
+            continue
+        most = len(cells) / 2
+        if not cfg.media and sum(bool(_IMAGE_URL.match(c)) for c in cells) > most:
+            hints.append(
+                SheetWarning(
+                    f"'{header}': this column looks like picture links — add "
+                    f"`image` to its settings cell to show the pictures",
+                    "looks-like-image",
+                    {"col": header},
+                )
+            )
+        elif (
+            not cfg.media
+            and not cfg.furigana
+            and not cfg.draw
+            and sum(bool(_FURIGANA.search(c)) for c in cells) > most
+        ):
+            hints.append(
+                SheetWarning(
+                    f"'{header}': this column looks like furigana (漢字[かな]) — add "
+                    f"`furigana` to its settings cell to show the reading above "
+                    f"the text",
+                    "looks-like-furigana",
+                    {"col": header},
+                )
+            )
+    return hints
+
+
 def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
     """
     Builds RemoteDeck object from processed TSV data.
@@ -651,6 +739,27 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
             # during a normal sync, and a typo nobody sees is a typo nobody fixes.
             log_to_addon(message, "SHEET_CONFIG")
 
+    else:
+        # No settings row still has roles to work out — the sort column, at least.
+        resolve_roles(sheet_config, plan.content_headers, plan.subdeck_headers)
+
+    # The reserved SUBDECK n headers still file notes, but nothing new should be
+    # written with them: a column with a real name and `subdeck=n` in its settings
+    # cell does the same and can be called "Bài học". Not said when the settings
+    # row already overrules them — subdeck-headers-ignored says that.
+    if plan.subdeck_headers and not sheet_config.subdeck_columns:
+        named = ", ".join(f"'{h}'" for h in plan.subdeck_headers)
+        level = subdeck_level(plan.subdeck_headers[0]) or 1
+        retired = SheetWarning(
+            f"{named}: SUBDECK columns are being retired — rename the column "
+            f"(e.g. 'Lesson') and write subdeck={level} in the settings row",
+            "subdeck-header-retired",
+            {"cols": named, "level": level},
+        )
+        add_debug_msg(f"⚠️ {retired}")
+        log_to_addon(retired, "SHEET_CONFIG")
+        sheet_config.warnings.append(retired)
+
     # Create remote deck
     remote_deck = RemoteDeck(url=url, plan=plan, sheet_config=sheet_config)
     remote_deck.headers = headers
@@ -667,6 +776,8 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
 
     embed_warnings = {}
     cloze_rows = []
+    # Each content column's non-empty cells as typed, for the hints below.
+    seen_cells = {header: [] for header in plan.content_headers}
 
     # Process each row
     for row_index, row in enumerate(rows):
@@ -674,6 +785,10 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
         try:
             # Create note dictionary keyed by the sheet's own headers
             note_data = row_to_dict(row, headers)
+            for header, cells in seen_cells.items():
+                cell = str(note_data.get(header, "")).strip()
+                if cell:
+                    cells.append(cell)
 
             # Rewritten here rather than at render time because a card template can
             # substitute a field but cannot transform one. Doing it before add_note
@@ -730,6 +845,11 @@ def build_remote_deck_from_tsv(parsed_data, url, debug_messages=None):
         add_debug_msg(f"⚠️ {message}")
         log_to_addon(message, "SHEET_CONFIG")
         sheet_config.warnings.append(message)
+
+    for hint in _column_hints(seen_cells, sheet_config):
+        add_debug_msg(f"⚠️ {hint}")
+        log_to_addon(hint, "SHEET_CONFIG")
+        sheet_config.warnings.append(hint)
 
     # An address that cannot be embedded frames an error message on the card, which
     # looks like the add-on broke rather than like a link that needs fixing.

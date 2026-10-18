@@ -81,8 +81,6 @@ def to_dict(plan, sheet_config):
     return {
         "content_headers": list(plan.content_headers),
         "present": bool(sheet_config.present),
-        "align": sheet_config.align,
-        "speed": sheet_config.speed,
         "reverse": bool(sheet_config.reverse),
         "theme": sheet_config.theme,
         "deck_name": sheet_config.deck_name,
@@ -112,8 +110,6 @@ def from_dict(stored):
 
     sheet_config = SheetConfig()
     sheet_config.present = bool(stored.get("present"))
-    sheet_config.align = stored.get("align")
-    sheet_config.speed = stored.get("speed")
     sheet_config.reverse = bool(stored.get("reverse"))
     # A theme the cache no longer knows renders as no theme rather than as a broken
     # colour: `_palette` falls back on the default palette for an unknown name.

@@ -16,10 +16,10 @@ import json
 import math
 from html import escape
 
-from .sheet_config import ALIGNMENTS
 from .sheet_config import FONTS
 from .sheet_config import THEME_COLORS
 from .sheet_config import THEMES
+from .sheet_config import font_of
 
 # A card frames this page, and this page frames the video.
 #
@@ -372,7 +372,9 @@ def _font_imports(sheet_config):
     """
     wanted = []
     for cfg in sheet_config.fields.values():
-        known = FONTS.get(str(cfg.font or "").lower())
+        if cfg.media or cfg.subdeck:
+            continue
+        known = FONTS.get(str(font_of(cfg) or "").lower())
         if known and known[0] and known[0] not in wanted:
             wanted.append(known[0])
     return "".join(
@@ -383,12 +385,11 @@ def _font_imports(sheet_config):
 
 def _css(sheet_config):
     """The card's stylesheet."""
-    align = sheet_config.align if sheet_config.align in ALIGNMENTS else "center"
     return (
         "<style>\n"
         + _font_imports(sheet_config)
         + _palette(sheet_config)
-        + f".sc-wrap {{ text-align: {align}; }}\n"
+        + ".sc-wrap { text-align: center; }\n"
         f".sc-front {{ font-size: clamp({FRONT_MIN_PX}px, {FRONT_FLUID},"
         f" {FRONT_SIZE_PX}px); line-height: 1.3; }}\n"
         f".sc-back {{ font-size: {BACK_SIZE_PX}px; line-height: 1.5;"
@@ -507,24 +508,9 @@ def _inline_style(cfg, with_size=True):
         parts.append("font-style: italic")
     if cfg.align:
         parts.append(f"text-align: {cfg.align}")
-    if cfg.font:
-        parts.append(f"font-family: {_font_stack(cfg.font)}")
-    if cfg.rtl:
-        # A right-to-left column that is still centred stays centred; one that was
-        # not given an alignment starts from the right, which is where a reader of
-        # Arabic or Hebrew starts.
-        parts.append("direction: rtl")
-        if not cfg.align:
-            parts.append("text-align: right")
-    if cfg.vertical:
-        # Classical Japanese and Chinese run top to bottom, right to left. The
-        # height is capped so a long line scrolls the card rather than growing it
-        # past the bottom of the screen, and `mixed` keeps Latin words upright
-        # inside a vertical line instead of rotating them onto their side.
-        parts.append("writing-mode: vertical-rl")
-        parts.append("text-orientation: mixed")
-        parts.append("max-height: 60vh")
-        parts.append("margin: 0 auto")
+    font = font_of(cfg)
+    if font:
+        parts.append(f"font-family: {_font_stack(font)}")
     return "; ".join(parts)
 
 
@@ -987,7 +973,7 @@ def _speed_text(speed):
     return f"{float(speed):g}"
 
 
-def _tts_tag(field, cfg, deck_speed):
+def _tts_tag(field, cfg):
     """Anki's TTS tag for the field, or "" when the field asked for no speech.
 
     The grammar is ``{{tts LANG [voices=A,B] [speed=N]:Field}}``: the language comes
@@ -1019,10 +1005,8 @@ def _tts_tag(field, cfg, deck_speed):
     if cfg.voices:
         options.append("voices=" + ",".join(cfg.voices))
 
-    # A field that names its own speed means it, so it outranks the deck-wide value.
-    speed = cfg.speed if cfg.speed is not None else deck_speed
-    if speed is not None:
-        options.append(f"speed={_speed_text(speed)}")
+    if cfg.speed is not None:
+        options.append(f"speed={_speed_text(cfg.speed)}")
 
     spoken = f"kana:{field}" if cfg.furigana else field
     tag = "{{" + " ".join(options) + f":{spoken}}}}}"
@@ -1118,17 +1102,22 @@ def _rows(fields, sheet_config, css_class, as_cloze=False, quiz=False):
         # thing a stylist cannot target and the one thing the preview cannot
         # point at. The value is the header exactly as written, so
         # `[data-sc-col="Pinyin"]` works in the note type's CSS too.
+        #
+        # `dir="auto"` lets the text say which way it runs: a cell in Arabic or
+        # Hebrew is laid out right to left, and one in any other script is left
+        # alone. It used to take an `rtl` key, which only the people who already
+        # knew they needed it ever wrote.
         lang = _html_lang(cfg.tts)
         lang_attr = f' lang="{escape(lang)}"' if lang else ""
         out.append(
             f"{{{{#{field}}}}}"
-            f'<div class="{css_class}" data-sc-col="{escape(name)}"'
+            f'<div class="{css_class}" data-sc-col="{escape(name)}" dir="auto"'
             f"{lang_attr}{style_attr}>"
             f"{label}{reference}</div>"
             f"{{{{/{field}}}}}"
         )
 
-        tts = _tts_tag(field, cfg, sheet_config.speed)
+        tts = _tts_tag(field, cfg)
         if tts:
             out.append(tts)
 
@@ -1325,11 +1314,7 @@ def build_templates(plan, sheet_config, is_cloze=False):
         return "\n".join(
             tag
             for tag in (
-                _tts_tag(
-                    _escape_field(name),
-                    sheet_config.for_field(name),
-                    sheet_config.speed,
-                )
+                _tts_tag(_escape_field(name), sheet_config.for_field(name))
                 for name in fields
             )
             if tag

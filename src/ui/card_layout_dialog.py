@@ -56,33 +56,33 @@ from .url_helpers import connect_a_sheet
 # Per-column settings the ``#config`` row can carry (see ``sheet_config``).
 # Kept in step with sheet_config.FieldConfig — a key missing here shows the column
 # as having no settings at all, which reads as "the add-on ignored my sheet".
+# Basic first (sheet_config.BASIC_KEYS), then the advanced ones.
 _FIELD_KEYS = (
+    # Basic
     "side",
     "size",
+    "bold",
     "color",
-    "align",
+    "tts",
     "media",
     "type_answer",
-    "tts",
+    "hint",
+    "label",
+    # Advanced
     "voices",
     "speed",
-    "label",
-    "bold",
-    "italic",
-    "hint",
-    "furigana",
     "cloze",
     "draw",
-    "subdeck",
-    "math",
-    "code",
+    "furigana",
+    "italic",
+    "align",
     "font",
-    "sort",
-    "rtl",
-    "vertical",
+    "code",
+    "math",
+    "subdeck",
 )
-_FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw", "sort", "rtl", "vertical")
-_DECK_KEYS = ("align", "speed", "reverse", "theme")
+_FLAG_KEYS = ("bold", "italic", "hint", "furigana", "draw")
+_DECK_KEYS = ("reverse", "theme")
 
 
 def _empty_snapshot():
@@ -533,12 +533,6 @@ class CardLayoutDialog(QDialog):
 
         parts = []
         deck = self.snapshot["deck"]
-        align = deck.get("align")
-        if align:
-            parts.append(f"text aligned {align}")
-        speed = deck.get("speed")
-        if speed not in (None, ""):
-            parts.append(f"speech speed {speed}")
         if deck.get("reverse"):
             parts.append("a reverse card is generated")
         theme = deck.get("theme")
@@ -741,7 +735,7 @@ class CardLayoutDialog(QDialog):
         """One field as it would appear, honouring size, colour and alignment."""
         size = settings.get("size") or (40 if is_front else 18)
         color = self._preview_color(settings.get("color"))
-        align = settings.get("align") or self.snapshot["deck"].get("align") or "center"
+        align = settings.get("align") or "center"
 
         label = settings.get("label") or header
         head = (

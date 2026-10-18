@@ -120,7 +120,9 @@ class TestFieldMarkup:
     def test_unstyled_field_carries_no_style_attribute(self):
         qfmt = build_templates(_plan(), SheetConfig())[0]["qfmt"]
         assert "style=" not in qfmt.split("</style>")[1]
-        assert '<div class="sc-front" data-sc-col="Word">{{Word}}</div>' in qfmt
+        assert (
+            '<div class="sc-front" data-sc-col="Word" dir="auto">{{Word}}</div>' in qfmt
+        )
 
     def test_every_field_says_which_column_it_came_from(self):
         """Anki's own classes say only which side a block is on.
@@ -403,19 +405,14 @@ class TestTextToSpeech:
             "{{tts en_US speed=1.5:Word}}" in build_templates(plan, config)[0]["qfmt"]
         )
 
-    def test_deck_speed_applies_when_the_field_names_none(self):
-        plan = _plan()
-        config = _config(plan, {"Word": "tts=en_US"}, deck="speed=0.8")
-        assert (
-            "{{tts en_US speed=0.8:Word}}" in build_templates(plan, config)[0]["qfmt"]
-        )
-
-    def test_field_speed_beats_the_deck_speed(self):
+    def test_a_deck_wide_speed_is_retired_and_said_so(self):
         plan = _plan()
         config = _config(plan, {"Word": "tts=en_US; speed=1.5"}, deck="speed=0.8")
         qfmt = build_templates(plan, config)[0]["qfmt"]
         assert "{{tts en_US speed=1.5:Word}}" in qfmt
         assert "speed=0.8" not in qfmt
+        assert [w.code for w in config.warnings] == ["retired-key"]
+        assert "each column's own cell" in config.warnings[0]
 
     def test_voices_and_speed_together(self):
         plan = _plan()
@@ -1022,7 +1019,7 @@ class TestCodeColumn:
 
 @pytest.mark.unit
 class TestFontAndDirection:
-    """`font`, `rtl`, `vertical` — the three things CSS can say and a sheet could not."""
+    """`font`, and the direction a column's text runs in."""
 
     def test_a_known_font_becomes_its_stack_and_is_fetched(self):
         plan = _plan()
@@ -1041,96 +1038,103 @@ class TestFontAndDirection:
         # Nothing is fetched for it: whether it is installed is not ours to know.
         assert "fonts.googleapis.com" not in qfmt
 
-    def test_right_to_left_also_starts_from_the_right(self):
+    def test_every_field_block_lets_the_text_say_its_direction(self):
+        # `dir="auto"` replaced the `rtl` key: Arabic or Hebrew is laid out right
+        # to left by the browser itself, and nothing else is touched.
         plan = _plan()
-        qfmt = build_templates(plan, _config(plan, {"Word": "rtl"}))[0]["qfmt"]
-        assert "direction: rtl" in qfmt and "text-align: right" in qfmt
+        template = build_templates(plan, _config(plan))[0]
+        blocks = re.findall(
+            r"<div class=\"sc-(?:front|back)\"[^>]*>",
+            template["qfmt"] + template["afmt"],
+        )
+        assert blocks and all('dir="auto"' in b for b in blocks)
 
-    def test_an_explicit_alignment_still_wins(self):
+    def test_a_retired_direction_key_is_absorbed_or_named(self):
         plan = _plan()
-        qfmt = build_templates(plan, _config(plan, {"Word": "rtl; align=center"}))[0][
-            "qfmt"
-        ]
-        assert "text-align: center" in qfmt and "text-align: right" not in qfmt
+        plain = build_templates(plan, _config(plan))
+        # rtl is done anyway, so it is accepted with nothing to say.
+        config = _config(plan, {"Word": "rtl"})
+        assert config.warnings == [] and build_templates(plan, config) == plain
+        # vertical is gone, so the sheet is told what to do instead.
+        config = _config(plan, {"Word": "vertical"})
+        assert [w.code for w in config.warnings] == ["retired-key"]
+        assert "no longer a setting" in config.warnings[0]
+        assert build_templates(plan, config) == plain
 
-    def test_vertical_writing_keeps_latin_upright(self):
+    def test_a_spoken_column_takes_its_languages_font(self):
         plan = _plan()
-        qfmt = build_templates(plan, _config(plan, {"Word": "vertical"}))[0]["qfmt"]
-        assert "writing-mode: vertical-rl" in qfmt
-        assert "text-orientation: mixed" in qfmt
+        for code, face in (
+            ("zh_CN", "SC"),
+            ("zh_HK", "TC"),
+            ("ja_JP", "JP"),
+            ("ko_KR", "KR"),
+        ):
+            qfmt = build_templates(plan, _config(plan, {"Word": f"tts={code}"}))[0][
+                "qfmt"
+            ]
+            assert f"font-family: Noto Sans {face}, sans-serif" in qfmt
+            assert f"family=Noto+Sans+{face}" in qfmt
+        # The same CSS as writing the font out.
+        said = build_templates(plan, _config(plan, {"Word": "tts=zh_CN; font=sc"}))
+        assert build_templates(plan, _config(plan, {"Word": "tts=zh_CN"})) == said
 
-    def test_a_column_has_one_direction(self):
-        config = _config(_plan(), {"Word": "rtl; vertical"})
-        assert config.for_field("Word").rtl and not config.for_field("Word").vertical
-        assert any("two directions" in w for w in config.warnings)
+    def test_an_explicit_font_beats_the_voice(self):
+        plan = _plan()
+        qfmt = build_templates(plan, _config(plan, {"Word": "tts=ja_JP; font=serif"}))[
+            0
+        ]["qfmt"]
+        assert "Noto Sans JP" not in qfmt and "Georgia" in qfmt
+        # A voice with no font of its own adds none.
+        qfmt = build_templates(plan, _config(plan, {"Word": "tts=en_US"}))[0]["qfmt"]
+        assert "Noto Sans" not in qfmt and 'style="font-family' not in qfmt
 
-    def test_none_of_them_touch_a_media_column(self):
-        config = _config(_plan(), {"Word": "image; font=sc; rtl; vertical"})
-        cfg = config.for_field("Word")
-        assert cfg.font is None and not cfg.rtl and not cfg.vertical
-        said = " ".join(config.warnings)
-        for key in ("font", "rtl", "vertical"):
-            assert key in said
+    def test_a_font_does_not_touch_a_media_column(self):
+        config = _config(_plan(), {"Word": "image; font=sc"})
+        assert config.for_field("Word").font is None
+        assert any("font" in w for w in config.warnings)
 
 
 @pytest.mark.unit
 class TestSortColumn:
-    """`sort` — a note property, like `subdeck`, and not a card one."""
+    """The browser lists notes by the first real column, with nothing to write."""
 
-    def test_it_names_the_column_and_changes_nothing_on_the_card(self):
+    def test_it_is_the_first_column_that_is_not_a_deck_level(self):
         plan = _plan()
-        plain = build_templates(plan, _config(plan))[0]
-        config = _config(plan, {"Meaning": "sort"})
-        assert config.sort_field == "Meaning"
-        assert build_templates(plan, config)[0] == plain
+        assert _config(plan).sort_field == FIELDS[0]
+        config = _config(plan, {FIELDS[0]: "subdeck=1"})
+        assert config.sort_field == FIELDS[1]
+        config = _config(plan, {FIELDS[0]: "image"})
+        assert config.sort_field == FIELDS[1]
 
-    def test_only_one_column_can_be_it(self):
-        config = _config(_plan(), {"Word": "sort", "Meaning": "sort"})
-        assert config.sort_field == "Word"
-        assert any("sorts by" in w for w in config.warnings)
-
-    def test_a_media_column_is_refused(self):
-        # Sorting a deck by a column of URLs lists it by whatever the addresses
-        # happen to start with.
-        config = _config(_plan(), {"Word": "image; sort"})
-        assert config.sort_field is None
-        assert any("sort" in w for w in config.warnings)
+    def test_the_old_key_is_absorbed(self):
+        plan = _plan()
+        config = _config(plan, {FIELDS[1]: "sort"})
+        assert config.warnings == []
+        assert config.sort_field == FIELDS[0]
 
     def test_it_reaches_the_note_type_as_an_index(self):
-        """Anki stores the sort field as a position in the field list.
-
-        The browser's first column and a deck's sort order both read it, and
-        without this it is field 0 — which here is `ID`, so a deck lists as w01,
-        w02, w03.
-        """
+        """Anki stores the sort field as a position in the field list."""
         from src.templates_and_definitions import apply_sort_field
 
         plan = _plan()
         fields = plan.note_type_fields()
         model = {"sortf": 0}
-        config = _config(plan, {"Meaning": "sort"})
-        assert apply_sort_field(None, model, fields, config) is True
-        assert fields[model["sortf"]] == "Meaning"
-        # Idempotent: a re-sync of an unchanged sheet must not mark the note type
-        # as changed, which would rewrite it on every single sync.
-        assert apply_sort_field(None, model, fields, config) is False
+        assert apply_sort_field(None, model, fields, _config(plan)) is True
+        assert fields[model["sortf"]] == FIELDS[0]
+        # Idempotent: an unchanged sheet must not rewrite the note type each sync.
+        assert apply_sort_field(None, model, fields, _config(plan)) is False
 
-    def test_a_sheet_that_says_nothing_leaves_the_note_type_alone(self):
+    def test_a_sheet_with_no_settings_row_gets_it_too(self):
+        from src.sheet_config import SheetConfig
         from src.templates_and_definitions import apply_sort_field
 
         plan = _plan()
+        fields = plan.note_type_fields()
         model = {"sortf": 0}
-        assert apply_sort_field(
-            None, model, plan.note_type_fields(), _config(plan)
-        ) is (False)
-        assert model["sortf"] == 0
-
-    def test_a_deck_level_may_still_be_the_sort_column(self):
-        # `subdeck` refuses every *card* key, and this is not one of them: where a
-        # note is filed and how it is listed are both properties of the note.
-        config = _config(_plan(), {"Word": "subdeck=1; sort"})
-        assert config.sort_field == "Word"
-        assert config.subdeck_columns == ["Word"]
+        assert apply_sort_field(None, model, fields, SheetConfig()) is True
+        assert fields[model["sortf"]] == FIELDS[0]
+        model = {"sortf": 0}
+        assert apply_sort_field(None, model, fields, None) is True
 
 
 @pytest.mark.unit
@@ -1604,8 +1608,9 @@ class TestReadableOnAPhone:
 
     def test_size_still_wins_over_the_fluid_default(self):
         qfmt = self._qfmt({"Word": "size=60"})
-        assert '<div class="sc-front" data-sc-col="Word" style="font-size: 60px">' in (
-            qfmt
+        assert (
+            '<div class="sc-front" data-sc-col="Word" dir="auto" style="font-size: 60px">'
+            in (qfmt)
         )
 
     def test_no_small_text_is_smaller_than_13px_or_fainter_than_70_percent(self):
@@ -1625,7 +1630,7 @@ class TestReadableOnAPhone:
         # A phone picks the shapes of a Han character by the text's language, so
         # without this a Japanese 直 is drawn the Chinese way.
         qfmt = self._qfmt({"Word": f"tts={code}"})
-        assert f'data-sc-col="Word" lang="{lang}"' in qfmt
+        assert f'data-sc-col="Word" dir="auto" lang="{lang}"' in qfmt
 
     def test_a_column_that_is_not_spoken_has_no_lang(self):
         assert " lang=" not in self._qfmt({})

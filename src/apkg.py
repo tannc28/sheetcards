@@ -38,6 +38,7 @@ import zipfile
 
 from .card_layout import build_templates
 from .column_model import deck_path
+from .sheet_config import sort_column
 from .tsv_model import SYNCED
 from .tsv_model import build_tags
 from .tsv_model import classify_row
@@ -269,16 +270,23 @@ def _templates(plan, sheet_config, previous_templates=()):
     return kept_templates(current, previous_templates, plan.note_type_fields()[0])
 
 
-def note_type_shape(plan, sheet_config, previous_fields=(), previous_templates=()):
+def note_type_shape(
+    plan, sheet_config, previous_fields=(), previous_templates=(), previous_sort=None
+):
     """What Anki compares a note type by: its kind, fields and template names.
 
     ``stubs`` names the kept templates that make no card (kept_templates).
+    ``sort`` is the sort field the package carries — not part of what Anki
+    compares, but remembered so the next package keeps it (sort_index).
     """
     is_cloze = bool(sheet_config.cloze_field)
     templates = _templates(plan, sheet_config, previous_templates)
+    fields = kept_fields(plan.note_type_fields(), previous_fields)
+    sortf = sort_index(fields, sheet_config, plan.content_headers, previous_sort)
     return {
         "kind": "cloze" if is_cloze else "basic",
-        "fields": kept_fields(plan.note_type_fields(), previous_fields),
+        "fields": fields,
+        "sort": fields[sortf],
         "templates": [spec["name"] for spec in templates],
         "stubs": [spec["name"] for spec in templates if spec.get("stub")],
     }
@@ -365,13 +373,38 @@ def _requirements(templates, fields):
     return req
 
 
-def sort_index(fields, sheet_config):
-    """The field Anki lists and sorts notes by: the column marked ``sort``, else 0.
+# What a shape remembered before it carried a sort field: the package was built
+# under the old rule (the column a `sort` key named, else field 0).
+OLD_SORT_RULE = ""
+
+
+def sort_index(fields, sheet_config, content_headers=None, previous_sort=None):
+    """The field Anki lists and sorts notes by: the first real column, else 0.
 
     The same rule the add-on applies (templates_and_definitions.apply_sort_field),
     so a package lists ``apple, book`` in the browser rather than ``w01, w02``.
+    ``content_headers`` is the sheet's own columns, because ``fields`` may lead
+    with columns an earlier package had and this sheet no longer does.
+
+    ``previous_sort`` is the sort field of the last package this device built for
+    the sheet (its shape's ``sort``), :data:`OLD_SORT_RULE` for one built before
+    shapes recorded it, None for a sheet never packaged here. A sheet packaged
+    before keeps its sort field, because a package whose sort field differs from
+    the collection's has its notes skipped as *duplicates* on the next import
+    with Anki's default options: Anki rewrites every note when a note type's sort
+    field changes, which makes them newer than the package. Verified in real
+    Anki 25.07 — the import after that one updates again, but an import that
+    silently changes nothing is what makes people stop trusting re-import.
     """
-    header = getattr(sheet_config, "sort_field", None)
+    if previous_sort == OLD_SORT_RULE:
+        header = getattr(sheet_config, "legacy_sort_field", None)
+    elif previous_sort is not None:
+        header = previous_sort
+    else:
+        header = getattr(sheet_config, "sort_field", None) or sort_column(
+            list(content_headers if content_headers is not None else fields[1:]),
+            sheet_config,
+        )
     return fields.index(header) if header and header in fields else 0
 
 
@@ -497,6 +530,7 @@ def build_package(
     now=None,
     previous_fields=(),
     previous_templates=(),
+    previous_sort=None,
 ):
     """Builds an ``.apkg`` from the rows of one sheet.
 
@@ -514,6 +548,7 @@ def build_package(
             new schema to Anki (see kept_fields)
         previous_templates (list, optional): that package's template names, so a
             template taken out stays as a stub (see kept_templates)
+        previous_sort (str, optional): that package's sort field (see sort_index)
 
     Returns:
         bytes: the package, ready to be written to a file or handed to a browser
@@ -525,7 +560,7 @@ def build_package(
     sheet_id, deck_name, keyed = resolve_identity(sheet_id, deck_name, sheet_config)
 
     fields = kept_fields(plan.note_type_fields(), previous_fields)
-    sortf = sort_index(fields, sheet_config)
+    sortf = sort_index(fields, sheet_config, plan.content_headers, previous_sort)
     content = set(plan.content_headers)
     templates = _templates(plan, sheet_config, previous_templates)
     model_name = f"SheetCards - {deck_name} - {'Cloze' if is_cloze else 'Basic'}"

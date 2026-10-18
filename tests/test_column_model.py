@@ -296,13 +296,13 @@ class TestFlagNegation:
         plan = cm.plan_columns(["ID", "Word"])
         assert parse_config_row({"ID": "#config reverse=false"}, plan).reverse is False
 
-    def test_deck_speed_is_range_checked_like_per_field_speed(self):
+    def test_deck_speed_and_align_are_retired(self):
         from src.sheet_config import parse_config_row
 
         plan = cm.plan_columns(["ID", "Word"])
-        parsed = parse_config_row({"ID": "#config speed=9"}, plan)
-        assert parsed.speed is None
-        assert any("outside" in w for w in parsed.warnings)
+        parsed = parse_config_row({"ID": "#config speed=9; align=left"}, plan)
+        assert [w.code for w in parsed.warnings] == ["retired-key", "retired-key"]
+        assert not hasattr(parsed, "speed") and not hasattr(parsed, "align")
 
 
 @pytest.mark.unit

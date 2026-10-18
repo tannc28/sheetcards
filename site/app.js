@@ -54,7 +54,7 @@ from sc import tsv_model as tm
 from sc.card_layout import build_templates, split_sides
 from sc.column_model import clean, deck_path
 from sc.sheet_config import is_config_row, warning_codes
-from sc.apkg import build_package, note_type_shape, resolve_identity, shape_code
+from sc.apkg import OLD_SORT_RULE, build_package, note_type_shape, resolve_identity, shape_code
 
 # The last analysis, so the package can be built from exactly the rows the page
 # drew rather than by parsing the sheet a second time.
@@ -68,6 +68,16 @@ def _previous(last, key="fields"):
     return last.get(key) or [] if last.get("kind") == kind else []
 
 
+def _previous_sort(last):
+    """The last package's sort field: None if there was none of this kind, and
+    OLD_SORT_RULE for one remembered before shapes recorded it (apkg.sort_index)."""
+    last = json.loads(last or "null") or {}
+    kind = "cloze" if _STATE["deck"].sheet_config.cloze_field else "basic"
+    if last.get("kind") != kind:
+        return None
+    return last.get("sort", OLD_SORT_RULE)
+
+
 def shape(last):
     """The note type the next package will carry, given the last one's."""
     deck = _STATE["deck"]
@@ -77,6 +87,7 @@ def shape(last):
             deck.sheet_config,
             _previous(last),
             _previous(last, "templates"),
+            _previous_sort(last),
         ),
         ensure_ascii=False,
     )
@@ -88,6 +99,7 @@ def package_bytes(last):
         _STATE["id"], _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"],
         previous_fields=_previous(last),
         previous_templates=_previous(last, "templates"),
+        previous_sort=_previous_sort(last),
     )
 
 
