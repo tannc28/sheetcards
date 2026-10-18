@@ -1,0 +1,229 @@
+{
+ "data": [
+  {
+   "id": 9191859,
+   "text": "Mom bought apples.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "CK",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 13340198,
+     "text": "Mẹ đã mua táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "leucammieuvu",
+     "is_unapproved": false,
+     "is_direct": true
+    }
+   ]
+  },
+  {
+   "id": 6116196,
+   "text": "Peel the apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "mailohilohi",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 13340808,
+     "text": "Gọt táo đi.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "leucammieuvu",
+     "is_unapproved": false,
+     "is_direct": true
+    }
+   ]
+  },
+  {
+   "id": 262240,
+   "text": "I like apples.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "CK",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 12055006,
+     "text": "Tôi thích táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "mqd",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  },
+  {
+   "id": 13877894,
+   "text": "I'm an apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "rul",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 13878082,
+     "text": "Tôi là táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "leucammieuvu",
+     "is_unapproved": false,
+     "is_direct": true
+    }
+   ]
+  },
+  {
+   "id": 4980512,
+   "text": "We are eating apples.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "tinnatay",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 2654732,
+     "text": "Tôi đang ăn táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "dreznovk",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  },
+  {
+   "id": 2547549,
+   "text": "Tom sliced the apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "CK",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 8963835,
+     "text": "Tom đã thái mỏng quả táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "dotheduyet1999",
+     "is_unapproved": false,
+     "is_direct": false
+    },
+    {
+     "id": 8963836,
+     "text": "Tom thái mỏng quả táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "dotheduyet1999",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  },
+  {
+   "id": 2525121,
+   "text": "He drew an apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "martinnicholson",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 8958519,
+     "text": "Anh ấy vẽ phác một quả táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "dotheduyet1999",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  },
+  {
+   "id": 2325147,
+   "text": "I dropped my apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "CK",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 3839332,
+     "text": "Tôi đã đánh rơi quả táo của mình.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "letuananh",
+     "is_unapproved": false,
+     "is_direct": true
+    }
+   ]
+  },
+  {
+   "id": 2096101,
+   "text": "I too like apples.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "gleki",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 659248,
+     "text": "Tôi cũng thích táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "autuno",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  },
+  {
+   "id": 1715036,
+   "text": "He sketched an apple.",
+   "lang": "eng",
+   "script": null,
+   "license": "CC BY 2.0 FR",
+   "owner": "xtofu80",
+   "is_unapproved": false,
+   "translations": [
+    {
+     "id": 8958519,
+     "text": "Anh ấy vẽ phác một quả táo.",
+     "lang": "vie",
+     "script": null,
+     "license": "CC BY 2.0 FR",
+     "owner": "dotheduyet1999",
+     "is_unapproved": false,
+     "is_direct": false
+    }
+   ]
+  }
+ ],
+ "paging": {
+  "total": 73,
+  "has_next": true,
+  "next": "https://api.tatoeba.org/unstable/sentences?lang=eng&q=apple&trans%3Alang=vie&sort=relevance&limit=10&after=10096%2C1715036"
+ }
+}

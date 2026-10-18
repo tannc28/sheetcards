@@ -1,0 +1,479 @@
+{
+ "batchcomplete": true,
+ "continue": {
+  "gsroffset": 12,
+  "continue": "gsroffset||"
+ },
+ "query": {
+  "pages": [
+   {
+    "pageid": 304872,
+    "ns": 6,
+    "title": "File:Santa Maria de Huerta Almacen.jpg",
+    "index": 8,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Santa_Maria_de_Huerta_Almacen.jpg/250px-Santa_Maria_de_Huerta_Almacen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 180,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Santa_Maria_de_Huerta_Almacen.jpg/500px-Santa_Maria_de_Huerta_Almacen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Santa_Maria_de_Huerta_Almacen.jpg/250px-Santa_Maria_de_Huerta_Almacen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 180,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Santa_Maria_de_Huerta_Almacen.jpg/500px-Santa_Maria_de_Huerta_Almacen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/9/98/Santa_Maria_de_Huerta_Almacen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Santa_Maria_de_Huerta_Almacen.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=304872",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Willtron\" title=\"User:Willtron\">Willtron</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 5765394,
+    "ns": 6,
+    "title": "File:Pink lady and cross section.jpg",
+    "index": 5,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Pink_lady_and_cross_section.jpg/250px-Pink_lady_and_cross_section.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 81,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Pink_lady_and_cross_section.jpg/500px-Pink_lady_and_cross_section.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Pink_lady_and_cross_section.jpg/250px-Pink_lady_and_cross_section.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 81,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Pink_lady_and_cross_section.jpg/500px-Pink_lady_and_cross_section.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Pink_lady_and_cross_section.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Pink_lady_and_cross_section.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=5765394",
+      "extmetadata": {
+       "Artist": {
+        "value": "<p><br style=\"clear:both\">\n</p>\n<table align=\"CENTER\" style=\"width:80%; background-color:#f7f8ff; border:2px solid #8888aa; padding:5px;\">\n\n<tbody><tr>\n<td><table border=\"0\" width=\"100%\" style=\"background-color:#f7f8ff;\">\n\t<tbody><tr style=\"font-family: Segoe UI, Trebuchet MS, serif;\">\n\t\t<td align=\"center\" valign=\"top\">\n\t\t<div style=\"padding-bottom:25px;\"><span style=\"font-size:large\"><b><a href=\"https://en.wikipedia.org/wiki/User:Fir0002\" class=\"extiw\" title=\"en:User:Fir0002\">fir0002</a> <br> flagstaffotos [at] gmail.com</b></span></div>\n\t\t<div style=\"font-size:11pt\">Canon 20D + Sigma 150mm f/2.8</div>\n</td>\n\t\t<td valign=\"top\" align=\"left\">\n                    <table border=\"0\" width=\"240\" style=\"background-color:#f7f8ff;\">\n                         <tbody><tr>\n                         <td valign=\"top\"><figure class=\"mw-halign-left\" typeof=\"mw:File\"><a href=\"//commons.wikimedia.org/wiki/File:Sigma_150_macro.jpg\" class=\"mw-file-description\"><img src=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/64/Sigma_150_macro.jpg/120px-Sigma_150_macro.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail\" decoding=\"async\" loading=\"lazy\" width=\"120\" height=\"80\" class=\"mw-file-element\" srcset=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/64/Sigma_150_macro.jpg/250px-Sigma_150_macro.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail 2x\" data-file-width=\"1600\" data-file-height=\"1067\"></a><figcaption></figcaption></figure></td>\n                         <td valign=\"top\"><figure class=\"mw-halign-left\" typeof=\"mw:File\"><a href=\"//commons.wikimedia.org/wiki/File:Sigma_150_macro02.jpg\" class=\"mw-file-description\"><img src=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Sigma_150_macro02.jpg/120px-Sigma_150_macro02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail\" decoding=\"async\" loading=\"lazy\" width=\"120\" height=\"80\" class=\"mw-file-element\" srcset=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Sigma_150_macro02.jpg/250px-Sigma_150_macro02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail 2x\" data-file-width=\"1600\" data-file-height=\"1067\"></a><figcaption></figcaption></figure></td>\n                         <td valign=\"top\"><figure class=\"mw-halign-left\" typeof=\"mw:File\"><a href=\"//commons.wikimedia.org/wiki/File:Sigma_150_macro03.jpg\" class=\"mw-file-description\"><img src=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Sigma_150_macro03.jpg/120px-Sigma_150_macro03.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail\" decoding=\"async\" loading=\"lazy\" width=\"120\" height=\"80\" class=\"mw-file-element\" srcset=\"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Sigma_150_macro03.jpg/250px-Sigma_150_macro03.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=parser&amp;utm_content=thumbnail 2x\" data-file-width=\"1600\" data-file-height=\"1067\"></a><figcaption></figcaption></figure></td>\n                         </tr>\n                         </tbody></table>\n\t\t</td>\n\t</tr>\n</tbody></table>\n</td></tr></tbody></table>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "GFDL 1.2",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 7823406,
+    "ns": 6,
+    "title": "File:Red Apple.jpg",
+    "index": 1,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/250px-Red_Apple.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 218,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/500px-Red_Apple.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/250px-Red_Apple.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 218,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/500px-Red_Apple.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Red_Apple.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=7823406",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a rel=\"mw:ExtLink nofollow\" href=\"https://www.flickr.com/people/24340456@N03\" class=\"external text\">Abhijit Tembhekar</a> from Mumbai, India",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY 2.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 11276471,
+    "ns": 6,
+    "title": "File:Apple II at Musée Bolo.jpg",
+    "index": 2,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Apple_II_at_Mus%C3%A9e_Bolo.jpg/250px-Apple_II_at_Mus%C3%A9e_Bolo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 240,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Apple_II_at_Mus%C3%A9e_Bolo.jpg/500px-Apple_II_at_Mus%C3%A9e_Bolo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Apple_II_at_Mus%C3%A9e_Bolo.jpg/250px-Apple_II_at_Mus%C3%A9e_Bolo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 240,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Apple_II_at_Mus%C3%A9e_Bolo.jpg/500px-Apple_II_at_Mus%C3%A9e_Bolo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Apple_II_at_Mus%C3%A9e_Bolo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Apple_II_at_Mus%C3%A9e_Bolo.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=11276471",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Rama\" title=\"User:Rama\">Rama</a> &amp; Musée Bolo",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 2.0 fr",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 11808709,
+    "ns": 6,
+    "title": "File:Honeycrisp.jpg",
+    "index": 11,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Honeycrisp.jpg/250px-Honeycrisp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 240,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Honeycrisp.jpg/500px-Honeycrisp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Honeycrisp.jpg/250px-Honeycrisp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 240,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Honeycrisp.jpg/500px-Honeycrisp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Honeycrisp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Honeycrisp.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=11808709",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jonathunder\" title=\"User:Jonathunder\">Jonathunder</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 16380592,
+    "ns": 6,
+    "title": "File:Apple Headquarters in Cupertino.jpg",
+    "index": 9,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Headquarters_in_Cupertino.jpg/250px-Apple_Headquarters_in_Cupertino.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 167,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Headquarters_in_Cupertino.jpg/500px-Apple_Headquarters_in_Cupertino.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Headquarters_in_Cupertino.jpg/250px-Apple_Headquarters_in_Cupertino.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 167,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Headquarters_in_Cupertino.jpg/500px-Apple_Headquarters_in_Cupertino.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Headquarters_in_Cupertino.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Apple_Headquarters_in_Cupertino.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=16380592",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jovianeye\" title=\"User:Jovianeye\">Joe Ravi</a> (<a rel=\"nofollow\" class=\"external text\" href=\"http://www.shutterstock.com/g/joeravi\">Shutterstock</a> <a rel=\"nofollow\" class=\"external text\" href=\"http://www.istockphoto.com/joeravi\">iStock</a> <a rel=\"nofollow\" class=\"external text\" href=\"http://www.dreamstime.com/joeravi_info\">Dreamstime</a>)",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 69553418,
+    "ns": 6,
+    "title": "File:Aerial view of Apple Park dllu.jpg",
+    "index": 6,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/250px-Aerial_view_of_Apple_Park_dllu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 160,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/500px-Aerial_view_of_Apple_Park_dllu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/250px-Aerial_view_of_Apple_Park_dllu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 160,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/500px-Aerial_view_of_Apple_Park_dllu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Aerial_view_of_Apple_Park_dllu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Apple_Park_dllu.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=69553418",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Dllu\" title=\"User:Dllu\">Daniel L. Lu (user:dllu)</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 73761619,
+    "ns": 6,
+    "title": "File:Apple Malus domestica Zoete Peppel. (actm).jpg",
+    "index": 7,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg/250px-Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 360,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg/500px-Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg/250px-Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 360,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg/500px-Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/78/Apple_Malus_domestica_Zoete_Peppel._%28actm%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Apple_Malus_domestica_Zoete_Peppel._(actm).jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=73761619",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Agnes_Monkelbaan\" title=\"User:Agnes Monkelbaan\">Agnes Monkelbaan</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 81528752,
+    "ns": 6,
+    "title": "File:Tree with red apples in Barkedal 4.jpg",
+    "index": 3,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Tree_with_red_apples_in_Barkedal_4.jpg/250px-Tree_with_red_apples_in_Barkedal_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 240,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Tree_with_red_apples_in_Barkedal_4.jpg/500px-Tree_with_red_apples_in_Barkedal_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Tree_with_red_apples_in_Barkedal_4.jpg/250px-Tree_with_red_apples_in_Barkedal_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 240,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Tree_with_red_apples_in_Barkedal_4.jpg/500px-Tree_with_red_apples_in_Barkedal_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/19/Tree_with_red_apples_in_Barkedal_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Tree_with_red_apples_in_Barkedal_4.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=81528752",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a rel=\"mw:WikiLink\" href=\"https://commons.wikimedia.org/wiki/User:W.carter\" title=\"User:W.carter\">W.carter</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 86021379,
+    "ns": 6,
+    "title": "File:Rotten apple under the tree.jpg",
+    "index": 4,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Rotten_apple_under_the_tree.jpg/250px-Rotten_apple_under_the_tree.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 160,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Rotten_apple_under_the_tree.jpg/500px-Rotten_apple_under_the_tree.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Rotten_apple_under_the_tree.jpg/250px-Rotten_apple_under_the_tree.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 160,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Rotten_apple_under_the_tree.jpg/500px-Rotten_apple_under_the_tree.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Rotten_apple_under_the_tree.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Rotten_apple_under_the_tree.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=86021379",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Sally_V\" title=\"User:Sally V\">Sally V</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 133604406,
+    "ns": 6,
+    "title": "File:Apple Garden in Kashmir, India.jpg",
+    "index": 12,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Apple_Garden_in_Kashmir%2C_India.jpg/250px-Apple_Garden_in_Kashmir%2C_India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 160,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Apple_Garden_in_Kashmir%2C_India.jpg/500px-Apple_Garden_in_Kashmir%2C_India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Apple_Garden_in_Kashmir%2C_India.jpg/250px-Apple_Garden_in_Kashmir%2C_India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 160,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Apple_Garden_in_Kashmir%2C_India.jpg/500px-Apple_Garden_in_Kashmir%2C_India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Apple_Garden_in_Kashmir%2C_India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Apple_Garden_in_Kashmir,_India.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=133604406",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a rel=\"mw:WikiLink\" href=\"https://commons.wikimedia.org/wiki/User:AuliRaha?action=edit&amp;redlink=1\" title=\"User:AuliRaha (page does not exist)\" class=\"new\" typeof=\"mw:LocalizedAttrs\" data-mw-i18n='{\"title\":{\"lang\":\"x-page\",\"key\":\"red-link-title\",\"params\":[\"User:AuliRaha\"]}}'>Auli Raha (অলি রাহা)</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 162557783,
+    "ns": 6,
+    "title": "File:Apple fruit in illorin.jpg",
+    "index": 10,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Apple_fruit_in_illorin.jpg/250px-Apple_fruit_in_illorin.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 240,
+      "thumbheight": 180,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Apple_fruit_in_illorin.jpg/500px-Apple_fruit_in_illorin.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Apple_fruit_in_illorin.jpg/250px-Apple_fruit_in_illorin.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 240,
+       "height": 180,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Apple_fruit_in_illorin.jpg/500px-Apple_fruit_in_illorin.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/6/67/Apple_fruit_in_illorin.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Apple_fruit_in_illorin.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=162557783",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Eunice_Ameh\" title=\"User:Eunice Ameh\">Eunice Ameh</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   }
+  ]
+ }
+}
