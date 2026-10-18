@@ -60,6 +60,8 @@
 .tx-name input:focus, .tx-area textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .tx-name input[aria-invalid="true"] { border-color: var(--bad); }
 .tx-name .field-error { display: flex; align-items: center; gap: 6px; margin: 0; }
+.tx-namenote { margin: 0; font-size: var(--t-sm); color: var(--accent); font-weight: 600; }
+.tx-namenote[hidden] { display: none; }
 
 /* ---- the text --------------------------------------------------------------- */
 
@@ -242,6 +244,25 @@
 .tx-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
 
 .tx-cols { position: relative; }
+/* Read aloud: one toggle, named by its language, and "đổi" for another. */
+.tx-say { gap: 4px; }
+.tx-toggle {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px;
+  border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink);
+  font-size: var(--t-sm); font-weight: 600; white-space: nowrap;
+}
+.tx-toggle .icon { color: var(--muted); }
+.tx-toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.tx-toggle[aria-pressed="true"] .icon { color: var(--accent); }
+.tx-say .tx-change {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 8px; border: 0; background: none;
+  font-size: var(--t-sm); font-weight: 600; color: var(--accent);
+}
+.tx-say .tx-change:hover { text-decoration: underline; text-underline-offset: 3px; }
+.tx-say:not(.open) > .tx-optbody { display: none; }
+@media (min-width: 60rem) { .tx-say { position: relative; } }
+.tx-gowhy { grid-column: 1 / -1; margin: 8px 0 0; }
+.tx-gowhy[hidden] { display: none; }
 .tx-cols .tx-chip { display: inline-flex; }
 .tx-cols:not(.open) .tx-optbody { display: none; }
 .tx-pill {
@@ -327,14 +348,10 @@
 
   .tx-body { display: flex; flex-direction: column; overflow: auto; overscroll-behavior: contain; }
 
-  /* The name on one slim line, its label beside it. */
-  .tx-name {
-    flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
-    gap: 4px 10px; padding: 10px 16px 0;
-  }
+  /* The name: its label above a field the width of the screen. */
+  .tx-name { flex: none; gap: 4px; padding: 10px 16px 0; }
   .tx-name .tx-label { font-size: var(--t-xs); color: var(--muted); }
-  .tx-name input { min-height: 38px; padding: 0 12px; border-radius: 10px; font-size: 16px; }
-  .tx-name .field-error { grid-column: 1 / -1; }
+  .tx-name input { min-height: 44px; padding: 0 12px; border-radius: var(--r-control); font-size: 16px; }
 
   /* The card: a fixed room, so nothing typed below ever moves; ‹ › on its
      edges, a tap turns it. */
@@ -400,6 +417,8 @@
   .tx-chip .caret { flex: none; color: var(--muted); }
   .tx-chiptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .tx-opt.open > .tx-chip { border-color: var(--accent); color: var(--accent); }
+  .tx-say .tx-change, .tx-say.open > .tx-change { border: 0; background: none; padding: 0 6px; min-height: 36px; color: var(--accent); }
+  .tx-toggle { min-height: 36px; padding: 0 12px; font-size: var(--t-xs); }
   .tx-morebtn { width: 36px; padding: 0; justify-content: center; font-size: 18px; }
   .tx-morebtn .icon { color: var(--ink) !important; }
   .tx-dot {

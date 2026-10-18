@@ -1643,7 +1643,11 @@ function pickTemplate(id) {
   // from the template: two sets with one name are one deck in Anki, and a
   // name nobody chose is how that happens. Suggested, and selected so typing
   // replaces it.
-  $("#tpl-name").value = textOf(id).name;
+  const base = textOf(id).name;
+  let name = base;
+  for (let n = 2; nameUsed(name) && n < 50; n++) name = `${base} (${n})`;
+  $("#tpl-name").value = name;
+  $("#tpl-name-note").className = "tpl-namenote";
   paintNameNote();
   $("#tplbox").showModal();
   $("#tpl-name").focus();
@@ -1669,15 +1673,20 @@ function idTyped(value) {
   }
 }
 
-/** Under the name field: why the sheet cannot be made yet, or a name in use. */
-function paintNameNote() {
+/**
+ * Under the name field: a name used before (the set it will update), or — only
+ * once Tạo has been pressed with the field empty — that a name is needed. The
+ * button itself is never greyed out.
+ */
+function paintNameNote(asked = false) {
   const name = $("#tpl-name").value.trim();
   const note = $("#tpl-name-note");
+  const missing = !name && (asked || note.classList.contains("bad"));
   const used = Boolean(name) && nameUsed(name);
-  $("#tpl-go").disabled = !name;
-  note.textContent = !name ? t("setNameEmpty") : used ? t("setNameUsed") : "";
-  note.className = `tpl-namenote${!name || used ? " bad" : ""}`;
-  $("#tpl-name").setAttribute("aria-invalid", String(!name));
+  note.textContent = missing ? t("setNameEmpty") : used ? t("setNameUsed", name) : "";
+  note.className = `tpl-namenote${missing ? " bad" : ""}`;
+  note.setAttribute("role", missing ? "alert" : "status");
+  $("#tpl-name").setAttribute("aria-invalid", String(missing));
 }
 
 /** The step's sheet as a .csv — the same writer as Download .csv in the editor. */
@@ -1691,7 +1700,7 @@ function stepCsv() {
 async function createFromStep({ advanced = false } = {}) {
   const name = $("#tpl-name").value.replace(/\s+/g, " ").trim().replace(/;/g, ",");
   if (!name) {
-    paintNameNote();
+    paintNameNote(true);
     return $("#tpl-name").focus();
   }
   // Only reachable over a sheet with words by a link (?tpl=): everywhere else
@@ -3127,7 +3136,7 @@ async function rename(typed) {
       title: t(had === null ? "nameAddTitle" : "renameTitle"),
       text:
         t(had === null ? "nameAddText" : "renameText", sheet.title || "—", name) +
-        (nameUsed(name) ? " " + t("setNameUsed") : ""),
+        (nameUsed(name) ? " " + t("setNameUsed", name) : ""),
       yes: t(had === null ? "nameAddYes" : "renameYes"),
       no: t("renameNo"),
     });

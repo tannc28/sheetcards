@@ -21,6 +21,19 @@
 
 import { rootLinks, site } from "./paths.js";
 
+// The languages the read-aloud toggle can name: [Vietnamese, English].
+const SAY_NAMES = {
+  en_US: ["tiếng Anh", "English"],
+  en_GB: ["tiếng Anh (Anh)", "British English"],
+  zh_CN: ["tiếng Trung", "Chinese"],
+  ja_JP: ["tiếng Nhật", "Japanese"],
+  ko_KR: ["tiếng Hàn", "Korean"],
+  fr_FR: ["tiếng Pháp", "French"],
+  de_DE: ["tiếng Đức", "German"],
+  es_ES: ["tiếng Tây Ban Nha", "Spanish"],
+  vi_VN: ["tiếng Việt", "Vietnamese"],
+};
+
 const STRINGS = {
   // --- masthead and entry ---------------------------------------------------
   skip: { en: "Skip to Make flashcards", vi: "Tới phần Tạo flashcard" },
@@ -333,9 +346,11 @@ const STRINGS = {
     en: "Give the flashcard set a name to create the sheet.",
     vi: "Đặt tên cho bộ flashcard để tạo sheet.",
   },
+  // A name used before is the same set: importing it updates that deck, which
+  // is what re-using a name is for.
   setNameUsed: {
-    en: "This name is already used for another flashcard set — the same name overwrites that deck in Anki.",
-    vi: "Tên này đã dùng cho một bộ flashcard khác — trùng tên sẽ ghi đè vào deck đó trong Anki.",
+    en: (name) => `Updates the set “${name}” made earlier.`,
+    vi: (name) => `Sẽ cập nhật bộ “${name}” đã tạo trước đó.`,
   },
   renameTitle: { en: "Rename the flashcard set?", vi: "Đổi tên bộ flashcard?" },
   renameText: {
@@ -545,7 +560,7 @@ const STRINGS = {
   txCopyText: { en: "Copy text", vi: "Copy văn bản" },
   txCopyTable: { en: "Copy table", vi: "Copy bảng" },
   txName: { en: "Flashcard set name", vi: "Tên bộ flashcard" },
-  txNamePlaceholder: { en: "e.g. English vocabulary week 1", vi: "Ví dụ: Từ vựng tiếng Anh tuần 1" },
+  txNamePlaceholder: { en: "e.g. IELTS week 1", vi: "Ví dụ: IELTS tuần 1" },
   txNameEmpty: { en: "Give the set a name.", vi: "Hãy đặt tên cho bộ flashcard." },
   txPlaceholder: {
     en: "apple - quả táo\nbook - quyển sách\njourney - chuyến đi",
@@ -561,8 +576,20 @@ const STRINGS = {
     vi: (n) => `${n} card không có mặt sau`,
   },
   txSettings: { en: "Settings", vi: "Cài đặt" },
-  txSpeak: { en: "Read aloud", vi: "Đọc to" },
-  txSpeakNone: { en: "Don't read", vi: "Không đọc" },
+  // The read-aloud toggle, named by its language. The Vietnamese names the
+  // language the way a learner says it ("tiếng Anh"), not by its code.
+  txSayIn: {
+    en: (code) => `Read aloud in ${SAY_NAMES[code]?.[1] || code}`,
+    vi: (code) => `Đọc ${SAY_NAMES[code]?.[0] || code}`,
+  },
+  txChange: { en: "change", vi: "đổi" },
+  txSpeakLang: { en: "Language read aloud", vi: "Ngôn ngữ đọc to" },
+  txGoEmpty: { en: "Paste or type at least one word first.", vi: "Dán hoặc gõ ít nhất một từ trước đã." },
+  txNameSuggest: { en: (day) => `Words ${day}`, vi: (day) => `Từ vựng ${day}` },
+  txAddsTo: {
+    en: (n, name) => `Adds ${n} new word${n === 1 ? "" : "s"} to the set “${name}”.`,
+    vi: (n, name) => `Sẽ thêm ${n} từ mới vào bộ “${name}”.`,
+  },
   txSpeakExample: { en: "read the example sentence too", vi: "đọc cả câu ví dụ" },
   txTheme: { en: "Theme", vi: "Theme" },
   txThemeNone: { en: "Default", vi: "Mặc định" },
@@ -1267,10 +1294,6 @@ const STRINGS = {
     vi: "Từ lần tải trước, card của deck này đã đổi (ví dụ bật reverse), nên với Anki đây là note type mới. Với tuỳ chọn mặc định, Anki sẽ không cập nhật note nào. Chỉ cần một lần, ở lần import này:",
   },
   // Nothing known about the last download (a Google Sheet never downloaded here).
-  schemaMaybe: {
-    en: "If you changed the columns since the last import: turn on <b>Merge note types</b> and set <b>Update notes</b> to <b>Always</b>.",
-    vi: "Nếu bạn đã đổi cột từ lần import trước: bật <b>Merge note types</b> và đặt <b>Update notes</b> thành <b>Always</b>.",
-  },
   // A named set imported when its deck was still called sc_<name>.
   renameTitle: {
     en: "First rename the old deck in Anki",
@@ -1488,42 +1511,18 @@ const STRINGS = {
     en: "Edited the sheet? Download again and import over it.",
     vi: "Sửa sheet rồi tải lại? Cứ import đè.",
   },
+  // One line each: what importing the next file does, and while what stays true.
   assureBody: {
-    en: (key = "ID") =>
-      `Each note is matched by its ${key} column and by the flashcard set name written in the sheet ` +
-      "itself, so importing a new file updates the notes you already have and keeps " +
-      "your review progress — no duplicate cards, even if the file was renamed, saved as " +
-      ".xlsx or moved to Google Sheets. A word deleted from the sheet stays in Anki; " +
-      "delete it there if you want it gone.",
-    vi: (key = "ID") =>
-      `Mỗi note được nhận ra nhờ cột ${key} và tên bộ flashcard ghi ngay trong sheet, nên ` +
-      "import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không " +
-      "nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã " +
-      "xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.",
+    en: "Import over it: your notes are updated and keep their progress, no duplicates.",
+    vi: "Import đè: note cũ được cập nhật và giữ tiến độ, không nhân đôi.",
   },
-  // The same promise for a sheet that does not name itself: true only while
-  // the link, or the file's name, stays the same.
   assureBodyLink: {
-    en: (key = "ID") =>
-      `Each note is matched by its ${key} column and by this Google Sheets link, so downloading ` +
-      "from the same link again updates the notes you already have and keeps your review " +
-      "progress. The same sheet saved as a file and uploaded would be a different deck, " +
-      "unless the sheet names itself (name=).",
-    vi: (key = "ID") =>
-      `Mỗi note được nhận ra nhờ cột ${key} và link Google Sheets này, nên tải lại từ đúng ` +
-      "link này sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Cùng sheet đó lưu ra file " +
-      "rồi tải lên sẽ thành deck khác, trừ khi sheet có tên riêng (name=).",
+    en: "Download again from this same link and import over it: notes update and keep their progress.",
+    vi: "Tải lại từ đúng link này rồi import đè: note được cập nhật và giữ tiến độ.",
   },
   assureBodyFile: {
-    en: (file, key = "ID") =>
-      `Each note is matched by its ${key} column and by the file's name, <b>${file}</b>. Upload a file with ` +
-      "that same name and the import updates the notes you already have and keeps your review " +
-      "progress. Renamed, or moved to Google Sheets, it would be a new deck — unless the sheet " +
-      "names itself (name=).",
-    vi: (file, key = "ID") =>
-      `Mỗi note được nhận ra nhờ cột ${key} và tên file <b>${file}</b>. Tải lên file đúng tên đó ` +
-      "thì import sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Đổi tên file hay chuyển " +
-      "lên Google Sheets sẽ thành deck mới — trừ khi sheet có tên riêng (name=).",
+    en: (file) => `Open <b>${file}</b> again (same name) and import over it: notes update and keep their progress.`,
+    vi: (file) => `Mở lại <b>${file}</b> (giữ đúng tên) rồi import đè: note được cập nhật và giữ tiến độ.`,
   },
   nameOfferAdd: { en: "Add name=", vi: "Thêm name=" },
   nameOfferWhy: {
@@ -1553,8 +1552,16 @@ const STRINGS = {
 
   nextTimeTitle: { en: "Adding words next week", vi: "Tuần sau thêm từ" },
   nextTimeBody: {
-    en: "Open the sheet again — the sheet link you saved, your .csv file or your Google Sheet — add the words, press Make flashcards, download the new .apkg and import it. Your old cards are updated, not doubled.",
-    vi: "Mở lại sheet — link sheet bạn đã lưu, file .csv hoặc Google Sheet của bạn — thêm từ, bấm Tạo flashcard, tải file .apkg mới rồi import. Card cũ được cập nhật, không nhân đôi.",
+    en: "Open this set again from Recent sets (on Make flashcards) or from the link you saved, add words, download the new .apkg and import it.",
+    vi: "Mở lại bộ này ở Bộ gần đây (trang Tạo flashcard) hoặc từ link đã lưu, thêm từ, tải file .apkg mới rồi import.",
+  },
+  saveSetLink: { en: "Save this set's link", vi: "Lưu link bộ này" },
+  saveSetLinkDone: { en: "Link copied", vi: "Đã copy link" },
+  saveSetLinkFailed: { en: "Couldn't copy the link. Use the share button above the card.", vi: "Không copy được link. Dùng nút chia sẻ phía trên card." },
+  recentTitle: { en: "Recent sets", vi: "Bộ gần đây" },
+  recentMeta: {
+    en: (n, day) => `${n} card${n === 1 ? "" : "s"} · ${day}`,
+    vi: (n, day) => `${n} card · ${day}`,
   },
 
   // --- the landing page, continued ------------------------------------------

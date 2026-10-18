@@ -36,7 +36,8 @@ import { lang, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { site } from "./paths.js";
 import { SEPARATORS } from "./wordlist.js";
-import { deckKey, markerGet, markerSet } from "./identity.js";
+import { deckKey, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
+import { recentFor, recentSets } from "./recent.js";
 import { warningText } from "./sheetwarnings.js";
 import { backOnly, cardDoc, cardFrame } from "./cardframe.js";
 import { THEME_SWATCHES } from "./theme-swatches.js";
@@ -57,8 +58,6 @@ import {
 } from "./importformats.js";
 import { encodeShare, shareAddress, toTsv } from "./sharelink.js";
 
-// The last name used, so pasting the longer list next week lands in the same deck.
-const NAME_KEY = "sc-paste-name";
 // The panel's last choices for each set, by its name: re-pasting the list
 // without its #config line starts from them rather than from a guess.
 const CHOICES_KEY = "sc-paste-settings";
@@ -130,22 +129,6 @@ function store(key, value) {
   }
 }
 
-function remembered() {
-  try {
-    return localStorage.getItem(NAME_KEY) || "";
-  } catch {
-    return "";
-  }
-}
-
-function remember(name) {
-  try {
-    localStorage.setItem(NAME_KEY, name);
-  } catch {
-    // A private window: the name is only a convenience.
-  }
-}
-
 /** Sets markup only when it changed, so an open select keeps its focus. */
 const written = new WeakMap();
 function setHtml(el, html) {
@@ -178,9 +161,11 @@ function build() {
     <div class="tx-body">
       <div class="tx-name">
         <label class="tx-label" for="tx-name">${escapeHtml(t("txName"))}</label>
-        <input id="tx-name" type="text" maxlength="100" autocomplete="off" required
-               placeholder="${escapeHtml(t("txNamePlaceholder"))}" aria-describedby="tx-name-error">
-        <span id="tx-name-error" class="field-error" hidden>${icon("circle-alert")}<span>${escapeHtml(t("txNameEmpty"))}</span></span>
+        <input id="tx-name" type="text" maxlength="100" autocomplete="off" required list="tx-names"
+               placeholder="${escapeHtml(t("txNamePlaceholder"))}" aria-describedby="tx-name-error tx-name-note">
+        <datalist id="tx-names"></datalist>
+        <span id="tx-name-error" class="field-error" role="alert" hidden>${icon("circle-alert")}<span>${escapeHtml(t("txNameEmpty"))}</span></span>
+        <p id="tx-name-note" class="tx-namenote" aria-live="polite"></p>
       </div>
       <section class="tx-look" aria-label="${escapeHtml(t("cardFrameTitle"))}">
         <div class="tx-lookhead">
@@ -229,10 +214,11 @@ function build() {
     </div>
     <div class="tx-foot">
       <section class="tx-set" id="tx-set" aria-label="${escapeHtml(t("txSettings"))}">
-        <div class="tx-opt" data-opt="tts">
-          <button class="tx-chip" type="button" aria-expanded="false" aria-controls="tx-pop-tts">${icon("volume-2")}<span class="tx-chiptext" id="tx-chip-tts"></span>${icon("chevron-down", "caret")}</button>
-          <div class="tx-optbody" id="tx-pop-tts">
-            <label class="tx-label" for="tx-tts">${icon("volume-2")}<span>${escapeHtml(t("txSpeak"))}</span></label>
+        <div class="tx-opt tx-say" data-opt="tts">
+          <button class="tx-toggle" id="tx-say" type="button" aria-pressed="false">${icon("volume-2")}<span class="tx-chiptext" id="tx-say-text"></span></button>
+          <button class="tx-chip tx-change" type="button" aria-expanded="false" aria-controls="tx-pop-tts">${escapeHtml(t("txChange"))}</button>
+          <div class="tx-optbody tx-pop" id="tx-pop-tts">
+            <label class="tx-label" for="tx-tts">${escapeHtml(t("txSpeakLang"))}</label>
             <select id="tx-tts"></select>
             <label class="tx-check" id="tx-ex-wrap" hidden><input type="checkbox" id="tx-ex"><span>${escapeHtml(t("txSpeakExample"))}</span></label>
           </div>
@@ -264,7 +250,8 @@ function build() {
           <span class="tx-copied" id="tx-copied" aria-live="polite"></span>
         </div>
       </div>
-      <button class="btn tx-go" id="tx-go" type="button" disabled><span id="tx-go-text">${escapeHtml(t("go"))}</span>${icon("arrow-right")}</button>
+      <button class="btn tx-go" id="tx-go" type="button"><span id="tx-go-text">${escapeHtml(t("go"))}</span>${icon("arrow-right")}</button>
+      <p class="field-error tx-gowhy" id="tx-go-why" role="alert" hidden>${icon("circle-alert")}<span>${escapeHtml(t("txGoEmpty"))}</span></p>
     </div>`;
   document.body.append(box);
   buildSaveBox();
@@ -347,6 +334,7 @@ function build() {
   let nameTimer = 0;
   $in("#tx-name").addEventListener("input", () => {
     $in("#tx-name-error").hidden = true;
+    paintNameNote();
     $in("#tx-name").removeAttribute("aria-invalid");
     clearTimeout(nameTimer);
     nameTimer = setTimeout(nameChanged, SETTLE);
@@ -375,7 +363,17 @@ function build() {
   });
 
   // ---- the settings
-  $in("#tx-tts").addEventListener("change", (e) => choose({ tts: e.target.value }));
+  $in("#tx-tts").addEventListener("change", (e) => {
+    state.sayLang = e.target.value;
+    choose({ tts: e.target.value });
+  });
+  // One tap: reading aloud on or off, in the language the words look like
+  // (or the one picked under "đổi").
+  $in("#tx-say").addEventListener("click", () => {
+    const now = currentChoices().tts;
+    if (now) state.sayLang = now;
+    choose({ tts: now ? "" : state.sayLang || sayGuess() });
+  });
   $in("#tx-ex").addEventListener("change", (e) => choose({ example: e.target.checked }));
   $in("#tx-themes").addEventListener("click", (e) => {
     const chip = e.target.closest("[data-theme]");
@@ -578,6 +576,44 @@ function buildSaveBox() {
   saveBox.addEventListener("click", (e) => {
     if (e.target === saveBox) saveBox.close();
   });
+}
+
+/** The language the words look like, for the read-aloud toggle: a script
+ *  says so outright; Latin letters with Vietnamese marks are Vietnamese, any
+ *  other Latin is offered as English (off until tapped). */
+function sayGuess() {
+  const words = (model()?.rows || []).slice(0, 40).map((r) => String(r[state.suggestion?.front ?? 0] ?? "")).join(" ");
+  if (/[\u3040-\u30ff]/.test(words)) return "ja_JP";
+  if (/[\uac00-\ud7af]/.test(words)) return "ko_KR";
+  if (/[\u3400-\u9fff]/.test(words)) return "zh_CN";
+  if (/[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(words)) return "vi_VN";
+  return "en_US";
+}
+
+/** A name to start from — "Từ vựng 18/10" — never one already used here. */
+function suggestedName() {
+  const day = lang() === "en"
+    ? new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+    : new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" });
+  const base = t("txNameSuggest", day);
+  let name = base;
+  for (let n = 2; nameUsed(name) && n < 50; n++) name = `${base} (${n})`;
+  return name;
+}
+
+/** Under the name: what this name does to a set made here before. */
+function paintNameNote() {
+  const note = $in("#tx-name-note");
+  const name = currentName();
+  const known = name ? recentFor(name) : null;
+  let text = "";
+  if (known?.keys) {
+    const had = new Set(known.keys.map(norm));
+    const fresh = new Set((state.fronts || []).map(norm).filter((f) => !had.has(f))).size;
+    text = fresh ? t("txAddsTo", fresh, known.name) : t("setNameUsed", known.name);
+  } else if (name && nameUsed(name)) text = t("setNameUsed", name);
+  note.textContent = text;
+  note.hidden = !text;
 }
 
 function paintPasteButton() {
@@ -902,7 +938,9 @@ function paintMeta(count, { dupes = 0, oneSided = 0 } = {}) {
 }
 
 function enable(on) {
-  for (const id of ["#tx-go", "#tx-edit", "#tx-save"]) $in(id).disabled = !on;
+  // Tạo flashcard is never greyed out: pressed with nothing to make, it says why.
+  for (const id of ["#tx-edit", "#tx-save"]) $in(id).disabled = !on;
+  if (on) $in("#tx-go-why").hidden = true;
 }
 
 /** Which form is on screen, and the words that go with it. */
@@ -959,6 +997,8 @@ function paint() {
   if (!rows.length) return paintCards(null);
   const made = settings();
   paintChoices(made.choices, rows[0]?.[state.suggestion.front] ?? "");
+  state.fronts = rows.map((r) => String(r[state.suggestion.front] ?? "").trim()).filter(Boolean);
+  paintNameNote();
   paintCards(
     table
       ? state.grid
@@ -982,24 +1022,21 @@ function paintChoices(choices, first = "") {
   const s = state.suggestion;
   $in("#tx-reused").hidden = !state.reused;
   const tts = $in("#tx-tts");
-  const known = SPOKEN.some(([code]) => code === choices.tts);
+  const say = choices.tts || state.sayLang || sayGuess();
+  const known = SPOKEN.some(([code]) => code === say);
   setHtml(
     tts,
     [
-      `<option value="">${escapeHtml(t("txSpeakNone"))}</option>`,
       ...SPOKEN.map(([code, label]) => `<option value="${code}">${escapeHtml(label)}</option>`),
-      ...(choices.tts && !known ? [`<option value="${escapeHtml(choices.tts)}">${escapeHtml(choices.tts)}</option>`] : []),
+      ...(say && !known ? [`<option value="${escapeHtml(say)}">${escapeHtml(say)}</option>`] : []),
     ].join(""),
   );
-  tts.value = choices.tts;
+  tts.value = say;
   $in("#tx-ex-wrap").hidden = s.example < 0 || !choices.tts;
   $in("#tx-ex").checked = choices.example;
-  const spoken = SPOKEN.find(([code]) => code === choices.tts)?.[1] || choices.tts || t("txSpeakNone");
-  // The chip says the choice; its speaker icon and its title say what it is.
-  $in("#tx-chip-tts").textContent = spoken;
-  const ttsChip = $in("#tx-chip-tts").parentElement;
-  ttsChip.title = `${t("txSpeak")}: ${spoken}`;
-  ttsChip.setAttribute("aria-label", ttsChip.title);
+  const toggle = $in("#tx-say");
+  toggle.setAttribute("aria-pressed", String(Boolean(choices.tts)));
+  $in("#tx-say-text").textContent = t("txSayIn", say);
 
   const mode = dark() ? "night" : "light";
   const listed = new Map(THEME_SWATCHES.map((w) => [w.name, w[mode]]));
@@ -1388,12 +1425,16 @@ function keepChoices(name) {
 }
 
 async function finish(edit) {
+  if (!state.cards.length && !(state.form === "table" ? model().rows.length : chosenRows().length)) {
+    $in("#tx-go-why").hidden = false;
+    return;
+  }
   if (nameMissing()) return;
   const name = currentName();
   const grid = finalGrid(name);
   if (!grid) return;
   keepChoices(name);
-  remember(name);
+  rememberName(name);
   // The grid carries name= and the deck is keyed by it; the link's title is the
   // same name, which is what the page calls the file it makes of it.
   const title = markerGet(grid[1].find((c) => MARKER.test(String(c).trim())) || "", "name") || name;
@@ -1431,8 +1472,15 @@ export function open(text) {
   if (!box) build();
   Object.assign(state, { at: 0, answered: false, tsv: "", doc: "", deck: null, cards: [] });
   const input = $in("#tx-name");
-  if (!input.value) input.value = remembered();
+  if (!input.value) input.value = suggestedName();
   $in("#tx-name-error").hidden = true;
+  $in("#tx-go-why").hidden = true;
+  setHtml(
+    $in("#tx-names"),
+    recentSets()
+      .map((r) => `<option value="${escapeHtml(r.name)}"></option>`)
+      .join(""),
+  );
   if (typeof text === "string" && text.trim()) load(text);
   else if (state.form === "table") {
     paintForm();
