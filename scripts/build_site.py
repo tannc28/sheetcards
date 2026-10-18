@@ -216,7 +216,8 @@ _COMMONS = "https://upload.wikimedia.org/wikipedia/commons/thumb"
 # stroke by stroke in the box (draw, on the question), and the answer animates
 # the strokes, shows the character large and reads it and an example aloud. The
 # same layout as the example workbook's "12 Chinese drawing", minus its deck and
-# tag columns, with the Chinese font and the iPhone's own Mandarin voice.
+# tag columns, with the iPhone's own Mandarin voice (which also picks the
+# Chinese font).
 HANZI_TEMPLATE = [
     ["ID", "Meaning", "Pinyin", "Draw", "Character", "Example"],
     [
@@ -224,8 +225,8 @@ HANZI_TEMPLATE = [
         "size=24; color=muted; label=Viết chữ có nghĩa",
         "side=front; size=40; color=accent",
         "side=front; draw; size=260",
-        "side=back; size=72; font=sc; tts=zh_CN; voices=Apple_Tingting",
-        "side=back; size=20; font=sc; tts=zh_CN; voices=Apple_Tingting; speed=0.8",
+        "side=back; size=72; tts=zh_CN; voices=Apple_Tingting",
+        "side=back; size=20; tts=zh_CN; voices=Apple_Tingting; speed=0.8",
     ],
     ["d01", "tôi", "wǒ", "我", "我", "我是学生。"],
     ["d02", "bạn", "nǐ", "你", "你", "你好吗？"],
@@ -250,9 +251,9 @@ KANJI_TEMPLATE = [
     ["ID", "Japanese", "Meaning", "Example", "Note"],
     [
         "#config",
-        "size=40; furigana; font=jp; tts=ja_JP",
+        "size=40; furigana; tts=ja_JP",
         "side=back; size=24",
-        "side=back; size=20; furigana; font=jp; tts=ja_JP",
+        "side=back; size=20; furigana; tts=ja_JP",
         "side=back; size=14; color=muted; hint",
     ],
     [
@@ -485,10 +486,32 @@ VOCAB_LANGUAGES = [
 ]
 
 
+def _tts_fonts():
+    """``sheet_config.TTS_FONTS``: the face a spoken column gets without asking.
+
+    Read from the file rather than copied, so the templates drop exactly the
+    ``font=`` the parser would have supplied anyway, and no other.
+    """
+    import ast
+
+    tree = ast.parse((SRC / "sheet_config.py").read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            getattr(t, "id", "") == "TTS_FONTS" for t in node.targets
+        ):
+            return ast.literal_eval(node.value)
+    return {}
+
+
 def _spoken(base, code, voice, font, speak):
-    """One column's cell, with the language's font and, if asked, its voice."""
+    """One column's cell, with the language's font and, if asked, its voice.
+
+    A spoken column is drawn in its voice's font already (sheet_config.font_of),
+    so ``font=`` is written only where the voice would not supply it — on a
+    column that is not read aloud, or a language with no font of its own.
+    """
     parts = [base]
-    if font:
+    if font and not (speak and _tts_fonts().get(code) == font):
         parts.append(f"font={font}")
     if speak:
         parts.append(f"tts={code}" + (f"; voices={voice}" if voice else ""))

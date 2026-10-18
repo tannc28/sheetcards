@@ -151,10 +151,6 @@ def test_the_tour_covers_every_directive(sheets):
         config = deck.sheet_config
         if not config:
             continue
-        if config.align:
-            used.add("deck align")
-        if config.speed is not None:
-            used.add("deck speed")
         if config.reverse:
             used.add("deck reverse")
         if config.theme:
@@ -169,6 +165,8 @@ def test_the_tour_covers_every_directive(sheets):
             used.add("cloze")
         if config.type_field:
             used.add("type")
+            if config.for_field(config.type_field).type_answer == "nc":
+                used.add("type=nc")
         for field in config.fields.values():
             for key in ("side", "size", "color", "align", "tts", "label"):
                 if getattr(field, key):
@@ -184,10 +182,16 @@ def test_the_tour_covers_every_directive(sheets):
                 used.add(field.media)
             if field.subdeck:
                 used.add("subdeck")
+            if field.font:
+                used.add("font")
+            if field.math:
+                used.add("math")
+            if field.code is not None:
+                used.add("code")
 
+    # Not here, on purpose: the retired keys (rtl, sort, vertical, and the
+    # deck-wide align and speed) — an example of one would be a sheet that warns.
     expected = {
-        "deck align",
-        "deck speed",
         "deck reverse",
         "deck theme",
         "deck name",
@@ -207,8 +211,12 @@ def test_the_tour_covers_every_directive(sheets):
         "furigana",
         "cloze",
         "type",
+        "type=nc",
         "draw",
         "subdeck",
+        "font",
+        "math",
+        "code",
         *MEDIA_KINDS,
     }
     assert expected - used == set(), f"no example uses: {sorted(expected - used)}"
@@ -218,11 +226,20 @@ def test_the_tour_covers_every_directive(sheets):
 def test_the_reserved_columns_are_all_demonstrated(sheets):
     roles = {"sync": False, "tags": False, "subdeck3": False, "subdeck1": False}
     for _, deck in sheets:
+        levels = len(deck.sheet_config.subdeck_columns) if deck.sheet_config else 0
         roles["sync"] |= deck.plan.sync_header is not None
         roles["tags"] |= deck.plan.tags_header is not None
-        roles["subdeck1"] |= len(deck.plan.subdeck_headers) >= 1
-        roles["subdeck3"] |= len(deck.plan.subdeck_headers) >= 3
+        roles["subdeck1"] |= levels >= 1
+        roles["subdeck3"] |= levels >= 3
     assert all(roles.values()), f"not demonstrated: {roles}"
+
+
+@pytest.mark.unit
+def test_no_sheet_uses_a_reserved_subdeck_header(sheets):
+    """`SUBDECK n` headers are being retired: the deck path is `subdeck=n` on a
+    column with a real name, so the examples must not teach the old way."""
+    used = [name for name, deck in sheets if deck.plan.subdeck_headers]
+    assert not used, f"still on SUBDECK headers: {used}"
 
 
 @pytest.mark.unit

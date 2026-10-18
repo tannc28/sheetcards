@@ -80,22 +80,25 @@ SHEETS = {
         ["b05", "das Buch", "quyển sách"],
         ["b06", "la casa", "ngôi nhà"],
     ],
-    # the reserved columns — SYNC gating, the deck path, tags
+    # the reserved columns — SYNC gating and tags — and the deck path, which is
+    # two ordinary columns the settings row names as levels (subdeck=1, =2):
+    # they keep a real name, file the note, and are never drawn on the card.
     "02 Sync & subdecks (deck con)": [
-        ["ID", "SYNC", "SUBDECK 1", "SUBDECK 2", "TAGS", "Question", "Answer"],
+        ["ID", "SYNC", "Topic", "Subtopic", "TAGS", "Question", "Answer"],
+        ["#config", "", "subdeck=1", "subdeck=2", "", "", ""],
         ["s01", "yes", "Geography", "Capitals", "europe, capitals", "Capital of Portugal?", "Lisbon"],
         ["s02", "x", "Geography", "Capitals", "asia; capitals", "Capital of Vietnam?", "Hanoi"],
         ["s03", "1", "Geography", "Rivers", "rivers", "Longest river in Asia?", "The Yangtze"],
         ["s04", "TRUE", "Geography", "Rivers", "rivers, europe", "Which river flows through Paris?", "The Seine"],
         ["s05", "✓", "History", "", "history", "Who was the first Ming emperor?", "The Hongwu Emperor"],
-        ["s06", "yes", "", "", "", "Where does a row with both SUBDECK cells empty go?", "Into 'Unsorted'. A sheet that sorts its rows has somewhere for the ones it did not sort."],
+        ["s06", "yes", "", "", "", "Where does a row with both Topic and Subtopic empty go?", "Into 'Unsorted'. A sheet that sorts its rows has somewhere for the ones it did not sort."],
         ["s07", "no", "Geography", "Capitals", "capitals", "This row is switched off.", "It is never written to Anki."],
         ["s08", "", "History", "", "history", "An empty SYNC cell is off too.", "Same as 'no'."],
     ],
     # the settings row: sides, sizes, colours, weight, labels, hint
     "03 Card layout (bố cục thẻ)": [
         ["ID", "Word", "Phonetic", "Meaning", "Example", "Note", "Source"],
-        ["#config align=left", "size=48px; bold", "side=front; size=22; color=accent", "size=26; color=#c2410c", "size=16; color=muted; italic; label=Example", "size=14; color=teal; align=right; hint", "side=hide"],
+        ["#config", "size=48px; bold; align=left", "side=front; size=22; color=accent; align=left", "size=26; color=#c2410c; align=left", "size=16; color=muted; italic; label; align=left", "size=14; color=teal; align=right; hint", "side=hide"],
         ["L01", "library", "/ˈlaɪbrəri/", "thư viện", "The library is next to the school.", "British speakers often say it in two syllables.", "Oxford 3000"],
         ["L02", "airport", "/ˈeəpɔːt/", "sân bay", "We got to the airport two hours early.", "air + port, the way most compound nouns are built.", "Oxford 3000"],
         ["L03", "hospital", "/ˈhɒspɪtl/", "bệnh viện", "She works at a hospital downtown.", "In British English: in hospital, no article.", "Oxford 3000"],
@@ -171,11 +174,11 @@ SHEETS = {
         ["v04", "A link that is already an embed link.", "https://www.youtube.com/embed/jNQXAC9IVRw", "The rewrite is idempotent — it is left alone."],
         ["v05", "A direct video file, not a page.", "https://upload.wikimedia.org/wikipedia/commons/d/de/Ink_grinding.webmhd.webm", "Passed through unchanged; the frame plays the file itself."],
     ],
-    # text-to-speech: a voice preference, deck-wide speed, a per-column
-    # override, and a column that is heard without being read
+    # text-to-speech: a voice preference, a speed on each spoken column, and a
+    # column that is heard without being read
     "10 Speech (đọc thành tiếng)": [
         ["ID", "English", "Phonetic", "Vietnamese", "Once more, slowly"],
-        ["#config speed=0.9", "size=34; tts=en_US; voices=Samantha,Microsoft Zira", "size=22; color=accent", "size=20", "side=hide; tts=en_US; speed=0.5"],
+        ["#config", "size=34; tts=en_US; voices=Samantha,Microsoft Zira; speed=0.9", "size=22; color=accent", "size=20", "side=hide; tts=en_US; speed=0.5"],
         ["k01", "Good morning.", "/ɡʊd ˈmɔːnɪŋ/", "chào buổi sáng", "Good morning."],
         ["k02", "Thank you for your help.", "/θæŋk juː fə jɔː help/", "cảm ơn bạn đã giúp đỡ", "Thank you for your help."],
         ["k03", "Could you say that again?", "/kʊd juː seɪ ðæt əˈɡen/", "bạn nói lại được không?", "Could you say that again?"],
@@ -186,7 +189,7 @@ SHEETS = {
     # write the character; a column that files the note without reaching the card
     "11 Chinese writing (gõ chữ)": [
         ["ID", "TAGS", "Level", "Meaning", "Pinyin", "Hanzi", "Strokes", "Example"],
-        ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN; font=sc; sort", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
+        ["#config", "", "subdeck=1", "side=front; size=24; color=muted; label=Write the character for", "side=front; size=40; color=accent", "side=back; size=90; type; tts=zh_CN", "side=back; image; size=200; hint; label=Stroke order", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["w01", "hanzi, hsk1", "HSK 1", "tôi", "wǒ", "我", "https://upload.wikimedia.org/wikipedia/commons/b/b3/%E6%88%91-order.gif", "我是学生。"],
         ["w02", "hanzi, hsk1", "HSK 1", "bạn", "nǐ", "你", "https://upload.wikimedia.org/wikipedia/commons/e/ee/%E4%BD%A0-order.gif", "你好吗？"],
         ["w03", "hanzi, hsk1", "HSK 1", "tốt; khỏe", "hǎo", "好", "https://upload.wikimedia.org/wikipedia/commons/6/6e/%E5%A5%BD-order.gif", "今天天气很好。"],
@@ -215,8 +218,8 @@ SHEETS = {
     ],
     # write the character yourself, stroke by stroke, and be marked on it
     "12 Chinese drawing (viết tay)": [
-        ["ID", "SUBDECK 1", "TAGS", "Meaning", "Pinyin", "Draw", "Character", "Example"],
-        ["#config", "", "", "size=24; color=muted; label=Draw the character for", "side=front; size=40; color=accent", "side=front; draw; size=260", "side=back; size=72; tts=zh_CN", "side=back; size=18; tts=zh_CN; speed=0.8"],
+        ["ID", "Level", "TAGS", "Meaning", "Pinyin", "Draw", "Character", "Example"],
+        ["#config", "subdeck=1", "", "size=24; color=muted; label=Draw the character for", "side=front; size=40; color=accent", "side=front; draw; size=260", "side=back; size=72; tts=zh_CN", "side=back; size=18; tts=zh_CN; speed=0.8"],
         ["d01", "HSK 1", "hanzi, hsk1, draw", "tôi", "wǒ", "我", "我", "我是学生。"],
         ["d02", "HSK 1", "hanzi, hsk1, draw", "bạn", "nǐ", "你", "你", "你好吗？"],
         ["d03", "HSK 1", "hanzi, hsk1, draw", "tốt; khỏe", "hǎo", "好", "好", "今天天气很好。"],
@@ -255,11 +258,11 @@ SHEETS = {
     # a whole-card palette, and a deck filed three levels deep: English vocabulary
     # by CEFR level and word class, in the colours of the season the theme is named
     # after. Nothing here is the end of anything — it is the sheet that demonstrates
-    # `theme=` and a three-level `SUBDECK`, and the widest one, which is why Sheet
+    # `theme=` and a three-level deck path, and the widest one, which is why Sheet
     # to Anki's example opens on it.
     "15 Theme + subdeck (màu, tầng)": [
-        ["ID", "SUBDECK 1", "SUBDECK 2", "SUBDECK 3", "TAGS", "Word", "Phonetic", "Meaning", "Example"],
-        ["#config theme=sakura", "", "", "", "", "size=44; bold; tts=en_US; sort", "side=back; size=20; color=accent", "side=back; size=22", "side=back; size=16; color=muted; italic; tts=en_US; speed=0.85"],
+        ["ID", "Language", "Level", "Word class", "TAGS", "Word", "Phonetic", "Meaning", "Example"],
+        ["#config theme=sakura", "subdeck=1", "subdeck=2", "subdeck=3", "", "size=44; bold; tts=en_US", "side=back; size=20; color=accent", "side=back; size=22", "side=back; size=16; color=muted; italic; tts=en_US; speed=0.85"],
         ["n01", "English", "B1", "Verbs", "cefr, b1", "to afford", "/əˈfɔːd/", "đủ tiền để mua", "We cannot afford a bigger flat this year."],
         ["n02", "English", "B1", "Verbs", "cefr, b1", "to complain", "/kəmˈpleɪn/", "phàn nàn", "She complained about the noise upstairs."],
         ["n03", "English", "B1", "Verbs", "cefr, b1", "to improve", "/ɪmˈpruːv/", "cải thiện", "His English improved after a year in Leeds."],
@@ -344,7 +347,7 @@ SHEETS = {
     # is already inside Anki, and the colouring is a library the card loads.
     "21 Formulas & code (công thức)": [
         ["ID", "Topic", "Question", "Formula", "Snippet", "Note"],
-        ["#config", "side=front; size=15; color=muted; label=Topic", "side=front; size=24; sort", "side=back; size=26; math=block", "side=back; code=python", "side=back; size=15; color=muted; hint"],
+        ["#config", "side=front; size=15; color=muted; label=Topic", "side=front; size=24", "side=back; size=26; math=block", "side=back; code=python", "side=back; size=15; color=muted; hint"],
         ["m01", "Geometry", "The area of a circle of radius r", "A = \\pi r^2", "", "The constant is the ratio of any circle's circumference to its diameter."],
         ["m02", "Algebra", "The quadratic formula", "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", "", "The part under the root is the discriminant; its sign counts the roots."],
         ["m03", "Physics", "Einstein's mass–energy equivalence", "E = mc^2", "", "c is the speed of light, so a very small mass is a very large energy."],
@@ -353,10 +356,11 @@ SHEETS = {
         ["m06", "Python", "Count how often each item appears", "", "from collections import Counter\n\ncounts = Counter(words)\nprint(counts.most_common(3))", "Counter is a dict that starts every key at zero."],
         ["m07", "SQL", "Rows in one table with no match in another", "", "SELECT c.name\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL", "A left join keeps every left row; the null is what says there was no match."],
     ],
-    # right to left, which is a direction no amount of styling can fake
+    # right to left with nothing to say so: every block on a card carries
+    # dir="auto", so Arabic runs from the right because it is Arabic
     "22 Arabic (phải sang trái)": [
         ["ID", "Arabic", "Transliteration", "Meaning", "Note"],
-        ["#config", "rtl; size=44; font=serif; sort", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=14; color=muted; hint"],
+        ["#config", "size=44; font=serif", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=14; color=muted; hint"],
         ["b01", "مرحبا", "marḥaban", "xin chào", "The everyday greeting, usable at any hour."],
         ["b02", "كتاب", "kitāb", "quyển sách", "Same root as maktaba, a library or bookshop."],
         ["b03", "ماء", "māʼ", "nước", "The last letter is a hamza, standing alone on the line."],
@@ -364,10 +368,11 @@ SHEETS = {
         ["b05", "مدرسة", "madrasa", "trường học", "Literally a place of study."],
         ["b06", "شكرا", "shukran", "cảm ơn", "Answered with ʿafwan, you are welcome."],
     ],
-    # top to bottom, right to left: how Japanese is set in a book
-    "23 Vertical text (viết dọc)": [
+    # haiku read aloud: tts=ja_JP also picks the Japanese font, so 直 and 骨
+    # are drawn in Japanese shapes without a font= of their own
+    "23 Haiku (thơ haiku)": [
         ["ID", "Japanese", "Reading", "Meaning"],
-        ["#config", "vertical; font=jp; size=30; sort", "side=back; size=18; color=accent", "side=back; size=20"],
+        ["#config", "size=30; tts=ja_JP", "side=back; size=18; color=accent", "side=back; size=20"],
         ["t01", "古池や蛙飛びこむ水の音", "ふるいけやかわずとびこむみずのおと", "Ao xưa, ếch nhảy vào, tiếng nước khẽ vang."],
         ["t02", "夏草や兵どもが夢の跡", "なつくさやつわものどもがゆめのあと", "Cỏ mùa hè — dấu vết giấc mộng của những người lính."],
         ["t03", "秋深き隣は何をする人ぞ", "あきふかきとなりはなにをするひとぞ", "Thu đã sâu — người bên cạnh làm nghề gì nhỉ?"],
@@ -377,7 +382,7 @@ SHEETS = {
     # a script of its own, and a voice of its own
     "24 Korean (tiếng Hàn)": [
         ["ID", "Korean", "Romanisation", "Meaning", "Example"],
-        ["#config", "font=kr; size=44; tts=ko_KR; sort", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=16; color=muted; italic"],
+        ["#config", "size=44; tts=ko_KR", "side=back; size=20; color=accent", "side=back; size=20", "side=back; size=16; color=muted; italic"],
         ["h01", "학교", "hakgyo", "trường học", "저는 학교에 갑니다."],
         ["h02", "친구", "chingu", "bạn bè", "친구를 만났어요."],
         ["h03", "음식", "eumsik", "món ăn", "한국 음식을 좋아해요."],
@@ -390,7 +395,7 @@ SHEETS = {
     # the same word in two scripts, which is what a Taiwan-bound learner needs
     "25 Traditional (chữ phồn thể)": [
         ["ID", "Traditional", "Simplified", "Pinyin", "Meaning"],
-        ["#config", "font=tc; size=48; tts=zh_TW; sort", "side=back; size=36; font=sc; color=muted; label=Simplified", "side=back; size=22; color=accent", "side=back; size=20"],
+        ["#config", "size=48; tts=zh_TW", "side=back; size=36; font=sc; color=muted; label=Simplified", "side=back; size=22; color=accent", "side=back; size=20"],
         ["f01", "學習", "学习", "xuéxí", "học tập"],
         ["f02", "電腦", "电脑", "diànnǎo", "máy tính"],
         ["f03", "圖書館", "图书馆", "túshūguǎn", "thư viện"],
@@ -403,7 +408,7 @@ SHEETS = {
     # a deck for the terminal: the answer is a command, and a command is code
     "26 Shell commands (dòng lệnh)": [
         ["ID", "Group", "Task", "Command", "Note"],
-        ["#config", "subdeck=1", "side=front; size=24; sort", "side=back; code=bash", "side=back; size=15; color=muted; hint"],
+        ["#config", "subdeck=1", "side=front; size=24", "side=back; code=bash", "side=back; size=15; color=muted; hint"],
         ["s01", "Files", "List every file, including the hidden ones", "ls -la", "The dot files are configuration; ls hides them by default."],
         ["s02", "Files", "Find every .log file under this directory", "find . -name '*.log'", "The quotes stop the shell expanding the pattern before find sees it."],
         ["s03", "Text", "Count the lines that contain a word", "grep -c 'error' app.log", "-c counts matching lines, not matches: two on one line is one."],
@@ -416,7 +421,7 @@ SHEETS = {
     # two languages on one card, both kept exactly as they were typed
     "27 Web dev (HTML & JS)": [
         ["ID", "Question", "Markup", "Script", "Note"],
-        ["#config", "side=front; size=22; sort", "side=back; code=html", "side=back; code=javascript", "side=back; size=15; color=muted; hint"],
+        ["#config", "side=front; size=22", "side=back; code=html", "side=back; code=javascript", "side=back; size=15; color=muted; hint"],
         ["w01", "How is a form field tied to its label?", "<label for=\"email\">Email</label>\n<input id=\"email\" type=\"email\">", "", "The for attribute matches the input's id, which is what makes the label clickable."],
         ["w02", "What does defer do on a script tag?", "<script src=\"app.js\" defer></script>", "", "The file downloads in parallel and runs after the document is parsed, in order."],
         ["w03", "How do you copy text to the clipboard?", "", "await navigator.clipboard.writeText('hello');", "Only inside a user gesture, and only on https or localhost."],
@@ -426,7 +431,7 @@ SHEETS = {
     # an equation is the answer, and it is set on a line of its own
     "28 Chemistry (hoá học)": [
         ["ID", "Topic", "Question", "Answer", "Equation", "Note"],
-        ["#config", "subdeck=1", "side=front; size=22; sort", "side=back; size=20", "side=back; size=24; math=block", "side=back; size=15; color=muted; hint"],
+        ["#config", "subdeck=1", "side=front; size=22", "side=back; size=20", "side=back; size=24; math=block", "side=back; size=15; color=muted; hint"],
         ["c01", "Reactions", "What does hydrogen burning in oxygen make?", "Nước.", "2H_2 + O_2 \\rightarrow 2H_2O", "Balanced: the same atoms come out as went in."],
         ["c02", "Reactions", "What does an acid and a base make?", "Muối và nước.", "HCl + NaOH \\rightarrow NaCl + H_2O", "Neutralisation — the pH moves toward 7."],
         ["c03", "Quantities", "How many particles are in one mole?", "Khoảng 6,022 × 10²³ hạt.", "N_A = 6.022 \\times 10^{23}\\ \\mathrm{mol^{-1}}", "Avogadro's number is a count, not a mass."],
@@ -437,7 +442,7 @@ SHEETS = {
     # the shape of English that is hardest to look up: a verb plus its particle
     "29 Phrasal verbs (cụm động từ)": [
         ["ID", "Sentence", "Meaning", "Note"],
-        ["#config", "cloze; size=26; tts=en_US; sort", "side=back; size=20", "side=back; size=15; color=muted; hint"],
+        ["#config", "cloze; size=26; tts=en_US", "side=back; size=20", "side=back; size=15; color=muted; hint"],
         ["v01", "I need to {{c1::look after}} my little brother tonight.", "trông nom, chăm sóc", "Take care of. The particle cannot move: never look my brother after."],
         ["v02", "She {{c1::gave up}} smoking two years ago.", "từ bỏ", "Give up + -ing, never give up to smoke."],
         ["v03", "We had to {{c1::put off}} the meeting until Friday.", "hoãn lại", "Postpone. This one does split: put the meeting off."],
@@ -449,7 +454,7 @@ SHEETS = {
     # three genders, and a voice that says them
     "30 German (tiếng Đức)": [
         ["ID", "Article", "Noun", "Plural", "Meaning", "Example"],
-        ["#config", "side=front; size=26; color=accent; label=Which article?", "side=front; size=40; tts=de_DE; sort", "side=back; size=20; color=muted; label=Plural", "side=back; size=20", "side=back; size=16; italic; tts=de_DE; speed=0.85"],
+        ["#config", "side=front; size=26; color=accent; label=Which article?", "side=front; size=40; tts=de_DE", "side=back; size=20; color=muted; label=Plural", "side=back; size=20", "side=back; size=16; italic; tts=de_DE; speed=0.85"],
         ["g01", "der", "Tisch", "die Tische", "cái bàn", "Der Tisch steht am Fenster."],
         ["g02", "die", "Tür", "die Türen", "cái cửa", "Bitte mach die Tür zu."],
         ["g03", "das", "Fenster", "die Fenster", "cửa sổ", "Das Fenster ist offen."],
@@ -461,7 +466,7 @@ SHEETS = {
     # accents that need not be typed, and one letter that must be
     "31 Spanish (tiếng Tây Ban Nha)": [
         ["ID", "English", "Spanish", "Note"],
-        ["#config", "size=28; sort", "side=back; size=32; type=nc; tts=es_ES", "side=back; size=15; color=muted"],
+        ["#config", "size=28", "side=back; size=32; type=nc; tts=es_ES", "side=back; size=15; color=muted"],
         ["e01", "the tree", "el árbol", "type=nc ignores the accent, so “el arbol” is accepted."],
         ["e02", "the city", "la ciudad"],
         ["e03", "the heart", "el corazón"],
