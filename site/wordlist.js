@@ -257,9 +257,9 @@ export async function loadReader(language) {
   if (!url) return null;
   readers[language] ??= import(new URL(url, import.meta.url).href).then((lib) =>
     language === "zh"
-      ? // Dictionaries write 一个 as yī gè, not the spoken yí gè: the reading is
+      ? // Dictionaries write 一个 as yīgè, not the spoken yígè: the reading is
         // the word's own, and tone sandhi is the speaker's to apply.
-        (word) => (/[一-鿿]/.test(word) ? lib.pinyin(word, { toneSandhi: false }) : "")
+        (word) => (/[一-鿿]/.test(word) ? lib.pinyin(word, { toneSandhi: false, separator: "" }) : "")
       : (word) => (/[가-힯]/.test(word) ? lib.romanize(word) : ""),
   );
   try {

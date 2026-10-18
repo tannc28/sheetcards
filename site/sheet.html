@@ -200,9 +200,11 @@
 
         <!-- On a phone: one line per word. A tap opens it as a form. -->
         <div class="listpane" id="listpane">
+          <!-- Pasting a list is how many words arrive at once, so it leads the list
+               rather than waiting under a long one. -->
+          <button class="addword pasteword" id="pastelist-m" type="button"><span data-icon="clipboard"></span><span data-i18n="wlOpen">Dán danh sách từ</span></button>
           <ol class="wordlist" id="wordlist"></ol>
           <button class="addword" id="addword" type="button"><span data-icon="plus"></span><span data-i18n="shAddWord">Thêm từ</span></button>
-          <button class="addword pasteword" id="pastelist-m" type="button"><span data-icon="clipboard"></span><span data-i18n="wlOpen">Dán danh sách từ</span></button>
         </div>
       </section>
 

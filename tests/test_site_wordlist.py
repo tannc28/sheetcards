@@ -211,7 +211,7 @@ def test_pinyin_is_the_dictionary_reading_without_tone_sandhi():
     )
     # With sandhi on, pinyin-pro writes yí gè and bú shì: what is said, not
     # what a dictionary (or the learner's textbook) prints.
-    assert out == ["yī gè", "bù shì", "yín háng", "jué de", ""]
+    assert out == ["yīgè", "bùshì", "yínháng", "juéde", ""]
 
 
 def test_korean_is_romanised():
