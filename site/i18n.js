@@ -1604,10 +1604,6 @@ const STRINGS = {
   // What feeds the phone in the demo: one set, written two ways side by side.
   demoSrcNote: { en: "Notes / text", vi: "Ghi chú / văn bản" },
   demoSrcSheet: { en: "Google Sheets / Excel", vi: "Google Sheets / Excel" },
-  demoSame: {
-    en: "One set, written either way, makes the same card.",
-    vi: "Cùng một bộ, viết kiểu nào cũng ra cùng một card.",
-  },
   // The sources a set can come from, as a row of marks (landing and step 1).
   srcTakes: { en: "Takes", vi: "Nhận" },
   srcSupports: { en: "Supports", vi: "Hỗ trợ" },
