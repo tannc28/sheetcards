@@ -208,7 +208,7 @@ function paint() {
   const parsed = state.parsed;
   const rows = chosenRows();
   const width = Math.max(2, ...parsed.rows.map((r) => r.length));
-  const names = pasteGrid({ name: "x", rows: parsed.rows, header: parsed.header, language: lang() })[0].slice(1, width + 1);
+  const names = pasteGrid({ name: "x", rows: parsed.rows, header: parsed.header, language: lang() })[0].slice(0, width);
   const dupes = parsed.marks.filter(Boolean).length;
   const oneSided = rows.filter((r) => r.length < 2 || !r[1]).length;
   $in("#tx-sum").textContent = parsed.rows.length

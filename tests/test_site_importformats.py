@@ -191,10 +191,11 @@ def test_paste_grid_is_a_named_basic_sheet():
         "return m.pasteGrid({name: 'Từ vựng; tuần 1', rows: data, language: 'vi'});",
         [["apple", "quả táo"], ["book", "quyển sách", "a noun"], ["", "orphan"]],
     )
-    assert grid[0] == ["ID", "Mặt trước", "Mặt sau", "Mặt sau 2"]
-    assert grid[1][0] == "#config name=Từ vựng tuần 1"
-    assert grid[2] == ["apple", "apple", "quả táo", ""]
-    assert grid[3] == ["book", "book", "quyển sách", "a noun"]
+    # No ID column: the parser keys each row by its first column.
+    assert grid[0] == ["Mặt trước", "Mặt sau", "Mặt sau 2"]
+    assert grid[1] == ["#config name=Từ vựng tuần 1", "", ""]
+    assert grid[2] == ["apple", "quả táo", ""]
+    assert grid[3] == ["book", "quyển sách", "a noun"]
     assert len(grid) == 4  # the row with no front has no key
 
 
@@ -216,11 +217,12 @@ def test_paste_grid_reads_back_as_the_named_deck():
     assert (identity, name, keyed) == ("name:english week 1", "English week 1", True)
 
 
-def test_derived_ids_match_the_parser():
-    from src.column_model import derived_ids
-
-    words = ["apple", "Apple", "apple (2)", "  journey ", "", "Straße", "STRASSE", "ệ"]
-    assert _run("return m.derivedIds(data);", words) == derived_ids(words)
+def test_a_sheet_without_an_id_column_gets_its_name_in_the_first_cell():
+    grid = _run(
+        "return m.namedSheet(data, 'Tuần 1');",
+        [["Word", "Meaning"], ["apple", "táo"]],
+    )
+    assert grid[1] == ["#config name=Tuần 1", ""]
 
 
 # ---------------------------------------------------------------------------

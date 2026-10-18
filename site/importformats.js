@@ -95,14 +95,14 @@ export function readSheetText(text) {
 
 /**
  * That sheet with `name=` in it: kept when it says one, else the name given,
- * written into its settings row (one is added under an ID header if it has
- * none). A sheet with no ID column has no cell for a settings row to begin
- * in, so it is left as it is and travels under the name as its title.
+ * written into its settings row — one is added when it has none. The marker
+ * sits in the ID cell, or, in a sheet with no ID column, opens the first
+ * column's own settings cell (sheet_config.marker_parts).
  */
 export function namedSheet(rows, name) {
   const grid = rows.map((r) => [...r]);
-  const idAt = grid[0].findIndex((c) => /^﻿?id$/i.test(c));
-  if (idAt < 0 || !cleanName(name)) return grid;
+  const idAt = Math.max(0, grid[0].findIndex((c) => /^﻿?id$/i.test(c)));
+  if (!cleanName(name)) return grid;
   if (grid[1] && MARKER_CELL.test(grid[1][idAt] || "")) {
     if (!markerGet(grid[1][idAt], "name")) grid[1][idAt] = markerSet(grid[1][idAt], "name", cleanName(name));
   } else {
@@ -344,38 +344,6 @@ export function readPaste(text, { rows = "auto", separator = "auto", existing = 
 /** column_model.id_text: NFC, trimmed, inner whitespace collapsed, case kept. */
 export const idText = (value) => String(value ?? "").normalize("NFC").split(/\s+/).filter(Boolean).join(" ");
 
-/**
- * column_model.derived_ids, the same keys a sheet with no ID column gets: the
- * word itself, and " (2)", " (3)" for a word written again (case-insensitive).
- * tests/test_site_importformats.py checks the two agree.
- */
-export function derivedIds(values) {
-  const out = [];
-  const taken = new Set();
-  const counts = new Map();
-  // Python's casefold and JS's toLowerCase agree on every letter a word list
-  // here is written in; ß is the one that differs, so it is folded by hand.
-  const fold = (s) => s.toLowerCase().replace(/ß/g, "ss");
-  for (const value of values) {
-    const text = idText(value);
-    if (!text) {
-      out.push("");
-      continue;
-    }
-    const key = fold(text);
-    let count = (counts.get(key) || 0) + 1;
-    let candidate = count === 1 ? text : `${text} (${count})`;
-    while (taken.has(fold(candidate))) {
-      count += 1;
-      candidate = `${text} (${count})`;
-    }
-    counts.set(key, count);
-    taken.add(fold(candidate));
-    out.push(candidate);
-  }
-  return out;
-}
-
 /** A name as `name=` can hold it: one line, no `;` (which ends a setting). */
 export function cleanName(name) {
   return cleanNameText(name);
@@ -389,17 +357,17 @@ const cleanNameText = (name) =>
     .trim();
 
 /**
- * The sheet a pasted list becomes: Basic, named.
+ * The sheet a pasted list becomes: Basic, named, with no ID column.
  *
- *   ID | Mặt trước | Mặt sau | Mặt sau 2 …
- *   #config name=<name>
- *   <word> | <word> | <meaning> …
+ *   Mặt trước           | Mặt sau   | Mặt sau 2 …
+ *   #config name=<name> |           |
+ *   <word>              | <meaning> | …
  *
- * The ID column holds the word itself (derivedIds) — exactly the key a sheet
- * with no ID column is given by the parser — so pasting the same list again
- * under the same name, with lines added, updates the notes already imported
- * and adds the new ones. It is written out rather than left to the parser
- * because a settings row needs an ID cell to sit in. A row with nothing on the
+ * A sheet with no ID column is keyed by its first column (column_model.
+ * derived_ids: the word itself, " (2)" for a word written again), so pasting
+ * the same list again under the same name, with lines added, updates the notes
+ * already imported and adds the new ones. The marker opens the first column's
+ * settings cell, as in Create sheet's Basic template. A row with nothing on the
  * front has no key and is left out.
  */
 export function pasteGrid({ name, rows, header = null, language = "vi" }) {
@@ -409,11 +377,7 @@ export function pasteGrid({ name, rows, header = null, language = "vi" }) {
     const own = String(header?.[i] ?? "").trim();
     return own && !RESERVED.test(norm(own)) ? own : fallback;
   });
-  const ids = derivedIds(kept.map((r) => r[0]));
-  const marker = `#config name=${cleanName(name)}`;
-  return [
-    ["ID", ...names],
-    [marker, ...names.map(() => "")],
-    ...kept.map((r, i) => [ids[i], ...names.map((_, c) => String(r[c] ?? ""))]),
-  ];
+  const settings = names.map(() => "");
+  settings[0] = `#config name=${cleanName(name)}`;
+  return [names, settings, ...kept.map((r) => names.map((_, c) => String(r[c] ?? "")))];
 }
