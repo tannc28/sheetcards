@@ -95,7 +95,7 @@ a.altcard { color: inherit; text-decoration: none; }
 /* Three equal cards, one row on a wide screen: same border, same height, the
    icon, the words and the arrow on the same lines whatever each one says. */
 .reopen-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
-@media (min-width: 52rem) { .reopen-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 52rem) { .reopen-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .reopen-row .reopen-card {
   width: 100%; height: 100%; align-items: center;
   border: 1.5px solid var(--line); border-style: solid;
@@ -120,6 +120,7 @@ a.altcard { color: inherit; text-decoration: none; }
 /* The other starting points: smaller tiles, one face each — the card as it
    comes out, its theme visibly applied — and a name. */
 .tplgroup { margin: 30px 0 0; }
+.tplupload { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 12px 0 0; text-align: center; }
 .tplgroup-hint { margin: -4px auto 12px; max-width: 40rem; text-align: center; font-size: var(--t-xs); color: var(--muted); }
 .moretpl {
   display: grid; gap: 10px;
@@ -712,3 +713,4 @@ a.altcard { color: inherit; text-decoration: none; }
 .devnote > [data-icon] { flex: none; margin-top: 3px; color: var(--warn); }
 .devnote > span:nth-child(2) { flex: 1 1 auto; }
 .devnote .iconbtn { flex: none; margin: -4px 0; }
+#templates-title { scroll-margin-top: 84px; }

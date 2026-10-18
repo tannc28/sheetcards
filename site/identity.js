@@ -180,14 +180,18 @@ export function codeChange(before, now) {
  * This browser's own record of the last download is exact (it holds the field
  * list itself), but only for downloads made here; the sheet's `shape=` is
  * written by Create sheet from whichever device downloaded last, so it travels.
- * The record wins while it agrees with the sheet, the sheet when they differ —
- * somebody downloaded elsewhere since — and with neither, `known` is false and
+ * The record wins while it agrees with the sheet (or the sheet is what was last
+ * downloaded here), the sheet when they differ — somebody downloaded elsewhere
+ * since — and with neither, `known` is false and
  * the done dialog says what to do *if* the columns changed.
  *
  * @returns {{change: string|null, dropped: string[], known: boolean}}
  */
 export function judgeShape(last, mark, code, shape) {
-  if (last && (!mark || last.code === mark)) {
+  // This browser's record is exact when the sheet agrees with it, or when the
+  // sheet is exactly what this browser last downloaded: a mark that differs
+  // then is only one nobody has written back yet.
+  if (last && (!mark || last.code === mark || last.code === code)) {
     return { change: shapeChange(last, shape), dropped: droppedTemplates(last, shape), known: true };
   }
   if (mark) return { change: codeChange(mark, code), dropped: [], known: true };

@@ -411,7 +411,7 @@ function bootStatus() {
         : t("booting");
   status(
     [
-      booting.queued && t(booting.queued === "file" ? "queuedFile" : "queued"),
+      booting.queued && t({ file: "queuedFile", sheet: "queuedSheet" }[booting.queued] ?? "queued"),
       loading,
       onMobileData() && t("bootData", mb(FIRST_LOAD_BYTES)),
       booting.slow && t("slowBoot"),
@@ -495,7 +495,19 @@ function pythonMessage(err) {
 
 /** The spreadsheet id in a Google Sheets link, or null when it is not one. */
 function spreadsheetId(url) {
+  if (publishedId(url)) return null;
   const m = url.trim().match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return m ? m[1] : null;
+}
+
+/**
+ * The id in a "File → Share → Publish to web" link (/d/e/2PACX-…/pubhtml), or
+ * null. It is not the spreadsheet's id — Google issues a separate one — so the
+ * file is fetched through the publish address itself, and a sheet published
+ * this way is keyed by it.
+ */
+function publishedId(url) {
+  const m = url.trim().match(/docs\.google\.com\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/);
   return m ? m[1] : null;
 }
 
@@ -526,6 +538,8 @@ function normalizeFileUrl(url) {
 async function sourceId(url) {
   const id = spreadsheetId(url);
   if (id) return id;
+  const published = publishedId(url);
+  if (published) return `pub_${published}`;
   const digest = await crypto.subtle.digest(
     "SHA-1",
     new TextEncoder().encode(normalizeFileUrl(url)),
@@ -544,6 +558,8 @@ async function sourceId(url) {
 // and, more to the point, the same sheets the add-on will sync.
 function toWorkbookUrl(url) {
   if (isFileUrl(url)) return normalizeFileUrl(url);
+  const published = publishedId(url);
+  if (published) return `https://docs.google.com/spreadsheets/d/e/${published}/pub?output=xlsx`;
   const id = spreadsheetId(url);
   if (!id) throw new Error(t("notASheet"));
   return `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
@@ -673,7 +689,10 @@ function failed(message, { field = false, share = false } = {}) {
  * refuses to hand over cross-origin, so for Google a failed fetch while online
  * is almost always the sharing setting.
  */
-function fetchProblem({ google, code = null, html = false }) {
+function fetchProblem({ google, code = null, html = false, published = false }) {
+  // A published sheet that could not be read is almost always one published
+  // as a single tab or as a web page only; the Share link always works.
+  if (published && navigator.onLine !== false) return t("publishedLink");
   if (code === null && !html) {
     if (navigator.onLine === false) return t("offline");
     return t(google ? "notShared" : "fileUnreachable");
@@ -711,7 +730,8 @@ async function preview({ again = false } = {}) {
   $("#go").disabled = true;
   fieldError("");
   let bytes, res;
-  const google = Boolean(spreadsheetId(input));
+  const published = Boolean(publishedId(input));
+  const google = Boolean(spreadsheetId(input)) || published;
   try {
     const workbookUrl = toWorkbookUrl(input);
     if (!again) {
@@ -726,14 +746,14 @@ async function preview({ again = false } = {}) {
       // which on a reload is also the only thing the reader asked for.
       res = await fetch(workbookUrl, { cache: "reload" });
     } catch {
-      throw new Error(fetchProblem({ google }));
+      throw new Error(fetchProblem({ google, published }));
     }
-    if (!res.ok) throw new Error(fetchProblem({ google, code: res.status }));
+    if (!res.ok) throw new Error(fetchProblem({ google, published, code: res.status }));
     bytes = new Uint8Array(await res.arrayBuffer());
     // An .xlsx is a ZIP and starts "PK". Anything else that came back with a 200
     // — a sign-in page, a file host's download page — is not the file.
     if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-      throw new Error(fetchProblem({ google, html: true }));
+      throw new Error(fetchProblem({ google, published, html: true }));
     }
   } catch (err) {
     $("#go").disabled = false;
@@ -1163,7 +1183,9 @@ function submit() {
     setStage("loading");
     $("#source").textContent = sourceLabel($("#url").value.trim());
   }
-  whenReady(() => preview());
+  // What was received, in the words of what the reader did: the example is a
+  // sheet they asked to see, not a link they pasted.
+  whenReady(() => preview(), $("#url").value.trim() === DEMO_SHEET ? "sheet" : "link");
 }
 
 // ---------------------------------------------------------------------------
@@ -1787,9 +1809,10 @@ function paintAssure() {
   const a = state.analysis;
   const named = a?.identity?.named;
   const body = $("#assure-body");
-  if (named) body.textContent = t("assureBody");
-  else if (upload?.google) body.textContent = t("assureBodyLink");
-  else body.innerHTML = t("assureBodyFile", escapeHtml(upload?.name || fileName()));
+  const key = a?.plan?.idFrom || "ID";
+  if (named) body.textContent = t("assureBody", key);
+  else if (upload?.google) body.textContent = t("assureBodyLink", key);
+  else body.innerHTML = t("assureBodyFile", escapeHtml(upload?.name || fileName()), escapeHtml(key));
   const offer = $("#done-nameoffer");
   // A settings row lives in the ID column, so a sheet without one cannot carry
   // a name until it has one.
@@ -2618,6 +2641,17 @@ paintIcons();
 paintStatic();
 mountInAppBanner({ t, icon });
 
+// The toast sits under the masthead, whose height is two lines on a phone and
+// one on a computer, and changes with the language.
+{
+  const head = document.querySelector(".masthead");
+  const measure = () => document.documentElement.style.setProperty("--mast-h", `${head.offsetHeight}px`);
+  if (head) {
+    measure();
+    new ResizeObserver(measure).observe(head);
+  }
+}
+
 // What the address asked for: a link (?url=, which the landing page and old
 // preview links forward here), the example (#example), or nothing — the form.
 setStage("empty");
@@ -2649,7 +2683,7 @@ if (loadFromAddress()) {
       const file = new File([tsv], `${(name || "Sheet").replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet"}.tsv`, {
         type: "text/tab-separated-values",
       });
-      whenReady(() => previewFile(file, { hash, edit: site(`sheet/${hash}`) }), "file");
+      whenReady(() => previewFile(file, { hash, edit: site(`sheet/${hash}`) }), "sheet");
     },
     (err) => failed(t(err.code === "version" ? "shareTooNew" : "shareBroken")),
   );

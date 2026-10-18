@@ -31,6 +31,7 @@ import { dark, onRepaint } from "./page.js";
 import { CARDS, HANZI_WRITER, THEME_SWATCHES } from "./home-cards.js";
 import { stashFile } from "./handoff.js";
 import { site } from "./paths.js";
+import { prefetchPython } from "./pyodide.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -485,3 +486,7 @@ buildTabs();
 // Still, the demo opens on the card — the step that needs no motion to read.
 show(0, still.matches ? "front" : "link");
 schedule();
+
+// Most visits here go on to Sheet to Anki or Create sheet, and both start with
+// the Python download: begun now, on Wi-Fi, while the reader is still reading.
+prefetchPython();

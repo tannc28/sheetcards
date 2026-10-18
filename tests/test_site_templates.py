@@ -130,6 +130,16 @@ def test_chinese_writing_and_japanese_furigana_are_offered(built):
     assert all("[" in row[1] for row in kanji[2:])
 
 
+def test_the_english_page_gets_the_written_templates_in_english(built):
+    _, _, templates = built
+    for tid in ("hanzi", "kanji"):
+        vi, en = templates[tid]["rows"], templates[tid]["en"]["rows"]
+        assert en[0] == vi[0] and len(en) == len(vi)
+        assert en[2:] != vi[2:]
+        assert templates[tid]["en"]["card"]
+    assert "label=Write the character for" in templates["hanzi"]["en"]["rows"][1][1]
+
+
 def test_ptrang_is_never_offered(built):
     build, out, _ = built
     site = build.build(out / "whole")

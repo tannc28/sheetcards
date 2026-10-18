@@ -34,7 +34,7 @@ import { SHEET_STATE, readState, writeState } from "./urlstate.js";
 import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, shareAddress, toTsv } from "./sharelink.js";
 import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
-import { fileStem, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
+import { deckKey, fileIdentity, fileStem, lastShape, markerGet, markerSet, nameUsed, rememberName } from "./identity.js";
 import { detectDevice } from "./devices.js";
 import { warningText } from "./sheetwarnings.js";
 
@@ -509,10 +509,11 @@ function fromGrid(grid, title) {
   const out = {
     // The sheet's own name, when it has one, over whatever the file was called.
     title: markerGet(marker, "name") ?? title ?? "",
-    // `next=` is kept as the mark rather than in the cell, and written back on
-    // the way out (exportGrid), so the cell shows what a person wrote.
-    marker: markerSet(marker, "next", null),
+    // `next=` and `shape=` are kept out of the cell and written back on the way
+    // out (exportGrid), so the cell shows what a person wrote.
+    marker: markerSet(markerSet(marker, "next", null), "shape", null),
     next: markerGet(marker, "next") || null,
+    shape: markerGet(marker, "shape") || null,
     retired: [],
     columns: used.map((i, n) => ({
       name: (header[i] || "").trim() || `Column ${n + 1}`,
@@ -532,16 +533,46 @@ function fromGrid(grid, title) {
   if (!sheet.rows.length) sheet.rows.push(newRow());
   const made = sheet;
   sheet = before;
+  // Said once by whoever opened it (readPicked), never kept with the sheet.
+  if (idAt < 0 && made.rows.some((r) => !blankRow(r))) ids.given.add(made);
   return made;
+}
+
+// Sheets fromGrid had to write IDs into: a file with no ID column.
+const ids = { given: new WeakSet() };
+
+/**
+ * What this sheet is to Sheet to Anki (apkg.resolve_identity): its name= when it
+ * has one, else the file it is handed over as.
+ */
+function sheetIdentity(of = sheet) {
+  return markerGet(of.marker, "name") !== null && of.title
+    ? `name:${deckKey(of.title)}`
+    : fileIdentity(`${fileBase(of)}.tsv`, "");
+}
+
+/**
+ * The note type Anki has for this sheet, as the shape= code: the last download
+ * made in this browser (Sheet to Anki keeps its code), else what the sheet
+ * already carried from whichever device downloaded it. Written into every way
+ * out, so the merge notice is right on a device that never downloaded it.
+ */
+function shapeMark(of = sheet) {
+  const here = lastShape(sheetIdentity(of))?.code;
+  if (here && here !== of.shape) of.shape = here;
+  return of.shape;
 }
 
 /** The sheet as rows of text — what every way out of this page writes. */
 function exportGrid(of = sheet, { mark = true } = {}) {
   // A template's own words are samples, not IDs anybody was given.
   if (mark) raiseMark(of);
+  let marker = of.marker;
+  if (mark && of.next) marker = markerSet(marker, "next", of.next);
+  if (mark && shapeMark(of)) marker = markerSet(marker, "shape", of.shape);
   return [
     ["ID", ...of.columns.map((c) => c.name)],
-    [mark && of.next ? markerSet(of.marker, "next", of.next) : of.marker, ...of.columns.map((c) => c.cell)],
+    [marker, ...of.columns.map((c) => c.cell)],
     ...of.rows.filter((r) => !blankRow(r)).map((r) => [r.id, ...r.values]),
   ];
 }
@@ -549,8 +580,8 @@ function exportGrid(of = sheet, { mark = true } = {}) {
 const wordCount = () => sheet.rows.filter((r) => !blankRow(r)).length;
 
 /** A file name made of the sheet's title. */
-function fileBase() {
-  return (sheet.title || t("tplBlankName")).replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet";
+function fileBase(of = sheet) {
+  return (of.title || t("tplBlankName")).replace(/[\\/:*?"<>|]+/g, " ").trim() || "Sheet";
 }
 
 // ---------------------------------------------------------------------------
@@ -948,6 +979,7 @@ function begin(next, { row = 0, col = 0, keepHistory = false, view = "rows", fil
   }
   sheet = next;
   sheet.next ??= null;
+  sheet.shape ??= null;
   if (!Array.isArray(sheet.retired)) sheet.retired = [];
   retireGaps();
   lastFiled = filed;
@@ -1086,7 +1118,9 @@ function mineCard(tpl) {
 /** What a template makes right now: its rows and its first word's card. */
 function templateNow(id, choice = vocabChoice) {
   if (id === "basic") return basicVariant();
-  if (byId(id)?.rows) return byId(id);
+  // A template written in Vietnamese words keeps an English copy for the
+  // English page (build_site.py, HANZI_TEMPLATE_EN).
+  if (byId(id)?.rows) return (lang() !== "vi" && byId(id).en) || byId(id);
   if (isMine(id)) {
     const tpl = mineOf(id);
     return tpl ? { rows: tpl.rows, card: mineCard(tpl) } : null;
@@ -1105,6 +1139,7 @@ function templateSheet(id, choice, theme = stepTheme) {
   // A template names no set (saveTemplate takes it out); the step asks.
   made.marker = markerSet(made.marker, "name", null);
   made.next = null;
+  made.shape = null;
   return made;
 }
 
@@ -1243,10 +1278,10 @@ function paintMine() {
           title="${escapeHtml(t("tplDelete"))}" aria-label="${escapeHtml(`${t("tplDelete")}: ${tpl.title}`)}">${icon("trash-2")}</button>
       </div>`;
   });
-  // Uploading one lives at the top of the page, beside the other ways in; this
-  // section only appears once there is something kept to show.
+  // Uploading one is part of this section: a kept template is either one
+  // saved from the editor or one uploaded here, and both are listed above it.
   $("#tpl-upload").disabled = list.length >= MAX_TEMPLATES;
-  $("#minegroup").hidden = !list.length;
+  $("#mytemplates").hidden = !list.length;
   $("#mytemplates").innerHTML = tiles.join("");
   watchFaces($("#mytemplates"), (id) => templateNow(id).card);
 }
@@ -1262,7 +1297,7 @@ function saveTemplate(grid, title) {
   // one deck in Anki.
   grid = grid.map((row, i) =>
     i === 1 && isMarkerCell(row[0])
-      ? [markerSet(markerSet(row[0], "name", null), "next", null), ...row.slice(1)]
+      ? [markerSet(markerSet(markerSet(row[0], "name", null), "next", null), "shape", null), ...row.slice(1)]
       : row,
   );
   const kept = keepTemplate(grid, title);
@@ -1421,13 +1456,14 @@ async function createFromStep() {
   made.title = name;
   made.marker = markerSet(made.marker, "name", name);
   rememberName(name);
-  // A kept template is step 1 done: its sample word is not one of the words.
-  if (isMine(stepId)) made.rows = [{ id: "w01", values: made.columns.map(() => "") }];
+  // The template's sample word shows what a row looks like (the card and the
+  // scrap in the step say "example"); it is not one of the learner's words, so
+  // the sheet starts with one empty row instead.
+  made.rows = [{ id: "w01", values: made.columns.map(() => "") }];
   // Custom is a template to make, so it opens on step 1; every other one is a
-  // template already, and opens on the words.
+  // template already, and opens on its first word.
   begin(made, { row: 0, col: 0, view: stepId === "custom" ? "look" : "rows" });
-  // A sheet with no word yet opens on its first one.
-  if (stepId !== "basic" && !isMine(stepId)) return;
+  if (stepId === "custom") return;
   if (WIDE.matches) {
     select(firstWordRow, 0);
     startEditing(firstWordRow, 0);
@@ -2415,9 +2451,15 @@ async function readPicked(file, index, choose = true, asTemplate = false) {
   const name = out.tabs.length > 1 ? out.tab : title;
   if (asTemplate) return saveTemplate(exportGrid(fromGrid(out.rows, name), { mark: false }), name);
   const opened = fromGrid(out.rows, name);
+  // What the file was called, for the line that says it is keyed by its name.
+  opened.source = file.name;
   if (markerGet(opened.marker, "name")) rememberName(opened.title);
-  begin(opened, { keepHistory: true, view: "rows", filed: toTsv(exportGrid(opened)) });
+  // IDs written in here exist only on this page until the file is saved again,
+  // so the sheet is not "saved" yet — and the reader is told why.
+  const given = ids.given.has(opened);
+  begin(opened, { keepHistory: true, view: "rows", filed: given ? null : toTsv(exportGrid(opened)) });
   if (out.encoding) toast(t("readAsEncoding", out.encoding), "bad");
+  else if (given) toast(t("shIdsGiven", wordCount()), "bad");
   else toast(t("shOpened", name, wordCount()), "ok");
 }
 
@@ -2620,7 +2662,7 @@ function paintNameOffer() {
   const box = $("#nameoffer");
   const legacy = ui.stage === "edit" && markerGet(sheet.marker, "name") === null;
   box.hidden = !legacy;
-  if (legacy) $("#nameoffer-text").textContent = t("nameOffer", `${fileBase()}.tsv`);
+  if (legacy) $("#nameoffer-text").textContent = t("nameOffer", sheet.source || `${fileBase()}.csv`);
 }
 
 $("#colhead").addEventListener("input", (e) => {
@@ -2823,7 +2865,11 @@ for (const [id, key] of [["#vocab-word", "word"], ["#vocab-example", "example"]]
 $("#share-copy").addEventListener("click", copyShare);
 $("#share-native").addEventListener("click", async () => {
   try {
-    await navigator.share({ title: sheet.title || "SheetCards", url: $("#share-url").value });
+    // Named so a chat full of saved links can be told apart: which sheet, how
+    // many words, and when — the newest is the one to open.
+    const when = new Date().toLocaleDateString(lang() === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "2-digit" });
+    const label = t("shShareLabel", sheet.title || "SheetCards", wordCount(), when);
+    await navigator.share({ title: label, text: label, url: $("#share-url").value });
     markFiled("link");
     toast(t("shLinkKept"), "ok");
   } catch {
@@ -3299,6 +3345,11 @@ async function arrive() {
     });
   }
   else setStage("empty");
+  // The landing page's "no sheet yet" door: straight to the templates, which on
+  // a phone are a screen or two below the other ways in.
+  if (location.hash === "#templates" && ui.stage === "empty") {
+    requestAnimationFrame(() => $("#templates-title").scrollIntoView({ block: "start" }));
+  }
   return arriveAt(want);
 }
 

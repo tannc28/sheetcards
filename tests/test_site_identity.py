@@ -128,10 +128,12 @@ def test_the_sheet_wins_when_another_device_downloaded_since():
     now = "{kind: 'basic', fields: ['ID', 'A'], templates: ['Card 1']}"
     out = _run(
         f"[m.judgeShape({last}, 'b1111aa', 'b1111aa', {now}),"
-        f" m.judgeShape({last}, 'b2222aa', 'b1111aa', {now}),"
+        f" m.judgeShape({last}, 'b2222aa', 'b3333aa', {now}),"
         f" m.judgeShape(null, 'b2222aa', 'b1111aa', {now}),"
         f" m.judgeShape({last}, null, 'b1111aa', {now}),"
-        f" m.judgeShape(null, null, 'b1111aa', {now})]"
+        f" m.judgeShape(null, null, 'b1111aa', {now}),"
+        # downloaded here as it is now; the sheet's mark is simply not written back
+        f" m.judgeShape({last}, 'b2222aa', 'b1111aa', {now})]"
     )
     assert [(o["change"], o["known"]) for o in out] == [
         (None, True),
@@ -139,6 +141,7 @@ def test_the_sheet_wins_when_another_device_downloaded_since():
         ("schema", True),
         (None, True),
         (None, False),
+        (None, True),
     ]
 
 

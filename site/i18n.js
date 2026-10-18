@@ -29,6 +29,7 @@ const STRINGS = {
 
   // --- the site's own navigation, on every page ---------------------------
   navLabel: { en: "Site", vi: "Các trang" },
+  navFootLabel: { en: "Pages (footer)", vi: "Các trang (cuối trang)" },
   navHome: { en: "Home", vi: "Trang chủ" },
   navPreview: { en: "Sheet to Anki", vi: "Sheet to Anki" },
   navSheet: { en: "Create sheet", vi: "Tạo Sheet" },
@@ -245,7 +246,7 @@ const STRINGS = {
   tplSheetLabel: { en: "Example sheet", vi: "Sheet ví dụ" },
   tplCsv: { en: "Download .csv", vi: "Tải file .csv mẫu" },
   vocabCreate: { en: "Create sheet", vi: "Tạo sheet" },
-  shOpenFile: { en: "Open a file to add words", vi: "Mở file để thêm từ" },
+  shOpenFile: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   shOpenFileHint: {
     en: "The .csv or .xlsx you saved — open it and carry on adding words",
     vi: "File .csv hoặc .xlsx bạn đã lưu — mở ra là thêm từ tiếp được ngay",
@@ -367,6 +368,10 @@ const STRINGS = {
     vi: (file) =>
       `Sheet này chưa ghi tên bộ flashcard bên trong, nên được nhận ra theo tên file “${file}”: giữ nguyên tên thì import vẫn cập nhật deck đang có.`,
   },
+  shIdsGiven: {
+    en: (n) => `This file has no ID column, so each of its ${n} words was given one (w01, w02…). Press Save .csv file to keep them: an ID is what lets the next import update a card instead of making a new one.`,
+    vi: (n) => `File này không có cột ID, nên ${n} từ đã được gán ID (w01, w02…). Bấm Lưu file .csv để giữ các ID này: nhờ ID, lần import sau mới cập nhật đúng card thay vì tạo card mới.`,
+  },
   nameOfferGo: { en: "Write the name into the sheet", vi: "Ghi tên vào sheet" },
   // The same draft open in two tabs (sheet.js, the storage event).
   otherTab: {
@@ -407,8 +412,12 @@ const STRINGS = {
   shUnsavedFile: { en: "Not saved — only a draft in this browser", vi: "Chưa lưu file — mới là nháp trong trình duyệt" },
   shSaveLink: { en: "Save sheet link", vi: "Lưu link sheet" },
   shSaveLinkLead: {
-    en: "Keep this link (send it to yourself in Messenger, Telegram or Notes). Next time: open the link → add words → Make flashcards. Added words? Save a new link — the old one opens the old sheet.",
-    vi: "Giữ link này (gửi cho chính bạn qua Messenger/Telegram hoặc Ghi chú). Lần sau mở link → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới — link cũ mở bản cũ.",
+    en: "Keep this link (send it to yourself in Messenger, Telegram or Notes). Next time: open the link in Chrome or Safari → add words → Make flashcards. Added words? Save a new link — the old one opens the old sheet.",
+    vi: "Giữ link này (gửi cho chính bạn qua Messenger/Telegram hoặc Ghi chú). Lần sau mở link bằng Chrome hoặc Safari → thêm từ → Tạo flashcard. Thêm từ rồi thì lưu link mới — link cũ mở bản cũ.",
+  },
+  shShareLabel: {
+    en: (name, n, when) => `${name} — ${n} word${n === 1 ? "" : "s"} — ${when}`,
+    vi: (name, n, when) => `${name} — ${n} từ — ${when}`,
   },
   shLinkKept: { en: "Link sent — your sheet is in it", vi: "Đã gửi link — sheet nằm trong link đó" },
   shFileLineLink: {
@@ -422,16 +431,16 @@ const STRINGS = {
     vi: "Thay đổi mới chỉ nằm trong trình duyệt này. Lưu link sheet để tuần sau mở lại và thêm từ.",
   },
   shComeBack: {
-    en: "Back to add words? Open the sheet link you saved (in Messenger, Telegram, Notes…) and the sheet appears here; saved a .csv instead? Press Open a file. Then press Make flashcards and import the new .apkg.",
-    vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
+    en: "Back to add words? Open the sheet link you saved (in Messenger, Telegram, Notes…) and the sheet appears here; saved a .csv instead? Press Open .xlsx/.csv file. Then press Make flashcards and import the new .apkg.",
+    vi: "Quay lại để thêm từ? Mở link sheet bạn đã lưu (trong Messenger, Telegram, Ghi chú…) là sheet hiện ra ở đây; đã lưu file .csv thì bấm Mở file .xlsx/.csv. Thêm từ xong, bấm Tạo flashcard và import file .apkg mới.",
   },
   shIosNote: {
     en: "On iPhone and iPad, Safari deletes this draft if you don't open the page for 7 days. Press <b>Save sheet link</b> to keep the sheet. Tip: <b>Share → Add to Home Screen</b> puts this page one tap away.",
     vi: "Trên iPhone/iPad, Safari xoá bản nháp này nếu 7 ngày bạn không mở trang. Bấm <b>Lưu link sheet</b> để giữ sheet. Mẹo: <b>Share → Add to Home Screen</b> (Thêm vào MH chính) để mở lại trang này chỉ với một chạm.",
   },
   shAndroidCsvNote: {
-    en: "To add words later, open this .csv with <b>Open a file</b> on this page — not from the Files app. There, Android may open it in AnkiDroid, whose CSV import turns every row, settings row included, into a junk note.",
-    vi: "Lần sau muốn thêm từ, mở file .csv này bằng nút <b>Mở file</b> ở trang này — đừng chạm vào nó trong app Files. Ở đó Android có thể mở bằng AnkiDroid, và AnkiDroid import CSV sẽ biến từng dòng, kể cả settings row, thành note rác.",
+    en: "To add words later, open this .csv with <b>Open .xlsx/.csv file</b> on this page — not from the Files app. There, Android may open it in AnkiDroid, whose CSV import turns every row, settings row included, into a junk note.",
+    vi: "Lần sau muốn thêm từ, mở file .csv này bằng nút <b>Mở file .xlsx/.csv</b> ở trang này — đừng chạm vào nó trong app Files. Ở đó Android có thể mở bằng AnkiDroid, và AnkiDroid import CSV sẽ biến từng dòng, kể cả settings row, thành note rác.",
   },
   gotIt: { en: "Got it", vi: "Đã hiểu" },
   shUndo: { en: "Undo", vi: "Hoàn tác" },
@@ -439,8 +448,8 @@ const STRINGS = {
   shNew: { en: "New sheet", vi: "Tạo sheet mới" },
   shNewTitle: { en: "Start a new sheet?", vi: "Tạo sheet mới?" },
   shNewText: {
-    en: (n) => `The ${n} word${n === 1 ? "" : "s"} in this sheet will be cleared from this browser. Download it or copy its Share link first if you want to keep it.`,
-    vi: (n) => `${n} từ trong sheet này sẽ bị xoá khỏi trình duyệt. Muốn giữ thì Download hoặc copy Share link trước.`,
+    en: (n) => `The ${n} word${n === 1 ? "" : "s"} in this sheet will be cleared from this browser. To keep them, press Save .csv file (or Save sheet link) first.`,
+    vi: (n) => `${n} từ trong sheet này sẽ bị xoá khỏi trình duyệt. Muốn giữ thì bấm Lưu file .csv (hoặc Lưu link sheet) trước.`,
   },
   shNewYes: { en: "Clear and start over", vi: "Xoá và làm lại" },
   shKeep: { en: "Keep my sheet", vi: "Giữ sheet hiện tại" },
@@ -728,7 +737,7 @@ const STRINGS = {
   },
   urlLabel: { en: "Google Sheets link", vi: "Link Google Sheets" },
   go: { en: "Make flashcards", vi: "Tạo flashcard" },
-  pick: { en: "Choose an .xlsx or .csv file", vi: "Chọn file .xlsx hoặc .csv" },
+  pick: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   orDrop: { en: "or drop one anywhere on this page", vi: "hoặc kéo thả file vào trang này" },
   tabLabel: { en: "Sheet", vi: "Sheet" },
   reloadLabel: {
@@ -798,8 +807,8 @@ const STRINGS = {
   // its own. Said in the words of somebody waiting for a page, with the two facts
   // that make the wait bearable: how big, and that it happens once.
   booting: {
-    en: "Getting Sheet to Anki ready (~6 MB, first time only)…",
-    vi: "Đang chuẩn bị Sheet to Anki (~6 MB, chỉ lần đầu)…",
+    en: "Loading the sheet reader (~6 MB, first time only)…",
+    vi: "Đang tải bộ đọc sheet (~6 MB, chỉ lần đầu)…",
   },
   loadingCode: { en: "Almost ready…", vi: "Sắp xong…" },
   slowBoot: {
@@ -816,9 +825,17 @@ const STRINGS = {
     en: "Got your file — the cards appear as soon as this finishes.",
     vi: "Đã nhận file — card sẽ hiện ngay khi tải xong.",
   },
+  publishedLink: {
+    en: "This is a Publish to web link, and this sheet could not be read through it. Use the Share link instead: Share → General access → Anyone with the link, then Copy link.",
+    vi: "Đây là link Publish to web, và không đọc được sheet qua link này. Hãy dùng link Share thay vì Publish: Share → General access → Anyone with the link, rồi Copy link.",
+  },
+  queuedSheet: {
+    en: "Got the sheet — the cards appear as soon as this finishes.",
+    vi: "Đã nhận sheet — card sẽ hiện ngay khi tải xong.",
+  },
   bootingMB: {
-    en: (done, total) => `Getting Sheet to Anki ready: ${done} of ${total} MB (first time only)…`,
-    vi: (done, total) => `Đang chuẩn bị Sheet to Anki: ${done} / ${total} MB (chỉ lần đầu)…`,
+    en: (done, total) => `Loading the sheet reader: ${done} of ${total} MB (first time only)…`,
+    vi: (done, total) => `Đang tải bộ đọc sheet: ${done} / ${total} MB (chỉ lần đầu)…`,
   },
   bootData: {
     en: (total) => `You seem to be on mobile data: the first visit downloads about ${total} MB, once.`,
@@ -1165,7 +1182,7 @@ const STRINGS = {
     en: "Paste the link of your Google Sheet first.",
     vi: "Hãy dán link Google Sheets của bạn trước.",
   },
-  useExample: { en: "Try the example file", vi: "Dùng file ví dụ" },
+  useExample: { en: "See an example", vi: "Xem ví dụ" },
   exampleHint: {
     en: "31 sample sheets, simple to advanced",
     vi: "31 sheet mẫu, từ đơn giản tới nâng cao",
@@ -1275,14 +1292,14 @@ const STRINGS = {
     vi: "Sửa sheet rồi tải lại? Cứ import đè.",
   },
   assureBody: {
-    en:
-      "Each note is matched by its ID and by the flashcard set name written in the sheet " +
+    en: (key = "ID") =>
+      `Each note is matched by its ${key} column and by the flashcard set name written in the sheet ` +
       "itself, so importing a new file updates the notes you already have and keeps " +
       "your review progress — no duplicate cards, even if the file was renamed, saved as " +
       ".xlsx or moved to Google Sheets. A word deleted from the sheet stays in Anki; " +
       "delete it there if you want it gone.",
-    vi:
-      "Mỗi note được nhận ra nhờ cột ID và tên bộ flashcard ghi ngay trong sheet, nên " +
+    vi: (key = "ID") =>
+      `Mỗi note được nhận ra nhờ cột ${key} và tên bộ flashcard ghi ngay trong sheet, nên ` +
       "import file mới sẽ cập nhật đúng các note cũ và giữ nguyên tiến độ ôn tập, không " +
       "nhân đôi card — dù file bị đổi tên, lưu ra .xlsx hay đưa lên Google Sheets. Từ đã " +
       "xoá khỏi sheet vẫn còn trong Anki; muốn bỏ thì xoá trong Anki.",
@@ -1290,24 +1307,24 @@ const STRINGS = {
   // The same promise for a sheet that does not name itself: true only while
   // the link, or the file's name, stays the same.
   assureBodyLink: {
-    en:
-      "Each note is matched by its ID and by this Google Sheets link, so downloading " +
+    en: (key = "ID") =>
+      `Each note is matched by its ${key} column and by this Google Sheets link, so downloading ` +
       "from the same link again updates the notes you already have and keeps your review " +
       "progress. The same sheet saved as a file and uploaded would be a different deck, " +
       "unless the sheet names itself (name=).",
-    vi:
-      "Mỗi note được nhận ra nhờ cột ID và link Google Sheets này, nên tải lại từ đúng " +
+    vi: (key = "ID") =>
+      `Mỗi note được nhận ra nhờ cột ${key} và link Google Sheets này, nên tải lại từ đúng ` +
       "link này sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Cùng sheet đó lưu ra file " +
       "rồi tải lên sẽ thành deck khác, trừ khi sheet có tên riêng (name=).",
   },
   assureBodyFile: {
-    en: (file) =>
-      `Each note is matched by its ID and by the file's name, <b>${file}</b>. Upload a file with ` +
+    en: (file, key = "ID") =>
+      `Each note is matched by its ${key} column and by the file's name, <b>${file}</b>. Upload a file with ` +
       "that same name and the import updates the notes you already have and keeps your review " +
       "progress. Renamed, or moved to Google Sheets, it would be a new deck — unless the sheet " +
       "names itself (name=).",
-    vi: (file) =>
-      `Mỗi note được nhận ra nhờ cột ID và tên file <b>${file}</b>. Tải lên file đúng tên đó ` +
+    vi: (file, key = "ID") =>
+      `Mỗi note được nhận ra nhờ cột ${key} và tên file <b>${file}</b>. Tải lên file đúng tên đó ` +
       "thì import sẽ cập nhật note cũ và giữ nguyên tiến độ ôn tập. Đổi tên file hay chuyển " +
       "lên Google Sheets sẽ thành deck mới — trừ khi sheet có tên riêng (name=).",
   },
@@ -1351,7 +1368,7 @@ const STRINGS = {
     vi: "https://docs.google.com/spreadsheets/d/…",
   },
   homeGo: { en: "Make flashcards", vi: "Tạo flashcard" },
-  homeUpload: { en: "Upload .xlsx / .csv", vi: "Upload file .xlsx / .csv" },
+  homeUpload: { en: "Open .xlsx/.csv file", vi: "Mở file .xlsx/.csv" },
   doorHaveTitle: { en: "Already have a Google Sheet or a file", vi: "Đã có Google Sheet hoặc file" },
   doorNewTitle: {
     en: "No sheet yet? Write one on the web",

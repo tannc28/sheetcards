@@ -50,7 +50,9 @@
      letter without colliding at a tight leading, which a system face set at
      display sizes does not manage. Loaded from Google Fonts where a page links
      it; everywhere else the system face stands in. */
-  --sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  /* Be Vietnam Pro has no IPA (ˈ ə ɪ ʊ ɒ): "Noto Sans" and the system faces after it do, so a
+     Phiên âm column falls back glyph by glyph rather than to boxes. */
+  --sans: "Be Vietnam Pro", "Noto Sans", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
 
   /* One scale, six steps. Nothing on the page is allowed a size of its own. */
   --t-xs: 0.75rem;      /* 12px — eyebrows, labels, counters */
@@ -1269,6 +1271,9 @@ iframe#card {
 .prose p, .prose ul, .prose ol { margin: 0 0 1em; }
 .prose li { margin: .3em 0; }
 .prose li > p { margin: 0; }
+/* A long address (a FAQ's example link) breaks where it must rather than
+   pushing a 320px page sideways. */
+.prose a, .prose p code, .prose li code { overflow-wrap: anywhere; }
 .prose code {
   font-size: .88em; padding: .1em .35em; border-radius: 4px;
   background: var(--sunken); overflow-wrap: anywhere;

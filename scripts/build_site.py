@@ -232,6 +232,17 @@ HANZI_TEMPLATE = [
     ["d03", "tốt; khỏe", "hǎo", "好", "好", "今天天气很好。"],
 ]
 
+# The same sheet for the English page: the label and the meanings are the
+# learner's language, which the Vietnamese copy is not.
+HANZI_TEMPLATE_EN = [
+    HANZI_TEMPLATE[0],
+    [HANZI_TEMPLATE[1][0], "size=24; color=muted; label=Write the character for"]
+    + HANZI_TEMPLATE[1][2:],
+    ["d01", "I; me", "wǒ", "我", "我", "我是学生。"],
+    ["d02", "you", "nǐ", "你", "你", "你好吗？"],
+    ["d03", "good; well", "hǎo", "好", "好", "今天天气很好。"],
+]
+
 # Japanese with furigana: the reading written in brackets after the kanji and
 # drawn as ruby over it, as in the example workbook's "13 Furigana". No voice is
 # named — the iPhone this was checked against has no ja_JP voice built in.
@@ -259,6 +270,25 @@ KANJI_TEMPLATE = [
         "Một dấu cách trước chữ kanji tách nó khỏi chữ đứng trước.",
     ],
     ["j03", "先生[せんせい]", "giáo viên", " 先生[せんせい]は 優[やさ]しいです。", ""],
+]
+KANJI_TEMPLATE_EN = [
+    KANJI_TEMPLATE[0],
+    KANJI_TEMPLATE[1],
+    [
+        "j01",
+        "日本語[にほんご]",
+        "Japanese (the language)",
+        " 私[わたし]は 日本語[にほんご]を 勉強[べんきょう]しています。",
+        "Write the reading in square brackets right after the kanji.",
+    ],
+    [
+        "j02",
+        "図書館[としょかん]",
+        "library",
+        " 図書館[としょかん]で 本[ほん]を 読[よ]みます。",
+        "A space before a kanji keeps it apart from the word before it.",
+    ],
+    ["j03", "先生[せんせい]", "teacher", " 先生[せんせい]は 優[やさ]しいです。", ""],
 ]
 
 VOCAB_HEADERS = ["ID", "Word", "Phiên âm", "Meaning", "Example", "Note"]
@@ -958,6 +988,12 @@ def sheet_templates(out):
             ("custom", CUSTOM_TEMPLATE),
         )
     ]
+    # The English page's copy of a template whose words are Vietnamese.
+    for tpl, rows in zip(fixed, (HANZI_TEMPLATE_EN, KANJI_TEMPLATE_EN), strict=False):
+        tpl["en"] = {
+            "rows": rows,
+            "card": _template_card(tm, card_layout, f"{tpl['id']} en", rows),
+        }
     more = [
         _language_template(tm, card_layout, "picture", picture_rows, ["word"]),
         _language_template(tm, card_layout, "reverse", reverse_rows, ["word"]),

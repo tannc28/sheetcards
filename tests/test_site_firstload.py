@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skipif(NODE is None, reason="node is not installed")
 
 def _run(expr):
     script = (
-        "import { FIRST_LOAD_BYTES, mb, onMobileData } from "
+        "import { FIRST_LOAD_BYTES, mb, onMobileData, prefetchPython } from "
         f'"{MODULE.as_uri()}";\nconsole.log(JSON.stringify({expr}));'
     )
     out = subprocess.run(
@@ -49,3 +49,16 @@ def test_the_size_said_is_what_the_cdn_sends():
 )
 def test_mobile_data_is_said_only_where_the_browser_says_so(connection, said):
     assert _run(f"onMobileData({{connection: {connection}}})") is said
+
+
+@pytest.mark.unit
+def test_the_prefetch_never_spends_mobile_data():
+    # requestIdleCallback is stubbed to never run, so nothing is fetched here.
+    out = _run(
+        "(globalThis.requestIdleCallback = () => 0, "
+        "[prefetchPython({connection: {type: 'cellular'}}),"
+        " prefetchPython({connection: {saveData: true}}),"
+        " prefetchPython({connection: {type: 'wifi'}}),"
+        " prefetchPython({})])"
+    )
+    assert out == [False, False, True, True]

@@ -44,7 +44,7 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <style>
       html { color-scheme: light dark; }
-      body { margin: 0; padding: 18px; font-family: arial, sans-serif; font-size: 20px;
+      body { margin: 0; padding: 18px; font-family: arial, "Noto Sans", "Segoe UI", system-ui, sans-serif; font-size: 20px;
              text-align: center; color: #111; background: #fff; }
       ${dark ? "body { color: #e6e9ee; background: #1b1f25; }" : ""}
       hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }

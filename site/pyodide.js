@@ -89,6 +89,29 @@ function countDownloads(onBytes) {
   };
 }
 
+/**
+ * Warms the browser's HTTP cache with Pyodide's files while nothing else is
+ * happening, so the first Sheet to Anki or Create sheet visit after the landing
+ * page does not start with a 6 MB wait. Never on mobile data or Save-Data —
+ * a page nobody has asked anything of must not spend somebody's plan — and
+ * never more than once per page. Failures are ignored: it is only a head start.
+ */
+export function prefetchPython(nav = globalThis.navigator) {
+  if (onMobileData(nav) || nav?.connection?.saveData) return false;
+  const idle = globalThis.requestIdleCallback || ((fn) => setTimeout(fn, 2000));
+  idle(
+    () => {
+      for (const name of Object.keys(FILES)) {
+        fetch(BASE + name, { priority: "low" })
+          .then((res) => res.arrayBuffer())
+          .catch(() => {});
+      }
+    },
+    { timeout: 8000 },
+  );
+  return true;
+}
+
 // The pure layer, in dependency order. tests/test_pure_modules.py reads this very
 // list and fails if it stops matching the modules it proves importable without Anki.
 export const PURE_MODULES = [
