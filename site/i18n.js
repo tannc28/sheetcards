@@ -1208,7 +1208,7 @@ const STRINGS = {
     en: (f) => `Filter not reproduced here: <code>${f}</code>`,
     vi: (f) => `Filter trang này chưa mô phỏng: <code>${f}</code>`,
   },
-  tagsLabel: { en: "tags", vi: "tags" },
+  tagsLabel: { en: "Tags:", vi: "Tags:" },
 
   // --- detail -------------------------------------------------------------
   warnings: { en: "Warnings", vi: "Cảnh báo" },

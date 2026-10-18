@@ -25,9 +25,21 @@ import { typeansRuntime } from "./typeans.js";
  * with a hop.
  */
 export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) {
+  // The answer template already opens with its own rule after the question, so
+  // the one added here would make two; the template's is dropped instead.
   const body =
     (tab === "back" ? back.html : front.html) +
-    (tab === "both" ? '<hr id="answer">' + backOnly(back.html, front.html) : "");
+    (tab === "both"
+      ? '<hr id="answer">' + backOnly(back.html, front.html).replace(/^\s*<hr id="answer">/, "")
+      : "");
+  // A sheet with a theme paints the card itself (`.card { … }` in the note
+  // type's stylesheet) and keeps the face Anki would give it. A card with no
+  // theme is drawn in the site's own face, so the first card someone sees looks
+  // like part of the page rather than a default.
+  const plain = !/\.card\s*\{/.test(front.html + (tab === "front" ? "" : back.html));
+  const face = plain
+    ? '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">'
+    : "";
 
   // Anki ships MathJax and renders `\(…\)` itself; a browser does not. Without
   // this, the one page whose job is to show what Anki will draw would show the
@@ -42,11 +54,16 @@ export function cardDoc({ front, back, tab, dark, ring = null, flash = false }) 
     <!-- An embed loaded with no referrer at all is refused by YouTube with
          "Error 153", and a srcdoc document sends none unless it says so. -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    ${face}
     <style>
       html { color-scheme: light dark; }
       body { margin: 0; padding: 18px; font-family: arial, "Noto Sans", "Segoe UI", system-ui, sans-serif; font-size: 20px;
              text-align: center; color: #111; background: #fff; }
       ${dark ? "body { color: #e6e9ee; background: #1b1f25; }" : ""}
+      ${plain ? 'body { font-family: "Be Vietnam Pro", arial, system-ui, sans-serif; }' : ""}
+      /* The list of voices the reviewing device has is for a card in Anki, on
+         that device; this browser's voices answer nothing about it. */
+      .sc-tts-debug { display: none !important; }
       hr#answer { margin: 16px 0; border: 0; border-top: 1px solid currentColor; opacity: .25; }
       .cloze { color: #2f6fd0; font-weight: 700; }
       a.hint { color: #2f6fd0; font-size: 15px; }

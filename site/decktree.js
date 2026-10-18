@@ -41,6 +41,14 @@ export function deckTree(rows) {
 }
 
 /**
+ * A top-level deck as a reader knows it. The deck itself is named `sc_<sheet>`
+ * so its notes stay apart from the reader's own decks; the prefix says nothing
+ * to whoever is looking at the tree, so it is left off the label only — the
+ * deck's real name, its path and its identity are unchanged.
+ */
+export const shown = (name) => String(name).replace(/^sc_/, "");
+
+/**
  * One tree as markup, sorted by name at every level.
  *
  * `pick` makes each level a button carrying `data-deck`, which is what the preview
@@ -54,7 +62,7 @@ export function treeHtml(node, opts = {}) {
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((child) => {
       const inner =
-        `<span class="name">${escapeHtml(child.name)}</span>` +
+        `<span class="name">${escapeHtml(depth === 0 ? shown(child.name) : child.name)}</span>` +
         `<span class="count">${child.count}</span>`;
       const classes = pick
         ? `${selected === child.path ? "on" : ""}${lit === child.path ? " lit" + pop : ""}`

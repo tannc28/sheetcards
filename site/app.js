@@ -1391,20 +1391,27 @@ function rowLabel(row, front) {
 const KIND_LABEL = { synced: "legendSynced", skipped: "legendSkipped", invalid: "legendInvalid" };
 const kindLabel = (kind) => t(KIND_LABEL[kind] || "legendSynced");
 
+/** The source is words written out rather than a sheet: a `#s=` link (what Dán
+ *  văn bản and Tạo Sheet hand over). Its rows are numbered as cards. */
+function written() {
+  return isShare(location.hash);
+}
+
 function rowList() {
   const visible = visibleRows();
   if (!visible.length) return `<p class="empty">${escapeHtml(t("noRowsHere"))}</p>`;
 
   const front = state.analysis.sides.front;
+  const byCard = written();
   return visible
     .map(
       // The dot's colour is backed by its shape (filled, hollow, diamond) for
       // whoever cannot tell green from red, and by words for a screen reader.
-      ({ r, i }) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
-        data-row="${i}" title="${escapeHtml(t("rowTitle", r.line, kindLabel(r.kind)))}"${
+      ({ r, i }, n) => `<button class="rowitem row-${r.kind} ${i === state.row ? "on" : ""}"
+        data-row="${i}" title="${escapeHtml(byCard ? kindLabel(r.kind) : t("rowTitle", r.line, kindLabel(r.kind)))}"${
           i === state.row ? ' aria-current="true"' : ""
         }>
-        <span class="n">${r.line}</span>
+        <span class="n">${byCard ? n + 1 : r.line}</span>
         <span class="dot ${r.kind}" aria-hidden="true"></span>
         <span class="sr-only">${escapeHtml(kindLabel(r.kind))}:</span>
         <span class="txt">${escapeHtml(rowLabel(r, front))}</span>
@@ -1605,11 +1612,16 @@ function cardMeta(a, row) {
       : `<span class="fate ${row.kind}"><span class="dot ${row.kind}" aria-hidden="true"></span>${escapeHtml(
           kindLabel(row.kind),
         )}</span>`;
+  // Words written out (pasted, or a sheet from Tạo Sheet) have no sheet rows
+  // anyone looked at, and the counter under the card already numbers it. The
+  // deck's own name is in the source bar; only levels below it are news.
   return (
-    `<span class="rowtag">${escapeHtml(t("valueInRow", row.line))}</span>` +
-    `<span class="crumbs" title="${escapeHtml(row.deck)}">${path
-      .map((p) => `<span>${escapeHtml(p)}</span>`)
-      .join(icon("chevron-right", "sep"))}</span>` +
+    (written() ? "" : `<span class="rowtag">${escapeHtml(t("valueInRow", row.line))}</span>`) +
+    (parts.length > root
+      ? `<span class="crumbs" title="${escapeHtml(row.deck)}">${path
+          .map((p) => `<span>${escapeHtml(p)}</span>`)
+          .join(icon("chevron-right", "sep"))}</span>`
+      : "") +
     fate
   );
 }
@@ -1668,9 +1680,9 @@ function cardNotes(a, row, front, back) {
       ? `<p class="note">${t("unknownFilters", unknown.map(escapeHtml).join("</code>, <code>"))}</p>`
       : "",
     row.tags.length
-      ? `<p class="tags"><span class="tags-k">${escapeHtml(t("tagsLabel"))}</span>${row.tags
-          .map((tag) => `<span class="chip${lit.tags ? " lit" + popping() : ""}">${escapeHtml(tag)}</span>`)
-          .join("")}</p>`
+      ? `<p class="tags"><span class="tags-k">${escapeHtml(t("tagsLabel"))}</span> <span class="${
+          lit.tags ? "lit" + popping() : ""
+        }">${row.tags.map(escapeHtml).join(", ")}</span></p>`
       : "",
   ].join("");
 }
