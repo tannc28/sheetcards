@@ -29,6 +29,7 @@ import {
 } from "./feedback.js";
 import { detectDevice } from "./devices.js";
 import { inAppBrowser } from "./inapp.js";
+import { CONTACT_STATE, readState, writeState } from "./urlstate.js";
 
 const $ = (sel) => document.querySelector(sel);
 const GSI = "https://accounts.google.com/gsi/client";
@@ -48,6 +49,21 @@ const state = {
 const nav = globalThis.navigator;
 const app = inAppBrowser({ userAgent: nav.userAgent || "", standalone: nav.standalone === true });
 const page = cameFrom(location.search, document.referrer, location.origin);
+
+// ?kind=bug|feature|other picks the kind of message, so a "Báo lỗi" link can
+// open the form already on it; changing it is written back, so the address
+// copied from the bar still says which.
+{
+  const asked = readState(location.search, CONTACT_STATE).kind;
+  const radio = asked && document.querySelector(`#fb-form input[name="kind"][value="${asked}"]`);
+  if (radio) radio.checked = true;
+  $("#fb-form")?.addEventListener("change", (e) => {
+    if (e.target.name !== "kind") return;
+    const now = readState(location.search, CONTACT_STATE);
+    const next = writeState(location.href, { ...now, kind: e.target.value }, CONTACT_STATE);
+    if (next.href !== location.href) history.replaceState(history.state, "", next);
+  });
+}
 const device =
   detectDevice({ userAgent: nav.userAgent || "", maxTouchPoints: nav.maxTouchPoints || 0 }) +
   (app ? ` · ${app}` : "") +

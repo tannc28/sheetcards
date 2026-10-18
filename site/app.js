@@ -23,6 +23,7 @@ import { cardDoc, cardFrame } from "./cardframe.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { dropHandoff, takeHandoff } from "./handoff.js";
 import { site } from "./paths.js";
+import { CREATE_STATE, clearState, readState, writeState } from "./urlstate.js";
 import { decodeShare, isShare } from "./sharelink.js";
 import { DEVICES, DEVICE_LABELS, DEVICE_STEPS, detectDevice } from "./devices.js";
 import { icon, paintIcons } from "./icons.js";
@@ -603,6 +604,8 @@ function analyse(tsv, deckName, sheetId, { keepRow = false } = {}) {
   // A column is chosen by position, and a different sheet has different columns
   // in those positions.
   state.column = null;
+  if (wanted && !keepRow) arriveAt(wanted);
+  wanted = null;
   setStage("review");
   render();
   // The button that started this is gone with the form (and a side panel shown
@@ -756,7 +759,9 @@ async function preview({ again = false } = {}) {
     const isDemo = input === DEMO_SHEET;
     $("#demo-note").hidden = !isDemo;
     $("#editsheet").hidden = true;
-    const url = new URL(location.href);
+    // A new deck starts from a clean address; where in it the reader is gets
+    // written back once it is drawn (syncAddress).
+    const url = clearState(location.href, CREATE_STATE);
     if (isDemo) {
       url.searchParams.delete("url");
       url.hash = "#example";
@@ -767,7 +772,8 @@ async function preview({ again = false } = {}) {
     rememberDeck(url);
     dropHandoff();
 
-    showUpload(at ?? (isDemo ? demoTab(upload.bytes) : 0), { keepRow: again });
+    upload.home = isDemo ? demoTab(upload.bytes) : 0;
+    showUpload(at ?? wantedTab(upload.bytes) ?? upload.home, { keepRow: again });
   } catch (err) {
     failed(err.message);
   } finally {
@@ -831,6 +837,17 @@ function demoTab(bytes) {
     return index < 0 ? 0 : index;
   } catch {
     return 0;
+  }
+}
+
+/** The sheet the address names (`tab=`), as a position, or null. */
+function wantedTab(bytes) {
+  if (!wanted?.tab) return null;
+  try {
+    const index = sheetNames(bytes).indexOf(wanted.tab);
+    return index < 0 ? null : index;
+  } catch {
+    return null;
   }
 }
 
@@ -906,6 +923,7 @@ function openFile(file) {
   // wrong place. A deck already on screen stays there under the toast.
   if (!FILE_TYPES.test(file.name)) return status(t("badFileType", file.name), "bad");
   fromPage = true;
+  wanted = null;
   whenReady(() => previewFile(file), "file");
 }
 
@@ -936,7 +954,7 @@ async function previewFile(file, { hash = "", edit = "" } = {}) {
 
   // Nothing about a local file can go in the address bar, so a ?url= left over
   // from a link would send the next person who opens it somewhere else entirely.
-  const url = new URL(location.href);
+  const url = clearState(location.href, CREATE_STATE);
   url.searchParams.delete("url");
   url.hash = hash;
   rememberDeck(url);
@@ -949,7 +967,8 @@ async function previewFile(file, { hash = "", edit = "" } = {}) {
   // The link it complained about is gone, so the complaint goes with it.
   fieldError("");
 
-  showUpload(0);
+  upload.home = 0;
+  showUpload(wantedTab(upload.bytes) ?? 0);
 }
 
 // ---- the browser's Back button ---------------------------------------------
@@ -977,10 +996,90 @@ function rememberDeck(url) {
   }
 }
 
+// ---- where in the deck the address says the reader is ----------------------
+//
+// Which sheet, deck, row, side and card are on screen, and whether the Sheet view
+// is open, go into the query as the reader moves (urlstate.js), so the address
+// copied from the bar opens the same card for whoever it is sent to. Replaced,
+// never pushed: Back still goes from the deck to the form in one step.
+
+/** What the address asked for, waiting for its deck to be read; then null. */
+let wanted = null;
+
+/** Puts the reader where `want` (read from an address) says, as far as it can. */
+// A deck in the address is named below the sheet's own deck (Geography::Rivers),
+// which is all of the name a reader would recognise; the root is the sheet's.
+const deckRoot = () => `sc_${state.deckName}::`;
+const shortDeck = (deck) => (deck?.startsWith(deckRoot()) ? deck.slice(deckRoot().length) : deck);
+
+function arriveAt(want) {
+  const rows = state.analysis.rows;
+  const deck = want.deck && deckRoot() + want.deck;
+  if (deck && rows.some((r) => r.deck === deck || r.deck.startsWith(`${deck}::`))) {
+    state.deckFilter = deck;
+    const first = visibleRows()[0];
+    if (first) state.row = first.i;
+  }
+  if (want.row) {
+    const at = rows.findIndex((r) => r.id === want.row);
+    if (at >= 0) {
+      state.row = at;
+      // A row the deck filter would hide wins over the filter: the row is the
+      // more particular thing to have asked for.
+      if (!visibleRows().some(({ i }) => i === at)) state.deckFilter = null;
+    }
+  }
+  if (want.card) state.template = want.card - 1;
+  if (want.cloze) state.ordinal = want.cloze;
+  state.answered = want.side === "back";
+  if (want.view) {
+    state.view = want.view;
+    $("#sheetview").hidden = false;
+    $("#open-sheet").setAttribute("aria-expanded", "true");
+  }
+}
+
+/** Whether the address can bring this deck back: a link, the example, a shared
+ *  sheet or a handed-over file. A file picked here cannot, so nothing is written. */
+function addressable() {
+  return Boolean(new URLSearchParams(location.search).get("url")) ||
+    location.hash === "#example" || location.hash === "#file" || isShare(location.hash);
+}
+
+/** Where the reader is, as the address's query. */
+function addressState() {
+  const a = state.analysis;
+  const card = currentCard(a);
+  const tabs = upload?.tabs || [];
+  // The row a plain visit would show: the first card, or the first in the deck picked.
+  const first = state.deckFilter
+    ? (visibleRows()[0]?.i ?? 0)
+    : Math.max(0, a.rows.findIndex((r) => r.kind === "synced"));
+  const row = card?.row;
+  const open = $("#open-sheet").getAttribute("aria-expanded") === "true" && !$("#sheetview").dataset.beside;
+  return {
+    tab: tabs.length > 1 && upload.index !== (upload.home ?? 0) ? tabs[upload.index] : null,
+    deck: shortDeck(state.deckFilter),
+    row: row && row.id && state.row !== first ? row.id : null,
+    side: state.answered ? "back" : null,
+    card: card && card.templates.length > 1 ? Math.min(state.template, card.templates.length - 1) + 1 : null,
+    cloze: card && card.ordinals.length > 1 && card.ordinal !== card.ordinals[0] ? card.ordinal : null,
+    view: open || state.view !== "grid" ? state.view : null,
+  };
+}
+
+/** Writes where the reader is into the address, if the address can say it. */
+function syncAddress() {
+  if (state.stage !== "review" || !state.analysis || wanted || !addressable()) return;
+  const next = writeState(location.href, addressState(), CREATE_STATE);
+  if (next.href !== location.href) history.replaceState(history.state, "", next);
+}
+
 /** The link form, with whatever link was last in it. */
 function showForm({ focus = true } = {}) {
   // Whatever was waiting for Python is no longer what is wanted.
   pending = null;
+  wanted = null;
   booting.queued = false;
   setStage("empty");
   bootStatus();
@@ -992,10 +1091,16 @@ function showForm({ focus = true } = {}) {
 
 /** Starts the load the address asks for, if it asks for one. */
 function loadFromAddress() {
+  wanted = readState(location.search, CREATE_STATE);
   const asked = new URLSearchParams(location.search).get("url");
   if (asked) $("#url").value = asked;
   else if (location.hash === "#example") $("#url").value = DEMO_SHEET;
-  else return false;
+  else {
+    // A handed-over file and a shared sheet are read from the address too, by
+    // the start of this module; anything else has nothing to arrive at.
+    if (location.hash !== "#file" && !isShare(location.hash)) wanted = null;
+    return false;
+  }
   fromPage = false;
   submit();
   return true;
@@ -1285,6 +1390,7 @@ function paintCard({ typed = null } = {}) {
   $("#cardmeta").innerHTML = cardMeta(a, row);
   paintCardBar(templates, ordinals, ordinal);
   $("#cardnotes").innerHTML = cardNotes(a, row, front, back);
+  syncAddress();
 }
 
 /** Above the card: which row of the sheet it is, and where in the deck it lands. */
@@ -1812,6 +1918,11 @@ function closeDeckPanel() {
 // ---------------------------------------------------------------------------
 
 function paintSheetView(a) {
+  paintSheetViewBody(a);
+  syncAddress();
+}
+
+function paintSheetViewBody(a) {
   for (const b of document.querySelectorAll("[data-view]")) {
     b.setAttribute("aria-pressed", String(b.dataset.view === state.view));
   }
@@ -2181,6 +2292,7 @@ document.addEventListener("click", (e) => {
 $("#entry-form").addEventListener("submit", (e) => {
   e.preventDefault();
   fromPage = true;
+  wanted = null;
   submit();
 });
 
@@ -2210,6 +2322,7 @@ $("#example").addEventListener("click", () => {
   $("#url").value = DEMO_SHEET;
   fieldError("");
   fromPage = true;
+  wanted = null;
   submit();
 });
 
@@ -2247,7 +2360,7 @@ $("#open-sheet").addEventListener("click", () => {
   if (!view.hidden) {
     paintSheetView(state.analysis);
     view.scrollIntoView({ block: "start", behavior: STILL.matches ? "auto" : "smooth" });
-  }
+  } else syncAddress();
 });
 
 $("#flip").addEventListener("click", flip);

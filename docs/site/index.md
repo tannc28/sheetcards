@@ -185,11 +185,11 @@ thì card bị xoá theo. Xem chi tiết ở [Sync](syncing.md).
 - **Bắt đầu từ ví dụ.** [File ví dụ](examples.md) có 31 deck nhỏ, mỗi deck minh
   hoạ một tính năng.
 - **Có gì không chạy?** Xem [FAQ và xử lý lỗi](faq.md), hoặc
-  [Liên hệ & góp ý](../contact/?from=docs/index).
+  [Liên hệ & góp ý](../contact/?from=docs/index&kind=bug).
 
 ## Sắp có
 
 - **Thư viện template**: xem và dùng template người khác chia sẻ.
 - **Thư viện Theme**: thêm nhiều theme để khoác lên card của bạn.
 
-Muốn có sớm, hay cần thứ gì khác? [Góp ý](../contact/?from=docs/index).
+Muốn có sớm, hay cần thứ gì khác? [Góp ý](../contact/?from=docs/index&kind=feature).

@@ -162,7 +162,7 @@ Screen**) để mở lại nhanh.
 
 ## Những vấn đề khác
 
-Gặp lỗi? → [Liên hệ & góp ý](../contact/?from=docs/faq): gửi góp ý ngay trên
+Gặp lỗi? → [Liên hệ & góp ý](../contact/?from=docs/faq&kind=bug): gửi góp ý ngay trên
 web, hoặc nhắn qua GitHub hay Facebook.
 
 Bật **Write a debug log** trong **Settings…** (`Ctrl+Shift+O`), làm lại thao tác

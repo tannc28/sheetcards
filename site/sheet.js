@@ -30,6 +30,7 @@ import { icon, paintIcons } from "./icons.js";
 import { deckTree, treeHtml } from "./decktree.js";
 import { stashFile } from "./handoff.js";
 import { site } from "./paths.js";
+import { SHEET_STATE, readState, writeState } from "./urlstate.js";
 import { LONG_LINK, asCsv, decodeShare, encodeShare, isShare, parseTsv, shareAddress, toTsv } from "./sharelink.js";
 import { PALETTES, PIECES, TEMPLATES } from "./sheet-templates.js";
 import { MAX_TEMPLATES, dropTemplate, keepTemplate, listTemplates } from "./usertemplates.js";
@@ -881,6 +882,57 @@ function setView(view) {
   // words are being written, and this opens it again.
   $("#tplfold-text").textContent = t(view === "look" ? "shFoldTemplate" : "shEditTemplate");
   $("#tplfold").setAttribute("aria-expanded", String(view === "look"));
+  syncAddress();
+}
+
+// ---- the address -----------------------------------------------------------
+//
+// An open template step says which template, language, read-aloud choices and
+// theme it is on (?tpl=vocab&lang=en_US&theme=sakura), and the editor which of
+// its two steps is in front (?view=look), so a link copied from the bar opens
+// the same thing for whoever it is sent to (urlstate.js). Replaced, never pushed.
+// A kept template ("mine:") lives in one browser and is left out.
+
+/** What the page shows, as the address's query. */
+function addressState() {
+  if ($("#tplbox").open) {
+    if (isMine(stepId) || !byId(stepId)) return {};
+    const tpl = byId(stepId);
+    const out = { tpl: stepId };
+    if (tpl.toggles) {
+      out.lang = vocabChoice.lang === VOCAB_DEFAULT.lang ? null : vocabChoice.lang;
+      out.word = vocabChoice.word ? null : "0";
+      if (tpl.toggles.includes("example")) out.example = vocabChoice.example ? null : "0";
+    }
+    if (stepTheme !== null) out.theme = stepTheme || "none";
+    return out;
+  }
+  return ui.stage === "edit" && ui.view === "look" ? { view: "look" } : {};
+}
+
+function syncAddress() {
+  const next = writeState(location.href, addressState(), SHEET_STATE);
+  if (next.href !== location.href) history.replaceState(history.state, "", next);
+}
+
+/** The template step an address asks for (?tpl=…), opened as if picked. */
+function openAsked(want) {
+  const tpl = byId(want.tpl);
+  if (!tpl) return false;
+  // Opened over a sheet being written, the step is only a look until its
+  // button is pressed — which asks first (createFromStep).
+  if (tpl.toggles) {
+    if (VOCAB.languages.some((l) => l.code === want.lang)) vocabChoice.lang = want.lang;
+    if (want.word) vocabChoice.word = want.word === "1";
+    if (want.example) vocabChoice.example = want.example === "1";
+  }
+  pickTemplate(tpl.id);
+  const theme = want.theme === "none" ? "" : want.theme;
+  if (theme !== undefined && theme in PALETTES) {
+    stepTheme = theme;
+    paintStep();
+  }
+  return true;
 }
 
 /**
@@ -1290,6 +1342,7 @@ function paintStep() {
     el.srcdoc = faceDoc(card, el.dataset.tab, 0.72);
   }
   $("#tpl-sheet").innerHTML = sheetScrap(exportGrid(templateSheet(stepId), { mark: false }));
+  syncAddress();
 }
 
 function pickTemplate(id) {
@@ -1346,11 +1399,22 @@ function stepCsv() {
   toast(t("shDownloaded", name), "ok");
 }
 
-function createFromStep() {
+async function createFromStep() {
   const name = $("#tpl-name").value.replace(/\s+/g, " ").trim().replace(/;/g, ",");
   if (!name) {
     paintNameNote();
     return $("#tpl-name").focus();
+  }
+  // Only reachable over a sheet with words by a link (?tpl=): everywhere else
+  // the step opens from the empty page, after "Tạo sheet mới" has asked.
+  if (ui.stage === "edit" && wordCount()) {
+    const sure = await ask({
+      title: t("shNewTitle"),
+      text: t("shNewText", wordCount()),
+      yes: t("shNewYes"),
+      no: t("shKeep"),
+    });
+    if (!sure) return;
   }
   $("#tplbox").close();
   const made = templateSheet(stepId);
@@ -2725,6 +2789,8 @@ $("#new").addEventListener("click", async () => {
 });
 
 $("#tpl-name").addEventListener("input", paintNameNote);
+// Closed, the step is no longer what the address says is open.
+$("#tplbox").addEventListener("close", syncAddress);
 $("#tpl-name").addEventListener("keydown", (e) => {
   if (e.key !== "Enter" || e.isComposing) return;
   e.preventDefault();
@@ -3192,6 +3258,7 @@ const bootStatus = () =>
 
 /** What the address and the saved draft ask for, in that order. */
 async function arrive() {
+  const want = readState(location.search, SHEET_STATE);
   const draft = loadDraft();
   if (isShare(location.hash)) {
     let shared = null;
@@ -3203,7 +3270,7 @@ async function arrive() {
     }
     // The fragment has done its job; left in the address, a reload would ask
     // the same question again over edits made since.
-    history.replaceState(null, "", location.pathname);
+    history.replaceState(null, "", location.pathname + location.search);
     if (shared) {
       const differs = draft && JSON.stringify(draft.sheet) !== JSON.stringify(shared) && draft.sheet.rows.some((r) => !blankRow(r));
       const replace =
@@ -3218,7 +3285,7 @@ async function arrive() {
         // Opened from the link it was saved in: kept, until it changes.
         begin(shared, { filed: toTsv(exportGrid(shared)), how: "link" });
         toast(t("shOpened", shared.title || fileBase(), wordCount()), "ok");
-        return;
+        return arriveAt(want);
       }
     }
   }
@@ -3232,6 +3299,17 @@ async function arrive() {
     });
   }
   else setStage("empty");
+  return arriveAt(want);
+}
+
+/** After the sheet is open: the step or the view the address asked for. */
+function arriveAt(want) {
+  if (want.tpl && openAsked(want)) return;
+  if (want.view && ui.stage === "edit") {
+    setView(want.view);
+    drawCard();
+  }
+  syncAddress();
 }
 
 wireSave();

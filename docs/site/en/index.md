@@ -195,11 +195,11 @@ deleted rows are removed. [Syncing](syncing.md) has the details.
 - **Start from an example.** The [example workbook](examples.md) has 31 small
   decks, each showing one feature.
 - **Something not working?** See [FAQ and troubleshooting](faq.md), or
-  [Contact & feedback](../../contact/?from=docs/en/index).
+  [Contact & feedback](../../contact/?from=docs/en/index&kind=bug).
 
 ## Coming soon
 
 - **Template library**: browse and use templates other people share.
 - **Theme library**: more themes to dress your cards in.
 
-Want them sooner, or something else? [Tell us](../../contact/?from=docs/en/index).
+Want them sooner, or something else? [Tell us](../../contact/?from=docs/en/index&kind=feature).
