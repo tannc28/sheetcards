@@ -1721,10 +1721,13 @@ async function createFromStep({ advanced = false } = {}) {
   // full editor, on the same sheet.
   begin(made, { row: 0, col: 0, view: advanced ? "look" : "rows" });
   if (advanced) return;
+  // A phone lands on the list, where pasting a list and adding one word are
+  // offered side by side; opening the word form straight away covered the
+  // first of them.
   if (WIDE.matches) {
     select(firstWordRow, 0);
     startEditing(firstWordRow, 0);
-  } else openForm(0, { field: 0 });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1953,6 +1956,9 @@ function duplicates() {
 function paintList() {
   deriveIds();
   const dupes = duplicates();
+  // No words yet: "Thêm từ" and "Dán danh sách từ" are offered side by side
+  // (sheet.css .listpane.fresh) rather than one empty line between them.
+  $("#listpane").classList.toggle("fresh", sheet.rows.every(blankRow));
   $("#wordlist").innerHTML = sheet.rows
     .map((row, k) => {
       const [first = "", second = ""] = row.values.filter((v) => String(v).trim());
