@@ -89,7 +89,8 @@ class TestOwnPackage:
         assert [s["name"] for s in sheets] == ["SheetCards - English week 1 - Basic"]
         rows = sheets[0]["rows"]
         # The package's own ID field is a field like any other; its guid is the key.
-        assert rows[0] == ["ID", "ID (Anki)", "Word", "Meaning", "SUBDECK 1", "TAGS"]
+        assert rows[0] == ["ID", "ID (Anki)", "Word", "Meaning", "Deck 1", "TAGS"]
+        assert rows[1][4] == "subdeck=1"
         assert rows[1][0] == "#config name=English week 1; reverse"
         by_word = {r[2]: r for r in rows[2:]}
         assert by_word["apple"][1] == "w01"
@@ -190,7 +191,7 @@ def test_a_legacy_export_reads_as_sheets(exported):
         "Basic (type in the answer)",
     }
     basic = sheets["Basic"]
-    assert basic["rows"][0] == ["ID", "Front", "Back", "SUBDECK 1", "TAGS"]
+    assert basic["rows"][0] == ["ID", "Front", "Back", "Deck 1", "TAGS"]
     assert basic["rows"][1][0] == "#config name=Spanish (Basic)"
     words = {r[1]: r for r in basic["rows"][2:]}
     assert words["<b>hola</b>"][2] == "hello<br>hi"

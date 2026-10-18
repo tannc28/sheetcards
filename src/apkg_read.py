@@ -14,8 +14,9 @@ What a sheet gets from each note:
 - one column per field, named as the field is (a field whose name a sheet
   reserves — ``ID``, ``TAGS``, ``SYNC``, ``SUBDECK n`` — gets `` (Anki)`` added,
   or it would stop being a field);
-- ``SUBDECK 1..n``: the deck the note's first card is in, below the deck every
-  note shares, which becomes the sheet's ``name=``;
+- ``Deck 1..n``: the deck the note's first card is in, below the deck every
+  note shares (which becomes the sheet's ``name=``), one level per column, each
+  said to be that level by ``subdeck=n`` in the settings row;
 - ``TAGS``: the note's tags, when any note has one.
 
 The settings row says what the note type said, as far as a sheet can: which
@@ -343,11 +344,16 @@ def read_package(data, name=""):
         depth = max((len(p) for *_, p in items), default=0)
         has_tags = any(str(t).strip() for _, t, _, _ in items)
         header = ["ID", *columns]
-        header += [f"SUBDECK {n}" for n in range(1, depth + 1)]
+        # Named columns with subdeck=n rather than the reserved SUBDECK n headers,
+        # which are on their way out (tsv_model: subdeck-header-retired).
+        levels = [_column_name(f"Deck {n}", taken) for n in range(1, depth + 1)]
+        header += levels
         if has_tags:
             header.append("TAGS")
 
         cells, reverse = _settings(fields, columns, model)
+        for n, level in enumerate(levels, start=1):
+            cells[level] = f"subdeck={n}"
         label = str(model.get("name") or "Notes").strip() or "Notes"
         named = f"{deck_name} ({label})" if several and deck_name else deck_name
         named = re.sub(r"[;\t\r\n]+", " ", named).strip()[:100].strip()
@@ -356,7 +362,7 @@ def read_package(data, name=""):
             marker += f" name={named}"
         if reverse:
             marker += "; reverse" if named else " reverse"
-        settings = [marker, *(cells.get(c, "") for c in columns)]
+        settings = [marker, *(cells.get(c, "") for c in columns + levels)]
         settings += [""] * (len(header) - len(settings))
 
         media = {"images": 0, "audio": 0}

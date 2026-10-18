@@ -55,7 +55,7 @@ bằng **Mở file** trong Sheet to Anki hoặc Tạo Sheet; file `.txt` cũng �
   nếu dòng đầu trông giống các dòng bên dưới thì nó được đọc như một card, và các
   cột được đặt tên **Mặt trước** / **Mặt sau**. Nếu đoán sai, bấm *Dòng đầu là
   tên cột* (hoặc *Dòng đầu là một card*) ở dòng thông báo.
-- Dòng đầu có `ID`, `TAGS`, `SUBDECK 1`, hoặc tên cột quen thuộc (Front, Back,
+- Dòng đầu có `ID`, `TAGS`, hoặc tên cột quen thuộc (Front, Back,
   Term, Definition, Mặt trước, Nghĩa…) thì luôn được đọc là tên cột.
 
 ## Deck chia sẻ của Anki (.apkg)
@@ -64,7 +64,8 @@ Một deck tải từ AnkiWeb Shared Decks, hay một file `.apkg`/`.colpkg` xu�
 mở được bằng **Mở file** để thành sheet bạn sửa được rồi tạo lại `.apkg`.
 
 - **Mỗi note type thành một sheet**: các field là các cột, guid của note thành
-  cột `ID`, deck con thành `SUBDECK 1`, `SUBDECK 2`…, tag thành `TAGS`. Settings
+  cột `ID`, deck con thành các cột `Deck 1`, `Deck 2`… (ghi `subdeck=1`, `subdeck=2`…
+  ở settings row), tag thành `TAGS`. Settings
   row ghi lại field nào ở mặt trước, field cloze, ô gõ đáp án và card ngược.
 - **Định dạng**: giữ in đậm, in nghiêng, gạch dưới, chỉ số trên/dưới và xuống
   dòng; các thẻ HTML khác bị bỏ, chỉ giữ chữ.

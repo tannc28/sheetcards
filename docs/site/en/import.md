@@ -56,7 +56,7 @@ Noji (formerly Anki Pro) exports a deck as a text-only CSV file. Open it with
   right: when the first row looks like the rows under it, it is read as a card
   and the columns are called **Front** / **Back**. If the guess is wrong, press
   *The first row is column names* (or *The first row is a card*) in the note.
-- A first row holding `ID`, `TAGS`, `SUBDECK 1`, or a familiar column name
+- A first row holding `ID`, `TAGS`, or a familiar column name
   (Front, Back, Term, Definition, Meaning…) is always read as column names.
 
 ## A shared Anki deck (.apkg)
@@ -65,8 +65,8 @@ A deck from AnkiWeb Shared Decks, or an `.apkg`/`.colpkg` exported from Anki,
 opens with **Open file** as a sheet you can edit and turn into an `.apkg` again.
 
 - **Each note type becomes a sheet**: its fields are the columns, each note's
-  guid becomes the `ID` column, subdecks become `SUBDECK 1`, `SUBDECK 2`…, tags
-  become `TAGS`. The settings row records which fields are on the front, the
+  guid becomes the `ID` column, subdecks become columns `Deck 1`, `Deck 2`…
+  (marked `subdeck=1`, `subdeck=2`… in the settings row), tags become `TAGS`. The settings row records which fields are on the front, the
   cloze field, a type-in answer and a reverse card.
 - **Formatting**: bold, italic, underline, sub/superscript and line breaks are
   kept; other HTML tags are removed and their text kept.
