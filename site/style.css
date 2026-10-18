@@ -263,6 +263,11 @@ body.page .masthead {
   body.page .masthead { gap: 4px; }
   .masthead .ghlink { width: 32px; }
 }
+@media (pointer: coarse) and (max-width: 24rem) {
+  .masthead .langs-icon { display: none; }
+  body.page .masthead { column-gap: 0; }
+  .masthead .ghlink, .masthead .themebtn { width: 44px; }
+}
 
 /* The way to reach the author, on every page: one quiet line, not a banner.
    It stands where a "by ctan" signature used to, and goes to contact/. */
@@ -1215,6 +1220,10 @@ iframe#card {
   /* A finger's 44px, drawn rather than reached for with a pseudo-element: the
      box is what is measured, and what a thumb aims at. */
   .masthead .themebtn, .masthead .ghlink { width: 44px; height: 44px; }
+  /* Three 44px icons side by side are their own spacing; the row keeps the
+     name, the icons and the language switch on one line down to 360px. */
+  body.page .masthead { column-gap: 2px; }
+  .masthead .langs { margin-left: 4px; }
   .langs button { min-height: 44px; }
   .rail-go { min-height: 44px; }
   .sharechoice, .tx-check { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
