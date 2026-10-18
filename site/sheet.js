@@ -2007,6 +2007,9 @@ function paintSheet() {
   grid.classList.toggle("cfgopen", cfgOpen());
   grid.innerHTML = head + names + settings + words;
   if (!SIZES_ITSELF) for (const box of grid.querySelectorAll("textarea")) grow(box);
+  // The grid is one stop for Tab: its cells are reached with the arrow keys and
+  // opened with Enter, so Tab leaves rather than walking every cell.
+  for (const box of grid.querySelectorAll("input, textarea")) box.tabIndex = -1;
   paintSelection();
 }
 
@@ -2225,6 +2228,19 @@ function startEditing(r, c) {
   box.focus();
   box.select();
   return true;
+}
+
+/** The cell after (or before) one, row by row; null past either end. */
+function nextCell(r, c, by) {
+  const first = -1;
+  const last = sheet.columns.length - 1;
+  let row = r;
+  let col = c + by;
+  if (col > last) [row, col] = [r + 1, first];
+  if (col < first) [row, col] = [r - 1, last];
+  if (row === 1 && !cfgOpen()) row += by;
+  if (row < 0 || row > lastRow()) return null;
+  return { r: row, c: col };
 }
 
 function stopEditing() {
@@ -3587,6 +3603,11 @@ function fillFrom(src, box) {
   }
 }
 
+// Tabbed into: the arrow keys start from the first word.
+$("#sheet").addEventListener("focus", () => {
+  if (!ui.sel && ui.stage === "edit") select(Math.min(firstWordRow, lastRow()), 0);
+});
+
 $("#sheet").addEventListener("click", (e) => {
   if (!e.target.closest("#cfgsum")) return;
   ui.cfgOpen = !cfgOpen();
@@ -3786,6 +3807,7 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       stopEditing();
       select(r, c);
+      $("#sheet").focus({ preventScroll: true });
     } else if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.isComposing) {
       // Enter goes down, as in a spreadsheet; past the last word it makes one.
       e.preventDefault();
@@ -3797,10 +3819,17 @@ document.addEventListener("keydown", (e) => {
       }
       select(Math.min(lastRow(), r + 1), c);
       reveal(Math.min(lastRow(), r + 1), c);
+      $("#sheet").focus({ preventScroll: true });
     } else if (e.key === "Tab") {
-      e.preventDefault();
+      // On to the next cell's field, as in a spreadsheet, wrapping at the end of
+      // a row; past the last cell Tab leaves the grid.
+      const next = nextCell(r, c, e.shiftKey ? -1 : 1);
       stopEditing();
-      select(r, c + (e.shiftKey ? -1 : 1));
+      if (!next) return;
+      e.preventDefault();
+      select(next.r, next.c);
+      reveal(next.r, next.c);
+      if (!startEditing(next.r, next.c)) $("#sheet").focus({ preventScroll: true });
     }
     return;
   }
@@ -3828,14 +3857,13 @@ document.addEventListener("keydown", (e) => {
       ui.sel = { ...anchor, r2: ui.sel.r2, c2: ui.sel.c2 };
       reveal(ui.sel.r2, ui.sel.c2);
     } else {
-      select(r + step[0], c + step[1]);
+      // A folded settings row is stepped over.
+      let to = r + step[0];
+      if (to === 1 && !cfgOpen()) to += step[0] || 0;
+      select(Math.max(0, to), c + step[1]);
       reveal(ui.sel.r, ui.sel.c);
     }
     return;
-  }
-  if (e.key === "Tab") {
-    e.preventDefault();
-    return select(r, c + (e.shiftKey ? -1 : 1));
   }
   if (e.key === "Enter" || e.key === "F2") {
     e.preventDefault();

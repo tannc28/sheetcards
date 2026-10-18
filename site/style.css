@@ -105,6 +105,11 @@
   --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px -10px rgb(0 0 0 / .6);
   --shadow-lg: 0 2px 4px rgb(0 0 0 / .3), 0 28px 56px -18px rgb(0 0 0 / .75);
 }
+/* On a dark page a shadow says nothing, so a dialog or a menu is lifted the
+   other way: a lighter surface than the page, and an edge. */
+:root[data-theme="dark"] :is(.donebox, .rowform, .deckpanel:modal, .menu, .rareacts, .tx-pop.tx-optbody) {
+  background: #201c2a; border: 1px solid #3a3550;
+}
 
 * { box-sizing: border-box; }
 
@@ -704,6 +709,7 @@ h3.spaced { margin-top: 18px; }
 .sheet .cell.editing textarea { pointer-events: auto; }
 .sheet .drop { pointer-events: auto; }
 .sheet .cell, .sheet .ref { cursor: cell; }
+.sheet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Row 2 folded: one line naming the keys it uses; a click opens the cells. */
 .sheet .cfgsum {
   grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-start; gap: 8px;
@@ -1206,10 +1212,12 @@ iframe#card {
    on the first row take the theme button's 34px and reach 44 invisibly. */
 @media (pointer: coarse) {
   .masthead .sitenav a { min-height: 44px; display: inline-flex; align-items: center; }
-  .themebtn { position: relative; }
-  .themebtn::after, .ghlink::after { content: ""; position: absolute; inset: -5px; }
-  .ghlink { position: relative; }
-  .langs button { min-height: 34px; }
+  /* A finger's 44px, drawn rather than reached for with a pseudo-element: the
+     box is what is measured, and what a thumb aims at. */
+  .masthead .themebtn, .masthead .ghlink { width: 44px; height: 44px; }
+  .langs button { min-height: 44px; }
+  .rail-go { min-height: 44px; }
+  .sharechoice, .tx-check { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
   .brand a.name { padding: 11px 0; margin: -11px 0; }
 }
 @media (pointer: coarse) and (max-width: 55.99rem) {

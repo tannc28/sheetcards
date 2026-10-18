@@ -444,3 +444,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tx-mini, .tx-split .caret, .tx-opt .caret { transition: none; }
 }
+
+@media (max-width: 59.99rem) {
+  :root[data-theme="dark"] .tx-opt > .tx-optbody { background: #201c2a; border-color: #3a3550; }
+}
