@@ -101,7 +101,8 @@ def shape(last):
 def package_bytes(last, files=None):
     """The package; files is [address, name, bytes] per picture or recording fetched."""
     deck = _STATE["deck"]
-    files = files.to_py() if files is not None else []
+    # JavaScript's null reaches Python as JsNull, not None, so test truthiness.
+    files = files.to_py() if files else []
     return build_package(
         _STATE["id"], _STATE["name"], deck.plan, deck.sheet_config, _STATE["rows"],
         previous_fields=_previous(last),
@@ -540,7 +541,7 @@ async function boot() {
   const fn = py.globals.get("analyze");
   analyze = (tsv, deckName, sheetId) => JSON.parse(fn(tsv, deckName, sheetId));
   const pack = py.globals.get("package_bytes");
-  buildPackage = (last, files) => pack(JSON.stringify(last), files || null).toJs();
+  buildPackage = (last, files) => pack(JSON.stringify(last), files || []).toJs();
   const jobs = py.globals.get("media_jobs");
   const queries = py.globals.get("media_queries");
   const sources = py.globals.get("media_sources");
