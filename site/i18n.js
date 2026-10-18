@@ -43,8 +43,8 @@ const STRINGS = {
   // loaded sheet's name first: that is what tells two open tabs, or two entries
   // in the history, apart.
   titleHome: {
-    en: "SheetCards — Anki flashcards from Google Sheets",
-    vi: "SheetCards — tạo flashcard Anki từ Google Sheets",
+    en: "SheetCards — Anki flashcards from Google Sheets, files or notes",
+    vi: "SheetCards — tạo flashcard Anki từ Google Sheets, file hay ghi chú",
   },
   titleCreate: {
     en: "SheetCards — Make Anki flashcards from Google Sheets, files or notes",
