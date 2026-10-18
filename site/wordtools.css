@@ -111,7 +111,7 @@ input.sgval { background: var(--accent-soft); border-style: dashed !important; b
 .sg-credit { margin: 14px 0 4px; }
 
 /* Step 2's own buttons for these: beside "Thêm từ" on a phone, in the grid's foot. */
-.listpane .pasteword { margin-top: 8px; }
+.listpane .pasteword { margin-bottom: 10px; }
 .rf-suggest { flex: 0 0 auto; min-height: 48px; }
 
 @media (max-width: 39.99rem) {
